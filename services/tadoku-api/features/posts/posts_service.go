@@ -141,19 +141,17 @@ func (s *Service) UpdatePost(ctx context.Context, parameters UpdatePostParameter
 	return s.posts.CreatePostContent(ctx, item.ID, contentID, item.Title, item.Content, *item.UpdatedAt)
 }
 
-func (s *Service) GetPostVersion(ctx context.Context, namespace string, postID, contentID uuid.UUID) (*PostVersion, error) {
-	versions, err := s.ListPostVersions(ctx, namespace, postID)
+func (s *Service) GetPostVersion(
+	ctx context.Context,
+	namespace string,
+	postID, contentID uuid.UUID,
+) (*PostVersion, error) {
+	content, position, err := s.posts.GetPostVersion(ctx, namespace, postID, contentID)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, version := range versions {
-		if version.ID == contentID {
-			return &version, nil
-		}
-	}
-
-	return nil, ErrPostNotFound
+	return &PostVersion{PostContent: *content, Version: position}, nil
 }
 
 func (s *Service) ListPostVersions(ctx context.Context, namespace string, id uuid.UUID) ([]PostVersion, error) {

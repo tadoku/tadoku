@@ -222,6 +222,40 @@ func (r *PostsRepository) UpdatePost(ctx context.Context, item *Post, contentID 
 	return nil
 }
 
+// GetPostVersion returns the content and its 1-based position in ListPostVersions order. The SQL count must use the
+// list's order.
+func (r *PostsRepository) GetPostVersion(
+	ctx context.Context,
+	namespace string,
+	postID, contentID uuid.UUID,
+) (*PostContent, int, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	row, err := queries.New(executor).GetPostVersion(ctx, queries.GetPostVersionParams{
+		ContentID: postgres.UUID(contentID),
+		PostID:    postgres.UUID(postID),
+		Namespace: namespace,
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, 0, ErrPostNotFound
+	}
+	if err != nil {
+		return nil, 0, fmt.Errorf("get post version: %w", err)
+	}
+
+	content := &PostContent{
+		ID:        uuid.UUID(row.ID.Bytes),
+		Title:     row.Title,
+		Content:   row.Content,
+		CreatedAt: row.CreatedAt.Time,
+	}
+
+	return content, int(row.Position), nil
+}
+
 // ListPostVersions returns the post's contents in version order, oldest first.
 func (r *PostsRepository) ListPostVersions(ctx context.Context, namespace string, id uuid.UUID) ([]PostContent, error) {
 	executor, err := postgres.Executor(ctx, r.db)
@@ -242,7 +276,6 @@ func (r *PostsRepository) ListPostVersions(ctx context.Context, namespace string
 		contents = append(contents, PostContent{
 			ID:        uuid.UUID(row.ID.Bytes),
 			Title:     row.Title,
-			Content:   row.Content,
 			CreatedAt: row.CreatedAt.Time,
 		})
 	}

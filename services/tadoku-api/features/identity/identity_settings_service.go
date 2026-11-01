@@ -182,14 +182,14 @@ func (s *Service) lockSettingsSession(ctx context.Context, header CookieHeader) 
 	if err != nil {
 		return AuthenticatedSession{}, err
 	}
-	if _, err := s.repository.lockAccount(ctx, session.Account.ID); err != nil {
+	if _, err := usableAccount(s.repository.lockAccount(ctx, session.Account.ID)); err != nil {
 		if errors.Is(err, errAccountNotFound) {
 			return AuthenticatedSession{}, errx.NewUnauthorizedError("a valid session is required")
 		}
 		return AuthenticatedSession{}, err
 	}
 
-	current, err := s.repository.session(ctx, hashToken(cookieValue(header, s.cookie(ctx).Name)), timex.Now())
+	current, err := s.session(ctx, cookieValue(header, s.cookie(ctx).Name))
 	if err != nil {
 		return AuthenticatedSession{}, err
 	}

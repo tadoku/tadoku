@@ -37,7 +37,22 @@ var (
 	ErrEmailTaken      = &Error{"email_taken", errx.NewConflictError("email is already registered")}
 	ErrThrottled       = &Error{"throttled", errx.NewThrottledError("too many login attempts; try again later")}
 	errAccountNotFound = errors.New("identity account not found")
+	errSessionNotFound = errors.New("identity session not found")
 )
+
+type accountStatus int
+
+const (
+	accountActive accountStatus = iota + 1
+	accountInactive
+	accountDeletionLocked
+	accountDeleted
+)
+
+// usable reports whether the account may sign in, hold a session and recover its password. The CreateSession,
+// LockRecoveryAccount and LockAccount guards in sql/identity/identity.sql repeat this rule atomically; change them
+// together.
+func (s accountStatus) usable() bool { return s == accountActive }
 
 type Account struct {
 	ID          uuid.UUID

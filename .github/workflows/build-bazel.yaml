@@ -207,6 +207,12 @@ jobs:
       - name: Verify Go comment policy
         run: bazel run --lockfile_mode=error //tools/ci/commentpolicy
 
+      - name: Setup Go for OpenAPI formatting
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+
       - name: Verify Tadoku API OpenAPI generation
         run: |
           ./scripts/generate-openapi.sh

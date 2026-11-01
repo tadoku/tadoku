@@ -169,7 +169,9 @@ package's `generate.go`, so it needs only `curl` and `tar`. New query packages
 must be added to `SQLC_PACKAGES` in the script. `./scripts/generate-openapi.sh`
 concatenates the contract fragments into `services/tadoku-api/spec/openapi.yaml`,
 then runs oapi-codegen through Bazel from `tools/oapi-codegen/`, which pins the same
-Bazel version as the repo root via `tools/oapi-codegen/.bazelversion`. See
+Bazel version as the repo root via `tools/oapi-codegen/.bazelversion`. CI installs
+the Go version from the root `go.mod` so oapi-codegen's formatter can invoke the
+Go executable. Builds and tests still run through Bazel. See
 [Tadoku API contract](../tadoku-api/contract.md).
 
 ## pnpm workspaces

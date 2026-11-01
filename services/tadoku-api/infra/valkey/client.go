@@ -51,16 +51,9 @@ func Open(ctx context.Context, rawURL string, timeout time.Duration) (valkeygo.C
 			return nil, dialErr
 		}
 		if initial {
-			mu.Lock()
-			if initializing && ctx.Err() == nil {
-				initialConnection = connection
-			} else {
-				_ = connection.Close()
-				dialErr = ctx.Err()
-			}
-			mu.Unlock()
+			return retainOrDiscardInitial(&mu, &initializing, &initialConnection, ctx, connection)
 		}
-		return connection, dialErr
+		return connection, nil
 	}
 
 	client, err := valkeygo.NewClient(option)
@@ -80,6 +73,23 @@ func Open(ctx context.Context, rawURL string, timeout time.Duration) (valkeygo.C
 		return client, fmt.Errorf("open valkey: %w", err)
 	}
 	return client, nil
+}
+
+func retainOrDiscardInitial(
+	mu *sync.Mutex,
+	initializing *bool,
+	initialConnection *net.Conn,
+	ctx context.Context,
+	connection net.Conn,
+) (net.Conn, error) {
+	mu.Lock()
+	defer mu.Unlock()
+	if *initializing && ctx.Err() == nil {
+		*initialConnection = connection
+		return connection, nil
+	}
+	_ = connection.Close()
+	return nil, ctx.Err()
 }
 
 func clientOption(rawURL string, timeout time.Duration) (valkeygo.ClientOption, error) {

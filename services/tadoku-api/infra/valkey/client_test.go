@@ -337,6 +337,29 @@ func TestClientOptionPreservesParsedSettingsAndOverridesServicePolicy(t *testing
 	}
 }
 
+func TestRetainOrDiscardInitialReturnsNilConnWhenContextCanceled(t *testing.T) {
+	client, server := net.Pipe()
+	t.Cleanup(func() { _ = server.Close() })
+
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	var mu sync.Mutex
+	initializing := true
+	var initialConnection net.Conn
+
+	conn, err := retainOrDiscardInitial(&mu, &initializing, &initialConnection, ctx, client)
+	if conn != nil || !errors.Is(err, context.Canceled) {
+		t.Fatalf("conn=%v error=%v", conn, err)
+	}
+	if initialConnection != nil {
+		t.Fatal("canceled dial retained the connection")
+	}
+
+	if _, err := client.Write([]byte("x")); err == nil {
+		t.Fatal("discarded connection was not closed")
+	}
+}
+
 func TestClientOptionRejectsInvalidConfigurationWithoutLeakingCredentials(t *testing.T) {
 	for _, test := range []struct {
 		name    string

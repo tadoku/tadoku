@@ -20,6 +20,8 @@ var (
 
 const WorkerComponent = "tadoku-worker"
 
+const AttemptsExhausted = "attempts_exhausted"
+
 type ClaimedJob struct {
 	ID             int64
 	Tenant         tenant.Key

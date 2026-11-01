@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
@@ -17,7 +18,7 @@ func (r *runner) maintainEmails(ctx context.Context, retention bool) {
 	}
 	for _, key := range keys {
 		tenantCtx := tenant.WithKey(bounded, key)
-		if err := r.email.ReconcileFailures(tenantCtx); err != nil {
+		if err := r.email.ReconcileFailures(tenantCtx, jobqueue.AttemptsExhausted); err != nil {
 			r.logger.ErrorContext(tenantCtx, "reconcile failed emails", "error", err)
 		}
 		if retention {

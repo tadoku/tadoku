@@ -35,16 +35,13 @@ end;
 
 -- name: ReconcileFailures :exec
 update emails as e
-set status = case
-  when sqlc.arg('hold')::boolean or e.tenant <> 'tadoku/prod' then 'held'
-  else 'failed'
-end,
+set status = case when sqlc.arg('hold')::boolean then 'held' else 'failed' end,
 error = case
-  when sqlc.arg('hold')::boolean or e.tenant <> 'tadoku/prod' then null
+  when sqlc.arg('hold')::boolean then null
   else (
-  select coalesce(j.last_error, 'attempts_exhausted')
+  select coalesce(j.last_error, sqlc.arg('exhausted_error')::text)
   from jobs as j
-  where j.tenant = e.tenant and j.task_type = 'email.send.v1'
+  where j.tenant = e.tenant and j.task_type = sqlc.arg('task_type')::text
     and j.payload->>'email_id' = e.id::text and j.state = 'failed'
   order by j.id desc
   limit 1
@@ -53,11 +50,11 @@ end
 where e.status = 'pending'
   and exists (
     select 1 from jobs as j
-    where j.tenant = e.tenant and j.task_type = 'email.send.v1'
+    where j.tenant = e.tenant and j.task_type = sqlc.arg('task_type')::text
       and j.payload->>'email_id' = e.id::text and j.state = 'failed'
   )
   and not exists (
     select 1 from jobs as j
-    where j.tenant = e.tenant and j.task_type = 'email.send.v1'
+    where j.tenant = e.tenant and j.task_type = sqlc.arg('task_type')::text
       and j.payload->>'email_id' = e.id::text and j.state <> 'failed'
   );

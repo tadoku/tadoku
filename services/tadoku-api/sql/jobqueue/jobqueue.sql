@@ -23,7 +23,7 @@ with exhausted as (
 update jobs as task
 set state = 'failed', claim_token = null, lease_expires_at = null,
   failed_at = sqlc.arg('now')::timestamptz,
-  last_error = case when task.state = 'running' then 'lease_expired' else 'attempts_exhausted' end
+  last_error = case when task.state = 'running' then 'lease_expired' else sqlc.arg('exhausted_error')::text end
 from exhausted
 where task.id = exhausted.id
 returning task.tenant, task.last_error;

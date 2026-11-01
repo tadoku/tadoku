@@ -75,7 +75,7 @@ func (s *Service) UpdateContestRegistrations(
 			return MutationResult{}, err
 		}
 	}
-	if err := s.logs.RecomputeOfficialEligibility(ctx, logID, now); err != nil {
+	if err := s.recomputeOfficialEligibility(ctx, logID, now); err != nil {
 		return MutationResult{}, err
 	}
 	after, err := s.logs.JobContext(ctx, logID)
@@ -114,6 +114,14 @@ func (s *Service) lockMutableLog(ctx context.Context, logID uuid.UUID) error {
 		return ErrLogFrozen
 	}
 	return nil
+}
+
+func (s *Service) recomputeOfficialEligibility(ctx context.Context, logID uuid.UUID, now time.Time) error {
+	official, err := s.logs.AttachedContestOfficialFlags(ctx, logID)
+	if err != nil {
+		return err
+	}
+	return s.logs.SetOfficialEligibility(ctx, logID, logscore.EligibleOfficial(official), now)
 }
 
 func (s *Service) Delete(ctx context.Context, logID uuid.UUID, now time.Time) (MutationResult, error) {
@@ -172,7 +180,7 @@ func (s *Service) ModerateDetach(
 	if err := s.logs.DetachContest(ctx, logID, contestID); err != nil {
 		return MutationResult{}, err
 	}
-	if err := s.logs.RecomputeOfficialEligibility(ctx, logID, now); err != nil {
+	if err := s.recomputeOfficialEligibility(ctx, logID, now); err != nil {
 		return MutationResult{}, err
 	}
 	after, err := s.logs.JobContext(ctx, logID)

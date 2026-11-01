@@ -290,62 +290,6 @@ func (q *Queries) FindScoringRuleSetByID(ctx context.Context, id pgtype.UUID) (F
 	return i, err
 }
 
-const findUnitForScoringByID = `-- name: FindUnitForScoringByID :one
-select id, unit_key, modifier
-from log_units
-where id = $1
-  and log_activity_id = $2
-  and (language_code is null or language_code = $3)
-`
-
-type FindUnitForScoringByIDParams struct {
-	ID           pgtype.UUID
-	ActivityID   int16
-	LanguageCode pgtype.Text
-}
-
-type FindUnitForScoringByIDRow struct {
-	ID       pgtype.UUID
-	UnitKey  string
-	Modifier float32
-}
-
-func (q *Queries) FindUnitForScoringByID(ctx context.Context, arg FindUnitForScoringByIDParams) (FindUnitForScoringByIDRow, error) {
-	row := q.db.QueryRow(ctx, findUnitForScoringByID, arg.ID, arg.ActivityID, arg.LanguageCode)
-	var i FindUnitForScoringByIDRow
-	err := row.Scan(&i.ID, &i.UnitKey, &i.Modifier)
-	return i, err
-}
-
-const findUnitForScoringByKey = `-- name: FindUnitForScoringByKey :one
-select id, unit_key, modifier
-from log_units
-where unit_key = $1
-  and log_activity_id = $2
-  and (language_code is null or language_code = $3)
-order by language_code is null asc
-limit 1
-`
-
-type FindUnitForScoringByKeyParams struct {
-	UnitKey      string
-	ActivityID   int16
-	LanguageCode pgtype.Text
-}
-
-type FindUnitForScoringByKeyRow struct {
-	ID       pgtype.UUID
-	UnitKey  string
-	Modifier float32
-}
-
-func (q *Queries) FindUnitForScoringByKey(ctx context.Context, arg FindUnitForScoringByKeyParams) (FindUnitForScoringByKeyRow, error) {
-	row := q.db.QueryRow(ctx, findUnitForScoringByKey, arg.UnitKey, arg.ActivityID, arg.LanguageCode)
-	var i FindUnitForScoringByKeyRow
-	err := row.Scan(&i.ID, &i.UnitKey, &i.Modifier)
-	return i, err
-}
-
 const listContestScoringRuleSets = `-- name: ListContestScoringRuleSets :many
 select
   scope,
@@ -394,6 +338,86 @@ func (q *Queries) ListContestScoringRuleSets(ctx context.Context, contestID pgty
 			&i.FallbackRuleSetID,
 			&i.CreatedAt,
 			&i.PublishedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLogUnitsByID = `-- name: ListLogUnitsByID :many
+select id, unit_key, modifier, log_activity_id, language_code
+from log_units
+where id = $1
+`
+
+type ListLogUnitsByIDRow struct {
+	ID            pgtype.UUID
+	UnitKey       string
+	Modifier      float32
+	LogActivityID int16
+	LanguageCode  pgtype.Text
+}
+
+func (q *Queries) ListLogUnitsByID(ctx context.Context, id pgtype.UUID) ([]ListLogUnitsByIDRow, error) {
+	rows, err := q.db.Query(ctx, listLogUnitsByID, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListLogUnitsByIDRow{}
+	for rows.Next() {
+		var i ListLogUnitsByIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UnitKey,
+			&i.Modifier,
+			&i.LogActivityID,
+			&i.LanguageCode,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLogUnitsByKey = `-- name: ListLogUnitsByKey :many
+select id, unit_key, modifier, log_activity_id, language_code
+from log_units
+where unit_key = $1
+`
+
+type ListLogUnitsByKeyRow struct {
+	ID            pgtype.UUID
+	UnitKey       string
+	Modifier      float32
+	LogActivityID int16
+	LanguageCode  pgtype.Text
+}
+
+func (q *Queries) ListLogUnitsByKey(ctx context.Context, unitKey string) ([]ListLogUnitsByKeyRow, error) {
+	rows, err := q.db.Query(ctx, listLogUnitsByKey, unitKey)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListLogUnitsByKeyRow{}
+	for rows.Next() {
+		var i ListLogUnitsByKeyRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UnitKey,
+			&i.Modifier,
+			&i.LogActivityID,
+			&i.LanguageCode,
 		); err != nil {
 			return nil, err
 		}

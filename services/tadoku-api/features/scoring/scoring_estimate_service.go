@@ -185,29 +185,26 @@ func (s *Service) resolveUnit(ctx context.Context, parameters PreviewParameters)
 		return "", nil
 	}
 
-	var resolved string
-	if parameters.UnitID != nil {
-		var err error
-		resolved, err = s.repository.FindUnitKeyByID(ctx, *parameters.UnitID, parameters.ActivityID, parameters.LanguageCode)
-		if err != nil {
-			return "", err
-		}
+	unit, err := s.findApplicableUnit(
+		ctx,
+		parameters.UnitID,
+		parameters.UnitKey,
+		parameters.ActivityID,
+		parameters.LanguageCode,
+	)
+	if err != nil {
+		return "", err
 	}
-	if parameters.UnitID == nil && parameters.UnitKey != nil {
-		var err error
-		resolved, err = s.repository.FindUnitKeyByKey(ctx, *parameters.UnitKey, parameters.ActivityID, parameters.LanguageCode)
-		if err != nil {
-			return "", err
-		}
+	if unit == nil && parameters.UnitID != nil {
+		return "", errx.NewInvalidInputError("unit_id is not valid for activity_id and language_code")
 	}
-	if parameters.UnitKey != nil && resolved != *parameters.UnitKey {
+	if unit == nil {
+		return "", errx.NewInvalidInputError("unit_key is not valid for activity_id and language_code")
+	}
+	if parameters.UnitKey != nil && unit.Key != *parameters.UnitKey {
 		return "", errx.NewInvalidInputError("unit_id and unit_key identify different units")
 	}
-	unitActivity, knownUnit = activities.UnitActivityID(resolved)
-	if !knownUnit || unitActivity != parameters.ActivityID {
-		return "", errx.NewInvalidInputError("resolved unit_key is not valid for activity_id")
-	}
-	return resolved, nil
+	return unit.Key, nil
 }
 
 func stringValue(value *string) string {

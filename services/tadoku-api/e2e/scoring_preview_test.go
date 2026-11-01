@@ -5,7 +5,12 @@ import (
 	"testing"
 )
 
+// Test safety: cases seeding this shared log unit must run inside a test that removes it on cleanup.
+const mismatchedActivityUnitID = "556e957a-f75a-1692-1d44-b455a20a06ea"
+
 func TestImmersionScorePreview(t *testing.T) {
+	cleanupLogUnit(t, mismatchedActivityUnitID)
+
 	tests := []struct {
 		description []string
 		want        int
@@ -18,12 +23,20 @@ func TestImmersionScorePreview(t *testing.T) {
 		{description: []string{"contest", "inherits", "platform"}, want: http.StatusOK},
 		{description: []string{"contest", "replace", "no", "match"}, want: http.StatusOK},
 		{description: []string{"duplicate", "registrations", "preserve", "order"}, want: http.StatusOK},
+		{description: []string{"generic", "unit", "id", "for", "any", "language"}, want: http.StatusOK},
+		{description: []string{"language", "specific", "unit", "by", "id"}, want: http.StatusOK},
 		{description: []string{"registration", "not", "owned"}, want: http.StatusBadRequest},
 		{description: []string{"registration", "language", "not", "allowed"}, want: http.StatusBadRequest},
 		{description: []string{"registration", "activity", "not", "allowed"}, want: http.StatusBadRequest},
 		{description: []string{"registration", "not", "ongoing"}, want: http.StatusBadRequest},
 		{description: []string{"deleted", "contest"}, want: http.StatusNotFound},
 		{description: []string{"unit", "id", "key", "mismatch"}, want: http.StatusBadRequest},
+		{description: []string{"unit", "id", "other", "language"}, want: http.StatusBadRequest},
+		{description: []string{"unit", "id", "other", "activity"}, want: http.StatusBadRequest},
+		{description: []string{"unknown", "unit", "id"}, want: http.StatusBadRequest},
+		{description: []string{"unit", "key", "other", "language"}, want: http.StatusBadRequest},
+		{description: []string{"unit", "id", "stored", "activity", "mismatch"}, want: http.StatusBadRequest},
+		{description: []string{"unit", "id", "key", "activity", "mismatch"}, want: http.StatusBadRequest},
 		{description: []string{"duration", "with", "unit", "without", "amount"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "duration", "with", "amount"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "tags"}, want: http.StatusBadRequest},

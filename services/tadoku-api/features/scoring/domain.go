@@ -58,6 +58,37 @@ type RuleSet struct {
 	PublishedAt       *time.Time
 }
 
+type logUnit struct {
+	ID       uuid.UUID
+	Key      string
+	Modifier float32
+}
+
+type unitCandidate struct {
+	logUnit
+	activityID   int32
+	languageCode *string
+}
+
+func applicableUnit(candidates []unitCandidate, activityID int32, languageCode string) *logUnit {
+	var generic *logUnit
+	for i := range candidates {
+		candidate := &candidates[i]
+		unitActivity, knownUnit := activities.UnitActivityID(candidate.Key)
+		if candidate.activityID != activityID || !knownUnit || unitActivity != activityID {
+			continue
+		}
+
+		if candidate.languageCode != nil && *candidate.languageCode == languageCode {
+			return &candidate.logUnit
+		}
+		if candidate.languageCode == nil && generic == nil {
+			generic = &candidate.logUnit
+		}
+	}
+	return generic
+}
+
 type DraftRules struct {
 	Rules []Rule
 }

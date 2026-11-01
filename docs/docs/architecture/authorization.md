@@ -218,6 +218,10 @@ contests listings return, and official contests cannot be private.
   contests service chooses the visibility from the actor and the
   administrator status the application reports; see `newListVisibility` in
   `services/tadoku-api/features/contests/domain.go`.
+- The contest list returns deleted contests only to administrators, matching
+  reads of one contest by its ID. The contests service ignores
+  `include_deleted` for everyone else; see `ListContests` in
+  `services/tadoku-api/features/contests/contests_service.go`.
 - A user's yearly contest registrations include private contests only when
   the actor is that user or an administrator, and their total excludes the
   private contests they hide. The contests service decides this from the

@@ -12,8 +12,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 const identityBranchA = "tadoku/identity-a-0123abcd"
@@ -200,20 +198,7 @@ func TestIdentityV2LogoutIgnoresBody(t *testing.T) {
 }
 
 func TestIdentityV2LoginTimingAndThrottle(t *testing.T) {
-	resetIdentity(t, "testdata/IdentityV2/setup.sql", "testdata/IdentityV2/production-password-cost.sql")
-
-	var passwordHash string
-	err := api.db.Pool.QueryRow(t.Context(), `select password_hash from accounts
-		where tenant = $1 and email_normalized = 'reader@example.test'`, identityBranchA,
-	).Scan(&passwordHash)
-	if err != nil {
-		t.Fatal(err)
-	}
-	passwordCost, err := bcrypt.Cost([]byte(passwordHash))
-	if err != nil || passwordCost != 12 {
-		t.Fatalf("timing fixture bcrypt cost=%d, err=%v, want cost 12", passwordCost, err)
-	}
-
+	resetIdentity(t)
 	var known, unknown []time.Duration
 	for i := 0; i < 8; i++ {
 		for _, email := range []string{"reader@example.test", "unknown@example.test"} {

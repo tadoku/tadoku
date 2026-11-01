@@ -169,9 +169,9 @@ package's `generate.go`, so it needs only `curl` and `tar`. New query packages
 must be added to `SQLC_PACKAGES` in the script. `./scripts/generate-openapi.sh`
 concatenates the contract fragments into `services/tadoku-api/spec/openapi.yaml`,
 then runs oapi-codegen through Bazel from `tools/oapi-codegen/`, which pins the same
-Bazel version as the repo root via `tools/oapi-codegen/.bazelversion`. CI installs
-the Go version from the root `go.mod` so oapi-codegen's formatter can invoke the
-Go executable. Builds and tests still run through Bazel. See
+Bazel version as the repo root via `tools/oapi-codegen/.bazelversion`. CI exposes
+the host SDK resolved by `bazel run @rules_go//go -- env GOROOT` on `PATH` so
+oapi-codegen's formatter uses the Bazel-configured Go executable. See
 [Tadoku API contract](../tadoku-api/contract.md).
 
 ## pnpm workspaces
@@ -233,9 +233,12 @@ All workflows live in `.github/workflows/`.
 
 Backend CI uses one job on the repository-scoped `tadoku-ci` Kubernetes runner
 pool. Normal and race test configurations share the same disposable services;
-Bazel can execute test targets in parallel within each pass. Main publication
-runs only after both passes and image scanning succeed. ARC admits at most five
-Tadoku build runners; resource reservations may keep excess jobs queued.
+Bazel can execute test targets in parallel within each pass. The normal pass
+uses `bazel test --nobuild_tests_only //...` to build the full target set and run
+its tests together. Release image commands follow both passes so their distinct
+configuration does not invalidate normal analysis between the build and tests.
+Main publication runs only after both passes and image scanning succeed. ARC
+admits at most five Tadoku build runners; resource reservations may keep excess jobs queued.
 
 The runners use the private Bazel HTTP action cache and Lab CA. Pull requests
 read existing results without uploading; trusted non-PR runs populate the cache.

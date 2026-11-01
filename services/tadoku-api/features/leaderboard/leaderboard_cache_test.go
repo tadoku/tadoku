@@ -125,6 +125,65 @@ func (client *invalidateBeforeZcard) Do(ctx context.Context, command valkeygo.Co
 	return client.Client.Do(ctx, command)
 }
 
+func TestFetchPageReadsOneSnapshotWhileSameGenerationRepublishes(t *testing.T) {
+	client := newLeaderboardTestClient(t)
+	tenantKey, err := tenant.Parse("e2e/snapshot-" + uuid.NewString())
+	if err != nil {
+		t.Fatal(err)
+	}
+	tenantCtx := tenant.WithKey(t.Context(), tenantKey)
+	cache := NewCache(client, time.Second)
+	key, err := cache.cacheKey(tenantCtx, globalKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cleanupLeaderboardKeys(t, client, key)
+
+	first, second, third, fourth := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	before := []score{{userID: first, value: 30}, {userID: second, value: 20}, {userID: fourth, value: 10}}
+	after := []score{
+		{userID: first, value: 30},
+		{userID: second, value: 20},
+		{userID: third, value: 15},
+		{userID: fourth, value: 10},
+	}
+	published, err := cache.rebuild(tenantCtx, key, before, "0")
+	if err != nil || !published {
+		t.Fatalf("publish first board: published=%t error=%v", published, err)
+	}
+
+	racing := NewCache(&republishAfterPageRead{Client: client, cache: cache, key: key, scores: after, t: t}, time.Second)
+	page, exists, err := racing.fetchPage(tenantCtx, key, 2, 1)
+	if err != nil || !exists {
+		t.Fatalf("fetch page: exists=%t error=%v", exists, err)
+	}
+
+	entries := buildEntries(page)
+	if len(entries) != 1 || entries[0].Rank != 3 || entries[0].IsTie {
+		t.Errorf("entries = %+v; want one untied entry at rank 3 from a single snapshot", entries)
+	}
+}
+
+type republishAfterPageRead struct {
+	valkeygo.Client
+	cache  *Cache
+	key    string
+	scores []score
+	t      *testing.T
+	calls  int
+}
+
+func (client *republishAfterPageRead) Do(ctx context.Context, command valkeygo.Completed) valkeygo.ValkeyResult {
+	client.calls++
+	if client.calls == 5 {
+		published, err := client.cache.rebuild(ctx, client.key, client.scores, "0")
+		if err != nil || !published {
+			client.t.Fatalf("republish board: published=%t error=%v", published, err)
+		}
+	}
+	return client.Client.Do(ctx, command)
+}
+
 func TestTenantLeaderboardInvalidationKeepsOtherTenantWarm(t *testing.T) {
 	client := newLeaderboardTestClient(t)
 	cache := NewCache(client, time.Second)

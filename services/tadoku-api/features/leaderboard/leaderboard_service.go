@@ -1,9 +1,12 @@
 package leaderboard
 
 import (
+	"bytes"
+	"cmp"
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -54,30 +57,12 @@ func (s *Service) InvalidateOfficial(ctx context.Context, year int16) error {
 	return s.cache.invalidate(ctx, globalCacheKey)
 }
 
-func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Result, error) {
+func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Leaderboard, error) {
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
-	request.Request = normalize(request.Request)
-	if filtered(request.Request) {
-		return s.fetchContestFromPostgres(ctx, request)
-	}
 
-	key, err := s.cache.cacheKey(ctx, contestPrefix+request.ContestID.String())
-	if err != nil {
-		return nil, err
-	}
-	result, exists, err := s.cache.fetchPage(ctx, key, int64(request.offset()), request.PageSize)
-	if err != nil {
-		slog.WarnContext(ctx, "contest leaderboard cache unavailable; falling back to Postgres", "error", err)
-		return s.fetchContestFromPostgres(ctx, request)
-	}
-	if !exists {
-		generation, err := s.cache.generation(ctx, key)
-		if err != nil {
-			slog.WarnContext(ctx, "contest leaderboard cache unavailable; falling back to Postgres", "error", err)
-			return s.fetchContestFromPostgres(ctx, request)
-		}
+	load := func(ctx context.Context) ([]score, error) {
 		found, err := s.repository.contestExists(ctx, request.ContestID)
 		if err != nil {
 			return nil, err
@@ -85,99 +70,85 @@ func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Re
 		if !found {
 			return nil, errx.NewNotFoundError("contest not found")
 		}
-		scores, err := s.repository.allContestScores(ctx, request.ContestID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to fetch all contest scores for rebuild: %w", err)
-		}
-		if _, err := s.cache.rebuild(ctx, key, scores, generation); err != nil {
-			slog.WarnContext(ctx, "contest leaderboard cache rebuild failed; falling back to Postgres", "error", err)
-		}
-		return s.fetchContestFromPostgres(ctx, request)
+		return s.repository.contestScores(ctx, request)
 	}
-	return cachedResult(result, request.Request), nil
+	return s.fetch(ctx, request.Request, "contest", contestPrefix+request.ContestID.String(), load)
 }
 
-func (s *Service) FetchYearly(ctx context.Context, request YearlyRequest) (*Result, error) {
+func (s *Service) FetchYearly(ctx context.Context, request YearlyRequest) (*Leaderboard, error) {
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
-	request.Request = normalize(request.Request)
-	if filtered(request.Request) {
-		return postgresResult(s.repository.yearly(ctx, request))
-	}
 
-	key, err := s.cache.cacheKey(ctx, yearlyPrefix+strconv.Itoa(int(request.Year)))
-	if err != nil {
-		return nil, err
+	year := int16(request.Year)
+	load := func(ctx context.Context) ([]score, error) {
+		return s.repository.officialScores(ctx, &year, request.Request)
 	}
-	result, exists, err := s.cache.fetchPage(ctx, key, int64(request.offset()), request.PageSize)
-	if err != nil {
-		slog.WarnContext(ctx, "yearly leaderboard cache unavailable; falling back to Postgres", "error", err)
-		return postgresResult(s.repository.yearly(ctx, request))
-	}
-	if !exists {
-		generation, err := s.cache.generation(ctx, key)
-		if err != nil {
-			slog.WarnContext(ctx, "yearly leaderboard cache unavailable; falling back to Postgres", "error", err)
-			return postgresResult(s.repository.yearly(ctx, request))
-		}
-		scores, err := s.repository.allYearlyScores(ctx, int(request.Year))
-		if err != nil {
-			return nil, fmt.Errorf("failed to fetch all yearly scores for rebuild: %w", err)
-		}
-		if _, err := s.cache.rebuild(ctx, key, scores, generation); err != nil {
-			slog.WarnContext(ctx, "yearly leaderboard cache rebuild failed; falling back to Postgres", "error", err)
-		}
-		return postgresResult(s.repository.yearly(ctx, request))
-	}
-	return cachedResult(result, request.Request), nil
+	return s.fetch(ctx, request.Request, "yearly", yearlyPrefix+strconv.Itoa(int(year)), load)
 }
 
-func (s *Service) FetchGlobal(ctx context.Context, request Request) (*Result, error) {
+func (s *Service) FetchGlobal(ctx context.Context, request Request) (*Leaderboard, error) {
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
+
+	load := func(ctx context.Context) ([]score, error) {
+		return s.repository.officialScores(ctx, nil, request)
+	}
+	return s.fetch(ctx, request, "global", globalKey, load)
+}
+
+// fetch serves an unfiltered request from the cache, rebuilding it on a miss, and pages the board that load
+// returns otherwise. load must return every score on the board that matches the request's filters.
+func (s *Service) fetch(
+	ctx context.Context,
+	request Request,
+	board, cacheName string,
+	load func(context.Context) ([]score, error),
+) (*Leaderboard, error) {
 	request = normalize(request)
 	if filtered(request) {
-		return postgresResult(s.repository.global(ctx, request))
+		return fetchFromPostgres(ctx, request, load)
 	}
 
-	key, err := s.cache.cacheKey(ctx, globalKey)
+	key, err := s.cache.cacheKey(ctx, cacheName)
 	if err != nil {
 		return nil, err
 	}
-	result, exists, err := s.cache.fetchPage(ctx, key, int64(request.offset()), request.PageSize)
+	cached, exists, err := s.cache.fetchPage(ctx, key, int64(request.offset()), request.PageSize)
 	if err != nil {
-		slog.WarnContext(ctx, "global leaderboard cache unavailable; falling back to Postgres", "error", err)
-		return postgresResult(s.repository.global(ctx, request))
+		slog.WarnContext(ctx, board+" leaderboard cache unavailable; falling back to Postgres", "error", err)
+		return fetchFromPostgres(ctx, request, load)
 	}
-	if !exists {
-		generation, err := s.cache.generation(ctx, key)
-		if err != nil {
-			slog.WarnContext(ctx, "global leaderboard cache unavailable; falling back to Postgres", "error", err)
-			return postgresResult(s.repository.global(ctx, request))
-		}
-		scores, err := s.repository.allGlobalScores(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to fetch all global scores for rebuild: %w", err)
-		}
-		if _, err := s.cache.rebuild(ctx, key, scores, generation); err != nil {
-			slog.WarnContext(ctx, "global leaderboard cache rebuild failed; falling back to Postgres", "error", err)
-		}
-		return postgresResult(s.repository.global(ctx, request))
+	if exists {
+		return result(cached, request), nil
 	}
-	return cachedResult(result, request), nil
+
+	generation, err := s.cache.generation(ctx, key)
+	if err != nil {
+		slog.WarnContext(ctx, board+" leaderboard cache unavailable; falling back to Postgres", "error", err)
+		return fetchFromPostgres(ctx, request, load)
+	}
+	scores, err := load(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := s.cache.rebuild(ctx, key, scores, generation); err != nil {
+		slog.WarnContext(ctx, board+" leaderboard cache rebuild failed; falling back to Postgres", "error", err)
+	}
+	return result(pageOf(scores, request), request), nil
 }
 
-func (s *Service) fetchContestFromPostgres(ctx context.Context, request ContestRequest) (*Result, error) {
-	exists, err := s.repository.contestExists(ctx, request.ContestID)
+func fetchFromPostgres(
+	ctx context.Context,
+	request Request,
+	load func(context.Context) ([]score, error),
+) (*Leaderboard, error) {
+	scores, err := load(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if !exists {
-		return nil, errx.NewNotFoundError("contest not found")
-	}
-	return postgresResult(s.repository.contest(ctx, request))
+	return result(pageOf(scores, request), request), nil
 }
 
 func normalize(request Request) Request {
@@ -209,29 +180,47 @@ func validateActivity(activityID *int32) error {
 
 func filtered(request Request) bool { return request.LanguageCode != nil || request.ActivityID != nil }
 
-func postgresResult(value *Leaderboard, err error) (*Result, error) {
-	if err != nil {
-		return nil, err
+// pageOf sorts scores into the cache's order and cuts the request's page from them.
+func pageOf(scores []score, request Request) *page {
+	slices.SortFunc(scores, func(a, b score) int {
+		if order := cmp.Compare(b.value, a.value); order != 0 {
+			return order
+		}
+		return bytes.Compare(b.userID[:], a.userID[:])
+	})
+
+	start := min(int(request.offset()), len(scores))
+	board := &page{
+		scores:     scores[start:min(start+request.PageSize, len(scores))],
+		offset:     int(request.offset()),
+		totalCount: len(scores),
 	}
-	return &Result{Leaderboard: value}, nil
+	if len(board.scores) == 0 {
+		return board
+	}
+
+	first, last := board.scores[0].value, board.scores[len(board.scores)-1].value
+	for _, item := range scores {
+		if item.value > first {
+			board.aboveFirst++
+		}
+		if item.value >= last {
+			board.throughLast++
+		}
+	}
+	return board
 }
 
-func cachedResult(cached *page, request Request) *Result {
-	return &Result{
-		Leaderboard:         result(buildEntries(cached), cached.totalCount, request),
-		HydrateDisplayNames: true,
+func buildEntries(board *page) []Entry {
+	entries := make([]Entry, len(board.scores))
+	if len(entries) == 0 {
+		return entries
 	}
-}
 
-func buildEntries(cached *page) []Entry {
-	if len(cached.scores) == 0 {
-		return []Entry{}
-	}
-	entries := make([]Entry, len(cached.scores))
-	rank := cached.startRank
-	for i, item := range cached.scores {
-		if i > 0 && item.value < cached.scores[i-1].value {
-			rank = cached.startRank + i
+	rank := board.aboveFirst + 1
+	for i, item := range board.scores {
+		if i > 0 && item.value < board.scores[i-1].value {
+			rank = board.offset + i + 1
 		}
 		entries[i] = Entry{
 			Rank:   rank,
@@ -239,16 +228,17 @@ func buildEntries(cached *page) []Entry {
 			Score:  float32(item.value),
 		}
 	}
-	for i := range entries {
-		if i > 0 && entries[i].Rank == entries[i-1].Rank {
+
+	for i := 1; i < len(entries); i++ {
+		if entries[i].Rank == entries[i-1].Rank {
 			entries[i].IsTie = true
 			entries[i-1].IsTie = true
 		}
 	}
-	if cached.hasPrevTie {
+	if board.aboveFirst < board.offset {
 		entries[0].IsTie = true
 	}
-	if cached.hasNextTie {
+	if board.throughLast > board.offset+len(entries) {
 		entries[len(entries)-1].IsTie = true
 	}
 	return entries

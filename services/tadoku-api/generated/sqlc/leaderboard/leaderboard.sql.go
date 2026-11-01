@@ -27,186 +27,8 @@ func (q *Queries) ContestExists(ctx context.Context, id pgtype.UUID) (bool, erro
 	return exists, err
 }
 
-const contestLeaderboardAllScores = `-- name: ContestLeaderboardAllScores :many
-select cr.user_id, coalesce(scores.score, 0)::real as score
-from contest_registrations cr
-left join (
-  select logs.user_id, sum(coalesce(contest_logs.computed_score, contest_logs.score)) as score
-  from contest_logs
-  inner join logs on logs.id = contest_logs.log_id
-  where contest_logs.contest_id = $1 and logs.deleted_at is null
-  group by logs.user_id
-) scores on scores.user_id = cr.user_id
-where cr.contest_id = $1 and cr.deleted_at is null
-`
-
-type ContestLeaderboardAllScoresRow struct {
-	UserID pgtype.UUID
-	Score  float32
-}
-
-func (q *Queries) ContestLeaderboardAllScores(ctx context.Context, contestID pgtype.UUID) ([]ContestLeaderboardAllScoresRow, error) {
-	rows, err := q.db.Query(ctx, contestLeaderboardAllScores, contestID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ContestLeaderboardAllScoresRow{}
-	for rows.Next() {
-		var i ContestLeaderboardAllScoresRow
-		if err := rows.Scan(&i.UserID, &i.Score); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const globalLeaderboard = `-- name: GlobalLeaderboard :many
-with leaderboard as (
-  select logs.user_id, sum(coalesce(computed_score, score)) as score
-  from logs
-  inner join users on users.id = logs.user_id and users.deleted_at is null
-  where eligible_official_leaderboard = true
-    and logs.deleted_at is null
-    and (logs.language_code = $1 or $1 is null)
-    and (logs.log_activity_id = $2::integer or $2 is null)
-  group by logs.user_id
-), ranked_leaderboard as (
-  select user_id, score, rank() over(order by score desc) as "rank" from leaderboard where score > 0
-), enriched_leaderboard as (
-  select
-    rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
-    ranked_leaderboard.user_id,
-    users.display_name::varchar as user_display_name,
-    coalesce(ranked_leaderboard.score, 0)::real as score
-  from ranked_leaderboard
-  inner join users on users.id = ranked_leaderboard.user_id
-), tied_leaderboard as (
-  select
-    enriched_leaderboard."rank",
-    enriched_leaderboard.user_id,
-    enriched_leaderboard.user_display_name,
-    enriched_leaderboard.score,
-    coalesce((
-      "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
-      or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
-    ), false)::boolean as is_tie
-  from enriched_leaderboard
-), page as (
-  select
-    tied_leaderboard."rank",
-    tied_leaderboard.user_id,
-    tied_leaderboard.user_display_name,
-    tied_leaderboard.score,
-    tied_leaderboard.is_tie
-  from tied_leaderboard
-  order by tied_leaderboard.score desc, tied_leaderboard.user_display_name asc
-  limit $4
-  offset $3
-), total as (
-  select count(*) as total_size
-  from tied_leaderboard
-)
-select
-  page."rank",
-  page.user_id,
-  page.user_display_name,
-  page.score,
-  page.is_tie,
-  total.total_size
-from total
-left join page on true
-order by page.score desc, page.user_display_name asc
-`
-
-type GlobalLeaderboardParams struct {
-	LanguageCode pgtype.Text
-	ActivityID   pgtype.Int4
-	StartFrom    int32
-	PageSize     int32
-}
-
-type GlobalLeaderboardRow struct {
-	Rank            pgtype.Int8
-	UserID          pgtype.UUID
-	UserDisplayName pgtype.Text
-	Score           pgtype.Float4
-	IsTie           pgtype.Bool
-	TotalSize       int64
-}
-
-func (q *Queries) GlobalLeaderboard(ctx context.Context, arg GlobalLeaderboardParams) ([]GlobalLeaderboardRow, error) {
-	rows, err := q.db.Query(ctx, globalLeaderboard,
-		arg.LanguageCode,
-		arg.ActivityID,
-		arg.StartFrom,
-		arg.PageSize,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []GlobalLeaderboardRow{}
-	for rows.Next() {
-		var i GlobalLeaderboardRow
-		if err := rows.Scan(
-			&i.Rank,
-			&i.UserID,
-			&i.UserDisplayName,
-			&i.Score,
-			&i.IsTie,
-			&i.TotalSize,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const globalLeaderboardAllScores = `-- name: GlobalLeaderboardAllScores :many
-select logs.user_id, sum(coalesce(computed_score, score))::real as score
-from logs
-inner join users on users.id = logs.user_id and users.deleted_at is null
-where eligible_official_leaderboard = true and logs.deleted_at is null
-group by logs.user_id
-having sum(coalesce(computed_score, score)) > 0
-`
-
-type GlobalLeaderboardAllScoresRow struct {
-	UserID pgtype.UUID
-	Score  float32
-}
-
-func (q *Queries) GlobalLeaderboardAllScores(ctx context.Context) ([]GlobalLeaderboardAllScoresRow, error) {
-	rows, err := q.db.Query(ctx, globalLeaderboardAllScores)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []GlobalLeaderboardAllScoresRow{}
-	for rows.Next() {
-		var i GlobalLeaderboardAllScoresRow
-		if err := rows.Scan(&i.UserID, &i.Score); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const leaderboardForContest = `-- name: LeaderboardForContest :many
-with leaderboard as (
+const contestLeaderboard = `-- name: ContestLeaderboard :many
+with scores as (
   select logs.user_id, sum(coalesce(contest_logs.computed_score, contest_logs.score)) as score
   from contest_logs
   inner join logs on logs.id = contest_logs.log_id
@@ -215,247 +37,80 @@ with leaderboard as (
     and (logs.language_code = $2 or $2 is null)
     and (logs.log_activity_id = $3::integer or $3 is null)
   group by logs.user_id
-), ranked_leaderboard as (
-  select user_id, score, rank() over(order by score desc) as "rank"
-  from leaderboard
-), registrations as (
-  select contest_registrations.user_id, users.display_name as user_display_name, contest_registrations.created_at
-  from contest_registrations
-  inner join users on users.id = contest_registrations.user_id
-  where contest_id = $1
-    and contest_registrations.deleted_at is null
-    and ($2 = any(language_codes) or $2 is null)
-), enriched_leaderboard as (
-  select
-    rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
-    registrations.user_id,
-    registrations.user_display_name,
-    coalesce(ranked_leaderboard.score, 0)::real as score,
-    registrations.created_at as registered_at
-  from registrations
-  left join ranked_leaderboard using(user_id)
-), tied_leaderboard as (
-  select
-    enriched_leaderboard."rank",
-    enriched_leaderboard.user_id,
-    enriched_leaderboard.user_display_name,
-    enriched_leaderboard.score,
-    enriched_leaderboard.registered_at,
-    coalesce((
-      "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
-      or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
-    ), false)::boolean as is_tie
-  from enriched_leaderboard
-), page as (
-  select
-    tied_leaderboard."rank",
-    tied_leaderboard.user_id,
-    tied_leaderboard.user_display_name,
-    tied_leaderboard.score,
-    tied_leaderboard.registered_at,
-    tied_leaderboard.is_tie
-  from tied_leaderboard
-  order by tied_leaderboard.score desc, tied_leaderboard.registered_at asc, tied_leaderboard.user_id desc
-  limit $5
-  offset $4
-), total as (
-  select count(*) as total_size
-  from tied_leaderboard
 )
-select
-  page."rank",
-  page.user_id,
-  page.user_display_name,
-  page.score,
-  page.is_tie,
-  total.total_size
-from total
-left join page on true
-order by page.score desc, page.registered_at asc, page.user_id desc
+select contest_registrations.user_id, coalesce(scores.score, 0)::real as score
+from contest_registrations
+inner join users on users.id = contest_registrations.user_id
+left join scores on scores.user_id = contest_registrations.user_id
+where contest_registrations.contest_id = $1
+  and contest_registrations.deleted_at is null
+  and ($2::varchar = any(contest_registrations.language_codes) or $2 is null)
 `
 
-type LeaderboardForContestParams struct {
+type ContestLeaderboardParams struct {
 	ContestID    pgtype.UUID
 	LanguageCode pgtype.Text
 	ActivityID   pgtype.Int4
-	StartFrom    int32
-	PageSize     int32
 }
 
-type LeaderboardForContestRow struct {
-	Rank            pgtype.Int8
-	UserID          pgtype.UUID
-	UserDisplayName pgtype.Text
-	Score           pgtype.Float4
-	IsTie           pgtype.Bool
-	TotalSize       int64
-}
-
-func (q *Queries) LeaderboardForContest(ctx context.Context, arg LeaderboardForContestParams) ([]LeaderboardForContestRow, error) {
-	rows, err := q.db.Query(ctx, leaderboardForContest,
-		arg.ContestID,
-		arg.LanguageCode,
-		arg.ActivityID,
-		arg.StartFrom,
-		arg.PageSize,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []LeaderboardForContestRow{}
-	for rows.Next() {
-		var i LeaderboardForContestRow
-		if err := rows.Scan(
-			&i.Rank,
-			&i.UserID,
-			&i.UserDisplayName,
-			&i.Score,
-			&i.IsTie,
-			&i.TotalSize,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const yearlyLeaderboard = `-- name: YearlyLeaderboard :many
-with leaderboard as (
-  select logs.user_id, sum(coalesce(computed_score, score)) as score
-  from logs
-  inner join users on users.id = logs.user_id and users.deleted_at is null
-  where logs.year = $1
-    and eligible_official_leaderboard = true
-    and logs.deleted_at is null
-    and (logs.language_code = $2 or $2 is null)
-    and (logs.log_activity_id = $3::integer or $3 is null)
-  group by logs.user_id
-), ranked_leaderboard as (
-  select user_id, score, rank() over(order by score desc) as "rank" from leaderboard where score > 0
-), enriched_leaderboard as (
-  select
-    rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
-    ranked_leaderboard.user_id,
-    users.display_name::varchar as user_display_name,
-    coalesce(ranked_leaderboard.score, 0)::real as score
-  from ranked_leaderboard
-  inner join users on users.id = ranked_leaderboard.user_id
-), tied_leaderboard as (
-  select
-    enriched_leaderboard."rank",
-    enriched_leaderboard.user_id,
-    enriched_leaderboard.user_display_name,
-    enriched_leaderboard.score,
-    coalesce((
-      "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
-      or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
-    ), false)::boolean as is_tie
-  from enriched_leaderboard
-), page as (
-  select
-    tied_leaderboard."rank",
-    tied_leaderboard.user_id,
-    tied_leaderboard.user_display_name,
-    tied_leaderboard.score,
-    tied_leaderboard.is_tie
-  from tied_leaderboard
-  order by tied_leaderboard.score desc, tied_leaderboard.user_display_name asc
-  limit $5
-  offset $4
-), total as (
-  select count(*) as total_size
-  from tied_leaderboard
-)
-select
-  page."rank",
-  page.user_id,
-  page.user_display_name,
-  page.score,
-  page.is_tie,
-  total.total_size
-from total
-left join page on true
-order by page.score desc, page.user_display_name asc
-`
-
-type YearlyLeaderboardParams struct {
-	Year         int16
-	LanguageCode pgtype.Text
-	ActivityID   pgtype.Int4
-	StartFrom    int32
-	PageSize     int32
-}
-
-type YearlyLeaderboardRow struct {
-	Rank            pgtype.Int8
-	UserID          pgtype.UUID
-	UserDisplayName pgtype.Text
-	Score           pgtype.Float4
-	IsTie           pgtype.Bool
-	TotalSize       int64
-}
-
-func (q *Queries) YearlyLeaderboard(ctx context.Context, arg YearlyLeaderboardParams) ([]YearlyLeaderboardRow, error) {
-	rows, err := q.db.Query(ctx, yearlyLeaderboard,
-		arg.Year,
-		arg.LanguageCode,
-		arg.ActivityID,
-		arg.StartFrom,
-		arg.PageSize,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []YearlyLeaderboardRow{}
-	for rows.Next() {
-		var i YearlyLeaderboardRow
-		if err := rows.Scan(
-			&i.Rank,
-			&i.UserID,
-			&i.UserDisplayName,
-			&i.Score,
-			&i.IsTie,
-			&i.TotalSize,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const yearlyLeaderboardAllScores = `-- name: YearlyLeaderboardAllScores :many
-select logs.user_id, sum(coalesce(computed_score, score))::real as score
-from logs
-inner join users on users.id = logs.user_id and users.deleted_at is null
-where year = $1 and eligible_official_leaderboard = true and logs.deleted_at is null
-group by logs.user_id
-having sum(coalesce(computed_score, score)) > 0
-`
-
-type YearlyLeaderboardAllScoresRow struct {
+type ContestLeaderboardRow struct {
 	UserID pgtype.UUID
 	Score  float32
 }
 
-func (q *Queries) YearlyLeaderboardAllScores(ctx context.Context, year int16) ([]YearlyLeaderboardAllScoresRow, error) {
-	rows, err := q.db.Query(ctx, yearlyLeaderboardAllScores, year)
+func (q *Queries) ContestLeaderboard(ctx context.Context, arg ContestLeaderboardParams) ([]ContestLeaderboardRow, error) {
+	rows, err := q.db.Query(ctx, contestLeaderboard, arg.ContestID, arg.LanguageCode, arg.ActivityID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []YearlyLeaderboardAllScoresRow{}
+	items := []ContestLeaderboardRow{}
 	for rows.Next() {
-		var i YearlyLeaderboardAllScoresRow
+		var i ContestLeaderboardRow
+		if err := rows.Scan(&i.UserID, &i.Score); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const officialLeaderboard = `-- name: OfficialLeaderboard :many
+select logs.user_id, sum(coalesce(logs.computed_score, logs.score))::real as score
+from logs
+inner join users on users.id = logs.user_id and users.deleted_at is null
+where logs.eligible_official_leaderboard = true
+  and logs.deleted_at is null
+  and (logs.year = $1::smallint or $1 is null)
+  and (logs.language_code = $2 or $2 is null)
+  and (logs.log_activity_id = $3::integer or $3 is null)
+group by logs.user_id
+having sum(coalesce(logs.computed_score, logs.score)) > 0
+`
+
+type OfficialLeaderboardParams struct {
+	Year         pgtype.Int2
+	LanguageCode pgtype.Text
+	ActivityID   pgtype.Int4
+}
+
+type OfficialLeaderboardRow struct {
+	UserID pgtype.UUID
+	Score  float32
+}
+
+func (q *Queries) OfficialLeaderboard(ctx context.Context, arg OfficialLeaderboardParams) ([]OfficialLeaderboardRow, error) {
+	rows, err := q.db.Query(ctx, officialLeaderboard, arg.Year, arg.LanguageCode, arg.ActivityID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []OfficialLeaderboardRow{}
+	for rows.Next() {
+		var i OfficialLeaderboardRow
 		if err := rows.Scan(&i.UserID, &i.Score); err != nil {
 			return nil, err
 		}

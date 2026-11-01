@@ -1,6 +1,7 @@
 import { useCurrentDateTime, useCurrentLocation } from '@app/common/hooks'
 import { useSession } from '@app/common/session'
 import {
+  acceptsNewRegistrations,
   ContestView,
   useContestSummary,
   useContestLogs,
@@ -60,10 +61,7 @@ export const ContestLeaderboard = ({ id, contest, routeForPage }: Props) => {
   )
   const hasEnded = contestInterval.isBefore(now)
   const hasStarted = contestInterval.contains(now) || hasEnded
-  const registrationClosed = Interval.fromDateTimes(
-    DateTime.fromISO(contest.contest_start),
-    DateTime.fromISO(contest.registration_end).endOf('day'),
-  ).isBefore(now)
+  const registrationClosed = !acceptsNewRegistrations(contest, now)
 
   const showPagination =
     leaderboard.data && leaderboard.data.total_size > filters.pageSize

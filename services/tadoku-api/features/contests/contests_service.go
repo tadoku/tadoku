@@ -198,6 +198,10 @@ func (s *Service) ApplyRegistration(
 	existing *Registration,
 	contest Contest,
 ) (RegistrationResult, error) {
+	if existing == nil && !contest.RegistrationEnd.Add(24*time.Hour).After(timex.Now()) {
+		return RegistrationResult{}, ErrRegistrationClosed
+	}
+
 	result := RegistrationResult{}
 	removedLanguages := []string{}
 	if existing != nil {

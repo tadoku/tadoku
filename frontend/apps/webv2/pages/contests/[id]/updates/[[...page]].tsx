@@ -8,6 +8,7 @@ import {
 } from '@heroicons/react/24/solid'
 import { routes } from '@app/common/routes'
 import {
+  acceptsNewRegistrations,
   useContest,
   useContestLogs,
   useContestRegistration,
@@ -71,8 +72,6 @@ const Page = () => {
   const hasEnded = contestInterval.isBefore(now)
   const hasStarted = contestInterval.contains(now) || hasEnded
   const isOngoing = hasStarted && !hasEnded
-  const registrationsOpen =
-    DateTime.fromISO(contest.data.registration_end) > now
 
   const logsTotalPages = logs.data
     ? Math.ceil(logs.data.total_size / filters.pageSize)
@@ -115,7 +114,10 @@ const Page = () => {
                 label: 'Join contest',
                 IconComponent: PlusIcon,
                 style: 'primary',
-                visible: !hasEnded && !registration.data,
+                visible:
+                  !hasEnded &&
+                  !registration.data &&
+                  acceptsNewRegistrations(contest.data, now),
               },
               {
                 href: routes.contestJoin(id),

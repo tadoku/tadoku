@@ -1,10 +1,13 @@
 import { useCurrentDateTime } from '@app/common/hooks'
 import { useRoutes } from '@app/common/routes'
 import { useSessionOrRedirect } from '@app/common/session'
-import { useContest, useContestRegistration } from '@app/immersion/contest-api'
+import {
+  acceptsNewRegistrations,
+  useContest,
+  useContestRegistration,
+} from '@app/immersion/contest-api'
 import { ContestRegistrationForm } from '@app/immersion/ContestRegistration'
 import { ExclamationCircleIcon, HomeIcon } from '@heroicons/react/20/solid'
-import { DateTime, Interval } from 'luxon'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { Breadcrumb, Flash, Loading } from 'ui'
@@ -33,10 +36,29 @@ const Page = () => {
     )
   }
 
-  const registrationClosed = Interval.fromDateTimes(
-    DateTime.fromISO(contest.data.contest_start),
-    DateTime.fromISO(contest.data.registration_end).endOf('day'),
-  ).isBefore(now)
+  if (registration.isError) {
+    return (
+      <div role="alert" className="v-stack spaced">
+        <Flash style="error" IconComponent={ExclamationCircleIcon}>
+          Could not load your registration, please try again.
+        </Flash>
+        <div>
+          <button
+            type="button"
+            className="btn primary"
+            onClick={() => registration.refetch()}
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const registrationClosed =
+    registration.isSuccess &&
+    registration.data === null &&
+    !acceptsNewRegistrations(contest.data, now)
 
   return (
     <>

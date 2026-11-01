@@ -1,6 +1,7 @@
 import { useCurrentDateTime } from '@app/common/hooks'
 import { useSession } from '@app/common/session'
 import {
+  acceptsNewRegistrations,
   useContestRegistration,
   useLatestOfficialContest,
 } from '@app/immersion/contest-api'
@@ -71,7 +72,10 @@ const Page = () => {
                 label: 'Join contest',
                 IconComponent: PlusIcon,
                 style: 'primary',
-                visible: !hasEnded && !registration.data,
+                visible:
+                  !hasEnded &&
+                  !registration.data &&
+                  acceptsNewRegistrations(contest.data, now),
               },
               {
                 href: routes.logCreate(),

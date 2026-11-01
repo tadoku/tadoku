@@ -219,34 +219,42 @@ func (r *PagesRepository) UpdatePage(ctx context.Context, item *Page, contentID 
 	return nil
 }
 
-func (r *PagesRepository) GetPageVersion(ctx context.Context, namespace string, pageID, contentID uuid.UUID) (*PageVersion, error) {
+// GetPageVersion returns the content and its 1-based position in ListPageVersions order. The SQL count must use the
+// list's order.
+func (r *PagesRepository) GetPageVersion(
+	ctx context.Context,
+	namespace string,
+	pageID, contentID uuid.UUID,
+) (*PageContent, int, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	row, err := queries.New(executor).GetPageVersion(ctx, queries.GetPageVersionParams{
-		Namespace: namespace,
-		PageID:    postgres.UUID(pageID),
 		ContentID: postgres.UUID(contentID),
+		PageID:    postgres.UUID(pageID),
+		Namespace: namespace,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, ErrPageNotFound
+		return nil, 0, ErrPageNotFound
 	}
 	if err != nil {
-		return nil, fmt.Errorf("get page version: %w", err)
+		return nil, 0, fmt.Errorf("get page version: %w", err)
 	}
 
-	return &PageVersion{
+	content := &PageContent{
 		ID:        uuid.UUID(row.ID.Bytes),
-		Version:   int(row.Version),
 		Title:     row.Title,
 		HTML:      row.Html,
 		CreatedAt: row.CreatedAt.Time,
-	}, nil
+	}
+
+	return content, int(row.Position), nil
 }
 
-func (r *PagesRepository) ListPageVersions(ctx context.Context, namespace string, id uuid.UUID) ([]PageVersion, error) {
+// ListPageVersions returns the page's contents in version order, oldest first.
+func (r *PagesRepository) ListPageVersions(ctx context.Context, namespace string, id uuid.UUID) ([]PageContent, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err
@@ -260,15 +268,14 @@ func (r *PagesRepository) ListPageVersions(ctx context.Context, namespace string
 		return nil, fmt.Errorf("list page versions: %w", err)
 	}
 
-	versions := make([]PageVersion, 0, len(rows))
-	for i, row := range rows {
-		versions = append(versions, PageVersion{
+	contents := make([]PageContent, 0, len(rows))
+	for _, row := range rows {
+		contents = append(contents, PageContent{
 			ID:        uuid.UUID(row.ID.Bytes),
-			Version:   i + 1,
 			Title:     row.Title,
 			CreatedAt: row.CreatedAt.Time,
 		})
 	}
 
-	return versions, nil
+	return contents, nil
 }

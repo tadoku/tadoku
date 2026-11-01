@@ -33,13 +33,13 @@ func TestPagesRepositoryGetPageVersion(t *testing.T) {
 		)
 		values
 			('tadoku/prod', '11111111-1111-4111-8111-111111111111', 'main',
-			 'published-post', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '2026-09-11 12:00:00',
+			 'published-page', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '2026-09-11 12:00:00',
 			 '2026-09-10 12:00:00', '2026-09-11 12:00:00', null),
 			('tadoku/prod', '22222222-2222-4222-8222-222222222222', 'main',
-			 'draft-post', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', null,
-			 '2026-09-10 13:00:00', '2026-09-10 13:00:00', null),
+			 'draft-page', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', null,
+			 '2026-09-09 12:00:00', '2026-09-09 12:00:00', null),
 			('tadoku/prod', '33333333-3333-4333-8333-333333333333', 'main',
-			 'deleted-post', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', null,
+			 'deleted-page', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', null,
 			 '2026-09-10 13:00:00', '2026-09-10 13:00:00', '2026-09-11 12:00:00');
 		insert into pages_content (tenant, id, page_id, title, html, created_at)
 		values
@@ -50,7 +50,7 @@ func TestPagesRepositoryGetPageVersion(t *testing.T) {
 			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', '11111111-1111-4111-8111-111111111111',
 			 'Original title', 'Original content', '2026-09-10 12:00:00'),
 			('tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', '22222222-2222-4222-8222-222222222222',
-			 'Draft title', 'Draft content', '2026-09-10 13:00:00'),
+			 'Draft title', 'Draft content', '2026-09-09 12:00:00'),
 			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', '33333333-3333-4333-8333-333333333333',
 			 'Deleted title', 'Deleted content', '2026-09-10 13:00:00'),
 			('tadoku/prod', 'dddddddd-dddd-4ddd-8ddd-ddddddddddd1', '44444444-4444-4444-8444-444444444444',
@@ -61,26 +61,47 @@ func TestPagesRepositoryGetPageVersion(t *testing.T) {
 
 	repository := pages.NewPagesRepository(db.Pool)
 	pageID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
+	list, err := repository.ListPageVersions(tenantCtx, "main", pageID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tiedCreatedAt := time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC)
+	want := []pages.PageContent{
+		{
+			ID:        uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1"),
+			Title:     "Original title",
+			HTML:      "Original content",
+			CreatedAt: tiedCreatedAt,
+		},
+		{
+			ID:        uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2"),
+			Title:     "Tied title",
+			HTML:      "Tied content",
+			CreatedAt: tiedCreatedAt,
+		},
+		{
+			ID:        uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3"),
+			Title:     "Latest title",
+			HTML:      "Latest content",
+			CreatedAt: tiedCreatedAt.Add(24 * time.Hour),
+		},
+	}
+	if len(list) != len(want) {
+		t.Fatalf("list=%+v, want %d versions", list, len(want))
+	}
 
-	for _, test := range []struct {
-		id        string
-		version   int
-		title     string
-		body      string
-		createdAt time.Time
-	}{
-		{"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1", 1, "Original title", "Original content", time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC)},
-		{"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2", 2, "Tied title", "Tied content", time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC)},
-		{"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3", 3, "Latest title", "Latest content", time.Date(2026, 9, 11, 12, 0, 0, 0, time.UTC)},
-	} {
-		t.Run(test.title, func(t *testing.T) {
-			id := uuid.MustParse(test.id)
-			got, err := repository.GetPageVersion(tenantCtx, "main", pageID, id)
+	for i, want := range want {
+		t.Run(want.Title, func(t *testing.T) {
+			got, position, err := repository.GetPageVersion(tenantCtx, "main", pageID, want.ID)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if got.ID != id || got.Version != test.version || got.Title != test.title || got.HTML != test.body || !got.CreatedAt.Equal(test.createdAt) {
-				t.Errorf("version=%+v, want ID=%s ordinal=%d title=%q content=%q created_at=%v", got, id, test.version, test.title, test.body, test.createdAt)
+
+			if !reflect.DeepEqual(*got, want) {
+				t.Errorf("content=%+v, want %+v", *got, want)
+			}
+			if position != i+1 || list[i].ID != want.ID {
+				t.Errorf("position=%d, list position of %s=%d", position, want.ID, i+1)
 			}
 		})
 	}
@@ -98,7 +119,12 @@ func TestPagesRepositoryGetPageVersion(t *testing.T) {
 		{"missing parent", "main", "44444444-4444-4444-8444-444444444444", "dddddddd-dddd-4ddd-8ddd-ddddddddddd1"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := repository.GetPageVersion(tenantCtx, test.namespace, uuid.MustParse(test.pageID), uuid.MustParse(test.contentID))
+			_, _, err := repository.GetPageVersion(
+				tenantCtx,
+				test.namespace,
+				uuid.MustParse(test.pageID),
+				uuid.MustParse(test.contentID),
+			)
 			if !errors.Is(err, pages.ErrPageNotFound) {
 				t.Errorf("error=%v, want page not found", err)
 			}
@@ -148,22 +174,19 @@ func TestPagesRepositoryListPageVersions(t *testing.T) {
 
 	id := uuid.MustParse("11111111-1111-4111-8111-111111111111")
 	firstCreatedAt := time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC)
-	want := []pages.PageVersion{
+	want := []pages.PageContent{
 		{
 			ID:        uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1"),
-			Version:   1,
 			Title:     "First",
 			CreatedAt: firstCreatedAt,
 		},
 		{
 			ID:        uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2"),
-			Version:   2,
 			Title:     "Second",
 			CreatedAt: firstCreatedAt,
 		},
 		{
 			ID:        uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3"),
-			Version:   3,
 			Title:     "Third",
 			CreatedAt: firstCreatedAt.Add(24 * time.Hour),
 		},

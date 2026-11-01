@@ -12,22 +12,23 @@ import (
 )
 
 const getPageVersion = `-- name: GetPageVersion :one
-with versions as (
-  select
-    pc.id,
-    row_number() over (order by pc.created_at asc, pc.id asc) as version,
-    pc.title,
-    pc.html,
-    pc.created_at
-  from pages_content pc
-  join pages p on p.id = pc.page_id
-  where p.id = $2
-    and p.namespace = $3
-    and p.deleted_at is null
-)
-select versions.id, versions.version, versions.title, versions.html, versions.created_at
-from versions
-where versions.id = $1::uuid
+select
+  pages_content.id,
+  pages_content.title,
+  pages_content.html,
+  pages_content.created_at,
+  (
+    select count(*)
+    from pages_content earlier
+    where earlier.page_id = pages_content.page_id
+      and (earlier.created_at, earlier.id) <= (pages_content.created_at, pages_content.id)
+  ) as position
+from pages_content
+inner join pages on pages.id = pages_content.page_id
+where pages_content.id = $1
+  and pages_content.page_id = $2
+  and pages.namespace = $3
+  and pages.deleted_at is null
 `
 
 type GetPageVersionParams struct {
@@ -38,10 +39,10 @@ type GetPageVersionParams struct {
 
 type GetPageVersionRow struct {
 	ID        pgtype.UUID
-	Version   int64
 	Title     string
 	Html      string
 	CreatedAt pgtype.Timestamp
+	Position  int64
 }
 
 func (q *Queries) GetPageVersion(ctx context.Context, arg GetPageVersionParams) (GetPageVersionRow, error) {
@@ -49,10 +50,10 @@ func (q *Queries) GetPageVersion(ctx context.Context, arg GetPageVersionParams) 
 	var i GetPageVersionRow
 	err := row.Scan(
 		&i.ID,
-		&i.Version,
 		&i.Title,
 		&i.Html,
 		&i.CreatedAt,
+		&i.Position,
 	)
 	return i, err
 }

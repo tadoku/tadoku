@@ -20,17 +20,26 @@ type Post struct {
 	UpdatedAt   *time.Time
 }
 
+// IsPublished is the publication rule. ListPosts applies it in SQL to the cutoff it receives, so change both together.
+func (p Post) IsPublished(now time.Time) bool {
+	return p.PublishedAt != nil && !p.PublishedAt.After(now)
+}
+
 var (
 	ErrPostNotFound      = errx.NewNotFoundError("post not found")
 	ErrPostAlreadyExists = errx.NewConflictError("post already exists")
 )
 
-type PostVersion struct {
+type PostContent struct {
 	ID        uuid.UUID
-	Version   int
 	Title     string
 	Content   string
 	CreatedAt time.Time
+}
+
+type PostVersion struct {
+	PostContent
+	Version int
 }
 
 type postParameters struct {

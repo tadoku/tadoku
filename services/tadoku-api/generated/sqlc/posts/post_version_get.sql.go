@@ -12,22 +12,23 @@ import (
 )
 
 const getPostVersion = `-- name: GetPostVersion :one
-with versions as (
-  select
-    pc.id,
-    row_number() over (order by pc.created_at asc, pc.id asc) as version,
-    pc.title,
-    pc.content,
-    pc.created_at
-  from posts_content pc
-  join posts p on p.id = pc.post_id
-  where p.id = $2
-    and p.namespace = $3
-    and p.deleted_at is null
-)
-select versions.id, versions.version, versions.title, versions.content, versions.created_at
-from versions
-where versions.id = $1::uuid
+select
+  posts_content.id,
+  posts_content.title,
+  posts_content.content,
+  posts_content.created_at,
+  (
+    select count(*)
+    from posts_content earlier
+    where earlier.post_id = posts_content.post_id
+      and (earlier.created_at, earlier.id) <= (posts_content.created_at, posts_content.id)
+  ) as position
+from posts_content
+inner join posts on posts.id = posts_content.post_id
+where posts_content.id = $1
+  and posts_content.post_id = $2
+  and posts.namespace = $3
+  and posts.deleted_at is null
 `
 
 type GetPostVersionParams struct {
@@ -38,10 +39,10 @@ type GetPostVersionParams struct {
 
 type GetPostVersionRow struct {
 	ID        pgtype.UUID
-	Version   int64
 	Title     string
 	Content   string
 	CreatedAt pgtype.Timestamp
+	Position  int64
 }
 
 func (q *Queries) GetPostVersion(ctx context.Context, arg GetPostVersionParams) (GetPostVersionRow, error) {
@@ -49,10 +50,10 @@ func (q *Queries) GetPostVersion(ctx context.Context, arg GetPostVersionParams) 
 	var i GetPostVersionRow
 	err := row.Scan(
 		&i.ID,
-		&i.Version,
 		&i.Title,
 		&i.Content,
 		&i.CreatedAt,
+		&i.Position,
 	)
 	return i, err
 }

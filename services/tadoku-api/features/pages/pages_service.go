@@ -59,7 +59,7 @@ func (s *Service) FindPageBySlug(ctx context.Context, namespace, slug string) (*
 	if err != nil {
 		return nil, err
 	}
-	if page.PublishedAt == nil || page.PublishedAt.After(timex.Now()) {
+	if !page.IsPublished(timex.Now()) {
 		return nil, ErrPageNotFound
 	}
 
@@ -137,10 +137,29 @@ func (s *Service) UpdatePage(ctx context.Context, parameters UpdatePageParameter
 	return s.pages.CreatePageContent(ctx, item.ID, contentID, item.Title, item.HTML, *item.UpdatedAt)
 }
 
-func (s *Service) GetPageVersion(ctx context.Context, namespace string, pageID, contentID uuid.UUID) (*PageVersion, error) {
-	return s.pages.GetPageVersion(ctx, namespace, pageID, contentID)
+func (s *Service) GetPageVersion(
+	ctx context.Context,
+	namespace string,
+	pageID, contentID uuid.UUID,
+) (*PageVersion, error) {
+	content, position, err := s.pages.GetPageVersion(ctx, namespace, pageID, contentID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &PageVersion{PageContent: *content, Version: position}, nil
 }
 
 func (s *Service) ListPageVersions(ctx context.Context, namespace string, id uuid.UUID) ([]PageVersion, error) {
-	return s.pages.ListPageVersions(ctx, namespace, id)
+	contents, err := s.pages.ListPageVersions(ctx, namespace, id)
+	if err != nil {
+		return nil, err
+	}
+
+	versions := make([]PageVersion, 0, len(contents))
+	for i, content := range contents {
+		versions = append(versions, PageVersion{PageContent: content, Version: i + 1})
+	}
+
+	return versions, nil
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestwindow"
 	domainlanguages "github.com/tadoku/tadoku/services/tadoku-api/domain/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
@@ -100,6 +101,13 @@ func (s *Service) CreatePlatformDraft(ctx context.Context, parameters PlatformDr
 		Rules:     parameters.Rules,
 		CreatedAt: parameters.CreatedAt,
 	})
+}
+
+func (s *Service) RequireContestScoringChangeable(contestStart, now time.Time) error {
+	if contestwindow.Started(contestStart, now) {
+		return errx.NewConflictError("contest scoring cannot change after the contest starts")
+	}
+	return nil
 }
 
 func (s *Service) CreateContestDraft(ctx context.Context, parameters ContestDraftParameters) (*RuleSet, error) {

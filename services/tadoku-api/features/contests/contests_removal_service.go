@@ -5,13 +5,18 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestwindow"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 )
 
 // RemoveUser requires the caller's transaction and a user locked for deletion. It deletes the user's registrations
 // in unfinished contests and keeps the contests the user owns under deleteduser.OrganizerName.
 func (s *Service) RemoveUser(ctx context.Context, userID uuid.UUID, now time.Time) (RemovalResult, error) {
-	contestIDs, err := s.contests.DeleteUnfinishedRegistrations(ctx, userID, now)
+	contestIDs, err := s.contests.DeleteUnfinishedRegistrations(
+		ctx,
+		userID,
+		contestwindow.EarliestUnfinishedContestEnd(now),
+	)
 	if err != nil {
 		return RemovalResult{}, err
 	}

@@ -41,7 +41,7 @@ using logs, contests
 where logs.id = contest_logs.log_id
   and contests.id = contest_logs.contest_id
   and logs.user_id = sqlc.arg(user_id)
-  and (logs.deleted_at is not null or contests.contest_end >= sqlc.arg(now));
+  and (logs.deleted_at is not null or contests.contest_end >= sqlc.arg(earliest_unfinished_contest_end));
 
 -- name: FreezeUserContestHistory :execrows
 update logs

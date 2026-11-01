@@ -135,6 +135,11 @@ type Log struct {
 	Tracking        logscore.Tracking
 }
 
+type attachedContest struct {
+	ID  uuid.UUID
+	End time.Time
+}
+
 type RegistrationReference struct {
 	RegistrationID       uuid.UUID
 	ContestID            uuid.UUID

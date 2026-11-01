@@ -17,6 +17,7 @@ func TestImmersionFetchLeaderboardGlobal(t *testing.T) {
 		{description: []string{"cache", "miss", "past", "end"}, want: http.StatusOK, cache: "miss"},
 		{description: []string{"cache", "hit"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"language", "filtered"}, want: http.StatusOK, cache: "hit"},
+		{description: []string{"activity", "filtered"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"empty", "language"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"tie", "page", "boundary"}, want: http.StatusOK, cache: "hit_tie"},
 		{description: []string{"tie", "first", "page"}, want: http.StatusOK, cache: "hit_tie"},
@@ -81,6 +82,8 @@ func TestImmersionContestFetchLeaderboard(t *testing.T) {
 		{description: []string{"tie", "page", "boundary"}, want: http.StatusOK, cache: "hit_tie"},
 		{description: []string{"tie", "first", "page"}, want: http.StatusOK, cache: "hit_tie"},
 		{description: []string{"tie", "order", "across", "paths"}, want: http.StatusOK, cache: "miss_then_hit"},
+		{description: []string{"deleted", "participant"}, want: http.StatusOK, cache: "miss_then_hit"},
+		{description: []string{"deleted", "participant", "activity", "filtered"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"missing", "organizer"}, want: http.StatusNotFound},
 		{description: []string{"missing", "organizer", "filtered"}, want: http.StatusNotFound, cache: "hit"},
 		{description: []string{"missing", "contest", "cache", "miss"}, want: http.StatusNotFound, cache: "miss_then_miss"},
@@ -94,6 +97,9 @@ func TestImmersionContestFetchLeaderboard(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("ImmersionContestFetchLeaderboard", test.want, test.description...)
 		cacheKey := "leaderboard:contest:f1111111-1111-4111-8111-111111111111"
+		if test.description[0] == "deleted" {
+			cacheKey = "leaderboard:contest:f3333333-3333-4333-8333-333333333333"
+		}
 		if test.description[0] == "missing" {
 			cacheKey = "leaderboard:contest:f2222222-2222-4222-8222-222222222222"
 			if len(test.description) > 1 && test.description[1] == "contest" {
@@ -199,6 +205,13 @@ func verifyRebuiltLeaderboardCache(t *testing.T, key string) {
 			"22222222-2222-4222-8222-222222222222": 20,
 			"33333333-3333-4333-8333-333333333333": 20,
 			"66666666-6666-4666-8666-666666666666": 0,
+		}
+	case "leaderboard:contest:f3333333-3333-4333-8333-333333333333":
+		want = map[string]float64{
+			"11111111-1111-4111-8111-111111111111": 10,
+			"22222222-2222-4222-8222-222222222222": 25,
+			"77777777-7777-4777-8777-777777777777": 40,
+			"88888888-8888-4888-8888-888888888888": 0,
 		}
 	}
 	got := make(map[string]float64, len(entries))

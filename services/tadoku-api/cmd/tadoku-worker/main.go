@@ -166,8 +166,18 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 		}
 		w.WriteHeader(http.StatusOK)
 	})
-	privateServer := &http.Server{Handler: privateMux, ReadHeaderTimeout: 5 * time.Second}
-	metricsServer := &http.Server{Handler: promhttp.HandlerFor(registry, promhttp.HandlerOpts{}), ReadHeaderTimeout: 5 * time.Second}
+	privateServer := &http.Server{
+		Handler:           privateMux,
+		ReadHeaderTimeout: 5 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       30 * time.Second,
+	}
+	metricsServer := &http.Server{
+		Handler:           promhttp.HandlerFor(registry, promhttp.HandlerOpts{}),
+		ReadHeaderTimeout: 5 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       30 * time.Second,
+	}
 
 	privateListener, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", cfg.Port))
 	if err != nil {

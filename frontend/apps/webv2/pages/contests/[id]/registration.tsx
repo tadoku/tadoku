@@ -6,7 +6,10 @@ import {
   useContest,
   useContestRegistration,
 } from '@app/immersion/contest-api'
-import { ContestRegistrationForm } from '@app/immersion/ContestRegistration'
+import {
+  ContestRegistrationForm,
+  registrationChangesClosed,
+} from '@app/immersion/ContestRegistration'
 import { ExclamationCircleIcon, HomeIcon } from '@heroicons/react/20/solid'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
@@ -59,6 +62,7 @@ const Page = () => {
     registration.isSuccess &&
     registration.data === null &&
     !acceptsNewRegistrations(contest.data, now)
+  const contestEnded = registrationChangesClosed(contest.data.contest_end, now)
 
   return (
     <>
@@ -86,12 +90,16 @@ const Page = () => {
         />
       </div>
       <Flash
-        visible={registrationClosed}
+        visible={registrationClosed || contestEnded}
         style="error"
         IconComponent={ExclamationCircleIcon}
         className="mb-4"
       >
-        Unfortunately, registrations for this contest have ended.
+        {!contestEnded
+          ? 'Unfortunately, registrations for this contest have ended.'
+          : registration.data
+            ? 'This contest has ended, so your registration can no longer be changed.'
+            : 'This contest has ended, so it no longer accepts registrations.'}
       </Flash>
 
       {registration.isLoading ? (
@@ -100,7 +108,7 @@ const Page = () => {
         <ContestRegistrationForm
           contest={contest.data}
           data={registration.data ?? undefined}
-          isClosed={registrationClosed}
+          isClosed={registrationClosed || contestEnded}
         />
       )}
     </>

@@ -11,6 +11,7 @@ import {
 } from '@app/immersion/contest-api'
 import { useRouter } from 'next/router'
 import { useDebounce } from 'use-debounce'
+import { DateTime } from 'luxon'
 import { routes } from '@app/common/routes'
 import {
   ExclamationCircleIcon,
@@ -35,6 +36,19 @@ export const ContestRegistrationFormSchema = z.object({
 export type ContestRegistrationFormSchema = z.infer<
   typeof ContestRegistrationFormSchema
 >
+
+/** Whether the API refuses new and changed registrations: after the last UTC day of `contestEnd`. */
+export const registrationChangesClosed = (contestEnd: string, now: DateTime) =>
+  DateTime.fromISO(contestEnd, { zone: 'utc' }).endOf('day') < now
+
+const registrationErrorMessage = (error: unknown, registered: boolean) => {
+  if (!(error instanceof Error && error.message === '403')) {
+    return 'Could not save your registration, please try again later.'
+  }
+  return registered
+    ? 'This registration can no longer be changed.'
+    : 'Registration for this contest has closed.'
+}
 
 interface Props {
   contest: ContestView
@@ -151,10 +165,7 @@ export const ContestRegistrationForm = ({ contest, data, isClosed }: Props) => {
             style="error"
             IconComponent={ExclamationCircleIcon}
           >
-            {createRegistrationMutation.error instanceof Error &&
-            createRegistrationMutation.error.message === '403'
-              ? 'Registration for this contest has closed.'
-              : 'Could not save your registration, please try again later.'}
+            {registrationErrorMessage(createRegistrationMutation.error, !!data)}
           </Flash>
           <div className="h-stack spaced justify-end">
             <a

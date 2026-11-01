@@ -80,9 +80,10 @@ export const ContestOverview = ({
             <div>
               Registrations open until{' '}
               <strong>
-                {DateTime.fromISO(contest.registration_end).toLocaleString(
-                  DateTime.DATE_MED,
-                )}
+                {DateTime.min(
+                  DateTime.fromISO(contest.registration_end),
+                  DateTime.fromISO(contest.contest_end),
+                ).toLocaleString(DateTime.DATE_MED)}
               </strong>
             </div>
           )}

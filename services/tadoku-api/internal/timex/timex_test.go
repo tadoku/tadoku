@@ -139,3 +139,44 @@ func TestTheWorldRejectsConcurrentOverride(t *testing.T) {
 		}
 	})
 }
+
+func TestAdvanceMovesTheActiveScope(t *testing.T) {
+	instant := time.Date(2026, time.September, 30, 23, 59, 59, 0, time.UTC)
+
+	timex.TheWorld(instant, func() {
+		timex.Advance(time.Second)
+		if got, want := timex.Now(), instant.Add(time.Second); got != want {
+			t.Errorf("after one advance: Now() = %#v, want %#v", got, want)
+		}
+
+		timex.Advance(time.Hour)
+		if got, want := timex.Now(), instant.Add(time.Second+time.Hour); got != want {
+			t.Errorf("after two advances: Now() = %#v, want %#v", got, want)
+		}
+	})
+
+	before := time.Now().UTC().Truncate(time.Microsecond)
+	got := timex.Now()
+	after := time.Now().UTC().Truncate(time.Microsecond)
+	if got.Before(before) || got.After(after) {
+		t.Errorf("after advanced scope: Now() = %v, want UTC time between %v and %v", got, before, after)
+	}
+}
+
+func TestAdvanceOutsideAScopePanics(t *testing.T) {
+	var got any
+	func() {
+		defer func() { got = recover() }()
+		timex.Advance(time.Hour)
+	}()
+
+	if got != "timex.Advance: no override active" {
+		t.Errorf("advance outside a scope panic = %#v, want clear rejection", got)
+	}
+	before := time.Now().UTC().Truncate(time.Microsecond)
+	now := timex.Now()
+	after := time.Now().UTC().Truncate(time.Microsecond)
+	if now.Before(before) || now.After(after) {
+		t.Errorf("rejected advance fixed the clock: Now() = %v, want UTC time between %v and %v", now, before, after)
+	}
+}

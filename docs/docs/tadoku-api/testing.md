@@ -53,8 +53,9 @@ bazel test //services/tadoku-api/e2e:e2e_test --test_filter=TestAuthentication
 ```
 
 The first command runs everything, the second the HTTP E2Es and user journeys,
-and the third one test function. CI runs the database suites in normal and race
-builds.
+and the third one test function. CI runs the database suites in the normal build
+of every change and in the daily race build; see
+[Race tests](../develop/race-tests.md).
 
 ## Test infrastructure
 
@@ -79,8 +80,8 @@ Never point tests at shared development or production services.
   database mapping to the disposable PostgreSQL instance, SCRAM authentication
   and nonzero `max_prepared_statements`. The dedicated target exercises 300
   goroutines, 12,000 tenant reads and 6,000 writes. Its test-only
-  session-setting negative control must observe cross-client leaks. Normal and race CI jobs
-  print both workload and negative-control results.
+  session-setting negative control must observe cross-client leaks. The normal and race CI
+  workflows print both workload and negative-control results.
 - **Identity accounts:** ordinary HTTP golden and journey resets seed native
   tenant-owned accounts after case SQL, preserving existing user/account state
   on primary-key conflicts. Cast and gateway fixtures obtain sessions through

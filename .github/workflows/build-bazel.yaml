@@ -256,38 +256,6 @@ jobs:
       - name: Show PgBouncer regression evidence
         run: cat bazel-testlogs/services/tadoku-api/infra/postgres/pgbouncer_test/test.log
 
-      - name: Race-test Tadoku API and helpers
-        id: race
-        run: >-
-          bazel test --lockfile_mode=error --test_output=errors --@rules_go//go/config:race
-          --profile="$RUNNER_TEMP/bazel-race.profile"
-          --build_event_json_file="$RUNNER_TEMP/bazel-race.json"
-          //services/tadoku-api/internal/permissions:permissions_test
-          //services/tadoku-api/internal/timex:timex_test
-          //services/tadoku-api/infra/postgres:postgres_test
-          //services/tadoku-api/infra/postgres:pgbouncer_test
-          //services/tadoku-api/infra/valkey:valkey_test
-          //services/tadoku-api/app/worker:worker_test
-          //services/tadoku-api/features/announcements:announcements_test
-          //services/tadoku-api/features/audit:audit_test
-          //services/tadoku-api/features/authz:authz_test
-          //services/tadoku-api/features/pages:pages_test
-          //services/tadoku-api/features/profile:profile_test
-          //services/tadoku-api/features/posts:posts_test
-          //services/tadoku-api/e2e:e2e_test
-          //services/tadoku-api/cmd/tadoku-api:tadoku-api_test
-          //services/tadoku-api/transport/http:http_test
-
-      - name: Retain race diagnostics
-        if: failure() && steps.race.outcome == 'failure'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: http-e2e-race-${{ github.run_attempt }}
-          path: |
-            bazel-testlogs/services/tadoku-api/e2e/e2e_test/test.log
-            bazel-testlogs/services/tadoku-api/e2e/e2e_test/test.xml
-          retention-days: 7
-
       - name: Print release image digests
         run: |
           targets='set(//services/tadoku-api:image //services/tadoku-api/cmd/tadoku-worker:image)'

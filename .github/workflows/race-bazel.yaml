@@ -1,0 +1,185 @@
+name: race-bazel
+
+# Race-instrumented Tadoku API tests, kept off the push, pull-request and image
+# publication path. See docs/docs/develop/race-tests.md.
+
+on:
+  schedule:
+    # Daily at 15:37 UTC. GitHub starts this repository's schedules hours late
+    # and can skip them, so runs are not exactly 24 hours apart.
+    - cron: "37 15 * * *"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/race-bazel.yaml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: race-bazel-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  race:
+    name: Race-test Tadoku API
+    # Fork pull requests cannot use the private runner pool.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: tadoku-ci
+    timeout-minutes: 60
+    env:
+      TADOKU_TEST_POSTGRES_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable
+      TADOKU_TEST_PGBOUNCER_URL: postgres://postgres:postgres@127.0.0.1:6432/postgres?sslmode=disable
+      TADOKU_TEST_VALKEY_URL: redis://127.0.0.1:6379
+    # Keep these images identical to build-bazel.yaml, whose services the runner Pods pre-pull.
+    services:
+      postgres:
+        image: postgres:17@sha256:b8faeff7712663c2773a190181e1246e37e364b887611c04658c28b44e2408fe
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      pgbouncer:
+        image: edoburu/pgbouncer:v1.25.2-p0@sha256:7d7a27d9e90985cab5cf42256f5c13a3120baa4b055b69df37beb272b89b2340
+        env:
+          DB_HOST: postgres
+          DB_PORT: 5432
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          AUTH_TYPE: scram-sha-256
+          POOL_MODE: transaction
+          LISTEN_PORT: 6432
+          MAX_CLIENT_CONN: 1000
+          DEFAULT_POOL_SIZE: 5
+          MAX_PREPARED_STATEMENTS: 200
+        ports:
+          - 6432:6432
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -p 6432 -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      valkey:
+        image: valkey/valkey:9@sha256:418652cfb58ef879d4978c33553735d7147016032d5aefaa14c828e611eb9dfd
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Configure private Bazel cache and resource budget
+        env:
+          UPLOAD_RESULTS: ${{ github.event_name != 'pull_request' }}
+        run: |
+          cat > "$HOME/.bazelrc" <<EOF
+          startup --output_user_root=$RUNNER_TEMP/bazel
+          common --repository_cache=$HOME/bazelisk/repositories
+          common --remote_cache=https://bazel-cache.lab
+          common --tls_certificate=/usr/local/share/ca-certificates/ca.crt
+          common --remote_timeout=5s
+          common --remote_retries=1
+          build --remote_upload_local_results=$UPLOAD_RESULTS
+          build --jobs=3
+          test --local_test_jobs=2
+          build --local_resources=memory=2048
+          EOF
+          if test -r "$HOME/bazelisk/repositories/prewarm.json"; then
+            cp "$HOME/bazelisk/repositories/prewarm.json" "$RUNNER_TEMP/bazel-prewarm.json"
+          else
+            printf '{"status":"cold"}\n' > "$RUNNER_TEMP/bazel-prewarm.json"
+          fi
+          cat "$RUNNER_TEMP/bazel-prewarm.json"
+          curl --fail --silent --show-error \
+            --cacert /usr/local/share/ca-certificates/ca.crt \
+            https://bazel-cache.lab/status | tee "$RUNNER_TEMP/bazel-cache-before.json"
+
+      - name: Race-test Tadoku API and helpers
+        id: race
+        run: >-
+          bazel test --lockfile_mode=error --test_output=errors --@rules_go//go/config:race
+          --profile="$RUNNER_TEMP/bazel-race.profile"
+          --build_event_json_file="$RUNNER_TEMP/bazel-race.json"
+          //services/tadoku-api/internal/permissions:permissions_test
+          //services/tadoku-api/internal/timex:timex_test
+          //services/tadoku-api/infra/postgres:postgres_test
+          //services/tadoku-api/infra/postgres:pgbouncer_test
+          //services/tadoku-api/infra/valkey:valkey_test
+          //services/tadoku-api/app/worker:worker_test
+          //services/tadoku-api/features/announcements:announcements_test
+          //services/tadoku-api/features/audit:audit_test
+          //services/tadoku-api/features/authz:authz_test
+          //services/tadoku-api/features/pages:pages_test
+          //services/tadoku-api/features/profile:profile_test
+          //services/tadoku-api/features/posts:posts_test
+          //services/tadoku-api/e2e:e2e_test
+          //services/tadoku-api/cmd/tadoku-api:tadoku-api_test
+          //services/tadoku-api/transport/http:http_test
+
+      - name: Show PgBouncer regression evidence
+        run: cat bazel-testlogs/services/tadoku-api/infra/postgres/pgbouncer_test/test.log
+
+      - name: Retain race diagnostics
+        if: failure() && steps.race.outcome == 'failure'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: http-e2e-race-${{ github.run_attempt }}
+          path: |
+            bazel-testlogs/services/tadoku-api/e2e/e2e_test/test.log
+            bazel-testlogs/services/tadoku-api/e2e/e2e_test/test.xml
+          retention-days: 7
+
+      - name: Retain CI performance evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: bazel-performance-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/bazel-*.profile
+            ${{ runner.temp }}/bazel-*.json
+          retention-days: 7
+
+  alert:
+    name: Alert on race failure
+    needs: race
+    # Covers failed, timed-out and cancelled runs, including setup failures.
+    if: always() && github.event_name != 'pull_request' && needs.race.result != 'success'
+    # Notify accepts producers only from inside the homelab cluster.
+    runs-on: tadoku-ci
+    timeout-minutes: 5
+    steps:
+      - name: Send Notify alert
+        env:
+          RESULT: ${{ needs.race.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          body="Result: $RESULT. Revision $GITHUB_SHA on $GITHUB_REF_NAME ($EVENT). Diagnostics: http-e2e-race and bazel-performance artifacts."
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ### Race tests $RESULT
+
+          Revision \`$GITHUB_SHA\` on \`$GITHUB_REF_NAME\` ($EVENT)
+
+          [Workflow run]($RUN_URL)
+          EOF
+          echo "::error title=Tadoku race tests $RESULT::$body"
+          jq --null-input --compact-output \
+            --arg title "Tadoku race tests $RESULT at ${GITHUB_SHA:0:12}" \
+            --arg body "$body" \
+            --arg link "$RUN_URL" \
+            '{topic: "ci", severity: "warning", title: $title, body: $body, link: $link}' |
+            curl --fail-with-body --silent --show-error --max-time 10 --retry 2 --retry-all-errors \
+              --header 'Content-Type: application/json' --data @- \
+              http://notify.notify.svc.cluster.local/v1/notifications ||
+            { echo "::error::Notify did not accept the alert; see the workflow run instead."; exit 1; }

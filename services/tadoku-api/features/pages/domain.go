@@ -20,9 +20,9 @@ type Page struct {
 	UpdatedAt   *time.Time
 }
 
-// IsPublishedAt is the publication rule. ListPages applies it in SQL to the cutoff it receives, so change both together.
-func (p Page) IsPublishedAt(t time.Time) bool {
-	return p.PublishedAt != nil && !p.PublishedAt.After(t)
+// IsPublished is the publication rule. ListPages applies it in SQL to the cutoff it receives, so change both together.
+func (p Page) IsPublished(now time.Time) bool {
+	return p.PublishedAt != nil && !p.PublishedAt.After(now)
 }
 
 type PageContent struct {

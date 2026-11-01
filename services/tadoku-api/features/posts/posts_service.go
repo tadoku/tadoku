@@ -59,7 +59,7 @@ func (s *Service) FindPostBySlug(ctx context.Context, namespace, slug string) (*
 	if err != nil {
 		return nil, err
 	}
-	if !post.IsPublishedAt(timex.Now()) {
+	if !post.IsPublished(timex.Now()) {
 		return nil, ErrPostNotFound
 	}
 

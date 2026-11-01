@@ -59,7 +59,7 @@ func (s *Service) FindPageBySlug(ctx context.Context, namespace, slug string) (*
 	if err != nil {
 		return nil, err
 	}
-	if !page.IsPublishedAt(timex.Now()) {
+	if !page.IsPublished(timex.Now()) {
 		return nil, ErrPageNotFound
 	}
 

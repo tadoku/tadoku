@@ -20,9 +20,9 @@ type Post struct {
 	UpdatedAt   *time.Time
 }
 
-// IsPublishedAt is the publication rule. ListPosts applies it in SQL to the cutoff it receives, so change both together.
-func (p Post) IsPublishedAt(t time.Time) bool {
-	return p.PublishedAt != nil && !p.PublishedAt.After(t)
+// IsPublished is the publication rule. ListPosts applies it in SQL to the cutoff it receives, so change both together.
+func (p Post) IsPublished(now time.Time) bool {
+	return p.PublishedAt != nil && !p.PublishedAt.After(now)
 }
 
 var (

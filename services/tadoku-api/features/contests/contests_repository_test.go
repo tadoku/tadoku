@@ -62,40 +62,63 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 		Official: true,
 		PageSize: 10,
 	}
-	items, total, err := repository.ListContests(tenantCtx, parameters)
+	items, total, err := repository.ListContests(tenantCtx, parameters, publicContests{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(items) != 1 || items[0].Title != "Public official" || total != 3 {
-		t.Errorf("public list=%+v total=%d, want one visible of three matching official contests", items, total)
+	if len(items) != 1 || items[0].Title != "Public official" || total != 2 {
+		t.Errorf("public list=%+v total=%d, want one visible contest and the orphan counted", items, total)
 	}
 
 	parameters.Page = 1
-	items, total, err = repository.ListContests(tenantCtx, parameters)
+	items, total, err = repository.ListContests(tenantCtx, parameters, publicContests{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(items) != 0 || total != 3 {
-		t.Errorf("out-of-range list=%+v total=%d, want empty page with three matches", items, total)
+	if len(items) != 0 || total != 2 {
+		t.Errorf("out-of-range list=%+v total=%d, want empty page with two visible matches", items, total)
 	}
 
-	items, total, err = repository.ListContests(tenantCtx, ListParameters{
-		Official: false,
-		PageSize: 10,
-	})
+	items, total, err = repository.ListContests(
+		tenantCtx,
+		ListParameters{
+			Official: false,
+			PageSize: 10,
+		},
+		publicContests{},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(items) != 0 || total != 1 {
-		t.Errorf("hidden-only list=%+v total=%d, want empty page with one private match", items, total)
+	if len(items) != 0 || total != 0 {
+		t.Errorf("hidden-only list=%+v total=%d, want private contest hidden from page and total", items, total)
+	}
+
+	items, total, err = repository.ListContests(
+		tenantCtx,
+		ListParameters{
+			Official: false,
+			PageSize: 10,
+		},
+		nil,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 0 || total != 0 {
+		t.Errorf("missing-visibility list=%+v total=%d, want private contests hidden", items, total)
 	}
 
 	orphanOwnerID := uuid.MustParse("33333333-3333-4333-8333-333333333333")
-	items, total, err = repository.ListContests(tenantCtx, ListParameters{
-		UserID:   &orphanOwnerID,
-		Official: true,
-		PageSize: 10,
-	})
+	items, total, err = repository.ListContests(
+		tenantCtx,
+		ListParameters{
+			UserID:   &orphanOwnerID,
+			Official: true,
+			PageSize: 10,
+		},
+		publicContests{},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,12 +127,13 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	ownerID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
+	otherUserID := uuid.MustParse("22222222-2222-4222-8222-222222222222")
 	parameters = ListParameters{
 		UserID:   &ownerID,
 		Official: false,
 		PageSize: 10,
 	}
-	items, total, err = repository.ListContests(tenantCtx, parameters)
+	items, total, err = repository.ListContests(tenantCtx, parameters, publicAndOwnContests{ownerID: ownerID})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,12 +141,32 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 		t.Errorf("owner list=%+v total=%d, want private owner contest", items, total)
 	}
 
+	items, total, err = repository.ListContests(tenantCtx, parameters, publicAndOwnContests{ownerID: otherUserID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 0 || total != 0 {
+		t.Errorf("other user owner-filter list=%+v total=%d, want private contest hidden", items, total)
+	}
+
+	items, total, err = repository.ListContests(tenantCtx, parameters, allContests{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 1 || items[0].Title != "Private unofficial" || total != 1 {
+		t.Errorf("admin owner-filter list=%+v total=%d, want private owner contest", items, total)
+	}
+
 	missingOwnerID := uuid.MustParse("44444444-4444-4444-8444-444444444444")
-	items, total, err = repository.ListContests(tenantCtx, ListParameters{
-		UserID:   &missingOwnerID,
-		Official: false,
-		PageSize: 10,
-	})
+	items, total, err = repository.ListContests(
+		tenantCtx,
+		ListParameters{
+			UserID:   &missingOwnerID,
+			Official: false,
+			PageSize: 10,
+		},
+		allContests{},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}

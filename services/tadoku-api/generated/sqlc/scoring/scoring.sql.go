@@ -349,6 +349,86 @@ func (q *Queries) ListContestScoringRuleSets(ctx context.Context, contestID pgty
 	return items, nil
 }
 
+const listLogUnitsByID = `-- name: ListLogUnitsByID :many
+select id, unit_key, modifier, log_activity_id, language_code
+from log_units
+where id = $1
+`
+
+type ListLogUnitsByIDRow struct {
+	ID            pgtype.UUID
+	UnitKey       string
+	Modifier      float32
+	LogActivityID int16
+	LanguageCode  pgtype.Text
+}
+
+func (q *Queries) ListLogUnitsByID(ctx context.Context, id pgtype.UUID) ([]ListLogUnitsByIDRow, error) {
+	rows, err := q.db.Query(ctx, listLogUnitsByID, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListLogUnitsByIDRow{}
+	for rows.Next() {
+		var i ListLogUnitsByIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UnitKey,
+			&i.Modifier,
+			&i.LogActivityID,
+			&i.LanguageCode,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLogUnitsByKey = `-- name: ListLogUnitsByKey :many
+select id, unit_key, modifier, log_activity_id, language_code
+from log_units
+where unit_key = $1
+`
+
+type ListLogUnitsByKeyRow struct {
+	ID            pgtype.UUID
+	UnitKey       string
+	Modifier      float32
+	LogActivityID int16
+	LanguageCode  pgtype.Text
+}
+
+func (q *Queries) ListLogUnitsByKey(ctx context.Context, unitKey string) ([]ListLogUnitsByKeyRow, error) {
+	rows, err := q.db.Query(ctx, listLogUnitsByKey, unitKey)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListLogUnitsByKeyRow{}
+	for rows.Next() {
+		var i ListLogUnitsByKeyRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UnitKey,
+			&i.Modifier,
+			&i.LogActivityID,
+			&i.LanguageCode,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPlatformScoringRuleSets = `-- name: ListPlatformScoringRuleSets :many
 select
   scope,
@@ -457,86 +537,6 @@ func (q *Queries) ListScoringRulesForRuleSet(ctx context.Context, ruleSetID pgty
 			&i.Tag,
 			&i.ScoreSource,
 			&i.Rate,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listUnitsForScoringByID = `-- name: ListUnitsForScoringByID :many
-select id, unit_key, modifier, log_activity_id, language_code
-from log_units
-where id = $1
-`
-
-type ListUnitsForScoringByIDRow struct {
-	ID            pgtype.UUID
-	UnitKey       string
-	Modifier      float32
-	LogActivityID int16
-	LanguageCode  pgtype.Text
-}
-
-func (q *Queries) ListUnitsForScoringByID(ctx context.Context, id pgtype.UUID) ([]ListUnitsForScoringByIDRow, error) {
-	rows, err := q.db.Query(ctx, listUnitsForScoringByID, id)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ListUnitsForScoringByIDRow{}
-	for rows.Next() {
-		var i ListUnitsForScoringByIDRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.UnitKey,
-			&i.Modifier,
-			&i.LogActivityID,
-			&i.LanguageCode,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listUnitsForScoringByKey = `-- name: ListUnitsForScoringByKey :many
-select id, unit_key, modifier, log_activity_id, language_code
-from log_units
-where unit_key = $1
-`
-
-type ListUnitsForScoringByKeyRow struct {
-	ID            pgtype.UUID
-	UnitKey       string
-	Modifier      float32
-	LogActivityID int16
-	LanguageCode  pgtype.Text
-}
-
-func (q *Queries) ListUnitsForScoringByKey(ctx context.Context, unitKey string) ([]ListUnitsForScoringByKeyRow, error) {
-	rows, err := q.db.Query(ctx, listUnitsForScoringByKey, unitKey)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ListUnitsForScoringByKeyRow{}
-	for rows.Next() {
-		var i ListUnitsForScoringByKeyRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.UnitKey,
-			&i.Modifier,
-			&i.LogActivityID,
-			&i.LanguageCode,
 		); err != nil {
 			return nil, err
 		}

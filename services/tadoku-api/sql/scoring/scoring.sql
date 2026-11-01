@@ -80,12 +80,12 @@ where scope = 'contest'
   and contest_id = sqlc.arg('contest_id')
 order by version desc;
 
--- name: ListUnitsForScoringByID :many
+-- name: ListLogUnitsByID :many
 select id, unit_key, modifier, log_activity_id, language_code
 from log_units
 where id = sqlc.arg('id');
 
--- name: ListUnitsForScoringByKey :many
+-- name: ListLogUnitsByKey :many
 select id, unit_key, modifier, log_activity_id, language_code
 from log_units
 where unit_key = sqlc.arg('unit_key');

@@ -128,9 +128,9 @@ func (r *ScoringRepository) ListUnitsByID(ctx context.Context, id uuid.UUID) ([]
 		return nil, err
 	}
 
-	rows, err := q.ListUnitsForScoringByID(ctx, postgres.UUID(id))
+	rows, err := q.ListLogUnitsByID(ctx, postgres.UUID(id))
 	if err != nil {
-		return nil, fmt.Errorf("list units for scoring: %w", err)
+		return nil, fmt.Errorf("list log units: %w", err)
 	}
 	candidates := make([]unitCandidate, len(rows))
 	for i, row := range rows {
@@ -145,18 +145,18 @@ func (r *ScoringRepository) ListUnitsByKey(ctx context.Context, key string) ([]u
 		return nil, err
 	}
 
-	rows, err := q.ListUnitsForScoringByKey(ctx, key)
+	rows, err := q.ListLogUnitsByKey(ctx, key)
 	if err != nil {
-		return nil, fmt.Errorf("list units for scoring: %w", err)
+		return nil, fmt.Errorf("list log units: %w", err)
 	}
 	candidates := make([]unitCandidate, len(rows))
 	for i, row := range rows {
-		candidates[i] = unitCandidateFromRow(queries.ListUnitsForScoringByIDRow(row))
+		candidates[i] = unitCandidateFromRow(queries.ListLogUnitsByIDRow(row))
 	}
 	return candidates, nil
 }
 
-func unitCandidateFromRow(row queries.ListUnitsForScoringByIDRow) unitCandidate {
+func unitCandidateFromRow(row queries.ListLogUnitsByIDRow) unitCandidate {
 	return unitCandidate{
 		logUnit:      logUnit{ID: row.ID.Bytes, Key: row.UnitKey, Modifier: row.Modifier},
 		activityID:   int32(row.LogActivityID),

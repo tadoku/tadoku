@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"net/url"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -27,17 +27,12 @@ func workerTestDatabase(t *testing.T) *testpostgres.Database {
 		}
 	})
 
-	parsed, err := url.Parse(db.DSN)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	password, _ := parsed.User.Password()
-	t.Setenv("WORKER_POSTGRES_HOST", parsed.Hostname())
-	t.Setenv("WORKER_POSTGRES_PORT", parsed.Port())
-	t.Setenv("WORKER_POSTGRES_DATABASE", parsed.Path[1:])
-	t.Setenv("WORKER_POSTGRES_USER", parsed.User.Username())
-	t.Setenv("WORKER_POSTGRES_PASSWORD", password)
+	app := db.AppPool.Config().ConnConfig
+	t.Setenv("WORKER_POSTGRES_HOST", app.Host)
+	t.Setenv("WORKER_POSTGRES_PORT", fmt.Sprint(app.Port))
+	t.Setenv("WORKER_POSTGRES_DATABASE", app.Database)
+	t.Setenv("WORKER_POSTGRES_USER", app.User)
+	t.Setenv("WORKER_POSTGRES_PASSWORD", app.Password)
 	t.Setenv("WORKER_POSTGRES_SSLMODE", "disable")
 	return db
 }
@@ -53,7 +48,13 @@ func TestReplayCommandCreatesLinkedJob(t *testing.T) {
 	}
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	if err := replay(t.Context(), []string{"--id", fmt.Sprint(failedID), "--actor", "operator@example.test", "--reason", "provider restored"}, logger); err != nil {
+	args := []string{
+		"--tenant", "tadoku/prod",
+		"--id", fmt.Sprint(failedID),
+		"--actor", "operator@example.test",
+		"--reason", "provider restored",
+	}
+	if err := replay(t.Context(), args, logger); err != nil {
 		t.Fatal(err)
 	}
 
@@ -69,8 +70,99 @@ func TestReplayCommandCreatesLinkedJob(t *testing.T) {
 		t.Errorf("replay state: original=%q replay=%q actor=%q reason=%q", originalState, replayState, actor, reason)
 	}
 
-	if err := replay(context.Background(), []string{"--id", fmt.Sprint(failedID), "--reason", "missing actor"}, logger); err == nil {
+	missingActor := []string{"--tenant", "tadoku/prod", "--id", fmt.Sprint(failedID), "--reason", "missing actor"}
+	if err := replay(context.Background(), missingActor, logger); err == nil {
 		t.Error("replay accepted a missing actor")
+	}
+}
+
+func TestReplayCommandReplaysOnlyInSelectedTenant(t *testing.T) {
+	db := workerTestDatabase(t)
+
+	const (
+		jobTenant   = "e2e/replay-0123abcd"
+		otherTenant = "e2e/other-0123abcd"
+	)
+	_, err := db.Pool.Exec(
+		t.Context(),
+		"insert into tenants (key, kind) values ($1, 'test'), ($2, 'test')",
+		jobTenant,
+		otherTenant,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var failedID int64
+	err = db.Pool.QueryRow(
+		t.Context(),
+		`insert into jobs (tenant, task_type, payload, state, attempts, failed_at, last_error)
+		values ($1, 'leaderboard.invalidate_official.v1', '{"year":2025}', 'failed', 5, now(), 'handler_error')
+		returning id`,
+		jobTenant,
+	).Scan(&failedID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	jobArgs := []string{
+		"--id", fmt.Sprint(failedID),
+		"--actor", "  operator@example.test ",
+		"--reason", " provider restored  ",
+	}
+	for _, tc := range []struct {
+		name   string
+		tenant []string
+		want   string
+	}{
+		{"missing tenant", nil, "--tenant: tenant key"},
+		{"malformed tenant", []string{"--tenant", "Tadoku/Prod"}, "--tenant: tenant key"},
+		{"production tenant", []string{"--tenant", "tadoku/prod"}, "tenant tadoku/prod: job is not failed"},
+		{"other test tenant", []string{"--tenant", otherTenant}, "tenant " + otherTenant + ": job is not failed"},
+		{"unregistered tenant", []string{"--tenant", "e2e/absent-0123abcd"}, "job is not failed"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := replay(t.Context(), append(tc.tenant, jobArgs...), logger)
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("replay error = %v, want %q", err, tc.want)
+			}
+
+			var jobs int
+			err = db.Pool.QueryRow(t.Context(), "select count(*) from jobs").Scan(&jobs)
+			if err != nil || jobs != 1 {
+				t.Fatalf("rejected replay changed jobs: count=%d error=%v", jobs, err)
+			}
+		})
+	}
+
+	if err := replay(t.Context(), append([]string{"--tenant", jobTenant}, jobArgs...), logger); err != nil {
+		t.Fatal(err)
+	}
+
+	var originalState, replayTenant, replayState, taskType, payload, actor, reason string
+	err = db.Pool.QueryRow(t.Context(), `select original.state, replay.tenant, replay.state, replay.task_type,
+			replay.payload::text, replay.replay_actor, replay.replay_reason
+		from jobs original join jobs replay on replay.replay_of_id = original.id
+		where original.id = $1`,
+		failedID,
+	).Scan(&originalState, &replayTenant, &replayState, &taskType, &payload, &actor, &reason)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got := []string{originalState, replayTenant, replayState, taskType, payload, actor, reason}
+	want := []string{
+		"failed",
+		jobTenant,
+		"pending",
+		"leaderboard.invalidate_official.v1",
+		`{"year": 2025}`,
+		"operator@example.test",
+		"provider restored",
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("replayed job = %q, want %q", got, want)
 	}
 }
 

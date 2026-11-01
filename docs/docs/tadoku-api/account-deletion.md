@@ -229,8 +229,11 @@ the cause, then replay it with the
 [replay command](./jobs-operations.md#inspect-and-replay-retained-work):
 
 ```sh
-tadoku-worker replay --id <FAILED_JOB_ID> --actor <YOUR_NAME> --reason '<repaired cause>'
+tadoku-worker replay --tenant <TENANT> --id <FAILED_JOB_ID> --actor <YOUR_NAME> --reason '<repaired cause>'
 ```
+
+`<TENANT>` is the tenant the deletion was filed in, the same key the queries
+above set; production is `tadoku/prod`.
 
 Follow the new job with the queries above. A job that failed with
 `rejected` named a user without a deletion lock or without a `users`

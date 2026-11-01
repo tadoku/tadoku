@@ -99,9 +99,11 @@ insert into jobs (task_type, payload) values
 commit;
 ```
 
-The replay command cannot replay branch jobs: it runs as `tadoku/prod`. Test
-replay with `bazel test //services/tadoku-api/cmd/tadoku-worker:tadoku-worker_test`
-and a disposable database, as described in [Testing](./testing.md).
+To replay a failed job in your tenant, run the
+[replay command](#inspect-and-replay-retained-work) in your branch's worker pod
+with `--tenant tadoku/<route>`; that pod already connects to the database your
+branch uses. A frontend-only branch has no worker; run it in the base worker
+pod instead.
 
 `dev down` stops your worker and clears its override, so the base worker can
 finish your remaining jobs before tenant teardown deletes the tenant's rows,
@@ -180,16 +182,25 @@ subcommand. It needs only the worker's `WORKER_POSTGRES_*` settings, so it can
 run inside the worker container:
 
 ```sh
-tadoku-worker replay --id 123 --actor operator-name --reason 'cause repaired'
+tadoku-worker replay --tenant tadoku/prod --id 123 --actor operator-name --reason 'cause repaired'
 ```
 
-- It replays only `tadoku/prod` jobs. For a job in another tenant, a job that is
-  not `failed`, or a name the binary does not register, it exits with
-  `job is not failed or supported`.
-- It inserts a new `pending` job with the same name and payload, linked through
-  `replay_of_id`, and records the trimmed actor and reason. It logs
-  `job replayed` with `source_job_id` and the new `job_id`. The failed original
-  stays unchanged.
+- `--tenant` is required and names the failed job's tenant, the key you set in
+  `tadoku.tenant` to inspect it. There is no default; production is
+  `--tenant tadoku/prod`. A missing or malformed key exits before connecting.
+  The `WORKER_POSTGRES_*` settings choose the database; `--tenant` only chooses
+  the tenant within it, and the command ignores `WORKER_BRANCH`. The
+  development base database also has a `tadoku/prod` tenant.
+- It replays only jobs in the selected tenant, and must connect as the runtime
+  role so row-level security applies. For a job in another tenant, including an
+  unregistered key, a job that is not `failed`, or a name the binary does not
+  register, it exits with `job is not failed or supported`, naming the selected
+  tenant, and inserts nothing.
+- It inserts a new `pending` job in the same tenant with the same name and
+  payload, linked through `replay_of_id`, and records the trimmed actor and
+  reason. It logs `job replayed` with the tenant, `source_job_id` and the new
+  `job_id`. The failed original stays unchanged. A worker serving that tenant
+  processes the new job.
 - Verify the new job reaches `completed`. An invalid payload remains invalid on
   replay; repair requires its own reviewed procedure, not repeated replay or a
   name change.

@@ -433,7 +433,7 @@ from contests, logs
 where contest_logs.log_id = sqlc.arg('log_id') and logs.id = contest_logs.log_id
   and logs.frozen_at is null and contest_logs.contest_id = sqlc.arg('contest_id')
   and contest_logs.contest_id = contests.id
-  and contests.contest_end >= sqlc.arg('open_if_end_on_or_after');
+  and contests.contest_end >= sqlc.arg('earliest_unfinished_contest_end');
 
 -- name: UpdateOngoingContestLogs :exec
 update contest_logs set
@@ -444,7 +444,7 @@ update contest_logs set
 from contests, logs
 where contest_logs.log_id = sqlc.arg('log_id') and logs.id = contest_logs.log_id
   and logs.frozen_at is null and contest_logs.contest_id = contests.id
-  and contests.contest_end >= sqlc.arg('open_if_end_on_or_after');
+  and contests.contest_end >= sqlc.arg('earliest_unfinished_contest_end');
 
 -- name: DeleteLogTags :exec
 delete from log_tags where log_id = sqlc.arg('log_id');

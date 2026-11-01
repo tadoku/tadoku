@@ -644,10 +644,10 @@ where contest_registrations.user_id = $2
 `
 
 type ListOngoingContestRegistrationsParams struct {
-	DeletedOrganizerName     string
-	UserID                   pgtype.UUID
-	StartedIfStartOnOrBefore pgtype.Date
-	OpenIfEndOnOrAfter       pgtype.Date
+	DeletedOrganizerName         string
+	UserID                       pgtype.UUID
+	LatestStartedContestStart    pgtype.Date
+	EarliestUnfinishedContestEnd pgtype.Date
 }
 
 type ListOngoingContestRegistrationsRow struct {
@@ -672,8 +672,8 @@ func (q *Queries) ListOngoingContestRegistrations(ctx context.Context, arg ListO
 	rows, err := q.db.Query(ctx, listOngoingContestRegistrations,
 		arg.DeletedOrganizerName,
 		arg.UserID,
-		arg.StartedIfStartOnOrBefore,
-		arg.OpenIfEndOnOrAfter,
+		arg.LatestStartedContestStart,
+		arg.EarliestUnfinishedContestEnd,
 	)
 	if err != nil {
 		return nil, err

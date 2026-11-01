@@ -110,7 +110,7 @@ func (r *ContestsRepository) FindRegistrationWithContestForUser(ctx context.Cont
 func (r *ContestsRepository) ListOngoingRegistrations(
 	ctx context.Context,
 	userID uuid.UUID,
-	startedIfStartOnOrBefore, openIfEndOnOrAfter time.Time,
+	latestStartedContestStart, earliestUnfinishedContestEnd time.Time,
 ) ([]Registration, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
@@ -118,10 +118,10 @@ func (r *ContestsRepository) ListOngoingRegistrations(
 	}
 
 	rows, err := queries.New(executor).ListOngoingContestRegistrations(ctx, queries.ListOngoingContestRegistrationsParams{
-		DeletedOrganizerName:     deleteduser.OrganizerName,
-		UserID:                   postgres.UUID(userID),
-		StartedIfStartOnOrBefore: pgtype.Date{Time: startedIfStartOnOrBefore, Valid: true},
-		OpenIfEndOnOrAfter:       pgtype.Date{Time: openIfEndOnOrAfter, Valid: true},
+		DeletedOrganizerName:         deleteduser.OrganizerName,
+		UserID:                       postgres.UUID(userID),
+		LatestStartedContestStart:    pgtype.Date{Time: latestStartedContestStart, Valid: true},
+		EarliestUnfinishedContestEnd: pgtype.Date{Time: earliestUnfinishedContestEnd, Valid: true},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list ongoing contest registrations: %w", err)

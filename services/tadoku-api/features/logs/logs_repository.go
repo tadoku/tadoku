@@ -148,7 +148,7 @@ func (r *LogsRepository) UpdateContestLog(
 	ctx context.Context,
 	logID uuid.UUID,
 	tracking logscore.ContestTracking,
-	openIfEndOnOrAfter time.Time,
+	earliestUnfinishedContestEnd time.Time,
 ) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
@@ -156,18 +156,18 @@ func (r *LogsRepository) UpdateContestLog(
 	}
 	p := trackingParams(tracking.Tracking)
 	return queries.New(executor).UpdateOngoingContestLog(ctx, queries.UpdateOngoingContestLogParams{
-		UnitKey:            p.unitKey,
-		Amount:             p.amount,
-		Modifier:           p.modifier,
-		DurationSeconds:    p.duration,
-		ComputedScore:      pgtype.Float4{Float32: tracking.Tracking.Score, Valid: true},
-		ScoreRuleSetID:     p.ruleSetID,
-		ScoreRuleIds:       p.ruleIDs,
-		ScoreRates:         tracking.Tracking.Rates,
-		ScoreSource:        p.source,
-		LogID:              postgres.UUID(logID),
-		ContestID:          postgres.UUID(tracking.ContestID),
-		OpenIfEndOnOrAfter: pgtype.Date{Time: openIfEndOnOrAfter, Valid: true},
+		UnitKey:                      p.unitKey,
+		Amount:                       p.amount,
+		Modifier:                     p.modifier,
+		DurationSeconds:              p.duration,
+		ComputedScore:                pgtype.Float4{Float32: tracking.Tracking.Score, Valid: true},
+		ScoreRuleSetID:               p.ruleSetID,
+		ScoreRuleIds:                 p.ruleIDs,
+		ScoreRates:                   tracking.Tracking.Rates,
+		ScoreSource:                  p.source,
+		LogID:                        postgres.UUID(logID),
+		ContestID:                    postgres.UUID(tracking.ContestID),
+		EarliestUnfinishedContestEnd: pgtype.Date{Time: earliestUnfinishedContestEnd, Valid: true},
 	})
 }
 
@@ -175,7 +175,7 @@ func (r *LogsRepository) UpdateOngoingContestLogs(
 	ctx context.Context,
 	logID uuid.UUID,
 	tracking logscore.Tracking,
-	openIfEndOnOrAfter time.Time,
+	earliestUnfinishedContestEnd time.Time,
 ) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
@@ -183,17 +183,17 @@ func (r *LogsRepository) UpdateOngoingContestLogs(
 	}
 	p := trackingParams(tracking)
 	return queries.New(executor).UpdateOngoingContestLogs(ctx, queries.UpdateOngoingContestLogsParams{
-		UnitKey:            p.unitKey,
-		Amount:             p.amount,
-		Modifier:           p.modifier,
-		DurationSeconds:    p.duration,
-		ComputedScore:      pgtype.Float4{Float32: tracking.Score, Valid: true},
-		ScoreRuleSetID:     p.ruleSetID,
-		ScoreRuleIds:       p.ruleIDs,
-		ScoreRates:         tracking.Rates,
-		ScoreSource:        p.source,
-		LogID:              postgres.UUID(logID),
-		OpenIfEndOnOrAfter: pgtype.Date{Time: openIfEndOnOrAfter, Valid: true},
+		UnitKey:                      p.unitKey,
+		Amount:                       p.amount,
+		Modifier:                     p.modifier,
+		DurationSeconds:              p.duration,
+		ComputedScore:                pgtype.Float4{Float32: tracking.Score, Valid: true},
+		ScoreRuleSetID:               p.ruleSetID,
+		ScoreRuleIds:                 p.ruleIDs,
+		ScoreRates:                   tracking.Rates,
+		ScoreSource:                  p.source,
+		LogID:                        postgres.UUID(logID),
+		EarliestUnfinishedContestEnd: pgtype.Date{Time: earliestUnfinishedContestEnd, Valid: true},
 	})
 }
 

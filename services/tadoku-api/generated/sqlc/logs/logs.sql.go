@@ -1239,18 +1239,18 @@ where contest_logs.log_id = $10 and logs.id = contest_logs.log_id
 `
 
 type UpdateOngoingContestLogParams struct {
-	UnitKey            pgtype.Text
-	Amount             pgtype.Float4
-	Modifier           pgtype.Float4
-	DurationSeconds    pgtype.Int4
-	ComputedScore      pgtype.Float4
-	ScoreRuleSetID     pgtype.UUID
-	ScoreRuleIds       []pgtype.UUID
-	ScoreRates         []float32
-	ScoreSource        pgtype.Text
-	LogID              pgtype.UUID
-	ContestID          pgtype.UUID
-	OpenIfEndOnOrAfter pgtype.Date
+	UnitKey                      pgtype.Text
+	Amount                       pgtype.Float4
+	Modifier                     pgtype.Float4
+	DurationSeconds              pgtype.Int4
+	ComputedScore                pgtype.Float4
+	ScoreRuleSetID               pgtype.UUID
+	ScoreRuleIds                 []pgtype.UUID
+	ScoreRates                   []float32
+	ScoreSource                  pgtype.Text
+	LogID                        pgtype.UUID
+	ContestID                    pgtype.UUID
+	EarliestUnfinishedContestEnd pgtype.Date
 }
 
 func (q *Queries) UpdateOngoingContestLog(ctx context.Context, arg UpdateOngoingContestLogParams) error {
@@ -1266,7 +1266,7 @@ func (q *Queries) UpdateOngoingContestLog(ctx context.Context, arg UpdateOngoing
 		arg.ScoreSource,
 		arg.LogID,
 		arg.ContestID,
-		arg.OpenIfEndOnOrAfter,
+		arg.EarliestUnfinishedContestEnd,
 	)
 	return err
 }
@@ -1284,17 +1284,17 @@ where contest_logs.log_id = $10 and logs.id = contest_logs.log_id
 `
 
 type UpdateOngoingContestLogsParams struct {
-	UnitKey            pgtype.Text
-	Amount             pgtype.Float4
-	Modifier           pgtype.Float4
-	DurationSeconds    pgtype.Int4
-	ComputedScore      pgtype.Float4
-	ScoreRuleSetID     pgtype.UUID
-	ScoreRuleIds       []pgtype.UUID
-	ScoreRates         []float32
-	ScoreSource        pgtype.Text
-	LogID              pgtype.UUID
-	OpenIfEndOnOrAfter pgtype.Date
+	UnitKey                      pgtype.Text
+	Amount                       pgtype.Float4
+	Modifier                     pgtype.Float4
+	DurationSeconds              pgtype.Int4
+	ComputedScore                pgtype.Float4
+	ScoreRuleSetID               pgtype.UUID
+	ScoreRuleIds                 []pgtype.UUID
+	ScoreRates                   []float32
+	ScoreSource                  pgtype.Text
+	LogID                        pgtype.UUID
+	EarliestUnfinishedContestEnd pgtype.Date
 }
 
 func (q *Queries) UpdateOngoingContestLogs(ctx context.Context, arg UpdateOngoingContestLogsParams) error {
@@ -1309,7 +1309,7 @@ func (q *Queries) UpdateOngoingContestLogs(ctx context.Context, arg UpdateOngoin
 		arg.ScoreRates,
 		arg.ScoreSource,
 		arg.LogID,
-		arg.OpenIfEndOnOrAfter,
+		arg.EarliestUnfinishedContestEnd,
 	)
 	return err
 }

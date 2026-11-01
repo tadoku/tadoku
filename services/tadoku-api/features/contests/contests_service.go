@@ -72,8 +72,8 @@ func (s *Service) listOngoingRegistrations(ctx context.Context, userID uuid.UUID
 	return s.contests.ListOngoingRegistrations(
 		ctx,
 		userID,
-		contestwindow.StartedIfStartOnOrBefore(now),
-		contestwindow.OpenIfEndOnOrAfter(now),
+		contestwindow.LatestStartedContestStart(now),
+		contestwindow.EarliestUnfinishedContestEnd(now),
 	)
 }
 

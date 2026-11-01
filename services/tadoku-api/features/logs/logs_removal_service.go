@@ -23,8 +23,8 @@ func (s *Service) RemoveUser(ctx context.Context, userID uuid.UUID, now time.Tim
 		return RemovalResult{}, err
 	}
 
-	openIfEndOnOrAfter := contestwindow.OpenIfEndOnOrAfter(now)
-	if err := s.logs.DeleteUserContestLogsOutsideFinishedContests(ctx, userID, openIfEndOnOrAfter); err != nil {
+	earliestUnfinishedContestEnd := contestwindow.EarliestUnfinishedContestEnd(now)
+	if err := s.logs.DeleteUserContestLogsOutsideFinishedContests(ctx, userID, earliestUnfinishedContestEnd); err != nil {
 		return RemovalResult{}, err
 	}
 	kept, err := s.logs.FreezeUserContestHistory(ctx, userID, now)

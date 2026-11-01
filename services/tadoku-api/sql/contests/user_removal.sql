@@ -3,7 +3,7 @@ delete from contest_registrations
 using contests
 where contests.id = contest_registrations.contest_id
   and contest_registrations.user_id = sqlc.arg(user_id)
-  and contests.contest_end >= sqlc.arg(open_if_end_on_or_after)
+  and contests.contest_end >= sqlc.arg(earliest_unfinished_contest_end)
 returning contest_registrations.contest_id;
 
 -- name: CountRegistrationsForUser :one

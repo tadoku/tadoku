@@ -38,7 +38,7 @@ func (r *LogsRepository) UserOfficialYears(ctx context.Context, userID uuid.UUID
 func (r *LogsRepository) DeleteUserContestLogsOutsideFinishedContests(
 	ctx context.Context,
 	userID uuid.UUID,
-	openIfEndOnOrAfter time.Time,
+	earliestUnfinishedContestEnd time.Time,
 ) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
@@ -47,8 +47,8 @@ func (r *LogsRepository) DeleteUserContestLogsOutsideFinishedContests(
 	return queries.New(executor).DeleteUserContestLogsOutsideFinishedContests(
 		ctx,
 		queries.DeleteUserContestLogsOutsideFinishedContestsParams{
-			UserID:             postgres.UUID(userID),
-			OpenIfEndOnOrAfter: pgtype.Date{Time: openIfEndOnOrAfter, Valid: true},
+			UserID:                       postgres.UUID(userID),
+			EarliestUnfinishedContestEnd: pgtype.Date{Time: earliestUnfinishedContestEnd, Valid: true},
 		},
 	)
 }

@@ -23,7 +23,7 @@ func (s *Service) PlanContestRegistrationUpdate(
 	}
 	current := make(map[uuid.UUID]RegistrationReference, len(log.Registrations))
 	for _, reference := range log.Registrations {
-		if contestwindow.Open(reference.ContestEnd, now) {
+		if contestwindow.Unfinished(reference.ContestEnd, now) {
 			current[reference.RegistrationID] = reference
 		}
 	}
@@ -135,7 +135,7 @@ func (s *Service) Delete(ctx context.Context, logID uuid.UUID, now time.Time) (M
 		return MutationResult{}, err
 	}
 	for _, contest := range contests {
-		if !contestwindow.Open(contest.End, now) {
+		if !contestwindow.Unfinished(contest.End, now) {
 			return MutationResult{}, errx.NewForbiddenError("forbidden")
 		}
 	}
@@ -307,19 +307,19 @@ func (s *Service) update(ctx context.Context, mutation logMutation) (MutationRes
 	if err := s.logs.UpdateLog(ctx, mutation); err != nil {
 		return MutationResult{}, err
 	}
-	openIfEndOnOrAfter := contestwindow.OpenIfEndOnOrAfter(mutation.Now)
+	earliestUnfinishedContestEnd := contestwindow.EarliestUnfinishedContestEnd(mutation.Now)
 	if len(mutation.ContestTrackings) == 0 {
 		inherited := mutation.Tracking
 		inherited.RuleSetID = nil
 		inherited.RuleIDs = nil
 		inherited.Rates = nil
 		inherited.Source = ""
-		if err := s.logs.UpdateOngoingContestLogs(ctx, mutation.ID, inherited, openIfEndOnOrAfter); err != nil {
+		if err := s.logs.UpdateOngoingContestLogs(ctx, mutation.ID, inherited, earliestUnfinishedContestEnd); err != nil {
 			return MutationResult{}, err
 		}
 	} else {
 		for _, tracking := range mutation.ContestTrackings {
-			if err := s.logs.UpdateContestLog(ctx, mutation.ID, tracking, openIfEndOnOrAfter); err != nil {
+			if err := s.logs.UpdateContestLog(ctx, mutation.ID, tracking, earliestUnfinishedContestEnd); err != nil {
 				return MutationResult{}, err
 			}
 		}
@@ -337,7 +337,7 @@ func (s *Service) update(ctx context.Context, mutation logMutation) (MutationRes
 		return MutationResult{}, err
 	}
 	for _, contest := range contests {
-		if contestwindow.Open(contest.End, mutation.Now) {
+		if contestwindow.Unfinished(contest.End, mutation.Now) {
 			result.Jobs = append(result.Jobs, jobs.InvalidateContestLeaderboardV1{ContestID: contest.ID})
 		}
 	}
@@ -359,7 +359,7 @@ func (s *Service) RegistrationsForRescoring(log *Log, now time.Time) []logscore.
 	}
 	selected := make([]logscore.Target, 0, len(log.Registrations))
 	for _, registration := range log.Registrations {
-		if contestwindow.Open(registration.ContestEnd, now) {
+		if contestwindow.Unfinished(registration.ContestEnd, now) {
 			selected = append(selected, logscore.Target{
 				RegistrationID: registration.RegistrationID,
 				ContestID:      registration.ContestID,

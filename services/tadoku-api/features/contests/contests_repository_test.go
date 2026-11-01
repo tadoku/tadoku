@@ -424,8 +424,8 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 		return repository.ListOngoingRegistrations(
 			tenantCtx,
 			userID,
-			contestwindow.StartedIfStartOnOrBefore(now),
-			contestwindow.OpenIfEndOnOrAfter(now),
+			contestwindow.LatestStartedContestStart(now),
+			contestwindow.EarliestUnfinishedContestEnd(now),
 		)
 	}
 	ongoing, err := listOngoing(time.Date(2026, 9, 12, 23, 59, 59, 0, time.UTC))

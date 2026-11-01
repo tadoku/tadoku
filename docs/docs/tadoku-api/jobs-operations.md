@@ -20,12 +20,18 @@ only that tenant's keys. Private development databases sharing `tadoku/prod`
 retain their route prefix as described in
 [Valkey configuration](./configuration.md#valkey-and-leaderboard-caches).
 The API does not check worker readiness
-or the queue before serving a warm key. It can therefore serve an outdated
-leaderboard while the worker is down, while that key's invalidation job is
-pending or running, and after the job has failed terminally. A failed
-invalidation leaves the key stale until another write affecting the same
-contest or year publishes a new invalidation, or an operator replays the failed
-job. There is no automatic age limit on a warm key and no startup
+or the queue before serving a warm key. Instead, each rebuild stamps the key's
+marker with the business time taken just before its PostgreSQL read, and the
+API serves the key only while that stamp is under one minute old and not in
+the future. The first read after that rebuilds from PostgreSQL. A warm board
+therefore trails PostgreSQL by less than one minute while the worker is down,
+while the key's invalidation job is pending or running, or after the job has
+failed terminally. A marker without a stamp or for another
+generation is a miss. The bound assumes API pod clocks agree; a reading pod
+whose clock runs behind the rebuilding pod extends it by that skew. The bound
+is `maxSnapshotAge` in
+`services/tadoku-api/features/leaderboard/leaderboard_cache.go`. Outdated keys
+stay in Valkey until a read or invalidation replaces them; there is no startup
 reconciliation of all leaderboard keys.
 
 On a cache miss, the API rebuilds from PostgreSQL behind a generation check so
@@ -44,9 +50,9 @@ gauges refresh at startup and every fifteen seconds. Investigate any failed
 leaderboard invalidation in `jobs`. Inspect its `last_error` and repair the
 cause before using the
 [replay command](#inspect-and-replay-retained-work). Verify the replayed job
-completes and a subsequent leaderboard read reflects PostgreSQL. A later write
-can also publish another invalidation, but do not depend on users making one to
-recover a stale board.
+completes and a subsequent leaderboard read reflects PostgreSQL. Without a
+replay, the board still rebuilds from PostgreSQL once its stamp passes the
+freshness bound.
 
 ## Run jobs on your development branch
 

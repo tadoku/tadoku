@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
 type Service struct {
@@ -129,11 +130,12 @@ func (s *Service) fetch(
 		slog.WarnContext(ctx, board+" leaderboard cache unavailable; falling back to Postgres", "error", err)
 		return fetchFromPostgres(ctx, request, load)
 	}
+	builtAt := timex.Now()
 	scores, err := load(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := s.cache.rebuild(ctx, key, scores, generation); err != nil {
+	if _, err := s.cache.rebuild(ctx, key, scores, generation, builtAt); err != nil {
 		slog.WarnContext(ctx, board+" leaderboard cache rebuild failed; falling back to Postgres", "error", err)
 	}
 	return result(pageOf(scores, request), request), nil

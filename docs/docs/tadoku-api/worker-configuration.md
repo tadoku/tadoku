@@ -52,8 +52,8 @@ rebuilds from PostgreSQL only if its generation has not changed, and cached
 reads recheck that generation before returning; unavailable Valkey falls back
 to PostgreSQL. Worker Pod readiness reports whether the execution loop can
 operate, independently of individual job success. Monitor queued and failed
-jobs because cached results can remain stale while invalidation work is
-outstanding.
+jobs because cached results can remain stale, for up to the one-minute
+freshness bound, while invalidation work is outstanding.
 
 Global and per-type concurrency are per process. Handler cancellation does not
 release its slot until it returns. On shutdown the application stops claiming,

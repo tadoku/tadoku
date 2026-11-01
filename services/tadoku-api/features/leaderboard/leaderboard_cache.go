@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 	valkeygo "github.com/valkey-io/valkey-go"
 )
 
@@ -15,6 +17,8 @@ const (
 	contestPrefix = "leaderboard:contest:"
 	yearlyPrefix  = "leaderboard:yearly:"
 	globalKey     = "leaderboard:global"
+
+	maxSnapshotAge = time.Minute
 )
 
 var rebuildScript = valkeygo.NewLuaScript(`
@@ -22,10 +26,10 @@ if (redis.call('GET', KEYS[3]) or '0') ~= ARGV[1] then
   return 0
 end
 redis.call('DEL', KEYS[1])
-if #ARGV > 1 then
-  redis.call('ZADD', KEYS[1], unpack(ARGV, 2))
+if #ARGV > 2 then
+  redis.call('ZADD', KEYS[1], unpack(ARGV, 3))
 end
-redis.call('SET', KEYS[2], 'native:' .. ARGV[1])
+redis.call('SET', KEYS[2], ARGV[2])
 return 1
 `)
 
@@ -115,7 +119,7 @@ func (c *Cache) fetchPage(ctx context.Context, key string, start int64, pageSize
 	if err != nil {
 		return nil, false, err
 	}
-	if generation != "0" && marker != "native:"+generation {
+	if !snapshotFresh(marker, generation) {
 		return nil, false, nil
 	}
 
@@ -134,6 +138,24 @@ func (c *Cache) fetchPage(ctx context.Context, key string, start int64, pageSize
 		return nil, false, err
 	}
 	return board, true, nil
+}
+
+func snapshotMarker(generation string, builtAt time.Time) string {
+	return "native:" + generation + ":" + strconv.FormatInt(builtAt.UnixMilli(), 10)
+}
+
+func snapshotFresh(marker, generation string) bool {
+	builtAt, ok := strings.CutPrefix(marker, "native:"+generation+":")
+	if !ok {
+		return false
+	}
+	millis, err := strconv.ParseInt(builtAt, 10, 64)
+	if err != nil {
+		return false
+	}
+
+	age := timex.Now().Sub(time.UnixMilli(millis))
+	return age >= 0 && age < maxSnapshotAge
 }
 
 func parsePage(reply []valkeygo.ValkeyMessage, offset int) (*page, error) {
@@ -212,11 +234,17 @@ func (c *Cache) invalidate(ctx context.Context, key string) error {
 	return nil
 }
 
-func (c *Cache) rebuild(ctx context.Context, key string, scores []score, generation string) (bool, error) {
+func (c *Cache) rebuild(
+	ctx context.Context,
+	key string,
+	scores []score,
+	generation string,
+	builtAt time.Time,
+) (bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, c.operationTimeout)
 	defer cancel()
-	args := make([]string, 0, 1+len(scores)*2)
-	args = append(args, generation)
+	args := make([]string, 0, 2+len(scores)*2)
+	args = append(args, generation, snapshotMarker(generation, builtAt))
 	for _, item := range scores {
 		args = append(args, strconv.FormatFloat(item.value, 'f', -1, 64), item.userID.String())
 	}

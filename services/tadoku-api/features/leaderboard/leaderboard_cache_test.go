@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testvalkey"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 	valkeygo "github.com/valkey-io/valkey-go"
 )
 
@@ -63,7 +64,8 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 		t.Fatal(err)
 	}
 	stale := []score{{userID: uuid.MustParse("11111111-1111-4111-8111-111111111111"), value: 10}}
-	published, err := cache.rebuild(tenantCtx, key, stale, before)
+	builtAt := timex.Now()
+	published, err := cache.rebuild(tenantCtx, key, stale, before, builtAt)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -83,7 +85,7 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 		t.Fatal(err)
 	}
 	fresh := []score{{userID: stale[0].userID, value: 20}}
-	published, err = cache.rebuild(tenantCtx, key, fresh, after)
+	published, err = cache.rebuild(tenantCtx, key, fresh, after, builtAt)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,8 +96,8 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if marker != "native:"+after {
-		t.Errorf("marker = %q, want native:%s", marker, after)
+	if want := snapshotMarker(after, builtAt); marker != want {
+		t.Errorf("marker = %q, want %q", marker, want)
 	}
 
 	racing := NewCache(&invalidateBeforeZcard{Client: client, key: key, t: t}, time.Second)
@@ -147,12 +149,21 @@ func TestFetchPageReadsOneSnapshotWhileSameGenerationRepublishes(t *testing.T) {
 		{userID: third, value: 15},
 		{userID: fourth, value: 10},
 	}
-	published, err := cache.rebuild(tenantCtx, key, before, "0")
+	builtAt := timex.Now()
+	published, err := cache.rebuild(tenantCtx, key, before, "0", builtAt)
 	if err != nil || !published {
 		t.Fatalf("publish first board: published=%t error=%v", published, err)
 	}
 
-	racing := NewCache(&republishAfterPageRead{Client: client, cache: cache, key: key, scores: after, t: t}, time.Second)
+	republish := &republishAfterPageRead{
+		Client:  client,
+		cache:   cache,
+		key:     key,
+		scores:  after,
+		builtAt: builtAt,
+		t:       t,
+	}
+	racing := NewCache(republish, time.Second)
 	page, exists, err := racing.fetchPage(tenantCtx, key, 2, 1)
 	if err != nil || !exists {
 		t.Fatalf("fetch page: exists=%t error=%v", exists, err)
@@ -166,17 +177,18 @@ func TestFetchPageReadsOneSnapshotWhileSameGenerationRepublishes(t *testing.T) {
 
 type republishAfterPageRead struct {
 	valkeygo.Client
-	cache  *Cache
-	key    string
-	scores []score
-	t      *testing.T
-	calls  int
+	cache   *Cache
+	key     string
+	scores  []score
+	builtAt time.Time
+	t       *testing.T
+	calls   int
 }
 
 func (client *republishAfterPageRead) Do(ctx context.Context, command valkeygo.Completed) valkeygo.ValkeyResult {
 	client.calls++
 	if client.calls == 5 {
-		published, err := client.cache.rebuild(ctx, client.key, client.scores, "0")
+		published, err := client.cache.rebuild(ctx, client.key, client.scores, "0", client.builtAt)
 		if err != nil || !published {
 			client.t.Fatalf("republish board: published=%t error=%v", published, err)
 		}
@@ -215,11 +227,12 @@ func TestTenantLeaderboardInvalidationKeepsOtherTenantWarm(t *testing.T) {
 	}
 
 	userA, userB := uuid.New(), uuid.New()
-	published, err := cache.rebuild(ctxA, cacheA, []score{{userID: userA, value: 10}}, "0")
+	builtAt := timex.Now()
+	published, err := cache.rebuild(ctxA, cacheA, []score{{userID: userA, value: 10}}, "0", builtAt)
 	if err != nil || !published {
 		t.Fatalf("warm tenant A: published=%t error=%v", published, err)
 	}
-	published, err = cache.rebuild(ctxB, cacheB, []score{{userID: userB, value: 20}}, "0")
+	published, err = cache.rebuild(ctxB, cacheB, []score{{userID: userB, value: 20}}, "0", builtAt)
 	if err != nil || !published {
 		t.Fatalf("warm tenant B: published=%t error=%v", published, err)
 	}

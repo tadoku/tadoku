@@ -210,7 +210,7 @@ func (s *Service) ApplyRegistration(
 	existing *Registration,
 	contest Contest,
 ) (RegistrationResult, error) {
-	if existing == nil && !contest.RegistrationEnd.Add(24*time.Hour).After(timex.Now()) {
+	if existing == nil && !contestwindow.RegistrationOpen(contest.RegistrationEnd, timex.Now()) {
 		return RegistrationResult{}, ErrRegistrationClosed
 	}
 

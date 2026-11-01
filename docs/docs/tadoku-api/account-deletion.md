@@ -83,7 +83,8 @@ fails without retry as `rejected`. Any other failure rolls the whole deletion
 back and leaves the account locked until the job is retried or replayed. A
 finished contest is one whose end date is before the current UTC date, the rule
 that closes log editing. `services/tadoku-api/domain/contestwindow` owns that
-rule and the rule that a contest has started from its start date. Go code calls
+rule, the rule that a contest has started from its start date and the rule that
+new registrations close after the `registration_end` date. Go code calls
 its predicates; SQL that filters by the window binds the date bounds it
 computes instead of the current time.
 

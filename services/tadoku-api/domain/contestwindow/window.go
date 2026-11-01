@@ -12,6 +12,12 @@ func Open(end, now time.Time) bool {
 	return !end.Before(OpenIfEndOnOrAfter(now))
 }
 
+// RegistrationOpen takes a registration_end date at UTC midnight; a contest accepts new registrations through the end
+// of that UTC day.
+func RegistrationOpen(registrationEnd, now time.Time) bool {
+	return !registrationEnd.Before(utcDate(now))
+}
+
 // StartedIfStartOnOrBefore is the bound SQL binds to select started contests: contest_start <= the bound.
 func StartedIfStartOnOrBefore(now time.Time) time.Time {
 	return utcDate(now)

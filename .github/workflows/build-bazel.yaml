@@ -137,6 +137,7 @@ jobs:
         run: |
           cat > "$HOME/.bazelrc" <<EOF
           startup --output_user_root=$RUNNER_TEMP/bazel
+          common --repository_cache=$HOME/bazelisk/repositories
           common --remote_cache=https://bazel-cache.lab
           common --tls_certificate=/usr/local/share/ca-certificates/ca.crt
           common --remote_timeout=5s
@@ -146,6 +147,12 @@ jobs:
           test --local_test_jobs=2
           build --local_resources=memory=2048
           EOF
+          if test -r "$HOME/bazelisk/repositories/prewarm.json"; then
+            cp "$HOME/bazelisk/repositories/prewarm.json" "$RUNNER_TEMP/bazel-prewarm.json"
+          else
+            printf '{"status":"cold"}\n' > "$RUNNER_TEMP/bazel-prewarm.json"
+          fi
+          cat "$RUNNER_TEMP/bazel-prewarm.json"
           curl --fail --silent --show-error \
             --cacert /usr/local/share/ca-certificates/ca.crt \
             https://bazel-cache.lab/status | tee "$RUNNER_TEMP/bazel-cache-before.json"

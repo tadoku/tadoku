@@ -204,7 +204,7 @@ The worker performs tenant-scoped email retention at startup and daily, with
 the periods in [Retained email](./email.md#retention-and-operations). A branch
 worker cleans only its branch. Every fifteen seconds it also
 reconciles pending email rows whose send jobs exhausted their attempts. This
-is independent of three-calendar-month successful-job cleanup. See
+is independent of the 90-day successful-job cleanup. See
 [Retained email](./email.md) for inspection, production audit records and SMTP
 failure semantics; never inspect production content with unaudited operator
 SQL as a substitute for its read API.

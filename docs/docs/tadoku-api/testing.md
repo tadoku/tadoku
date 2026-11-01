@@ -138,6 +138,8 @@ Never point tests at shared development or production services.
   with [rapid](https://pkg.go.dev/pgregory.net/rapid) when a rule must hold
   over a combinatorial input space and an independent model states the
   expected result. Keep example tests for the cases a reader should see.
+  Never require random cases to reach an outcome; check each outcome a
+  property must cover on a fixed case through the same assertions.
 - Draw from small pools so values collide, and build them through the public
   constructors. Generate invalid input only when the property is about
   rejecting it. Rapid seeds, shrinks and prints counterexamples; do not do any

@@ -128,9 +128,9 @@ func runLeaderboardCase(t *testing.T, name string, want int, cache, cacheKey str
 	})
 }
 
-func seedLeaderboardCache(t *testing.T, key, cache string) {
+func seedLeaderboardCache(t *testing.T, name, cache string) {
 	t.Helper()
-	key = "tenant:tadoku/prod:" + key
+	key := "tenant:tadoku/prod:" + name
 	client := leaderboardValkey.client
 	builder := client.B().Zadd().Key(key).ScoreMember().ScoreMember(77, "11111111-1111-4111-8111-111111111111")
 	if cache == "hit_many" {
@@ -146,7 +146,14 @@ func seedLeaderboardCache(t *testing.T, key, cache string) {
 	if err := client.Do(t.Context(), builder.Build()).Error(); err != nil {
 		t.Fatal(err)
 	}
-	if err := client.Do(t.Context(), client.B().Set().Key(key+":last_updated").Value("2026-09-12T12:00:00Z").Build()).Error(); err != nil {
+	seedLeaderboardMarker(t, name, fmt.Sprintf("native:0:%d", fixtureInstant.UnixMilli()))
+}
+
+func seedLeaderboardMarker(t *testing.T, key, marker string) {
+	t.Helper()
+	key = "tenant:tadoku/prod:" + key
+	client := leaderboardValkey.client
+	if err := client.Do(t.Context(), client.B().Set().Key(key+":last_updated").Value(marker).Build()).Error(); err != nil {
 		t.Fatal(err)
 	}
 }

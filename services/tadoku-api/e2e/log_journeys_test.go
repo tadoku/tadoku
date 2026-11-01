@@ -3,6 +3,7 @@ package e2e_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"testing"
@@ -46,6 +47,39 @@ func TestStandaloneWorkerLeaderboardJourney(t *testing.T) {
 	if score := cachedLeaderboardScore(t, "leaderboard:global"); score != 10 {
 		t.Errorf("rebuilt leaderboard cache score = %v, want 10", score)
 	}
+}
+
+func TestLeaderboardFreshnessBoundJourney(t *testing.T) {
+	uuid.SetRand(rand.New(rand.NewSource(1)))
+	defer uuid.SetRand(nil)
+
+	expired := fixtureInstant.Add(time.Minute)
+	runJourneyWithHandler(t, api, scoringEnabledHandler, "LeaderboardFreshness", []step{
+		{request: "warm_empty_board", as: guest, want: http.StatusOK},
+		{request: "create_log", as: user, want: http.StatusOK},
+		{request: "within_bound_stale", as: guest, want: http.StatusOK, at: expired.Add(-time.Millisecond)},
+		{request: "after_bound_rebuilt", as: guest, want: http.StatusOK, at: expired},
+	})
+	if t.Failed() {
+		return
+	}
+	if score := cachedLeaderboardScore(t, "leaderboard:global"); score != 10 {
+		t.Errorf("rebuilt leaderboard cache score = %v, want 10", score)
+	}
+}
+
+func TestLeaderboardUntrustedMarkerJourney(t *testing.T) {
+	runJourneyWithSetup(t, api, scoringEnabledHandler, "LeaderboardMarkers", func(t *testing.T) {
+		legacy := "leaderboard:yearly:2026"
+		future := "leaderboard:contest:f0000000-0000-4000-8000-000000000001"
+		seedLeaderboardCache(t, legacy, "hit")
+		seedLeaderboardMarker(t, legacy, "native:0")
+		seedLeaderboardCache(t, future, "hit")
+		seedLeaderboardMarker(t, future, fmt.Sprintf("native:0:%d", fixtureInstant.Add(time.Hour).UnixMilli()))
+	}, []step{
+		{request: "legacy_marker_rebuilt", as: guest, want: http.StatusOK},
+		{request: "future_marker_rebuilt", as: guest, want: http.StatusOK},
+	})
 }
 
 func TestLogCreateAtomicFailureJourney(t *testing.T) {

@@ -242,6 +242,17 @@ admits at most five Tadoku build runners; resource reservations may keep excess 
 
 The runners use the private Bazel HTTP action cache and Lab CA. Pull requests
 read existing results without uploading; trusted non-PR runs populate the cache.
+Each runner Pod prefetches trusted public `main` dependencies while becoming
+idle: frozen module metadata, Gazelle and the OpenAPI generator, plus the
+workflow's digest-pinned service images. Native repository archives and extracted
+source trees use the Pod's private Bazelisk `emptyDir` under
+`/home/runner/bazelisk/repositories`; output roots and Bazel servers remain
+separate and disposable. Source-cache hits differ from HTTP action-cache hits.
+Prewarm failure falls back to ordinary cold setup. The `bazel-prewarm.json`
+receipt in `bazel-performance` records the seed revision, duration and size, or
+reports `cold` when no successful source seed receipt was available. A `ready`
+receipt means repository fetches completed; service-image pulls are best effort.
+
 Local action outputs and service data are disposable per runner. Fork pull
 requests retain GitHub-hosted isolation and cannot use the private runner pool.
 Manual dispatch can select the hosted control for an equivalent-workload

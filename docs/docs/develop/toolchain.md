@@ -237,6 +237,9 @@ set and run its tests together against disposable services; Bazel can execute
 test targets in parallel. Release image commands follow the tests so their
 distinct configuration does not invalidate normal analysis between the build and
 tests. Main publication runs only after the tests and image scanning succeed.
+Image scanning uses the Trivy that the runner image puts on `PATH`;
+GitHub-hosted runs install the same version before scanning. The scan step
+asserts the version in both environments.
 Race tests run separately and never gate publication; see [Race tests](./race-tests.md).
 ARC admits at most five Tadoku build runners; resource reservations may keep
 excess jobs queued.

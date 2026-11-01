@@ -295,6 +295,7 @@ func (s *Service) ListContests(
 	if parameters.PageSize > 100 {
 		parameters.PageSize = 100
 	}
+	parameters.IncludeDeleted = parameters.IncludeDeleted && actorIsAdmin
 
 	items, total, err := s.contests.ListContests(ctx, parameters, newListVisibility(actorID, actorIsAdmin))
 	if err != nil {

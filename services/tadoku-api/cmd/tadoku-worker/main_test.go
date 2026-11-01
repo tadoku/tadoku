@@ -80,8 +80,9 @@ func TestReplayCommandReplaysOnlyInSelectedTenant(t *testing.T) {
 	db := workerTestDatabase(t)
 
 	const (
-		jobTenant   = "e2e/replay-0123abcd"
-		otherTenant = "e2e/other-0123abcd"
+		jobTenant    = "e2e/replay-0123abcd"
+		otherTenant  = "e2e/other-0123abcd"
+		absentTenant = "e2e/absent-0123abcd"
 	)
 	_, err := db.Pool.Exec(
 		t.Context(),
@@ -120,7 +121,7 @@ func TestReplayCommandReplaysOnlyInSelectedTenant(t *testing.T) {
 		{"malformed tenant", []string{"--tenant", "Tadoku/Prod"}, "--tenant: tenant key"},
 		{"production tenant", []string{"--tenant", "tadoku/prod"}, "tenant tadoku/prod: job is not failed"},
 		{"other test tenant", []string{"--tenant", otherTenant}, "tenant " + otherTenant + ": job is not failed"},
-		{"unregistered tenant", []string{"--tenant", "e2e/absent-0123abcd"}, "job is not failed"},
+		{"unregistered tenant", []string{"--tenant", absentTenant}, "tenant " + absentTenant + ": job is not failed"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			err := replay(t.Context(), append(tc.tenant, jobArgs...), logger)

@@ -25,7 +25,8 @@ The general test principles are in [Testing](./testing.md).
 - The router uses the default deployed API request budget of 30 seconds,
   including cost-12 password hashing. The complete E2E target uses an explicit
   `timeout = "long"` (900-second) budget so race instrumentation can cover real
-  bcrypt work without reducing the password cost or skipping throttle requests.
+  bcrypt work for production registration, password writes and timing/throttle
+  scenarios without skipping requests.
   Provider fixtures retain their own bounded timeouts; request-deadline behavior
   is tested at the transport boundary.
 - `reset` runs `internal/testpostgres/cleanup.sql`, which explicitly lists the
@@ -320,6 +321,14 @@ jq -r .token "$fixture_output"
 synthetic bcrypt cost-4 hash keeps fixture login cheap; production registration
 and the dedicated password-policy workflows retain cost 12. Sessions come from
 real API login.
+
+The default `e2e/testdata/IdentityV2/setup.sql` uses the same test-cost hash and
+password for routine identity scenarios. Timing/throttle scenarios explicitly
+load `e2e/testdata/IdentityV2/production-password-cost.sql` after that seed and
+verify the known account's cost is 12 before measuring. Production registration,
+password writes and unknown-account dummy comparisons retain their production
+cost; lowering a fixture's login cost must not change those paths or their
+assertions.
 
 Ordinary golden and journey resets load case SQL before the account seed.
 Explicit user/account primary-key conflicts preserve existing rows, including

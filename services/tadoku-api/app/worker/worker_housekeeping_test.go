@@ -1,17 +1,24 @@
 package worker
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"log/slog"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -262,6 +269,146 @@ func TestWorkerCleanupRetainsNinetyDaysAndFailures(t *testing.T) {
 		}
 		if exists != item.retain {
 			t.Errorf("%s retained=%t; want %t", item.name, exists, item.retain)
+		}
+	}
+}
+
+type emailMaintenanceBatchKey struct{}
+
+type emailMaintenanceTracer struct {
+	cancelTenant string
+	cancel       context.CancelFunc
+
+	mu      sync.Mutex
+	tenants []string
+}
+
+func (*emailMaintenanceTracer) TraceQueryStart(ctx context.Context, _ *pgx.Conn, _ pgx.TraceQueryStartData) context.Context {
+	return ctx
+}
+
+func (*emailMaintenanceTracer) TraceQueryEnd(context.Context, *pgx.Conn, pgx.TraceQueryEndData) {}
+
+func (tracer *emailMaintenanceTracer) TraceBatchStart(
+	ctx context.Context,
+	_ *pgx.Conn,
+	data pgx.TraceBatchStartData,
+) context.Context {
+	for _, query := range data.Batch.QueuedQueries {
+		if !strings.HasPrefix(query.SQL, "-- name: ReconcileFailures :") {
+			continue
+		}
+		key, _ := tenant.FromContext(ctx)
+		tracer.mu.Lock()
+		tracer.tenants = append(tracer.tenants, key.String())
+		tracer.mu.Unlock()
+		if key.String() == tracer.cancelTenant {
+			return context.WithValue(ctx, emailMaintenanceBatchKey{}, true)
+		}
+	}
+	return ctx
+}
+
+func (*emailMaintenanceTracer) TraceBatchQuery(context.Context, *pgx.Conn, pgx.TraceBatchQueryData) {}
+
+func (tracer *emailMaintenanceTracer) TraceBatchEnd(ctx context.Context, _ *pgx.Conn, _ pgx.TraceBatchEndData) {
+	if ctx.Value(emailMaintenanceBatchKey{}) == nil {
+		return
+	}
+	tracer.cancel()
+}
+
+func (tracer *emailMaintenanceTracer) seen() []string {
+	tracer.mu.Lock()
+	defer tracer.mu.Unlock()
+	return append([]string(nil), tracer.tenants...)
+}
+
+func TestMaintainEmailsStopsAfterBoundedCancellation(t *testing.T) {
+	database, err := testpostgres.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := database.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+
+	first := "e2e/maintain-a-0123abcd"
+	second := "e2e/maintain-b-0123abcd"
+	if _, err := database.Pool.Exec(t.Context(), `
+		insert into tenants (key, kind) values
+			($1, 'test'),
+			($2, 'test')`, first, second); err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	tracer := &emailMaintenanceTracer{cancelTenant: first, cancel: cancel}
+
+	config := database.AppPool.Config()
+	config.ConnConfig.Tracer = tracer
+	pool, err := pgxpool.NewWithConfig(t.Context(), config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(pool.Close)
+
+	var logs bytes.Buffer
+	runtime := &runner{
+		scope:  baseWorkerScope(t),
+		queue:  jobqueue.NewService(jobqueue.NewRepository(pool)),
+		email:  email.NewService(email.NewRepository(pool), nil),
+		logger: slog.New(slog.NewJSONHandler(&logs, nil)),
+	}
+
+	runtime.maintainEmails(ctx, false)
+
+	got := tracer.seen()
+	if len(got) == 0 || got[0] != first {
+		t.Fatalf("reconciled tenants = %v; want %s first", got, first)
+	}
+	if len(got) >= 3 {
+		t.Fatalf("reconciled tenants = %v; want to stop before finishing %s and tadoku/prod", got, second)
+	}
+	for _, event := range decodeLogEvents(t, logs.Bytes()) {
+		if event["level"] == "ERROR" {
+			t.Errorf("unexpected error log after bounded cancellation: %v", event)
+		}
+	}
+}
+
+func TestMaintainEmailsOmitsCanceledTenantListError(t *testing.T) {
+	database, err := testpostgres.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := database.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+
+	var logs bytes.Buffer
+	runtime := &runner{
+		scope:  baseWorkerScope(t),
+		queue:  jobqueue.NewService(jobqueue.NewRepository(database.AppPool)),
+		email:  email.NewService(email.NewRepository(database.AppPool), nil),
+		logger: slog.New(slog.NewJSONHandler(&logs, nil)),
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	runtime.maintainEmails(ctx, false)
+
+	for _, event := range decodeLogEvents(t, logs.Bytes()) {
+		if event["msg"] == "list email maintenance tenants" {
+			t.Fatalf("logged canceled tenant list as error: %v", event)
+		}
+		if event["level"] == "ERROR" {
+			t.Errorf("unexpected error log for canceled tenant list: %v", event)
 		}
 	}
 }

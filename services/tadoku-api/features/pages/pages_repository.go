@@ -219,6 +219,40 @@ func (r *PagesRepository) UpdatePage(ctx context.Context, item *Page, contentID 
 	return nil
 }
 
+// GetPageVersion returns the content and its 1-based position in ListPageVersions order. The SQL count must use the
+// list's order.
+func (r *PagesRepository) GetPageVersion(
+	ctx context.Context,
+	namespace string,
+	pageID, contentID uuid.UUID,
+) (*PageContent, int, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	row, err := queries.New(executor).GetPageVersion(ctx, queries.GetPageVersionParams{
+		ContentID: postgres.UUID(contentID),
+		PageID:    postgres.UUID(pageID),
+		Namespace: namespace,
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, 0, ErrPageNotFound
+	}
+	if err != nil {
+		return nil, 0, fmt.Errorf("get page version: %w", err)
+	}
+
+	content := &PageContent{
+		ID:        uuid.UUID(row.ID.Bytes),
+		Title:     row.Title,
+		HTML:      row.Html,
+		CreatedAt: row.CreatedAt.Time,
+	}
+
+	return content, int(row.Position), nil
+}
+
 // ListPageVersions returns the page's contents in version order, oldest first.
 func (r *PagesRepository) ListPageVersions(ctx context.Context, namespace string, id uuid.UUID) ([]PageContent, error) {
 	executor, err := postgres.Executor(ctx, r.db)
@@ -239,7 +273,6 @@ func (r *PagesRepository) ListPageVersions(ctx context.Context, namespace string
 		contents = append(contents, PageContent{
 			ID:        uuid.UUID(row.ID.Bytes),
 			Title:     row.Title,
-			HTML:      row.Html,
 			CreatedAt: row.CreatedAt.Time,
 		})
 	}

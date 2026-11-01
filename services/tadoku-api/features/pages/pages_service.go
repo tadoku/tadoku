@@ -137,19 +137,17 @@ func (s *Service) UpdatePage(ctx context.Context, parameters UpdatePageParameter
 	return s.pages.CreatePageContent(ctx, item.ID, contentID, item.Title, item.HTML, *item.UpdatedAt)
 }
 
-func (s *Service) GetPageVersion(ctx context.Context, namespace string, pageID, contentID uuid.UUID) (*PageVersion, error) {
-	versions, err := s.ListPageVersions(ctx, namespace, pageID)
+func (s *Service) GetPageVersion(
+	ctx context.Context,
+	namespace string,
+	pageID, contentID uuid.UUID,
+) (*PageVersion, error) {
+	content, position, err := s.pages.GetPageVersion(ctx, namespace, pageID, contentID)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, version := range versions {
-		if version.ID == contentID {
-			return &version, nil
-		}
-	}
-
-	return nil, ErrPageNotFound
+	return &PageVersion{PageContent: *content, Version: position}, nil
 }
 
 func (s *Service) ListPageVersions(ctx context.Context, namespace string, id uuid.UUID) ([]PageVersion, error) {

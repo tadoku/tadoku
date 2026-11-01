@@ -58,12 +58,17 @@ func (q *Queries) DeleteUnfinishedRegistrationsForUser(ctx context.Context, arg 
 
 const renameContestsOwnedByUser = `-- name: RenameContestsOwnedByUser :execrows
 update contests
-set owner_user_display_name = 'Deleted organizer'
-where owner_user_id = $1
+set owner_user_display_name = $1::varchar
+where owner_user_id = $2
 `
 
-func (q *Queries) RenameContestsOwnedByUser(ctx context.Context, userID pgtype.UUID) (int64, error) {
-	result, err := q.db.Exec(ctx, renameContestsOwnedByUser, userID)
+type RenameContestsOwnedByUserParams struct {
+	DeletedOrganizerName string
+	UserID               pgtype.UUID
+}
+
+func (q *Queries) RenameContestsOwnedByUser(ctx context.Context, arg RenameContestsOwnedByUserParams) (int64, error) {
+	result, err := q.db.Exec(ctx, renameContestsOwnedByUser, arg.DeletedOrganizerName, arg.UserID)
 	if err != nil {
 		return 0, err
 	}

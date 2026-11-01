@@ -9,7 +9,7 @@ import (
 )
 
 // RemoveUser requires the caller's transaction and a user locked for deletion. It deletes the user's registrations
-// in unfinished contests and keeps the contests the user owns under "Deleted organizer".
+// in unfinished contests and keeps the contests the user owns under deleteduser.OrganizerName.
 func (s *Service) RemoveUser(ctx context.Context, userID uuid.UUID, now time.Time) (RemovalResult, error) {
 	contestIDs, err := s.contests.DeleteUnfinishedRegistrations(ctx, userID, now)
 	if err != nil {

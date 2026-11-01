@@ -34,5 +34,5 @@ where id = sqlc.arg(id);
 
 -- name: TombstoneUser :exec
 update users
-set display_name = 'Deleted participant', deleted_at = sqlc.arg(now), updated_at = sqlc.arg(now)
+set display_name = sqlc.arg(display_name), deleted_at = sqlc.arg(now), updated_at = sqlc.arg(now)
 where id = sqlc.arg(id);

@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/deleteduser"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
@@ -102,8 +103,9 @@ func (r *Repository) Tombstone(ctx context.Context, userID uuid.UUID, now time.T
 		return err
 	}
 	return queries.New(executor).TombstoneUser(ctx, queries.TombstoneUserParams{
-		ID:  postgres.UUID(userID),
-		Now: postgres.Timestamp(now),
+		DisplayName: deleteduser.ParticipantName,
+		ID:          postgres.UUID(userID),
+		Now:         postgres.Timestamp(now),
 	})
 }
 

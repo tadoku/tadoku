@@ -356,7 +356,10 @@ select
   contests.title,
   contest_registrations.id,
   contests.contest_end,
-  case when owner_users.deleted_at is not null then 'Deleted organizer' else owner_users.display_name end::varchar as owner_user_display_name,
+  case
+    when owner_users.deleted_at is not null then sqlc.arg('deleted_organizer_name')::varchar
+    else owner_users.display_name
+  end::varchar as owner_user_display_name,
   contests.official,
   coalesce(contest_logs.computed_score, contest_logs.score) as score
 from contest_logs

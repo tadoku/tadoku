@@ -66,8 +66,8 @@ before provider resources close. A noncooperative handler can delay exit; see
 The worker separates queue scope from handler scope. Queue claims, backlog
 metrics and completed-job cleanup receive the required `jobqueue.Scope`; each
 handler and fenced transition receives only its persisted job tenant. Database
-helpers never supply a default tenant. The replay command uses the explicit
-canonical `tadoku/prod` context.
+helpers never supply a default tenant. The replay command uses only the tenant
+its required `--tenant` flag names.
 
 ## Worker metrics
 

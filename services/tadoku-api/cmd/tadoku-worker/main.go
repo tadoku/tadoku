@@ -223,10 +223,9 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 }
 
 func replay(ctx context.Context, args []string, logger *slog.Logger) error {
-	ctx = tenant.WithKey(ctx, tenant.Production())
-
 	flags := flag.NewFlagSet("replay", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
+	rawTenant := flags.String("tenant", "", "tenant key of the failed job")
 	id := flags.Int64("id", 0, "failed job ID")
 	actor := flags.String("actor", "", "operator identity")
 	reason := flags.String("reason", "", "reason for replay")
@@ -235,8 +234,16 @@ func replay(ctx context.Context, args []string, logger *slog.Logger) error {
 		return fmt.Errorf("parse replay flags: %w", err)
 	}
 	if flags.NArg() != 0 || *id < 1 || strings.TrimSpace(*actor) == "" || strings.TrimSpace(*reason) == "" {
-		return errors.New("usage: tadoku-worker replay --id <failed-id> --actor <actor> --reason <reason>")
+		return errors.New(
+			"usage: tadoku-worker replay --tenant <tenant> --id <failed-id> --actor <actor> --reason <reason>",
+		)
 	}
+
+	key, err := tenant.Parse(*rawTenant)
+	if err != nil {
+		return fmt.Errorf("replay --tenant: %w", err)
+	}
+	ctx = tenant.WithKey(ctx, key)
 
 	postgresConfig, err := postgresconfig.Load("WORKER_POSTGRES", "WORKER_POSTGRES_URL")
 	if err != nil {
@@ -253,7 +260,7 @@ func replay(ctx context.Context, args []string, logger *slog.Logger) error {
 
 	newID, err := worker.Replay(ctx, jobqueue.NewService(jobqueue.NewRepository(pool)), *id, *actor, *reason)
 	if err != nil {
-		return fmt.Errorf("replay job %d: %w", *id, err)
+		return fmt.Errorf("replay job %d in tenant %s: %w", *id, key, err)
 	}
 	logger.InfoContext(ctx, "job replayed", "source_job_id", *id, "job_id", newID)
 	return nil
@@ -268,7 +275,9 @@ func main() {
 		if os.Args[1] == "replay" {
 			err = replay(ctx, os.Args[2:], logger)
 		} else {
-			err = errors.New("usage: tadoku-worker [replay --id <failed-id> --actor <actor> --reason <reason>]")
+			err = errors.New(
+				"usage: tadoku-worker [replay --tenant <tenant> --id <failed-id> --actor <actor> --reason <reason>]",
+			)
 		}
 		if err != nil {
 			logger.Error("tadoku-worker command failed", "error", err)

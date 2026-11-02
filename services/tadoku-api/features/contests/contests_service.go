@@ -213,7 +213,7 @@ func (s *Service) ApplyRegistration(
 	if !contestwindow.Unfinished(contest.ContestEnd, registration.UpdatedAt) {
 		return RegistrationResult{}, ErrContestEnded
 	}
-	if existing == nil && !contestwindow.RegistrationOpen(contest.RegistrationEnd, timex.Now()) {
+	if existing == nil && !contestwindow.RegistrationOpen(contest.RegistrationEnd, registration.UpdatedAt) {
 		return RegistrationResult{}, ErrRegistrationClosed
 	}
 

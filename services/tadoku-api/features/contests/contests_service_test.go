@@ -14,6 +14,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
 func TestApplyRegistrationDetachesUsingLanguageCodes(t *testing.T) {
@@ -152,6 +153,93 @@ func TestApplyRegistrationDetachesUsingLanguageCodes(t *testing.T) {
 			if !reflect.DeepEqual(stored.LanguageCodes, test.wantStoredCodes) {
 				t.Errorf("stored language codes=%v, want %v", stored.LanguageCodes, test.wantStoredCodes)
 			}
+		})
+	}
+}
+
+func TestApplyRegistrationUsesRegistrationTimestampForWindow(t *testing.T) {
+	userID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
+	contestID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+	registrationID := uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")
+	registrationEnd := time.Date(2026, 8, 31, 0, 0, 0, 0, time.UTC)
+	contest := Contest{
+		ID:              contestID,
+		ContestEnd:      time.Date(2026, 9, 30, 0, 0, 0, 0, time.UTC),
+		RegistrationEnd: registrationEnd,
+	}
+	beforeClose := time.Date(2026, 8, 31, 23, 0, 0, 0, time.UTC)
+	afterClose := time.Date(2026, 9, 1, 0, 0, 1, 0, time.UTC)
+
+	tests := []struct {
+		name      string
+		updatedAt time.Time
+		clock     time.Time
+		wantErr   error
+	}{
+		{
+			name:      "accepts new registration dated before registration end while clock is after",
+			updatedAt: beforeClose,
+			clock:     afterClose,
+			wantErr:   nil,
+		},
+		{
+			name:      "rejects new registration dated after registration end while clock is before",
+			updatedAt: afterClose,
+			clock:     beforeClose,
+			wantErr:   ErrRegistrationClosed,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+			service := NewService(nil)
+			if test.wantErr == nil {
+				db, err := testpostgres.New(tenantCtx)
+				if err != nil {
+					t.Fatal(err)
+				}
+				t.Cleanup(func() {
+					if err := db.Close(); err != nil {
+						t.Error(err)
+					}
+				})
+
+				_, err = db.Pool.Exec(tenantCtx, `
+					insert into users (tenant, id, display_name, created_at, updated_at)
+					values
+						('tadoku/prod', '11111111-1111-4111-8111-111111111111', 'Reader', '2026-01-01', '2026-01-01'),
+						('tadoku/prod', '99999999-9999-4999-8999-999999999999', 'Owner', '2026-01-01', '2026-01-01');
+					insert into contests (
+						tenant, id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
+						registration_end, title, activity_type_id_allow_list, official, created_at, updated_at
+					) values (
+						'tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '99999999-9999-4999-8999-999999999999', 'Owner', true,
+						'2026-09-01', '2026-09-30', '2026-08-31', 'Registration window fixture', '{1}', false,
+						'2026-01-01', '2026-01-01'
+					);
+				`)
+				if err != nil {
+					t.Fatal(err)
+				}
+				service = NewService(NewContestsRepository(db.Pool))
+			}
+
+			registration := Registration{
+				ID:            registrationID,
+				ContestID:     contestID,
+				UserID:        userID,
+				LanguageCodes: []string{"jpn"},
+				CreatedAt:     test.updatedAt,
+				UpdatedAt:     test.updatedAt,
+			}
+
+			timex.TheWorld(test.clock, func() {
+				_, err := service.ApplyRegistration(tenantCtx, registration, nil, contest)
+				if !errors.Is(err, test.wantErr) {
+					t.Errorf("ApplyRegistration error=%v, want %v", err, test.wantErr)
+				}
+			})
 		})
 	}
 }

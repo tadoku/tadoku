@@ -17,7 +17,9 @@ import (
 // TestCheckProperties checks, for random graphs over the reference model, that AllowedFor equals the reference
 // evaluator for every drawn question and user, including the depth error. AllowedEach and AllowedForEach equal those
 // single checks without sending more queries than the slowest of them, and are unavailable without answers when a
-// storage call inside them fails.
+// storage call inside them fails. Random graphs reach each verdict only sometimes, so every run also checks every
+// question and user on a group whose members include itself and one user, which grants that user, fails the others
+// with the depth error and denies every other question.
 func TestCheckProperties(t *testing.T) {
 	t.Parallel()
 
@@ -31,19 +33,19 @@ func TestCheckProperties(t *testing.T) {
 	graph := batchOf(graphs.referenceRelationship(), 30)
 	questions := rapid.SliceOfN(rapid.SampledFrom(refQuestions(graphs)), 0, 12)
 	users := rapid.SliceOfN(rapid.IntRange(0, len(graphs.users)-1), 0, 8)
-	seen := map[refVerdict]int{}
 
-	rapid.Check(t, func(t *rapid.T) {
+	checkGraph := func(
+		t tb,
+		seen map[refVerdict]int,
+		relationships batch,
+		asked []refQuestion,
+		askedUsers []uuid.UUID,
+		failAt int,
+	) {
 		ctx := tenant.WithKey(t.Context(), tenant.Production())
 		clearRelationships(t, db, production)
-		relationships := graph.Draw(t, "graph")
 		grantAll(t, ctx, writer, relationships...)
 		ref := newReference(relationships)
-		asked := questions.Draw(t, "questions")
-		var askedUsers []uuid.UUID
-		for _, i := range users.Draw(t, "users") {
-			askedUsers = append(askedUsers, graphs.users[i])
-		}
 
 		singles := map[pair]single{}
 		for _, question := range asked {
@@ -65,7 +67,6 @@ func TestCheckProperties(t *testing.T) {
 			}
 		}
 
-		failAt := rapid.IntRange(0, 3).Draw(t, "failing acquisition")
 		batch := func(name string, pairs []pair, call func() (map[pair]bool, error)) {
 			statements.take()
 			statements.failAcquisition(failAt)
@@ -102,13 +103,33 @@ func TestCheckProperties(t *testing.T) {
 				return pairsOf(allowed, func(check permissions.Check) pair { return pair{check, user} }), err
 			})
 		}
-	})
+	}
 
+	cycle := map[refVerdict]int{}
+	selfMember := batch{
+		refMemberGroups.On(graphs.groups[0], graphs.groups[0]),
+		refMemberUsers.On(graphs.groups[0], graphs.users[0]),
+	}
+	checkGraph(t, cycle, selfMember, refQuestions(graphs), graphs.users, 0)
 	for _, verdict := range []refVerdict{refDenied, refGranted, refFailed} {
-		if seen[verdict] == 0 && !testing.Short() {
-			t.Errorf("no generated question was %s; the generator no longer covers it", verdict)
+		if cycle[verdict] == 0 {
+			t.Fatalf("no question on the group cycle was %s: %v", verdict, cycle)
 		}
 	}
+
+	seen := map[refVerdict]int{}
+	rapid.Check(t, func(t *rapid.T) {
+		relationships := graph.Draw(t, "graph")
+		asked := questions.Draw(t, "questions")
+		var askedUsers []uuid.UUID
+		for _, i := range users.Draw(t, "users") {
+			askedUsers = append(askedUsers, graphs.users[i])
+		}
+		failAt := rapid.IntRange(0, 3).Draw(t, "failing acquisition")
+
+		checkGraph(t, seen, relationships, asked, askedUsers, failAt)
+	})
+
 	t.Logf("verdicts: %v", seen)
 }
 

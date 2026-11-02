@@ -232,13 +232,14 @@ From `docs/`, after `pnpm install --frozen-lockfile`:
 All workflows live in `.github/workflows/`.
 
 Backend CI uses one job on the repository-scoped `tadoku-ci` Kubernetes runner
-pool. Normal and race test configurations share the same disposable services;
-Bazel can execute test targets in parallel within each pass. The normal pass
-uses `bazel test --nobuild_tests_only //...` to build the full target set and run
-its tests together. Release image commands follow both passes so their distinct
-configuration does not invalidate normal analysis between the build and tests.
-Main publication runs only after both passes and image scanning succeed. ARC
-admits at most five Tadoku build runners; resource reservations may keep excess jobs queued.
+pool. It uses `bazel test --nobuild_tests_only //...` to build the full target
+set and run its tests together against disposable services; Bazel can execute
+test targets in parallel. Release image commands follow the tests so their
+distinct configuration does not invalidate normal analysis between the build and
+tests. Main publication runs only after the tests and image scanning succeed.
+Race tests run separately and never gate publication; see [Race tests](./race-tests.md).
+ARC admits at most five Tadoku build runners; resource reservations may keep
+excess jobs queued.
 
 The runners use the private Bazel HTTP action cache and Lab CA. Pull requests
 read existing results without uploading; trusted non-PR runs populate the cache.
@@ -259,15 +260,17 @@ Manual dispatch can select the hosted control for an equivalent-workload
 comparison. `bazel-performance` artifacts retain build profiles and build-event
 JSON; include queue/setup time and publication when comparing complete CI runs.
 
-When a normal or race test step fails, `build-bazel.yaml` uploads the available HTTP
+When the test step fails, `build-bazel.yaml` uploads the available HTTP
 E2E target's `test.log` and `test.xml` as a workflow artifact for seven days.
-Artifact names include the job and run attempt, for example `http-e2e-build-1`.
+Artifact names include the job and run attempt, for example `http-e2e-build-1`;
+`race-bazel.yaml` uploads the same files as `http-e2e-race-<attempt>`.
 Download these files from the workflow run when Bazel suppresses oversized
 console output; they include assertion output and fixture cleanup errors.
 
 | Workflow | Runs on | Checks |
 | --- | --- | --- |
-| `build-bazel.yaml` | PRs and `main` pushes touching Bazel or Go inputs | Frozen lockfile, changed forward migration risk check on PRs, Gazelle diff, visibility, provider-dependency, repository, Go comment and `.depolicy.yaml` import checks, OpenAPI bundle and generation diff, build, image target coverage, tests and race tests; scans and publishes backend images from `main` |
+| `build-bazel.yaml` | PRs and `main` pushes touching Bazel or Go inputs | Frozen lockfile, changed forward migration risk check on PRs, Gazelle diff, visibility, provider-dependency, repository, Go comment and `.depolicy.yaml` import checks, OpenAPI bundle and generation diff, build, image target coverage, and tests; scans and publishes backend images from `main` |
+| `race-bazel.yaml` | Daily, manual dispatch and PRs changing it | Race-instrumented Tadoku API tests; alerts through Notify when a scheduled or manual run does not succeed. See [Race tests](./race-tests.md) |
 | `verify-sqlc.yaml` | Every PR | Reruns `./scripts/generate-sqlc.sh` and fails on any change |
 | `verify-frontend-api-client.yaml` | PRs and `main` pushes touching the contract, recorded HTTP golden responses, the client package or the frontend lockfile | Regenerates the [frontend API client](../frontend/api-client.md), fails on any change, then typechecks it and replays the recorded responses through it |
 | `verify-standalone-migrations.yaml` | Every PR | Fails when migration SQL files change together with other files, unless the PR has the `migration-move` label |

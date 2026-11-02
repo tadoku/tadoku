@@ -245,6 +245,20 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
 - Tests that use `timex.TheWorld` or override the JWT clock, and their parent
   tests, must not call `t.Parallel`.
 
+Latency-padding checks use `testing/synctest` with controlled processing delays
+below and above the floor. Keep the real router, restricted database role,
+admission store, rendering and transactional writes. Virtual time checks timer
+policy, not production I/O latency; retain real-clock minimum-delay and
+production-cost password checks. Short wall-clock sample means cannot establish
+constant-time behavior under host stalls. Minimum padding does not conceal work
+that exceeds its floor.
+
+Create and close bubble clients and pools inside that bubble. Use synchronous
+Valkey (`DisableAutoPipelining`): background socket reads prevent virtual time
+from advancing. Finish the local JWKS exchange and close its server before
+measuring timers; finish the scenario before key refresh is due. Never reuse HTTP
+keep-alive connections across bubbles.
+
 ### Signing a new fixture token
 
 `e2e/testdata/TenantIsolation/` contains synthetic signed canonical and

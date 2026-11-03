@@ -242,6 +242,7 @@ func (s *Service) ApplyRegistration(
 		if err != nil {
 			return RegistrationResult{}, err
 		}
+		result.WithdrawnLogIDs = removedIDs
 		for _, id := range removedIDs {
 			result.Events = append(result.Events, contestevent.Change{
 				ContestID: registration.ContestID,

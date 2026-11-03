@@ -267,8 +267,9 @@ Moderate ==
 
 \* UpsertContestRegistration reads the time after LockUser. ApplyRegistration
 \* refuses a finished contest; dropping the log's language runs
-\* DetachContestLogsForLanguages, which skips soft-deleted logs, publishes a
-\* withdrawn event per detached log, and leaves eligible_official_leaderboard as it was.
+\* DetachContestLogsForLanguages, which skips soft-deleted logs and publishes a
+\* withdrawn event per detached log, then RecomputeOfficialEligibility on the
+\* detached logs.
 RegisterCommit ==
     /\ pc["register"] = "commit"
     /\ \E c \in registered :
@@ -276,10 +277,12 @@ RegisterCommit ==
         THEN LET detached == IF Visible THEN attached \cap {c} ELSE {}
              IN /\ registered' = registered \ {c}
                 /\ attached' = attached \ detached
-                /\ IF detached # {} THEN Write ELSE UNCHANGED wroteFrozen
+                /\ IF detached # {}
+                   THEN Write /\ eligible' = (attached' \cap Official # {})
+                   ELSE UNCHANGED <<wroteFrozen, eligible>>
                 /\ feed' = feed \cup Events(detached, "log.withdrawn", now["register"])
                 /\ Finish("register")
-                /\ UNCHANGED <<row, deleted, frozen, eligible, described, user>>
+                /\ UNCHANGED <<row, deleted, frozen, described, user>>
         ELSE Abort("register")
     /\ TimeUnchanged
 

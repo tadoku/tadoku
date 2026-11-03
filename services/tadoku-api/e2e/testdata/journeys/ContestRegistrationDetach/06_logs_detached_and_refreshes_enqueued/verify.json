@@ -18,5 +18,10 @@
     "kind": "jobs",
     "user_id": "",
     "reference": "leaderboard.invalidate_official.v1:2025"
+  },
+  {
+    "kind": "jobs",
+    "user_id": "",
+    "reference": "leaderboard.invalidate_official.v1:2026"
   }
 ]

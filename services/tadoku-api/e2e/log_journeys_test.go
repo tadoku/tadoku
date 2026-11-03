@@ -126,6 +126,10 @@ func TestLogOfficialEligibilityJourney(t *testing.T) {
 		{verify: "detached"},
 		{request: "moderate_detach_official", as: admin, want: http.StatusOK},
 		{verify: "moderated"},
+		{request: "reattach_official", as: user, want: http.StatusOK},
+		{verify: "reattached"},
+		{request: "remove_official_language", as: user, want: http.StatusOK},
+		{verify: "language_removed"},
 	})
 }
 

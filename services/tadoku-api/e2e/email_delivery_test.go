@@ -259,15 +259,23 @@ func TestEmailWorkerDelivery(t *testing.T) {
 						t.Fatalf("delivery=%+v", row.Delivery)
 					}
 				}
-				if err := service.Send(ctx, id); err != nil {
+				resent := 0
+				err = service.Send(ctx, id)
+				if tc.status == "failed" {
+					if err == nil {
+						t.Fatal("resending the failed email to the rejecting server returned nil")
+					}
+					resent = 1
+				} else if err != nil {
 					t.Fatal(err)
 				}
+
 				fixture.mu.Lock()
 				attempts := fixture.attempts
 				messages := append([]string(nil), fixture.messages...)
 				fixture.mu.Unlock()
-				if attempts != tc.attempts {
-					t.Errorf("SMTP attempts=%d want %d", attempts, tc.attempts)
+				if attempts != tc.attempts+resent {
+					t.Errorf("SMTP attempts=%d want %d", attempts, tc.attempts+resent)
 				}
 				if tc.status == "sent" {
 					message, err := textproto.NewReader(bufio.NewReader(strings.NewReader(messages[0]))).ReadMIMEHeader()

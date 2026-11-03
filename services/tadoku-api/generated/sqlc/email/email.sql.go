@@ -59,7 +59,7 @@ set status = $2, sent_at = $3, provider_message_id = $4, error = $5
 where id = $1
   and (
     status = 'pending'
-    or (status = 'failed' and $2 = 'sent')
+    or (status = 'failed' and $2 in ('sent', 'failed'))
   )
 `
 

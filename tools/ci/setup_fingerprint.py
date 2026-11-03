@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Identify the native runtime used by the CI setup checks; probe errors disable reuse."""
 
+import argparse
 import hashlib
 import json
 import os
@@ -9,6 +10,40 @@ import platform
 import shutil
 import subprocess
 import sys
+
+
+WRAPPER_INPUTS = [
+    "tools/bazel", ".bazelversion", "tools/ci/*.py", "tools/ci/run_bazel_images.sh",
+    ".github/workflows/build-bazel.yaml",
+]
+OPENAPI_INPUTS = [
+    "services/tadoku-api/spec/**", "services/tadoku-api/generated/openapi/**",
+    "scripts/generate-openapi.sh", "tools/oapi-codegen/**", "tools/bazel", "tools/ci/*.py",
+    ".github/workflows/build-bazel.yaml", ".bazel*", "go.mod", "go.sum", "**/MODULE.bazel*",
+    "**/REPO.bazel", "**/BUILD*", "**/*.bzl", "**/*.patch",
+]
+
+
+def input_fingerprint(kind):
+    patterns = WRAPPER_INPUTS if kind == 'wrapper' else OPENAPI_INPUTS
+    root = Path(subprocess.check_output(['git', 'rev-parse', '--show-toplevel'], text=True).strip())
+    subprocess.run(['git', 'diff', '--quiet', 'HEAD', '--', *patterns], cwd=root, check=True)
+    unknown = subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard', '-z', '--', *patterns], cwd=root)
+    if unknown:
+        raise RuntimeError('Untracked setup inputs disable reuse')
+    manifest = subprocess.check_output(['git', 'ls-files', '--stage', '-z', '--', *patterns], cwd=root)
+    records = [record.split(b'\t', 1) for record in manifest.split(b'\0') if record]
+    if not records:
+        raise RuntimeError('Empty setup input manifest')
+    paths = {path for _, path in records}
+    digest = hashlib.sha256()
+    for metadata, path in records:
+        source = root / os.fsdecode(path)
+        if source.is_symlink() and os.fsencode(source.resolve(strict=True).relative_to(root)) not in paths:
+            raise RuntimeError('Setup symlink target is outside the input closure')
+        digest.update(metadata + b'\t' + path + b'\0' + str(source.lstat().st_mode).encode() + b'\0')
+        digest.update(hashlib.sha256(source.read_bytes()).digest())
+    return digest.hexdigest()
 
 
 def fingerprint():
@@ -73,7 +108,10 @@ def fingerprint():
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--inputs', choices=('wrapper', 'openapi'))
+    args = parser.parse_args()
     try:
-        print(fingerprint())
+        print(input_fingerprint(args.inputs) if args.inputs else fingerprint())
     except (OSError, ValueError, RuntimeError, KeyError, subprocess.SubprocessError) as error:
         sys.exit(f'Setup fingerprint unavailable; run checks: {error}')

@@ -176,7 +176,10 @@ jobs:
         continue-on-error: true
         run: |
           fingerprint="$(python3 tools/ci/setup_fingerprint.py)"
-          printf 'fingerprint=%s\n' "$fingerprint" >> "$GITHUB_OUTPUT"
+          wrapper_inputs="$(python3 tools/ci/setup_fingerprint.py --inputs wrapper)"
+          openapi_inputs="$(python3 tools/ci/setup_fingerprint.py --inputs openapi)"
+          printf 'fingerprint=%s\nwrapper_inputs=%s\nopenapi_inputs=%s\n' \
+            "$fingerprint" "$wrapper_inputs" "$openapi_inputs" >> "$GITHUB_OUTPUT"
 
       # Existence-only lookup: no generated files or executable outputs are restored.
       # GitHub scopes PR writes to refs/pull/.../merge; main cannot read them.
@@ -186,7 +189,7 @@ jobs:
         continue-on-error: true
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
-          key: setup-wrapper-v1-${{ steps.setup-runtime.outputs.fingerprint }}-${{ hashFiles('tools/bazel', '.bazelversion', 'tools/ci/*.py', 'tools/ci/run_bazel_images.sh', '.github/workflows/build-bazel.yaml') }}
+          key: setup-wrapper-v2-${{ steps.setup-runtime.outputs.fingerprint }}-${{ steps.setup-runtime.outputs.wrapper_inputs }}
           path: |
             ${{ runner.temp }}/bazel-wrapper/result.json
             ${{ runner.temp }}/bazel-publish/result.json
@@ -201,7 +204,7 @@ jobs:
         run: python3 tools/ci/check_bazel_publish.py --evidence-dir "$RUNNER_TEMP/bazel-publish"
 
       - name: Retain Bazel wrapper evidence
-        if: always() && (steps.wrapper-cache.outputs.cache-hit != 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        if: always() && (steps.wrapper-cache.outcome != 'success' || steps.wrapper-cache.outputs.cache-hit != 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: bazel-wrapper-${{ github.run_attempt }}
@@ -219,7 +222,7 @@ jobs:
         continue-on-error: true
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
-          key: setup-openapi-v1-${{ steps.setup-runtime.outputs.fingerprint }}-${{ hashFiles('services/tadoku-api/spec/**', 'services/tadoku-api/generated/openapi/**', 'scripts/generate-openapi.sh', 'tools/oapi-codegen/**', 'tools/bazel', 'tools/ci/*.py', '.github/workflows/build-bazel.yaml', '.bazel*', 'go.mod', 'go.sum', '**/MODULE.bazel*', '**/REPO.bazel', '**/BUILD*', '**/*.bzl', '**/*.patch') }}
+          key: setup-openapi-v2-${{ steps.setup-runtime.outputs.fingerprint }}-${{ steps.setup-runtime.outputs.openapi_inputs }}
           path: ${{ runner.temp }}/openapi-verification.json
           lookup-only: true
 

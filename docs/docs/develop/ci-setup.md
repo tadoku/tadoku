@@ -15,8 +15,8 @@ CI runs depolicy with `GO111MODULE=off`: its import-only parser still reads the
 module and policy files directly, while standard-library classification uses
 the pinned SDK's source tree without spawning `go list` for external imports.
 
-Push and PR builds can reuse successful wrapper/publication and dependency/OpenAPI checks
-through exact GitHub Actions cache lookups. `lookup-only` restores no files:
+Push and PR builds can reuse successful wrapper/publication and dependency/OpenAPI
+checks through exact GitHub Actions cache lookups. `lookup-only` restores no files:
 checked-in generated outputs stay in place. A receipt is saved only after a
 successful job; missing receipts, probe failures, cache errors and partial key
 matches run the checks. There are no fallback restore keys. Cache entries are
@@ -28,6 +28,12 @@ fork-written entries. See [GitHub cache scope](https://docs.github.com/en/action
 | Wrapper and publication | Bazel hook and version, CI Python checks and their embedded fixtures, image runner, workflow and native runtime |
 | Frozen dependencies and OpenAPI | All contract inputs and generated outputs, generator script and isolated workspace, root SDK/module/lock/build/rule/patch metadata, hook and versions, workflow and native runtime |
 
+Source keys include the selected tracked paths, Git blob identities, actual file
+modes and raw file bytes. Content-only hashes can miss same-byte renames.
+Dirty tracked inputs, untracked selected inputs and symlinks whose targets are
+outside the selected closure disable reuse. The successful receipt contains no
+source or generated output archive.
+
 `tools/ci/setup_fingerprint.py` identifies the runtime using installed package
 versions, native executable hashes and versions, Python version, kernel and
 architecture, UID, relevant tool/locale environment, Bazel and Go configuration,
@@ -35,8 +41,12 @@ Docker client/server/runtime/security/storage configuration and resource limits.
 It rejects RC imports because they can refer to files outside the known input
 set. Unsupported hosts rerun the checks. Do not add an external input to a
 cached check without extending its fingerprint. The OpenAPI receipt includes
-the frozen module graph and checked-in outputs, so a hand-edited generated file forces regeneration
-and the existing diff check. New untracked generated files also fail validation.
+the frozen module graph and checked-in outputs, so a hand-edited generated file
+forces regeneration and the existing diff check. New untracked generated files also fail validation.
+The dependency check uses the same frozen graph: Bazel's
+[`error` lockfile mode](https://bazel.build/external/lockfile#lockfile-usage)
+performs no registry network requests during resolution. Builds and tests still
+use that mode on every run.
 
 The cache action logs the exact matched key and originating cache scope is
 inspectable through GitHub's cache API. On a miss, `bazel-wrapper` retains the
@@ -49,11 +59,11 @@ other Bazel client holding the per-UID lock:
 
 ```sh
 python3 tools/ci/check_setup_fingerprint.py --evidence-dir /tmp/tadoku-setup-fingerprint
+python3 tools/ci/check_setup_inputs.py --evidence-dir /tmp/tadoku-setup-inputs
 ```
 
 Successful test XML for every executed target is retained with profiles and
 build events in the existing performance artifact in both normal and race jobs.
-
 
 Gazelle validation runs as `//tools/ci/setup:gazelle_test` inside the existing
 full build/test invocation. The native Gazelle rule is local, unsandboxed and

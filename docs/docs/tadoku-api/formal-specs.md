@@ -8,8 +8,7 @@ sidebar_position: 5.5
 
 Read this when you change a TLA+ model, or change code that a model describes.
 
-A model is a small, hand-written TLA+ description of a concurrent design, such
-as how workers claim and finish jobs. TLC, the TLA+ model checker, explores
+A model is a small, hand-written TLA+ description of a concurrent design. TLC, the TLA+ model checker, explores
 every reachable state of the model within small bounds and fails when any
 ordering of steps breaks a rule. Models catch design bugs where each line of
 code is correct but two transactions interleave badly. They do not test the Go
@@ -18,7 +17,7 @@ or SQL itself, and nothing checks automatically that the code matches a model.
 ## Before changing code
 
 Search `services/tadoku-api/spec/tla/` for the path of the file you are
-changing. Each model's header names the source files it describes. When yours
+changing. A model's header must name every source file it describes. When yours
 is named, change the model in the same pull request so that it still describes
 the code, and run its check.
 
@@ -40,7 +39,8 @@ A model is `<Name>.tla` with its CI configuration `<Name>.cfg`, which sets the
 bounds and lists the invariants and properties to check. A configuration that
 checks larger bounds, or a property the code is known to break, is
 `<Name>_<purpose>.cfg` with a `manual` test target. Add a target with the
-`tlc_test` macro from `services/tadoku-api/spec/tla/tlc.bzl`.
+`tlc_test` macro from `services/tadoku-api/spec/tla/tlc.bzl`. The macro fails
+when a target larger than `small` is not tagged `manual`.
 
 ## Write a model
 
@@ -72,7 +72,8 @@ and `.cfg` files, the runner script and the pinned tools. A pull request that
 changes no model gets cached results. One that edits a model reruns only that
 model. Changing TLC, the runner script or the JDK reruns them all once. The
 `small` test size stops a model after 60 seconds; keep each CI configuration
-to a few seconds.
+to a few seconds. TLC runs with two worker threads and a 512 MiB heap, and the
+macro tags each test `cpu:2` so Bazel schedules for both threads.
 
 Because code changes never rerun a model, CI does not notice when code drifts
 from its model. Keeping them in step is the author's job, as described in

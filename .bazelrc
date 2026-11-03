@@ -3,4 +3,3 @@ build:release --@rules_go//go/config:pure
 
 # TLC runs on a hermetic JDK, so hosts and CI runners need no Java install.
 common --java_runtime_version=remotejdk_21
-common --tool_java_runtime_version=remotejdk_21

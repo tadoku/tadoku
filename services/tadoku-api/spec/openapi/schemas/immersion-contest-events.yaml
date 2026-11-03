@@ -19,7 +19,10 @@ components:
         occurred_at:
           type: string
           format: date-time
-          description: Source operation time, stored once when the event is created.
+          description: >-
+            Source operation time, or one microsecond after the log's previous
+            event in this contest when that is later. Stored once when the
+            event is created.
         event:
           type: string
           enum:

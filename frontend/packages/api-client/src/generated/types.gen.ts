@@ -286,7 +286,7 @@ export type ImmersionContestEvent = {
     id: string;
     log_id: string;
     /**
-     * Source operation time, stored once when the event is created.
+     * Source operation time, or one microsecond after the log's previous event in this contest when that is later. Stored once when the event is created.
      */
     occurred_at: string;
     /**

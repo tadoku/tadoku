@@ -16,7 +16,7 @@
 \*   services/tadoku-api/features/authz/roles.go
 \*   services/tadoku-api/sql/identity/identity.sql
 \*   services/tadoku-api/sql/profile/profile.sql
-\*   docs/docs/architecture/authorization.md (granting an administrator)
+\*   docs/docs/architecture/authorization.md (granting an administrator, refused for a banned user)
 \*
 \* Each step is one SQL statement, named after its query or function in its
 \* comment, except that a transaction's statements and Go checks that run while
@@ -254,7 +254,8 @@ RoleCommit ==
 
 Role == RoleLockUser \/ RoleCommit
 
-\* Operator SQL grants an administrator after locking the users row.
+\* Operator SQL grants an administrator after locking the users row; GrantAdmin
+\* expects its caller to hold that lock. Both insert nothing for a banned user.
 GrantLockUser ==
     /\ pc["grant"] = "start"
     /\ lockU = None
@@ -267,7 +268,7 @@ GrantLockUser ==
 GrantCommit ==
     /\ pc["grant"] = "commit"
     /\ Finish("grant", "done")
-    /\ admin' = TRUE
+    /\ admin' = (admin \/ ~banned)
     /\ writeAfterLock' = (writeAfterLock \/ locked)
     /\ UNCHANGED <<locked, deleted, account, session, banned, job, attempts, failures, snap,
                    sessionAfterLock>>
@@ -386,16 +387,16 @@ LockedHasVisibleJob == (locked /\ ~deleted) => job \in {"pending", "running", "f
 \* No settings write, ban or administrator grant commits after the deletion lock.
 NoWriteAfterLock == ~writeAfterLock
 
+\* A ban refuses an admin and a grant refuses a banned user, both under the users row lock.
+RolesExclusive == ~(admin /\ banned)
+
 \* Liveness: a locked user is eventually deleted, given that an admin replays a failed job.
 DeletionCompletes == locked ~> deleted
 
-\* Known gaps, checked by manual configurations.
+\* Known gap, checked by a manual configuration.
 
 \* CreateSession can insert a session after the lock commits, because it judges the
 \* users row from its snapshot, and login then reports success. Every later
 \* request treats that session as a guest.
 NoSessionAfterLock == ~sessionAfterLock
-
-\* Granting an administrator does not check for a ban.
-RolesExclusive == ~(admin /\ banned)
 ====

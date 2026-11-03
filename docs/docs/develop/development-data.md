@@ -96,7 +96,9 @@ startup creates no database, Postgres cluster, PVC or database dependency Job.
 - Provisioning uses `tadoku_owner` to create the test tenant. The
   `development-accounts` step then grants Dev Admin `admins` on the tenant's
   `app:root` in the same transaction that seeds the accounts. Dev Reader gets
-  no role.
+  no role. If Dev Admin is banned in that tenant, the command fails with the
+  banned-user refusal and commits nothing. If Dev Admin's account deletion is
+  in progress, it gets no administrator grant and the command still succeeds.
 - Flipt uses environment `test` and namespace `tadoku_<route>`, with display
   name `tadoku/<route>`. Provisioning adds missing resources from this branch's
   `k8s/dev/base/flipt/features.yaml`. Canonical definitions/imports and the safe

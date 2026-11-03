@@ -121,8 +121,10 @@ or a ban filed at the same moment either see the new administrator and refuse,
 or commit first. A filed deletion still runs, so roll the grant back when the
 lock shows `deletion_locked_at` or `deleted_at` set. When the insert reports
 `INSERT 0 0`, the user is banned: roll back, and grant only after deliberately
-unbanning them through `PUT /authz/users/{id}/role`. A duplicate key error means
-the user is already an administrator; roll back.
+unbanning them. Ask another administrator to unban them through
+`PUT /authz/users/{id}/role`, or, when there is none, remove the ban with the
+unban block below. A duplicate key error means the user is already an
+administrator; roll back.
 
 To revoke one:
 
@@ -139,7 +141,26 @@ where tenant = current_setting('tadoku.tenant')
 commit;
 ```
 
-Both blocks name the tenant only in `set_config`. For a production branch
+To unban a user without another administrator:
+
+```sql
+begin;
+select set_config('tadoku.tenant', 'tadoku/prod', true);
+select id from users where id = '<lowercase user UUID>' for update;
+delete from permission_relationships
+where tenant = current_setting('tadoku.tenant')
+  and object_type = 'app'
+  and object_id = 'root'
+  and relation = 'banned'
+  and subject_type = 'user'
+  and subject_id = '<lowercase user UUID>';
+commit;
+```
+
+The lock orders the unban with role updates and grants. Unlike the API, it
+writes no `moderation_audit_log` entry, because no administrator acts.
+
+These blocks name the tenant only in `set_config`. For a production branch
 tenant, use its key there instead of `tadoku/prod`. In
 development, `tadoku-tenant development-accounts` grants Dev Admin `admins` on
 each branch tenant through `authz.GrantAdmin` under Dev Admin's `users` row
@@ -301,8 +322,10 @@ re-run.
   the same email that the seed does not own is never modified.
 - Grants the administrator `admins` on `app:root` in `tadoku/prod` with SQL
   under its `users` row lock, keeping an existing grant. A banned
-  administrator fails the seed without a grant; unban them deliberately
-  through `PUT /authz/users/{id}/role` first. The reader gets no role.
+  administrator fails the seed without a grant. Ask another administrator to
+  unban them through `PUT /authz/users/{id}/role`, or remove the ban with the
+  [unban block](#granting-an-administrator), then rerun. The reader gets no
+  role.
 - Loads the application seed data from `scripts/dev/seed/`.
 
 See [Development data](../develop/development-data.md#seed-data) for fixture UUIDs, reruns and branch seeding, and

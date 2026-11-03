@@ -340,9 +340,10 @@ func TestEmailDeliveryAfterSettlement(t *testing.T) {
 	ctx := tenant.WithKey(t.Context(), tenant.Production())
 	id := writeEmail(t, ctx, service, recoveryMail())
 
-	settled := make(chan struct{})
+	started, settled := make(chan struct{}), make(chan struct{})
 	fixture.mu.Lock()
 	fixture.beforeAccept = func() {
+		close(started)
 		defer close(settled)
 		tag, err := api.db.Pool.Exec(ctx, `update jobs
 			set state = 'failed', attempts = 5, failed_at = now(), last_error = 'lease_expired'
@@ -364,7 +365,11 @@ func TestEmailDeliveryAfterSettlement(t *testing.T) {
 	fixture.mu.Unlock()
 
 	err = service.Send(ctx, id)
-	<-settled
+	select {
+	case <-started:
+		<-settled
+	default:
+	}
 	if err != nil {
 		t.Fatal(err)
 	}

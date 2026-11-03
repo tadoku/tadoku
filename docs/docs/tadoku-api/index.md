@@ -93,6 +93,8 @@ see [Contributing workflow](../develop/contributing.md#cms-managed-content).
   changing a persisted message version.
 - [Testing](./testing.md): read before adding or changing any test; covers
   principles, test infrastructure and repository tests.
+- [TLA+ models](./formal-specs.md): read before changing a TLA+ model or code
+  that a model describes.
 - [HTTP end-to-end tests](./http-e2e.md): read before adding or changing an
   operation's golden cases, fixture tokens, relationships or local identity fixtures.
 - [User journeys](./user-journeys.md): read before changing a chained user

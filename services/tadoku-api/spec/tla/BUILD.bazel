@@ -1,0 +1,24 @@
+load("@rules_java//java:java_binary.bzl", "java_binary")
+load("@rules_java//java:java_import.bzl", "java_import")
+load(":tlc.bzl", "tlc_test")
+
+java_import(
+    name = "tla2tools",
+    jars = ["@tla2tools//file:tla2tools.jar"],
+)
+
+java_binary(
+    name = "tlc",
+    jvm_flags = [
+        "-XX:+UseParallelGC",
+        "-Xmx1g",
+    ],
+    main_class = "tlc2.TLC",
+    runtime_deps = [":tla2tools"],
+)
+
+tlc_test(
+    name = "helloworld_test",
+    config = "HelloWorld.cfg",
+    spec = "HelloWorld.tla",
+)

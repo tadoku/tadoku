@@ -152,6 +152,13 @@ makes new libraries public; narrow their `visibility` as described in
 `./scripts/check-tadoku-api-visibility.sh` and
 `./tools/ci/check_tadoku_api_provider_deps.sh`.
 
+### TLA+ models
+
+TLC checks the TLA+ models in `services/tadoku-api/spec/tla/` as ordinary Bazel
+tests, so `bazel test //...` includes them. TLC is a pinned jar in
+`MODULE.bazel` and runs on the remote JDK set in `.bazelrc`. See
+[TLA+ models](../tadoku-api/formal-specs.md).
+
 ## Code generation
 
 Generated code is checked in and CI fails when it is stale. Commit the complete

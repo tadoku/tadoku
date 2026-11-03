@@ -132,10 +132,12 @@ Complete(w) ==
     /\ Release(w)
     /\ UNCHANGED <<attempts, replayOf, effects, failedAt, opPc, opTarget>>
 
-\* Retry: back to pending, or failed once attempts reach MaxAttempts.
+\* Retry: back to pending, or failed once attempts reach MaxAttempts. A handler
+\* that returned nil after its deadline counts as a transient error, so a
+\* committed effect can still be retried.
 Retry(w) ==
     LET j == held[w].job IN
-    /\ phase[w] = "transient"
+    /\ phase[w] \in {"transient", "succeeded"}
     /\ Holds(w)
     /\ state' = [state EXCEPT ![j] = IF attempts[j] >= MaxAttempts THEN "failed" ELSE "pending"]
     /\ token' = [token EXCEPT ![j] = None]
@@ -163,7 +165,9 @@ Drop(w) ==
     /\ Release(w)
     /\ UNCHANGED <<state, attempts, token, lease, replayOf, effects, completedAt, failedAt, opPc, opTarget>>
 
-\* The worker stops mid-job: a crash, a deadline or a failed transition query.
+\* The worker stops mid-job without a transition: a crash, a failed transition
+\* query, the claim found too close to expiry before dispatch, or the renew loop
+\* cancelling the handler before its margin runs out while the lease is live.
 Crash(w) ==
     /\ phase[w] # "idle"
     /\ Release(w)
@@ -276,12 +280,17 @@ LeaseRespected ==
         (lease[j] /\ token'[j] # token[j]) =>
             \E w \in Workers : held[w].job = j /\ held[w].tok = token[j] /\ held'[w] = Idle]_vars
 
-\* A transient failure ends the job exactly when the worker told its handler
-\* this was the final attempt.
+\* A Retry fails the job exactly when its handler was told this was the final
+\* attempt. A job can still exhaust its attempts without a final-attempt run,
+\* when a later claim never reached its handler.
 FinalAttemptAgrees ==
     [][\A w \in Workers :
         LET j == held[w].job IN
-        (phase[w] = "transient" /\ j # None /\ held'[w] = Idle /\ state'[j] # state[j]) =>
+        (/\ phase[w] \in {"transient", "succeeded"}
+         /\ j # None
+         /\ held'[w] = Idle
+         /\ state[j] = "running"
+         /\ state'[j] \in {"pending", "failed"}) =>
             ((state'[j] = "failed") = final[w])]_vars
 
 \* Liveness: every job that exists eventually completes or fails.

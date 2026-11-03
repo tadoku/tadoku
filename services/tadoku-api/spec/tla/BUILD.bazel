@@ -21,7 +21,7 @@ tlc_test(
     tags = ["manual"],
 )
 
-# Two original jobs, about 30 seconds.
+# Two original jobs with a replay: larger bounds than CI runs.
 tlc_test(
     name = "jobqueue_large_test",
     size = "medium",

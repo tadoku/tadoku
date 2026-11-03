@@ -266,6 +266,13 @@ func TestEmailWorkerDelivery(t *testing.T) {
 						t.Fatal("resending the failed email to the rejecting server returned nil")
 					}
 					resent = 1
+					after, err := service.Find(ctx, id)
+					if err != nil {
+						t.Fatal(err)
+					}
+					if after.Delivery != row.Delivery {
+						t.Errorf("non-final resend changed delivery=%+v want %+v", after.Delivery, row.Delivery)
+					}
 				} else if err != nil {
 					t.Fatal(err)
 				}
@@ -429,6 +436,18 @@ func TestEmailReplayResendsFailedEmail(t *testing.T) {
 	workerCtx, cancel := context.WithCancel(t.Context())
 	done := make(chan error, 1)
 	go func() { done <- application.Run(workerCtx) }()
+	stopped := false
+	stop := func() {
+		if stopped {
+			return
+		}
+		stopped = true
+		cancel()
+		if err := <-done; err != nil {
+			t.Error(err)
+		}
+	}
+	defer stop()
 	deadline := time.Now().Add(10 * time.Second)
 	for {
 		var state string
@@ -444,10 +463,7 @@ func TestEmailReplayResendsFailedEmail(t *testing.T) {
 		}
 		time.Sleep(20 * time.Millisecond)
 	}
-	cancel()
-	if err := <-done; err != nil {
-		t.Fatal(err)
-	}
+	stop()
 
 	row, err := service.Find(ctx, id)
 	if err != nil {

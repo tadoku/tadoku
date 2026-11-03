@@ -48,10 +48,11 @@ bound and five attempts. It holds a pending row unless both the deployment
 has enabled sending and the persisted tenant is `tadoku/prod`. A missing ID in
 the job's tenant is harmless; a guessed ID cannot reach another tenant's row.
 Sent and held rows are not sent again; a failed row is. Replaying its failed
-send job resends it, and the outcome replaces the recorded failure. If the
-failed email had in fact been delivered, for example after a crash that
-followed SMTP acceptance, the replay delivers it again, so replaying is the
-operator's call.
+send job resends it; a `sent` outcome or the replay's final failure replaces
+the recorded failure. If the failed email had in fact been delivered, for
+example after a crash that followed SMTP acceptance, the replay delivers it
+again, so replaying is the operator's call. A replay in a tenant that holds
+its mail, or of an email that retention deleted, completes without sending.
 
 Enabled production delivery uses authenticated SMTP over STARTTLS, verifies
 the server certificate and records `sent`, the sending time and the provider's

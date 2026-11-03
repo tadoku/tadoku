@@ -315,7 +315,8 @@ TerminalEmailFinal ==
 \* does not replace a failed row.
 SentNeverLost == ~lostSent
 
-\* A completed send job, such as a replay, leaves its email sent or held.
+\* A completed send job, such as a replay, leaves its email sent or held. It
+\* relies on the hold rule being fixed and on retention not deleting the email.
 CompletedJobDelivered == \A j \in Ids : state[j] = "completed" => email \in {"sent", "held"}
 
 \* Liveness: every email leaves pending.

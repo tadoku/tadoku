@@ -26,6 +26,13 @@ excess jobs queued.
 
 The runners use the private Bazel HTTP action cache and Lab CA. Pull requests
 read existing results without uploading; trusted non-PR runs populate the cache.
+The normal job also uses Bazel's remote repository contents cache for repository
+rules that declare reproducible outputs. Bazel validates their declared and
+recorded inputs before reuse; changed inputs, missing or corrupt entries and
+cache outages fall back to repository evaluation. The upload policy applies to
+all Bazel commands, including dependency resolution and queries. The first trusted
+run pays the repository upload cost; later jobs can reuse those results without
+repeating repository generation. This is separate from compiled action caching.
 Each runner Pod prefetches trusted public `main` dependencies while becoming
 idle: frozen module metadata, Gazelle and the OpenAPI generator, plus the
 workflow's digest-pinned service images. Native repository archives and extracted

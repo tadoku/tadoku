@@ -5,6 +5,8 @@
 \*   services/tadoku-api/sql/jobqueue/jobqueue.sql
 \*   services/tadoku-api/migrations/0031_async_outbox.up.sql
 \*   services/tadoku-api/features/jobqueue/jobqueue_repository.go
+\*   services/tadoku-api/features/jobqueue/jobqueue_service.go
+\*   services/tadoku-api/app/worker/application.go
 \*   services/tadoku-api/app/worker/runtime.go
 \*
 \* Each action is named after the query or worker step it models. Time is
@@ -12,8 +14,10 @@
 \* here, and a failed one is Drop. A claim's token is the job's attempt number,
 \* which is unique per claim. Handlers run at least once, so effects can exceed
 \* 1 and handlers must be idempotent. Operator replays are bounded by
-\* MaxReplays, and replay op inserts into slot NumJobs + op. Every worker uses
-\* the same MaxAttempts; a rolling deploy that changes it is out of scope.
+\* MaxReplays, and replay op inserts into slot NumJobs + op. A replay is one
+\* transaction: it locks the failed job, then inserts only when that job has no
+\* replay yet. Every worker uses the same MaxAttempts; a rolling deploy that
+\* changes it is out of scope.
 EXTENDS Naturals, FiniteSets
 
 CONSTANTS Workers, NumJobs, MaxReplays, MaxAttempts
@@ -38,8 +42,8 @@ VARIABLES
     held,      \* the claim each worker holds
     phase,     \* where each worker is in runner.process
     final,     \* the finalAttemptKey value the worker gave its handler
-    opPc,      \* each operator replay: "idle", "read" or "done"
-    opTarget   \* the failed job each operator replay read
+    opPc,      \* each operator replay: "idle", "locked", "checked" or "done"
+    opTarget   \* the failed job each operator replay locked
 
 vars == <<state, attempts, token, lease, replayOf, effects, completedAt, failedAt, held, phase, final, opPc, opTarget>>
 
@@ -55,7 +59,7 @@ TypeOK ==
     /\ held \in [Workers -> [job : {None} \cup Ids, tok : 0..MaxAttempts]]
     /\ phase \in [Workers -> {"idle", "handling", "succeeded", "transient", "permanent"}]
     /\ final \in [Workers -> BOOLEAN]
-    /\ opPc \in [Operators -> {"idle", "read", "done"}]
+    /\ opPc \in [Operators -> {"idle", "locked", "checked", "done"}]
     /\ opTarget \in [Operators -> {None} \cup Ids]
 
 Init ==
@@ -184,27 +188,43 @@ FailExhausted(j) ==
     /\ failedAt' = [failedAt EXCEPT ![j] = TRUE]
     /\ UNCHANGED <<attempts, replayOf, effects, completedAt, held, phase, final, opPc, opTarget>>
 
-\* CleanupCompleted: a completed job that no replay refers to.
+\* CleanupCompleted: a completed job that is not a replay and that no replay
+\* refers to. Keeping completed replays keeps their lineage unreplayable.
 CleanupCompleted(j) ==
     /\ state[j] = "completed"
+    /\ replayOf[j] = None
     /\ \A k \in Ids : replayOf[k] # j
     /\ state' = [state EXCEPT ![j] = "removed"]
     /\ UNCHANGED <<attempts, token, lease, replayOf, effects, completedAt, failedAt, held, phase, final, opPc, opTarget>>
 
-\* Replay is one insert ... select statement with no guard beyond the job being
-\* failed, so replays one after another already break the replay rules. It also
-\* takes no row lock, so a guard added later must lock the failed job: two
-\* replays can otherwise both read it before either inserts.
-ReplayRead(op, j) ==
+\* An operator replay holds the failed job's row lock until it commits or
+\* refuses.
+LockHolder(op, j) == opPc[op] \in {"locked", "checked"} /\ opTarget[op] = j
+
+\* LockReplaySource: select ... for update on a failed job of a supported type.
+\* It waits while another replay holds the lock; a job that is not failed is
+\* refused without a step.
+ReplayLock(op, j) ==
     /\ opPc[op] = "idle"
     /\ state[j] = "failed"
-    /\ opPc' = [opPc EXCEPT ![op] = "read"]
+    /\ \A other \in Operators : ~LockHolder(other, j)
+    /\ opPc' = [opPc EXCEPT ![op] = "locked"]
     /\ opTarget' = [opTarget EXCEPT ![op] = j]
     /\ UNCHANGED <<state, attempts, token, lease, replayOf, effects, completedAt, failedAt, held, phase, final>>
 
+\* Replay is an insert ... select guarded by "no replay of this job exists",
+\* so it reads before it writes. A removed row no longer exists.
+ReplayCheck(op) ==
+    LET replayed ==
+            \E k \in Ids : replayOf[k] = opTarget[op] /\ state[k] \notin {"absent", "removed"}
+    IN
+    /\ opPc[op] = "locked"
+    /\ opPc' = [opPc EXCEPT ![op] = IF replayed THEN "done" ELSE "checked"]
+    /\ UNCHANGED <<state, attempts, token, lease, replayOf, effects, completedAt, failedAt, held, phase, final, opTarget>>
+
 ReplayInsert(op) ==
     LET slot == NumJobs + op IN
-    /\ opPc[op] = "read"
+    /\ opPc[op] = "checked"
     /\ state' = [state EXCEPT ![slot] = "pending"]
     /\ replayOf' = [replayOf EXCEPT ![slot] = opTarget[op]]
     /\ opPc' = [opPc EXCEPT ![op] = "done"]
@@ -231,10 +251,11 @@ Next ==
     \/ Done
     \/ \E w \in Workers : WorkerStep(w) \/ Crash(w)
     \/ \E j \in Ids : Expire(j) \/ FailExhausted(j) \/ CleanupCompleted(j)
-    \/ \E op \in Operators : ReplayInsert(op) \/ \E j \in Ids : ReplayRead(op, j)
+    \/ \E op \in Operators : ReplayCheck(op) \/ ReplayInsert(op) \/ \E j \in Ids : ReplayLock(op, j)
 
-\* Workers keep working, leases eventually lapse and the exhaustion sweep runs.
-\* Crashes, cleanup and operator replays are never forced. This assumes that a
+\* Workers keep working, leases eventually lapse, the exhaustion sweep runs and
+\* a started replay commits. Crashes, cleanup and starting an operator replay
+\* are never forced. This assumes that a
 \* handler returns soon after its context is cancelled: the worker waits for
 \* dispatch to return before its slot is free, so a handler that ignores
 \* cancellation keeps the slot, and Drop releasing it at once would hide that.
@@ -242,7 +263,7 @@ Next ==
 Fairness ==
     /\ \A w \in Workers : WF_vars(WorkerStep(w))
     /\ \A j \in Ids : WF_vars(Expire(j)) /\ WF_vars(FailExhausted(j))
-    /\ \A op \in Operators : WF_vars(ReplayInsert(op))
+    /\ \A op \in Operators : WF_vars(ReplayCheck(op)) /\ WF_vars(ReplayInsert(op))
 
 Spec == Init /\ [][Next]_vars /\ Fairness
 

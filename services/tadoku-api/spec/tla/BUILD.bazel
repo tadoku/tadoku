@@ -13,12 +13,11 @@ tlc_test(
     spec = "JobQueue.tla",
 )
 
-# Known gap: a failed job can have two replays pending, or be replayed after a replay succeeded.
+# Two operators replaying one failed job and its replays.
 tlc_test(
     name = "jobqueue_replay_test",
     config = "JobQueue_replay.cfg",
     spec = "JobQueue.tla",
-    tags = ["manual"],
 )
 
 # Two original jobs with a replay: larger bounds than CI runs.

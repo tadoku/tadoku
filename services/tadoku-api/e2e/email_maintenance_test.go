@@ -85,7 +85,7 @@ func TestEmailWorkerReconciliation(t *testing.T) {
 				}
 
 				scope, _ := jobqueue.AllTenantsExcept(jobqueue.WorkerComponent)
-				application := emailWorker(t, service, jobqueue.NewRepository(pool), scope)
+				application := emailWorker(t, service, pool, scope)
 				workerCtx, cancel := context.WithCancel(t.Context())
 				done := make(chan error, 1)
 				go func() { done <- application.Run(workerCtx) }()
@@ -270,7 +270,7 @@ func TestEmailWorkerReconciliationRules(t *testing.T) {
 	}
 
 	scope, _ := jobqueue.AllTenantsExcept(jobqueue.WorkerComponent)
-	application := emailWorker(t, service, jobqueue.NewRepository(api.db.AppPool), scope)
+	application := emailWorker(t, service, api.db.AppPool, scope)
 	workerCtx, cancel := context.WithCancel(t.Context())
 	done := make(chan error, 1)
 	go func() { done <- application.Run(workerCtx) }()
@@ -312,12 +312,11 @@ func TestEmailWorkerReconciliationRules(t *testing.T) {
 func emailWorker(
 	t *testing.T,
 	service *email.Service,
-	repository *jobqueue.Repository,
+	pool *pgxpool.Pool,
 	scope jobqueue.Scope,
 ) *worker.Application {
 	t.Helper()
-	deps := workerDependencies(t, api.db.AppPool)
-	deps.JobQueue = jobqueue.NewService(repository)
+	deps := workerDependencies(t, pool)
 	deps.Email = service
 	application, err := worker.NewApplication(deps, worker.Config{
 		Scope:           scope,
@@ -393,7 +392,7 @@ func TestEmailWorkerStartupAndDailyRetention(t *testing.T) {
 		}
 
 		scope, _ := jobqueue.AllTenantsExcept(jobqueue.WorkerComponent)
-		application := emailWorker(t, service, jobqueue.NewRepository(pool), scope)
+		application := emailWorker(t, service, pool, scope)
 		workerCtx, cancel := context.WithCancel(t.Context())
 		done := make(chan error, 1)
 		go func() { done <- application.Run(workerCtx) }()

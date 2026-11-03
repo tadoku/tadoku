@@ -38,7 +38,7 @@ func TestIdentityGeneratedRecoveryJourney(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	application := emailWorker(t, emailService(), jobqueue.NewRepository(api.db.AppPool), scope)
+	application := emailWorker(t, emailService(), api.db.AppPool, scope)
 	atFixtureInstant(func() {
 		ctx, cancel := context.WithCancel(t.Context())
 		done := make(chan error, 1)

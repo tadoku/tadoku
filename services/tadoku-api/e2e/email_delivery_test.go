@@ -34,6 +34,8 @@ type emailSMTP struct {
 	messages []string
 	attempts int
 	reject   bool
+	// Test safety: runs on the server goroutine after DATA and before the reply; set it before sending.
+	beforeAccept func()
 }
 
 func emailSMTPServer(t *testing.T, reject bool) *emailSMTP {
@@ -105,7 +107,11 @@ func (s *emailSMTP) serve(conn net.Conn, cert tls.Certificate) {
 			if !s.reject {
 				s.messages = append(s.messages, string(raw))
 			}
+			beforeAccept := s.beforeAccept
 			s.mu.Unlock()
+			if beforeAccept != nil {
+				beforeAccept()
+			}
 			if s.reject {
 				_ = peer.PrintfLine("451 temporarily unavailable")
 			} else {
@@ -318,5 +324,47 @@ func TestEmailGuessedJobTenant(t *testing.T) {
 	defer fixture.mu.Unlock()
 	if fixture.attempts != 0 {
 		t.Errorf("guessed job made %d SMTP attempts", fixture.attempts)
+	}
+}
+
+func TestEmailDeliveryAfterSettlement(t *testing.T) {
+	api.reset(t, "")
+	fixture := emailSMTPServer(t, false)
+	sender, err := smtpinfra.New(fixture.config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	service := email.NewService(email.NewRepository(api.db.AppPool), sender)
+	ctx := tenant.WithKey(t.Context(), tenant.Production())
+	id := writeEmail(t, ctx, service, recoveryMail())
+
+	fixture.mu.Lock()
+	fixture.beforeAccept = func() {
+		_, err := api.db.Pool.Exec(ctx, `update jobs
+			set state = 'failed', attempts = 5, failed_at = now(), last_error = 'lease_expired'
+			where tenant = $1 and payload->>'email_id' = $2`,
+			tenant.Production().String(),
+			id.String())
+		if err != nil {
+			t.Errorf("fail send job: %v", err)
+			return
+		}
+		if err := service.ReconcileFailures(ctx, jobqueue.AttemptsExhausted); err != nil {
+			t.Errorf("reconcile: %v", err)
+		}
+	}
+	fixture.mu.Unlock()
+
+	if err := service.Send(ctx, id); err != nil {
+		t.Fatal(err)
+	}
+
+	row, err := service.Find(ctx, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sent, ok := row.Delivery.(email.Sent)
+	if !ok || sent.At.IsZero() || sent.ProviderMessageID != "fixture-message-id" {
+		t.Errorf("delivery after settlement=%+v, want sent with the provider message ID", row.Delivery)
 	}
 }

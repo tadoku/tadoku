@@ -24,7 +24,11 @@ limit sqlc.arg('page_size')::integer;
 -- name: Finish :exec
 update emails
 set status = $2, sent_at = $3, provider_message_id = $4, error = $5
-where id = $1 and status = 'pending';
+where id = $1
+  and (
+    status = 'pending'
+    or (status = 'failed' and $2 = 'sent')
+  );
 
 -- name: Retain :execrows
 delete from emails

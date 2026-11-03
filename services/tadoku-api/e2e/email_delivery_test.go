@@ -34,6 +34,8 @@ type emailSMTP struct {
 	messages []string
 	attempts int
 	reject   bool
+	// Test safety: runs on the server goroutine after DATA and before the reply; set it before sending.
+	beforeAccept func()
 }
 
 func emailSMTPServer(t *testing.T, reject bool) *emailSMTP {
@@ -105,7 +107,11 @@ func (s *emailSMTP) serve(conn net.Conn, cert tls.Certificate) {
 			if !s.reject {
 				s.messages = append(s.messages, string(raw))
 			}
+			beforeAccept := s.beforeAccept
 			s.mu.Unlock()
+			if beforeAccept != nil {
+				beforeAccept()
+			}
 			if s.reject {
 				_ = peer.PrintfLine("451 temporarily unavailable")
 			} else {
@@ -318,5 +324,62 @@ func TestEmailGuessedJobTenant(t *testing.T) {
 	defer fixture.mu.Unlock()
 	if fixture.attempts != 0 {
 		t.Errorf("guessed job made %d SMTP attempts", fixture.attempts)
+	}
+}
+
+func TestEmailDeliveryAfterSettlement(t *testing.T) {
+	api.reset(t, "")
+	fixture := emailSMTPServer(t, false)
+	config := fixture.config
+	config.Timeout = 5 * time.Second
+	sender, err := smtpinfra.New(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	service := email.NewService(email.NewRepository(api.db.AppPool), sender)
+	ctx := tenant.WithKey(t.Context(), tenant.Production())
+	id := writeEmail(t, ctx, service, recoveryMail())
+
+	started, settled := make(chan struct{}), make(chan struct{})
+	fixture.mu.Lock()
+	fixture.beforeAccept = func() {
+		close(started)
+		defer close(settled)
+		tag, err := api.db.Pool.Exec(ctx, `update jobs
+			set state = 'failed', attempts = 5, failed_at = now(), last_error = 'lease_expired'
+			where tenant = $1 and payload->>'email_id' = $2`,
+			tenant.Production().String(),
+			id.String())
+		if err != nil || tag.RowsAffected() != 1 {
+			t.Errorf("fail send job: %s error=%v", tag, err)
+			return
+		}
+		if err := service.ReconcileFailures(ctx, jobqueue.AttemptsExhausted); err != nil {
+			t.Errorf("reconcile: %v", err)
+			return
+		}
+		if row, err := service.Find(ctx, id); err != nil || row.Delivery != (email.Failed{Error: "lease_expired"}) {
+			t.Errorf("settled before acceptance: delivery=%+v error=%v", row.Delivery, err)
+		}
+	}
+	fixture.mu.Unlock()
+
+	err = service.Send(ctx, id)
+	select {
+	case <-started:
+		<-settled
+	default:
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	row, err := service.Find(ctx, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sent, ok := row.Delivery.(email.Sent)
+	if !ok || sent.At.IsZero() || sent.ProviderMessageID != "fixture-message-id" {
+		t.Errorf("delivery after settlement=%+v, want sent with the provider message ID", row.Delivery)
 	}
 }

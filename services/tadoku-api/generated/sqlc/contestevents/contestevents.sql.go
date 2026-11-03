@@ -14,28 +14,44 @@ import (
 const insertContestEvents = `-- name: InsertContestEvents :exec
 insert into contest_events (id, contest_id, log_id, event, occurred_at)
 select
-  unnest($1::uuid[]),
-  unnest($2::uuid[]),
-  unnest($3::uuid[]),
-  unnest($4::text[]),
-  $5
+  new_events.id,
+  new_events.contest_id,
+  new_events.log_id,
+  new_events.event,
+  greatest(
+    $1::timestamptz,
+    (
+      select max(events.occurred_at) + interval '1 microsecond'
+      from contest_events as events
+      where events.contest_id = new_events.contest_id
+        and events.log_id = new_events.log_id
+        and events.occurred_at >= $1::timestamptz
+    )
+  )
+from (
+  select
+    unnest($2::uuid[]),
+    unnest($3::uuid[]),
+    unnest($4::uuid[]),
+    unnest($5::text[])
+) as new_events (id, contest_id, log_id, event)
 `
 
 type InsertContestEventsParams struct {
+	OccurredAt pgtype.Timestamptz
 	Ids        []pgtype.UUID
 	ContestIds []pgtype.UUID
 	LogIds     []pgtype.UUID
 	Events     []string
-	OccurredAt pgtype.Timestamptz
 }
 
 func (q *Queries) InsertContestEvents(ctx context.Context, arg InsertContestEventsParams) error {
 	_, err := q.db.Exec(ctx, insertContestEvents,
+		arg.OccurredAt,
 		arg.Ids,
 		arg.ContestIds,
 		arg.LogIds,
 		arg.Events,
-		arg.OccurredAt,
 	)
 	return err
 }

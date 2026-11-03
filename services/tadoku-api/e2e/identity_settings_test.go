@@ -90,9 +90,7 @@ func TestIdentitySettingsPasswordRevokesOthers(t *testing.T) {
 
 func TestIdentitySettingsValidationAndTenantIsolation(t *testing.T) {
 	t.Parallel()
-	s := newScenario(t, "identity-a", "identity-b")
-	s.seed(t, "identity-a", tenantSeed{})
-	s.seed(t, "identity-b", tenantSeed{})
+	s := newPairedIdentityScenario(t)
 
 	cookie := s.identityLoginCookie(t, "identity-a")
 	for _, tc := range []struct {
@@ -240,9 +238,7 @@ func TestIdentitySettingsEmailUniqueness(t *testing.T) {
 	t.Parallel()
 	for _, otherRole := range []string{"identity-a", "identity-b"} {
 		t.Run(otherRole, func(t *testing.T) {
-			s := newScenario(t, "identity-a", "identity-b")
-			s.seed(t, "identity-a", tenantSeed{})
-			s.seed(t, "identity-b", tenantSeed{})
+			s := newPairedIdentityScenario(t)
 
 			response := s.identityRequest(t, api.handler, otherRole, "POST", "/identity/registration",
 				`{"email":"occupied@example.test","display_name":"Other Reader","password":"Independent-653!"}`,
@@ -266,7 +262,7 @@ func TestIdentitySettingsEmailUniqueness(t *testing.T) {
     (select count(*) from emails where tenant = $1),
     (select count(*) from recovery_tokens where tenant = $1 and used_at is null)
     from accounts where tenant = $1 and user_id = $2`,
-				s.tenant(t, "identity-a").String(), identityReaderID).Scan(&email, &notices, &unused)
+				s.tenant(t, "identity-a").String(), scenarioCast[user].subject).Scan(&email, &notices, &unused)
 			if err != nil {
 				t.Fatal(err)
 			}

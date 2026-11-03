@@ -51,10 +51,8 @@ func identityUserCount(t *testing.T, tenantKey string) int {
 
 func TestIdentityV2RegistrationAdmissionBudget(t *testing.T) {
 	t.Parallel()
-	s := newScenario(t, "identity-a", "identity-b")
-	s.seed(t, "identity-a", tenantSeed{})
+	s := newPairedIdentityScenario(t)
 	branchA := s.tenant(t, "identity-a").String()
-	s.seed(t, "identity-b", tenantSeed{})
 
 	const peer = "198.51.100.20"
 

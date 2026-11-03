@@ -14,9 +14,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
-// Test safety: identityReaderID must match reader@example.test in testdata/tenant_accounts.sql.
-const identityReaderID = "11111111-1111-4111-8111-111111111111"
-
 var identityProductionCostSeed = tenantSeed{
 	finalize: []string{"testdata/IdentityV2/scenario-production-password-cost.sql"},
 }
@@ -55,9 +52,9 @@ func (s *scenario) registerFrom(
 	return s.identityRequest(t, handler, role, "POST", "/identity/registration", body, "", fromPeer(peer, forwarded))
 }
 
-// seedRecoveryToken stores a recovery token for the role's cast reader and returns its raw value.
+// seedRecoveryToken stores a recovery token for the cast reader of the role's tenant and returns its raw value.
 func (s *scenario) seedRecoveryToken(
-	t testing.TB,
+	t *testing.T,
 	role string,
 	marker byte,
 	expires time.Time,
@@ -66,13 +63,10 @@ func (s *scenario) seedRecoveryToken(
 	t.Helper()
 	raw := base64.RawURLEncoding.EncodeToString([]byte(strings.Repeat(string(marker), 32)))
 	digest := sha256.Sum256([]byte(raw))
-	_, err := api.db.Pool.Exec(t.Context(), `insert into recovery_tokens
-		(tenant, token_hash, user_id, expires_at, used_at)
-		values ($1, $2, $3, $4, $5)`,
-		s.tenant(t, role).String(), hex.EncodeToString(digest[:]), identityReaderID, expires, used)
-	if err != nil {
-		t.Fatal(err)
-	}
+	writeTenantRows(t, s.tenant(t, role).String(), `insert into recovery_tokens
+		(token_hash, user_id, expires_at, used_at)
+		values ($1, $2, $3, $4)`,
+		hex.EncodeToString(digest[:]), scenarioCast[user].subject, expires, used)
 	return raw
 }
 

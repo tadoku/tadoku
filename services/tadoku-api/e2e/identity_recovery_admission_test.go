@@ -179,7 +179,7 @@ func TestIdentityRecoveryClientBudget(t *testing.T) {
 		`{"email":"reader@example.test","return_to":"https://evil.example/"}`,
 		`{"email":"reader@example.test","return_to":"https://account.tadoku.dev.lab/` + strings.Repeat("a", 2040) + `"}`,
 	} {
-		response := guestIdentityRequest(t, s, "identity-a", "POST", "/identity/recovery", body, "",
+		response := s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/recovery", body, "",
 			fromPeer(peer, ""))
 		requireIdentityStatus(t, response, http.StatusBadRequest)
 	}
@@ -209,10 +209,10 @@ func TestIdentityRecoveryClientBudget(t *testing.T) {
 	requireRecoveryAccepted(t, recoverFromRole(t, s, "identity-b", "reader@example.test", peer, ""))
 	requireRecoveryWrites(t, tenantB, 1)
 
-	response := guestIdentityRequest(t, s, "identity-a", "POST", "/identity/login",
+	response := s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/login",
 		`{"email":"reader@example.test","password":"Fixture-login-482!"}`, "", fromPeer(peer, ""))
 	requireIdentityStatus(t, response, http.StatusOK)
-	response = guestIdentityRequest(t, s, "identity-a", "POST", "/identity/registration",
+	response = s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/registration",
 		`{"email":"registered@example.test","display_name":"Budget Reader","password":"Independent-653!"}`, "",
 		fromPeer(peer, ""))
 	requireIdentityStatus(t, response, http.StatusCreated)

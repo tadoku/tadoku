@@ -147,7 +147,7 @@ func TestIdentityGuestGatewayAdmissionPreservesBanGate(t *testing.T) {
 
 	response = s.identityRequest(t, api.handler, "identity-a", "GET", "/identity/session", "", cookie, nil)
 	view := identityView(t, response)
-	if view.Account == nil || view.Account.ID != identityReaderID {
+	if view.Account == nil || view.Account.ID != scenarioCast[user].subject {
 		t.Fatal("anonymous gateway admission failed to return the banned cookie account")
 	}
 	response = s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/logout", "", cookie, nil)

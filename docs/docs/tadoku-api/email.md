@@ -71,9 +71,10 @@ SMTP accepts a message and before `sent` is persisted can deliver twice, as can
 an SMTP error after the provider accepted the message, a failed `sent` update,
 or a handler that keeps sending after its lease lapsed while a new claim sends
 again. The submitted Message-ID does not provide a deduplication guarantee.
-The `sent` update applies only to a pending email. A send that finishes after
-its email was settled `failed` leaves it `failed`: a handler whose lease lapsed,
-or a replay inserted after reconciliation's statement snapshot.
+A send that finishes after its email was settled `failed`, from a handler whose
+lease lapsed or a replay inserted after reconciliation's statement snapshot,
+still records `sent`: provider acceptance replaces `failed`. Held and sent
+emails never change.
 See [Execution guarantees](./jobs.md#execution-and-failure-guarantees).
 
 ## Read retained messages

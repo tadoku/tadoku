@@ -91,3 +91,53 @@ tlc_test(
     spec = "EmailDelivery.tla",
     tags = ["manual"],
 )
+
+# An official invalidation of two keys, with one failed attempt and a replay.
+tlc_test(
+    name = "leaderboardcache_test",
+    config = "LeaderboardCache.cfg",
+    spec = "LeaderboardCache.tla",
+)
+
+# Two writes to one contest board, with overlapping invalidation jobs.
+tlc_test(
+    name = "leaderboardcache_writes_test",
+    config = "LeaderboardCache_writes.cfg",
+    spec = "LeaderboardCache.tla",
+)
+
+# Known gap: when Valkey loses one of a board's keys, the cache can serve an
+# empty board, or publish an older one once the generation counts back up.
+tlc_test(
+    name = "leaderboardcache_keyloss_test",
+    config = "LeaderboardCache_keyloss.cfg",
+    spec = "LeaderboardCache.tla",
+    tags = ["manual"],
+)
+
+# Known gap: a board too large for rebuildScript's unpack deletes the sorted
+# set and keeps the marker, so the cache can serve an empty board.
+tlc_test(
+    name = "leaderboardcache_unpack_test",
+    config = "LeaderboardCache_unpack.cfg",
+    spec = "LeaderboardCache.tla",
+    tags = ["manual"],
+)
+
+# Known gap: without an operator replay, a failed invalidation leaves a warm
+# board stale with no age limit.
+tlc_test(
+    name = "leaderboardcache_noreplay_test",
+    config = "LeaderboardCache_noreplay.cfg",
+    spec = "LeaderboardCache.tla",
+    tags = ["manual"],
+)
+
+# Two writes to the official boards, with retries: larger bounds than CI runs.
+tlc_test(
+    name = "leaderboardcache_large_test",
+    size = "large",
+    config = "LeaderboardCache_large.cfg",
+    spec = "LeaderboardCache.tla",
+    tags = ["manual"],
+)

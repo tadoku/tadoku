@@ -383,3 +383,75 @@ func TestEmailDeliveryAfterSettlement(t *testing.T) {
 		t.Errorf("delivery after settlement=%+v, want sent with the provider message ID", row.Delivery)
 	}
 }
+
+func TestEmailReplayResendsFailedEmail(t *testing.T) {
+	api.reset(t, "")
+	fixture := emailSMTPServer(t, false)
+	sender, err := smtpinfra.New(fixture.config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	service := email.NewService(email.NewRepository(api.db.AppPool), sender)
+	ctx := tenant.WithKey(t.Context(), tenant.Production())
+	id := writeEmail(t, ctx, service, recoveryMail())
+
+	var jobID int64
+	err = api.db.Pool.QueryRow(ctx, `update jobs
+		set state = 'failed', attempts = 5, failed_at = now(), last_error = 'handler_error'
+		where tenant = 'tadoku/prod' and payload->>'email_id' = $1
+		returning id`,
+		id.String()).Scan(&jobID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := service.ReconcileFailures(ctx, jobqueue.AttemptsExhausted); err != nil {
+		t.Fatal(err)
+	}
+	if row, err := service.Find(ctx, id); err != nil || row.Delivery != (email.Failed{Error: "handler_error"}) {
+		t.Fatalf("settled delivery=%+v error=%v", row.Delivery, err)
+	}
+
+	replayID, err := worker.Replay(ctx, api.db.AppPool, jobID, "operator", "SMTP repaired")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	scope, _ := jobqueue.AllTenantsExcept(jobqueue.WorkerComponent)
+	application := emailWorker(t, service, api.db.AppPool, scope)
+	workerCtx, cancel := context.WithCancel(t.Context())
+	done := make(chan error, 1)
+	go func() { done <- application.Run(workerCtx) }()
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		var state string
+		err := api.db.Pool.QueryRow(ctx, "select state from jobs where id = $1", replayID).Scan(&state)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if state == "completed" || state == "failed" {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("replay job state=%s after 10s", state)
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	cancel()
+	if err := <-done; err != nil {
+		t.Fatal(err)
+	}
+
+	row, err := service.Find(ctx, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sent, ok := row.Delivery.(email.Sent)
+	if !ok || sent.ProviderMessageID != "fixture-message-id" {
+		t.Errorf("replayed delivery=%+v, want sent with the provider message ID", row.Delivery)
+	}
+	fixture.mu.Lock()
+	defer fixture.mu.Unlock()
+	if len(fixture.messages) != 1 {
+		t.Errorf("replay delivered %d messages, want 1", len(fixture.messages))
+	}
+}

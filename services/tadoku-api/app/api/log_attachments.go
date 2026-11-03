@@ -47,7 +47,7 @@ func (a *Application) UpdateLogContestRegistrations(
 			return err
 		}
 
-		now := timex.Now()
+		now := timex.Now(ctx)
 		toAttach, detachments, err := a.logs.PlanContestRegistrationUpdate(current, targets, now)
 		if err != nil {
 			return err
@@ -105,7 +105,7 @@ func (a *Application) DeleteLog(ctx context.Context, logID uuid.UUID) error {
 		if err := a.profile.LockUser(ctx, log.UserID); err != nil {
 			return err
 		}
-		now := timex.Now()
+		now := timex.Now(ctx)
 		result, err := a.logs.Delete(ctx, logID, now)
 		if err != nil {
 			return err
@@ -153,7 +153,7 @@ func (a *Application) DetachContestLog(ctx context.Context, contestID, logID uui
 		}); err != nil {
 			return err
 		}
-		now := timex.Now()
+		now := timex.Now(ctx)
 		result, err := a.logs.ModerateDetach(ctx, logID, contestID, now)
 		if err != nil {
 			return err

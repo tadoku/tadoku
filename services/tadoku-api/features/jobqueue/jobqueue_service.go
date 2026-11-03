@@ -94,7 +94,7 @@ func (s *Service) Retry(ctx context.Context, task ClaimedJob, next time.Time, co
 	if err := validateErrorCode(code); err != nil {
 		return false, err
 	}
-	if next.Before(timex.Now()) {
+	if next.Before(timex.Now(ctx)) {
 		return false, errx.NewInvalidInputError("next attempt must not be before the current time")
 	}
 	if maxAttempts < 1 || maxAttempts > math.MaxInt32 {
@@ -133,7 +133,7 @@ func (s *Service) Replay(ctx context.Context, failedID int64, actor, reason stri
 }
 
 func (s *Service) CleanupCompleted(ctx context.Context, limit int) (int64, error) {
-	now := timex.Now()
+	now := timex.Now(ctx)
 	if now.IsZero() {
 		return 0, errx.NewInvalidInputError("cleanup time must not be zero")
 	}

@@ -29,7 +29,7 @@ func (s *Service) ListActiveAnnouncements(ctx context.Context, namespace string)
 		return nil, errx.NewInvalidInputError("namespace is required")
 	}
 
-	return s.announcements.ListActiveAnnouncements(ctx, namespace, timex.Now(), 10)
+	return s.announcements.ListActiveAnnouncements(ctx, namespace, timex.Now(ctx), 10)
 }
 
 func (s *Service) ListAnnouncements(ctx context.Context, namespace string, pageSize, page int) (*AnnouncementList, error) {
@@ -79,7 +79,7 @@ func (s *Service) CreateAnnouncement(ctx context.Context, parameters CreateAnnou
 		return err
 	}
 
-	now := timex.Now()
+	now := timex.Now(ctx)
 	item := &Announcement{
 		ID:        parameters.ID,
 		Namespace: parameters.Namespace,
@@ -96,7 +96,7 @@ func (s *Service) CreateAnnouncement(ctx context.Context, parameters CreateAnnou
 }
 
 func (s *Service) DeleteAnnouncement(ctx context.Context, namespace string, id uuid.UUID) error {
-	return s.announcements.DeleteAnnouncement(ctx, namespace, id, timex.Now())
+	return s.announcements.DeleteAnnouncement(ctx, namespace, id, timex.Now(ctx))
 }
 
 func (s *Service) UpdateAnnouncement(ctx context.Context, parameters UpdateAnnouncementParameters) error {
@@ -113,6 +113,6 @@ func (s *Service) UpdateAnnouncement(ctx context.Context, parameters UpdateAnnou
 		Href:      parameters.Href,
 		StartsAt:  parameters.StartsAt,
 		EndsAt:    parameters.EndsAt,
-		UpdatedAt: timex.Now(),
+		UpdatedAt: timex.Now(ctx),
 	})
 }

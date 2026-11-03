@@ -244,16 +244,29 @@ exported.
 
 ## Business time
 
-- Never call `time.Now()` for business time; use `internal/timex.Now()`. This
-  applies to services, repositories and background workers.
-- Tests control business time with `timex.TheWorld`; see
-  [Time in tests](./http-e2e.md#time-in-tests).
+- Never call `time.Now()` for business time; use `internal/timex.Now(ctx)`
+  with the operation's context. This applies to services, repositories and
+  background workers. A pure domain rule takes the instant as a parameter
+  instead.
+- A context built for follow-up work, such as a job's final transition, derives
+  from the operation's context with `context.WithoutCancel`, not
+  `context.Background()`, so business time and the ID source carry over.
+- Tests control business time by attaching a `timex.Clock` with
+  `timex.WithClock`, or for code without such a context with the process-wide
+  `timex.TheWorld`; see [Time in tests](./http-e2e.md#time-in-tests).
 - Real time that only drives expiry, deadlines or latency, such as token-cache
   expiry or request duration, reads `time.Now()` and stays independent of
   business time.
 - A shared `services/common` package that needs controllable real time gives
   the struct an unexported `now func() time.Time` field that defaults to
   `time.Now`. Only tests in the same package override it.
+
+## Generated IDs
+
+- Create a new record ID with `internal/uuidx.New(ctx)` and a request ID with
+  `uuidx.NewV7(ctx)`, not `uuid.New()`. Production attaches no source, so both
+  stay random; tests attach a deterministic stream with `uuidx.WithSource`.
+- Security tokens, secrets and salts read `crypto/rand` directly.
 
 ## Readability
 

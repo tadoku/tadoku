@@ -21,8 +21,9 @@ The general test principles are in [Testing](./testing.md).
   Fixture reset and verification SQL use the owner `Pool`; an owner-pool
   application router would bypass the policies the suite must exercise.
 - Bazel uses native rules_go process sharding. Each process owns its database,
-  application role, router, clocks, UUID state and leased Valkey logical database.
-  Scenarios run sequentially within a process. Call `reset` before each independent
+  application role, router, JWT verification clock and leased Valkey logical
+  database; each golden case and journey owns its business clock and UUID
+  stream. Scenarios run sequentially within a process. Call `reset` before each independent
   scenario, never between dependent requests.
 - The router uses the default deployed API request budget of 30 seconds,
   including cost-12 password hashing. The complete E2E target uses an explicit
@@ -160,9 +161,9 @@ tenant, insert its registry row in the case's `setup.sql` with
   golden.
 - Compare directly; do not decode the response into the generated types the
   handler uses.
-- Explicit seed IDs and frozen business time make responses deterministic.
-  Supply business time through `timex`. Never rewrite SQL inside a test
-  connector or rewrite response fields.
+- Explicit seed IDs, a per-case UUID source and frozen business time make
+  responses deterministic; see [Time in tests](#time-in-tests). Never rewrite
+  SQL inside a test connector or rewrite response fields.
 - Buffered response goldens are serialized with `httputil.DumpResponse`. When
   `ContentLength` is unknown, fill it from the recorder body's byte length
   before serialization. Preserve known declared lengths and explicitly set
@@ -233,20 +234,28 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
 
 ### Time in tests
 
-- The HTTP runner fixes `jwt.TimeFunc` at the signed fixtures' verification
-  instant, `2026-09-12T12:00:00Z` (`1789214400`), and restores it on return. JWT
-  clock overrides belong only in such scoped, sequential tests and must always
-  be restored.
-- Control business time with `timex.TheWorld` inside the tests that need it,
-  never around the whole suite in `TestMain`. A test may use separate,
-  non-nested scopes for different times, and business time can move
-  independently of token expiry. No test-only request-context wrapper is
-  needed.
-- To let business time pass while a request is in flight, call `timex.Advance`
-  inside one scope. Release whatever the request waits on and wait for it to
-  finish before that scope returns, on failure paths too.
-- Tests that use `timex.TheWorld` or override the JWT clock, and their parent
-  tests, must not call `t.Parallel`.
+- `TestMain` fixes `jwt.TimeFunc` at the signed fixtures' verification
+  instant, `2026-09-12T12:00:00Z` (`1789214400`), before any test runs. Tests
+  do not write it, except one whose tokens are signed at another time, such as
+  the Oathkeeper-minted tokens of the email gateway fixture; it restores the
+  fixture instant in cleanup.
+- The golden runner gives each case its own `timex.Clock` at the case's
+  business time and its own UUID stream, and attaches both to the request
+  context with `timex.WithClock` and `uuidx.WithSource`. The default stream
+  starts with sixteen `0x11` bytes; a case table may set a seed instead.
+  Business time moves independently of token expiry, and production, which
+  attaches neither, keeps real time and random IDs.
+- A test outside the runners that needs fixed business time either attaches a
+  clock to its requests' contexts or wraps them in `timex.TheWorld`
+  (`atFixtureInstant` for the fixture instant), never the whole suite in
+  `TestMain`. `TheWorld` applies only to contexts without a clock; a test may
+  use separate, non-nested scopes.
+- To let business time pass while a request is in flight, call `Advance` on
+  its clock, or `timex.Advance` inside a `TheWorld` scope. Release whatever the
+  request waits on and wait for it to finish before the scope returns, on
+  failure paths too.
+- Tests that use `timex.TheWorld` or `uuid.SetRand` or override
+  `jwt.TimeFunc`, and their parent tests, must not call `t.Parallel`.
 
 Latency-padding checks use `testing/synctest` with controlled processing delays
 below and above the floor. Keep the real router, restricted database role,

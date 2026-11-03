@@ -48,7 +48,7 @@ All paths are relative to `services/tadoku-api/`.
 | `app/permissionmodel/` | The list of every feature's permission namespace, from which composition roots build the permission model. |
 | `cmd/tadoku-worker/` | Worker composition root and private health/metrics lifecycle. |
 | `domain/<concept>/` | Business values and pure rules shared by several features. |
-| `internal/` | Technical support: errors (`errx`), request identity (`identity`), permission evaluation (`permissions`), feature-flag evaluation (`featureflags`), business time (`timex`), callback authentication (`callbackauth`) and test fixtures (`test*`). |
+| `internal/` | Technical support: errors (`errx`), request identity (`identity`), permission evaluation (`permissions`), feature-flag evaluation (`featureflags`), business time (`timex`), generated IDs (`uuidx`), callback authentication (`callbackauth`) and test fixtures (`test*`). |
 | `infra/` | Infrastructure adapters: PostgreSQL (`postgres`), Valkey (`valkey`), Flipt evaluation and management (`flipt`, `fliptmanagement`), and scoring observability (`observability`). |
 | `cmd/tadoku-api/` | The composition root: loads configuration, constructs and owns the pool, provider clients and HTTP resources, and wires them into the application. |
 

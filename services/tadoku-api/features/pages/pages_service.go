@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/uuidx"
 )
 
 type Service struct {
@@ -23,7 +24,7 @@ func (s *Service) CreatePage(ctx context.Context, parameters CreatePageParameter
 		return err
 	}
 
-	now := timex.Now()
+	now := timex.Now(ctx)
 	item := &Page{
 		ID:          parameters.ID,
 		Namespace:   parameters.Namespace,
@@ -35,7 +36,7 @@ func (s *Service) CreatePage(ctx context.Context, parameters CreatePageParameter
 		UpdatedAt:   &now,
 	}
 
-	contentID := uuid.New()
+	contentID := uuidx.New(ctx)
 	if err := s.pages.CreatePage(ctx, item, contentID); err != nil {
 		return err
 	}
@@ -44,7 +45,7 @@ func (s *Service) CreatePage(ctx context.Context, parameters CreatePageParameter
 }
 
 func (s *Service) DeletePage(ctx context.Context, namespace string, id uuid.UUID) error {
-	return s.pages.DeletePage(ctx, namespace, id, timex.Now())
+	return s.pages.DeletePage(ctx, namespace, id, timex.Now(ctx))
 }
 
 func (s *Service) FindPageBySlug(ctx context.Context, namespace, slug string) (*Page, error) {
@@ -59,7 +60,7 @@ func (s *Service) FindPageBySlug(ctx context.Context, namespace, slug string) (*
 	if err != nil {
 		return nil, err
 	}
-	if !page.IsPublished(timex.Now()) {
+	if !page.IsPublished(timex.Now(ctx)) {
 		return nil, ErrPageNotFound
 	}
 
@@ -94,7 +95,7 @@ func (s *Service) ListPages(ctx context.Context, namespace string, includeDrafts
 		offset *= int64(pageSize)
 	}
 
-	pages, totalSize, err := s.pages.ListPages(ctx, namespace, includeDrafts, timex.Now(), int32(pageSize), offset)
+	pages, totalSize, err := s.pages.ListPages(ctx, namespace, includeDrafts, timex.Now(ctx), int32(pageSize), offset)
 	if err != nil {
 		return nil, err
 	}
@@ -122,14 +123,14 @@ func (s *Service) UpdatePage(ctx context.Context, parameters UpdatePageParameter
 	item.Title = parameters.Title
 	item.HTML = parameters.HTML
 	item.PublishedAt = parameters.PublishedAt
-	now := timex.Now()
+	now := timex.Now(ctx)
 	item.UpdatedAt = &now
 
 	if !contentChanged {
 		return s.pages.UpdatePage(ctx, item, nil)
 	}
 
-	contentID := uuid.New()
+	contentID := uuidx.New(ctx)
 	if err := s.pages.UpdatePage(ctx, item, &contentID); err != nil {
 		return err
 	}

@@ -25,7 +25,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
-func runWorkerStep(t *testing.T, s *suite, forTenant string) {
+func runWorkerStep(t *testing.T, ctx context.Context, s *suite, forTenant string) {
 	t.Helper()
 	eligible, arguments := eligibleJobs(forTenant)
 	var queued int
@@ -37,16 +37,17 @@ func runWorkerStep(t *testing.T, s *suite, forTenant string) {
 		t.Fatal("API write did not enqueue jobs")
 	}
 
-	stop := startWorker(t, s, forTenant)
+	stop := startWorker(t, ctx, s, forTenant)
 	defer stop()
 	if failed := waitForWorker(t, s, forTenant); failed != 0 {
 		t.Fatalf("worker failed %d jobs; queued=%d", failed, queued)
 	}
 }
 
-// startWorker runs the base worker, or with forTenant only that tenant's worker, until stop returns. A caller that fixes
-// business time keeps its timex.TheWorld scope open until stop returns.
-func startWorker(t *testing.T, s *suite, forTenant string) (stop func()) {
+// startWorker runs the base worker, or with forTenant only that tenant's worker, until stop returns. Jobs keep ctx's
+// values, including a scenario clock and UUID source. A caller that fixes business time with timex.TheWorld instead keeps
+// that scope open until stop returns.
+func startWorker(t *testing.T, ctx context.Context, s *suite, forTenant string) (stop func()) {
 	t.Helper()
 	scope, err := jobqueue.AllTenantsExcept(jobqueue.WorkerComponent)
 	if err != nil {
@@ -77,7 +78,7 @@ func startWorker(t *testing.T, s *suite, forTenant string) (stop func()) {
 		t.Fatal(err)
 	}
 
-	workerContext, cancelWorker := context.WithCancel(t.Context())
+	workerContext, cancelWorker := context.WithCancel(ctx)
 	workerDone := make(chan error, 1)
 	go func() { workerDone <- application.Run(workerContext) }()
 	return func() {

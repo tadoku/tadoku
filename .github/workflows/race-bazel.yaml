@@ -120,6 +120,7 @@ jobs:
           --build_event_json_file="$RUNNER_TEMP/bazel-race.json"
           //services/tadoku-api/internal/permissions:permissions_test
           //services/tadoku-api/internal/timex:timex_test
+          //services/tadoku-api/internal/uuidx:uuidx_test
           //services/tadoku-api/infra/postgres:postgres_test
           //services/tadoku-api/infra/postgres:pgbouncer_test
           //services/tadoku-api/infra/valkey:valkey_test

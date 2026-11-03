@@ -9,6 +9,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestwindow"
 	domainlanguages "github.com/tadoku/tadoku/services/tadoku-api/domain/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/uuidx"
 )
 
 func (s *Service) ListPlatformRuleSets(ctx context.Context, includeDrafts bool) ([]RuleSet, error) {
@@ -147,7 +148,7 @@ func (s *Service) createDraft(ctx context.Context, draft RuleSet) (*RuleSet, err
 		return nil, fmt.Errorf("allocate scoring rule set version: %w", err)
 	}
 
-	draft.ID = uuid.New()
+	draft.ID = uuidx.New(ctx)
 	draft.Version = version
 	draft.Status = "draft"
 	rules := draft.Rules
@@ -159,7 +160,7 @@ func (s *Service) createDraft(ctx context.Context, draft RuleSet) (*RuleSet, err
 	}
 	created.Rules = make([]Rule, len(rules))
 	for i, rule := range rules {
-		rule.ID = uuid.New()
+		rule.ID = uuidx.New(ctx)
 		if err := s.repository.CreateRule(ctx, created.ID, rule); err != nil {
 			return nil, err
 		}

@@ -2,8 +2,11 @@ package e2e_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -14,7 +17,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
@@ -62,10 +64,20 @@ func runJourney(t *testing.T, s *suite, name string, steps []step) {
 }
 
 func runJourneyWithHandler(t *testing.T, s *suite, handler http.Handler, name string, steps []step) {
-	runJourneyWithSetup(t, s, handler, name, nil, steps)
+	runJourneyWithSetup(t, s, handler, name, nil, nil, steps)
 }
 
-func runJourneyWithSetup(t *testing.T, s *suite, handler http.Handler, name string, afterReset func(*testing.T), steps []step) {
+// runJourneyWithSetup runs afterReset after the journey's reset. ids supplies the bytes of the journey's generated
+// UUIDs in creation order; nil uses a fixed seed.
+func runJourneyWithSetup(
+	t *testing.T,
+	s *suite,
+	handler http.Handler,
+	name string,
+	afterReset func(*testing.T),
+	ids io.Reader,
+	steps []step,
+) {
 	t.Helper()
 
 	directory := filepath.Join(journeysDir, name)
@@ -86,9 +98,11 @@ func runJourneyWithSetup(t *testing.T, s *suite, handler http.Handler, name stri
 		afterReset(t)
 	}
 
-	previous := jwt.TimeFunc
-	jwt.TimeFunc = func() time.Time { return fixtureInstant }
-	defer func() { jwt.TimeFunc = previous }()
+	if ids == nil {
+		ids = rand.New(rand.NewSource(1))
+	}
+	clock := timex.NewClock(fixtureInstant)
+	ctx := scenarioContext(t, clock, ids)
 
 	for index, current := range steps {
 		stepDir := filepath.Join(directory, names[index])
@@ -97,22 +111,19 @@ func runJourneyWithSetup(t *testing.T, s *suite, handler http.Handler, name stri
 			at = fixtureInstant
 		}
 
+		clock.Set(at)
+
 		passed := t.Run(names[index], func(t *testing.T) {
-			timex.TheWorld(at, func() {
-				if current.verify != "" {
-					checkVerifyGolden(t, s, stepDir)
-					return
-				}
-				if current.valkey != "" {
-					checkValkeyGolden(t, stepDir)
-					return
-				}
-				if current.job != "" {
-					runJobStep(t, s, current)
-					return
-				}
-				runRequestStep(t, s, handler, stepDir, current, tokens)
-			})
+			switch {
+			case current.verify != "":
+				checkVerifyGolden(t, s, stepDir)
+			case current.valkey != "":
+				checkValkeyGolden(t, stepDir)
+			case current.job != "":
+				runJobStep(t, ctx, s, current)
+			default:
+				runRequestStep(t, ctx, s, handler, stepDir, current, tokens)
+			}
 		})
 		if !passed {
 			return
@@ -217,11 +228,11 @@ func checkJourneyFiles(directory string, steps []step, names []string) error {
 	return nil
 }
 
-func runJobStep(t *testing.T, s *suite, current step) {
+func runJobStep(t *testing.T, ctx context.Context, s *suite, current step) {
 	t.Helper()
 	switch current.job {
 	case "run_worker", "run_branch_worker":
-		runWorkerStep(t, s, current.forTenant)
+		runWorkerStep(t, ctx, s, current.forTenant)
 	default:
 		t.Fatalf("unknown journey job %q", current.job)
 	}
@@ -305,7 +316,15 @@ func resetJourney(t *testing.T, s *suite, directory string) {
 	s.resetProfileService()
 }
 
-func runRequestStep(t *testing.T, s *suite, handler http.Handler, directory string, current step, tokens map[member]string) {
+func runRequestStep(
+	t *testing.T,
+	ctx context.Context,
+	s *suite,
+	handler http.Handler,
+	directory string,
+	current step,
+	tokens map[member]string,
+) {
 	t.Helper()
 
 	if readHTTPRequest(t, directory).Header.Get("Authorization") != "" {
@@ -318,7 +337,7 @@ func runRequestStep(t *testing.T, s *suite, handler http.Handler, directory stri
 	}
 	slices.Sort(others)
 	for _, other := range others {
-		replay := readHTTPRequest(t, directory)
+		replay := readHTTPRequest(t, directory).WithContext(ctx)
 		authorize(replay, other, tokens)
 
 		recorder := httptest.NewRecorder()
@@ -331,7 +350,7 @@ func runRequestStep(t *testing.T, s *suite, handler http.Handler, directory stri
 		return
 	}
 
-	request := readHTTPRequest(t, directory)
+	request := readHTTPRequest(t, directory).WithContext(ctx)
 	authorize(request, current.as, tokens)
 	checkHTTPResponseGolden(t, handler, request, directory, current.want, *updateGoldens)
 }

@@ -1,12 +1,9 @@
 package e2e_test
 
 import (
-	"math/rand"
 	"net/http"
 	"testing"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 func TestAnnouncementLifecycleJourney(t *testing.T) {
@@ -65,9 +62,6 @@ func TestAnnouncementLifecycleJourney(t *testing.T) {
 }
 
 func TestPageLifecycleJourney(t *testing.T) {
-	uuid.SetRand(rand.New(rand.NewSource(1)))
-	defer uuid.SetRand(nil)
-
 	scheduled := fixtureInstant.Add(time.Hour)
 	published := fixtureInstant.Add(2 * time.Hour)
 	retitled := fixtureInstant.Add(3 * time.Hour)
@@ -245,9 +239,6 @@ func TestPageLifecycleJourney(t *testing.T) {
 }
 
 func TestPostLifecycleJourney(t *testing.T) {
-	uuid.SetRand(rand.New(rand.NewSource(1)))
-	defer uuid.SetRand(nil)
-
 	scheduled := fixtureInstant.Add(time.Hour)
 	published := fixtureInstant.Add(2 * time.Hour)
 	retitled := fixtureInstant.Add(3 * time.Hour)

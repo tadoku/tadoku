@@ -39,7 +39,7 @@ func (a *Application) CreateLog(ctx context.Context, p LogCreateParameters) (*Lo
 	}
 	actor := identity.FromContext(ctx)
 
-	userID, err := a.profile.SynchronizeUser(ctx, actor, timex.Now())
+	userID, err := a.profile.SynchronizeUser(ctx, actor, timex.Now(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (a *Application) CreateLog(ctx context.Context, p LogCreateParameters) (*Lo
 		if err := a.profile.LockUser(ctx, userID); err != nil {
 			return err
 		}
-		now := timex.Now()
+		now := timex.Now(ctx)
 
 		input, err := a.scoring.NormalizeLogInput(logscore.Input{
 			UnitID:          p.UnitID,
@@ -114,7 +114,7 @@ func (a *Application) UpdateLog(ctx context.Context, p LogUpdateParameters) (*Lo
 		if err := a.profile.LockUser(ctx, existing.UserID); err != nil {
 			return err
 		}
-		now := timex.Now()
+		now := timex.Now(ctx)
 		current, err := a.logs.FindLog(ctx, p.ID)
 		if err != nil {
 			return err

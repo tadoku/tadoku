@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/uuidx"
 )
 
 type Service struct {
@@ -23,7 +24,7 @@ func (s *Service) CreatePost(ctx context.Context, parameters CreatePostParameter
 		return err
 	}
 
-	now := timex.Now()
+	now := timex.Now(ctx)
 	item := &Post{
 		ID:          parameters.ID,
 		Namespace:   parameters.Namespace,
@@ -35,7 +36,7 @@ func (s *Service) CreatePost(ctx context.Context, parameters CreatePostParameter
 		UpdatedAt:   &now,
 	}
 
-	contentID := uuid.New()
+	contentID := uuidx.New(ctx)
 	if err := s.posts.CreatePost(ctx, item, contentID); err != nil {
 		return err
 	}
@@ -44,7 +45,7 @@ func (s *Service) CreatePost(ctx context.Context, parameters CreatePostParameter
 }
 
 func (s *Service) DeletePost(ctx context.Context, namespace string, id uuid.UUID) error {
-	return s.posts.DeletePost(ctx, namespace, id, timex.Now())
+	return s.posts.DeletePost(ctx, namespace, id, timex.Now(ctx))
 }
 
 func (s *Service) FindPostBySlug(ctx context.Context, namespace, slug string) (*Post, error) {
@@ -59,7 +60,7 @@ func (s *Service) FindPostBySlug(ctx context.Context, namespace, slug string) (*
 	if err != nil {
 		return nil, err
 	}
-	if !post.IsPublished(timex.Now()) {
+	if !post.IsPublished(timex.Now(ctx)) {
 		return nil, ErrPostNotFound
 	}
 
@@ -94,7 +95,7 @@ func (s *Service) ListPosts(ctx context.Context, namespace string, includeDrafts
 		offset *= int64(pageSize)
 	}
 
-	posts, totalSize, err := s.posts.ListPosts(ctx, namespace, includeDrafts, timex.Now(), int32(pageSize), offset)
+	posts, totalSize, err := s.posts.ListPosts(ctx, namespace, includeDrafts, timex.Now(ctx), int32(pageSize), offset)
 	if err != nil {
 		return nil, err
 	}
@@ -126,14 +127,14 @@ func (s *Service) UpdatePost(ctx context.Context, parameters UpdatePostParameter
 	item.Title = parameters.Title
 	item.Content = parameters.Content
 	item.PublishedAt = parameters.PublishedAt
-	now := timex.Now()
+	now := timex.Now(ctx)
 	item.UpdatedAt = &now
 
 	if !contentChanged {
 		return s.posts.UpdatePost(ctx, item, nil)
 	}
 
-	contentID := uuid.New()
+	contentID := uuidx.New(ctx)
 	if err := s.posts.UpdatePost(ctx, item, &contentID); err != nil {
 		return err
 	}

@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/bazelbuild/rules_go/go/runfiles"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"go.yaml.in/yaml/v3"
@@ -33,6 +34,9 @@ import (
 )
 
 func TestEmailGatewayCookieAndBearer(t *testing.T) {
+	previous := jwt.TimeFunc
+	jwt.TimeFunc = time.Now
+	t.Cleanup(func() { jwt.TimeFunc = previous })
 	api.reset(t, "")
 
 	key, _ := tenant.Parse("tadoku/gateway-0123abcd")

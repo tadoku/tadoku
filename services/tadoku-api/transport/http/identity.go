@@ -15,6 +15,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 	callbackopenapi "github.com/tadoku/tadoku/services/tadoku-api/generated/openapi/callback"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
 type identityRequestKey struct{}
@@ -77,7 +78,7 @@ func (s *server) IdentityRegistrationCreate(
 	}
 	cookie := identityCookie(result.Cookie)
 	return openapi.IdentityRegistrationCreate201JSONResponse{
-		Body:    identitySession(result.Session),
+		Body:    identitySession(ctx, result.Session),
 		Headers: openapi.IdentityRegistrationCreate201ResponseHeaders{SetCookie: &cookie},
 	}, nil
 }
@@ -98,7 +99,7 @@ func (s *server) IdentityLoginCreate(
 	}
 	cookie := identityCookie(result.Cookie)
 	return openapi.IdentityLoginCreate200JSONResponse{
-		Body:    identitySession(result.Session),
+		Body:    identitySession(ctx, result.Session),
 		Headers: openapi.IdentityLoginCreate200ResponseHeaders{SetCookie: &cookie},
 	}, nil
 }
@@ -129,7 +130,7 @@ func (s *server) IdentitySessionGet(
 		s.logOperationError(ctx, "read identity session", err)
 		return nil, err
 	}
-	return openapi.IdentitySessionGet200JSONResponse(identitySession(result)), nil
+	return openapi.IdentitySessionGet200JSONResponse(identitySession(ctx, result)), nil
 }
 
 func identityCookie(cookie api.IdentityCookie) string {
@@ -146,7 +147,7 @@ func identityCookie(cookie api.IdentityCookie) string {
 	}).String()
 }
 
-func identitySession(result api.IdentitySession) openapi.IdentitySession {
+func identitySession(ctx context.Context, result api.IdentitySession) openapi.IdentitySession {
 	account := nullable.NewNullNullable[openapi.IdentityAccount]()
 	recentLogin := false
 	if session, ok := result.(api.IdentityAuthenticatedSession); ok {
@@ -157,7 +158,7 @@ func identitySession(result api.IdentitySession) openapi.IdentitySession {
 			CreatedAt:       session.Account.CreatedAt,
 			AuthenticatedAt: session.AuthenticatedAt,
 		})
-		recentLogin = session.RecentLogin()
+		recentLogin = session.RecentLogin(timex.Now(ctx))
 	}
 	return openapi.IdentitySession{Account: account, RecentLogin: recentLogin}
 }

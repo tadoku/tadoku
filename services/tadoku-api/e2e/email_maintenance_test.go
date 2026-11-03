@@ -385,7 +385,7 @@ func TestEmailWorkerStartupAndDailyRetention(t *testing.T) {
 			dailyID:   2*24*time.Hour + time.Hour,
 		} {
 			_, err := ownerPool.Exec(ctx, `update emails set created_at = $2, status = 'held' where id = $1`,
-				id, timex.Now().Add(-age))
+				id, timex.Now(ctx).Add(-age))
 			if err != nil {
 				t.Fatal(err)
 			}

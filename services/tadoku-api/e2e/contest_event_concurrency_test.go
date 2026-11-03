@@ -11,15 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
 func TestContestEventConcurrentPublication(t *testing.T) {
-	previous := jwt.TimeFunc
-	jwt.TimeFunc = func() time.Time { return fixtureInstant }
-	defer func() { jwt.TimeFunc = previous }()
-
 	for _, commitPending := range []bool{true, false} {
 		t.Run(fmt.Sprintf("commit_pending_%t", commitPending), func(t *testing.T) {
 			cleanupContestEventUnit(t)
@@ -216,17 +212,14 @@ func TestContestEventsOfALogFollowCommitOrder(t *testing.T) {
 	const contestID = "f0000000-0000-4000-8000-000000000002"
 	const logID = "d0000000-0000-4000-8000-000000000002"
 
-	useContestEventUUIDs(t)
+	uuid.SetRand(contestEventUUIDs())
+	t.Cleanup(func() { uuid.SetRand(nil) })
 	cleanupContestEventUnit(t)
 	resetJourney(t, api, "testdata/journeys/ContestEventConcurrentPublication")
 	tokens, err := loadCast([]step{{as: user}})
 	if err != nil {
 		t.Fatal(err)
 	}
-	previous := jwt.TimeFunc
-	jwt.TimeFunc = func() time.Time { return fixtureInstant }
-	defer func() { jwt.TimeFunc = previous }()
-
 	attach := httptest.NewRequest(http.MethodPut, "/immersion/logs/"+logID+"/contest-registrations",
 		strings.NewReader(`{"registration_ids":["e0000000-0000-4000-8000-000000000001",`+
 			`"e0000000-0000-4000-8000-000000000002"]}`))

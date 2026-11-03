@@ -135,7 +135,7 @@ func TestAccountDeletionWorkerLocksTheAccountBeforeTheUser(t *testing.T) {
 	login := holdRow(t, "select 1 from accounts where user_id = $1 for update", readerUserID)
 
 	atFixtureInstant(func() {
-		stop := startWorker(t, api, "")
+		stop := startWorker(t, t.Context(), api, "")
 		defer stop()
 		waitForLockWaiters(t, 1, nil)
 

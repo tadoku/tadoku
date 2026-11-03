@@ -197,9 +197,7 @@ func TestUserModerationJourney(t *testing.T) {
 }
 
 func TestAdminAccountDeletionJourney(t *testing.T) {
-	useContestEventUUIDs(t)
-
-	runJourney(t, api, "AdminAccountDeletion", []step{
+	runJourneyWithSetup(t, api, api.handler, "AdminAccountDeletion", nil, contestEventUUIDs(), []step{
 		{
 			request: "finished_contest_leaderboard",
 			as:      guest,
@@ -339,7 +337,7 @@ func TestAccountDeletionEndsAccessJourney(t *testing.T) {
 func TestModerationAuditFailureJourney(t *testing.T) {
 	afterReset := func(t *testing.T) { failInserts(t, "moderation_audit_log") }
 
-	runJourneyWithSetup(t, api, api.handler, "ModerationAuditFailure", afterReset, []step{
+	runJourneyWithSetup(t, api, api.handler, "ModerationAuditFailure", afterReset, nil, []step{
 		{
 			request: "ban_user_audit_unavailable",
 			as:      admin,
@@ -364,7 +362,7 @@ func TestModerationAuditFailureJourney(t *testing.T) {
 func TestModerationBanWriteFailureJourney(t *testing.T) {
 	afterReset := func(t *testing.T) { failInserts(t, "permission_relationships") }
 
-	runJourneyWithSetup(t, api, api.handler, "ModerationBanWriteFailure", afterReset, []step{
+	runJourneyWithSetup(t, api, api.handler, "ModerationBanWriteFailure", afterReset, nil, []step{
 		{
 			request: "ban_user_write_unavailable",
 			as:      admin,

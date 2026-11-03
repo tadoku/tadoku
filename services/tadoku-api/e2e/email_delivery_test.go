@@ -230,7 +230,7 @@ func TestEmailWorkerDelivery(t *testing.T) {
 					if tc.reject {
 						_, err = ownerPool.Exec(ctx,
 							"update jobs set next_attempt_at = $1 where state = 'pending'",
-							timex.Now().Add(-time.Minute),
+							timex.Now(ctx).Add(-time.Minute),
 						)
 						if err != nil {
 							t.Fatal(err)

@@ -16,7 +16,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -67,10 +66,6 @@ func TestTenantIsolation(t *testing.T) {
 	if err := json.Unmarshal(contents, &tokens); err != nil {
 		t.Fatal(err)
 	}
-
-	previous := jwt.TimeFunc
-	jwt.TimeFunc = func() time.Time { return fixtureInstant }
-	defer func() { jwt.TimeFunc = previous }()
 
 	key, err := tenant.Parse(isolationTenant)
 	if err != nil {

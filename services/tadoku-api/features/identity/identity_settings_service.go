@@ -34,13 +34,13 @@ func (s *Service) UpdateProfile(
 			return ProfileResult{}, err
 		}
 		if email.value != account.Email.recipient() {
-			if err := recentSession(session); err != nil {
+			if err := recentSession(ctx, session); err != nil {
 				return ProfileResult{}, err
 			}
-			if err := s.repository.updateEmail(ctx, account.ID, email, timex.Now()); err != nil {
+			if err := s.repository.updateEmail(ctx, account.ID, email, timex.Now(ctx)); err != nil {
 				return ProfileResult{}, err
 			}
-			if err := s.repository.invalidateRecoveryTokens(ctx, account.ID, timex.Now()); err != nil {
+			if err := s.repository.invalidateRecoveryTokens(ctx, account.ID, timex.Now(ctx)); err != nil {
 				return ProfileResult{}, err
 			}
 			messages = []mail.Message{{
@@ -48,7 +48,7 @@ func (s *Service) UpdateProfile(
 				Recipient: account.Email.recipient(),
 				Params: map[string]string{
 					"new_email":  email.value,
-					"changed_at": timex.Now().Format(time.RFC3339),
+					"changed_at": timex.Now(ctx).Format(time.RFC3339),
 				},
 			}}
 			account.Email = email
@@ -59,7 +59,7 @@ func (s *Service) UpdateProfile(
 		if err != nil {
 			return ProfileResult{}, err
 		}
-		if err := s.repository.updateDisplayName(ctx, account.ID, name, timex.Now()); err != nil {
+		if err := s.repository.updateDisplayName(ctx, account.ID, name, timex.Now(ctx)); err != nil {
 			return ProfileResult{}, err
 		}
 		account.DisplayName = name
@@ -79,7 +79,7 @@ func (s *Service) HashPasswordUpdate(ctx context.Context, header CookieHeader, r
 	if err != nil {
 		return PasswordUpdate{}, err
 	}
-	if err := recentSession(session); err != nil {
+	if err := recentSession(ctx, session); err != nil {
 		return PasswordUpdate{}, err
 	}
 	password, err := ParsePassword(raw, session.Account.Email)
@@ -100,7 +100,7 @@ func (s *Service) ApplyPasswordUpdate(ctx context.Context, update PasswordUpdate
 	if err != nil {
 		return err
 	}
-	if err := recentSession(session); err != nil {
+	if err := recentSession(ctx, session); err != nil {
 		return err
 	}
 	if _, err := ParsePassword(update.password.value, session.Account.Email); err != nil {
@@ -110,10 +110,10 @@ func (s *Service) ApplyPasswordUpdate(ctx context.Context, update PasswordUpdate
 		return errx.NewInvalidInputError("password update must be hashed before applying")
 	}
 
-	if err := s.repository.updatePassword(ctx, session.Account.ID, update.hash, timex.Now()); err != nil {
+	if err := s.repository.updatePassword(ctx, session.Account.ID, update.hash, timex.Now(ctx)); err != nil {
 		return err
 	}
-	if err := s.repository.invalidateRecoveryTokens(ctx, session.Account.ID, timex.Now()); err != nil {
+	if err := s.repository.invalidateRecoveryTokens(ctx, session.Account.ID, timex.Now(ctx)); err != nil {
 		return err
 	}
 	return s.repository.revokeOtherSessions(
@@ -134,7 +134,7 @@ func (s *Service) AdmitAccountDeletion(ctx context.Context, header CookieHeader,
 	if err != nil {
 		return AccountDeletion{}, err
 	}
-	if err := recentSession(session); err != nil {
+	if err := recentSession(ctx, session); err != nil {
 		return AccountDeletion{}, err
 	}
 	address, err := ParseEmail(email)
@@ -151,7 +151,7 @@ func (s *Service) RequestAccountDeletion(ctx context.Context, deletion AccountDe
 	if err != nil {
 		return uuid.Nil, Cookie{}, err
 	}
-	if err := recentSession(session); err != nil {
+	if err := recentSession(ctx, session); err != nil {
 		return uuid.Nil, Cookie{}, err
 	}
 
@@ -200,8 +200,8 @@ func (s *Service) lockSettingsSession(ctx context.Context, header CookieHeader) 
 	return session, nil
 }
 
-func recentSession(session AuthenticatedSession) error {
-	if !session.RecentLogin() {
+func recentSession(ctx context.Context, session AuthenticatedSession) error {
+	if !session.RecentLogin(timex.Now(ctx)) {
 		return ErrStaleSession
 	}
 	return nil

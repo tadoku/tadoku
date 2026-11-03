@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/uuidx"
 )
 
 const correlationHeader = "X-Request-Id"
@@ -125,7 +125,7 @@ type correlationIDKey struct{}
 
 func withCorrelationID(ctx context.Context, id string) context.Context {
 	if id == "" {
-		id = uuid.Must(uuid.NewV7()).String()
+		id = uuidx.NewV7(ctx).String()
 	}
 	return context.WithValue(ctx, correlationIDKey{}, id)
 }

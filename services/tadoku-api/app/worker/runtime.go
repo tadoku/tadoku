@@ -211,7 +211,7 @@ func (r *runner) updateMetrics(ctx context.Context) (int64, error) {
 		r.metrics.failed.WithLabelValues(string(spec.typeName)).Set(float64(stats.Failed))
 		age := float64(0)
 		if stats.OldestDueAt != nil {
-			age = max(0, timex.Now().Sub(*stats.OldestDueAt).Seconds())
+			age = max(0, timex.Now(ctx).Sub(*stats.OldestDueAt).Seconds())
 		}
 		r.metrics.oldestDueAge.WithLabelValues(string(spec.typeName)).Set(age)
 	}
@@ -224,7 +224,7 @@ func (r *runner) updateMetrics(ctx context.Context) (int64, error) {
 	r.metrics.unsupportedFailed.Set(float64(stats.Failed))
 	age := float64(0)
 	if stats.OldestDueAt != nil {
-		age = max(0, timex.Now().Sub(*stats.OldestDueAt).Seconds())
+		age = max(0, timex.Now(ctx).Sub(*stats.OldestDueAt).Seconds())
 	}
 	r.metrics.unsupportedOldestDueAge.Set(age)
 	return stats.Pending + stats.Running + stats.Failed, nil
@@ -283,7 +283,7 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec han
 	r.metrics.duration.WithLabelValues(string(task.Type), tenant.MetricKind(ctx)).Observe(
 		max(0, (limit - time.Until(maximum)).Seconds()),
 	)
-	transitionCtx, stop := context.WithTimeout(tenant.WithKey(context.Background(), task.Tenant), 5*time.Second)
+	transitionCtx, stop := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 	defer stop()
 
 	var held, terminal bool
@@ -298,7 +298,8 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec han
 		if isPermanent {
 			held, err = r.queue.Fail(transitionCtx, task, code)
 		} else {
-			held, err = r.queue.Retry(transitionCtx, task, retryAt(task.Attempts), code, spec.maxAttempts)
+			retry := retryAt(timex.Now(ctx), task.Attempts)
+			held, err = r.queue.Retry(transitionCtx, task, retry, code, spec.maxAttempts)
 		}
 		r.metrics.attempts.WithLabelValues(string(task.Type), code, tenant.MetricKind(ctx)).Inc()
 	}
@@ -386,9 +387,9 @@ func (r *runner) renew(ctx context.Context, cancelHandler context.CancelFunc, ta
 	}
 }
 
-func retryAt(attempts int) time.Time {
+func retryAt(now time.Time, attempts int) time.Time {
 	shift := min(max(attempts-1, 0), 6)
 	backoff := min(time.Second<<shift, time.Minute)
 	jitter := time.Duration(rand.Int64N(int64(backoff / 2)))
-	return timex.Now().Add(backoff/2 + jitter)
+	return now.Add(backoff/2 + jitter)
 }

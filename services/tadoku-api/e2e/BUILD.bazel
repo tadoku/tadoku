@@ -110,6 +110,10 @@ go_test(
         "request_body_limit_test.go",
         "router_options_test.go",
         "routing_test.go",
+        "scenario_canary_test.go",
+        "scenario_probe_test.go",
+        "scenario_test.go",
+        "scenario_tokens_test.go",
         "scoring_preview_test.go",
         "scoring_rule_set_create_test.go",
         "scoring_rule_set_lifecycle_test.go",
@@ -125,6 +129,7 @@ go_test(
         "testdata/**/*.json",
         "testdata/**/*.sql",
     ]) + [
+        "//k8s/dev/base/flipt:features.yaml",
         "//k8s/dev/base/oathkeeper:oathkeeper.yaml",
         "//k8s/dev/base/oathkeeper:rules.yaml",
         "//services/tadoku-api/spec:openapi.yaml",
@@ -154,6 +159,7 @@ go_test(
     deps = [
         "//services/tadoku-api/app/api",
         "//services/tadoku-api/app/permissionmodel",
+        "//services/tadoku-api/app/tenantlifecycle",
         "//services/tadoku-api/app/worker",
         "//services/tadoku-api/domain/jobs",
         "//services/tadoku-api/domain/mail",

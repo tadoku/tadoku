@@ -76,7 +76,7 @@ func runTests(m *testing.M) (code int) {
 		}
 	}()
 
-	jwks, err := os.ReadFile("testdata/authentication.jwks.json")
+	jwks, err := fixtureJWKS()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1

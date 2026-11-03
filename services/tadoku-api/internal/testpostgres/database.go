@@ -26,9 +26,11 @@ type Database struct {
 	AppPool *pgxpool.Pool
 	DSN     string
 
-	admin   *pgxpool.Pool
-	name    string
-	appRole string
+	admin    *pgxpool.Pool
+	seedPool *pgxpool.Pool
+	name     string
+	appRole  string
+	seedRole string
 }
 
 func New(ctx context.Context) (_ *Database, err error) {
@@ -138,6 +140,10 @@ func New(ctx context.Context) (_ *Database, err error) {
 		return nil, fmt.Errorf("ping test application pool: %w", err)
 	}
 
+	if err := db.openSeedPool(ctx, cfg, name+"_seed"); err != nil {
+		return nil, err
+	}
+
 	if _, err := db.Pool.Exec(ctx, "create table tadoku_test_language_baseline as select code, name from languages"); err != nil {
 		return nil, fmt.Errorf("snapshot language baseline: %w", err)
 	}
@@ -155,6 +161,9 @@ func New(ctx context.Context) (_ *Database, err error) {
 }
 
 func (d *Database) Close() error {
+	if d.seedPool != nil {
+		d.seedPool.Close()
+	}
 	if d.AppPool != nil {
 		d.AppPool.Close()
 	}
@@ -175,6 +184,11 @@ func (d *Database) Close() error {
 	if d.appRole != "" {
 		if _, err := d.admin.Exec(ctx, "drop role "+pgx.Identifier{d.appRole}.Sanitize()); err != nil {
 			cleanupErr = errors.Join(cleanupErr, fmt.Errorf("drop test application role: %w", err))
+		}
+	}
+	if d.seedRole != "" {
+		if _, err := d.admin.Exec(ctx, "drop role "+pgx.Identifier{d.seedRole}.Sanitize()); err != nil {
+			cleanupErr = errors.Join(cleanupErr, fmt.Errorf("drop test seeding role: %w", err))
 		}
 	}
 	return cleanupErr

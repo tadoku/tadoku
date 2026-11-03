@@ -23,8 +23,9 @@ The general test principles are in [Testing](./testing.md).
 - Bazel uses native rules_go process sharding. Each process owns its database,
   application role, router, JWT verification clock and leased Valkey logical
   database; each golden case and journey owns its business clock and UUID
-  stream. Scenarios run sequentially within a process. Call `reset` before each independent
-  scenario, never between dependent requests.
+  stream. Golden cases and journeys run sequentially within a process. Call
+  `reset` before each of them, never between dependent requests.
+  [Scenario fixtures](./scenario-fixtures.md) own private tenants instead.
 - The router uses the default deployed API request budget of 30 seconds,
   including cost-12 password hashing. The complete E2E target uses an explicit
   `timeout = "long"` (900-second) budget so race instrumentation can cover real
@@ -229,8 +230,9 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
 - The transport router test proves that every registered application route
   inherits the shared gates.
 - The suite serves a synthetic, checked-in public JWKS
-  (`e2e/testdata/authentication.jwks.json`) locally; no private keys or live
-  identity providers are needed.
+  (`e2e/testdata/authentication.jwks.json`) locally, plus the public key of
+  the per-process [scenario fixture](./scenario-fixtures.md) signing key. No checked-in
+  private keys or live identity providers are needed.
 
 ### Time in tests
 

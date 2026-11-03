@@ -75,6 +75,15 @@ Never point tests at shared development or production services.
   Owner-only baseline snapshots are not granted to it. Application-pool
   shutdown precedes database and role cleanup; partial setup also cleans up
   the owned role and reports cleanup failures.
+
+  `SeedTenant` runs a fixture transaction bound to one test tenant through a
+  second per-database login, capped at two connections. The login holds DML
+  only on tables whose every row-level security policy is exactly the
+  `tadoku.tenant` binding, derived from the catalog, plus their sequences. It
+  has nothing on the tenant registry, overrides, `jobs`, shared reference
+  tables or migration metadata, and the same pool shutdown, role cleanup and
+  partial-setup handling. It fails if the transaction ends bound to another
+  tenant or to all tenants.
 - **PgBouncer:** PostgreSQL transport tests require
   `TADOKU_TEST_PGBOUNCER_URL` with the same loopback, synthetic credential and
   database guard. Run PgBouncer 1.25.2 in transaction mode, with a wildcard
@@ -228,6 +237,7 @@ guard until it has the required protections.
 
 All HTTP E2E application repositories and the real journey worker use
 `AppPool`; reset, fixture mutations and `verify.sql` keep `Pool`.
+[Scenario fixture](./scenario-fixtures.md) seeds use `SeedTenant`.
 
 Tests using `testing/synctest` create and close every database pool used in the
 bubble inside that same bubble. Copy the fixture pool configuration to preserve

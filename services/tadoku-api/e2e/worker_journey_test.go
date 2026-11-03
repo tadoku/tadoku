@@ -96,7 +96,7 @@ func startWorker(t *testing.T, ctx context.Context, s *suite, forTenant string) 
 
 // waitForWorker blocks until a job that the worker started for forTenant may claim has failed or none is pending or
 // running, and returns how many have failed.
-func waitForWorker(t *testing.T, s *suite, forTenant string) (failed int) {
+func waitForWorker(t testing.TB, s *suite, forTenant string) (failed int) {
 	t.Helper()
 	eligible, arguments := eligibleJobs(forTenant)
 
@@ -138,7 +138,7 @@ func eligibleJobs(forTenant string) (string, []any) {
 }
 
 // workerDependencies gives email no sender, so the worker holds every message.
-func workerDependencies(t *testing.T, pool *pgxpool.Pool) worker.Dependencies {
+func workerDependencies(t testing.TB, pool *pgxpool.Pool) worker.Dependencies {
 	t.Helper()
 	model, err := permissionmodel.New()
 	if err != nil {

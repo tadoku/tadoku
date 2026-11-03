@@ -146,7 +146,8 @@ removing Go files or changing imports:
 bazel run //:gazelle
 ```
 
-CI fails when `bazel run //:gazelle -- -mode=diff` reports changes. Gazelle
+CI runs the uncached `//tools/ci/setup:gazelle_test` in its normal test invocation
+and fails on the same Gazelle diff. Gazelle
 makes new libraries public; narrow their `visibility` as described in
 [Import boundaries](../tadoku-api/import-boundaries.md), then run
 `./scripts/check-tadoku-api-visibility.sh` and
@@ -267,8 +268,12 @@ receipt means repository fetches completed; service-image pulls are best effort.
 Local action outputs and service data are disposable per runner. Fork pull
 requests retain GitHub-hosted isolation and cannot use the private runner pool.
 Manual dispatch can select the hosted control for an equivalent-workload
-comparison. `bazel-performance` artifacts retain build profiles and build-event
+comparison. Both scheduled and manual builds execute the wrapper, publication
+authentication and OpenAPI checks even when their successful receipts exist. `bazel-performance` artifacts retain build profiles and build-event
 JSON; include queue/setup time and publication when comparing complete CI runs.
+
+See [CI setup verification](./ci-setup.md) for exact-input receipt keys, runtime
+invalidation, cache scope and the fingerprint check command.
 
 When the test step fails, `build-bazel.yaml` uploads the available HTTP
 E2E target's `test.log` and `test.xml` as a workflow artifact for seven days.

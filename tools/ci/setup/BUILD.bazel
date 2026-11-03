@@ -1,0 +1,34 @@
+load("@gazelle//:def.bzl", "gazelle_test")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+gazelle_test(
+    name = "gazelle_test",
+    size = "small",
+    tags = ["local"],
+    workspace = "//:.depolicy.yaml",
+)
+
+sh_test(
+    name = "policies_test",
+    size = "small",
+    srcs = ["policies.sh"],
+    args = [
+        "$(rlocationpath //:.depolicy.yaml)",
+        "$(rlocationpath //tools/ci/depolicy)",
+        "$(rlocationpath //tools/ci/repopolicy)",
+        "$(rlocationpath //tools/ci/commentpolicy)",
+    ],
+    data = [
+        "//:.depolicy.yaml",
+        "//tools/ci/commentpolicy",
+        "//tools/ci/depolicy",
+        "//tools/ci/repopolicy",
+        "@bazel_tools//tools/bash/runfiles",
+    ],
+    tags = [
+        "external",
+        "local",
+        "no-cache",
+        "no-sandbox",
+    ],
+)

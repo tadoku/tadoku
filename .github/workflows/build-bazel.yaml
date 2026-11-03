@@ -86,7 +86,9 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U postgres"
+          --health-cmd "pg_isready -h 127.0.0.1 -U postgres"
+          --health-start-period 30s
+          --health-start-interval 1s
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -107,6 +109,8 @@ jobs:
           - 6432:6432
         options: >-
           --health-cmd "pg_isready -h 127.0.0.1 -p 6432 -U postgres"
+          --health-start-period 30s
+          --health-start-interval 1s
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -116,6 +120,8 @@ jobs:
           - 6379:6379
         options: >-
           --health-cmd "valkey-cli ping"
+          --health-start-period 30s
+          --health-start-interval 1s
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -144,7 +150,9 @@ jobs:
           common --remote_retries=1
           build --remote_upload_local_results=$UPLOAD_RESULTS
           build --jobs=3
-          test --local_test_jobs=2
+          test --local_test_jobs=3
+          test --remote_download_outputs=minimal
+          test --remote_download_regex=.*test[.](xml|log)$
           build --local_resources=memory=2048
           EOF
           if test -r "$HOME/bazelisk/repositories/prewarm.json"; then
@@ -165,14 +173,40 @@ jobs:
           fi
           fuser --version
 
+      - name: Fingerprint setup runtime
+        id: setup-runtime
+        continue-on-error: true
+        run: |
+          fingerprint="$(python3 tools/ci/setup_fingerprint.py)"
+          wrapper_inputs="$(python3 tools/ci/setup_fingerprint.py --inputs wrapper)"
+          openapi_inputs="$(python3 tools/ci/setup_fingerprint.py --inputs openapi)"
+          printf 'fingerprint=%s\nwrapper_inputs=%s\nopenapi_inputs=%s\n' \
+            "$fingerprint" "$wrapper_inputs" "$openapi_inputs" >> "$GITHUB_OUTPUT"
+
+      # Existence-only lookup: no generated files or executable outputs are restored.
+      # GitHub scopes PR writes to refs/pull/.../merge; main cannot read them.
+      - name: Look up successful wrapper verification
+        id: wrapper-cache
+        if: steps.setup-runtime.outcome == 'success'
+        continue-on-error: true
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          key: setup-wrapper-v2-${{ steps.setup-runtime.outputs.fingerprint }}-${{ steps.setup-runtime.outputs.wrapper_inputs }}
+          path: |
+            ${{ runner.temp }}/bazel-wrapper/result.json
+            ${{ runner.temp }}/bazel-publish/result.json
+          lookup-only: true
+
       - name: Verify safe Bazel execution
+        if: steps.wrapper-cache.outcome != 'success' || steps.wrapper-cache.outputs.cache-hit != 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: python3 tools/ci/check_bazel_wrapper.py --evidence-dir "$RUNNER_TEMP/bazel-wrapper"
 
       - name: Verify image publication authentication
+        if: steps.wrapper-cache.outcome != 'success' || steps.wrapper-cache.outputs.cache-hit != 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: python3 tools/ci/check_bazel_publish.py --evidence-dir "$RUNNER_TEMP/bazel-publish"
 
       - name: Retain Bazel wrapper evidence
-        if: always()
+        if: always() && (steps.wrapper-cache.outcome != 'success' || steps.wrapper-cache.outputs.cache-hit != 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: bazel-wrapper-${{ github.run_attempt }}
@@ -184,7 +218,18 @@ jobs:
             ${{ runner.temp }}/bazel-publish/*.log
           retention-days: 7
 
+      - name: Look up successful dependency and OpenAPI verification
+        id: openapi-cache
+        if: steps.setup-runtime.outcome == 'success'
+        continue-on-error: true
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          key: setup-openapi-v2-${{ steps.setup-runtime.outputs.fingerprint }}-${{ steps.setup-runtime.outputs.openapi_inputs }}
+          path: ${{ runner.temp }}/openapi-verification.json
+          lookup-only: true
+
       - name: Verify frozen Bazel dependencies
+        if: steps.openapi-cache.outcome != 'success' || steps.openapi-cache.outputs.cache-hit != 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: bazel mod deps --lockfile_mode=error
 
       - name: Check changed forward migrations for risky SQL
@@ -196,34 +241,26 @@ jobs:
             bazel run --lockfile_mode=error //tools/ci/migrationsafety/cmd -- "${migrations[@]}"
           fi
 
-      - name: Verify Gazelle
-        run: bazel run --lockfile_mode=error //:gazelle -- -mode=diff
-
       - name: Verify Tadoku API Go library visibility
         run: ./scripts/check-tadoku-api-visibility.sh
 
       - name: Verify Tadoku API provider dependencies
         run: ./tools/ci/check_tadoku_api_provider_deps.sh
 
-      - name: Verify Tadoku API import policies (including test files)
-        run: bazel run --lockfile_mode=error //tools/ci/depolicy
-
-      - name: Verify Tadoku API repository policies
-        run: bazel run --lockfile_mode=error //tools/ci/repopolicy
-
-      - name: Verify Go comment policy
-        run: bazel run --lockfile_mode=error //tools/ci/commentpolicy
-
       - name: Expose Bazel Go SDK for OpenAPI formatting
+        if: steps.openapi-cache.outcome != 'success' || steps.openapi-cache.outputs.cache-hit != 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: |
           go_root="$(bazel run --lockfile_mode=error @rules_go//go -- env GOROOT)"
           test -x "$go_root/bin/go"
           printf '%s/bin\n' "$go_root" >> "$GITHUB_PATH"
 
       - name: Verify Tadoku API OpenAPI generation
+        if: steps.openapi-cache.outcome != 'success' || steps.openapi-cache.outputs.cache-hit != 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: |
           ./scripts/generate-openapi.sh
           git diff --exit-code -- services/tadoku-api/spec/openapi.yaml services/tadoku-api/generated/openapi
+          test -z "$(git ls-files --others --exclude-standard -- services/tadoku-api/generated/openapi)"
+          printf '{"run_id":"%s","revision":"%s"}\n' "$GITHUB_RUN_ID" "$GITHUB_SHA" > "$RUNNER_TEMP/openapi-verification.json"
 
       - name: Check load_images covers all production oci_load targets
         run: |
@@ -249,12 +286,37 @@ jobs:
         with:
           name: http-e2e-${{ github.job }}-${{ github.run_attempt }}
           path: |
-            bazel-testlogs/services/tadoku-api/e2e/e2e_test/test.log
-            bazel-testlogs/services/tadoku-api/e2e/e2e_test/test.xml
+            bazel-testlogs/services/tadoku-api/e2e/e2e_test/**/test.log
+            bazel-testlogs/services/tadoku-api/e2e/e2e_test/**/test.xml
           retention-days: 7
 
       - name: Show PgBouncer regression evidence
         run: cat bazel-testlogs/services/tadoku-api/infra/postgres/pgbouncer_test/test.log
+
+      - name: Record test resource evidence
+        if: always()
+        continue-on-error: true
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+          PGBOUNCER_CONTAINER: ${{ job.services.pgbouncer.id }}
+          VALKEY_CONTAINER: ${{ job.services.valkey.id }}
+        run: |
+          set -euo pipefail
+          cgroup="/sys/fs/cgroup$(sed -n 's/^0:://p' /proc/self/cgroup)"
+          if [[ ! -d "$cgroup" ]]; then cgroup=/sys/fs/cgroup; fi
+          for counter in memory.peak memory.max memory.events memory.stat cpu.max cpu.stat; do
+            if [[ -r "$cgroup/$counter" ]]; then
+              cat "$cgroup/$counter" > "$RUNNER_TEMP/bazel-cgroup-$counter"
+            fi
+          done
+          for service in postgres pgbouncer valkey; do
+            variable="${service^^}_CONTAINER"
+            container="${!variable}"
+            if [[ -n "$container" ]]; then
+              docker exec "$container" sh -c 'cgroup="/sys/fs/cgroup$(sed -n "s/^0:://p" /proc/self/cgroup)"; if ! test -d "$cgroup"; then cgroup=/sys/fs/cgroup; fi; for counter in memory.peak memory.events cpu.stat; do echo "$counter"; cat "$cgroup/$counter"; done' \
+                > "$RUNNER_TEMP/bazel-cgroup-$service" 2>&1 || true
+            fi
+          done
 
       - name: Print release image digests
         run: |
@@ -314,4 +376,7 @@ jobs:
           path: |
             ${{ runner.temp }}/bazel-*.profile
             ${{ runner.temp }}/bazel-*.json
+            ${{ runner.temp }}/bazel-cgroup-*
+            ${{ runner.temp }}/openapi-verification.json
+            bazel-testlogs/**/test.xml
           retention-days: 7

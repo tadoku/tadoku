@@ -14,16 +14,22 @@
 \* here, and a failed one is Drop. A claim's token is the job's attempt number,
 \* which is unique per claim. Handlers run at least once, so effects can exceed
 \* 1 and handlers must be idempotent. Operator replays are bounded by
-\* MaxReplays, and replay op inserts into slot NumJobs + op. A replay is one
-\* transaction: it locks the failed job, then inserts only when that job has no
-\* replay yet. Every worker uses the same MaxAttempts; a rolling deploy that
-\* changes it is out of scope.
+\* MaxReplays, and replay op inserts into slot NumJobs + Prior + op. A replay is
+\* one transaction: it locks the root of the failed job's lineage, then inserts
+\* only when that job has no replay yet and no job in the lineage is pending,
+\* running or completed. Every worker uses the same MaxAttempts; a rolling
+\* deploy that changes it is out of scope.
+\*
+\* With ForkedHistory, the model may also start from a lineage that replays made
+\* before the guard: failed original 1 with two replays, one failed and one
+\* pending, completed or failed.
 EXTENDS Naturals, FiniteSets
 
-CONSTANTS Workers, NumJobs, MaxReplays, MaxAttempts
+CONSTANTS Workers, NumJobs, MaxReplays, MaxAttempts, ForkedHistory
 
 Originals == 1..NumJobs
-Ids == 1..(NumJobs + MaxReplays)
+Prior == IF ForkedHistory THEN 2 ELSE 0
+Ids == 1..(NumJobs + Prior + MaxReplays)
 Operators == 1..MaxReplays
 None == 0
 Live == {"pending", "running"}
@@ -62,15 +68,34 @@ TypeOK ==
     /\ opPc \in [Operators -> {"idle", "locked", "checked", "done"}]
     /\ opTarget \in [Operators -> {None} \cup Ids]
 
-Init ==
+\* Prior replays made before the guard, of original 1.
+PriorFailed == NumJobs + 1
+PriorOther == NumJobs + 2
+
+FreshQueue ==
     /\ state = [j \in Ids |-> IF j \in Originals THEN "pending" ELSE "absent"]
     /\ attempts = [j \in Ids |-> 0]
-    /\ token = [j \in Ids |-> None]
-    /\ lease = [j \in Ids |-> FALSE]
     /\ replayOf = [j \in Ids |-> None]
     /\ effects = [j \in Ids |-> 0]
-    /\ completedAt = [j \in Ids |-> FALSE]
-    /\ failedAt = [j \in Ids |-> FALSE]
+
+ForkedQueue(other) ==
+    LET started == {1, PriorFailed} \cup IF other = "pending" THEN {} ELSE {PriorOther} IN
+    /\ state = [j \in Ids |->
+            CASE j = 1 \/ j = PriorFailed -> "failed"
+              [] j = PriorOther -> other
+              [] j \in Originals -> "pending"
+              [] OTHER -> "absent"]
+    /\ attempts = [j \in Ids |-> IF j \in started THEN MaxAttempts ELSE 0]
+    /\ replayOf = [j \in Ids |-> IF j \in {PriorFailed, PriorOther} THEN 1 ELSE None]
+    /\ effects = [j \in Ids |-> IF j = PriorOther /\ other = "completed" THEN 1 ELSE 0]
+
+Init ==
+    /\ \/ FreshQueue
+       \/ ForkedHistory /\ \E other \in {"pending", "completed", "failed"} : ForkedQueue(other)
+    /\ token = [j \in Ids |-> None]
+    /\ lease = [j \in Ids |-> FALSE]
+    /\ completedAt = [j \in Ids |-> state[j] = "completed"]
+    /\ failedAt = [j \in Ids |-> state[j] = "failed"]
     /\ held = [w \in Workers |-> Idle]
     /\ phase = [w \in Workers |-> "idle"]
     /\ final = [w \in Workers |-> FALSE]
@@ -197,34 +222,44 @@ CleanupCompleted(j) ==
     /\ state' = [state EXCEPT ![j] = "removed"]
     /\ UNCHANGED <<attempts, token, lease, replayOf, effects, completedAt, failedAt, held, phase, final, opPc, opTarget>>
 
-\* An operator replay holds the failed job's row lock until it commits or
-\* refuses.
-LockHolder(op, j) == opPc[op] \in {"locked", "checked"} /\ opTarget[op] = j
+RECURSIVE Root(_)
+Root(j) == IF replayOf[j] = None THEN j ELSE Root(replayOf[j])
 
-\* LockReplaySource: select ... for update on a failed job of a supported type.
-\* It waits while another replay holds the lock; a job that is not failed is
-\* refused without a step.
+\* An operator replay holds the row lock on its lineage's root until it commits
+\* or refuses.
+LockHolder(op, r) == opPc[op] \in {"locked", "checked"} /\ Root(opTarget[op]) = r
+
+\* LockReplayLineage: walks replay_of_id up from a failed job of a supported type
+\* and runs select ... for update on the root. It waits while another replay
+\* holds that lock; a job that is not failed is refused without a step.
 ReplayLock(op, j) ==
     /\ opPc[op] = "idle"
     /\ state[j] = "failed"
-    /\ \A other \in Operators : ~LockHolder(other, j)
+    /\ \A other \in Operators : ~LockHolder(other, Root(j))
     /\ opPc' = [opPc EXCEPT ![op] = "locked"]
     /\ opTarget' = [opTarget EXCEPT ![op] = j]
     /\ UNCHANGED <<state, attempts, token, lease, replayOf, effects, completedAt, failedAt, held, phase, final>>
 
-\* Replay is an insert ... select guarded by "no replay of this job exists",
-\* so it reads before it writes. A removed row no longer exists.
+\* Replay is an insert ... select guarded by "this job has no replay, and no
+\* job from the lineage's root down is pending, running or completed", so it
+\* reads before it writes. A removed row no longer exists.
 ReplayCheck(op) ==
-    LET replayed ==
-            \E k \in Ids : replayOf[k] = opTarget[op] /\ state[k] \notin {"absent", "removed"}
+    LET t == opTarget[op]
+        blocked ==
+            \E k \in Ids :
+                /\ state[k] \notin {"absent", "removed"}
+                /\ \/ replayOf[k] = t
+                   \/ Root(k) = Root(t) /\ state[k] \in Live \cup {"completed"}
     IN
     /\ opPc[op] = "locked"
-    /\ opPc' = [opPc EXCEPT ![op] = IF replayed THEN "done" ELSE "checked"]
+    /\ opPc' = [opPc EXCEPT ![op] = IF blocked THEN "done" ELSE "checked"]
     /\ UNCHANGED <<state, attempts, token, lease, replayOf, effects, completedAt, failedAt, held, phase, final, opTarget>>
 
+\* The insert copies only a failed job.
 ReplayInsert(op) ==
-    LET slot == NumJobs + op IN
+    LET slot == NumJobs + Prior + op IN
     /\ opPc[op] = "checked"
+    /\ state[opTarget[op]] = "failed"
     /\ state' = [state EXCEPT ![slot] = "pending"]
     /\ replayOf' = [replayOf EXCEPT ![slot] = opTarget[op]]
     /\ opPc' = [opPc EXCEPT ![op] = "done"]
@@ -319,9 +354,6 @@ EveryJobEnds == \A j \in Ids : (state[j] \in Live) ~> (state[j] \in Ended)
 
 ----
 \* Replay rules. A replay is "unfinished" while it is pending or running.
-
-RECURSIVE Root(_)
-Root(j) == IF replayOf[j] = None THEN j ELSE Root(replayOf[j])
 
 Lineage(r) == {j \in Ids : state[j] # "absent" /\ Root(j) = r}
 

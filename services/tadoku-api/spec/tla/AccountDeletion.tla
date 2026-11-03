@@ -135,8 +135,12 @@ FileCommit(p) ==
 File(p) == Snapshot(p, "start", "lockAccount") \/ FileLockAccount(p) \/ FileDeletionState(p) \/ FileLockUser(p) \/ FileCommit(p)
 
 ----
-\* Login: FindCredentials, then CreateSession, one statement that locks the
-\* accounts row. When CreateSession inserts a row, login reports success.
+\* Login: FindCredentials, then CreateSession. CreateSession is one statement
+\* that locks the accounts row and then, for the sessions foreign key, takes a
+\* key-share lock on the users row while it still holds the accounts row. That
+\* key-share lock waits for "for update" holders of the users row, but not for
+\* the settings write's plain update. When CreateSession inserts a row, login
+\* reports success.
 
 LoginCredentials ==
     /\ pc["login"] = "start"
@@ -144,17 +148,29 @@ LoginCredentials ==
     /\ UNCHANGED <<locked, deleted, account, session, admin, banned, job, attempts, failures,
                    lockA, lockU, snap, sessionAfterLock, signInAfterLock, writeAfterLock>>
 
-LoginInsert ==
-    /\ pc["login"] = "insertSession"
+LoginLockAccount ==
+    /\ pc["login"] = "lockAccount"
     /\ lockA = None
     /\ IF account /\ snap["login"]
-       THEN session' = TRUE /\ sessionAfterLock' = (sessionAfterLock \/ locked)
-       ELSE UNCHANGED <<session, sessionAfterLock>>
-    /\ Goto("login", "done")
-    /\ UNCHANGED <<locked, deleted, account, admin, banned, job, attempts, failures,
-                   lockA, lockU, snap, signInAfterLock, writeAfterLock>>
+       THEN lockA' = "login" /\ Goto("login", "insertSession")
+       ELSE Goto("login", "done") /\ UNCHANGED lockA
+    /\ UNCHANGED lockU
+    /\ Unchanged
 
-Login == LoginCredentials \/ Snapshot("login", "createSession", "insertSession") \/ LoginInsert
+LoginInsert ==
+    /\ pc["login"] = "insertSession"
+    /\ lockU \in {None, "settings"}
+    /\ session' = TRUE
+    /\ sessionAfterLock' = (sessionAfterLock \/ locked)
+    /\ Finish("login", "done")
+    /\ UNCHANGED <<locked, deleted, account, admin, banned, job, attempts, failures,
+                   snap, signInAfterLock, writeAfterLock>>
+
+Login ==
+    \/ LoginCredentials
+    \/ Snapshot("login", "createSession", "lockAccount")
+    \/ LoginLockAccount
+    \/ LoginInsert
 
 \* A later request authenticates with the session: FindSession reads the latest
 \* committed state, and a session of an account that is not usable is a guest.

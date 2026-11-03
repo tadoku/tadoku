@@ -29,9 +29,29 @@ job. There is no automatic age limit on a warm key and no startup
 reconciliation of all leaderboard keys.
 
 On a cache miss, the API rebuilds from PostgreSQL behind a generation check so
-an older rebuild cannot overwrite a completed invalidation. Filtered reads use
-PostgreSQL, and Valkey errors fall back to PostgreSQL. Those paths do not make
-an already warm key fresh while its invalidation remains unprocessed.
+an older rebuild cannot overwrite a completed invalidation. That holds only
+while Valkey keeps a board's three keys: the sorted set, its `:last_updated`
+marker and its `:generation` counter. If eviction removes the sorted set
+alone, the API serves an empty board until the next invalidation. If eviction
+removes the generation, or a restart without persistence drops every key, the
+counter starts again from zero. A request that read the generation before the
+loss can then publish the older board it loaded once invalidations bring the
+counter back to the value it read; for `"0"` none are needed. That board stays
+until the next invalidation. The development Valkey evicts with `allkeys-lru`
+and keeps nothing across restarts. Production's eviction setting lives in
+Upstash, outside this repository; it is assumed to be the default, eviction
+off, but that is not confirmed.
+
+On Valkey 9, a board of 4000 or more scores is never cached: the rebuild
+script fails with `too many results to unpack` after deleting the sorted set,
+and the request serves PostgreSQL. Production's Upstash runtime is not
+verified. When a smaller board was published at the same generation,
+that failure leaves its marker beside the deleted set, and the API serves an
+empty board until the next invalidation.
+
+Filtered reads use PostgreSQL, and Valkey errors fall back to PostgreSQL.
+Those paths do not make an already warm key fresh while its invalidation
+remains unprocessed.
 
 The worker's private `/livez` answers while the process serves. `/readyz`
 succeeds only when the last claim pass succeeded for every registered name and

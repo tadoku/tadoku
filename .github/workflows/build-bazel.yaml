@@ -213,7 +213,18 @@ jobs:
             ${{ runner.temp }}/bazel-publish/*.log
           retention-days: 7
 
+      - name: Look up successful dependency and OpenAPI verification
+        id: openapi-cache
+        if: steps.setup-runtime.outcome == 'success'
+        continue-on-error: true
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          key: setup-openapi-v1-${{ steps.setup-runtime.outputs.fingerprint }}-${{ hashFiles('services/tadoku-api/spec/**', 'services/tadoku-api/generated/openapi/**', 'scripts/generate-openapi.sh', 'tools/oapi-codegen/**', 'tools/bazel', 'tools/ci/*.py', '.github/workflows/build-bazel.yaml', '.bazel*', 'go.mod', 'go.sum', '**/MODULE.bazel*', '**/REPO.bazel', '**/BUILD*', '**/*.bzl', '**/*.patch') }}
+          path: ${{ runner.temp }}/openapi-verification.json
+          lookup-only: true
+
       - name: Verify frozen Bazel dependencies
+        if: steps.openapi-cache.outcome != 'success' || steps.openapi-cache.outputs.cache-hit != 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: bazel mod deps --lockfile_mode=error
 
       - name: Check changed forward migrations for risky SQL
@@ -244,16 +255,6 @@ jobs:
 
       - name: Verify Go comment policy
         run: bazel run --lockfile_mode=error //tools/ci/commentpolicy
-
-      - name: Look up successful OpenAPI verification
-        id: openapi-cache
-        if: steps.setup-runtime.outcome == 'success'
-        continue-on-error: true
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          key: setup-openapi-v1-${{ steps.setup-runtime.outputs.fingerprint }}-${{ hashFiles('services/tadoku-api/spec/**', 'services/tadoku-api/generated/openapi/**', 'scripts/generate-openapi.sh', 'tools/oapi-codegen/**', 'tools/bazel', 'tools/ci/*.py', '.github/workflows/build-bazel.yaml', '.bazel*', 'go.mod', 'go.sum', '**/MODULE.bazel*', '**/REPO.bazel', '**/BUILD*', '**/*.bzl', '**/*.patch') }}
-          path: ${{ runner.temp }}/openapi-verification.json
-          lookup-only: true
 
       - name: Expose Bazel Go SDK for OpenAPI formatting
         if: steps.openapi-cache.outcome != 'success' || steps.openapi-cache.outputs.cache-hit != 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'

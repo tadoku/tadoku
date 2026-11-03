@@ -27,6 +27,7 @@ def fingerprint():
             "DOCKER_TLS_VERIFY", "DOCKER_CERT_PATH",
             "USE_BAZEL_VERSION", "BAZELISK_SKIP_WRAPPER", "BAZEL_REAL",
             "GOENV", "GOFLAGS", "GOTOOLCHAIN", "GOROOT", "GOPATH", "GOWORK", "GODEBUG",
+            "GO111MODULE", "GOOS", "GOARCH", "CGO_ENABLED", "XDG_CONFIG_HOME",
         )},
         "packages": command("dpkg-query", "-W", "-f=${Package}=${Version}\\n"),
         "python": sys.version,
@@ -41,10 +42,14 @@ def fingerprint():
         if path is None:
             raise RuntimeError(f"missing {tool}")
         runtime["tools"][tool] = [str(Path(path).resolve()), digest(path), command(tool, *args)]
+    if os.environ.get('GOWORK', '') not in ('', 'off'):
+        raise RuntimeError('External Go workspaces disable setup reuse')
+    goenv = os.environ.get('GOENV')
+    config = Path(os.environ.get('XDG_CONFIG_HOME') or Path.home() / '.config')
     # Imports can name arbitrary external files; unfamiliar RC layouts rerun checks.
     for path in (Path('/etc/bazel.bazelrc'), Path.home() / '.bazelrc', Path('.bazelrc'),
                  Path('tools/oapi-codegen/.bazelrc'), Path.home() / '.bazeliskrc',
-                 Path.home() / '.config/go/env'):
+                 Path(goenv) if goenv and goenv != 'off' else config / 'go/env'):
         if path.exists():
             if any(line.split()[:1] in (["import"], ["try-import"]) for line in path.read_text().splitlines()):
                 raise RuntimeError(f"RC imports disable setup reuse: {path}")
@@ -55,6 +60,10 @@ def fingerprint():
         'Architecture', 'OSType', 'OperatingSystem', 'KernelVersion', 'ServerVersion', 'Driver',
         'CgroupDriver', 'CgroupVersion', 'SecurityOptions', 'Runtimes', 'DefaultRuntime', 'NCPU', 'MemTotal',
     )}
+    status = Path('/proc/self/status').read_text().splitlines()
+    runtime['security'] = [line for line in status if line.split(':')[0] in (
+        'Gid', 'Groups', 'CapInh', 'CapPrm', 'CapEff', 'CapBnd', 'CapAmb', 'NoNewPrivs', 'Seccomp',
+    )]
     runtime['limits'] = {}
     for name in ('cpu.max', 'memory.max', 'cpuset.cpus.effective'):
         path = Path('/sys/fs/cgroup') / name

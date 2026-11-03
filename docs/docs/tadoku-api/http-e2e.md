@@ -335,6 +335,16 @@ synthetic bcrypt cost-4 hash keeps fixture login cheap; production registration
 and the dedicated password-policy workflows retain cost 12. Sessions come from
 real API login.
 
+Ordinary native-identity fixtures also use cost-4 hashes. The login timing and
+throttle control explicitly restores cost-12 reader hashes and checks their
+parsed bcrypt cost before exercising known and unknown accounts.
+
+The IP-throttle fixture seeds wrong-password cost-4 accounts for repeated login
+attempts, while keeping an unknown-account cost-12 dummy comparison in each
+tenant and the cost-12 successful fail-open login. All throttle requests still
+use the real router, PostgreSQL and Valkey. Registration, credential-storage,
+password-policy and real-clock timing controls keep production cost 12.
+
 Ordinary golden and journey resets load case SQL before the account seed.
 Explicit user/account primary-key conflicts preserve existing rows, including
 case-specific names, timestamps, inactive accounts and deleted or locked users.

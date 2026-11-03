@@ -4,34 +4,43 @@
 \*
 \* Sources:
 \*   services/tadoku-api/app/api/account_deletion.go
-\*   services/tadoku-api/app/worker/account_deletion.go
+\*   services/tadoku-api/app/api/identity_account_deletion.go
 \*   services/tadoku-api/app/api/authz.go
+\*   services/tadoku-api/app/worker/account_deletion.go
+\*   services/tadoku-api/app/worker/runtime.go
 \*   services/tadoku-api/features/profile/profile_service.go
 \*   services/tadoku-api/features/identity/identity_service.go
+\*   services/tadoku-api/features/identity/identity_settings_service.go
+\*   services/tadoku-api/features/identity/identity_deletion_service.go
+\*   services/tadoku-api/features/authz/authz_service.go
+\*   services/tadoku-api/features/authz/roles.go
 \*   services/tadoku-api/sql/identity/identity.sql
 \*   services/tadoku-api/sql/profile/profile.sql
 \*   docs/docs/architecture/authorization.md (granting an administrator)
 \*
-\* Each step is one SQL statement, named after its query or function. A
-\* transaction's writes become visible when it commits, and an abort releases
-\* its row locks. A statement that locks an accounts row with "for update of a"
-\* judges the users row from the snapshot taken when the statement started,
-\* before it waited for the lock; PostgreSQL rechecks only rows it locks. The
-\* delete job runs at least once: it retries, can end failed, and an operator
-\* replays it. MaxFailures bounds its transient failures.
+\* Each step is one SQL statement, named after its query or function, except
+\* that statements run while a transaction holds both rows' locks are merged
+\* into one step. A transaction's writes become visible when it commits, and an
+\* abort releases its row locks. A statement that locks an accounts row with
+\* "for update of a" judges the users row from the snapshot taken when the
+\* statement started, before it waited for the lock; PostgreSQL rechecks only
+\* rows it locks. The delete job runs at least once: its commit and its job
+\* acknowledgement are separate, it retries, can end failed, and an operator
+\* replays it. MaxFailures bounds its transient failures. Password recovery
+\* stores sessions the way login does and is not modelled separately.
 EXTENDS Naturals
 
 CONSTANTS MaxAttempts, MaxFailures
 
 None == "none"
 Filers == {"self", "admin"}
-Procs == Filers \cup {"login", "settings", "role", "grant", "worker"}
+Procs == Filers \cup {"login", "request", "settings", "role", "grant", "worker"}
 
 VARIABLES
     locked,      \* users.deletion_locked_at is set
     deleted,     \* users.deleted_at is set
     account,     \* the accounts row exists
-    session,     \* a sessions row exists
+    session,     \* a sessions row exists; the user starts signed in
     admin,       \* the admin relationship exists
     banned,      \* the banned relationship exists
     job,         \* the account.delete.v1 job: none, pending, running, done or failed
@@ -42,10 +51,11 @@ VARIABLES
     pc,          \* each process's next step
     snap,        \* what a waiting statement's snapshot said about the users row
     sessionAfterLock, \* a session row was inserted while the user was locked
-    writeAfterLock    \* a settings write committed while the user was locked
+    signInAfterLock,  \* a request authenticated while the user was locked
+    writeAfterLock    \* a user write committed while the user was locked
 
 vars == <<locked, deleted, account, session, admin, banned, job, attempts, failures,
-          lockA, lockU, pc, snap, sessionAfterLock, writeAfterLock>>
+          lockA, lockU, pc, snap, sessionAfterLock, signInAfterLock, writeAfterLock>>
 
 Usable == account /\ ~locked /\ ~deleted
 
@@ -58,13 +68,13 @@ TypeOK ==
     /\ snap \in [Procs -> BOOLEAN]
 
 Init ==
-    /\ locked = FALSE /\ deleted = FALSE /\ account = TRUE /\ session = FALSE
+    /\ locked = FALSE /\ deleted = FALSE /\ account = TRUE /\ session = TRUE
     /\ admin \in BOOLEAN /\ banned \in BOOLEAN /\ ~(admin /\ banned)
     /\ job = "none" /\ attempts = 0 /\ failures = 0
     /\ lockA = None /\ lockU = None
     /\ pc = [p \in Procs |-> IF p = "worker" THEN "idle" ELSE "start"]
     /\ snap = [p \in Procs |-> FALSE]
-    /\ sessionAfterLock = FALSE /\ writeAfterLock = FALSE
+    /\ sessionAfterLock = FALSE /\ signInAfterLock = FALSE /\ writeAfterLock = FALSE
 
 Goto(p, step) == pc' = [pc EXCEPT ![p] = step]
 
@@ -75,15 +85,15 @@ Finish(p, step) ==
     /\ lockU' = IF lockU = p THEN None ELSE lockU
 
 \* Take a statement snapshot of whether the users row passes the account guard.
-Snapshot(p, next) ==
-    /\ pc[p] = "start"
+Snapshot(p, from, next) ==
+    /\ pc[p] = from
     /\ snap' = [snap EXCEPT ![p] = ~locked /\ ~deleted]
     /\ Goto(p, next)
     /\ UNCHANGED <<locked, deleted, account, session, admin, banned, job, attempts, failures,
-                   lockA, lockU, sessionAfterLock, writeAfterLock>>
+                   lockA, lockU, sessionAfterLock, signInAfterLock, writeAfterLock>>
 
 Unchanged == UNCHANGED <<locked, deleted, account, session, admin, banned, job, attempts, failures,
-                         snap, sessionAfterLock, writeAfterLock>>
+                         snap, sessionAfterLock, signInAfterLock, writeAfterLock>>
 
 ----
 \* fileAccountDeletion, for a self-service or an admin request.
@@ -120,25 +130,19 @@ FileCommit(p) ==
             /\ locked' = TRUE
             /\ job' = "pending"
             /\ attempts' = 0
-    /\ UNCHANGED <<deleted, account, session, admin, banned, failures, snap, sessionAfterLock, writeAfterLock>>
+    /\ UNCHANGED <<deleted, account, session, admin, banned, failures, snap, sessionAfterLock, signInAfterLock, writeAfterLock>>
 
-File(p) == Snapshot(p, "lockAccount") \/ FileLockAccount(p) \/ FileDeletionState(p) \/ FileLockUser(p) \/ FileCommit(p)
+File(p) == Snapshot(p, "start", "lockAccount") \/ FileLockAccount(p) \/ FileDeletionState(p) \/ FileLockUser(p) \/ FileCommit(p)
 
 ----
-\* Login: FindCredentials, then CreateSession, one statement that locks the accounts row.
+\* Login: FindCredentials, then CreateSession, one statement that locks the
+\* accounts row. When CreateSession inserts a row, login reports success.
 
 LoginCredentials ==
     /\ pc["login"] = "start"
     /\ IF Usable THEN Goto("login", "createSession") ELSE Goto("login", "done")
     /\ UNCHANGED <<locked, deleted, account, session, admin, banned, job, attempts, failures,
-                   lockA, lockU, snap, sessionAfterLock, writeAfterLock>>
-
-LoginSnapshot ==
-    /\ pc["login"] = "createSession"
-    /\ snap' = [snap EXCEPT !["login"] = ~locked /\ ~deleted]
-    /\ Goto("login", "insertSession")
-    /\ UNCHANGED <<locked, deleted, account, session, admin, banned, job, attempts, failures,
-                   lockA, lockU, sessionAfterLock, writeAfterLock>>
+                   lockA, lockU, snap, sessionAfterLock, signInAfterLock, writeAfterLock>>
 
 LoginInsert ==
     /\ pc["login"] = "insertSession"
@@ -148,36 +152,67 @@ LoginInsert ==
        ELSE UNCHANGED <<session, sessionAfterLock>>
     /\ Goto("login", "done")
     /\ UNCHANGED <<locked, deleted, account, admin, banned, job, attempts, failures,
-                   lockA, lockU, snap, writeAfterLock>>
+                   lockA, lockU, snap, signInAfterLock, writeAfterLock>>
 
-Login == LoginCredentials \/ LoginSnapshot \/ LoginInsert
+Login == LoginCredentials \/ Snapshot("login", "createSession", "insertSession") \/ LoginInsert
+
+\* A later request authenticates with the session: FindSession reads the latest
+\* committed state, and a session of an account that is not usable is a guest.
+RequestFindSession ==
+    /\ pc["request"] = "start"
+    /\ signInAfterLock' = (signInAfterLock \/ (session /\ Usable /\ locked))
+    /\ Goto("request", "done")
+    /\ UNCHANGED <<locked, deleted, account, session, admin, banned, job, attempts, failures,
+                   lockA, lockU, snap, sessionAfterLock, writeAfterLock>>
 
 ----
-\* A settings write: LockAccount, then the profile write's LockUser, then commit.
+\* A settings write (lockSettingsSession, then the write): FindSession,
+\* LockAccount, FindSession again, then UpdateDisplayName on the users row.
+
+SettingsSession ==
+    /\ pc["settings"] = "start"
+    /\ IF session /\ Usable THEN Goto("settings", "snapshot") ELSE Goto("settings", "done")
+    /\ UNCHANGED <<lockA, lockU>>
+    /\ Unchanged
 
 SettingsLockAccount ==
     /\ pc["settings"] = "lockAccount"
     /\ IF snap["settings"] /\ account
-       THEN lockA = None /\ lockA' = "settings" /\ Goto("settings", "lockUser")
+       THEN lockA = None /\ lockA' = "settings" /\ Goto("settings", "recheck")
        ELSE Goto("settings", "done") /\ UNCHANGED lockA
     /\ UNCHANGED lockU
     /\ Unchanged
 
-SettingsLockUser ==
-    /\ pc["settings"] = "lockUser"
+\* The session is looked up again after the account lock, from a new snapshot.
+SettingsRecheck ==
+    /\ pc["settings"] = "recheck"
+    /\ IF session /\ Usable
+       THEN Goto("settings", "update") /\ UNCHANGED <<lockA, lockU>>
+       ELSE Finish("settings", "done")
+    /\ Unchanged
+
+SettingsUpdate ==
+    /\ pc["settings"] = "update"
     /\ lockU = None
-    /\ IF locked \/ deleted
-       THEN Finish("settings", "done")
-       ELSE lockU' = "settings" /\ Goto("settings", "commit") /\ UNCHANGED lockA
+    /\ lockU' = "settings"
+    /\ Goto("settings", "commit")
+    /\ UNCHANGED lockA
     /\ Unchanged
 
 SettingsCommit ==
     /\ pc["settings"] = "commit"
     /\ Finish("settings", "done")
     /\ writeAfterLock' = (writeAfterLock \/ locked)
-    /\ UNCHANGED <<locked, deleted, account, session, admin, banned, job, attempts, failures, snap, sessionAfterLock>>
+    /\ UNCHANGED <<locked, deleted, account, session, admin, banned, job, attempts, failures, snap,
+                   sessionAfterLock, signInAfterLock>>
 
-Settings == Snapshot("settings", "lockAccount") \/ SettingsLockAccount \/ SettingsLockUser \/ SettingsCommit
+Settings ==
+    \/ SettingsSession
+    \/ Snapshot("settings", "snapshot", "lockAccount")
+    \/ SettingsLockAccount
+    \/ SettingsRecheck
+    \/ SettingsUpdate
+    \/ SettingsCommit
 
 ----
 \* UpdateRole bans the user: LockUser, refuse an admin, then SetBanned.
@@ -195,7 +230,9 @@ RoleCommit ==
     /\ pc["role"] = "commit"
     /\ Finish("role", "done")
     /\ banned' = (banned \/ ~admin)
-    /\ UNCHANGED <<locked, deleted, account, session, admin, job, attempts, failures, snap, sessionAfterLock, writeAfterLock>>
+    /\ writeAfterLock' = (writeAfterLock \/ locked)
+    /\ UNCHANGED <<locked, deleted, account, session, admin, job, attempts, failures, snap,
+                   sessionAfterLock, signInAfterLock>>
 
 Role == RoleLockUser \/ RoleCommit
 
@@ -213,12 +250,15 @@ GrantCommit ==
     /\ pc["grant"] = "commit"
     /\ Finish("grant", "done")
     /\ admin' = TRUE
-    /\ UNCHANGED <<locked, deleted, account, session, banned, job, attempts, failures, snap, sessionAfterLock, writeAfterLock>>
+    /\ writeAfterLock' = (writeAfterLock \/ locked)
+    /\ UNCHANGED <<locked, deleted, account, session, banned, job, attempts, failures, snap,
+                   sessionAfterLock, signInAfterLock>>
 
 Grant == GrantLockUser \/ GrantCommit
 
 ----
-\* The worker's DeleteAccount: LockAccountForDeletion, Tombstone, removeAccountData, commit.
+\* The worker's DeleteAccount: LockAccountForDeletion, Tombstone, removeAccountData
+\* and commit, then the job runtime's separate Complete.
 
 WorkerClaim ==
     /\ pc["worker"] = "idle"
@@ -226,7 +266,8 @@ WorkerClaim ==
     /\ job' = "running"
     /\ attempts' = attempts + 1
     /\ Goto("worker", "lockAccount")
-    /\ UNCHANGED <<locked, deleted, account, session, admin, banned, failures, lockA, lockU, snap, sessionAfterLock, writeAfterLock>>
+    /\ UNCHANGED <<locked, deleted, account, session, admin, banned, failures, lockA, lockU, snap,
+                   sessionAfterLock, signInAfterLock, writeAfterLock>>
 
 WorkerLockAccount ==
     /\ pc["worker"] = "lockAccount"
@@ -241,59 +282,69 @@ WorkerLockAccount ==
 WorkerLockUser ==
     /\ pc["worker"] = "lockUser"
     /\ lockU = None
-    /\ CASE deleted -> Finish("worker", "idle") /\ job' = "done"
+    /\ CASE deleted -> Finish("worker", "ack") /\ UNCHANGED job
          [] ~locked -> Finish("worker", "idle") /\ job' = "failed"
          [] OTHER -> lockU' = "worker" /\ Goto("worker", "commit") /\ UNCHANGED <<lockA, job>>
-    /\ UNCHANGED <<locked, deleted, account, session, admin, banned, attempts, failures, snap, sessionAfterLock, writeAfterLock>>
+    /\ UNCHANGED <<locked, deleted, account, session, admin, banned, attempts, failures, snap,
+                   sessionAfterLock, signInAfterLock, writeAfterLock>>
 
 WorkerCommit ==
     /\ pc["worker"] = "commit"
-    /\ Finish("worker", "idle")
+    /\ Finish("worker", "ack")
     /\ deleted' = TRUE
     /\ account' = FALSE
     /\ session' = FALSE
     /\ admin' = FALSE
     /\ banned' = FALSE
-    /\ job' = "done"
-    /\ UNCHANGED <<locked, attempts, failures, snap, sessionAfterLock, writeAfterLock>>
+    /\ UNCHANGED <<locked, job, attempts, failures, snap, sessionAfterLock, signInAfterLock, writeAfterLock>>
 
-\* A transient failure rolls the attempt back: retry, or fail once attempts run out.
+\* The job runtime records success in its own transaction.
+WorkerAck ==
+    /\ pc["worker"] = "ack"
+    /\ job' = "done"
+    /\ Goto("worker", "idle")
+    /\ UNCHANGED <<locked, deleted, account, session, admin, banned, attempts, failures, lockA, lockU, snap,
+                   sessionAfterLock, signInAfterLock, writeAfterLock>>
+
+\* A transient failure: before the commit it rolls the attempt back, and after
+\* it the acknowledgement is lost. Either way the job retries, or fails once
+\* attempts run out.
 WorkerFails ==
-    /\ pc["worker"] \in {"lockAccount", "lockUser", "commit"}
+    /\ pc["worker"] \in {"lockAccount", "lockUser", "commit", "ack"}
     /\ failures < MaxFailures
     /\ failures' = failures + 1
     /\ job' = IF attempts >= MaxAttempts THEN "failed" ELSE "pending"
     /\ Finish("worker", "idle")
-    /\ UNCHANGED <<locked, deleted, account, session, admin, banned, attempts, snap, sessionAfterLock, writeAfterLock>>
+    /\ UNCHANGED <<locked, deleted, account, session, admin, banned, attempts, snap,
+                   sessionAfterLock, signInAfterLock, writeAfterLock>>
 
-Worker == WorkerClaim \/ WorkerLockAccount \/ WorkerLockUser \/ WorkerCommit
+Worker == WorkerClaim \/ WorkerLockAccount \/ WorkerLockUser \/ WorkerCommit \/ WorkerAck
 
-\* An admin fixes the cause and replays the failed job as a new job row.
+\* An admin fixes the cause and replays the failed job as a new job row, even
+\* when the deletion had already committed before the failure.
 OperatorReplay ==
     /\ job = "failed"
-    /\ locked /\ ~deleted
     /\ job' = "pending"
     /\ attempts' = 0
     /\ UNCHANGED <<locked, deleted, account, session, admin, banned, failures, lockA, lockU, pc, snap,
-                   sessionAfterLock, writeAfterLock>>
+                   sessionAfterLock, signInAfterLock, writeAfterLock>>
 
-\* Every request has finished and the job is not waiting for anyone.
+\* Every request has finished and no delete job is waiting.
 Done ==
     /\ \A p \in Procs \ {"worker"} : pc[p] = "done"
     /\ pc["worker"] = "idle"
-    /\ job \notin {"pending", "running"}
-    /\ ~(job = "failed" /\ locked /\ ~deleted)
+    /\ job \in {"none", "done"}
     /\ UNCHANGED vars
 
 Next ==
     \/ \E p \in Filers : File(p)
-    \/ Login \/ Settings \/ Role \/ Grant
+    \/ Login \/ RequestFindSession \/ Settings \/ Role \/ Grant
     \/ Worker \/ WorkerFails \/ OperatorReplay
     \/ Done
 
 Fairness ==
     /\ \A p \in Filers : WF_vars(File(p))
-    /\ WF_vars(Login) /\ WF_vars(Settings) /\ WF_vars(Role) /\ WF_vars(Grant)
+    /\ WF_vars(Login) /\ WF_vars(RequestFindSession) /\ WF_vars(Settings) /\ WF_vars(Role) /\ WF_vars(Grant)
     /\ WF_vars(Worker)
     /\ WF_vars(OperatorReplay)
 
@@ -312,8 +363,11 @@ DeletedHasNoAccount == deleted => ~account /\ ~session
 \* A locked user always has a delete job an operator can see.
 LockedHasVisibleJob == (locked /\ ~deleted) => job \in {"pending", "running", "failed"}
 
-\* No settings write commits after the deletion lock.
+\* No settings write, ban or administrator grant commits after the deletion lock.
 NoWriteAfterLock == ~writeAfterLock
+
+\* No request authenticates after the deletion lock.
+NoSignInAfterLock == ~signInAfterLock
 
 \* Liveness: a locked user is eventually deleted, given that an admin replays a failed job.
 DeletionCompletes == locked ~> deleted
@@ -321,7 +375,8 @@ DeletionCompletes == locked ~> deleted
 \* Known gaps, checked by manual configurations.
 
 \* CreateSession can insert a session after the lock commits, because it judges the
-\* users row from its snapshot. Every later request treats that session as a guest.
+\* users row from its snapshot, and login then reports success. NoSignInAfterLock
+\* checks that every later request treats that session as a guest.
 NoSessionAfterLock == ~sessionAfterLock
 
 \* Granting an administrator does not check for a ban.

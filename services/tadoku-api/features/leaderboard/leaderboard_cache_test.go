@@ -184,7 +184,7 @@ func (client *republishAfterPageRead) Do(ctx context.Context, command valkeygo.C
 	return client.Client.Do(ctx, command)
 }
 
-func TestRebuildPublishesBoardTooLargeForOneUnpack(t *testing.T) {
+func TestRebuildPublishesBoardOf5001Scores(t *testing.T) {
 	client := newLeaderboardTestClient(t)
 	tenantKey, err := tenant.Parse("e2e/large-" + uuid.NewString())
 	if err != nil {

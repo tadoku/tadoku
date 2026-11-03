@@ -24,9 +24,12 @@
 \* and its ":generation" counter. Each Valkey command a request sends is one
 \* step, and each Lua script (rebuildScript, pageScript, invalidateScript) is
 \* one atomic step that keeps the writes it made before an error.
-\* rebuildScript cannot fail after its first write: it adds scores in chunks
-\* small enough for Lua's unpack, and Valkey refuses a memory-growing command
-\* only before a script's first write (verified on Valkey 9).
+\* rebuildScript adds scores in chunks small enough for Lua's unpack, and
+\* Valkey refuses a memory-growing or replica write only before a script's
+\* first write, so the script cannot fail after its first write for numeric
+\* scores. A NaN score would fail ZADD after the DEL and leave a truncated set
+\* beside the marker; the model leaves that out. Verified on Valkey 9;
+\* production's Upstash runtime is not verified.
 \*
 \* Every producer enqueues its invalidation job in the transaction of the write
 \* that changes a board, so a write is one step that raises the board's

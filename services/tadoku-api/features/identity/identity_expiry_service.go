@@ -15,7 +15,7 @@ func NewExpiry(repository *Repository) *Expiry { return &Expiry{repository: repo
 // RemoveExpired requires a tenant context. Ending ctx stops it between batches and leaves the remaining rows for the
 // next call; a lock held by a concurrent request also defers that row to the next call.
 func (e *Expiry) RemoveExpired(ctx context.Context) error {
-	now := timex.Now()
+	now := timex.Now(ctx)
 	for {
 		if err := ctx.Err(); err != nil {
 			return err

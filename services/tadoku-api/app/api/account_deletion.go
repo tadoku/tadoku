@@ -109,7 +109,7 @@ func (a *Application) fileAccountDeletion(ctx context.Context, request AccountDe
 	if err := a.identityDeletion.LockAccountForRequest(ctx, request.userID); err != nil {
 		return err
 	}
-	if err := a.profile.LockForDeletion(ctx, request.userID, timex.Now()); err != nil {
+	if err := a.profile.LockForDeletion(ctx, request.userID, timex.Now(ctx)); err != nil {
 		return err
 	}
 	if request.source == adminDeletion {

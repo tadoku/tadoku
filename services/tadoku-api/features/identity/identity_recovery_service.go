@@ -79,7 +79,7 @@ func (s *Service) WriteRecovery(ctx context.Context, request RecoveryRequest) (R
 		ctx,
 		credential.account.ID,
 		hashToken(request.token),
-		timex.Now().Add(time.Hour),
+		timex.Now(ctx).Add(time.Hour),
 	)
 	if err != nil {
 		return RecoveryResult{}, err
@@ -108,10 +108,10 @@ func (s *Service) ConsumeRecovery(ctx context.Context, raw RecoveryToken) (Recov
 	if err != nil {
 		return RecoveryLogin{}, err
 	}
-	if err := s.repository.useRecoveryToken(ctx, hash, timex.Now()); err != nil {
+	if err := s.repository.useRecoveryToken(ctx, hash, timex.Now(ctx)); err != nil {
 		return RecoveryLogin{}, err
 	}
-	if err := s.repository.invalidateRecoveryTokens(ctx, id, timex.Now()); err != nil {
+	if err := s.repository.invalidateRecoveryTokens(ctx, id, timex.Now(ctx)); err != nil {
 		return RecoveryLogin{}, err
 	}
 	if err := s.repository.revokeOtherSessions(ctx, id, ""); err != nil {

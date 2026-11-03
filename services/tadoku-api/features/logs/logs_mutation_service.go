@@ -10,6 +10,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/uuidx"
 )
 
 func (s *Service) PlanContestRegistrationUpdate(
@@ -241,7 +242,7 @@ func (s *Service) Create(
 	}
 
 	mutation := logMutation{
-		ID:                          uuid.New(),
+		ID:                          uuidx.New(ctx),
 		UserID:                      userID,
 		LanguageCode:                scored.LanguageCode,
 		ActivityID:                  scored.ActivityID,

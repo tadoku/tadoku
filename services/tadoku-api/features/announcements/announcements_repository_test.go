@@ -259,7 +259,7 @@ func TestAnnouncementsRepositoryCreateAnnouncement(t *testing.T) {
 	})
 
 	repository := announcements.NewAnnouncementsRepository(db.Pool)
-	instant := timex.Now()
+	instant := timex.Now(t.Context())
 	emptyHref, href := "", "https://example.test/announcement"
 	for _, test := range []struct {
 		name string

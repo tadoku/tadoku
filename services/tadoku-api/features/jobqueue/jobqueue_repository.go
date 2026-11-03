@@ -29,7 +29,7 @@ func (r *Repository) Insert(ctx context.Context, typ jobs.Type, payload json.Raw
 	id, err := queries.New(executor).Enqueue(ctx, queries.EnqueueParams{
 		TaskType: string(typ),
 		Payload:  payload,
-		Now:      postgres.Timestamptz(timex.Now()),
+		Now:      postgres.Timestamptz(timex.Now(ctx)),
 	})
 	if err != nil {
 		return 0, fmt.Errorf("enqueue job: %w", err)
@@ -38,7 +38,7 @@ func (r *Repository) Insert(ctx context.Context, typ jobs.Type, payload json.Raw
 }
 
 func (r *Repository) Claim(ctx context.Context, typ jobs.Type, limit int, lease time.Duration, maxAttempts int) ([]ClaimedJob, error) {
-	now := timex.Now()
+	now := timex.Now(ctx)
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err
@@ -83,7 +83,7 @@ func (r *Repository) FailExhausted(ctx context.Context, typ jobs.Type, maxAttemp
 	}
 
 	rows, err := queries.New(executor).FailExhausted(ctx, queries.FailExhaustedParams{
-		Now:            postgres.Timestamptz(timex.Now()),
+		Now:            postgres.Timestamptz(timex.Now(ctx)),
 		TaskType:       string(typ),
 		Component:      postgres.NullableText(componentFromContext(ctx)),
 		MaxAttempts:    int32(maxAttempts),
@@ -129,7 +129,7 @@ func (r *Repository) Complete(ctx context.Context, task ClaimedJob) (bool, error
 		return false, err
 	}
 	count, err := queries.New(executor).Complete(ctx, queries.CompleteParams{
-		Now:        postgres.Timestamptz(timex.Now()),
+		Now:        postgres.Timestamptz(timex.Now(ctx)),
 		ID:         task.ID,
 		ClaimToken: postgres.UUID(task.Token),
 	})
@@ -137,7 +137,7 @@ func (r *Repository) Complete(ctx context.Context, task ClaimedJob) (bool, error
 }
 
 func (r *Repository) Retry(ctx context.Context, task ClaimedJob, next time.Time, code string, maxAttempts int) (bool, error) {
-	now := timex.Now()
+	now := timex.Now(ctx)
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return false, err
@@ -159,7 +159,7 @@ func (r *Repository) Fail(ctx context.Context, task ClaimedJob, code string) (bo
 		return false, err
 	}
 	count, err := queries.New(executor).Fail(ctx, queries.FailParams{
-		Now:        postgres.Timestamptz(timex.Now()),
+		Now:        postgres.Timestamptz(timex.Now(ctx)),
 		ErrorCode:  code,
 		ID:         task.ID,
 		ClaimToken: postgres.UUID(task.Token),
@@ -196,7 +196,7 @@ func (r *Repository) Replay(ctx context.Context, failedID int64, actor, reason s
 		return 0, err
 	}
 	row, err := queries.New(executor).Replay(ctx, queries.ReplayParams{
-		Now:      postgres.Timestamptz(timex.Now()),
+		Now:      postgres.Timestamptz(timex.Now(ctx)),
 		Actor:    actor,
 		Reason:   reason,
 		FailedID: failedID,

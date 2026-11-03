@@ -17,7 +17,7 @@ import (
 // DeleteAccount locks the account row and then the user row, the order of every transaction that locks both, so it
 // waits for a login, recovery, settings write or filing that holds the account row instead of deadlocking with it.
 func (a *Application) DeleteAccount(ctx context.Context, job jobs.DeleteAccountV1) error {
-	now := timex.Now()
+	now := timex.Now(ctx)
 	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
 		if err := a.identityDeletion.LockAccountForDeletion(ctx, job.UserID); err != nil {
 			return err

@@ -3,9 +3,9 @@ package http
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/uuidx"
 )
 
 func (s *server) ContentAnnouncementCreate(
@@ -16,7 +16,7 @@ func (s *server) ContentAnnouncementCreate(
 	if request.Body != nil {
 		body = *request.Body
 	}
-	id := uuid.New()
+	id := uuidx.New(ctx)
 	if body.Id != nil {
 		id = *body.Id
 	}

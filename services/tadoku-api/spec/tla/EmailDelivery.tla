@@ -301,11 +301,15 @@ CompletedJobNotPending == \A j \in Ids : state[j] \in {"completed", "removed"} =
 \* A pending email always has a job that can still settle it.
 PendingHasJob == email = "pending" => \E j \in Ids : state[j] \notin Gone
 
-\* A settled email never changes, except that a late delivery turns failed into sent.
+\* A settled email never changes, except that a late Finish(sent) turns failed into sent.
 TerminalEmailFinal ==
-    [][email # "pending" => email' = email \/ (email = "failed" /\ email' = "sent")]_vars
+    [][email # "pending" =>
+        \/ email' = email
+        \/ /\ email = "failed" /\ email' = "sent"
+           /\ \E w \in Workers : run[w].pc = "finishSent" /\ run'[w].pc = "ok"]_vars
 
-\* A delivery whose Finish(sent) runs is recorded as sent.
+\* A delivery whose Finish(sent) runs is recorded as sent: it fails when Finish(sent)
+\* does not replace a failed row.
 SentNeverLost == ~lostSent
 
 \* Liveness: every email leaves pending.

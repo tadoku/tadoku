@@ -330,7 +330,9 @@ func TestEmailGuessedJobTenant(t *testing.T) {
 func TestEmailDeliveryAfterSettlement(t *testing.T) {
 	api.reset(t, "")
 	fixture := emailSMTPServer(t, false)
-	sender, err := smtpinfra.New(fixture.config)
+	config := fixture.config
+	config.Timeout = 30 * time.Second
+	sender, err := smtpinfra.New(config)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -338,24 +340,32 @@ func TestEmailDeliveryAfterSettlement(t *testing.T) {
 	ctx := tenant.WithKey(t.Context(), tenant.Production())
 	id := writeEmail(t, ctx, service, recoveryMail())
 
+	settled := make(chan struct{})
 	fixture.mu.Lock()
 	fixture.beforeAccept = func() {
-		_, err := api.db.Pool.Exec(ctx, `update jobs
+		defer close(settled)
+		tag, err := api.db.Pool.Exec(ctx, `update jobs
 			set state = 'failed', attempts = 5, failed_at = now(), last_error = 'lease_expired'
 			where tenant = $1 and payload->>'email_id' = $2`,
 			tenant.Production().String(),
 			id.String())
-		if err != nil {
-			t.Errorf("fail send job: %v", err)
+		if err != nil || tag.RowsAffected() != 1 {
+			t.Errorf("fail send job: %s error=%v", tag, err)
 			return
 		}
 		if err := service.ReconcileFailures(ctx, jobqueue.AttemptsExhausted); err != nil {
 			t.Errorf("reconcile: %v", err)
+			return
+		}
+		if row, err := service.Find(ctx, id); err != nil || row.Delivery != (email.Failed{Error: "lease_expired"}) {
+			t.Errorf("settled before acceptance: delivery=%+v error=%v", row.Delivery, err)
 		}
 	}
 	fixture.mu.Unlock()
 
-	if err := service.Send(ctx, id); err != nil {
+	err = service.Send(ctx, id)
+	<-settled
+	if err != nil {
 		t.Fatal(err)
 	}
 

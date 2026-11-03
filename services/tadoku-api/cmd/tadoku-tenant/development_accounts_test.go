@@ -380,6 +380,43 @@ func TestDevelopmentAccountsRefuseConcurrentBan(t *testing.T) {
 	}
 }
 
+func TestDevelopmentAccountsBanIsPerTenant(t *testing.T) {
+	db := developmentDatabase(t)
+	for _, key := range []string{otherDevelopmentTenant, developmentTenant} {
+		if err := run(t.Context(), developmentArgs(key)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	ban := func(key string) {
+		t.Helper()
+		_, err := db.Pool.Exec(t.Context(), `update permission_relationships
+			set relation = 'banned'
+			where tenant = $1 and relation = 'admins' and subject_id = $2`,
+			key,
+			developmentAdmin,
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	ban(otherDevelopmentTenant)
+	_, err := db.Pool.Exec(t.Context(), `delete from permission_relationships where tenant = $1`, developmentTenant)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := run(t.Context(), developmentArgs(developmentTenant)); err != nil {
+		t.Fatalf("ban in %s refused provisioning %s: %v", otherDevelopmentTenant, developmentTenant, err)
+	}
+	assertDevelopmentAdmin(t, db, developmentTenant)
+
+	ban(developmentTenant)
+	err = run(t.Context(), developmentArgs(developmentTenant))
+	if !errors.Is(err, authz.ErrBannedUser) {
+		t.Errorf("seed with a ban in %s: error = %v, want %v", developmentTenant, err, authz.ErrBannedUser)
+	}
+}
+
 func waitForBlockedOrDone(t *testing.T, db *testpostgres.Database, holder int32, done <-chan error) (bool, error) {
 	t.Helper()
 

@@ -8,10 +8,11 @@ _TLA2TOOLS = "@tla2tools//file"
 def tlc_test(name, spec, config, size = "small", tags = [], **kwargs):
     """Fails when TLC finds a violated invariant, property or deadlock in spec under config.
 
-    A model outside CI's small budget must be tagged manual.
+    A model outside CI's small budget must be tagged manual. The cpu:2 tag counts
+    TLC's two worker threads in local runs; Bazel ignores it under --local_test_jobs.
     """
-    if size != "small" and "manual" not in tags:
-        fail("%s: a tlc_test larger than small must be tagged manual so CI stays fast" % name)
+    if (size != "small" or "timeout" in kwargs) and "manual" not in tags:
+        fail("%s: a tlc_test with a larger size or timeout must be tagged manual so CI stays fast" % name)
 
     sh_test(
         name = name,

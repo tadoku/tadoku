@@ -30,8 +30,8 @@ bazel test //services/tadoku-api/spec/tla/...              # every CI model
 bazel test //services/tadoku-api/spec/tla:<model>_test     # one model
 ```
 
-TLC runs on the hermetic JDK pinned in `.bazelrc`, so no local Java install is
-needed. Targets tagged `manual` are not part of `//...`; run them by name.
+TLC runs on the remote JDK that `.bazelrc` selects and `MODULE.bazel` pins
+through rules_java, so no local Java install is needed. Targets tagged `manual` are not part of `//...`; run them by name.
 
 ## Layout
 
@@ -40,7 +40,7 @@ bounds and lists the invariants and properties to check. A configuration that
 checks larger bounds, or a property the code is known to break, is
 `<Name>_<purpose>.cfg` with a `manual` test target. Add a target with the
 `tlc_test` macro from `services/tadoku-api/spec/tla/tlc.bzl`. The macro fails
-when a target larger than `small` is not tagged `manual`.
+when a target with a larger `size` or any `timeout` is not tagged `manual`.
 
 ## Write a model
 
@@ -72,8 +72,7 @@ and `.cfg` files, the runner script and the pinned tools. A pull request that
 changes no model gets cached results. One that edits a model reruns only that
 model. Changing TLC, the runner script or the JDK reruns them all once. The
 `small` test size stops a model after 60 seconds; keep each CI configuration
-to a few seconds. TLC runs with two worker threads and a 512 MiB heap, and the
-macro tags each test `cpu:2` so Bazel schedules for both threads.
+to a few seconds. TLC runs with two worker threads and a 512 MiB heap.
 
 Because code changes never rerun a model, CI does not notice when code drifts
 from its model. Keeping them in step is the author's job, as described in

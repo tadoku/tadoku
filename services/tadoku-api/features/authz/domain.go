@@ -17,6 +17,7 @@ const (
 var (
 	ErrUserNotFound       = errx.NewNotFoundError("user not found")
 	ErrAdminRoleProtected = errx.NewForbiddenError("cannot modify role of an admin user")
+	ErrBannedUser         = errx.NewConflictError("cannot make a banned user an administrator; unban them first")
 )
 
 type RoleUpdateParameters struct {

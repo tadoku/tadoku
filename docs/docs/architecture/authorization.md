@@ -102,17 +102,17 @@ select set_config('tadoku.tenant', 'tadoku/prod', true);
 select deletion_locked_at, deleted_at from users where id = '<lowercase user UUID>' for update;
 -- If either value is set, the account is being deleted: run rollback; instead.
 insert into permission_relationships (tenant, object_type, object_id, relation, subject_type, subject_id)
-select 'tadoku/prod', 'app', 'root', 'admins', 'user', '<lowercase user UUID>'
+select current_setting('tadoku.tenant'), 'app', 'root', 'admins', 'user', '<lowercase user UUID>'
 where not exists (
   select from permission_relationships
-  where tenant = 'tadoku/prod'
+  where tenant = current_setting('tadoku.tenant')
     and object_type = 'app'
     and object_id = 'root'
     and relation = 'banned'
     and subject_type = 'user'
     and subject_id = '<lowercase user UUID>'
 );
--- INSERT 0 1: granted. INSERT 0 0: the user is banned; run rollback; instead.
+-- INSERT 0 1: granted. INSERT 0 0: nothing was granted because the user is banned; roll back.
 commit;
 ```
 
@@ -130,7 +130,7 @@ To revoke one:
 begin;
 select set_config('tadoku.tenant', 'tadoku/prod', true);
 delete from permission_relationships
-where tenant = 'tadoku/prod'
+where tenant = current_setting('tadoku.tenant')
   and object_type = 'app'
   and object_id = 'root'
   and relation = 'admins'
@@ -139,7 +139,8 @@ where tenant = 'tadoku/prod'
 commit;
 ```
 
-For a production branch tenant, use its key instead of `tadoku/prod`. In
+Both blocks name the tenant only in `set_config`. For a production branch
+tenant, use its key there instead of `tadoku/prod`. In
 development, `tadoku-tenant development-accounts` grants Dev Admin `admins` on
 each branch tenant through `authz.GrantAdmin` under Dev Admin's `users` row
 lock, so a concurrent ban either commits first and the grant returns

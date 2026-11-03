@@ -3,21 +3,18 @@ package e2e_test
 import (
 	"bytes"
 	"context"
+	"io"
 	"net/http"
 	"testing"
 	"time"
-
-	"github.com/google/uuid"
 )
 
-func useContestEventUUIDs(t *testing.T) {
-	t.Helper()
+func contestEventUUIDs() io.Reader {
 	randomBytes := make([]byte, 16*128)
 	for index := range 128 {
 		randomBytes[index*16+15] = byte(index + 1)
 	}
-	uuid.SetRand(bytes.NewReader(randomBytes))
-	t.Cleanup(func() { uuid.SetRand(nil) })
+	return bytes.NewReader(randomBytes)
 }
 
 func cleanupContestEventUnit(t *testing.T) {
@@ -38,7 +35,6 @@ func cleanupLogUnit(t *testing.T, id string) {
 }
 
 func TestContestEventsJourney(t *testing.T) {
-	useContestEventUUIDs(t)
 	cleanupContestEventUnit(t)
 
 	steps := []step{
@@ -70,11 +66,10 @@ func TestContestEventsJourney(t *testing.T) {
 		steps[index].at = fixtureInstant.Add(time.Duration(index) * time.Second)
 	}
 
-	runJourneyWithHandler(t, api, scoringEnabledHandler, "ContestEvents", steps)
+	runJourneyWithSetup(t, api, scoringEnabledHandler, "ContestEvents", nil, contestEventUUIDs(), steps)
 }
 
 func TestContestEventWithdrawalsJourney(t *testing.T) {
-	useContestEventUUIDs(t)
 	cleanupContestEventUnit(t)
 
 	steps := []step{
@@ -103,11 +98,10 @@ func TestContestEventWithdrawalsJourney(t *testing.T) {
 		steps[index].at = fixtureInstant.Add(time.Duration(index) * time.Second)
 	}
 
-	runJourneyWithHandler(t, api, scoringEnabledHandler, "ContestEventWithdrawals", steps)
+	runJourneyWithSetup(t, api, scoringEnabledHandler, "ContestEventWithdrawals", nil, contestEventUUIDs(), steps)
 }
 
 func TestContestEventFrozenScoresJourney(t *testing.T) {
-	useContestEventUUIDs(t)
 	cleanupContestEventUnit(t)
 
 	steps := []step{
@@ -124,11 +118,10 @@ func TestContestEventFrozenScoresJourney(t *testing.T) {
 		steps[index].at = fixtureInstant.Add(time.Duration(index) * time.Second)
 	}
 
-	runJourneyWithHandler(t, api, scoringEnabledHandler, "ContestEventFrozenScores", steps)
+	runJourneyWithSetup(t, api, scoringEnabledHandler, "ContestEventFrozenScores", nil, contestEventUUIDs(), steps)
 }
 
 func TestContestEventRollbackJourney(t *testing.T) {
-	useContestEventUUIDs(t)
 	cleanupContestEventUnit(t)
 
 	runJourneyWithSetup(t, api, scoringEnabledHandler, "ContestEventRollback", func(t *testing.T) {
@@ -146,7 +139,7 @@ func TestContestEventRollbackJourney(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-	}, []step{
+	}, contestEventUUIDs(), []step{
 		{request: "create_fails_after_event_append", as: user, want: http.StatusInternalServerError},
 		{request: "rolled_back_feed_empty", as: guest, want: http.StatusOK},
 		{request: "rolled_back_log_missing", as: guest, want: http.StatusNotFound},

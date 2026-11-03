@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -20,9 +19,6 @@ func TestContestRegistrationEditWaitingPastContestEndIsRefused(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	previous := jwt.TimeFunc
-	jwt.TimeFunc = func() time.Time { return fixtureInstant }
-	defer func() { jwt.TimeFunc = previous }()
 	request := readHTTPRequest(t, journey+"/01_remove_language_after_end")
 	authorize(request, user, tokens)
 	holder := holdRow(t, "select 1 from users where id = $1 for update", readerUserID)

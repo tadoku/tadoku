@@ -13,7 +13,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
@@ -30,9 +29,6 @@ func emailTokens(t *testing.T) map[string]string {
 	if err := json.Unmarshal(raw, &tokens); err != nil {
 		t.Fatal(err)
 	}
-	previous := jwt.TimeFunc
-	jwt.TimeFunc = func() time.Time { return fixtureInstant }
-	t.Cleanup(func() { jwt.TimeFunc = previous })
 	return tokens
 }
 

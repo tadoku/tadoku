@@ -88,7 +88,7 @@ func enqueueReaderDeletionJob(t *testing.T) {
 func runJobs(t *testing.T) (failed int) {
 	t.Helper()
 	atFixtureInstant(func() {
-		stop := startWorker(t, api, "")
+		stop := startWorker(t, t.Context(), api, "")
 		defer stop()
 		failed = waitForWorker(t, api, "")
 	})

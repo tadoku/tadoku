@@ -74,7 +74,8 @@ e2e/testdata/journeys/
 - A `run_worker` job step has no fixture directory. It starts the worker against
   the journey's disposable database and Valkey fixture, waits until every job
   eligible for the base worker has completed, including jobs those jobs enqueue,
-  and stops it before the next step.
+  and stops it before the next step. The worker runs with the journey's
+  context, so its jobs read the journey's clock and UUID stream.
   Tenants overridden for `tadoku-worker` remain pending. A `run_branch_worker`
   job step requires `forTenant` with a parsed non-production key and completes
   only that tenant's jobs.
@@ -93,8 +94,12 @@ e2e/testdata/journeys/
   no per-step seeds and no resets between steps. A journey may seed an external
   cache or install a fault, such as a failing trigger, after reset; it removes
   a fault in cleanup.
-- The JWT clock stays at the fixture instant for the whole journey, while each
-  step's `at` sets its business instant through `timex`.
+- The JWT clock stays at the suite's fixture instant. Each journey owns one
+  `timex.Clock` and one UUID stream, attached to the context of every request,
+  replay and worker step. A step's `at`, by default the fixture instant, sets
+  the clock before the step runs.
+- The stream follows a fixed seed. A journey whose goldens name specific
+  generated IDs passes its own bytes to `runJourneyWithSetup`.
 - The runner stops at the first failing step. Unknown entries in a journey or
   step directory fail the journey.
 

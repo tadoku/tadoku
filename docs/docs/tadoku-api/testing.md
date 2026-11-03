@@ -169,10 +169,10 @@ CI latency from a host with more available resources.
   use `--local_test_jobs=1` to serialize targets while retaining all assertions.
 - Parallel worker tests create their fixtures after `t.Parallel`, own their
   databases and provider keys, and stop every worker goroutine before fixture
-  cleanup. Tests that change process-wide state, including `timex.TheWorld` or
-  environment variables, and their parents stay serial. Bound in-process
-  concurrency with `-test.parallel` as well as target concurrency when measuring
-  against CPU, memory and connection limits.
+  cleanup. Tests that change process-wide state, including `timex.TheWorld`,
+  `uuid.SetRand`, `jwt.TimeFunc` or environment variables, and their parents
+  stay serial. Bound in-process concurrency with `-test.parallel` as well as
+  target concurrency when measuring against CPU, memory and connection limits.
 - Keep the pool-closing failure test isolated. It opens a second pool on the
   shared DSN and closes it, without creating another migrated database.
 - The `services/tadoku-api/infra/postgres/` helper tests have their own setup in

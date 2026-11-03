@@ -29,3 +29,25 @@ tlc_test(
     spec = "JobQueue.tla",
     tags = ["manual"],
 )
+
+tlc_test(
+    name = "accountdeletion_test",
+    config = "AccountDeletion.cfg",
+    spec = "AccountDeletion.tla",
+)
+
+# Known gap: CreateSession can insert a session after the deletion lock commits.
+tlc_test(
+    name = "accountdeletion_session_test",
+    config = "AccountDeletion_session.cfg",
+    spec = "AccountDeletion.tla",
+    tags = ["manual"],
+)
+
+# Known gap: granting an administrator does not check for a ban.
+tlc_test(
+    name = "accountdeletion_roles_test",
+    config = "AccountDeletion_roles.cfg",
+    spec = "AccountDeletion.tla",
+    tags = ["manual"],
+)

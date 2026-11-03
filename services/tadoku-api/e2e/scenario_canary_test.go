@@ -8,7 +8,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -337,5 +339,86 @@ func TestScenarioProvisioningIgnoresCanonicalState(t *testing.T) {
 	}
 	if pages := tenantRows(t, key, "pages") + tenantRows(t, key, "pages_content"); pages != "[][]" {
 		t.Errorf("scenario copied canonical pages: %s", pages)
+	}
+}
+
+type scenarioTimestamps struct {
+	emailID                       uuid.UUID
+	emailCreated, recoveryExpires time.Time
+	jobCreated, jobCompleted      time.Time
+}
+
+func TestScenarioClocksDivergeUnderOverlap(t *testing.T) {
+	offsets := map[string]time.Duration{"fixture": 0, "ahead": 72 * time.Hour}
+	var started, requested sync.WaitGroup
+	started.Add(len(offsets))
+	requested.Add(len(offsets))
+
+	for name, offset := range offsets {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			s := newIdentityScenario(t)
+			key := s.tenant(t, "identity-a")
+			s.clock.Advance(offset)
+			meetScenario(t, &started)
+
+			requireRecoveryAccepted(t, recoverIn(t, s, api.handler, "reader@example.test", "198.51.100.70", nil))
+			requireRecoveryWrites(t, key.String(), 1)
+			meetScenario(t, &requested)
+
+			s.clock.Advance(time.Minute)
+			s.runWorker(t, "identity-a")
+
+			var got scenarioTimestamps
+			err := api.db.Pool.QueryRow(t.Context(), `select
+				email.id, email.created_at, token.expires_at, job.created_at, job.completed_at
+				from emails email, recovery_tokens token, jobs job
+				where email.tenant = $1 and token.tenant = $1 and job.tenant = $1 and job.task_type = 'email.send.v1'`,
+				key.String(),
+			).Scan(&got.emailID, &got.emailCreated, &got.recoveryExpires, &got.jobCreated, &got.jobCompleted)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, at := range []*time.Time{&got.emailCreated, &got.recoveryExpires, &got.jobCreated, &got.jobCompleted} {
+				*at = at.UTC()
+			}
+
+			ids := newScenarioIDs(key)
+			correlationID, emailID := uuid.Must(uuid.NewV7FromReader(ids)), uuid.Must(uuid.NewRandomFromReader(ids))
+			requestedAt := fixtureInstant.Add(offset)
+			want := scenarioTimestamps{
+				emailID:         emailID,
+				emailCreated:    requestedAt,
+				recoveryExpires: requestedAt.Add(time.Hour),
+				jobCreated:      requestedAt,
+				jobCompleted:    requestedAt.Add(time.Minute),
+			}
+			t.Logf("%s clock +%s after correlation ID %s wrote %s", key, offset, correlationID, got)
+			if got != want {
+				t.Errorf("%s wrote %s, want its own clock and IDs %s", key, got, want)
+			}
+		})
+	}
+}
+
+func (got scenarioTimestamps) String() string {
+	return fmt.Sprintf("email %s created %s, recovery expires %s, job created %s and completed %s",
+		got.emailID, got.emailCreated.Format(time.RFC3339), got.recoveryExpires.Format(time.RFC3339),
+		got.jobCreated.Format(time.RFC3339), got.jobCompleted.Format(time.RFC3339))
+}
+
+// meetScenario blocks until every scenario of group has arrived, so their next steps overlap.
+func meetScenario(t *testing.T, group *sync.WaitGroup) {
+	t.Helper()
+	group.Done()
+	arrived := make(chan struct{})
+	go func() {
+		group.Wait()
+		close(arrived)
+	}()
+	select {
+	case <-arrived:
+	case <-time.After(30 * time.Second):
+		t.Fatal("the overlapping scenario never arrived; it needs -test.parallel of at least 2")
 	}
 }

@@ -22,25 +22,29 @@ retain their route prefix as described in
 The API does not check worker readiness
 or the queue before serving a warm key. It can therefore serve an outdated
 leaderboard while the worker is down, while that key's invalidation job is
-pending or running, and after the job has failed terminally. A failed
-invalidation leaves the key stale until another write affecting the same
-contest or year publishes a new invalidation, or an operator replays the failed
-job. There is no automatic age limit on a warm key and no startup
-reconciliation of all leaderboard keys.
+pending or running, and after the job has failed terminally. A rebuild sets
+the board's `:last_updated` marker to expire after 28 days; the sorted set and
+`:generation` counter do not expire. Once the marker lapses, the next read
+misses and rebuilds from PostgreSQL. A failed invalidation therefore leaves the
+key stale until the first of three events: another write affecting the same
+contest or year publishes a new invalidation, an operator replays the failed
+job, or the marker expires, at most 28 days after the board's rebuild. Replay
+is the faster recovery and the expected response to a failed invalidation.
+There is no startup reconciliation of all leaderboard keys.
 
 On a cache miss, the API rebuilds from PostgreSQL behind a generation check so
 an older rebuild cannot overwrite a completed invalidation. That holds only
 while Valkey keeps a board's three keys: the sorted set, its `:last_updated`
 marker and its `:generation` counter. If eviction removes the sorted set
-alone, the API serves an empty board until the next invalidation. If eviction
-removes the generation, or a restart without persistence drops every key, the
-counter starts again from zero. A request that read the generation before the
-loss can then publish the older board it loaded once invalidations bring the
-counter back to the value it read; for `"0"` none are needed. That board stays
-until the next invalidation. The development Valkey evicts with `allkeys-lru`
-and keeps nothing across restarts. Production's eviction setting lives in
-Upstash, outside this repository; it is assumed to be the default, eviction
-off, but that is not confirmed.
+alone, the API serves an empty board until the next invalidation or the marker
+expires. If eviction removes the generation, or a restart without persistence
+drops every key, the counter starts again from zero. A request that read the
+generation before the loss can then publish the older board it loaded once
+invalidations bring the counter back to the value it read; for `"0"` none are
+needed. That board stays until the next invalidation or the marker expires. The
+development Valkey evicts with `allkeys-lru` and keeps nothing across restarts.
+Production's eviction setting lives in Upstash, outside this repository; it is
+assumed to be the default, eviction off, but that is not confirmed.
 
 Filtered reads use PostgreSQL, and Valkey errors fall back to PostgreSQL.
 Those paths do not make an already warm key fresh while its invalidation

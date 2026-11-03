@@ -106,11 +106,19 @@ tlc_test(
     tags = ["manual"],
 )
 
-# Known gap: without an operator replay, a failed invalidation leaves a warm
-# board stale with no age limit.
+# A failed invalidation that no operator replays: the marker's expiry still
+# brings the board back to PostgreSQL.
 tlc_test(
     name = "leaderboardcache_noreplay_test",
     config = "LeaderboardCache_noreplay.cfg",
+    spec = "LeaderboardCache.tla",
+)
+
+# Without the marker's expiry, a failed invalidation that no operator replays
+# leaves the board stale forever.
+tlc_test(
+    name = "leaderboardcache_noexpiry_test",
+    config = "LeaderboardCache_noexpiry.cfg",
     spec = "LeaderboardCache.tla",
     tags = ["manual"],
 )

@@ -64,7 +64,8 @@ browser → ingress-nginx → Envoy → webv2 / authv2 / admin
   invalidates those caches, and the next read rebuilds them from PostgreSQL. A
   cached leaderboard can be stale until its invalidation completes; after a
   terminal failure it stays stale until the next write to the same contest or
-  year, or a replay. See
+  year, a replay, or its cache marker's expiry at most 28 days after the
+  rebuild. See
   [Leaderboard freshness and worker health](../tadoku-api/jobs-operations.md#leaderboard-freshness-and-worker-health).
 - Filtered requests, cache misses and cache errors read a leaderboard from
   PostgreSQL; other requests read a page from Valkey. Contest boards and

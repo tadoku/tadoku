@@ -18,9 +18,10 @@
 \*   services/tadoku-api/sql/profile/profile.sql
 \*   docs/docs/architecture/authorization.md (granting an administrator)
 \*
-\* Each step is one SQL statement, named after its query or function, except
-\* that statements run while a transaction holds both rows' locks are merged
-\* into one step. A transaction's writes become visible when it commits, and an
+\* Each step is one SQL statement, named after its query or function in its
+\* comment, except that a transaction's statements and Go checks that run while
+\* it holds the users row lock are merged into one step: every competing writer
+\* takes that row first. A transaction's writes become visible when it commits, and an
 \* abort releases its row locks. A statement that locks an accounts row with
 \* "for update of a" judges the users row from the snapshot taken when the
 \* statement started, before it waited for the lock; PostgreSQL rechecks only
@@ -30,7 +31,9 @@
 \* execution at a time; concurrent duplicate runs are JobQueue.tla's concern.
 \* The self-service filing's settings-session prefix is folded into its first
 \* steps. Completing a password recovery creates its session while it holds the
-\* account row, so it reads the lock and inserts nothing; it is not modelled.
+\* account row, so it inserts nothing after the lock; it is not modelled. The ban
+\* stands for every writer that locks only the users row, such as log, contest
+\* and attachment writes through profile.LockUser.
 \* A later request's FindSession is one statement that reads the latest
 \* committed state, so a session stored after the lock never authenticates;
 \* the HTTP end-to-end cases check that, not this model.
@@ -126,10 +129,12 @@ FileLockUser(p) ==
     /\ Unchanged
 
 \* UserRoles: an admin can't be deleted, and a banned user can't delete themselves.
+\* A user without an account row can't be filed: ConfirmAccount refuses it on the
+\* admin path, and the self-service path needs a session.
 \* MarkDeletionLocked, the audit event and the enqueue commit together.
 FileCommit(p) ==
     /\ pc[p] = "roles"
-    /\ IF admin \/ (banned /\ p = "self")
+    /\ IF admin \/ (banned /\ p = "self") \/ ~account
        THEN Finish(p, "done") /\ UNCHANGED <<locked, job, attempts>>
        ELSE /\ Finish(p, "done")
             /\ locked' = TRUE
@@ -143,9 +148,10 @@ File(p) == Snapshot(p, "start", "lockAccount") \/ FileLockAccount(p) \/ FileDele
 \* Login: FindCredentials, then CreateSession. CreateSession is one statement
 \* that locks the accounts row and then, for the sessions foreign key, takes a
 \* key-share lock on the users row while it still holds the accounts row. That
-\* key-share lock waits for "for update" holders of the users row, but not for
-\* the settings write's plain update. When CreateSession inserts a row, login
-\* reports success.
+\* key-share lock waits for "for update" holders of the users row. It would not
+\* wait for the settings write's plain update, but the settings write only
+\* updates while it holds the accounts row, so that case cannot arise here. When
+\* CreateSession inserts a row, login reports success.
 
 LoginCredentials ==
     /\ pc["login"] = "start"
@@ -164,7 +170,7 @@ LoginLockAccount ==
 
 LoginInsert ==
     /\ pc["login"] = "insertSession"
-    /\ lockU \in {None, "settings"}
+    /\ lockU = None
     /\ session' = TRUE
     /\ sessionAfterLock' = (sessionAfterLock \/ locked)
     /\ Finish("login", "done")

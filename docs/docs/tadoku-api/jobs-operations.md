@@ -237,9 +237,9 @@ tadoku-worker replay --tenant tadoku/prod --id 123 --actor operator-name --reaso
 - Replaying a failed `email.send.v1` job resends its email unless the email
   is sent or held, and can deliver a message the provider already accepted.
   In a tenant that holds its mail when the replay runs, or for an email that
-  retention deleted, the replay completes without sending, and that completed
-  replay refuses further replays. Check the email's status as well as the
-  job's. See
+  retention deleted, the replay completes without sending and a failed email
+  stays `failed`; that completed replay refuses further replays. Check the
+  email's status as well as the job's. See
   [Retained email](./email.md#delivery-and-failures).
 - Verify the new job reaches `completed`. An invalid payload remains invalid on
   replay; repair requires its own reviewed procedure, not repeated replay or a

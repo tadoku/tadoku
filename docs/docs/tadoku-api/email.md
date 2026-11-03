@@ -52,7 +52,8 @@ send job resends it; a `sent` outcome or the replay's final failure replaces
 the recorded failure. If the failed email had in fact been delivered, for
 example after a crash that followed SMTP acceptance, the replay delivers it
 again, so replaying is the operator's call. A replay in a tenant that holds
-its mail, or of an email that retention deleted, completes without sending.
+its mail completes without sending and leaves the email `failed`; a replay of
+an email that retention deleted also completes without sending.
 
 Enabled production delivery uses authenticated SMTP over STARTTLS, verifies
 the server certificate and records `sent`, the sending time and the provider's

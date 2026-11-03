@@ -25,7 +25,7 @@ redis.call('DEL', KEYS[1])
 for i = 2, #ARGV, 2000 do
   redis.call('ZADD', KEYS[1], unpack(ARGV, i, math.min(i + 1999, #ARGV)))
 end
-redis.call('SET', KEYS[2], 'native:' .. ARGV[1])
+redis.call('SET', KEYS[2], 'native:' .. ARGV[1], 'EX', 2419200)
 return 1
 `)
 

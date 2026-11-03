@@ -244,7 +244,15 @@ func TestWorkerCleanupRetainsNinetyDaysAndFailures(t *testing.T) {
 	timex.TheWorld(now, func() { runtime.cleanupCompleted(tenantCtx) })
 
 	var expired int
-	if err := f.db.QueryRow(tenantCtx, `select count(*) from jobs where state = 'completed' and completed_at = $1`, old).Scan(&expired); err != nil {
+	err := f.db.QueryRow(
+		tenantCtx,
+		`select count(*) from jobs
+		where state = 'completed'
+			and completed_at = $1
+			and replay_of_id is null`,
+		old,
+	).Scan(&expired)
+	if err != nil {
 		t.Fatal(err)
 	}
 	if expired != 0 {
@@ -259,7 +267,7 @@ func TestWorkerCleanupRetainsNinetyDaysAndFailures(t *testing.T) {
 		{"success at the cutoff", recentID, true},
 		{"expired success", oldID, false},
 		{"failed original", failedID, true},
-		{"expired successful replay", replayID, false},
+		{"expired successful replay", replayID, true},
 		{"pending job", pendingID, true},
 		{"running job", runningID, true},
 	} {

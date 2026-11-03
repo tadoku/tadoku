@@ -186,7 +186,7 @@ jobs:
         continue-on-error: true
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
-          key: setup-wrapper-v1-${{ steps.setup-runtime.outputs.fingerprint }}-${{ hashFiles('tools/bazel', '.bazelversion', 'tools/ci/*.py', 'tools/ci/run_bazel_images.sh', '.github/workflows/build-bazel.yaml') }},intentional-cache-error
+          key: setup-wrapper-v1-${{ steps.setup-runtime.outputs.fingerprint }}-${{ hashFiles('tools/bazel', '.bazelversion', 'tools/ci/*.py', 'tools/ci/run_bazel_images.sh', '.github/workflows/build-bazel.yaml') }}
           path: |
             ${{ runner.temp }}/bazel-wrapper/result.json
             ${{ runner.temp }}/bazel-publish/result.json
@@ -235,9 +235,6 @@ jobs:
           if ((${#migrations[@]})); then
             bazel run --lockfile_mode=error //tools/ci/migrationsafety/cmd -- "${migrations[@]}"
           fi
-
-      - name: Verify Gazelle
-        run: bazel run --lockfile_mode=error //:gazelle -- -mode=diff
 
       - name: Verify Tadoku API Go library visibility
         run: ./scripts/check-tadoku-api-visibility.sh

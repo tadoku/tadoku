@@ -146,7 +146,8 @@ removing Go files or changing imports:
 bazel run //:gazelle
 ```
 
-CI fails when `bazel run //:gazelle -- -mode=diff` reports changes. Gazelle
+CI runs the uncached `//tools/ci/setup:gazelle_test` in its normal test invocation
+and fails on the same Gazelle diff. Gazelle
 makes new libraries public; narrow their `visibility` as described in
 [Import boundaries](../tadoku-api/import-boundaries.md), then run
 `./scripts/check-tadoku-api-visibility.sh` and

@@ -54,3 +54,9 @@ python3 tools/ci/check_setup_fingerprint.py --evidence-dir /tmp/tadoku-setup-fin
 Successful test XML for every executed target is retained with profiles and
 build events in the existing performance artifact in both normal and race jobs.
 
+
+Gazelle validation runs as `//tools/ci/setup:gazelle_test` inside the existing
+full build/test invocation. The native Gazelle rule is local, unsandboxed and
+uncached: every run checks the real workspace, including changed Go and BUILD
+files. Its workspace anchor is the exported root policy file. This avoids a
+separate Bazel invocation and repeats no analysis solely to run Gazelle.

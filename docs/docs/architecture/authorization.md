@@ -76,6 +76,9 @@ and `is_banned`, `Related("banned")`.
 Nothing is inherited between tenants: a test or branch tenant starts with no
 administrators and no bans.
 
+A user is never both an administrator and banned: a ban refuses an
+administrator, and a grant refuses a banned user.
+
 Administrators can change only the `banned` relation through the API
 (`PUT /authz/users/{id}/role`), and never for another administrator. No API
 grants `admins`; see [Granting an administrator](#granting-an-administrator).
@@ -89,8 +92,9 @@ returns `404`.
 
 Grant or revoke an administrator in a deployed environment with operator SQL
 as the runtime role, setting the tenant inside the transaction as
-[Tenancy](../tadoku-api/database.md#tenancy) requires. To grant a production
-administrator:
+[Tenancy](../tadoku-api/database.md#tenancy) requires. A banned user cannot be
+made an administrator: the grant inserts nothing while a `banned` relationship
+exists. To grant a production administrator:
 
 ```sql
 begin;
@@ -98,15 +102,27 @@ select set_config('tadoku.tenant', 'tadoku/prod', true);
 select deletion_locked_at, deleted_at from users where id = '<lowercase user UUID>' for update;
 -- If either value is set, the account is being deleted: run rollback; instead.
 insert into permission_relationships (tenant, object_type, object_id, relation, subject_type, subject_id)
-values ('tadoku/prod', 'app', 'root', 'admins', 'user', '<lowercase user UUID>')
-on conflict do nothing;
+select 'tadoku/prod', 'app', 'root', 'admins', 'user', '<lowercase user UUID>'
+where not exists (
+  select from permission_relationships
+  where tenant = 'tadoku/prod'
+    and object_type = 'app'
+    and object_id = 'root'
+    and relation = 'banned'
+    and subject_type = 'user'
+    and subject_id = '<lowercase user UUID>'
+);
+-- INSERT 0 1: granted. INSERT 0 0: the user is banned; run rollback; instead.
 commit;
 ```
 
 Locking the `users` row first, as role updates do, makes an account deletion
-filed at the same moment either see the new administrator and refuse, or be
-filed first. A filed deletion still runs, so roll the grant back when the lock
-shows `deletion_locked_at` or `deleted_at` set.
+or a ban filed at the same moment either see the new administrator and refuse,
+or commit first. A filed deletion still runs, so roll the grant back when the
+lock shows `deletion_locked_at` or `deleted_at` set. When the insert reports
+`INSERT 0 0`, the user is banned: roll back, and grant only after deliberately
+unbanning them through `PUT /authz/users/{id}/role`. A duplicate key error means
+the user is already an administrator; roll back.
 
 To revoke one:
 
@@ -125,7 +141,8 @@ commit;
 
 For a production branch tenant, use its key instead of `tadoku/prod`. In
 development, `tadoku-tenant development-accounts` grants Dev Admin `admins` on
-each branch tenant; see
+each branch tenant through `authz.GrantAdmin`, which returns
+`authz.ErrBannedUser`, a conflict, for a banned user; see
 [Development data](../develop/development-data.md#branch-tenants).
 
 ## Request pipeline

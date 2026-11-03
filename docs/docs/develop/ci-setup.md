@@ -78,3 +78,14 @@ events plus each disposable service's cgroup peak/events. Missing counters or
 unavailable services remain visible in these diagnostic files. These snapshots
 include setup and the complete normal build/test phase; they do not replace a
 measurement of scheduler or runner-factory queue time.
+
+Workspace import, repository and Go comment policies run uncached as
+`//tools/ci/setup:policies_test` in the same full test invocation. The test uses
+the existing checker binaries against the real workspace, with the same
+`GO111MODULE=off` standard-library classification. The standalone checker
+commands remain available.
+
+Self-hosted normal tests use Bazel's minimal remote-output download mode.
+Local actions still receive their required inputs, and the full target set is
+built and tested. XML and logs are explicitly downloaded even for cached tests.
+Release builds and image entrypoints use their existing download behavior.

@@ -46,6 +46,15 @@ def input_fingerprint(kind):
     return digest.hexdigest()
 
 
+def resource_limits():
+    root = Path('/sys/fs/cgroup')
+    relative = next(line[3:] for line in Path('/proc/self/cgroup').read_text().splitlines() if line.startswith('0::'))
+    scoped = root / relative.lstrip('/')
+    if not scoped.is_dir():
+        scoped = root
+    return {name: (scoped / name).read_text() for name in ('cpu.max', 'memory.max', 'cpuset.cpus.effective')}
+
+
 def fingerprint():
     def command(*argv):
         return subprocess.check_output(argv, text=True, stderr=subprocess.STDOUT, timeout=20).strip()
@@ -99,11 +108,7 @@ def fingerprint():
     runtime['security'] = [line for line in status if line.split(':')[0] in (
         'Gid', 'Groups', 'CapInh', 'CapPrm', 'CapEff', 'CapBnd', 'CapAmb', 'NoNewPrivs', 'Seccomp',
     )]
-    runtime['limits'] = {}
-    for name in ('cpu.max', 'memory.max', 'cpuset.cpus.effective'):
-        path = Path('/sys/fs/cgroup') / name
-        if path.exists():
-            runtime['limits'][name] = path.read_text()
+    runtime['limits'] = resource_limits()
     return hashlib.sha256(json.dumps(runtime, sort_keys=True).encode()).hexdigest()
 
 
@@ -113,5 +118,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     try:
         print(input_fingerprint(args.inputs) if args.inputs else fingerprint())
-    except (OSError, ValueError, RuntimeError, KeyError, subprocess.SubprocessError) as error:
+    except (OSError, ValueError, RuntimeError, KeyError, StopIteration, subprocess.SubprocessError) as error:
         sys.exit(f'Setup fingerprint unavailable; run checks: {error}')

@@ -150,7 +150,7 @@ jobs:
           common --remote_retries=1
           build --remote_upload_local_results=$UPLOAD_RESULTS
           build --jobs=3
-          test --local_test_jobs=2
+          test --local_test_jobs=3
           build --local_resources=memory=2048
           EOF
           if test -r "$HOME/bazelisk/repositories/prewarm.json"; then
@@ -295,12 +295,37 @@ jobs:
         with:
           name: http-e2e-${{ github.job }}-${{ github.run_attempt }}
           path: |
-            bazel-testlogs/services/tadoku-api/e2e/e2e_test/test.log
-            bazel-testlogs/services/tadoku-api/e2e/e2e_test/test.xml
+            bazel-testlogs/services/tadoku-api/e2e/e2e_test/**/test.log
+            bazel-testlogs/services/tadoku-api/e2e/e2e_test/**/test.xml
           retention-days: 7
 
       - name: Show PgBouncer regression evidence
         run: cat bazel-testlogs/services/tadoku-api/infra/postgres/pgbouncer_test/test.log
+
+      - name: Record test resource evidence
+        if: always()
+        continue-on-error: true
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+          PGBOUNCER_CONTAINER: ${{ job.services.pgbouncer.id }}
+          VALKEY_CONTAINER: ${{ job.services.valkey.id }}
+        run: |
+          set -euo pipefail
+          cgroup="/sys/fs/cgroup$(sed -n 's/^0:://p' /proc/self/cgroup)"
+          if [[ ! -d "$cgroup" ]]; then cgroup=/sys/fs/cgroup; fi
+          for counter in memory.peak memory.max memory.events memory.stat cpu.max cpu.stat; do
+            if [[ -r "$cgroup/$counter" ]]; then
+              cat "$cgroup/$counter" > "$RUNNER_TEMP/bazel-cgroup-$counter"
+            fi
+          done
+          for service in postgres pgbouncer valkey; do
+            variable="${service^^}_CONTAINER"
+            container="${!variable}"
+            if [[ -n "$container" ]]; then
+              docker exec "$container" sh -c 'cgroup="/sys/fs/cgroup$(sed -n "s/^0:://p" /proc/self/cgroup)"; if ! test -d "$cgroup"; then cgroup=/sys/fs/cgroup; fi; for counter in memory.peak memory.events cpu.stat; do echo "$counter"; cat "$cgroup/$counter"; done' \
+                > "$RUNNER_TEMP/bazel-cgroup-$service" 2>&1 || true
+            fi
+          done
 
       - name: Print release image digests
         run: |
@@ -360,6 +385,7 @@ jobs:
           path: |
             ${{ runner.temp }}/bazel-*.profile
             ${{ runner.temp }}/bazel-*.json
+            ${{ runner.temp }}/bazel-cgroup-*
             ${{ runner.temp }}/openapi-verification.json
             bazel-testlogs/**/test.xml
           retention-days: 7

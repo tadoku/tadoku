@@ -143,8 +143,8 @@ jobs:
         with:
           name: http-e2e-race-${{ github.run_attempt }}
           path: |
-            bazel-testlogs/services/tadoku-api/e2e/e2e_test/test.log
-            bazel-testlogs/services/tadoku-api/e2e/e2e_test/test.xml
+            bazel-testlogs/services/tadoku-api/e2e/e2e_test/**/test.log
+            bazel-testlogs/services/tadoku-api/e2e/e2e_test/**/test.xml
           retention-days: 7
 
       - name: Retain CI performance evidence

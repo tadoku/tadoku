@@ -16,6 +16,7 @@ type fakeSDKClient struct {
 	stateErr error
 	request  *fliptsdk.EvaluationRequest
 	closed   bool
+	onClose  func(context.Context) error
 }
 
 func (c *fakeSDKClient) EvaluateBoolean(_ context.Context, request *fliptsdk.EvaluationRequest) (*fliptsdk.BooleanEvaluationResponse, error) {
@@ -25,8 +26,11 @@ func (c *fakeSDKClient) EvaluateBoolean(_ context.Context, request *fliptsdk.Eva
 
 func (c *fakeSDKClient) Err() error { return c.stateErr }
 
-func (c *fakeSDKClient) Close(_ context.Context) error {
+func (c *fakeSDKClient) Close(ctx context.Context) error {
 	c.closed = true
+	if c.onClose != nil {
+		return c.onClose(ctx)
+	}
 	return nil
 }
 

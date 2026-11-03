@@ -22,16 +22,33 @@ retain their route prefix as described in
 The API does not check worker readiness
 or the queue before serving a warm key. It can therefore serve an outdated
 leaderboard while the worker is down, while that key's invalidation job is
-pending or running, and after the job has failed terminally. A failed
-invalidation leaves the key stale until another write affecting the same
-contest or year publishes a new invalidation, or an operator replays the failed
-job. There is no automatic age limit on a warm key and no startup
-reconciliation of all leaderboard keys.
+pending or running, and after the job has failed terminally. A rebuild sets
+the board's `:last_updated` marker to expire after 28 days, and its
+`:generation` with it; only the sorted set does not expire. A `:generation`
+that a miss creates expires after an hour unless a rebuild publishes under it.
+Once the marker lapses, the next read
+misses and rebuilds from PostgreSQL. A failed invalidation therefore leaves the
+key stale until the first of three events: another write affecting the same
+contest or year publishes a new invalidation, an operator replays the failed
+job, or the marker expires, at most 28 days after the board's rebuild. Replay
+is the faster recovery and the expected response to a failed invalidation.
+There is no startup reconciliation of all leaderboard keys.
 
 On a cache miss, the API rebuilds from PostgreSQL behind a generation check so
-an older rebuild cannot overwrite a completed invalidation. Filtered reads use
-PostgreSQL, and Valkey errors fall back to PostgreSQL. Those paths do not make
-an already warm key fresh while its invalidation remains unprocessed.
+an older rebuild cannot overwrite a completed invalidation. A board has three
+keys: the sorted set, its `:last_updated` marker and its `:generation`. The page
+script reads them together and serves a page only when the marker names the
+current generation and the set's size, so a lost key, a restart without
+persistence, or a rebuild that stops partway is only a miss. A generation is a
+random value created before a miss loads the board and incremented by
+invalidations, so a lost generation never returns to a value a pending rebuild
+read. The development Valkey evicts with `allkeys-lru` and keeps nothing across
+restarts. Production's Valkey is Upstash, configured outside this repository,
+with eviction off.
+
+Filtered reads use PostgreSQL, and Valkey errors fall back to PostgreSQL.
+Those paths do not make an already warm key fresh while its invalidation
+remains unprocessed.
 
 The worker's private `/livez` answers while the process serves. `/readyz`
 succeeds only when the last claim pass succeeded for every registered name and
@@ -119,21 +136,21 @@ override. A branch worker cleans only its own tenant.
 do not supply an arbitrary cutoff. The service subtracts 90 days from the
 business clock and passes that cutoff to a single repository statement.
 
-A row is eligible only when `state = 'completed'` and `completed_at` is strictly
+A row is eligible only when `state = 'completed'`, it is not a replay
+(`replay_of_id` is null), no row replays it, and `completed_at` is strictly
 earlier than that cutoff. Exact-boundary completions remain. The cutoff does not
 depend on the database session's timezone.
 
-Successful replay rows expire under the same rule when no retained child
-references them. The failed original stays indefinitely. The self-referencing
-foreign key and the no-child cleanup condition preserve replay lineage; a row
-still needed by a retained descendant is not removed. Automatic cleanup never
-deletes pending, running or failed records, regardless of age. A successful
-replay does not make its failed original eligible for cleanup.
+Completed replays stay indefinitely, like the failed jobs they replay. A
+completed replay is what refuses further
+[replays](#inspect-and-replay-retained-work) in its lineage, so removing it
+would make the lineage replayable again. Automatic cleanup never deletes
+pending, running or failed records, regardless of age.
 
 Record important completion evidence before successful history expires. A
-missing completed row or aged-out successful replay is not proof that an effect
-never ran. Failure inspection and version-retirement decisions still account
-for the retained failed originals.
+missing completed row is not proof that an effect never ran. Failure
+inspection and version-retirement decisions still account for the retained
+failed jobs.
 
 ## Inspect and replay retained work
 
@@ -201,6 +218,29 @@ tadoku-worker replay --tenant tadoku/prod --id 123 --actor operator-name --reaso
   reason. It logs `job replayed` with the tenant, `source_job_id` and the new
   `job_id`. The failed original stays unchanged. A worker serving that tenant
   processes the new job.
+- A job's lineage is the original job and every job replayed from it,
+  directly or through other replays. A replay is refused while any job in the
+  lineage is `pending`, `running` or `completed`, so replays never add a second
+  unfinished job or run again after a success. A failed job can be replayed
+  only if it has no replay yet; to retry
+  after a replay failed, replay that failed replay. The command refuses, names
+  the job that blocks the replay and inserts nothing:
+  - `job lineage cannot be replayed: job <id> is completed`, or `is pending`
+    or `is running`, when a job in the lineage completed or is still
+    unfinished. A completed job is named first.
+  - `job was already replayed as job <id>` when the job's replay failed.
+    Replay that job instead.
+
+  A replay locks its lineage's original job, so two replays in one lineage
+  that run at the same time insert at most one job. The rule covers the whole
+  lineage, including one where a job has several replays.
+- Replaying a failed `email.send.v1` job resends its email unless the email
+  is sent or held, and can deliver a message the provider already accepted.
+  In a tenant that holds its mail when the replay runs, or for an email that
+  retention deleted, the replay completes without sending and a failed email
+  stays `failed`; that completed replay refuses further replays. Check the
+  email's status as well as the job's. See
+  [Retained email](./email.md#delivery-and-failures).
 - Verify the new job reaches `completed`. An invalid payload remains invalid on
   replay; repair requires its own reviewed procedure, not repeated replay or a
   name change.

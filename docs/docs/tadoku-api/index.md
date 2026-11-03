@@ -48,7 +48,7 @@ All paths are relative to `services/tadoku-api/`.
 | `app/permissionmodel/` | The list of every feature's permission namespace, from which composition roots build the permission model. |
 | `cmd/tadoku-worker/` | Worker composition root and private health/metrics lifecycle. |
 | `domain/<concept>/` | Business values and pure rules shared by several features. |
-| `internal/` | Technical support: errors (`errx`), request identity (`identity`), permission evaluation (`permissions`), feature-flag evaluation (`featureflags`), business time (`timex`), callback authentication (`callbackauth`) and test fixtures (`test*`). |
+| `internal/` | Technical support: errors (`errx`), request identity (`identity`), permission evaluation (`permissions`), feature-flag evaluation (`featureflags`), business time (`timex`), generated IDs (`uuidx`), callback authentication (`callbackauth`) and test fixtures (`test*`). |
 | `infra/` | Infrastructure adapters: PostgreSQL (`postgres`), Valkey (`valkey`), Flipt evaluation and management (`flipt`, `fliptmanagement`), and scoring observability (`observability`). |
 | `cmd/tadoku-api/` | The composition root: loads configuration, constructs and owns the pool, provider clients and HTTP resources, and wires them into the application. |
 
@@ -93,6 +93,8 @@ see [Contributing workflow](../develop/contributing.md#cms-managed-content).
   changing a persisted message version.
 - [Testing](./testing.md): read before adding or changing any test; covers
   principles, test infrastructure and repository tests.
+- [TLA+ models](./formal-specs.md): read before changing a TLA+ model or code
+  that a model describes.
 - [HTTP end-to-end tests](./http-e2e.md): read before adding or changing an
   operation's golden cases, fixture tokens, relationships or local identity fixtures.
 - [User journeys](./user-journeys.md): read before changing a chained user

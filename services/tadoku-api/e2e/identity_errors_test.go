@@ -8,7 +8,9 @@ import (
 )
 
 func TestIdentityV2InfrastructureErrorBody(t *testing.T) {
-	resetIdentity(t)
+	t.Parallel()
+	s := newIdentityScenario(t)
+
 	pool := openUnreachablePool(t, api.db.AppPool.Config().ConnString())
 	handler, _, err := newTestRouterWithLogger(
 		t.Context(),
@@ -19,8 +21,8 @@ func TestIdentityV2InfrastructureErrorBody(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	response := identityRequest(t, handler, identityBranchA, "GET", "/identity/session", "",
-		"tadoku_session_tadoku_identity-a-0123abcd=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", nil)
+	response := s.identityRequest(t, handler, "identity-a", "GET", "/identity/session", "",
+		identitySessionCookieName(s.tenant(t, "identity-a"))+"=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", nil)
 	requireIdentityStatus(t, response, http.StatusServiceUnavailable)
 	if response.Body.String() != "{\"message\":\"identity service unavailable\"}\n" {
 		t.Errorf("infrastructure error body=%q, want the sanitized identity error", response.Body.String())
@@ -28,8 +30,10 @@ func TestIdentityV2InfrastructureErrorBody(t *testing.T) {
 }
 
 func TestIdentityV2NonJSONErrorBody(t *testing.T) {
-	resetIdentity(t)
-	response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/login",
+	t.Parallel()
+	s := newIdentityScenario(t)
+
+	response := s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/login",
 		`{"email":"reader@example.test","password":"wrong-password"}`, "", func(request *http.Request) {
 			request.Header.Set("Content-Type", "text/plain")
 		})

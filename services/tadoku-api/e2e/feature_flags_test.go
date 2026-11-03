@@ -36,6 +36,7 @@ func TestImmersionFeatureFlagDecisions(t *testing.T) {
 func withFliptUnavailable(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		flipt.SetUnavailable(true)
+		defer flipt.SetUnavailable(false)
 		next.ServeHTTP(response, request)
 	})
 }

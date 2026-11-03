@@ -16,6 +16,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/uuidx"
 )
 
 const maxActiveTokens = 10
@@ -54,7 +55,7 @@ func (s *Service) Verify(ctx context.Context, raw string, deployment tenant.Depl
 		return Principal{}, errx.NewUnauthorizedError("access token tenant mismatch")
 	}
 
-	row, found, err := s.repository.verify(tenant.WithKey(ctx, key), tokenHash(raw), acceptedScopes, timex.Now())
+	row, found, err := s.repository.verify(tenant.WithKey(ctx, key), tokenHash(raw), acceptedScopes, timex.Now(ctx))
 	if err != nil {
 		return Principal{}, err
 	}
@@ -69,7 +70,7 @@ func (s *Service) Verify(ctx context.Context, raw string, deployment tenant.Depl
 func (s *Service) Create(ctx context.Context, request Create) (Issued, error) {
 	key, ok := tenant.FromContext(ctx)
 	if !ok {
-		return Issued{}, postgres.ErrNoTenant
+		return Issued{}, errx.NewUnavailableError("access tokens require a tenant", postgres.ErrNoTenant)
 	}
 
 	if s.production && key == tenant.Production() {
@@ -101,9 +102,9 @@ func (s *Service) Create(ctx context.Context, request Create) (Issued, error) {
 	}
 
 	raw := "tdk_at_" + strings.ReplaceAll(key.String(), "/", "_") + "_" + base64.RawURLEncoding.EncodeToString(secret)
-	now := timex.Now()
+	now := timex.Now(ctx)
 	row := Token{
-		ID:        uuid.New(),
+		ID:        uuidx.New(ctx),
 		Name:      request.Name,
 		Scopes:    request.Scopes,
 		CreatedAt: now,
@@ -122,7 +123,7 @@ func (s *Service) Create(ctx context.Context, request Create) (Issued, error) {
 
 func (s *Service) List(ctx context.Context) ([]Token, error) { return s.repository.list(ctx) }
 func (s *Service) Revoke(ctx context.Context, id uuid.UUID) error {
-	return s.repository.revoke(ctx, id, timex.Now())
+	return s.repository.revoke(ctx, id, timex.Now(ctx))
 }
 
 func emailReadOnly(scopes []Scope) bool {

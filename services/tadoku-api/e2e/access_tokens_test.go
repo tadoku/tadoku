@@ -2,7 +2,6 @@ package e2e_test
 
 import (
 	"bytes"
-	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
@@ -16,39 +15,27 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 func TestAccessTokenEmailRoutes(t *testing.T) {
-	api.reset(t, "")
+	t.Parallel()
+	s := newScenario(t, "tokens", "other")
+	key := s.tenant(t, "tokens").Key()
+	other := s.tenant(t, "other").Key()
+	now := s.clock.Now()
 
-	key, _ := tenant.Parse("e2e/tokens-0123abcd")
-	other, _ := tenant.Parse("e2e/other-0123abcd")
-	_, err := api.db.Pool.Exec(t.Context(), `insert into tenants(key,kind)
- values ($1,'test'),
- ($2,'test')`, key.String(), other.String())
-	if err != nil {
-		t.Fatal(err)
-	}
+	id := writeEmail(t, s.executionContext(tenant.WithKey(t.Context(), key)), emailService(), recoveryMail())
+	otherID := writeEmail(t, s.executionContext(tenant.WithKey(t.Context(), other)), emailService(), recoveryMail())
 
-	t.Cleanup(func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		_, err := api.db.Pool.Exec(ctx, "delete from tenants where key=any($1)", []string{key.String(), other.String()})
-		if err != nil {
-			t.Error(err)
-		}
-	})
-
-	id := writeEmail(t, tenant.WithKey(t.Context(), key), emailService(), recoveryMail())
-	otherID := writeEmail(t, tenant.WithKey(t.Context(), other), emailService(), recoveryMail())
-
-	raw := "tdk_at_e2e_tokens-0123abcd_" + strings.Repeat("a", 43)
+	prefix := func(key tenant.Key) string { return "tdk_at_" + strings.ReplaceAll(key.String(), "/", "_") + "_" }
+	raw := prefix(key) + strings.Repeat("a", 43)
 	digest := sha256.Sum256([]byte(raw))
 	tokenID := uuid.New()
-	_, err = api.db.Pool.Exec(t.Context(), `insert into access_tokens(tenant,id,name,token_hash,scopes,expires_at)
- values ($1,$2,'test',$3,array['email:read'],now()+interval '1 hour')`,
-		key.String(), tokenID, hex.EncodeToString(digest[:]))
+	_, err := api.db.Pool.Exec(t.Context(), `insert into access_tokens(tenant,id,name,token_hash,scopes,expires_at)
+ values ($1,$2,'test',$3,array['email:read'],$4::timestamptz+interval '1 hour')`,
+		key.String(), tokenID, hex.EncodeToString(digest[:]), now)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,6 +56,7 @@ func TestAccessTokenEmailRoutes(t *testing.T) {
 			req.Header.Set("Authorization", "Bearer "+token)
 		}
 		req.Header.Set("X-Dev-Branch", other.String())
+		req = req.WithContext(s.executionContext(req.Context()))
 
 		response := httptest.NewRecorder()
 
@@ -113,19 +101,23 @@ func TestAccessTokenEmailRoutes(t *testing.T) {
 		name, sql string
 		status    int
 	}{
-		{"expired", "update access_tokens set expires_at=now()-interval '1 second' where id=$1", 401},
-		{"revoked", "update access_tokens set expires_at=now()+interval '1 hour',revoked_at=now() where id=$1", 401},
-		{"wrong scope", "update access_tokens set revoked_at=null,scopes=array['other'] where id=$1", 401},
-		{"extra scope", "update access_tokens set scopes=array['email:read','other'] where id=$1", 401},
-		{"no scope", "update access_tokens set scopes=array[]::text[] where id=$1", 401},
-		{"nonstandard bounds", "update access_tokens set scopes='[0:0]={email:read}'::text[] where id=$1", 401},
-		{"two dimensions", "update access_tokens set scopes=array[['email:read']] where id=$1", 401},
-		{"null scope", "update access_tokens set scopes=array[null]::text[] where id=$1", 401},
-		{"restored scope", "update access_tokens set scopes=array['email:read'] where id=$1", 200},
+		{"expired", "update access_tokens set expires_at=@now::timestamptz-interval '1 second' where id=@id", 401},
+		{
+			"revoked",
+			"update access_tokens set expires_at=@now::timestamptz+interval '1 hour',revoked_at=@now where id=@id",
+			401,
+		},
+		{"wrong scope", "update access_tokens set revoked_at=null,scopes=array['other'] where id=@id", 401},
+		{"extra scope", "update access_tokens set scopes=array['email:read','other'] where id=@id", 401},
+		{"no scope", "update access_tokens set scopes=array[]::text[] where id=@id", 401},
+		{"nonstandard bounds", "update access_tokens set scopes='[0:0]={email:read}'::text[] where id=@id", 401},
+		{"two dimensions", "update access_tokens set scopes=array[['email:read']] where id=@id", 401},
+		{"null scope", "update access_tokens set scopes=array[null]::text[] where id=@id", 401},
+		{"restored scope", "update access_tokens set scopes=array['email:read'] where id=@id", 200},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			seeded := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
-			if _, err := api.db.Pool.Exec(t.Context(), tc.sql, tokenID); err != nil {
+			if _, err := api.db.Pool.Exec(t.Context(), tc.sql, pgx.NamedArgs{"id": tokenID, "now": now}); err != nil {
 				t.Fatal(err)
 			}
 			_, err := api.db.Pool.Exec(t.Context(), "update access_tokens set last_used_at=$2 where id=$1", tokenID, seeded)
@@ -154,7 +146,7 @@ func TestAccessTokenEmailRoutes(t *testing.T) {
 	t.Run("unauthenticated", func(t *testing.T) { request(t, handler, "", "/emails", 400) })
 
 	t.Run("forged prefix", func(t *testing.T) {
-		request(t, api.handler, strings.Replace(raw, "e2e_tokens", "e2e_other", 1), "/emails", 401)
+		request(t, api.handler, strings.Replace(raw, prefix(key), prefix(other), 1), "/emails", 401)
 	})
 }
 

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -146,5 +148,94 @@ func TestProviderCancelledEvaluationDoesNotCreateTenantClient(t *testing.T) {
 	_, err = provider.EvaluateBoolean(ctx, featureflags.EvaluationRequest{})
 	if !errors.Is(err, context.Canceled) || calls != 1 {
 		t.Fatalf("cancelled evaluation error=%v factories=%d", err, calls)
+	}
+}
+
+func TestProviderEvictionCloseIgnoresVictimAndRequestContext(t *testing.T) {
+	lifetime, cancelLifetime := context.WithCancel(t.Context())
+	t.Cleanup(cancelLifetime)
+
+	targets, err := NewTargets("production", "default", "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var (
+		mu          sync.Mutex
+		armEviction atomic.Bool
+		evictionCtx context.Context
+	)
+	factory := func(_ context.Context, _ Config, _ Observer) (*Client, error) {
+		sdk := &fakeSDKClient{
+			response: &fliptsdk.BooleanEvaluationResponse{
+				FlagKey: "fixture-flag",
+				Enabled: true,
+			},
+			onClose: func(ctx context.Context) error {
+				if !armEviction.Load() {
+					return nil
+				}
+				mu.Lock()
+				if evictionCtx == nil {
+					evictionCtx = ctx
+				}
+				mu.Unlock()
+				return errors.New("victim close failed")
+			},
+		}
+		return &Client{client: sdk}, nil
+	}
+
+	provider, err := newProvider(lifetime, Config{}, targets, nil, factory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = provider.Close(context.Background()) })
+
+	request := featureflags.EvaluationRequest{
+		FlagKey:  "fixture-flag",
+		EntityID: "11111111-1111-4111-8111-111111111111",
+	}
+	for index := range maxTestClients {
+		key, err := tenant.Parse(fmt.Sprintf("e2e/evict-%d", index))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := provider.EvaluateBoolean(tenant.WithKey(t.Context(), key), request); err != nil {
+			t.Fatalf("seed tenant %d: %v", index, err)
+		}
+	}
+
+	key, err := tenant.Parse("e2e/evict-new")
+	if err != nil {
+		t.Fatal(err)
+	}
+	reqCtx, cancelReq := context.WithCancel(tenant.WithKey(t.Context(), key))
+	t.Cleanup(cancelReq)
+	armEviction.Store(true)
+
+	result, err := provider.EvaluateBoolean(reqCtx, request)
+	if err != nil {
+		t.Fatalf("eviction evaluation failed: %v", err)
+	}
+	if !result.Enabled {
+		t.Fatal("expected enabled evaluation after eviction")
+	}
+
+	mu.Lock()
+	got := evictionCtx
+	mu.Unlock()
+	if got == nil {
+		t.Fatal("eviction Close was not observed")
+	}
+	if got == reqCtx {
+		t.Fatal("eviction Close used the request context")
+	}
+	if got != lifetime {
+		t.Fatal("eviction Close did not use the provider lifetime context")
+	}
+	cancelReq()
+	if err := got.Err(); err != nil {
+		t.Fatalf("eviction Close context was cancelled with the request: %v", err)
 	}
 }

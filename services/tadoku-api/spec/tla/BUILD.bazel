@@ -1,0 +1,168 @@
+load(":tlc.bzl", "tlc_test")
+
+tlc_test(
+    name = "jobqueue_test",
+    config = "JobQueue.cfg",
+    spec = "JobQueue.tla",
+)
+
+# Two jobs live at once, without replays.
+tlc_test(
+    name = "jobqueue_concurrent_test",
+    config = "JobQueue_concurrent.cfg",
+    spec = "JobQueue.tla",
+)
+
+# Two operators replaying a failed job and its replays, from a fresh or forked lineage.
+tlc_test(
+    name = "jobqueue_replay_test",
+    config = "JobQueue_replay.cfg",
+    spec = "JobQueue.tla",
+)
+
+# Two original jobs with a replay: larger bounds than CI runs.
+tlc_test(
+    name = "jobqueue_large_test",
+    size = "medium",
+    config = "JobQueue_large.cfg",
+    spec = "JobQueue.tla",
+    tags = ["manual"],
+)
+
+tlc_test(
+    name = "accountdeletion_test",
+    config = "AccountDeletion.cfg",
+    spec = "AccountDeletion.tla",
+)
+
+# Known gap: CreateSession can insert a session after the deletion lock commits.
+tlc_test(
+    name = "accountdeletion_session_test",
+    config = "AccountDeletion_session.cfg",
+    spec = "AccountDeletion.tla",
+    tags = ["manual"],
+)
+
+# Three operators replaying a forked lineage: larger bounds than CI runs.
+tlc_test(
+    name = "jobqueue_replay_large_test",
+    size = "medium",
+    config = "JobQueue_replay_large.cfg",
+    spec = "JobQueue.tla",
+    tags = ["manual"],
+)
+
+tlc_test(
+    name = "emaildelivery_test",
+    config = "EmailDelivery.cfg",
+    spec = "EmailDelivery.tla",
+)
+
+# Three attempts and two replays: larger bounds than CI runs.
+tlc_test(
+    name = "emaildelivery_large_test",
+    size = "medium",
+    config = "EmailDelivery_large.cfg",
+    spec = "EmailDelivery.tla",
+    tags = ["manual"],
+)
+
+# Accepted at-least-once delivery: the provider can receive an email twice.
+tlc_test(
+    name = "emaildelivery_duplicates_test",
+    config = "EmailDelivery_duplicates.cfg",
+    spec = "EmailDelivery.tla",
+    tags = ["manual"],
+)
+
+# An official invalidation of two keys, with one failed attempt and a replay.
+tlc_test(
+    name = "leaderboardcache_test",
+    config = "LeaderboardCache.cfg",
+    spec = "LeaderboardCache.tla",
+)
+
+# Two writes to one contest board, with overlapping invalidation jobs.
+tlc_test(
+    name = "leaderboardcache_writes_test",
+    config = "LeaderboardCache_writes.cfg",
+    spec = "LeaderboardCache.tla",
+)
+
+# Valkey loses a key, restarts empty, or a rebuild stops partway: the cache
+# only misses.
+tlc_test(
+    name = "leaderboardcache_keyloss_test",
+    config = "LeaderboardCache_keyloss.cfg",
+    spec = "LeaderboardCache.tla",
+)
+
+# A failed invalidation that no operator replays: the marker's expiry still
+# brings the board back to PostgreSQL.
+tlc_test(
+    name = "leaderboardcache_noreplay_test",
+    config = "LeaderboardCache_noreplay.cfg",
+    spec = "LeaderboardCache.tla",
+)
+
+# Without the marker's expiry, a failed invalidation that no operator replays
+# leaves the board stale forever.
+tlc_test(
+    name = "leaderboardcache_noexpiry_test",
+    config = "LeaderboardCache_noexpiry.cfg",
+    spec = "LeaderboardCache.tla",
+    tags = ["manual"],
+)
+
+# Two writes to the official boards, with retries: larger bounds than CI runs.
+tlc_test(
+    name = "leaderboardcache_large_test",
+    size = "large",
+    config = "LeaderboardCache_large.cfg",
+    spec = "LeaderboardCache.tla",
+    tags = ["manual"],
+)
+
+# Deletion, moderation and registration detaches against one log.
+tlc_test(
+    name = "logevents_test",
+    config = "LogEvents.cfg",
+    spec = "LogEvents.tla",
+)
+
+# Updates and attachment changes against a deletion.
+tlc_test(
+    name = "logevents_requests_test",
+    config = "LogEvents_requests.cfg",
+    spec = "LogEvents.tla",
+)
+
+# Creates, attachment changes, moderation and registration against account deletion, with the feed's order.
+tlc_test(
+    name = "logevents_feed_test",
+    config = "LogEvents_feed.cfg",
+    spec = "LogEvents.tla",
+)
+
+# Every log writer at once: larger bounds than CI runs.
+tlc_test(
+    name = "logevents_large_test",
+    size = "medium",
+    config = "LogEvents_large.cfg",
+    spec = "LogEvents.tla",
+    tags = ["manual"],
+)
+
+# Creates, updates, deletions and attachment changes against one log, with the feed's order.
+tlc_test(
+    name = "logevents_order_test",
+    config = "LogEvents_order.cfg",
+    spec = "LogEvents.tla",
+)
+
+# Attaching, moderation and registration detaches keep eligible_official_leaderboard in step with official attachments.
+tlc_test(
+    name = "logevents_eligibility_test",
+    config = "LogEvents_eligibility.cfg",
+    spec = "LogEvents.tla",
+)

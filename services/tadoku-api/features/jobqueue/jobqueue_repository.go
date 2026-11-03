@@ -29,7 +29,7 @@ func (r *Repository) Insert(ctx context.Context, typ jobs.Type, payload json.Raw
 	id, err := queries.New(executor).Enqueue(ctx, queries.EnqueueParams{
 		TaskType: string(typ),
 		Payload:  payload,
-		Now:      postgres.Timestamptz(timex.Now()),
+		Now:      postgres.Timestamptz(timex.Now(ctx)),
 	})
 	if err != nil {
 		return 0, fmt.Errorf("enqueue job: %w", err)
@@ -38,7 +38,7 @@ func (r *Repository) Insert(ctx context.Context, typ jobs.Type, payload json.Raw
 }
 
 func (r *Repository) Claim(ctx context.Context, typ jobs.Type, limit int, lease time.Duration, maxAttempts int) ([]ClaimedJob, error) {
-	now := timex.Now()
+	now := timex.Now(ctx)
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err
@@ -83,7 +83,7 @@ func (r *Repository) FailExhausted(ctx context.Context, typ jobs.Type, maxAttemp
 	}
 
 	rows, err := queries.New(executor).FailExhausted(ctx, queries.FailExhaustedParams{
-		Now:            postgres.Timestamptz(timex.Now()),
+		Now:            postgres.Timestamptz(timex.Now(ctx)),
 		TaskType:       string(typ),
 		Component:      postgres.NullableText(componentFromContext(ctx)),
 		MaxAttempts:    int32(maxAttempts),
@@ -129,7 +129,7 @@ func (r *Repository) Complete(ctx context.Context, task ClaimedJob) (bool, error
 		return false, err
 	}
 	count, err := queries.New(executor).Complete(ctx, queries.CompleteParams{
-		Now:        postgres.Timestamptz(timex.Now()),
+		Now:        postgres.Timestamptz(timex.Now(ctx)),
 		ID:         task.ID,
 		ClaimToken: postgres.UUID(task.Token),
 	})
@@ -137,7 +137,7 @@ func (r *Repository) Complete(ctx context.Context, task ClaimedJob) (bool, error
 }
 
 func (r *Repository) Retry(ctx context.Context, task ClaimedJob, next time.Time, code string, maxAttempts int) (bool, error) {
-	now := timex.Now()
+	now := timex.Now(ctx)
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return false, err
@@ -159,7 +159,7 @@ func (r *Repository) Fail(ctx context.Context, task ClaimedJob, code string) (bo
 		return false, err
 	}
 	count, err := queries.New(executor).Fail(ctx, queries.FailParams{
-		Now:        postgres.Timestamptz(timex.Now()),
+		Now:        postgres.Timestamptz(timex.Now(ctx)),
 		ErrorCode:  code,
 		ID:         task.ID,
 		ClaimToken: postgres.UUID(task.Token),
@@ -167,29 +167,54 @@ func (r *Repository) Fail(ctx context.Context, task ClaimedJob, code string) (bo
 	return count == 1, err
 }
 
-func (r *Repository) Replay(ctx context.Context, failedID int64, actor, reason string, supported []jobs.Type) (int64, error) {
+func (r *Repository) LockReplayLineage(ctx context.Context, failedID int64, supported []jobs.Type) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	names := make([]string, len(supported))
 	for i, typ := range supported {
 		names[i] = string(typ)
 	}
-	id, err := queries.New(executor).Replay(ctx, queries.ReplayParams{
-		Now:            postgres.Timestamptz(timex.Now()),
-		Actor:          actor,
-		Reason:         reason,
+
+	_, err = queries.New(executor).LockReplayLineage(ctx, queries.LockReplayLineageParams{
 		FailedID:       failedID,
 		SupportedTypes: names,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return 0, ErrNotFailed
+		return ErrNotFailed
 	}
+	if err != nil {
+		return fmt.Errorf("lock replay lineage: %w", err)
+	}
+	return nil
+}
+
+func (r *Repository) Replay(ctx context.Context, failedID int64, actor, reason string) (int64, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return 0, err
+	}
+	row, err := queries.New(executor).Replay(ctx, queries.ReplayParams{
+		Now:      postgres.Timestamptz(timex.Now(ctx)),
+		Actor:    actor,
+		Reason:   reason,
+		FailedID: failedID,
+	})
 	if err != nil {
 		return 0, fmt.Errorf("replay job: %w", err)
 	}
-	return id, nil
+
+	switch {
+	case row.ReplayID != 0:
+		return row.ReplayID, nil
+	case row.BlockerState == "failed":
+		return 0, fmt.Errorf("%w as job %d", ErrAlreadyReplayed, row.BlockerID)
+	case row.BlockerID != 0:
+		return 0, fmt.Errorf("%w: job %d is %s", ErrLineageBlocked, row.BlockerID, row.BlockerState)
+	default:
+		return 0, ErrNotFailed
+	}
 }
 
 func (r *Repository) CleanupCompleted(ctx context.Context, cutoff time.Time, limit int) (int64, error) {

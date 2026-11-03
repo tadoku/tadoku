@@ -10,6 +10,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/uuidx"
 )
 
 func (s *Service) PlanContestRegistrationUpdate(
@@ -117,6 +118,35 @@ func (s *Service) lockMutableLog(ctx context.Context, logID uuid.UUID) error {
 	return nil
 }
 
+// RecomputeOfficialEligibility must run in the transaction that detached the logs from their contests,
+// which must enqueue the returned jobs.
+func (s *Service) RecomputeOfficialEligibility(
+	ctx context.Context,
+	logIDs []uuid.UUID,
+	now time.Time,
+) ([]jobs.Job, error) {
+	followUp := make([]jobs.Job, 0)
+	for _, logID := range logIDs {
+		before, err := s.logs.JobContext(ctx, logID)
+		if err != nil {
+			return nil, err
+		}
+		if err := s.recomputeOfficialEligibility(ctx, logID, now); err != nil {
+			return nil, err
+		}
+		after, err := s.logs.JobContext(ctx, logID)
+		if err != nil {
+			return nil, err
+		}
+
+		if before.EligibleOfficial || after.EligibleOfficial {
+			year := before.Year
+			followUp = append(followUp, jobs.InvalidateOfficialLeaderboardV1{Year: year})
+		}
+	}
+	return followUp, nil
+}
+
 func (s *Service) recomputeOfficialEligibility(ctx context.Context, logID uuid.UUID, now time.Time) error {
 	official, err := s.logs.AttachedContestOfficialFlags(ctx, logID)
 	if err != nil {
@@ -212,7 +242,7 @@ func (s *Service) Create(
 	}
 
 	mutation := logMutation{
-		ID:                          uuid.New(),
+		ID:                          uuidx.New(ctx),
 		UserID:                      userID,
 		LanguageCode:                scored.LanguageCode,
 		ActivityID:                  scored.ActivityID,

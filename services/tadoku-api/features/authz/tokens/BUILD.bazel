@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "tokens",
@@ -15,8 +15,19 @@ go_library(
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/tenant",
         "//services/tadoku-api/internal/timex",
+        "//services/tadoku-api/internal/uuidx",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//:pgx",
         "@com_github_jackc_pgx_v5//pgxpool",
+    ],
+)
+
+go_test(
+    name = "tokens_test",
+    srcs = ["tokens_service_test.go"],
+    embed = [":tokens"],
+    deps = [
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/errx",
     ],
 )

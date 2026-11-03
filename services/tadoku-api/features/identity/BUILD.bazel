@@ -32,6 +32,7 @@ go_library(
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/tenant",
         "//services/tadoku-api/internal/timex",
+        "//services/tadoku-api/internal/uuidx",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//:pgx",
         "@com_github_jackc_pgx_v5//pgtype",
@@ -45,8 +46,17 @@ go_test(
     name = "identity_test",
     srcs = [
         "identity_recovery_service_test.go",
+        "identity_service_test.go",
         "identity_values_test.go",
     ],
     embed = [":identity"],
-    deps = ["//services/tadoku-api/internal/errx"],
+    deps = [
+        "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/tenant",
+        "//services/tadoku-api/internal/uuidx",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//pgproto3",
+        "@com_github_jackc_pgx_v5//pgxpool",
+        "@com_github_valkey_io_valkey_go//:valkey-go",
+    ],
 )

@@ -120,7 +120,7 @@ func (a *Application) CreatePlatformScoringRuleSetDraft(ctx context.Context, par
 	if err := a.normalizeScoringDraftRules(ctx, &draft.DraftRules); err != nil {
 		return nil, err
 	}
-	draft.CreatedAt = timex.Now()
+	draft.CreatedAt = timex.Now(ctx)
 
 	var created *ScoringRuleSet
 	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
@@ -144,7 +144,7 @@ func (a *Application) CreateContestScoringRuleSetDraft(ctx context.Context, cont
 	if err := a.requireOwnerOrAdmin(ctx, contest.OwnerUserID); err != nil {
 		return nil, err
 	}
-	if err := a.scoring.RequireContestScoringChangeable(contest.ContestStart, timex.Now()); err != nil {
+	if err := a.scoring.RequireContestScoringChangeable(contest.ContestStart, timex.Now(ctx)); err != nil {
 		return nil, err
 	}
 
@@ -163,7 +163,7 @@ func (a *Application) CreateContestScoringRuleSetDraft(ctx context.Context, cont
 	if err := a.normalizeScoringDraftRules(ctx, &draft.DraftRules); err != nil {
 		return nil, err
 	}
-	draft.CreatedAt = timex.Now()
+	draft.CreatedAt = timex.Now(ctx)
 
 	var created *ScoringRuleSet
 	err = postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
@@ -199,7 +199,7 @@ func (a *Application) PublishScoringRuleSet(ctx context.Context, id uuid.UUID) (
 
 	var published *ScoringRuleSet
 	err = postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
-		published, err = a.scoring.PublishRuleSet(ctx, *ruleSet, timex.Now())
+		published, err = a.scoring.PublishRuleSet(ctx, *ruleSet, timex.Now(ctx))
 		return err
 	})
 	return published, err
@@ -218,7 +218,7 @@ func (a *Application) ActivateScoringRuleSet(ctx context.Context, id uuid.UUID) 
 		return err
 	}
 
-	return a.scoring.ActivateRuleSet(ctx, *ruleSet, timex.Now())
+	return a.scoring.ActivateRuleSet(ctx, *ruleSet, timex.Now(ctx))
 }
 
 func (a *Application) authorizeScoringRuleSetChange(ctx context.Context, ruleSet ScoringRuleSet) error {
@@ -236,7 +236,7 @@ func (a *Application) authorizeScoringRuleSetChange(ctx context.Context, ruleSet
 		if err := a.requireOwnerOrAdmin(ctx, contest.OwnerUserID); err != nil {
 			return err
 		}
-		return a.scoring.RequireContestScoringChangeable(contest.ContestStart, timex.Now())
+		return a.scoring.RequireContestScoringChangeable(contest.ContestStart, timex.Now(ctx))
 	default:
 		return errx.NewInternalError("scoring rule set scope is invalid")
 	}

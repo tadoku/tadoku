@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestevent"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/uuidx"
 )
 
 type Service struct{ repository *Repository }
@@ -23,7 +24,7 @@ func (s *Service) Append(ctx context.Context, changes []contestevent.Change, occ
 
 	events := make([]newEvent, 0, len(changes))
 	for _, change := range changes {
-		events = append(events, newEvent{id: uuid.New(), change: change})
+		events = append(events, newEvent{id: uuidx.New(ctx), change: change})
 	}
 	return s.repository.Insert(ctx, events, occurredAt)
 }

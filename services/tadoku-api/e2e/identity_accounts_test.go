@@ -12,6 +12,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 const identityBranchA = "tadoku/identity-a-0123abcd"
@@ -63,26 +65,31 @@ func newIdentityRequest(t *testing.T, tenantKey, method, path, body, cookie stri
 	if err := json.Unmarshal(contents, &tokens); err != nil {
 		t.Fatal(err)
 	}
-	request := httptest.NewRequest(method, "https://tadoku.dev.lab"+path, strings.NewReader(body))
+	request := identityHTTPRequest(method, path, body, cookie)
 	request.Header.Set("Authorization", "Bearer "+tokens[tenantKey])
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Origin", "https://tadoku.dev.lab")
-	request.Header.Set("Cookie", cookie)
-	request.RemoteAddr = "198.51.100.20:12345"
 	if edit != nil {
 		edit(request)
 	}
 	return request
 }
 
-func requireIdentityStatus(t *testing.T, response *httptest.ResponseRecorder, want int) {
+func identityHTTPRequest(method, path, body, cookie string) *http.Request {
+	request := httptest.NewRequest(method, "https://tadoku.dev.lab"+path, strings.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Origin", "https://tadoku.dev.lab")
+	request.Header.Set("Cookie", cookie)
+	request.RemoteAddr = "198.51.100.20:12345"
+	return request
+}
+
+func requireIdentityStatus(t testing.TB, response *httptest.ResponseRecorder, want int) {
 	t.Helper()
 	if response.Code != want {
 		t.Fatalf("status=%d body=%s, want %d", response.Code, response.Body, want)
 	}
 }
 
-func identityView(t *testing.T, response *httptest.ResponseRecorder) identitySessionView {
+func identityView(t testing.TB, response *httptest.ResponseRecorder) identitySessionView {
 	t.Helper()
 	requireIdentityStatus(t, response, http.StatusOK)
 	var view identitySessionView
@@ -96,6 +103,7 @@ func identityView(t *testing.T, response *httptest.ResponseRecorder) identitySes
 }
 
 func TestIdentityV2RegistrationValidation(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		name, email, displayName, password string
 		want                               int
@@ -112,13 +120,15 @@ func TestIdentityV2RegistrationValidation(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			resetIdentity(t)
+			s := newIdentityScenario(t)
+
 			body, _ := json.Marshal(map[string]string{
 				"email":        tc.email,
 				"display_name": tc.displayName,
 				"password":     tc.password,
 			})
-			response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/registration", string(body), "", nil)
+			response := s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/registration", string(body),
+				"", nil)
 			requireIdentityStatus(t, response, tc.want)
 			if tc.want != 201 && response.Header().Get("Set-Cookie") != "" {
 				t.Error("rejected registration created a cookie")
@@ -128,6 +138,7 @@ func TestIdentityV2RegistrationValidation(t *testing.T) {
 }
 
 func TestIdentityV2RequestSecurity(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name, path, body, origin, contentType string
 		want                                  int
@@ -156,17 +167,20 @@ func TestIdentityV2RequestSecurity(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			resetIdentity(t)
-			response := identityRequest(t, api.handler, identityBranchA, "POST", tc.path, tc.body, "", func(r *http.Request) {
-				r.Header.Set("Origin", tc.origin)
-				r.Header.Set("Content-Type", tc.contentType)
-			})
+			s := newIdentityScenario(t)
+
+			response := s.identityRequest(t, api.handler, "identity-a", "POST", tc.path, tc.body, "",
+				func(r *http.Request) {
+					r.Header.Set("Origin", tc.origin)
+					r.Header.Set("Content-Type", tc.contentType)
+				})
 			requireIdentityStatus(t, response, tc.want)
 		})
 	}
 }
 
 func TestIdentityV2LogoutIgnoresBody(t *testing.T) {
+	t.Parallel()
 	oversized := `{"padding":"` + strings.Repeat("x", 128<<10) + `"}`
 	for _, tc := range []struct {
 		name, body, origin string
@@ -180,16 +194,17 @@ func TestIdentityV2LogoutIgnoresBody(t *testing.T) {
 		{"malformed from a foreign origin", "{", "https://evil.test", http.StatusForbidden},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			resetIdentity(t)
-			cookie := identityLoginCookie(t)
-			response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/logout", tc.body, cookie,
+			s := newIdentityScenario(t)
+
+			cookie := s.identityLoginCookie(t, "identity-a")
+			response := s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/logout", tc.body, cookie,
 				func(r *http.Request) { r.Header.Set("Origin", tc.origin) })
 			requireIdentityStatus(t, response, tc.want)
 			if response.Header().Get("Cache-Control") != "private, no-store" {
 				t.Error("logout response may be cached")
 			}
 
-			response = identityRequest(t, api.handler, identityBranchA, "GET", "/identity/session", "", cookie, nil)
+			response = s.identityRequest(t, api.handler, "identity-a", "GET", "/identity/session", "", cookie, nil)
 			if signedIn := identityView(t, response).Account != nil; signedIn != (tc.want != http.StatusNoContent) {
 				t.Errorf("signed in=%v after logout answered %d", signedIn, tc.want)
 			}
@@ -198,13 +213,28 @@ func TestIdentityV2LogoutIgnoresBody(t *testing.T) {
 }
 
 func TestIdentityV2LoginTimingAndThrottle(t *testing.T) {
-	resetIdentity(t)
+	t.Parallel()
+	s := newScenario(t, "identity-a", "identity-b")
+	s.seed(t, "identity-a", identityProductionCostSeed)
+	s.seed(t, "identity-b", identityProductionCostSeed)
+
+	var passwordHash string
+	err := api.db.Pool.QueryRow(t.Context(), `select password_hash from accounts
+		where tenant = $1 and email_normalized = 'reader@example.test'`, s.tenant(t, "identity-a").String(),
+	).Scan(&passwordHash)
+	if err != nil {
+		t.Fatal(err)
+	}
+	passwordCost, err := bcrypt.Cost([]byte(passwordHash))
+	if err != nil || passwordCost != 12 {
+		t.Fatalf("timing fixture bcrypt cost=%d, err=%v, want cost 12", passwordCost, err)
+	}
 	var known, unknown []time.Duration
 	for i := 0; i < 8; i++ {
 		for _, email := range []string{"reader@example.test", "unknown@example.test"} {
 			start := time.Now()
 			body := fmt.Sprintf(`{"email":%q,"password":"wrong-password"}`, email)
-			response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/login", body, "", nil)
+			response := s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/login", body, "", nil)
 			duration := time.Since(start)
 			requireIdentityStatus(t, response, http.StatusUnauthorized)
 			if response.Body.String() != "{\"code\":\"wrong_password\",\"message\":\"invalid email or password\"}\n" {
@@ -224,22 +254,22 @@ func TestIdentityV2LoginTimingAndThrottle(t *testing.T) {
 		}
 	}
 	for i := 8; i < 10; i++ {
-		response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/login",
+		response := s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/login",
 			`{"email":"reader@example.test","password":"wrong-password"}`, "", nil)
 		requireIdentityStatus(t, response, http.StatusUnauthorized)
 	}
-	response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/login",
+	response := s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/login",
 		`{"email":"reader@example.test","password":"Fixture-login-482!"}`, "", nil)
 	requireIdentityStatus(t, response, http.StatusTooManyRequests)
 	if response.Header().Get("Set-Cookie") != "" {
 		t.Error("throttled login issued a session")
 	}
-	response = identityRequest(t, api.handler, identityBranchB, "POST", "/identity/login",
+	response = s.identityRequest(t, api.handler, "identity-b", "POST", "/identity/login",
 		`{"email":"reader@example.test","password":"Fixture-login-482!"}`, "", nil)
 	requireIdentityStatus(t, response, http.StatusOK)
 }
 
-func requireRecentLogin(t *testing.T, response *httptest.ResponseRecorder, want bool) {
+func requireRecentLogin(t testing.TB, response *httptest.ResponseRecorder, want bool) {
 	t.Helper()
 	var view identitySessionView
 	if err := json.Unmarshal(response.Body.Bytes(), &view); err != nil {
@@ -251,14 +281,15 @@ func requireRecentLogin(t *testing.T, response *httptest.ResponseRecorder, want 
 }
 
 func TestIdentitySessionRecentLogin(t *testing.T) {
-	resetIdentity(t)
+	t.Parallel()
+	s := newIdentityScenario(t)
 
-	response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/registration",
+	response := s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/registration",
 		`{"email":"new@example.test","display_name":"New Reader","password":"Independent-653!"}`, "", nil)
 	requireIdentityStatus(t, response, http.StatusCreated)
 	requireRecentLogin(t, response, true)
 
-	response = identityRequest(t, api.handler, identityBranchA, "POST", "/identity/login",
+	response = s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/login",
 		`{"email":"reader@example.test","password":"Fixture-login-482!"}`, "", nil)
 	requireIdentityStatus(t, response, http.StatusOK)
 	requireRecentLogin(t, response, true)
@@ -276,12 +307,12 @@ func TestIdentitySessionRecentLogin(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			_, err := api.db.Pool.Exec(t.Context(), `update sessions
 				set authenticated_at = $2::timestamptz - $3::interval
-				where tenant = $1`, identityBranchA, fixtureInstant, tc.age)
+				where tenant = $1`, s.tenant(t, "identity-a").String(), fixtureInstant, tc.age)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			response := identityRequest(t, api.handler, identityBranchA, "GET", "/identity/session", "", cookie, nil)
+			response := s.identityRequest(t, api.handler, "identity-a", "GET", "/identity/session", "", cookie, nil)
 			if identityView(t, response).Account == nil {
 				t.Fatal("session no longer authenticates")
 			}
@@ -289,7 +320,7 @@ func TestIdentitySessionRecentLogin(t *testing.T) {
 		})
 	}
 
-	response = identityRequest(t, api.handler, identityBranchA, "GET", "/identity/session", "", "", nil)
+	response = s.identityRequest(t, api.handler, "identity-a", "GET", "/identity/session", "", "", nil)
 	if identityView(t, response).Account != nil {
 		t.Fatal("guest session has an account")
 	}
@@ -297,8 +328,10 @@ func TestIdentitySessionRecentLogin(t *testing.T) {
 }
 
 func TestIdentityV2SessionJourney(t *testing.T) {
-	resetIdentity(t)
-	response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/registration",
+	t.Parallel()
+	s := newIdentityScenario(t)
+
+	response := s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/registration",
 		`{"email":"new@example.test","display_name":"New Reader","password":"Independent-653!"}`, "", nil)
 	requireIdentityStatus(t, response, http.StatusCreated)
 	cookies := response.Result().Cookies()
@@ -315,7 +348,7 @@ func TestIdentityV2SessionJourney(t *testing.T) {
 	err = api.db.Pool.QueryRow(t.Context(), `select s.token_hash, a.password_hash
 		from sessions s
 		join accounts a on a.tenant = s.tenant and a.user_id = s.user_id
-		where s.tenant = $1 and a.email_normalized = 'new@example.test'`, identityBranchA,
+		where s.tenant = $1 and a.email_normalized = 'new@example.test'`, s.tenant(t, "identity-a").String(),
 	).Scan(&storedHash, &passwordHash)
 	if err != nil {
 		t.Fatal(err)
@@ -323,36 +356,36 @@ func TestIdentityV2SessionJourney(t *testing.T) {
 	if storedHash != hex.EncodeToString(digest[:]) || !strings.HasPrefix(passwordHash, "$2a$12$") {
 		t.Error("credentials were not stored as SHA-256/bcrypt cost 12 hashes")
 	}
-	if first.Name != "tadoku_session_tadoku_identity-a-0123abcd" || first.Domain != "tadoku.dev.lab" ||
+	if first.Name != identitySessionCookieName(s.tenant(t, "identity-a")) || first.Domain != "tadoku.dev.lab" ||
 		!first.HttpOnly || !first.Secure || first.SameSite != http.SameSiteLaxMode ||
 		first.Path != "/" || first.MaxAge != 7*24*60*60 {
 		t.Error("registration cookie violates tenant security policy")
 	}
-	response = identityRequest(t, api.handler, identityBranchA, "GET", "/identity/session", "", first.String(), nil)
+	response = s.identityRequest(t, api.handler, "identity-a", "GET", "/identity/session", "", first.String(), nil)
 	view := identityView(t, response)
 	if view.Account == nil || view.Account.Email != "new@example.test" ||
 		view.Account.DisplayName != "New Reader" || !view.Account.CreatedAt.Equal(fixtureInstant) ||
 		!view.Account.AuthenticatedAt.Equal(fixtureInstant) {
 		t.Fatal("registration did not persist the complete session account")
 	}
-	response = identityRequest(t, api.handler, identityBranchA, "POST", "/identity/login",
+	response = s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/login",
 		`{"email":"NEW@EXAMPLE.TEST","password":"Independent-653!"}`, "", nil)
 	requireIdentityStatus(t, response, http.StatusOK)
 	second := response.Result().Cookies()[0]
 	if first.Value == second.Value {
 		t.Error("login reused a session token")
 	}
-	response = identityRequest(t, api.handler, identityBranchA, "POST", "/identity/logout", "", second.String(), nil)
+	response = s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/logout", "", second.String(), nil)
 	requireIdentityStatus(t, response, http.StatusNoContent)
 	cleared := response.Result().Cookies()[0]
 	if cleared.Name != second.Name || cleared.MaxAge != -1 || cleared.Domain != second.Domain {
 		t.Error("logout failed to clear the selected tenant cookie")
 	}
-	response = identityRequest(t, api.handler, identityBranchA, "GET", "/identity/session", "", second.String(), nil)
+	response = s.identityRequest(t, api.handler, "identity-a", "GET", "/identity/session", "", second.String(), nil)
 	if identityView(t, response).Account != nil {
 		t.Error("revoked session still authenticates")
 	}
-	response = identityRequest(t, api.handler, identityBranchA, "GET", "/identity/session", "", first.String(), nil)
+	response = s.identityRequest(t, api.handler, "identity-a", "GET", "/identity/session", "", first.String(), nil)
 	if identityView(t, response).Account == nil {
 		t.Error("logout revoked another valid login")
 	}

@@ -126,8 +126,8 @@ func TestApplicationPoolPrivilegesAndCleanup(t *testing.T) {
 	closed = true
 
 	err = observer.QueryRow(t.Context(), `select
-		(select count(*) from pg_roles where rolname = $1) +
-		(select count(*) from pg_database where datname = $2)`, role, db.name).Scan(&count)
+		(select count(*) from pg_roles where rolname = any($1)) +
+		(select count(*) from pg_database where datname = $2)`, []string{role, db.seedRole}, db.name).Scan(&count)
 	if err != nil || count != 0 {
 		t.Fatalf("owned role/database remain: count=%d error=%v", count, err)
 	}
@@ -151,18 +151,25 @@ func TestCloseCleansPartialApplicationRoleSetup(t *testing.T) {
 	}
 
 	role := "tadoku_test_partial_" + uuid.NewString()[:8]
-	if _, err := admin.Exec(t.Context(), "create role "+pgx.Identifier{role}.Sanitize()+" login nosuperuser nobypassrls"); err != nil {
-		admin.Close()
-		t.Fatal(err)
+	seedRole := role + "_seed"
+	for _, name := range []string{role, seedRole} {
+		_, err := admin.Exec(t.Context(), "create role "+pgx.Identifier{name}.Sanitize()+" login nosuperuser nobypassrls")
+		if err != nil {
+			admin.Close()
+			t.Fatal(err)
+		}
 	}
 
-	partial := &Database{admin: admin, appRole: role}
+	partial := &Database{admin: admin, appRole: role, seedRole: seedRole}
 	if err := partial.Close(); err != nil {
 		t.Fatal(err)
 	}
 
 	var remaining int
-	err = complete.admin.QueryRow(t.Context(), "select count(*) from pg_roles where rolname = $1", role).Scan(&remaining)
+	err = complete.admin.QueryRow(t.Context(),
+		"select count(*) from pg_roles where rolname = any($1)",
+		[]string{role, seedRole},
+	).Scan(&remaining)
 	if err != nil || remaining != 0 {
 		t.Fatalf("partial setup role remains: count=%d error=%v", remaining, err)
 	}

@@ -21,7 +21,7 @@ func NewService(repository *Repository) *Service {
 }
 
 func (s *Service) Record(ctx context.Context, event Event) error {
-	event.recordedAt = timex.Now()
+	event.recordedAt = timex.Now(ctx)
 	return s.repository.Create(ctx, event)
 }
 

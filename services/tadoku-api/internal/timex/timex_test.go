@@ -1,6 +1,7 @@
 package timex_test
 
 import (
+	"context"
 	"sync"
 	"testing"
 	"time"
@@ -10,7 +11,7 @@ import (
 
 func TestNow(t *testing.T) {
 	before := time.Now().UTC().Truncate(time.Microsecond)
-	got := timex.Now()
+	got := timex.Now(context.Background())
 	after := time.Now().UTC().Truncate(time.Microsecond)
 	if got.Location() != time.UTC || got.Before(before) || got.After(after) {
 		t.Errorf("Now() = %v (%v), want UTC time between %v and %v", got, got.Location(), before, after)
@@ -30,7 +31,7 @@ func TestTheWorldFixedUTCAndRestoration(t *testing.T) {
 		timex.TheWorld(instant, func() {
 			called = true
 			for i := 0; i < 3; i++ {
-				if got := timex.Now(); got != instant.UTC() {
+				if got := timex.Now(context.Background()); got != instant.UTC() {
 					t.Errorf("Now() = %#v, want %#v", got, instant.UTC())
 				}
 			}
@@ -39,7 +40,7 @@ func TestTheWorldFixedUTCAndRestoration(t *testing.T) {
 			t.Error("TheWorld did not call its callback")
 		}
 		before := time.Now().UTC().Truncate(time.Microsecond)
-		got := timex.Now()
+		got := timex.Now(context.Background())
 		after := time.Now().UTC().Truncate(time.Microsecond)
 		if got.Location() != time.UTC || got.Before(before) || got.After(after) {
 			t.Errorf("after scope: Now() = %v (%v), want UTC time between %v and %v", got, got.Location(), before, after)
@@ -56,7 +57,7 @@ func TestTheWorldConcurrentReaders(t *testing.T) {
 			go func() {
 				defer readers.Done()
 				for j := 0; j < 1000; j++ {
-					if got := timex.Now(); got != instant {
+					if got := timex.Now(context.Background()); got != instant {
 						t.Errorf("concurrent Now() = %#v, want %#v", got, instant)
 						return
 					}
@@ -78,14 +79,14 @@ func TestTheWorldRestoresAfterPanic(t *testing.T) {
 		timex.TheWorld(time.Time{}, func() { panic(panicValue) })
 	}()
 	before := time.Now().UTC().Truncate(time.Microsecond)
-	got := timex.Now()
+	got := timex.Now(context.Background())
 	after := time.Now().UTC().Truncate(time.Microsecond)
 	if got.Location() != time.UTC || got.Before(before) || got.After(after) {
 		t.Errorf("after panic: Now() = %v (%v), want UTC time between %v and %v", got, got.Location(), before, after)
 	}
 	instant := time.Date(2050, time.January, 2, 3, 4, 5, 6, time.UTC)
 	timex.TheWorld(instant, func() {
-		if got := timex.Now(); got != instant {
+		if got := timex.Now(context.Background()); got != instant {
 			t.Errorf("later scope: Now() = %#v, want %#v", got, instant)
 		}
 	})
@@ -110,7 +111,7 @@ func TestTheWorldRejectsNestedOverride(t *testing.T) {
 		t.Fatal("nested override deadlocked")
 	}
 	timex.TheWorld(time.Time{}, func() {
-		if got := timex.Now(); got != (time.Time{}) {
+		if got := timex.Now(context.Background()); got != (time.Time{}) {
 			t.Errorf("scope after nested rejection: Now() = %#v, want zero time", got)
 		}
 	})
@@ -134,7 +135,7 @@ func TestTheWorldRejectsConcurrentOverride(t *testing.T) {
 		case <-time.After(5 * time.Second):
 			t.Error("concurrent override blocked behind the active scope")
 		}
-		if got := timex.Now(); got != instant {
+		if got := timex.Now(context.Background()); got != instant {
 			t.Errorf("rejected override changed active time: Now() = %#v, want %#v", got, instant)
 		}
 	})
@@ -145,18 +146,18 @@ func TestAdvanceMovesTheActiveScope(t *testing.T) {
 
 	timex.TheWorld(instant, func() {
 		timex.Advance(time.Second)
-		if got, want := timex.Now(), instant.Add(time.Second); got != want {
+		if got, want := timex.Now(context.Background()), instant.Add(time.Second); got != want {
 			t.Errorf("after one advance: Now() = %#v, want %#v", got, want)
 		}
 
 		timex.Advance(time.Hour)
-		if got, want := timex.Now(), instant.Add(time.Second+time.Hour); got != want {
+		if got, want := timex.Now(context.Background()), instant.Add(time.Second+time.Hour); got != want {
 			t.Errorf("after two advances: Now() = %#v, want %#v", got, want)
 		}
 	})
 
 	before := time.Now().UTC().Truncate(time.Microsecond)
-	got := timex.Now()
+	got := timex.Now(context.Background())
 	after := time.Now().UTC().Truncate(time.Microsecond)
 	if got.Before(before) || got.After(after) {
 		t.Errorf("after advanced scope: Now() = %v, want UTC time between %v and %v", got, before, after)
@@ -174,7 +175,7 @@ func TestAdvanceOutsideAScopePanics(t *testing.T) {
 		t.Errorf("advance outside a scope panic = %#v, want clear rejection", got)
 	}
 	before := time.Now().UTC().Truncate(time.Microsecond)
-	now := timex.Now()
+	now := timex.Now(context.Background())
 	after := time.Now().UTC().Truncate(time.Microsecond)
 	if now.Before(before) || now.After(after) {
 		t.Errorf("rejected advance fixed the clock: Now() = %v, want UTC time between %v and %v", now, before, after)

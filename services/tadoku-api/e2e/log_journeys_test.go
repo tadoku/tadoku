@@ -3,19 +3,14 @@ package e2e_test
 import (
 	"context"
 	"errors"
-	"math/rand"
 	"net/http"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func TestLogMutationJourney(t *testing.T) {
-	uuid.SetRand(rand.New(rand.NewSource(1)))
-	defer uuid.SetRand(nil)
-
 	end := time.Date(2027, 1, 1, 0, 0, 0, 0, time.UTC)
 	runJourneyWithHandler(t, api, scoringEnabledHandler, "LogMutation", []step{
 		{request: "create", as: user, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
@@ -29,12 +24,9 @@ func TestLogMutationJourney(t *testing.T) {
 }
 
 func TestStandaloneWorkerLeaderboardJourney(t *testing.T) {
-	uuid.SetRand(rand.New(rand.NewSource(1)))
-	defer uuid.SetRand(nil)
-
 	runJourneyWithSetup(t, api, scoringEnabledHandler, "LeaderboardJobs", func(t *testing.T) {
 		seedLeaderboardCache(t, "leaderboard:global", "hit")
-	}, []step{
+	}, nil, []step{
 		{request: "create_log", as: user, want: http.StatusOK},
 		{request: "before_worker_stale_cache", as: guest, want: http.StatusOK},
 		{job: "run_worker"},
@@ -49,9 +41,6 @@ func TestStandaloneWorkerLeaderboardJourney(t *testing.T) {
 }
 
 func TestLogCreateAtomicFailureJourney(t *testing.T) {
-	uuid.SetRand(rand.New(rand.NewSource(1)))
-	defer uuid.SetRand(nil)
-
 	runJourneyWithSetup(t, api, scoringEnabledHandler, "LogCreateAtomicFailure", func(t *testing.T) {
 		t.Cleanup(func() {
 			cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -69,7 +58,7 @@ func TestLogCreateAtomicFailureJourney(t *testing.T) {
 		if !errors.As(err, &postgresError) || postgresError.Code != "2200H" {
 			t.Fatalf("job sequence did not reject next ID: %v", err)
 		}
-	}, []step{
+	}, nil, []step{
 		{request: "create_duplicate_registration", as: user, want: http.StatusInternalServerError, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "failed_log_missing", as: user, want: http.StatusNotFound},
 		{request: "async_enqueue_failure", as: user, want: http.StatusInternalServerError},
@@ -87,9 +76,6 @@ func TestLogCreateValidationSyncJourney(t *testing.T) {
 }
 
 func TestLogAttachmentAndDeleteJourney(t *testing.T) {
-	uuid.SetRand(rand.New(rand.NewSource(1)))
-	defer uuid.SetRand(nil)
-
 	runJourneyWithHandler(t, api, scoringEnabledHandler, "LogAttachmentAndDelete", []step{
 		{request: "create", as: user, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "attach", as: user, want: http.StatusOK, others: cast{user2: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
@@ -113,9 +99,6 @@ func TestFrozenLogRefusalsJourney(t *testing.T) {
 }
 
 func TestLogOfficialEligibilityJourney(t *testing.T) {
-	uuid.SetRand(rand.New(rand.NewSource(1)))
-	defer uuid.SetRand(nil)
-
 	runJourney(t, api, "LogOfficialEligibility", []step{
 		{request: "create_unofficial", as: user, want: http.StatusOK},
 		{request: "create_official", as: user, want: http.StatusOK},
@@ -126,6 +109,10 @@ func TestLogOfficialEligibilityJourney(t *testing.T) {
 		{verify: "detached"},
 		{request: "moderate_detach_official", as: admin, want: http.StatusOK},
 		{verify: "moderated"},
+		{request: "reattach_official", as: user, want: http.StatusOK},
+		{verify: "reattached"},
+		{request: "remove_official_language", as: user, want: http.StatusOK},
+		{verify: "language_removed"},
 	})
 }
 

@@ -52,7 +52,7 @@ func TestClaimReturnsTenantForFencedTransitions(t *testing.T) {
 		t.Fatalf("renew test-tenant job: expires=%s held=%t error=%v", expires, held, err)
 	}
 
-	if ok, err := repo.Retry(ctx, claimed[2], timex.Now().Add(time.Minute), "temporary", 3); err != nil || !ok {
+	if ok, err := repo.Retry(ctx, claimed[2], timex.Now(ctx).Add(time.Minute), "temporary", 3); err != nil || !ok {
 		t.Fatalf("retry test-tenant job: held=%t error=%v", ok, err)
 	}
 	if ok, err := repo.Fail(ctx, claimed[3], "invalid_payload"); err != nil || !ok {

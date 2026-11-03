@@ -3,6 +3,7 @@ package e2e_test
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -16,9 +17,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/uuidx"
 )
 
 var fixtureInstant = time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC)
@@ -53,10 +53,14 @@ func (r repeatingByteReader) Read(buffer []byte) (int, error) {
 }
 
 func atFixtureInstant(fn func()) {
-	previous := jwt.TimeFunc
-	jwt.TimeFunc = func() time.Time { return fixtureInstant }
-	defer func() { jwt.TimeFunc = previous }()
 	timex.TheWorld(fixtureInstant, fn)
+}
+
+// scenarioContext gives one scenario its own business clock and UUID stream; every request and worker of the scenario
+// derives its context from it.
+func scenarioContext(t *testing.T, clock *timex.Clock, ids io.Reader) context.Context {
+	t.Helper()
+	return uuidx.WithSource(timex.WithClock(t.Context(), clock), ids)
 }
 
 func runCase(t *testing.T, s *suite, name string, want int, impl implementation) {
@@ -68,14 +72,10 @@ func runCaseAt(t *testing.T, s *suite, name string, want int, businessTime time.
 	dir := filepath.Join("testdata", name)
 	t.Run(impl.name, func(t *testing.T) {
 		s.reset(t, dir)
-		previous := jwt.TimeFunc
-		jwt.TimeFunc = func() time.Time { return fixtureInstant }
-		defer func() { jwt.TimeFunc = previous }()
-		timex.TheWorld(businessTime, func() {
-			uuid.SetRand(impl.uuidReader())
-			defer uuid.SetRand(nil)
-			checkHTTPGolden(t, impl.handler, dir, want, *updateGoldens)
-		})
+
+		ctx := scenarioContext(t, timex.NewClock(businessTime), impl.uuidReader())
+		request := readHTTPRequest(t, dir).WithContext(ctx)
+		checkHTTPResponseGolden(t, impl.handler, request, dir, want, *updateGoldens)
 	})
 }
 

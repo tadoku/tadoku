@@ -42,7 +42,9 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U postgres"
+          --health-cmd "pg_isready -h 127.0.0.1 -U postgres"
+          --health-start-period 30s
+          --health-start-interval 1s
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -63,6 +65,8 @@ jobs:
           - 6432:6432
         options: >-
           --health-cmd "pg_isready -h 127.0.0.1 -p 6432 -U postgres"
+          --health-start-period 30s
+          --health-start-interval 1s
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -72,6 +76,8 @@ jobs:
           - 6379:6379
         options: >-
           --health-cmd "valkey-cli ping"
+          --health-start-period 30s
+          --health-start-interval 1s
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -109,10 +115,12 @@ jobs:
         id: race
         run: >-
           bazel test --lockfile_mode=error --test_output=errors --@rules_go//go/config:race
+          --nocache_test_results
           --profile="$RUNNER_TEMP/bazel-race.profile"
           --build_event_json_file="$RUNNER_TEMP/bazel-race.json"
           //services/tadoku-api/internal/permissions:permissions_test
           //services/tadoku-api/internal/timex:timex_test
+          //services/tadoku-api/internal/uuidx:uuidx_test
           //services/tadoku-api/infra/postgres:postgres_test
           //services/tadoku-api/infra/postgres:pgbouncer_test
           //services/tadoku-api/infra/valkey:valkey_test
@@ -136,8 +144,8 @@ jobs:
         with:
           name: http-e2e-race-${{ github.run_attempt }}
           path: |
-            bazel-testlogs/services/tadoku-api/e2e/e2e_test/test.log
-            bazel-testlogs/services/tadoku-api/e2e/e2e_test/test.xml
+            bazel-testlogs/services/tadoku-api/e2e/e2e_test/**/test.log
+            bazel-testlogs/services/tadoku-api/e2e/e2e_test/**/test.xml
           retention-days: 7
 
       - name: Retain CI performance evidence
@@ -148,6 +156,7 @@ jobs:
           path: |
             ${{ runner.temp }}/bazel-*.profile
             ${{ runner.temp }}/bazel-*.json
+            bazel-testlogs/**/test.xml
           retention-days: 7
 
   alert:

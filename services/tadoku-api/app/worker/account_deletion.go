@@ -17,7 +17,7 @@ import (
 // DeleteAccount locks the account row and then the user row, the order of every transaction that locks both, so it
 // waits for a login, recovery, settings write or filing that holds the account row instead of deadlocking with it.
 func (a *Application) DeleteAccount(ctx context.Context, job jobs.DeleteAccountV1) error {
-	now := timex.Now()
+	now := timex.Now(ctx)
 	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
 		if err := a.identityDeletion.LockAccountForDeletion(ctx, job.UserID); err != nil {
 			return err
@@ -78,15 +78,5 @@ func (a *Application) removeAccountData(ctx context.Context, userID uuid.UUID, n
 	if err := a.contestEvents.Append(ctx, removedLogs.Events, now); err != nil {
 		return err
 	}
-	return a.queue.Enqueue(ctx, distinctJobs(followUp)...)
-}
-
-func distinctJobs(batch []jobs.Job) []jobs.Job {
-	distinct := make([]jobs.Job, 0, len(batch))
-	for _, job := range batch {
-		if !slices.Contains(distinct, job) {
-			distinct = append(distinct, job)
-		}
-	}
-	return distinct
+	return a.queue.Enqueue(ctx, jobs.Distinct(followUp)...)
 }

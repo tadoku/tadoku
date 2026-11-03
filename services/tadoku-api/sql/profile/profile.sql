@@ -21,7 +21,8 @@ where id = sqlc.arg(id);
 -- name: LockUser :one
 select deletion_locked_at, deleted_at
 from users
-where id = sqlc.arg(id)
+where tenant = current_setting('tadoku.tenant')
+  and id = sqlc.arg(id)
 for update;
 
 -- name: FindUserDisplayNames :many

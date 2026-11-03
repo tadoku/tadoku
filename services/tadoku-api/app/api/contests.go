@@ -3,15 +3,18 @@ package api
 import (
 	"context"
 	"errors"
+	"slices"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/uuidx"
 )
 
 type ListContestsParameters = contests.ListParameters
@@ -61,7 +64,7 @@ func (a *Application) CreateContest(ctx context.Context, parameters CreateContes
 	}
 
 	creator := identity.FromContext(ctx)
-	now := timex.Now()
+	now := timex.Now(ctx)
 	creatorID, err := a.profile.SynchronizeUser(ctx, creator, now)
 	if err != nil {
 		return nil, err
@@ -83,7 +86,7 @@ func (a *Application) CreateContest(ctx context.Context, parameters CreateContes
 		return nil, err
 	}
 	contest := contests.Contest{
-		ID:                      uuid.New(),
+		ID:                      uuidx.New(ctx),
 		ContestStart:            parameters.ContestStart,
 		ContestEnd:              parameters.ContestEnd,
 		RegistrationEnd:         parameters.RegistrationEnd,
@@ -204,7 +207,7 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 	}
 
 	user := identity.FromContext(ctx)
-	userID, err := a.profile.SynchronizeUser(ctx, user, timex.Now())
+	userID, err := a.profile.SynchronizeUser(ctx, user, timex.Now(ctx))
 	if err != nil {
 		return err
 	}
@@ -226,9 +229,9 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 		if err := a.profile.LockUser(ctx, userID); err != nil {
 			return err
 		}
-		now := timex.Now()
+		now := timex.Now(ctx)
 
-		registrationID := uuid.New()
+		registrationID := uuidx.New(ctx)
 		existing, err := a.contests.FindRegistration(ctx, userID, parameters.ContestID, languages)
 		if errors.Is(err, contests.ErrRegistrationNotFound) {
 			existing = nil
@@ -253,10 +256,14 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 		if err != nil {
 			return err
 		}
+		officialJobs, err := a.logs.RecomputeOfficialEligibility(ctx, result.WithdrawnLogIDs, now)
+		if err != nil {
+			return err
+		}
 		if err := a.contestEvents.Append(ctx, result.Events, now); err != nil {
 			return err
 		}
-		return a.jobqueue.Enqueue(ctx, result.Jobs...)
+		return a.jobqueue.Enqueue(ctx, jobs.Distinct(slices.Concat(result.Jobs, officialJobs))...)
 	})
 }
 

@@ -1,5 +1,10 @@
 load("@rules_go//go:def.bzl", "go_test")
 
+config_setting(
+    name = "race_enabled",
+    flag_values = {"@rules_go//go/config:race": "true"},
+)
+
 go_test(
     name = "e2e_test",
     size = "medium",
@@ -10,6 +15,7 @@ go_test(
         "access_tokens_test.go",
         "account_deletion_journeys_test.go",
         "account_deletion_locks_test.go",
+        "account_deletion_scenario_test.go",
         "account_deletion_test.go",
         "account_fixtures_test.go",
         "announcement_create_test.go",
@@ -50,6 +56,7 @@ go_test(
         "flipt_tenant_test.go",
         "golden_test.go",
         "identity_account_deletion_test.go",
+        "identity_accounts_scenario_test.go",
         "identity_accounts_test.go",
         "identity_errors_test.go",
         "identity_expiry_test.go",
@@ -58,7 +65,9 @@ go_test(
         "identity_read_test.go",
         "identity_recovery_admission_test.go",
         "identity_recovery_journey_test.go",
+        "identity_recovery_scenario_test.go",
         "identity_recovery_test.go",
+        "identity_recovery_timing_test.go",
         "identity_registration_admission_test.go",
         "identity_registration_test.go",
         "identity_settings_pool_test.go",
@@ -104,20 +113,27 @@ go_test(
         "request_body_limit_test.go",
         "router_options_test.go",
         "routing_test.go",
+        "scenario_canary_test.go",
+        "scenario_probe_test.go",
+        "scenario_test.go",
+        "scenario_tokens_test.go",
         "scoring_preview_test.go",
         "scoring_rule_set_create_test.go",
         "scoring_rule_set_lifecycle_test.go",
         "scoring_rule_set_list_test.go",
+        "sharding_test.go",
         "tenant_isolation_test.go",
         "user_journeys_test.go",
         "valkey_test.go",
         "worker_journey_test.go",
     ],
+    args = ["-test.parallel=2"],
     data = glob([
         "testdata/**/*.http",
         "testdata/**/*.json",
         "testdata/**/*.sql",
     ]) + [
+        "//k8s/dev/base/flipt:features.yaml",
         "//k8s/dev/base/oathkeeper:oathkeeper.yaml",
         "//k8s/dev/base/oathkeeper:rules.yaml",
         "//services/tadoku-api/spec:openapi.yaml",
@@ -131,6 +147,10 @@ go_test(
         "TADOKU_TEST_POSTGRES_URL",
         "TADOKU_TEST_VALKEY_URL",
     ],
+    shard_count = select({
+        ":race_enabled": 1,
+        "//conditions:default": 3,
+    }),
     tags = [
         "no-cache",
         "no-remote-exec",
@@ -143,6 +163,7 @@ go_test(
     deps = [
         "//services/tadoku-api/app/api",
         "//services/tadoku-api/app/permissionmodel",
+        "//services/tadoku-api/app/tenantlifecycle",
         "//services/tadoku-api/app/worker",
         "//services/tadoku-api/domain/jobs",
         "//services/tadoku-api/domain/mail",
@@ -178,6 +199,7 @@ go_test(
         "//services/tadoku-api/internal/testpostgres",
         "//services/tadoku-api/internal/testvalkey",
         "//services/tadoku-api/internal/timex",
+        "//services/tadoku-api/internal/uuidx",
         "//services/tadoku-api/transport/http",
         "@com_github_getkin_kin_openapi//openapi3",
         "@com_github_golang_jwt_jwt_v4//:jwt",

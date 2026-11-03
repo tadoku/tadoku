@@ -48,10 +48,11 @@ and the unsupported pending and running gauges are zero.
 Count v1 rows in every tenant with the
 [all-tenants query](./jobs-operations.md#inspect-and-replay-retained-work);
 branch tenants share the queue. Pending rows include delayed retries, and
-running rows hold leases; let the worker drain them. For each failed v1 row,
-either repair the cause and replay it while v1 is registered, or record why it
-needs no replay. Replays of v1 are v1 rows too, and a successful replay leaves
-its failed original in place.
+running rows hold leases; let the worker drain them. For each failed v1 row
+that can still be replayed (it has no replay, and no job in its lineage is
+pending, running or completed), either repair the cause and replay it while v1
+is registered, or record why it needs no replay. Replays of v1 are v1 rows too,
+and a successful replay leaves its failed original in place.
 
 **Gate:** no pending or running v1 rows remain in any tenant, and every failed
 v1 row has a recorded replay or no-replay decision.

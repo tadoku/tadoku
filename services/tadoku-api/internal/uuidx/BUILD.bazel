@@ -1,0 +1,18 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "uuidx",
+    srcs = ["uuidx.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/uuidx",
+    visibility = ["//services/tadoku-api:internal_consumers"],
+    deps = ["@com_github_google_uuid//:uuid"],
+)
+
+go_test(
+    name = "uuidx_test",
+    srcs = ["uuidx_test.go"],
+    deps = [
+        ":uuidx",
+        "@com_github_google_uuid//:uuid",
+    ],
+)

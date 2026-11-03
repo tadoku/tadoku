@@ -10,10 +10,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"strings"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 )
 
@@ -42,39 +42,41 @@ func identityLoginCookie(t *testing.T) string {
 }
 
 func TestIdentityRecoveryEnumerationAndTransactionalEmail(t *testing.T) {
-	resetIdentity(t)
-	var durations [2][]time.Duration
-	for n := 0; n < 4; n++ {
-		for i, email := range []string{"READER@EXAMPLE.TEST", "unknown@example.test"} {
-			start := time.Now()
-			response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/recovery",
-				fmt.Sprintf(`{"email":%q,"return_to":%q}`, email, recoverySettingsURL), "", nil)
-			durations[i] = append(durations[i], time.Since(start))
-			requireIdentityStatus(t, response, http.StatusAccepted)
-			if response.Body.Len() != 0 || response.Header().Get("Set-Cookie") != "" ||
-				response.Header().Get("Cache-Control") != "private, no-store" {
-				t.Fatal("recovery disclosed existence or created a session")
+	t.Parallel()
+	s := newIdentityScenario(t)
+	tenantKey := s.tenant(t, "identity-a").String()
+	jwks := publishedJWKS(t)
+
+	synctest.Test(t, func(t *testing.T) {
+		handler := recoveryTimingHandler(t, &recoveryWriteDelay{}, jwks)
+		var durations [2][]time.Duration
+		for n := 0; n < 4; n++ {
+			for i, email := range []string{"READER@EXAMPLE.TEST", "unknown@example.test"} {
+				request := newIdentityRequest(t, "", "POST", "/identity/recovery",
+					fmt.Sprintf(`{"email":%q,"return_to":%q}`, email, recoverySettingsURL), "", nil)
+				start := time.Now()
+				response := s.serveWith(t, handler, "identity-a", guest, request)
+				elapsed := time.Since(start)
+				durations[i] = append(durations[i], elapsed)
+				if elapsed != 300*time.Millisecond {
+					t.Errorf("%s elapsed=%s, want 300ms", email, elapsed)
+				}
+				requireIdentityStatus(t, response, http.StatusAccepted)
+				if response.Body.Len() != 0 || response.Header().Get("Set-Cookie") != "" ||
+					response.Header().Get("Cache-Control") != "private, no-store" {
+					t.Fatal("recovery disclosed existence or created a session")
+				}
 			}
 		}
-	}
-	var means [2]time.Duration
-	for i, samples := range durations {
-		for _, duration := range samples {
-			means[i] += duration / time.Duration(len(samples))
-		}
-	}
-	if means[0] < 200*time.Millisecond || means[1] < 200*time.Millisecond ||
-		means[0] > means[1]+100*time.Millisecond || means[1] > means[0]+100*time.Millisecond {
-		t.Errorf("recovery timing known=%s unknown=%s", means[0], means[1])
-	}
-	t.Logf("recovery means known=%s unknown=%s; samples=%v", means[0], means[1], durations)
+		t.Logf("recovery known/unknown samples=%v", durations)
+	})
 
 	var tokens, emails, jobs int
 	err := api.db.Pool.QueryRow(t.Context(), `select
 		(select count(*) from recovery_tokens where tenant = $1),
 		(select count(*) from emails where tenant = $1),
 		(select count(*) from jobs where tenant = $1 and task_type = 'email.send.v1'
-		 and (payload::jsonb - 'email_id') = '{}'::jsonb)`, identityBranchA).Scan(&tokens, &emails, &jobs)
+		 and (payload::jsonb - 'email_id') = '{}'::jsonb)`, tenantKey).Scan(&tokens, &emails, &jobs)
 	if err != nil ||
 		tokens != recoveryRecipientBudget ||
 		emails != recoveryRecipientBudget ||
@@ -85,13 +87,14 @@ func TestIdentityRecoveryEnumerationAndTransactionalEmail(t *testing.T) {
 	var expires time.Time
 	err = api.db.Pool.QueryRow(t.Context(), `select e.params->>'recovery_url', e.recipient, r.token_hash, r.expires_at
 		from emails e cross join recovery_tokens r
-		where e.tenant = $1 and r.tenant = e.tenant limit 1`, identityBranchA).
+		where e.tenant = $1 and r.tenant = e.tenant limit 1`, tenantKey).
 		Scan(&rawURL, &recipient, &storedHash, &expires)
 	if err != nil {
 		t.Fatal(err)
 	}
+	_, route, _ := strings.Cut(tenantKey, "/")
 	link, err := url.Parse(rawURL)
-	if err != nil || link.Host != "identity-a-0123abcd.tadoku.dev.lab" ||
+	if err != nil || link.Host != route+".tadoku.dev.lab" ||
 		!strings.HasPrefix(link.Path, "/api/internal/identity/recovery/") ||
 		link.Query().Get("return_to") != recoverySettingsURL || recipient != "reader@example.test" ||
 		!expires.Equal(fixtureInstant.Add(time.Hour)) {
@@ -105,19 +108,21 @@ func TestIdentityRecoveryEnumerationAndTransactionalEmail(t *testing.T) {
 }
 
 func TestIdentityRecoveryInvalidTokens(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
-		name, tenant string
-		expires      time.Time
-		used         *time.Time
+		name, role string
+		expires    time.Time
+		used       *time.Time
 	}{
-		{"expired", identityBranchA, fixtureInstant, nil},
-		{"used", identityBranchA, fixtureInstant.Add(time.Hour), &fixtureInstant},
-		{"other tenant", identityBranchB, fixtureInstant.Add(time.Hour), nil},
+		{"expired", "identity-a", fixtureInstant, nil},
+		{"used", "identity-a", fixtureInstant.Add(time.Hour), &fixtureInstant},
+		{"other tenant", "identity-b", fixtureInstant.Add(time.Hour), nil},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			resetIdentity(t)
-			token := seedRecoveryToken(t, 'a', tc.expires, tc.used)
-			response := identityRequest(t, api.handler, tc.tenant, "GET", "/identity/recovery/"+token, "", "", nil)
+			s := newPairedIdentityScenario(t)
+
+			token := s.seedRecoveryToken(t, "identity-a", 'a', tc.expires, tc.used)
+			response := s.identityRequest(t, api.handler, tc.role, "GET", "/identity/recovery/"+token, "", "", nil)
 			requireIdentityStatus(t, response, http.StatusBadRequest)
 			if !strings.Contains(response.Body.String(), `"code":"invalid_recovery_token"`) ||
 				response.Header().Get("Set-Cookie") != "" {
@@ -128,15 +133,16 @@ func TestIdentityRecoveryInvalidTokens(t *testing.T) {
 }
 
 func TestIdentityRecoveryConsumeRevokesAndSetsPassword(t *testing.T) {
-	resetIdentity(t)
-	old := identityLoginCookie(t)
-	first := seedRecoveryToken(t, 'a', fixtureInstant.Add(time.Hour), nil)
-	second := seedRecoveryToken(t, 'b', fixtureInstant.Add(time.Hour), nil)
-	response := identityRequest(t, api.handler, identityBranchA, "GET",
+	t.Parallel()
+	s := newIdentityScenario(t)
+	old := s.identityLoginCookie(t, "identity-a")
+	first := s.seedRecoveryToken(t, "identity-a", 'a', fixtureInstant.Add(time.Hour), nil)
+	second := s.seedRecoveryToken(t, "identity-a", 'b', fixtureInstant.Add(time.Hour), nil)
+
+	response := s.identityRequest(t, api.handler, "identity-a", "GET",
 		"/identity/recovery/"+first+"?return_to="+url.QueryEscape(recoverySettingsURL), "", "", nil)
 	requireIdentityStatus(t, response, http.StatusSeeOther)
-	want := "https://identity-a-0123abcd.account.tadoku.dev.lab/?edit=password&return_to=" +
-		url.QueryEscape(recoverySettingsURL)
+	want := recoveryLocation(t, s, "identity-a") + "&return_to=" + url.QueryEscape(recoverySettingsURL)
 	if response.Header().Get("Location") != want {
 		t.Fatal("recovery must open the Password editor with its validated return destination")
 	}
@@ -144,60 +150,50 @@ func TestIdentityRecoveryConsumeRevokesAndSetsPassword(t *testing.T) {
 	if !cookie.HttpOnly || !cookie.Secure || cookie.SameSite != http.SameSiteLaxMode {
 		t.Fatal("recovery cookie weakened session security")
 	}
-	response = identityRequest(t, api.handler, identityBranchA, "GET", "/identity/session", "", old, nil)
+	response = s.identityRequest(t, api.handler, "identity-a", "GET", "/identity/session", "", old, nil)
 	if identityView(t, response).Account != nil {
 		t.Fatal("recovery left an old session active")
 	}
 	for _, token := range []string{first, second} {
-		response = identityRequest(t, api.handler, identityBranchA, "GET", "/identity/recovery/"+token, "", "", nil)
+		response = s.identityRequest(t, api.handler, "identity-a", "GET", "/identity/recovery/"+token, "", "", nil)
 		requireIdentityStatus(t, response, http.StatusBadRequest)
 	}
-	response = identityRequest(t, api.handler, identityBranchA, "PUT", "/identity/settings/password",
+
+	response = s.identityRequest(t, api.handler, "identity-a", "PUT", "/identity/settings/password",
 		`{"password":"Replacement-839!"}`, cookie.String(), nil)
 	requireIdentityStatus(t, response, http.StatusNoContent)
-	response = identityRequest(t, api.handler, identityBranchA, "POST", "/identity/login",
+	response = s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/login",
 		`{"email":"reader@example.test","password":"Replacement-839!"}`, "", nil)
 	requireIdentityStatus(t, response, http.StatusOK)
-	response = identityRequest(t, api.handler, identityBranchA, "POST", "/identity/login",
+	response = s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/login",
 		`{"email":"reader@example.test","password":"Fixture-login-482!"}`, "", nil)
 	requireIdentityStatus(t, response, http.StatusUnauthorized)
 }
 
 func TestIdentityRecoveryConcurrentConsumption(t *testing.T) {
+	t.Parallel()
 	for _, sameToken := range []bool{true, false} {
 		t.Run(fmt.Sprintf("sameToken=%t", sameToken), func(t *testing.T) {
-			resetIdentity(t)
-			first := seedRecoveryToken(t, 'a', fixtureInstant.Add(time.Hour), nil)
+			s := newIdentityScenario(t)
+			first := s.seedRecoveryToken(t, "identity-a", 'a', fixtureInstant.Add(time.Hour), nil)
 			second := first
 			if !sameToken {
-				second = seedRecoveryToken(t, 'b', fixtureInstant.Add(time.Hour), nil)
+				second = s.seedRecoveryToken(t, "identity-a", 'b', fixtureInstant.Add(time.Hour), nil)
 			}
-			contents, err := os.ReadFile("testdata/IdentityV2/tokens.json")
-			if err != nil {
-				t.Fatal(err)
-			}
-			var tokens map[string]string
-			if err := json.Unmarshal(contents, &tokens); err != nil {
-				t.Fatal(err)
-			}
+
 			responses := make([]*httptest.ResponseRecorder, 2)
-			atFixtureInstant(func() {
-				var group sync.WaitGroup
-				start := make(chan struct{})
-				for i, token := range []string{first, second} {
-					group.Add(1)
-					go func() {
-						defer group.Done()
-						request := httptest.NewRequest("GET", "/identity/recovery/"+token, nil)
-						request.Header.Set("Authorization", "Bearer "+tokens[identityBranchA])
-						responses[i] = httptest.NewRecorder()
-						<-start
-						api.handler.ServeHTTP(responses[i], request)
-					}()
-				}
-				close(start)
-				group.Wait()
-			})
+			var group sync.WaitGroup
+			start := make(chan struct{})
+			for i, token := range []string{first, second} {
+				request := httptest.NewRequest("GET", "/identity/recovery/"+token, nil)
+				group.Go(func() {
+					<-start
+					responses[i] = s.serve(t, "identity-a", guest, request)
+				})
+			}
+			close(start)
+			group.Wait()
+
 			statuses := map[int]int{}
 			for _, response := range responses {
 				statuses[response.Code]++
@@ -210,19 +206,22 @@ func TestIdentityRecoveryConcurrentConsumption(t *testing.T) {
 }
 
 func TestIdentityRecoveryRejectsRedirectBeforeConsuming(t *testing.T) {
-	resetIdentity(t)
-	token := seedRecoveryToken(t, 'a', fixtureInstant.Add(time.Hour), nil)
-	response := identityRequest(t, api.handler, identityBranchA, "GET",
+	t.Parallel()
+	s := newIdentityScenario(t)
+	token := s.seedRecoveryToken(t, "identity-a", 'a', fixtureInstant.Add(time.Hour), nil)
+
+	response := s.identityRequest(t, api.handler, "identity-a", "GET",
 		"/identity/recovery/"+token+"?return_to=https%3A%2F%2Fevil.test", "", "", nil)
 	requireIdentityStatus(t, response, http.StatusBadRequest)
-	response = identityRequest(t, api.handler, identityBranchA, "GET", "/identity/recovery/"+token, "", "", nil)
+	response = s.identityRequest(t, api.handler, "identity-a", "GET", "/identity/recovery/"+token, "", "", nil)
 	requireIdentityStatus(t, response, http.StatusSeeOther)
-	if response.Header().Get("Location") != "https://identity-a-0123abcd.account.tadoku.dev.lab/?edit=password" {
+	if response.Header().Get("Location") != recoveryLocation(t, s, "identity-a") {
 		t.Fatal("default Settings redirect escaped the token tenant or closed the Password editor")
 	}
 }
 
 func TestIdentityRecoveryRejectsUnrepresentableReturnTo(t *testing.T) {
+	t.Parallel()
 	prefix := "https://account.tadoku.dev.lab/?q="
 	for _, tc := range []struct {
 		name, email, character string
@@ -234,19 +233,22 @@ func TestIdentityRecoveryRejectsUnrepresentableReturnTo(t *testing.T) {
 		{"expanded link unknown", "unknown@example.test", "&", http.StatusBadRequest},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			resetIdentity(t)
+			s := newIdentityScenario(t)
 			destination := prefix + strings.Repeat(tc.character, 2048-len(prefix))
 			body, err := json.Marshal(map[string]string{"email": tc.email, "return_to": destination})
 			if err != nil {
 				t.Fatal(err)
 			}
-			response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/recovery", string(body), "", nil)
+
+			response := s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/recovery", string(body),
+				"", nil)
 			requireIdentityStatus(t, response, tc.want)
 		})
 	}
 }
 
 func TestIdentityRecoveryRequiresUsableAccount(t *testing.T) {
+	t.Parallel()
 	for _, test := range []struct {
 		name, change string
 		usable       bool
@@ -257,57 +259,34 @@ func TestIdentityRecoveryRequiresUsableAccount(t *testing.T) {
 		},
 		{
 			name:   "inactive",
-			change: "update accounts set state = 'inactive' where tenant = $1 and user_id = $2",
+			change: "update accounts set state = 'inactive' where user_id = $1",
 		},
 		{
 			name:   "deleted",
-			change: "update users set deleted_at = '2026-01-05' where tenant = $1 and id = $2",
+			change: "update users set deleted_at = '2026-01-05' where id = $1",
 		},
 		{
 			name:   "deletion locked",
-			change: "update users set deletion_locked_at = '2026-01-05' where tenant = $1 and id = $2",
+			change: "update users set deletion_locked_at = '2026-01-05' where id = $1",
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			resetIdentity(t)
+			s := newIdentityScenario(t)
+			tenantKey := s.tenant(t, "identity-a").String()
 			if test.change != "" {
-				_, err := api.db.Pool.Exec(
-					t.Context(),
-					test.change,
-					identityBranchA,
-					"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
-				)
-				if err != nil {
-					t.Fatal(err)
-				}
+				writeTenantRows(t, tenantKey, test.change, scenarioCast[user].subject)
 			}
 
-			requested := recoverFrom(
-				t,
-				api.handler,
-				identityBranchA,
-				"reader@example.test",
-				"198.51.100.20",
-				"",
-			)
+			requested := recoverFromRole(t, s, "identity-a", "reader@example.test", "198.51.100.20", "")
 			requireRecoveryAccepted(t, requested)
 			written := 0
 			if test.usable {
 				written = 1
 			}
-			requireRecoveryWrites(t, identityBranchA, written)
+			requireRecoveryWrites(t, tenantKey, written)
 
-			token := seedRecoveryToken(t, 'z', fixtureInstant.Add(time.Hour), nil)
-			consumed := identityRequest(
-				t,
-				api.handler,
-				identityBranchA,
-				"GET",
-				"/identity/recovery/"+token,
-				"",
-				"",
-				nil,
-			)
+			token := s.seedRecoveryToken(t, "identity-a", 'z', fixtureInstant.Add(time.Hour), nil)
+			consumed := s.identityRequest(t, api.handler, "identity-a", "GET", "/identity/recovery/"+token, "", "", nil)
 			if test.usable {
 				requireIdentityStatus(t, consumed, http.StatusSeeOther)
 				return
@@ -318,26 +297,19 @@ func TestIdentityRecoveryRequiresUsableAccount(t *testing.T) {
 }
 
 func TestIdentityRecoveryDoesNotWaitForTheDeletionWorker(t *testing.T) {
+	t.Parallel()
 	for _, consume := range []bool{false, true} {
 		t.Run(fmt.Sprintf("consume=%t", consume), func(t *testing.T) {
-			resetIdentity(t)
-			const reader = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
-			_, err := api.db.Pool.Exec(
-				t.Context(),
-				"update users set deletion_locked_at = '2026-01-05' where tenant = $1 and id = $2",
-				identityBranchA,
-				reader,
-			)
-			if err != nil {
-				t.Fatal(err)
-			}
+			s := newIdentityScenario(t)
+			tenantKey := s.tenant(t, "identity-a").String()
+			reader := scenarioCast[user].subject
+			writeTenantRows(t, tenantKey, "update users set deletion_locked_at = '2026-01-05' where id = $1", reader)
 
 			body := fmt.Sprintf(`{"email":"reader@example.test","return_to":%q}`, recoverySettingsURL)
-			request := newIdentityRequest(t, identityBranchA, "POST", "/identity/recovery", body, "", nil)
+			request := newIdentityRequest(t, "", "POST", "/identity/recovery", body, "", nil)
 			if consume {
-				token := seedRecoveryToken(t, 'z', fixtureInstant.Add(time.Hour), nil)
-				path := "/identity/recovery/" + token
-				request = newIdentityRequest(t, identityBranchA, "GET", path, "", "", nil)
+				token := s.seedRecoveryToken(t, "identity-a", 'z', fixtureInstant.Add(time.Hour), nil)
+				request = newIdentityRequest(t, "", "GET", "/identity/recovery/"+token, "", "", nil)
 			}
 			worker, err := api.db.Pool.Begin(t.Context())
 			if err != nil {
@@ -347,34 +319,32 @@ func TestIdentityRecoveryDoesNotWaitForTheDeletionWorker(t *testing.T) {
 			_, err = worker.Exec(
 				t.Context(),
 				"select 1 from accounts where tenant = $1 and user_id = $2 for update",
-				identityBranchA,
+				tenantKey,
 				reader,
 			)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			atFixtureInstant(func() {
-				served := serveAsync(request)
-				select {
-				case response := <-served:
-					if consume {
-						requireRecoveryRejected(
-							t,
-							response,
-							http.StatusBadRequest,
-							"invalid_recovery_token",
-						)
-						return
-					}
-					requireRecoveryAccepted(t, response)
-					requireRecoveryWrites(t, identityBranchA, 0)
-				case <-time.After(5 * time.Second):
-					t.Error("recovery waits for the deletion worker holding the account row")
-					_ = worker.Rollback(t.Context())
-					<-served
+			served := serveAsyncIn(t, s, "identity-a", request)
+			select {
+			case response := <-served:
+				if consume {
+					requireRecoveryRejected(
+						t,
+						response,
+						http.StatusBadRequest,
+						"invalid_recovery_token",
+					)
+					return
 				}
-			})
+				requireRecoveryAccepted(t, response)
+				requireRecoveryWrites(t, tenantKey, 0)
+			case <-time.After(5 * time.Second):
+				t.Error("recovery waits for the deletion worker holding the account row")
+				_ = worker.Rollback(t.Context())
+				<-served
+			}
 		})
 	}
 }

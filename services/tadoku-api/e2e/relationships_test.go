@@ -33,40 +33,15 @@ func resetRelationships(ctx context.Context, pool *pgxpool.Pool, seedFiles ...st
 	batch.Queue("delete from permission_relationships")
 
 	for _, seedFile := range seedFiles {
-		contents, err := os.ReadFile(seedFile)
-		if errors.Is(err, os.ErrNotExist) {
-			continue
-		}
+		relationships, err := readRelationships(seedFile)
 		if err != nil {
-			return fmt.Errorf("read relationship seed %s: %w", seedFile, err)
+			return err
 		}
-
-		decoder := json.NewDecoder(bytes.NewReader(contents))
-		decoder.DisallowUnknownFields()
-		var relationships []fixtureRelationship
-		if err := decoder.Decode(&relationships); err != nil {
-			return fmt.Errorf("decode relationship seed %s: %w", seedFile, err)
-		}
-
 		for index, relationship := range relationships {
-			objectType, objectID, objectOK := strings.Cut(relationship.Object, ":")
-			subjectType, subjectID, subjectOK := strings.Cut(relationship.Subject, ":")
-			if !objectOK || !subjectOK || relationship.Tenant == "" || relationship.Relation == "" {
-				return fmt.Errorf(
-					"relationship seed %s[%d] needs a tenant, a relation and type:id object and subject",
-					seedFile,
-					index,
-				)
+			if relationship.Tenant == "" {
+				return fmt.Errorf("relationship seed %s[%d] needs a tenant", seedFile, index)
 			}
-			batch.Queue(
-				insertRelationshipSQL,
-				relationship.Tenant,
-				objectType,
-				objectID,
-				relationship.Relation,
-				subjectType,
-				subjectID,
-			)
+			relationship.queue(batch, relationship.Tenant)
 		}
 	}
 
@@ -77,4 +52,41 @@ func resetRelationships(ctx context.Context, pool *pgxpool.Pool, seedFiles ...st
 		return fmt.Errorf("seed relationships: %w", err)
 	}
 	return nil
+}
+
+// readRelationships returns no rows for a missing file. It leaves the tenant to the caller.
+func readRelationships(seedFile string) ([]fixtureRelationship, error) {
+	contents, err := os.ReadFile(seedFile)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read relationship seed %s: %w", seedFile, err)
+	}
+
+	decoder := json.NewDecoder(bytes.NewReader(contents))
+	decoder.DisallowUnknownFields()
+	var relationships []fixtureRelationship
+	if err := decoder.Decode(&relationships); err != nil {
+		return nil, fmt.Errorf("decode relationship seed %s: %w", seedFile, err)
+	}
+
+	for index, relationship := range relationships {
+		_, _, objectOK := strings.Cut(relationship.Object, ":")
+		_, _, subjectOK := strings.Cut(relationship.Subject, ":")
+		if !objectOK || !subjectOK || relationship.Relation == "" {
+			return nil, fmt.Errorf(
+				"relationship seed %s[%d] needs a relation and type:id object and subject",
+				seedFile,
+				index,
+			)
+		}
+	}
+	return relationships, nil
+}
+
+func (relationship fixtureRelationship) queue(batch *pgx.Batch, tenant string) {
+	objectType, objectID, _ := strings.Cut(relationship.Object, ":")
+	subjectType, subjectID, _ := strings.Cut(relationship.Subject, ":")
+	batch.Queue(insertRelationshipSQL, tenant, objectType, objectID, relationship.Relation, subjectType, subjectID)
 }

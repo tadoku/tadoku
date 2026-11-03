@@ -3,7 +3,10 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "testpostgres",
     testonly = True,
-    srcs = ["database.go"],
+    srcs = [
+        "database.go",
+        "tenant_seed.go",
+    ],
     data = ["//services/tadoku-api/migrations:up_files"],
     embedsrcs = ["cleanup.sql"],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres",

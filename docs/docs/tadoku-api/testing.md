@@ -65,7 +65,8 @@ Never point tests at shared development or production services.
 - **PostgreSQL:** `TADOKU_TEST_POSTGRES_URL` must point to an explicit loopback
   port, database `postgres`, credentials `postgres:postgres` and exactly
   `sslmode=disable`. Fixtures create random disposable databases and apply the
-  complete migration history.
+  complete migration history. The admin pool is capped at two connections;
+  owner and restricted application pools each allow four.
 
   `testpostgres.Database.Pool` is the owner pool for fixture reset and
   verification SQL. `AppPool` uses a separate randomly named per-database
@@ -74,6 +75,15 @@ Never point tests at shared development or production services.
   Owner-only baseline snapshots are not granted to it. Application-pool
   shutdown precedes database and role cleanup; partial setup also cleans up
   the owned role and reports cleanup failures.
+
+  `SeedTenant` runs a fixture transaction bound to one test tenant through a
+  second per-database login, capped at two connections. The login holds DML
+  only on tables whose every row-level security policy is exactly the
+  `tadoku.tenant` binding, derived from the catalog, plus their sequences. It
+  has nothing on the tenant registry, overrides, `jobs`, shared reference
+  tables or migration metadata, and the same pool shutdown, role cleanup and
+  partial-setup handling. It fails if the transaction ends bound to another
+  tenant or to all tenants.
 - **PgBouncer:** PostgreSQL transport tests require
   `TADOKU_TEST_PGBOUNCER_URL` with the same loopback, synthetic credential and
   database guard. Run PgBouncer 1.25.2 in transaction mode, with a wildcard
@@ -91,9 +101,10 @@ Never point tests at shared development or production services.
 - **Valkey:** raw Valkey and application lifecycle tests require
   `TADOKU_TEST_VALKEY_URL` in the exact form `redis://127.0.0.1:<port>` (or
   `localhost`) for a disposable Valkey 9 service. They never flush the shared
-  instance. Logical databases are reserved per suite: 15 for HTTP E2Es
-  and 13 for the leaderboard cache fence and worker
-  tests. The HTTP E2E fixtures lease their database. Tests sharing database 13
+  instance. Logical databases are reserved per suite: HTTP E2E shards use
+  15, 14, 12, 11 and 10, and the leaderboard cache fence and worker tests use 13.
+  Unsharded HTTP E2Es use 15. Invalid or incomplete Bazel shard coordinates,
+  including more than five shards, fail before opening fixtures. The HTTP E2E fixtures lease their database. Tests sharing database 13
   use unique parsed `e2e/<id>` tenants: the fence and cross-tenant tests create
   and delete only their named tenant keys; worker cache tests register a unique
   test tenant, persist it on jobs and delete only that tenant's matching keys.
@@ -103,6 +114,46 @@ Never point tests at shared development or production services.
   throttle keys. It resets only legacy/tenant-derived leaderboard patterns and
   tenant-derived identity login, registration and recovery patterns while holding its
   lease, including leaderboard keys created by arbitrary test-tenant jobs.
+
+## HTTP shard coverage
+
+The normal HTTP E2E target declares three native Bazel shards. Race builds use
+one E2E process while retaining the complete suite. Overall test-target
+concurrency still needs a runner-appropriate limit.
+
+Use native Bazel `shard_count` to select top-level tests; do not add an
+application test selector. Within a process, only scenario tests that meet the
+[parallel scenario](./scenario-fixtures.md#parallel-scenarios) rules call
+`t.Parallel`, at most two at a time; cases that share fixture state stay serial.
+`--test_sharding_strategy=disabled` runs the same target in one process for
+comparison. Keep `--nocache_test_results` on measured runs.
+
+Retain the complete successful test XML from an unfiltered unsharded run and
+all shards of an equivalent run. Compare exact `(classname, name)` identities,
+including parent tests and subtests, with
+`services/tadoku-api/e2e/check_shard_inventory.py`:
+
+```sh
+python3 services/tadoku-api/e2e/check_shard_inventory.py \
+  --baseline "$EVIDENCE/unsharded/test.xml" \
+  --shards "$EVIDENCE"/sharded/shard_*/test.xml
+```
+
+Run `python3 services/tadoku-api/e2e/check_shard_inventory_test.py` to exercise
+the checker's positive and negative controls.
+
+The comparison fails on empty inventories, unsuccessful cases, duplicates,
+missing names or unexpected names. A case count alone cannot prove completeness.
+Use the same revision and no test filter for both runs. Preserve an inventory
+from before fixture changes as well, so review can establish that existing cases
+remain covered. Retain commands, revision, setup and resource samples alongside
+XML; CI artifacts must include successful shard XML as well as failures.
+
+Limit concurrent test processes using Bazel's `--local_test_jobs` and the
+runner's measured memory, CPU and database capacity. The number of declared
+shards is not the number that must run simultaneously. Measure normal and race
+builds separately; instrumentation changes memory and CPU demand. Do not infer
+CI latency from a host with more available resources.
 
 ## Repository and package tests
 
@@ -127,6 +178,12 @@ Never point tests at shared development or production services.
 - Repository and transaction tests keep their own independent databases and may
   run in parallel. If local test targets contend with the provider fixtures,
   use `--local_test_jobs=1` to serialize targets while retaining all assertions.
+- Parallel worker tests create their fixtures after `t.Parallel`, own their
+  databases and provider keys, and stop every worker goroutine before fixture
+  cleanup. Tests that change process-wide state, including `timex.TheWorld`,
+  `uuid.SetRand`, `jwt.TimeFunc` or environment variables, and their parents
+  stay serial. Bound in-process concurrency with `-test.parallel` as well as
+  target concurrency when measuring against CPU, memory and connection limits.
 - Keep the pool-closing failure test isolated. It opens a second pool on the
   shared DSN and closes it, without creating another migrated database.
 - The `services/tadoku-api/infra/postgres/` helper tests have their own setup in
@@ -182,12 +239,16 @@ guard until it has the required protections.
 
 All HTTP E2E application repositories and the real journey worker use
 `AppPool`; reset, fixture mutations and `verify.sql` keep `Pool`.
+[Scenario fixture](./scenario-fixtures.md) seeds use `SeedTenant`.
 
 Tests using `testing/synctest` create and close every database pool used in the
 bubble inside that same bubble. Copy the fixture pool configuration to preserve
 the owner or restricted application role, then use the new pools for writes,
 worker services and verification SQL. Shared pools can open connections inside
 the bubble and abort the process when their synchronization crosses its boundary.
+Worker timer and retry scenarios advance virtual time while retaining real
+PostgreSQL, SMTP and worker execution; keep SMTP listeners outside the bubble
+and all database work inside its owned pools.
 
 `services/tadoku-api/e2e/tenant_isolation_test.go` runs signed requests through
 the production router with real JWT verification, PostgreSQL and Valkey. It

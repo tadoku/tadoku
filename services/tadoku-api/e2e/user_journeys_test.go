@@ -3,19 +3,14 @@ package e2e_test
 import (
 	"bytes"
 	"context"
-	"math/rand"
 	"net/http"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 func TestTenantIsolationJourney(t *testing.T) {
-	uuid.SetRand(rand.New(rand.NewSource(1)))
-	defer uuid.SetRand(nil)
-
 	const key = "e2e/alpha-0000000a"
 	t.Cleanup(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -35,7 +30,7 @@ func TestTenantIsolationJourney(t *testing.T) {
 		if err := api.flipt.SeedTenant(parsed); err != nil {
 			t.Fatal(err)
 		}
-	}, []step{
+	}, nil, []step{
 		{
 			request: "test_guest_admitted",
 			as:      alphaGuest,
@@ -137,10 +132,8 @@ func TestLanguageLifecycleJourney(t *testing.T) {
 
 func TestContestCreationJourney(t *testing.T) {
 	ids := append(bytes.Repeat([]byte{0x11}, 16), bytes.Repeat([]byte{0x22}, 16)...)
-	uuid.SetRand(bytes.NewReader(ids))
-	defer uuid.SetRand(nil)
 
-	runJourney(t, api, "ContestCreation", []step{
+	runJourneyWithSetup(t, api, api.handler, "ContestCreation", nil, bytes.NewReader(ids), []step{
 		{
 			request: "reject_invalid_contest",
 			as:      user,
@@ -192,9 +185,6 @@ func TestContestCreationJourney(t *testing.T) {
 }
 
 func TestScoringRuleSetDraftJourney(t *testing.T) {
-	uuid.SetRand(rand.New(rand.NewSource(1)))
-	defer uuid.SetRand(nil)
-
 	runJourney(t, api, "ScoringRuleSetDraft", []step{
 		{request: "create_platform_draft", as: admin, want: http.StatusOK, others: cast{user: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "platform_draft_visible_to_admin", as: admin, want: http.StatusOK},
@@ -205,9 +195,6 @@ func TestScoringRuleSetDraftJourney(t *testing.T) {
 }
 
 func TestScoringRuleSetDraftAtomicFailureJourney(t *testing.T) {
-	uuid.SetRand(rand.New(rand.NewSource(1)))
-	defer uuid.SetRand(nil)
-
 	runJourney(t, api, "ScoringRuleSetDraftAtomicFailure", []step{
 		{request: "create_two_rule_draft_with_collision", as: admin, want: http.StatusInternalServerError},
 		{request: "failed_draft_left_no_version", as: admin, want: http.StatusOK},
@@ -215,9 +202,6 @@ func TestScoringRuleSetDraftAtomicFailureJourney(t *testing.T) {
 }
 
 func TestPlatformScoringRuleSetLifecycleJourney(t *testing.T) {
-	uuid.SetRand(rand.New(rand.NewSource(1)))
-	defer uuid.SetRand(nil)
-
 	runJourney(t, api, "PlatformScoringRuleSetLifecycle", []step{
 		{request: "create_draft", as: admin, want: http.StatusOK, others: cast{user: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "publish_draft", as: admin, want: http.StatusOK, others: cast{user: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
@@ -228,9 +212,6 @@ func TestPlatformScoringRuleSetLifecycleJourney(t *testing.T) {
 }
 
 func TestContestScoringRuleSetLifecycleJourney(t *testing.T) {
-	uuid.SetRand(rand.New(rand.NewSource(1)))
-	defer uuid.SetRand(nil)
-
 	start := fixtureInstant.Add(12 * time.Hour)
 	runJourney(t, api, "ContestScoringRuleSetLifecycle", []step{
 		{request: "create_override_draft", as: user, want: http.StatusOK, others: cast{user2: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
@@ -255,9 +236,6 @@ func TestContestModerationDetachLogJourney(t *testing.T) {
 }
 
 func TestContestRegistrationJourney(t *testing.T) {
-	uuid.SetRand(rand.New(rand.NewSource(1)))
-	defer uuid.SetRand(nil)
-
 	runJourney(t, api, "ContestRegistration", []step{
 		{
 			request: "create_ongoing_contest",
@@ -321,9 +299,6 @@ func TestContestRegistrationJourney(t *testing.T) {
 }
 
 func TestYearlyContestRegistrationJourney(t *testing.T) {
-	uuid.SetRand(rand.New(rand.NewSource(1)))
-	defer uuid.SetRand(nil)
-
 	runJourney(t, api, "YearlyContestRegistration", []step{
 		{request: "create_private_contest", as: user, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "register_private_contest", as: user, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},

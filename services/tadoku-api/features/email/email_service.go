@@ -14,6 +14,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/uuidx"
 )
 
 type Sender interface {
@@ -42,14 +43,14 @@ func (s *Service) Write(ctx context.Context, message mail.Message) (WriteResult,
 	}
 
 	row := Email{
-		ID:        uuid.New(),
+		ID:        uuidx.New(ctx),
 		Template:  message.Template,
 		Recipient: message.Recipient,
 		Subject:   subject,
 		Body:      body,
 		Params:    maps.Clone(message.Params),
 		Delivery:  Pending{},
-		CreatedAt: timex.Now(),
+		CreatedAt: timex.Now(ctx),
 	}
 	if err := s.repository.insert(ctx, row); err != nil {
 		return WriteResult{}, err
@@ -125,7 +126,9 @@ func (s *Service) SendAttempt(ctx context.Context, id uuid.UUID, final bool) err
 	if err != nil {
 		return err
 	}
-	if _, ok := row.Delivery.(Pending); !ok {
+	switch row.Delivery.(type) {
+	case Pending, Failed:
+	default:
 		return nil
 	}
 	if s.holds(row.Tenant) {
@@ -145,7 +148,7 @@ func (s *Service) SendAttempt(ctx context.Context, id uuid.UUID, final bool) err
 
 	finishCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 3*time.Second)
 	defer cancel()
-	return s.repository.finish(finishCtx, id, Sent{At: timex.Now(), ProviderMessageID: messageID})
+	return s.repository.finish(finishCtx, id, Sent{At: timex.Now(ctx), ProviderMessageID: messageID})
 }
 
 func (s *Service) Retain(ctx context.Context) error {
@@ -158,7 +161,7 @@ func (s *Service) Retain(ctx context.Context) error {
 	if key == tenant.Production() {
 		days = 3
 	}
-	return s.repository.retain(ctx, timex.Now(), days)
+	return s.repository.retain(ctx, timex.Now(ctx), days)
 }
 
 // Pass the job queue's error code for a failed job that recorded none.

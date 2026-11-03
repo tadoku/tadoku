@@ -85,7 +85,9 @@ files in an area, read its page; those rules are as binding as this file.
 | Background jobs, worker handlers, replay or message-version changes | `docs/docs/tadoku-api/jobs.md` |
 | Filing or executing an account deletion | `docs/docs/tadoku-api/account-deletion.md` |
 | Any Go test | `docs/docs/tadoku-api/testing.md` |
+| A TLA+ model in `services/tadoku-api/spec/tla/`, or code a model describes | `docs/docs/tadoku-api/formal-specs.md` |
 | HTTP golden cases, fixture tokens or relationships | `docs/docs/tadoku-api/http-e2e.md` |
+| An E2E scenario that owns its tenants | `docs/docs/tadoku-api/scenario-fixtures.md` |
 | A user journey | `docs/docs/tadoku-api/user-journeys.md` |
 | An import, package, feature or Bazel visibility | `docs/docs/tadoku-api/import-boundaries.md` |
 | Startup, environment variables, provider clients or the leaderboard worker | `docs/docs/tadoku-api/configuration.md` |
@@ -96,7 +98,7 @@ files in an area, read its page; those rules are as binding as this file.
 | webv2, admin or the `ui` package | `docs/docs/frontend/conventions.md` |
 | A frontend call to Tadoku API or `frontend/packages/api-client` | `docs/docs/frontend/api-client.md` |
 | A Paper application or `paper-ui` | `docs/docs/frontend/paper-composition.md` |
-| Build tooling, code generation or CI | `docs/docs/develop/toolchain.md` |
+| Build tooling, code generation or CI | `docs/docs/develop/toolchain.md`, and `docs/docs/develop/ci-workflows.md` for CI |
 | Running your branch on the development cluster | `docs/docs/develop/environment.md` |
 | Deploying a branch to production | `docs/docs/develop/production-branches.md` |
 | Using dev-cli for live branch edits | `.agents/skills/dev-cli/SKILL.md` |

@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/uuidx"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -62,11 +62,7 @@ func (s *Service) Register(ctx context.Context, registration Registration) (Logi
 	if err != nil {
 		return LoginResult{}, err
 	}
-	id, err := uuid.NewRandom()
-	if err != nil {
-		return LoginResult{}, err
-	}
-	account := Account{ID: id, Email: email, DisplayName: name, CreatedAt: timex.Now()}
+	account := Account{ID: uuidx.New(ctx), Email: email, DisplayName: name, CreatedAt: timex.Now(ctx)}
 	result, err := s.newLogin(ctx, account)
 	if err != nil {
 		return LoginResult{}, err
@@ -134,7 +130,7 @@ func (s *Service) Session(ctx context.Context, header CookieHeader) (Session, er
 }
 
 func (s *Service) session(ctx context.Context, token string) (Session, error) {
-	session, status, err := s.repository.session(ctx, hashToken(token), timex.Now())
+	session, status, err := s.repository.session(ctx, hashToken(token), timex.Now(ctx))
 	if errors.Is(err, errSessionNotFound) {
 		return GuestSession{}, nil
 	}
@@ -167,7 +163,7 @@ func (s *Service) cookie(ctx context.Context) Cookie {
 	return Cookie{
 		Name:    name,
 		Domain:  s.cookieDomain,
-		Expires: timex.Now().Add(lifetime),
+		Expires: timex.Now(ctx).Add(lifetime),
 		MaxAge:  int(lifetime.Seconds()),
 	}
 }
@@ -204,7 +200,7 @@ func (s *Service) newLogin(ctx context.Context, account Account) (LoginResult, e
 	cookie.Value = base64.RawURLEncoding.EncodeToString(secret)
 	session := AuthenticatedSession{
 		Account:         account,
-		AuthenticatedAt: timex.Now(),
+		AuthenticatedAt: timex.Now(ctx),
 		ExpiresAt:       cookie.Expires,
 	}
 	return LoginResult{Session: session, Cookie: cookie}, nil

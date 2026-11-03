@@ -12,20 +12,27 @@ The general test principles are in [Testing](./testing.md).
 
 ## HTTP E2E suite
 
-- `TestMain` creates one disposable database, applies migrations and constructs
-  the production HTTP router once, with real JWT verification, ban checks and
+- Each Bazel shard's `TestMain` creates its own disposable database, applies
+  migrations and constructs the production HTTP router once, with real JWT verification, ban checks and
   PostgreSQL-backed permissions. There is no second bypass router or injected
   administrator identity. Handlers run in process, without HTTP listeners.
 - The production router, profile-service resets, alternate scoring/dependency
   routers and real worker journeys all use the restricted `AppPool`.
   Fixture reset and verification SQL use the owner `Pool`; an owner-pool
   application router would bypass the policies the suite must exercise.
-- Scenarios run sequentially. Call `reset` before each independent scenario,
-  never between dependent requests.
+- Bazel uses native rules_go process sharding. Each process owns its database,
+  application role, router, JWT verification clock and leased Valkey logical
+  database; each golden case and journey owns its business clock and UUID
+  stream. Golden cases and journeys run sequentially within a process. Call
+  `reset` before each of them, never between dependent requests.
+  [Scenario fixtures](./scenario-fixtures.md) own private tenants, clocks and
+  ID streams instead, and eligible scenario tests run in parallel after every
+  serial test has finished.
 - The router uses the default deployed API request budget of 30 seconds,
   including cost-12 password hashing. The complete E2E target uses an explicit
   `timeout = "long"` (900-second) budget so race instrumentation can cover real
-  bcrypt work without reducing the password cost or skipping throttle requests.
+  bcrypt work without reducing production-cost controls or skipping throttle
+  requests.
   Provider fixtures retain their own bounded timeouts; request-deadline behavior
   is tested at the transport boundary.
 - `reset` runs `internal/testpostgres/cleanup.sql`, which explicitly lists the
@@ -157,9 +164,9 @@ tenant, insert its registry row in the case's `setup.sql` with
   golden.
 - Compare directly; do not decode the response into the generated types the
   handler uses.
-- Explicit seed IDs and frozen business time make responses deterministic.
-  Supply business time through `timex`. Never rewrite SQL inside a test
-  connector or rewrite response fields.
+- Explicit seed IDs, a per-case UUID source and frozen business time make
+  responses deterministic; see [Time in tests](#time-in-tests). Never rewrite
+  SQL inside a test connector or rewrite response fields.
 - Buffered response goldens are serialized with `httputil.DumpResponse`. When
   `ContentLength` is unknown, fill it from the recorder body's byte length
   before serialization. Preserve known declared lengths and explicitly set
@@ -225,25 +232,48 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
 - The transport router test proves that every registered application route
   inherits the shared gates.
 - The suite serves a synthetic, checked-in public JWKS
-  (`e2e/testdata/authentication.jwks.json`) locally; no private keys or live
-  identity providers are needed.
+  (`e2e/testdata/authentication.jwks.json`) locally, plus the public key of
+  the per-process [scenario fixture](./scenario-fixtures.md) signing key. No checked-in
+  private keys or live identity providers are needed.
 
 ### Time in tests
 
-- The HTTP runner fixes `jwt.TimeFunc` at the signed fixtures' verification
-  instant, `2026-09-12T12:00:00Z` (`1789214400`), and restores it on return. JWT
-  clock overrides belong only in such scoped, sequential tests and must always
-  be restored.
-- Control business time with `timex.TheWorld` inside the tests that need it,
-  never around the whole suite in `TestMain`. A test may use separate,
-  non-nested scopes for different times, and business time can move
-  independently of token expiry. No test-only request-context wrapper is
-  needed.
-- To let business time pass while a request is in flight, call `timex.Advance`
-  inside one scope. Release whatever the request waits on and wait for it to
-  finish before that scope returns, on failure paths too.
-- Tests that use `timex.TheWorld` or override the JWT clock, and their parent
-  tests, must not call `t.Parallel`.
+- `TestMain` fixes `jwt.TimeFunc` at the signed fixtures' verification
+  instant, `2026-09-12T12:00:00Z` (`1789214400`), before any test runs. Tests
+  do not write it, except one whose tokens are signed at another time, such as
+  the Oathkeeper-minted tokens of the email gateway fixture; it restores the
+  fixture instant in cleanup.
+- The golden runner gives each case its own `timex.Clock` at the case's
+  business time and its own UUID stream, and attaches both to the request
+  context with `timex.WithClock` and `uuidx.WithSource`. The default stream
+  starts with sixteen `0x11` bytes; a case table may set a seed instead.
+  Business time moves independently of token expiry, and production, which
+  attaches neither, keeps real time and random IDs.
+- A test outside the runners that needs fixed business time either attaches a
+  clock to its requests' contexts or wraps them in `timex.TheWorld`
+  (`atFixtureInstant` for the fixture instant), never the whole suite in
+  `TestMain`. `TheWorld` applies only to contexts without a clock; a test may
+  use separate, non-nested scopes.
+- To let business time pass while a request is in flight, call `Advance` on
+  its clock, or `timex.Advance` inside a `TheWorld` scope. Release whatever the
+  request waits on and wait for it to finish before the scope returns, on
+  failure paths too.
+- Tests that use `timex.TheWorld` or `uuid.SetRand` or override
+  `jwt.TimeFunc`, and their parent tests, must not call `t.Parallel`.
+
+Latency-padding checks use `testing/synctest` with controlled processing delays
+below and above the floor. Keep the real router, restricted database role,
+admission store, rendering and transactional writes. Virtual time checks timer
+policy, not production I/O latency; retain real-clock minimum-delay and
+production-cost password checks. Short wall-clock sample means cannot establish
+constant-time behavior under host stalls. Minimum padding does not conceal work
+that exceeds its floor.
+
+Create and close bubble clients and pools inside that bubble. Use synchronous
+Valkey (`DisableAutoPipelining`): background socket reads prevent virtual time
+from advancing. Finish the local JWKS exchange and close its server before
+measuring timers; finish the scenario before key refresh is due. Never reuse HTTP
+keep-alive connections across bubbles.
 
 ### Signing a new fixture token
 
@@ -321,6 +351,16 @@ synthetic bcrypt cost-4 hash keeps fixture login cheap; production registration
 and the dedicated password-policy workflows retain cost 12. Sessions come from
 real API login.
 
+Ordinary native-identity fixtures also use cost-4 hashes. The login timing and
+throttle control explicitly restores cost-12 reader hashes and checks their
+parsed bcrypt cost before exercising known and unknown accounts.
+
+The IP-throttle fixture seeds wrong-password cost-4 accounts for repeated login
+attempts, while keeping an unknown-account cost-12 dummy comparison in each
+tenant and the cost-12 successful fail-open login. All throttle requests still
+use the real router, PostgreSQL and Valkey. Registration, credential-storage,
+password-policy and real-clock timing controls keep production cost 12.
+
 Ordinary golden and journey resets load case SQL before the account seed.
 Explicit user/account primary-key conflicts preserve existing rows, including
 case-specific names, timestamps, inactive accounts and deleted or locked users.
@@ -339,45 +379,6 @@ remain real permission relationships.
 
 ## Email gateway fixture
 
-`TestEmailGatewayCookieAndBearer` runs the checked-in development rules with
-checksum-pinned Oathkeeper v26.2.0, local PostgreSQL and the production
-router on the restricted role. It seeds disposable native admin and reader
-accounts with `bcrypt.MinCost` hashes, then logs in through the real gateway
-with the unchanged three-second client. Cookie checks call the API's session
-callback using the deployment's additional-header environment override with a
-synthetic bearer. JWT signing and verification remain real.
-
-Assertions cover email list/detail, reader-cookie token precedence, invalid
-tokens despite admin cookies, unrelated/forged/expired/revoked/mixed cookies,
-guest access outside email, protected-route denial, wrong-deployment `421`,
-revoked tokens, public identity access, logout and credential absence from logs.
-Native session expiry is fixture-only SQL; no shared provider is used.
-
-To check production routing, render the paired GitOps checkout's Oathkeeper
-chart (version 0.60.1) into a scratch file and pass its absolute path through
-`TADOKU_TEST_EMAIL_GATEWAY_RENDER`. The render must include the public
-`tadoku.app` identity rule, preview identity rules, email rules and this callback
-configuration. These public identity rules
-are a prerequisite for gateway login; a render without them cannot run this
-mode. Rendering does not activate those rules in any deployment. The same test
-reads the rendered ConfigMaps and uses checksum-pinned Oathkeeper v25.4.0. Adaptations
-are limited to loopback upstream/callback addresses, listener ports, ephemeral
-signing keys and the synthetic callback bearer. Matching, authenticator options,
-mutators and logging remain from the checked-in configuration or render.
-The second router used for the wrong-deployment case is test-only fixture
-instrumentation; no test route is added to production.
-It checks forwarded HTTPS on `tadoku.app` and a preview host, plus HTTP denial.
-Both binaries are fetched and checksum-verified by Bazel on cold machines.
-
-```sh
-helm template oathkeeper oathkeeper --repo https://k8s.ory.sh/helm/charts \
-  --version 0.60.1 --namespace tdk-prod-oathkeeper \
-  --values "$GITOPS_CHECKOUT/platform/oathkeeper/values.yaml" > "$SCRATCH/oathkeeper.yaml"
-TADOKU_TEST_EMAIL_GATEWAY_RENDER="$SCRATCH/oathkeeper.yaml" \
-  bazel test //services/tadoku-api/e2e:e2e_test \
-  --test_filter=TestEmailGatewayCookieAndBearer --cache_test_results=no --test_output=all
-```
-
-Use the disposable PostgreSQL and Valkey settings above. This local production
-configuration check deploys nothing and does not replace public branch-host
-verification after the rules are released.
+[HTTP email gateway fixture](./http-email-gateway.md) covers cookie and bearer
+routing through checksum-pinned Oathkeeper, including local checks of rendered
+production gateway rules.

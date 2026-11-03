@@ -14,6 +14,7 @@ const sidebars: SidebarsConfig = {
       label: 'Develop',
       items: [
         'develop/toolchain',
+        'develop/ci-workflows',
         'develop/race-tests',
         'develop/query-climb',
         'develop/environment',
@@ -68,6 +69,7 @@ const sidebars: SidebarsConfig = {
         'tadoku-api/jobs-versioning',
         'tadoku-api/testing',
         'tadoku-api/http-e2e',
+        'tadoku-api/http-email-gateway',
         'tadoku-api/user-journeys',
         'tadoku-api/import-boundaries',
         'tadoku-api/configuration',

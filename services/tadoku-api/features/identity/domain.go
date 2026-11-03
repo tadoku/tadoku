@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/mail"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
 var (
@@ -76,8 +75,8 @@ func (AuthenticatedSession) session() {}
 
 // RecentLogin reports whether email and password changes and account deletion are allowed; when it is false they
 // return ErrStaleSession.
-func (s AuthenticatedSession) RecentLogin() bool {
-	age := timex.Now().Sub(s.AuthenticatedAt)
+func (s AuthenticatedSession) RecentLogin(now time.Time) bool {
+	age := now.Sub(s.AuthenticatedAt)
 	return age >= 0 && age <= time.Hour
 }
 

@@ -22,6 +22,8 @@ import (
 )
 
 func TestWorkerStartsWithoutValkey(t *testing.T) {
+	t.Parallel()
+
 	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
@@ -84,6 +86,8 @@ func TestWorkerStartsWithoutValkey(t *testing.T) {
 }
 
 func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
+	t.Parallel()
+
 	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
@@ -161,6 +165,8 @@ func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
 }
 
 func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
+	t.Parallel()
+
 	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
@@ -224,7 +230,7 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 		t.Fatalf("exhausted job: state=%q attempts=%d code=%q", state, attempts, code)
 	}
 
-	replayedID, err := Replay(tenantCtx, jobqueue.NewService(repository), id, "worker-e2e", "deadline repaired")
+	replayedID, err := Replay(tenantCtx, f.db, id, "worker-e2e", "deadline repaired")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -241,6 +247,8 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 }
 
 func TestWorkerDoesNotDispatchAfterClaimLeaseExpires(t *testing.T) {
+	t.Parallel()
+
 	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
@@ -302,6 +310,8 @@ func TestWorkerDoesNotDispatchAfterClaimLeaseExpires(t *testing.T) {
 }
 
 func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
+	t.Parallel()
+
 	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
@@ -428,6 +438,8 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 }
 
 func TestWorkerRenewedDeadlineSchedulesRetry(t *testing.T) {
+	t.Parallel()
+
 	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {

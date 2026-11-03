@@ -68,7 +68,7 @@ func (s *Service) ListOngoingRegistrations(ctx context.Context, userID uuid.UUID
 }
 
 func (s *Service) listOngoingRegistrations(ctx context.Context, userID uuid.UUID) ([]Registration, error) {
-	now := timex.Now()
+	now := timex.Now(ctx)
 	return s.contests.ListOngoingRegistrations(
 		ctx,
 		userID,
@@ -242,6 +242,7 @@ func (s *Service) ApplyRegistration(
 		if err != nil {
 			return RegistrationResult{}, err
 		}
+		result.WithdrawnLogIDs = removedIDs
 		for _, id := range removedIDs {
 			result.Events = append(result.Events, contestevent.Change{
 				ContestID: registration.ContestID,
@@ -277,7 +278,7 @@ func (s *Service) CreateContest(ctx context.Context, contest Contest) (*Contest,
 }
 
 func (s *Service) CheckCreatePermission(ctx context.Context, userID uuid.UUID, accountCreatedAt time.Time) error {
-	now := timex.Now()
+	now := timex.Now(ctx)
 	if err := checkContestCreatorAccountAge(accountCreatedAt, now); err != nil {
 		return err
 	}

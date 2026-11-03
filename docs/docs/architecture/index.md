@@ -64,7 +64,8 @@ browser → ingress-nginx → Envoy → webv2 / authv2 / admin
   invalidates those caches, and the next read rebuilds them from PostgreSQL. A
   cached leaderboard can be stale until its invalidation completes; after a
   terminal failure it stays stale until the next write to the same contest or
-  year, or a replay. See
+  year, a replay, or its cache marker's expiry at most 28 days after the
+  rebuild. See
   [Leaderboard freshness and worker health](../tadoku-api/jobs-operations.md#leaderboard-freshness-and-worker-health).
 - Filtered requests, cache misses and cache errors read a leaderboard from
   PostgreSQL; other requests read a page from Valkey. Contest boards and
@@ -72,6 +73,13 @@ browser → ingress-nginx → Envoy → webv2 / authv2 / admin
   `services/tadoku-api/sql/leaderboard/leaderboard.sql` that decides who is on
   the board, with optional filters. It both rebuilds the cache and serves the
   PostgreSQL reads, so cached and filtered views list the same users.
+- A log counts on the official boards when its `eligible_official_leaderboard`
+  is set. Every request that attaches or detaches a live user's log, including
+  a registration that drops a language, recomputes that flag in the same
+  transaction from whether an official contest is still attached, and
+  invalidates the official boards for the log's year. Nothing recomputes stored
+  flags in bulk: a stored flag is corrected only when its log's attachments
+  next change.
 - Both paths order a board by score descending, then user ID descending, so
   pages from either store line up: Valkey's sorted set does so for cached
   pages, and `pageOf` in

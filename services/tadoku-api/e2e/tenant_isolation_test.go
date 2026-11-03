@@ -16,7 +16,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -67,10 +66,6 @@ func TestTenantIsolation(t *testing.T) {
 	if err := json.Unmarshal(contents, &tokens); err != nil {
 		t.Fatal(err)
 	}
-
-	previous := jwt.TimeFunc
-	jwt.TimeFunc = func() time.Time { return fixtureInstant }
-	defer func() { jwt.TimeFunc = previous }()
 
 	key, err := tenant.Parse(isolationTenant)
 	if err != nil {
@@ -189,7 +184,7 @@ func TestTenantIsolation(t *testing.T) {
 		t.Fatalf("fail replay fixture: changed=%t error=%v", changed, err)
 	}
 
-	replayed, err := worker.Replay(ctx, queue, claimed[0].ID, "isolation-test", "cascade replay chain")
+	replayed, err := worker.Replay(ctx, api.db.AppPool, claimed[0].ID, "isolation-test", "cascade replay chain")
 	if err != nil || replayed <= claimed[0].ID {
 		t.Fatalf("replay chain: old=%d new=%d error=%v", claimed[0].ID, replayed, err)
 	}

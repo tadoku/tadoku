@@ -15,13 +15,16 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/app/worker"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	smtpinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/smtp"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
 type emailSMTP struct {
@@ -31,6 +34,8 @@ type emailSMTP struct {
 	messages []string
 	attempts int
 	reject   bool
+	// Test safety: runs on the server goroutine after DATA and before the reply; set it before sending.
+	beforeAccept func()
 }
 
 func emailSMTPServer(t *testing.T, reject bool) *emailSMTP {
@@ -102,7 +107,11 @@ func (s *emailSMTP) serve(conn net.Conn, cert tls.Certificate) {
 			if !s.reject {
 				s.messages = append(s.messages, string(raw))
 			}
+			beforeAccept := s.beforeAccept
 			s.mu.Unlock()
+			if beforeAccept != nil {
+				beforeAccept()
+			}
 			if s.reject {
 				_ = peer.PrintfLine("451 temporarily unavailable")
 			} else {
@@ -133,130 +142,166 @@ func TestEmailWorkerDelivery(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			api.reset(t, "")
 			fixture := emailSMTPServer(t, tc.reject)
-			var sender email.Sender
-			if tc.enabled {
-				var err error
-				sender, err = smtpinfra.New(fixture.config)
+			synctest.Test(t, func(t *testing.T) {
+				ownerPool, err := pgxpool.NewWithConfig(t.Context(), api.db.Pool.Config())
 				if err != nil {
 					t.Fatal(err)
 				}
-			}
-			service := email.NewService(email.NewRepository(api.db.AppPool), sender)
-			key := tenant.Production()
-			if !tc.production {
-				key, _ = tenant.Parse("e2e/email-worker")
-				if _, err := api.db.Pool.Exec(t.Context(),
-					"insert into tenants(key,kind) values ($1,'test')",
-					key.String()); err != nil {
-					t.Fatal(err)
-				}
-				t.Cleanup(func() {
-					_, _ = api.db.Pool.Exec(context.Background(), "delete from tenants where key=$1", key.String())
-				})
-			}
-			ctx := tenant.WithKey(t.Context(), key)
-			id := writeEmail(t, ctx, service, recoveryMail())
-			scope, _ := jobqueue.AllTenantsExcept(jobqueue.WorkerComponent)
-			if !tc.production {
-				scope, _ = jobqueue.OnlyTenant(key)
-			}
-			deps := workerDependencies(t, api.db.AppPool)
-			deps.Email = service
-			application, err := worker.NewApplication(deps, worker.Config{
-				Scope:           scope,
-				Concurrency:     1,
-				ShutdownTimeout: time.Second,
-				Logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
-			})
-			if err != nil {
-				t.Fatal(err)
-			}
-			workerCtx, cancel := context.WithCancel(t.Context())
-			done := make(chan error, 1)
-			go func() { done <- application.Run(workerCtx) }()
-			defer func() {
-				cancel()
-				if err := <-done; err != nil {
-					t.Error(err)
-				}
-			}()
-			deadline := time.Now().Add(12 * time.Second)
-			for {
-				var status, state string
-				var attempts int
-				err := api.db.Pool.QueryRow(ctx,
-					`select e.status,j.state,j.attempts from emails e join jobs j on j.tenant=e.tenant and j.payload->>'email_id'=e.id::text where e.id=$1`,
-					id).Scan(&status,
-					&state,
-					&attempts)
+				defer ownerPool.Close()
+
+				pool, err := pgxpool.NewWithConfig(t.Context(), api.db.AppPool.Config())
 				if err != nil {
 					t.Fatal(err)
 				}
-				if status == tc.status && (state == "completed" || state == "failed") {
-					break
-				}
-				if tc.reject && attempts > 0 && attempts < 5 && status != "pending" {
-					t.Fatalf("email terminal before final attempt: status=%s attempts=%d", status, attempts)
-				}
-				if time.Now().After(deadline) {
-					t.Fatalf("delivery timeout status=%s job=%s attempts=%d", status, state, attempts)
-				}
-				if tc.reject {
-					_, err = api.db.Pool.Exec(ctx, "update jobs set next_attempt_at=now()-interval '1 minute' where state='pending'")
+				defer pool.Close()
+
+				var sender email.Sender
+				if tc.enabled {
+					var err error
+					sender, err = smtpinfra.New(fixture.config)
 					if err != nil {
 						t.Fatal(err)
 					}
 				}
-				time.Sleep(20 * time.Millisecond)
-			}
-			cancel()
-			if err := <-done; err != nil {
-				t.Fatal(err)
-			}
-			done <- nil
-			row, err := service.Find(ctx, id)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if tc.status == "sent" {
-				sent, ok := row.Delivery.(email.Sent)
-				if !ok || sent.At.IsZero() || sent.ProviderMessageID != "fixture-message-id" {
-					t.Fatalf("delivery=%+v", row.Delivery)
+				service := email.NewService(email.NewRepository(pool), sender)
+				key := tenant.Production()
+				if !tc.production {
+					key, _ = tenant.Parse("e2e/email-worker")
+					if _, err := ownerPool.Exec(t.Context(),
+						"insert into tenants(key,kind) values ($1,'test')",
+						key.String()); err != nil {
+						t.Fatal(err)
+					}
+					defer func() {
+						_, _ = ownerPool.Exec(context.Background(), "delete from tenants where key=$1", key.String())
+					}()
 				}
-			}
-			if tc.status == "failed" {
-				failed, ok := row.Delivery.(email.Failed)
-				if !ok || failed.Error == "" {
-					t.Fatalf("delivery=%+v", row.Delivery)
+				ctx := tenant.WithKey(t.Context(), key)
+				id := writeEmailWithPool(t, ctx, pool, service, recoveryMail())
+				scope, _ := jobqueue.AllTenantsExcept(jobqueue.WorkerComponent)
+				if !tc.production {
+					scope, _ = jobqueue.OnlyTenant(key)
 				}
-			}
-			if err := service.Send(ctx, id); err != nil {
-				t.Fatal(err)
-			}
-			fixture.mu.Lock()
-			attempts := fixture.attempts
-			messages := append([]string(nil), fixture.messages...)
-			fixture.mu.Unlock()
-			if attempts != tc.attempts {
-				t.Errorf("SMTP attempts=%d want %d", attempts, tc.attempts)
-			}
-			if tc.status == "sent" {
-				message, err := textproto.NewReader(bufio.NewReader(strings.NewReader(messages[0]))).ReadMIMEHeader()
+				deps := workerDependencies(t, pool)
+				deps.Email = service
+				application, err := worker.NewApplication(deps, worker.Config{
+					Scope:           scope,
+					Concurrency:     1,
+					ShutdownTimeout: time.Second,
+					Logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
+				})
 				if err != nil {
 					t.Fatal(err)
 				}
-				for header, want := range map[string]string{"From": "no-reply@tadoku.app",
-					"To":                    "reader@example.test",
-					"X-SES-SOURCE-ARN":      "arn:source",
-					"X-SES-FROM-ARN":        "arn:from",
-					"X-SES-RETURN-PATH-ARN": "arn:return",
-					"Message-ID": fmt.Sprintf("<%s@tadoku.app>",
-						id)} {
-					if message.Get(header) != want {
-						t.Errorf("header %s=%q want %q", header, message.Get(header), want)
+				workerCtx, cancel := context.WithCancel(t.Context())
+				done := make(chan error, 1)
+				go func() { done <- application.Run(workerCtx) }()
+				defer func() {
+					cancel()
+					if err := <-done; err != nil {
+						t.Error(err)
+					}
+				}()
+				deadline := time.Now().Add(12 * time.Second)
+				for {
+					synctest.Wait()
+					var status, state string
+					var attempts int
+					err := ownerPool.QueryRow(ctx,
+						`select e.status, j.state, j.attempts
+						from emails e
+						join jobs j on j.tenant = e.tenant and j.payload->>'email_id' = e.id::text
+						where e.id = $1`,
+						id).Scan(&status,
+						&state,
+						&attempts)
+					if err != nil {
+						t.Fatal(err)
+					}
+					if status == tc.status && (state == "completed" || state == "failed") {
+						break
+					}
+					if tc.reject && attempts > 0 && attempts < 5 && status != "pending" {
+						t.Fatalf("email terminal before final attempt: status=%s attempts=%d", status, attempts)
+					}
+					if time.Now().After(deadline) {
+						t.Fatalf("delivery timeout status=%s job=%s attempts=%d", status, state, attempts)
+					}
+					if tc.reject {
+						_, err = ownerPool.Exec(ctx,
+							"update jobs set next_attempt_at = $1 where state = 'pending'",
+							timex.Now(ctx).Add(-time.Minute),
+						)
+						if err != nil {
+							t.Fatal(err)
+						}
+					}
+					time.Sleep(20 * time.Millisecond)
+				}
+				cancel()
+				if err := <-done; err != nil {
+					t.Fatal(err)
+				}
+				done <- nil
+				row, err := service.Find(ctx, id)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if tc.status == "sent" {
+					sent, ok := row.Delivery.(email.Sent)
+					if !ok || sent.At.IsZero() || sent.ProviderMessageID != "fixture-message-id" {
+						t.Fatalf("delivery=%+v", row.Delivery)
 					}
 				}
-			}
+				if tc.status == "failed" {
+					failed, ok := row.Delivery.(email.Failed)
+					if !ok || failed.Error == "" {
+						t.Fatalf("delivery=%+v", row.Delivery)
+					}
+				}
+				resent := 0
+				err = service.Send(ctx, id)
+				if tc.status == "failed" {
+					if err == nil {
+						t.Fatal("resending the failed email to the rejecting server returned nil")
+					}
+					resent = 1
+					after, err := service.Find(ctx, id)
+					if err != nil {
+						t.Fatal(err)
+					}
+					if after.Delivery != row.Delivery {
+						t.Errorf("non-final resend changed delivery=%+v want %+v", after.Delivery, row.Delivery)
+					}
+				} else if err != nil {
+					t.Fatal(err)
+				}
+
+				fixture.mu.Lock()
+				attempts := fixture.attempts
+				messages := append([]string(nil), fixture.messages...)
+				fixture.mu.Unlock()
+				if attempts != tc.attempts+resent {
+					t.Errorf("SMTP attempts=%d want %d", attempts, tc.attempts+resent)
+				}
+				if tc.status == "sent" {
+					message, err := textproto.NewReader(bufio.NewReader(strings.NewReader(messages[0]))).ReadMIMEHeader()
+					if err != nil {
+						t.Fatal(err)
+					}
+					for header, want := range map[string]string{"From": "no-reply@tadoku.app",
+						"To":                    "reader@example.test",
+						"X-SES-SOURCE-ARN":      "arn:source",
+						"X-SES-FROM-ARN":        "arn:from",
+						"X-SES-RETURN-PATH-ARN": "arn:return",
+						"Message-ID": fmt.Sprintf("<%s@tadoku.app>",
+							id)} {
+						if message.Get(header) != want {
+							t.Errorf("header %s=%q want %q", header, message.Get(header), want)
+						}
+					}
+				}
+			})
 		})
 	}
 }
@@ -294,5 +339,143 @@ func TestEmailGuessedJobTenant(t *testing.T) {
 	defer fixture.mu.Unlock()
 	if fixture.attempts != 0 {
 		t.Errorf("guessed job made %d SMTP attempts", fixture.attempts)
+	}
+}
+
+func TestEmailDeliveryAfterSettlement(t *testing.T) {
+	api.reset(t, "")
+	fixture := emailSMTPServer(t, false)
+	config := fixture.config
+	config.Timeout = 5 * time.Second
+	sender, err := smtpinfra.New(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	service := email.NewService(email.NewRepository(api.db.AppPool), sender)
+	ctx := tenant.WithKey(t.Context(), tenant.Production())
+	id := writeEmail(t, ctx, service, recoveryMail())
+
+	started, settled := make(chan struct{}), make(chan struct{})
+	fixture.mu.Lock()
+	fixture.beforeAccept = func() {
+		close(started)
+		defer close(settled)
+		tag, err := api.db.Pool.Exec(ctx, `update jobs
+			set state = 'failed', attempts = 5, failed_at = now(), last_error = 'lease_expired'
+			where tenant = $1 and payload->>'email_id' = $2`,
+			tenant.Production().String(),
+			id.String())
+		if err != nil || tag.RowsAffected() != 1 {
+			t.Errorf("fail send job: %s error=%v", tag, err)
+			return
+		}
+		if err := service.ReconcileFailures(ctx, jobqueue.AttemptsExhausted); err != nil {
+			t.Errorf("reconcile: %v", err)
+			return
+		}
+		if row, err := service.Find(ctx, id); err != nil || row.Delivery != (email.Failed{Error: "lease_expired"}) {
+			t.Errorf("settled before acceptance: delivery=%+v error=%v", row.Delivery, err)
+		}
+	}
+	fixture.mu.Unlock()
+
+	err = service.Send(ctx, id)
+	select {
+	case <-started:
+		<-settled
+	default:
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	row, err := service.Find(ctx, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sent, ok := row.Delivery.(email.Sent)
+	if !ok || sent.At.IsZero() || sent.ProviderMessageID != "fixture-message-id" {
+		t.Errorf("delivery after settlement=%+v, want sent with the provider message ID", row.Delivery)
+	}
+}
+
+func TestEmailReplayResendsFailedEmail(t *testing.T) {
+	api.reset(t, "")
+	fixture := emailSMTPServer(t, false)
+	sender, err := smtpinfra.New(fixture.config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	service := email.NewService(email.NewRepository(api.db.AppPool), sender)
+	ctx := tenant.WithKey(t.Context(), tenant.Production())
+	id := writeEmail(t, ctx, service, recoveryMail())
+
+	var jobID int64
+	err = api.db.Pool.QueryRow(ctx, `update jobs
+		set state = 'failed', attempts = 5, failed_at = now(), last_error = 'handler_error'
+		where tenant = 'tadoku/prod' and payload->>'email_id' = $1
+		returning id`,
+		id.String()).Scan(&jobID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := service.ReconcileFailures(ctx, jobqueue.AttemptsExhausted); err != nil {
+		t.Fatal(err)
+	}
+	if row, err := service.Find(ctx, id); err != nil || row.Delivery != (email.Failed{Error: "handler_error"}) {
+		t.Fatalf("settled delivery=%+v error=%v", row.Delivery, err)
+	}
+
+	replayID, err := worker.Replay(ctx, api.db.AppPool, jobID, "operator", "SMTP repaired")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	scope, _ := jobqueue.AllTenantsExcept(jobqueue.WorkerComponent)
+	application := emailWorker(t, service, api.db.AppPool, scope)
+	workerCtx, cancel := context.WithCancel(t.Context())
+	done := make(chan error, 1)
+	go func() { done <- application.Run(workerCtx) }()
+	stopped := false
+	stop := func() {
+		if stopped {
+			return
+		}
+		stopped = true
+		cancel()
+		if err := <-done; err != nil {
+			t.Error(err)
+		}
+	}
+	defer stop()
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		var state string
+		err := api.db.Pool.QueryRow(ctx, "select state from jobs where id = $1", replayID).Scan(&state)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if state == "completed" || state == "failed" {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("replay job state=%s after 10s", state)
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	stop()
+
+	row, err := service.Find(ctx, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sent, ok := row.Delivery.(email.Sent)
+	if !ok || sent.ProviderMessageID != "fixture-message-id" {
+		t.Errorf("replayed delivery=%+v, want sent with the provider message ID", row.Delivery)
+	}
+	fixture.mu.Lock()
+	defer fixture.mu.Unlock()
+	if len(fixture.messages) != 1 {
+		t.Errorf("replay delivered %d messages, want 1", len(fixture.messages))
 	}
 }

@@ -22,7 +22,7 @@ func TestRetryReplayAndRetention(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = repo.Replay(tenantCtx, id, "operator", "repair", []jobs.Type{jobs.LeaderboardInvalidateOfficialV1})
+	_, err = replayJob(tenantCtx, db.Pool, id, jobs.LeaderboardInvalidateOfficialV1)
 	if !errors.Is(err, ErrNotFailed) || errx.KindOf(err) != errx.Conflict {
 		t.Errorf("replay pending = %v, kind=%v", err, errx.KindOf(err))
 	}
@@ -56,7 +56,7 @@ func TestRetryReplayAndRetention(t *testing.T) {
 
 	var replayID int64
 	at(t, jobTestTime.Add(2*time.Minute), func() {
-		replayID, err = repo.Replay(tenantCtx, id, "operator", "repair", []jobs.Type{jobs.LeaderboardInvalidateOfficialV1})
+		replayID, err = replayJob(tenantCtx, db.Pool, id, jobs.LeaderboardInvalidateOfficialV1)
 	})
 	if err != nil || replayID == 0 {
 		t.Fatalf("replay = %d, %v", replayID, err)
@@ -140,10 +140,10 @@ func TestReplayRequiresRegisteredVersion(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := repo.Replay(tenantCtx, id, "operator", "repair", []jobs.Type{jobs.LeaderboardInvalidateContestV1}); !errors.Is(err, ErrNotFailed) {
+	if _, err := replayJob(tenantCtx, db.Pool, id, jobs.LeaderboardInvalidateContestV1); !errors.Is(err, ErrNotFailed) {
 		t.Fatalf("unregistered replay = %v", err)
 	}
-	replayID, err := repo.Replay(tenantCtx, id, "operator", "repair", []jobs.Type{"future.job.v2"})
+	replayID, err := replayJob(tenantCtx, db.Pool, id, "future.job.v2")
 	if err != nil || replayID <= id {
 		t.Fatalf("registered replay = %d, %v", replayID, err)
 	}
@@ -191,7 +191,7 @@ func TestCleanupCompletedDeletesOnlyBeforeCutoff(t *testing.T) {
 	}
 }
 
-func TestCleanupCompletedExpiresSuccessfulReplayAndPreservesOtherStates(t *testing.T) {
+func TestCleanupCompletedKeepsReplaysAndPreservesOtherStates(t *testing.T) {
 	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db := jobTestDB(t)
 	repo := NewRepository(db.Pool)
@@ -222,27 +222,23 @@ func TestCleanupCompletedExpiresSuccessfulReplayAndPreservesOtherStates(t *testi
 		t.Fatal(err)
 	}
 
-	deleted, err := repo.CleanupCompleted(tenantCtx, cutoff, 1)
+	deleted, err := repo.CleanupCompleted(tenantCtx, cutoff, 10)
+
 	if err != nil || deleted != 1 {
-		t.Fatalf("bounded cleanup = %d, %v", deleted, err)
+		t.Fatalf("cleanup = %d, %v; want only the unlinked ordinary completion", deleted, err)
 	}
-	var replayRetained int
-	if err := db.Pool.QueryRow(tenantCtx, `select count(*) from jobs where id=2`).Scan(&replayRetained); err != nil {
+	var removed bool
+	if err := db.Pool.QueryRow(tenantCtx, `select not exists (select 1 from jobs where id = 5)`).Scan(&removed); err != nil {
 		t.Fatal(err)
 	}
-	if replayRetained != 0 {
-		t.Errorf("expired successful replay was retained")
-	}
-
-	deleted, err = repo.CleanupCompleted(tenantCtx, cutoff, 10)
-	if err != nil || deleted != 1 {
-		t.Fatalf("remaining cleanup = %d, %v", deleted, err)
+	if !removed {
+		t.Error("expired ordinary completion was retained")
 	}
 	var retained int
-	if err := db.Pool.QueryRow(tenantCtx, `select count(*) from jobs where id in (1,3,4,6,7)`).Scan(&retained); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, `select count(*) from jobs where id in (1,2,3,4,6,7)`).Scan(&retained); err != nil {
 		t.Fatal(err)
 	}
-	if retained != 5 {
-		t.Errorf("retained %d failed/active/referenced jobs, want 5", retained)
+	if retained != 6 {
+		t.Errorf("retained %d failed, active, replay and referenced jobs, want 6", retained)
 	}
 }

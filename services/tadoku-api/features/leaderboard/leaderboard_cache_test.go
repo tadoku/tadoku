@@ -94,12 +94,14 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if marker != "native:"+after {
-		t.Errorf("marker = %q, want native:%s", marker, after)
+	if marker != "native:"+after+":1" {
+		t.Errorf("marker = %q, want native:%s:1", marker, after)
 	}
 
-	racing := NewCache(&invalidateBeforeZcard{Client: client, key: key, t: t}, time.Second)
-	page, cacheExists, err := racing.fetchPage(tenantCtx, key, 0, 25)
+	if err := cache.invalidate(tenantCtx, key); err != nil {
+		t.Fatal(err)
+	}
+	page, cacheExists, err := cache.fetchPage(tenantCtx, key, 0, 25)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,24 +110,7 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 	}
 }
 
-type invalidateBeforeZcard struct {
-	valkeygo.Client
-	key   string
-	t     *testing.T
-	calls int
-}
-
-func (client *invalidateBeforeZcard) Do(ctx context.Context, command valkeygo.Completed) valkeygo.ValkeyResult {
-	client.calls++
-	if client.calls == 3 {
-		if err := invalidateScript.Exec(ctx, client.Client, []string{client.key, client.key + ":last_updated", client.key + ":generation"}, nil).Error(); err != nil {
-			client.t.Fatal(err)
-		}
-	}
-	return client.Client.Do(ctx, command)
-}
-
-func TestFetchPageReadsOneSnapshotWhileSameGenerationRepublishes(t *testing.T) {
+func TestFetchPageServesTheBoardASameGenerationRebuildRepublished(t *testing.T) {
 	client := newLeaderboardTestClient(t)
 	tenantKey, err := tenant.Parse("e2e/snapshot-" + uuid.NewString())
 	if err != nil {
@@ -147,41 +132,255 @@ func TestFetchPageReadsOneSnapshotWhileSameGenerationRepublishes(t *testing.T) {
 		{userID: third, value: 15},
 		{userID: fourth, value: 10},
 	}
-	published, err := cache.rebuild(tenantCtx, key, before, "0")
+	generation, err := cache.generation(tenantCtx, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	published, err := cache.rebuild(tenantCtx, key, before, generation)
 	if err != nil || !published {
 		t.Fatalf("publish first board: published=%t error=%v", published, err)
 	}
+	published, err = cache.rebuild(tenantCtx, key, after, generation)
+	if err != nil || !published {
+		t.Fatalf("republish board: published=%t error=%v", published, err)
+	}
 
-	racing := NewCache(&republishAfterPageRead{Client: client, cache: cache, key: key, scores: after, t: t}, time.Second)
-	page, exists, err := racing.fetchPage(tenantCtx, key, 2, 1)
+	page, exists, err := cache.fetchPage(tenantCtx, key, 2, 1)
 	if err != nil || !exists {
 		t.Fatalf("fetch page: exists=%t error=%v", exists, err)
 	}
 
 	entries := buildEntries(page)
-	if len(entries) != 1 || entries[0].Rank != 3 || entries[0].IsTie {
-		t.Errorf("entries = %+v; want one untied entry at rank 3 from a single snapshot", entries)
+	if len(entries) != 1 || entries[0].Rank != 3 || entries[0].IsTie || entries[0].UserID != third {
+		t.Errorf("entries = %+v; want one untied entry at rank 3 from the republished board", entries)
 	}
 }
 
-type republishAfterPageRead struct {
-	valkeygo.Client
-	cache  *Cache
-	key    string
-	scores []score
-	t      *testing.T
-	calls  int
+func TestRebuildPublishesBoardOf5001Scores(t *testing.T) {
+	client := newLeaderboardTestClient(t)
+	tenantKey, err := tenant.Parse("e2e/large-" + uuid.NewString())
+	if err != nil {
+		t.Fatal(err)
+	}
+	tenantCtx := tenant.WithKey(t.Context(), tenantKey)
+	cache := NewCache(client, 5*time.Second)
+	key, err := cache.cacheKey(tenantCtx, globalKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cleanupLeaderboardKeys(t, client, key)
+
+	generation, err := cache.generation(tenantCtx, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	small := []score{{userID: uuid.New(), value: 1}}
+	published, err := cache.rebuild(tenantCtx, key, small, generation)
+	if err != nil || !published {
+		t.Fatalf("publish small board: published=%t error=%v", published, err)
+	}
+
+	large := make([]score, 5001)
+	for i := range large {
+		large[i] = score{userID: uuid.New(), value: float64(i + 1)}
+	}
+	published, err = cache.rebuild(tenantCtx, key, large, generation)
+	if err != nil || !published {
+		t.Errorf("rebuild 5001 scores at the published generation: published=%t error=%v", published, err)
+	}
+
+	page, exists, err := cache.fetchPage(tenantCtx, key, 5000, 1)
+	if err != nil || !exists {
+		t.Fatalf("fetch last page: exists=%t error=%v", exists, err)
+	}
+	if page.totalCount != 5001 || len(page.scores) != 1 || page.scores[0] != large[0] {
+		t.Errorf("last page = %+v; want the lowest of 5001 scores", page)
+	}
 }
 
-func (client *republishAfterPageRead) Do(ctx context.Context, command valkeygo.Completed) valkeygo.ValkeyResult {
-	client.calls++
-	if client.calls == 5 {
-		published, err := client.cache.rebuild(ctx, client.key, client.scores, "0")
-		if err != nil || !published {
-			client.t.Fatalf("republish board: published=%t error=%v", published, err)
+func TestRebuildLimitsMarkerAgeToTwentyEightDays(t *testing.T) {
+	client := newLeaderboardTestClient(t)
+	tenantKey, err := tenant.Parse("e2e/ttl-" + uuid.NewString())
+	if err != nil {
+		t.Fatal(err)
+	}
+	tenantCtx := tenant.WithKey(t.Context(), tenantKey)
+	cache := NewCache(client, time.Second)
+	key, err := cache.cacheKey(tenantCtx, globalKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cleanupLeaderboardKeys(t, client, key)
+
+	if err := cache.invalidate(tenantCtx, key); err != nil {
+		t.Fatal(err)
+	}
+	generation, err := cache.generation(tenantCtx, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	board := []score{{userID: uuid.New(), value: 10}}
+	published, err := cache.rebuild(tenantCtx, key, board, generation)
+	if err != nil || !published {
+		t.Fatalf("publish board: published=%t error=%v", published, err)
+	}
+
+	limit := (28 * 24 * time.Hour).Milliseconds()
+	markerTTL := pttl(t, client, key+":last_updated")
+	if markerTTL <= limit-time.Minute.Milliseconds() || markerTTL > limit {
+		t.Errorf("marker PTTL = %d ms; want just under %d ms", markerTTL, limit)
+	}
+	if ttl := pttl(t, client, key); ttl != -1 {
+		t.Errorf("set PTTL = %d; want -1, no expiry", ttl)
+	}
+	if ttl := pttl(t, client, key+":generation"); ttl < markerTTL-time.Second.Milliseconds() {
+		t.Errorf("generation PTTL = %d ms; want about the marker's %d ms or more", ttl, markerTTL)
+	}
+}
+
+func TestMissLeavesGenerationThatExpiresWithinAnHour(t *testing.T) {
+	client := newLeaderboardTestClient(t)
+	cache, tenantCtx, key := newKeyLossFixture(t, client)
+
+	if _, err := cache.generation(tenantCtx, key); err != nil {
+		t.Fatal(err)
+	}
+
+	ttl := pttl(t, client, key+":generation")
+	if ttl <= 0 || ttl > time.Hour.Milliseconds() {
+		t.Errorf("generation PTTL after a miss = %d ms; want at most an hour", ttl)
+	}
+}
+
+func TestGenerationReplacesAValueFromThePreviousRelease(t *testing.T) {
+	client := newLeaderboardTestClient(t)
+	cache, tenantCtx, key := newKeyLossFixture(t, client)
+	previousRelease := func() {
+		t.Helper()
+		if err := client.Do(t.Context(), client.B().Incr().Key(key+":generation").Build()).Error(); err != nil {
+			t.Fatal(err)
 		}
 	}
-	return client.Client.Do(ctx, command)
+
+	previousRelease()
+	read, err := cache.generation(tenantCtx, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if read == "1" {
+		t.Errorf("generation kept the previous release's value %q", read)
+	}
+
+	previousRelease()
+	loseKey(t, client, key+":generation")
+	previousRelease()
+	stale := []score{{userID: uuid.New(), value: 10}}
+	published, err := cache.rebuild(tenantCtx, key, stale, read)
+	if err != nil || published {
+		t.Errorf("rebuild after the previous release recounted the generation: published=%t error=%v", published, err)
+	}
+}
+
+func pttl(t *testing.T, client valkeygo.Client, key string) int64 {
+	t.Helper()
+	ttl, err := client.Do(t.Context(), client.B().Pttl().Key(key).Build()).AsInt64()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return ttl
+}
+
+func TestFetchPageMissesWhenValkeyLosesTheSortedSet(t *testing.T) {
+	client := newLeaderboardTestClient(t)
+	cache, tenantCtx, key := newKeyLossFixture(t, client)
+
+	generation, err := cache.generation(tenantCtx, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	board := []score{{userID: uuid.New(), value: 10}}
+	published, err := cache.rebuild(tenantCtx, key, board, generation)
+	if err != nil || !published {
+		t.Fatalf("publish board: published=%t error=%v", published, err)
+	}
+	loseKey(t, client, key)
+
+	page, exists, err := cache.fetchPage(tenantCtx, key, 0, 25)
+	if err != nil || exists {
+		t.Errorf("fetch after the set was lost: page=%+v exists=%t error=%v; want a miss", page, exists, err)
+	}
+}
+
+func TestRebuildIsRefusedAfterValkeyLosesTheGeneration(t *testing.T) {
+	client := newLeaderboardTestClient(t)
+	cache, tenantCtx, key := newKeyLossFixture(t, client)
+	stale := []score{{userID: uuid.New(), value: 10}}
+
+	beforeFirstInvalidation, err := cache.generation(tenantCtx, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cache.invalidate(tenantCtx, key); err != nil {
+		t.Fatal(err)
+	}
+	loseKey(t, client, key+":generation")
+	published, err := cache.rebuild(tenantCtx, key, stale, beforeFirstInvalidation)
+	if err != nil || published {
+		t.Errorf("rebuild read before the first invalidation: published=%t error=%v; want refused", published, err)
+	}
+
+	if err := cache.invalidate(tenantCtx, key); err != nil {
+		t.Fatal(err)
+	}
+	beforeLoss, err := cache.generation(tenantCtx, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	loseKey(t, client, key+":generation")
+	if err := cache.invalidate(tenantCtx, key); err != nil {
+		t.Fatal(err)
+	}
+	published, err = cache.rebuild(tenantCtx, key, stale, beforeLoss)
+	if err != nil || published {
+		t.Errorf("rebuild read before the generation was lost: published=%t error=%v; want refused", published, err)
+	}
+
+	current, err := cache.generation(tenantCtx, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	published, err = cache.rebuild(tenantCtx, key, stale, current)
+	if err != nil || !published {
+		t.Fatalf("publish board: published=%t error=%v", published, err)
+	}
+	loseKey(t, client, key+":generation")
+	page, exists, err := cache.fetchPage(tenantCtx, key, 0, 25)
+	if err != nil || exists {
+		t.Errorf("fetch after the generation was lost: page=%+v exists=%t error=%v; want a miss", page, exists, err)
+	}
+}
+
+func newKeyLossFixture(t *testing.T, client valkeygo.Client) (*Cache, context.Context, string) {
+	t.Helper()
+	tenantKey, err := tenant.Parse("e2e/keyloss-" + uuid.NewString())
+	if err != nil {
+		t.Fatal(err)
+	}
+	tenantCtx := tenant.WithKey(t.Context(), tenantKey)
+	cache := NewCache(client, time.Second)
+	key, err := cache.cacheKey(tenantCtx, globalKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cleanupLeaderboardKeys(t, client, key)
+	return cache, tenantCtx, key
+}
+
+func loseKey(t *testing.T, client valkeygo.Client, key string) {
+	t.Helper()
+	if err := client.Do(t.Context(), client.B().Del().Key(key).Build()).Error(); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestTenantLeaderboardInvalidationKeepsOtherTenantWarm(t *testing.T) {
@@ -215,11 +414,19 @@ func TestTenantLeaderboardInvalidationKeepsOtherTenantWarm(t *testing.T) {
 	}
 
 	userA, userB := uuid.New(), uuid.New()
-	published, err := cache.rebuild(ctxA, cacheA, []score{{userID: userA, value: 10}}, "0")
+	generationA, err := cache.generation(ctxA, cacheA)
+	if err != nil {
+		t.Fatal(err)
+	}
+	generationB, err := cache.generation(ctxB, cacheB)
+	if err != nil {
+		t.Fatal(err)
+	}
+	published, err := cache.rebuild(ctxA, cacheA, []score{{userID: userA, value: 10}}, generationA)
 	if err != nil || !published {
 		t.Fatalf("warm tenant A: published=%t error=%v", published, err)
 	}
-	published, err = cache.rebuild(ctxB, cacheB, []score{{userID: userB, value: 20}}, "0")
+	published, err = cache.rebuild(ctxB, cacheB, []score{{userID: userB, value: 20}}, generationB)
 	if err != nil || !published {
 		t.Fatalf("warm tenant B: published=%t error=%v", published, err)
 	}

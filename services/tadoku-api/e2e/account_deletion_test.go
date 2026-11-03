@@ -16,29 +16,31 @@ const (
 )
 
 func TestAccountDeletionJobRequiresLock(t *testing.T) {
-	resetAccountDeletion(t)
-	enqueueReaderDeletionJob(t)
+	t.Parallel()
+	s := newDeletionScenario(t)
+	s.enqueueReaderDeletionJob(t)
 
-	if failed := runJobs(t); failed != 1 {
+	if failed := s.runJobs(t); failed != 1 {
 		t.Errorf("worker failed %d jobs, want only the job for a user without a deletion lock", failed)
 	}
-	checkVerifyGolden(t, api, "testdata/AccountDeletion/unlocked_job")
+	s.checkVerifyGolden(t, "testdata/AccountDeletion/unlocked_job")
 }
 
 func TestAccountDeletionReplayedJobChangesNothing(t *testing.T) {
-	tokens := resetAccountDeletion(t)
-	fileReaderDeletion(t, tokens)
-	if failed := runJobs(t); failed != 0 {
+	t.Parallel()
+	s := newDeletionScenario(t)
+	s.fileReaderDeletion(t)
+	if failed := s.runJobs(t); failed != 0 {
 		t.Fatalf("worker failed %d jobs of the deletion", failed)
 	}
-	checkVerifyGolden(t, api, "testdata/AccountDeletion/reader_deleted")
+	s.checkVerifyGolden(t, "testdata/AccountDeletion/reader_deleted")
 
-	enqueueReaderDeletionJob(t)
+	s.enqueueReaderDeletionJob(t)
 
-	if failed := runJobs(t); failed != 0 {
+	if failed := s.runJobs(t); failed != 0 {
 		t.Errorf("worker failed %d jobs, want the replayed deletion to complete", failed)
 	}
-	checkVerifyGolden(t, api, "testdata/AccountDeletion/reader_deletion_replayed")
+	s.checkVerifyGolden(t, "testdata/AccountDeletion/reader_deletion_replayed")
 }
 
 func TestAccountDeletionFreesTheAddress(t *testing.T) {
@@ -70,25 +72,11 @@ func TestAccountDeletionKeepsContestsEndedBeforeToday(t *testing.T) {
 	checkVerifyGolden(t, api, contestEndDayDir)
 }
 
-// enqueueReaderDeletionJob inserts account.delete.v1 for the reader as fixture SQL, so it reaches the worker without a
-// filing.
-func enqueueReaderDeletionJob(t *testing.T) {
-	t.Helper()
-	_, err := api.db.Pool.Exec(t.Context(), `insert into jobs (tenant, task_type, payload, created_at, next_attempt_at)
-		values ('tadoku/prod', 'account.delete.v1', $1, $2, $2)`,
-		`{"user_id":"`+readerUserID+`"}`,
-		fixtureInstant,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 // runJobs runs the journey worker at the fixture instant and returns the number of jobs that failed.
 func runJobs(t *testing.T) (failed int) {
 	t.Helper()
 	atFixtureInstant(func() {
-		stop := startWorker(t, api, "")
+		stop := startWorker(t, t.Context(), api, "")
 		defer stop()
 		failed = waitForWorker(t, api, "")
 	})
@@ -105,12 +93,18 @@ func resetAccountDeletion(t *testing.T) map[member]string {
 	return tokens
 }
 
-// readerDeletion builds the admin's filing for the reader, confirmed with the address testdata/accounts.sql gives it.
 func readerDeletion(tokens map[member]string) *http.Request {
+	request := readerDeletionRequest()
+	authorize(request, admin, tokens)
+	return request
+}
+
+// readerDeletionRequest builds the admin's filing for the reader, confirmed with the address the account cast gives
+// it, without credentials.
+func readerDeletionRequest() *http.Request {
 	request := httptest.NewRequest(http.MethodPost, "/profile/users/"+readerUserID+"/account-deletion",
 		strings.NewReader(`{"email":"reader@example.test","reason":"Owner confirmed by email"}`))
 	request.Header.Set("Content-Type", "application/json")
-	authorize(request, admin, tokens)
 	return request
 }
 

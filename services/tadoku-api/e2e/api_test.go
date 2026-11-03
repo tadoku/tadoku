@@ -16,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
 	apiapp "github.com/tadoku/tadoku/services/tadoku-api/app/api"
@@ -75,7 +76,7 @@ func runTests(m *testing.M) (code int) {
 		}
 	}()
 
-	jwks, err := os.ReadFile("testdata/authentication.jwks.json")
+	jwks, err := fixtureJWKS()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -117,6 +118,7 @@ func runTests(m *testing.M) (code int) {
 		return 1
 	}
 
+	jwt.TimeFunc = func() time.Time { return fixtureInstant }
 	return m.Run()
 }
 

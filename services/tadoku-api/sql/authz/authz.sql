@@ -58,14 +58,16 @@ where subject_type = 'user'
 -- name: ReadRelationships :many
 select object_type, object_id, relation, subject_type, subject_id, subject_relation
 from permission_relationships
-where object_type = @object_type::text
+where tenant = current_setting('tadoku.tenant')
+  and object_type = @object_type::text
   and object_id = @object_id::text
   and @user_id::text = ''
   and (@relation::text = '' or relation = @relation::text)
 union all
 select object_type, object_id, relation, subject_type, subject_id, subject_relation
 from permission_relationships
-where subject_type = 'user'
+where tenant = current_setting('tadoku.tenant')
+  and subject_type = 'user'
   and subject_id = @user_id::text
   and @object_id::text = ''
   and (@object_type::text = '' or object_type = @object_type::text)

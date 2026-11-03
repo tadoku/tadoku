@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
+	"strconv"
 	"testing"
 )
 
@@ -146,7 +147,15 @@ func seedLeaderboardCache(t *testing.T, key, cache string) {
 	if err := client.Do(t.Context(), builder.Build()).Error(); err != nil {
 		t.Fatal(err)
 	}
-	if err := client.Do(t.Context(), client.B().Set().Key(key+":last_updated").Value("2026-09-12T12:00:00Z").Build()).Error(); err != nil {
+	size, err := client.Do(t.Context(), client.B().Zcard().Key(key).Build()).AsInt64()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := client.Do(t.Context(), client.B().Set().Key(key+":generation").Value("1").Build()).Error(); err != nil {
+		t.Fatal(err)
+	}
+	marker := client.B().Set().Key(key + ":last_updated").Value("native:1:" + strconv.FormatInt(size, 10)).Build()
+	if err := client.Do(t.Context(), marker).Error(); err != nil {
 		t.Fatal(err)
 	}
 }

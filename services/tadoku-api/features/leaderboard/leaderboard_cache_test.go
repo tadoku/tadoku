@@ -222,6 +222,54 @@ func TestRebuildPublishesBoardOf5001Scores(t *testing.T) {
 	}
 }
 
+func TestRebuildLimitsMarkerAgeToTwentyEightDays(t *testing.T) {
+	client := newLeaderboardTestClient(t)
+	tenantKey, err := tenant.Parse("e2e/ttl-" + uuid.NewString())
+	if err != nil {
+		t.Fatal(err)
+	}
+	tenantCtx := tenant.WithKey(t.Context(), tenantKey)
+	cache := NewCache(client, time.Second)
+	key, err := cache.cacheKey(tenantCtx, globalKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cleanupLeaderboardKeys(t, client, key)
+
+	if err := cache.invalidate(tenantCtx, key); err != nil {
+		t.Fatal(err)
+	}
+	generation, err := cache.generation(tenantCtx, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	board := []score{{userID: uuid.New(), value: 10}}
+	published, err := cache.rebuild(tenantCtx, key, board, generation)
+	if err != nil || !published {
+		t.Fatalf("publish board: published=%t error=%v", published, err)
+	}
+
+	limit := (28 * 24 * time.Hour).Milliseconds()
+	markerTTL := pttl(t, client, key+":last_updated")
+	if markerTTL <= limit-time.Minute.Milliseconds() || markerTTL > limit {
+		t.Errorf("marker PTTL = %d ms; want just under %d ms", markerTTL, limit)
+	}
+	for _, persistent := range []string{key, key + ":generation"} {
+		if ttl := pttl(t, client, persistent); ttl != -1 {
+			t.Errorf("%s PTTL = %d; want -1, no expiry", persistent, ttl)
+		}
+	}
+}
+
+func pttl(t *testing.T, client valkeygo.Client, key string) int64 {
+	t.Helper()
+	ttl, err := client.Do(t.Context(), client.B().Pttl().Key(key).Build()).AsInt64()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return ttl
+}
+
 func TestTenantLeaderboardInvalidationKeepsOtherTenantWarm(t *testing.T) {
 	client := newLeaderboardTestClient(t)
 	cache := NewCache(client, time.Second)

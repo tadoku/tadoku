@@ -78,15 +78,5 @@ func (a *Application) removeAccountData(ctx context.Context, userID uuid.UUID, n
 	if err := a.contestEvents.Append(ctx, removedLogs.Events, now); err != nil {
 		return err
 	}
-	return a.queue.Enqueue(ctx, distinctJobs(followUp)...)
-}
-
-func distinctJobs(batch []jobs.Job) []jobs.Job {
-	distinct := make([]jobs.Job, 0, len(batch))
-	for _, job := range batch {
-		if !slices.Contains(distinct, job) {
-			distinct = append(distinct, job)
-		}
-	}
-	return distinct
+	return a.queue.Enqueue(ctx, jobs.Distinct(followUp)...)
 }

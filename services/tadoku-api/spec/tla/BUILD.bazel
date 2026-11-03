@@ -161,10 +161,9 @@ tlc_test(
     spec = "LogEvents.tla",
 )
 
-# Known gap: dropping a registration language detaches logs without recomputing eligible_official_leaderboard.
+# Attaching, moderation and registration detaches keep eligible_official_leaderboard in step with official attachments.
 tlc_test(
     name = "logevents_eligibility_test",
     config = "LogEvents_eligibility.cfg",
     spec = "LogEvents.tla",
-    tags = ["manual"],
 )

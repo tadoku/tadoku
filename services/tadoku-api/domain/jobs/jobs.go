@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"errors"
+	"slices"
 
 	"github.com/google/uuid"
 )
@@ -17,6 +18,16 @@ type Job interface {
 	Type() Type
 	Validate() error
 	job()
+}
+
+func Distinct(batch []Job) []Job {
+	distinct := make([]Job, 0, len(batch))
+	for _, job := range batch {
+		if !slices.Contains(distinct, job) {
+			distinct = append(distinct, job)
+		}
+	}
+	return distinct
 }
 
 type InvalidateContestLeaderboardV1 struct {

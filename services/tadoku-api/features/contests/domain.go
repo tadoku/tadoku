@@ -34,8 +34,9 @@ type Language struct {
 type Activity = activitiescatalog.Activity
 
 type RegistrationResult struct {
-	Jobs   []jobs.Job
-	Events []contestevent.Change
+	Jobs            []jobs.Job
+	Events          []contestevent.Change
+	WithdrawnLogIDs []uuid.UUID
 }
 
 type RemovalResult struct {

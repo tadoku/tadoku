@@ -331,7 +331,7 @@ func TestEmailDeliveryAfterSettlement(t *testing.T) {
 	api.reset(t, "")
 	fixture := emailSMTPServer(t, false)
 	config := fixture.config
-	config.Timeout = 30 * time.Second
+	config.Timeout = 5 * time.Second
 	sender, err := smtpinfra.New(config)
 	if err != nil {
 		t.Fatal(err)

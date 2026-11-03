@@ -101,11 +101,11 @@ func (a *Application) DeleteLog(ctx context.Context, logID uuid.UUID) error {
 		return err
 	}
 
-	now := timex.Now()
 	return postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
 		if err := a.profile.LockUser(ctx, log.UserID); err != nil {
 			return err
 		}
+		now := timex.Now()
 		result, err := a.logs.Delete(ctx, logID, now)
 		if err != nil {
 			return err

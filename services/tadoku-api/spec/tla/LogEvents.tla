@@ -31,9 +31,9 @@
 \* committed. AccountDeletion.tla covers the lock itself and filing in detail.
 \* What the lock does not order is the clock. The events of a transaction carry
 \* the time its request read with timex.Now(), and that read is its own step:
-\* some requests read it before they wait for the lock, others after. The same
-\* reading judges contest windows for that request, except that
-\* SelectRegistrationsForScoring reads the clock again for itself. A contest
+\* every request reads it after it takes the lock, and only the delete job reads
+\* it before. The same reading judges contest windows for that request, except
+\* that SelectRegistrationsForScoring reads the clock again for itself. A contest
 \* finishes through its own step, so TLC tries every point. The clock is one
 \* counter that every process shares: the model assumes the API and worker
 \* clocks agree and never tie, so within one contest a log's events carry
@@ -151,7 +151,7 @@ Abort(p) == Finish(p) /\ UNCHANGED Data
 TimeUnchanged == UNCHANGED <<open, clock, now, seen, picked>>
 
 ----
-\* CreateLog reads the time before its transaction. SelectRegistrationsForScoring
+\* CreateLog reads the time after LockUser. SelectRegistrationsForScoring
 \* picks registrations in contests unfinished when it runs; Create inserts the log,
 \* its contest_logs rows and its tags, and publishes a submitted event per contest.
 CreateCommit ==
@@ -167,9 +167,9 @@ CreateCommit ==
     /\ UNCHANGED <<deleted, frozen, user, registered>>
     /\ TimeUnchanged
 
-Create == Now("create", "start", "lock") \/ LockUser("create", "lock", "commit") \/ CreateCommit
+Create == LockUser("create", "start", "now") \/ Now("create", "now", "commit") \/ CreateCommit
 
-\* UpdateLog reads the time before its transaction. Update: lockMutableLog, then
+\* UpdateLog reads the time after LockUser. Update: lockMutableLog, then
 \* UpdateLog, UpdateOngoingContestLogs for contests unfinished at that time, the
 \* tags, and the diff of the views.
 UpdateCommit ==
@@ -184,9 +184,9 @@ UpdateCommit ==
     /\ TimeUnchanged
 
 Update ==
-    FindLog("update", "now") \/ Now("update", "now", "lock") \/ LockUser("update", "lock", "commit") \/ UpdateCommit
+    FindLog("update", "lock") \/ LockUser("update", "lock", "now") \/ Now("update", "now", "commit") \/ UpdateCommit
 
-\* DeleteLog reads the time before its transaction. Delete: lockMutableLog,
+\* DeleteLog reads the time after LockUser. Delete: lockMutableLog,
 \* ListAttachedContests, refuse a log in a finished contest, then SoftDeleteLog,
 \* which keeps the contest_logs rows, and a withdrawn event per contest.
 DeleteCommit ==
@@ -201,7 +201,7 @@ DeleteCommit ==
     /\ TimeUnchanged
 
 Delete ==
-    FindLog("delete", "now") \/ Now("delete", "now", "lock") \/ LockUser("delete", "lock", "commit") \/ DeleteCommit
+    FindLog("delete", "lock") \/ LockUser("delete", "lock", "now") \/ Now("delete", "now", "commit") \/ DeleteCommit
 
 \* UpdateLogContestRegistrations: FindLog before the transaction, then LockUser,
 \* FindLog again and SelectRegistrationsForScoring, which picks the requested

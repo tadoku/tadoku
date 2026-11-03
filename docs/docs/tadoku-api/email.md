@@ -58,9 +58,9 @@ the server certificate and records `sent`, the sending time and the provider's
 message ID returned by SMTP. The sender supplies an RFC Message-ID derived from
 the email ID, but [SES replaces Message-ID and Date headers](https://docs.aws.amazon.com/ses/latest/dg/header-fields.html).
 Use the recorded provider message ID to investigate a delivered message.
-A failed SMTP attempt leaves the email unchanged until the fifth attempt,
-which records `failed` and its error. Worker maintenance also reconciles
-pending rows whose delivery jobs have all failed, including abandoned final leases. For each
+A failed SMTP attempt leaves the email unchanged until the fifth attempt, which
+records `failed` and its error. Worker maintenance also reconciles pending rows
+whose delivery jobs have all failed, including abandoned final leases. For each
 tenant, `email.Service.ReconcileFailures` applies the delivery hold rule that
 `SendAttempt` uses and settles those emails in one statement, matching
 `email.send.v1` jobs by their payload's `email_id`. An email with a pending,

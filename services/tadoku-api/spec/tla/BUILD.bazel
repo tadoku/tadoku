@@ -89,13 +89,12 @@ tlc_test(
     spec = "LeaderboardCache.tla",
 )
 
-# Known gap: when Valkey loses one of a board's keys, the cache can serve an
-# empty board, or publish an older one once the generation counts back up.
+# Valkey loses a key, restarts empty, or a rebuild stops partway: the cache
+# only misses.
 tlc_test(
     name = "leaderboardcache_keyloss_test",
     config = "LeaderboardCache_keyloss.cfg",
     spec = "LeaderboardCache.tla",
-    tags = ["manual"],
 )
 
 # A failed invalidation that no operator replays: the marker's expiry still

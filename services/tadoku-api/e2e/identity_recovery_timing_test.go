@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 	"testing/synctest"
@@ -37,7 +36,8 @@ func (d *recoveryWriteDelay) TraceQueryStart(
 
 func (*recoveryWriteDelay) TraceQueryEnd(context.Context, *pgx.Conn, pgx.TraceQueryEndData) {}
 
-func recoveryTimingHandler(t *testing.T, delay *recoveryWriteDelay) http.Handler {
+// recoveryTimingHandler builds a private router whose JWKS server serves jwks; pass publishedJWKS.
+func recoveryTimingHandler(t *testing.T, delay *recoveryWriteDelay, jwks []byte) http.Handler {
 	t.Helper()
 	config := api.db.AppPool.Config()
 	config.ConnConfig.Tracer = delay
@@ -67,10 +67,6 @@ func recoveryTimingHandler(t *testing.T, delay *recoveryWriteDelay) http.Handler
 	}
 	t.Cleanup(client.Close)
 
-	jwks, err := os.ReadFile("testdata/authentication.jwks.json")
-	if err != nil {
-		t.Fatal(err)
-	}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Connection", "close")
@@ -90,6 +86,8 @@ func recoveryTimingHandler(t *testing.T, delay *recoveryWriteDelay) http.Handler
 }
 
 func TestIdentityRecoveryProcessingTime(t *testing.T) {
+	t.Parallel()
+	jwks := publishedJWKS(t)
 	for _, tc := range []struct {
 		name  string
 		delay time.Duration
@@ -99,22 +97,18 @@ func TestIdentityRecoveryProcessingTime(t *testing.T) {
 		{"above padding floor", 800 * time.Millisecond, 800 * time.Millisecond},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			resetIdentity(t)
+			s := newIdentityScenario(t)
 			synctest.Test(t, func(t *testing.T) {
 				delay := &recoveryWriteDelay{delay: tc.delay}
-				handler := recoveryTimingHandler(t, delay)
+				handler := recoveryTimingHandler(t, delay, jwks)
 				for _, email := range []string{"reader@example.test", "unknown@example.test"} {
 					request := newIdentityRequest(
-						t, identityBranchA, "POST", "/identity/recovery",
+						t, "", "POST", "/identity/recovery",
 						`{"email":"`+email+`","return_to":"`+recoverySettingsURL+`"}`, "", nil,
 					)
-					response := httptest.NewRecorder()
-					var elapsed time.Duration
-					atFixtureInstant(func() {
-						started := time.Now()
-						handler.ServeHTTP(response, request)
-						elapsed = time.Since(started)
-					})
+					started := time.Now()
+					response := s.serveWith(t, handler, "identity-a", guest, request)
+					elapsed := time.Since(started)
 					requireRecoveryAccepted(t, response)
 
 					want := 300 * time.Millisecond
@@ -130,29 +124,27 @@ func TestIdentityRecoveryProcessingTime(t *testing.T) {
 					t.Errorf("delayed %d recovery writes, want one known-account write", delay.writes)
 				}
 			})
-			requireRecoveryWrites(t, identityBranchA, 1)
+			requireRecoveryWrites(t, s.tenant(t, "identity-a").String(), 1)
 		})
 	}
 }
 
 func TestIdentityRecoveryMinimumDelay(t *testing.T) {
-	resetIdentity(t)
+	t.Parallel()
+	s := newIdentityScenario(t)
 	for _, email := range []string{"reader@example.test", "unknown@example.test"} {
 		request := newIdentityRequest(
-			t, identityBranchA, "POST", "/identity/recovery",
+			t, "", "POST", "/identity/recovery",
 			`{"email":"`+email+`","return_to":"`+recoverySettingsURL+`"}`, "", nil,
 		)
-		response := httptest.NewRecorder()
-		atFixtureInstant(func() {
-			started := time.Now()
-			api.handler.ServeHTTP(response, request)
-			elapsed := time.Since(started)
-			if elapsed < 300*time.Millisecond {
-				t.Errorf("%s elapsed=%s, want at least 300ms", email, elapsed)
-			}
-			t.Logf("real-clock %s elapsed=%s", email, elapsed)
-		})
+		started := time.Now()
+		response := s.serve(t, "identity-a", guest, request)
+		elapsed := time.Since(started)
+		if elapsed < 300*time.Millisecond {
+			t.Errorf("%s elapsed=%s, want at least 300ms", email, elapsed)
+		}
+		t.Logf("real-clock %s elapsed=%s", email, elapsed)
 		requireRecoveryAccepted(t, response)
 	}
-	requireRecoveryWrites(t, identityBranchA, 1)
+	requireRecoveryWrites(t, s.tenant(t, "identity-a").String(), 1)
 }

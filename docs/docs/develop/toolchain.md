@@ -266,8 +266,12 @@ receipt means repository fetches completed; service-image pulls are best effort.
 Local action outputs and service data are disposable per runner. Fork pull
 requests retain GitHub-hosted isolation and cannot use the private runner pool.
 Manual dispatch can select the hosted control for an equivalent-workload
-comparison. `bazel-performance` artifacts retain build profiles and build-event
+comparison. Both scheduled and manual builds execute the wrapper, publication
+authentication and OpenAPI checks even when their successful receipts exist. `bazel-performance` artifacts retain build profiles and build-event
 JSON; include queue/setup time and publication when comparing complete CI runs.
+
+See [CI setup verification](./ci-setup.md) for exact-input receipt keys, runtime
+invalidation, cache scope and the fingerprint check command.
 
 When the test step fails, `build-bazel.yaml` uploads the available HTTP
 E2E target's `test.log` and `test.xml` as a workflow artifact for seven days.

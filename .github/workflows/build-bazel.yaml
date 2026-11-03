@@ -171,14 +171,37 @@ jobs:
           fi
           fuser --version
 
+      - name: Fingerprint setup runtime
+        id: setup-runtime
+        continue-on-error: true
+        run: |
+          fingerprint="$(python3 tools/ci/setup_fingerprint.py)"
+          printf 'fingerprint=%s\n' "$fingerprint" >> "$GITHUB_OUTPUT"
+
+      # Existence-only lookup: no generated files or executable outputs are restored.
+      # GitHub scopes PR writes to refs/pull/.../merge; main cannot read them.
+      - name: Look up successful wrapper verification
+        id: wrapper-cache
+        if: steps.setup-runtime.outcome == 'success'
+        continue-on-error: true
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          key: setup-wrapper-v1-${{ steps.setup-runtime.outputs.fingerprint }}-${{ hashFiles('tools/bazel', '.bazelversion', 'tools/ci/*.py', 'tools/ci/run_bazel_images.sh', '.github/workflows/build-bazel.yaml') }}
+          path: |
+            ${{ runner.temp }}/bazel-wrapper/result.json
+            ${{ runner.temp }}/bazel-publish/result.json
+          lookup-only: true
+
       - name: Verify safe Bazel execution
+        if: steps.wrapper-cache.outcome != 'success' || steps.wrapper-cache.outputs.cache-hit != 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: python3 tools/ci/check_bazel_wrapper.py --evidence-dir "$RUNNER_TEMP/bazel-wrapper"
 
       - name: Verify image publication authentication
+        if: steps.wrapper-cache.outcome != 'success' || steps.wrapper-cache.outputs.cache-hit != 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: python3 tools/ci/check_bazel_publish.py --evidence-dir "$RUNNER_TEMP/bazel-publish"
 
       - name: Retain Bazel wrapper evidence
-        if: always()
+        if: always() && (steps.wrapper-cache.outputs.cache-hit != 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: bazel-wrapper-${{ github.run_attempt }}
@@ -222,16 +245,30 @@ jobs:
       - name: Verify Go comment policy
         run: bazel run --lockfile_mode=error //tools/ci/commentpolicy
 
+      - name: Look up successful OpenAPI verification
+        id: openapi-cache
+        if: steps.setup-runtime.outcome == 'success'
+        continue-on-error: true
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          key: setup-openapi-v1-${{ steps.setup-runtime.outputs.fingerprint }}-${{ hashFiles('services/tadoku-api/spec/**', 'services/tadoku-api/generated/openapi/**', 'scripts/generate-openapi.sh', 'tools/oapi-codegen/**', 'tools/bazel', 'tools/ci/*.py', '.github/workflows/build-bazel.yaml', '.bazel*', 'go.mod', 'go.sum', '**/MODULE.bazel*', '**/REPO.bazel', '**/BUILD*', '**/*.bzl', '**/*.patch') }}
+          path: ${{ runner.temp }}/openapi-verification.json
+          lookup-only: true
+
       - name: Expose Bazel Go SDK for OpenAPI formatting
+        if: steps.openapi-cache.outcome != 'success' || steps.openapi-cache.outputs.cache-hit != 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: |
           go_root="$(bazel run --lockfile_mode=error @rules_go//go -- env GOROOT)"
           test -x "$go_root/bin/go"
           printf '%s/bin\n' "$go_root" >> "$GITHUB_PATH"
 
       - name: Verify Tadoku API OpenAPI generation
+        if: steps.openapi-cache.outcome != 'success' || steps.openapi-cache.outputs.cache-hit != 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: |
           ./scripts/generate-openapi.sh
           git diff --exit-code -- services/tadoku-api/spec/openapi.yaml services/tadoku-api/generated/openapi
+          test -z "$(git ls-files --others --exclude-standard -- services/tadoku-api/generated/openapi)"
+          printf '{"run_id":"%s","revision":"%s"}\n' "$GITHUB_RUN_ID" "$GITHUB_SHA" > "$RUNNER_TEMP/openapi-verification.json"
 
       - name: Check load_images covers all production oci_load targets
         run: |
@@ -322,5 +359,6 @@ jobs:
           path: |
             ${{ runner.temp }}/bazel-*.profile
             ${{ runner.temp }}/bazel-*.json
+            ${{ runner.temp }}/openapi-verification.json
             bazel-testlogs/**/test.xml
           retention-days: 7

@@ -237,12 +237,6 @@ set and run its tests together against disposable services; Bazel can execute
 test targets in parallel. Release image commands follow the tests so their
 distinct configuration does not invalidate normal analysis between the build and
 tests. Main publication runs only after the tests and image scanning succeed.
-Service health probes run every second during startup, then every ten seconds.
-PostgreSQL readiness uses loopback TCP so its temporary first-boot Unix socket
-cannot report ready before the final server starts.
-CI runs depolicy with `GO111MODULE=off`: its import-only parser still reads the
-module and policy files directly, while standard-library classification uses
-the pinned SDK's source tree without spawning `go list` for external imports.
 Image scanning uses the Trivy that the runner image puts on `PATH`;
 GitHub-hosted runs install the same version before scanning. The scan step
 asserts the version in both environments.

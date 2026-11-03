@@ -8,6 +8,13 @@ sidebar_position: 4
 
 Read this when changing backend setup checks or investigating a setup cache hit.
 
+Service health probes run every second during startup, then every ten seconds.
+PostgreSQL readiness uses loopback TCP so its temporary first-boot Unix socket
+cannot report ready before the final server starts.
+CI runs depolicy with `GO111MODULE=off`: its import-only parser still reads the
+module and policy files directly, while standard-library classification uses
+the pinned SDK's source tree without spawning `go list` for external imports.
+
 Push and PR builds can reuse successful wrapper/publication and OpenAPI checks
 through exact GitHub Actions cache lookups. `lookup-only` restores no files:
 checked-in generated outputs stay in place. A receipt is saved only after a

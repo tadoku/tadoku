@@ -66,9 +66,9 @@ When the code breaks a property, put that property in a `manual`
 configuration. Its counterexample is the reproduction for the fix, and the
 fixing pull request moves the property into the CI configuration.
 
-A property the code breaks by design, such as at-most-once delivery under an
-at-least-once queue, also gets a `manual` configuration, with a target comment
-saying it is accepted; it stays there as documentation of the behaviour.
+A property the code breaks by design also gets a `manual` configuration, with
+a target comment saying it is accepted; it stays there as documentation of the
+behaviour.
 
 ## CI cost
 

@@ -119,21 +119,21 @@ override. A branch worker cleans only its own tenant.
 do not supply an arbitrary cutoff. The service subtracts 90 days from the
 business clock and passes that cutoff to a single repository statement.
 
-A row is eligible only when `state = 'completed'` and `completed_at` is strictly
+A row is eligible only when `state = 'completed'`, it is not a replay
+(`replay_of_id` is null), no row replays it, and `completed_at` is strictly
 earlier than that cutoff. Exact-boundary completions remain. The cutoff does not
 depend on the database session's timezone.
 
-Successful replay rows expire under the same rule when no retained child
-references them. The failed original stays indefinitely. The self-referencing
-foreign key and the no-child cleanup condition preserve replay lineage; a row
-still needed by a retained descendant is not removed. Automatic cleanup never
-deletes pending, running or failed records, regardless of age. A successful
-replay does not make its failed original eligible for cleanup.
+Completed replays stay indefinitely, like the failed jobs they replay. A
+lineage's successful replay is what refuses further
+[replays](#inspect-and-replay-retained-work) of it, so removing the replay
+would make its failed job replayable again. Automatic cleanup never deletes
+pending, running or failed records, regardless of age.
 
 Record important completion evidence before successful history expires. A
-missing completed row or aged-out successful replay is not proof that an effect
-never ran. Failure inspection and version-retirement decisions still account
-for the retained failed originals.
+missing completed row is not proof that an effect never ran. Failure
+inspection and version-retirement decisions still account for the retained
+failed jobs.
 
 ## Inspect and replay retained work
 
@@ -201,6 +201,13 @@ tadoku-worker replay --tenant tadoku/prod --id 123 --actor operator-name --reaso
   reason. It logs `job replayed` with the tenant, `source_job_id` and the new
   `job_id`. The failed original stays unchanged. A worker serving that tenant
   processes the new job.
+- Each job is replayed at most once. A failed job and the replays made from it
+  form a chain, and only its newest job can be replayed, while it is `failed`.
+  For a job that already has a replay, the command exits with
+  `job was already replayed as job <id>`, naming that replay, and inserts
+  nothing. To retry after a replay failed, replay that failed replay. Once a
+  replay in the chain completes, no job in it can be replayed. Replays of one
+  job lock it, so two run at the same time insert at most one job.
 - Verify the new job reaches `completed`. An invalid payload remains invalid on
   replay; repair requires its own reviewed procedure, not repeated replay or a
   name change.

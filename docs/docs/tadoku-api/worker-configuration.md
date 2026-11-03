@@ -13,8 +13,8 @@ worker, and development values are in
 
 The queue persists in the `jobs` table. See
 [Successful-job retention](./jobs-operations.md#successful-job-retention) for
-the automatic 90-day policy. Failed records are retained
-indefinitely.
+the automatic 90-day policy. Failed records and completed replays are
+retained indefinitely.
 
 `cmd/tadoku-worker` constructs `app/worker.Application` with the queue and
 business features. Its immutable typed registration drives both claiming and

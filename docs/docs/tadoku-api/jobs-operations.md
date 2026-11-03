@@ -29,8 +29,8 @@ misses and rebuilds from PostgreSQL. A failed invalidation therefore leaves the
 key stale until the first of three events: another write affecting the same
 contest or year publishes a new invalidation, an operator replays the failed
 job, or the marker expires, at most 28 days after the board's rebuild. Replay
-is the faster recovery and the expected response to a failed invalidation. There is no startup reconciliation of all
-leaderboard keys.
+is the faster recovery and the expected response to a failed invalidation.
+There is no startup reconciliation of all leaderboard keys.
 
 On a cache miss, the API rebuilds from PostgreSQL behind a generation check so
 an older rebuild cannot overwrite a completed invalidation. That holds only

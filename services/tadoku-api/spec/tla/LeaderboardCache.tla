@@ -48,9 +48,10 @@
 \* Any Valkey error sends a request to PostgreSQL, which changes no cache
 \* state. Filtered reads only read PostgreSQL and are not modelled.
 \*
-\* rebuildScript sets the marker with a 28-day expiry. MarkerExpires lets a
-\* marker lapse at any point, and fairness makes every marker lapse eventually;
-\* a later rebuild sets a new one.
+\* rebuildScript sets the marker with a 28-day expiry. With MarkerExpiry,
+\* MarkerExpires lets a marker lapse at any point, and fairness makes every
+\* marker lapse eventually; a later rebuild sets a new one. Configurations
+\* without it check that invalidation alone makes boards fresh.
 \*
 \* Losses lists how Valkey may lose keys, and MaxLosses bounds how often:
 \* eviction of one key ("data", "marker" or "generation"), since allkeys-lru
@@ -59,7 +60,7 @@
 \* checks a Valkey that never loses keys.
 EXTENDS Integers, Sequences
 
-CONSTANTS OfficialJob, Readers, MaxWrites, MaxAttempts, MaxFailures, Losses, MaxLosses, OperatorReplays
+CONSTANTS OfficialJob, Readers, MaxWrites, MaxAttempts, MaxFailures, Losses, MaxLosses, OperatorReplays, MarkerExpiry
 
 \* The keys a job invalidates, in order: InvalidateOfficial's yearly then
 \* global board, or InvalidateContest's one board.
@@ -281,6 +282,7 @@ Evict(k, part) ==
 
 \* The marker's 28-day expiry runs out.
 MarkerExpires(k) ==
+    /\ MarkerExpiry
     /\ marker[k] # Absent
     /\ marker' = [marker EXCEPT ![k] = Absent]
     /\ UNCHANGED <<pg, data, gen, covered, jobVars, losses, req, staleServe>>
@@ -302,9 +304,9 @@ Next ==
     \/ \E k \in KeySet, part \in Parts : Evict(k, part)
     \/ Restart
 
-\* Jobs keep running and markers expire. With OperatorReplays, an operator
-\* eventually replays a failed job. Requests, writes, failures and losses are
-\* never forced.
+\* Jobs keep running and, with MarkerExpiry, markers expire. With
+\* OperatorReplays, an operator eventually replays a failed job. Requests,
+\* writes, failures and losses are never forced.
 Fairness ==
     /\ \A j \in Jobs : WF_vars(Invalidation(j))
     /\ \A k \in KeySet : WF_vars(MarkerExpires(k))
@@ -333,8 +335,8 @@ MarkerNamesGeneration == \A k \in KeySet : marker[k] \in {Absent, gen[k]}
 GenerationMonotonic == [][\A k \in KeySet : gen'[k] >= gen[k]]_vars
 
 \* Liveness: once writes stop, every key the cache would serve comes to hold
-\* the PostgreSQL board, through a completed invalidation or the marker's
-\* expiry, even when no operator replays a failed job.
+\* the PostgreSQL board, through completed invalidations, or through the
+\* marker's expiry when no operator replays a failed job.
 Fresh == \A k \in KeySet : Servable(k) => data[k] = pg
 
 Converges == <>[]Fresh

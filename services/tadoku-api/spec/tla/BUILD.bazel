@@ -6,6 +6,13 @@ tlc_test(
     spec = "JobQueue.tla",
 )
 
+# Two jobs live at once, without replays.
+tlc_test(
+    name = "jobqueue_concurrent_test",
+    config = "JobQueue_concurrent.cfg",
+    spec = "JobQueue.tla",
+)
+
 # Known gap: a failed job can have two replays pending, or be replayed after a replay succeeded.
 tlc_test(
     name = "jobqueue_replay_test",

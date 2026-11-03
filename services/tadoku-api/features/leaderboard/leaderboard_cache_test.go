@@ -230,10 +230,54 @@ func TestRebuildLimitsMarkerAgeToTwentyEightDays(t *testing.T) {
 	if markerTTL <= limit-time.Minute.Milliseconds() || markerTTL > limit {
 		t.Errorf("marker PTTL = %d ms; want just under %d ms", markerTTL, limit)
 	}
-	for _, persistent := range []string{key, key + ":generation"} {
-		if ttl := pttl(t, client, persistent); ttl != -1 {
-			t.Errorf("%s PTTL = %d; want -1, no expiry", persistent, ttl)
+	if ttl := pttl(t, client, key); ttl != -1 {
+		t.Errorf("set PTTL = %d; want -1, no expiry", ttl)
+	}
+	if ttl := pttl(t, client, key+":generation"); ttl < markerTTL {
+		t.Errorf("generation PTTL = %d ms; want at least the marker's %d ms", ttl, markerTTL)
+	}
+}
+
+func TestMissLeavesGenerationThatExpiresWithinAnHour(t *testing.T) {
+	client := newLeaderboardTestClient(t)
+	cache, tenantCtx, key := newKeyLossFixture(t, client)
+
+	if _, err := cache.generation(tenantCtx, key); err != nil {
+		t.Fatal(err)
+	}
+
+	ttl := pttl(t, client, key+":generation")
+	if ttl <= 0 || ttl > time.Hour.Milliseconds() {
+		t.Errorf("generation PTTL after a miss = %d ms; want at most an hour", ttl)
+	}
+}
+
+func TestGenerationReplacesAValueFromThePreviousRelease(t *testing.T) {
+	client := newLeaderboardTestClient(t)
+	cache, tenantCtx, key := newKeyLossFixture(t, client)
+	previousRelease := func() {
+		t.Helper()
+		if err := client.Do(t.Context(), client.B().Incr().Key(key+":generation").Build()).Error(); err != nil {
+			t.Fatal(err)
 		}
+	}
+
+	previousRelease()
+	read, err := cache.generation(tenantCtx, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if read == "1" {
+		t.Errorf("generation kept the previous release's value %q", read)
+	}
+
+	previousRelease()
+	loseKey(t, client, key+":generation")
+	previousRelease()
+	stale := []score{{userID: uuid.New(), value: 10}}
+	published, err := cache.rebuild(tenantCtx, key, stale, read)
+	if err != nil || published {
+		t.Errorf("rebuild after the previous release recounted the generation: published=%t error=%v", published, err)
 	}
 }
 

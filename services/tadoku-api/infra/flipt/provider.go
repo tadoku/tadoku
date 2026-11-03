@@ -98,9 +98,7 @@ func (provider *Provider) EvaluateBoolean(
 			previous := oldest.Value.(tenantClient)
 			delete(provider.tests, previous.target)
 			provider.recent.Remove(oldest)
-			if err := previous.client.Close(ctx); err != nil {
-				return featureflags.ProviderResult{}, err
-			}
+			_ = previous.client.Close(provider.ctx)
 		}
 		cfg := provider.cfg
 		cfg.Environment = target.Environment

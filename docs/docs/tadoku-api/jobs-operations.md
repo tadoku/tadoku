@@ -202,9 +202,10 @@ tadoku-worker replay --tenant tadoku/prod --id 123 --actor operator-name --reaso
   `job_id`. The failed original stays unchanged. A worker serving that tenant
   processes the new job.
 - A job's lineage is the original job and every job replayed from it,
-  directly or through other replays. A lineage has at most one `pending` or
-  `running` job at a time, and once any job in it completes, none of it can be
-  replayed. A failed job can be replayed only if it has no replay yet; to retry
+  directly or through other replays. A replay is refused while any job in the
+  lineage is `pending`, `running` or `completed`, so replays never add a second
+  unfinished job or run again after a success. A failed job can be replayed
+  only if it has no replay yet; to retry
   after a replay failed, replay that failed replay. The command refuses, names
   the job that blocks the replay and inserts nothing:
   - `job lineage cannot be replayed: job <id> is completed`, or `is pending`

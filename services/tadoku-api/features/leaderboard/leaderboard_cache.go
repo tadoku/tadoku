@@ -22,8 +22,8 @@ if (redis.call('GET', KEYS[3]) or '0') ~= ARGV[1] then
   return 0
 end
 redis.call('DEL', KEYS[1])
-if #ARGV > 1 then
-  redis.call('ZADD', KEYS[1], unpack(ARGV, 2))
+for i = 2, #ARGV, 2000 do
+  redis.call('ZADD', KEYS[1], unpack(ARGV, i, math.min(i + 1999, #ARGV)))
 end
 redis.call('SET', KEYS[2], 'native:' .. ARGV[1])
 return 1

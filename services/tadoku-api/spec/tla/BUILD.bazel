@@ -115,15 +115,6 @@ tlc_test(
     tags = ["manual"],
 )
 
-# Known gap: a board too large for rebuildScript's unpack deletes the sorted
-# set and keeps the marker, so the cache can serve an empty board.
-tlc_test(
-    name = "leaderboardcache_unpack_test",
-    config = "LeaderboardCache_unpack.cfg",
-    spec = "LeaderboardCache.tla",
-    tags = ["manual"],
-)
-
 # Known gap: without an operator replay, a failed invalidation leaves a warm
 # board stale with no age limit.
 tlc_test(

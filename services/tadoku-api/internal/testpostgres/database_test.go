@@ -164,3 +164,58 @@ func TestNewRejectsUnsafeConfigurationAndCanceledSetup(t *testing.T) {
 		t.Fatalf("canceled setup: db=%v error=%v", db, err)
 	}
 }
+
+func TestIndependentDatabaseResetAndCleanup(t *testing.T) {
+	first, err := New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	firstClosed := false
+	t.Cleanup(func() {
+		if !firstClosed {
+			if err := first.Close(); err != nil {
+				t.Error(err)
+			}
+		}
+	})
+
+	second, err := New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := second.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	if first.DSN == second.DSN || first.appRole == second.appRole {
+		t.Fatal("independent fixtures share a database or application role")
+	}
+	for _, db := range []*Database{first, second} {
+		if db.admin.Config().MaxConns > 2 {
+			t.Errorf("admin pool allows %d connections, want at most 2", db.admin.Config().MaxConns)
+		}
+		if err := db.Reset(t.Context(), "testdata/announcements.sql"); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := first.Reset(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if err := first.Close(); err != nil {
+		t.Fatal(err)
+	}
+	firstClosed = true
+
+	var title string
+	if err := second.Pool.QueryRow(t.Context(), "select title from announcements where namespace = 'main'").Scan(&title); err != nil {
+		t.Fatal(err)
+	}
+	if title != "original" {
+		t.Errorf("other database reset/drop changed retained row to %q", title)
+	}
+	if err := second.AppPool.Ping(t.Context()); err != nil {
+		t.Fatalf("other database cleanup removed the surviving application role: %v", err)
+	}
+}

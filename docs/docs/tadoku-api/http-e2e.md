@@ -12,20 +12,23 @@ The general test principles are in [Testing](./testing.md).
 
 ## HTTP E2E suite
 
-- `TestMain` creates one disposable database, applies migrations and constructs
-  the production HTTP router once, with real JWT verification, ban checks and
+- Each Bazel shard's `TestMain` creates its own disposable database, applies
+  migrations and constructs the production HTTP router once, with real JWT verification, ban checks and
   PostgreSQL-backed permissions. There is no second bypass router or injected
   administrator identity. Handlers run in process, without HTTP listeners.
 - The production router, profile-service resets, alternate scoring/dependency
   routers and real worker journeys all use the restricted `AppPool`.
   Fixture reset and verification SQL use the owner `Pool`; an owner-pool
   application router would bypass the policies the suite must exercise.
-- Scenarios run sequentially. Call `reset` before each independent scenario,
-  never between dependent requests.
+- Bazel uses native rules_go process sharding. Each process owns its database,
+  application role, router, clocks, UUID state and leased Valkey logical database.
+  Scenarios run sequentially within a process. Call `reset` before each independent
+  scenario, never between dependent requests.
 - The router uses the default deployed API request budget of 30 seconds,
   including cost-12 password hashing. The complete E2E target uses an explicit
   `timeout = "long"` (900-second) budget so race instrumentation can cover real
-  bcrypt work without reducing the password cost or skipping throttle requests.
+  bcrypt work without reducing production-cost controls or skipping throttle
+  requests.
   Provider fixtures retain their own bounded timeouts; request-deadline behavior
   is tested at the transport boundary.
 - `reset` runs `internal/testpostgres/cleanup.sql`, which explicitly lists the

@@ -1,7 +1,6 @@
 ---
 title: CI workflows
 description: What each GitHub Actions workflow checks and when it runs, how backend CI uses the private runner pool and Bazel caches, and where failing test logs are uploaded.
-sidebar_position: 1.5
 ---
 
 # CI workflows

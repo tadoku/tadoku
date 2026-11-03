@@ -70,7 +70,7 @@ func (s *Service) Verify(ctx context.Context, raw string, deployment tenant.Depl
 func (s *Service) Create(ctx context.Context, request Create) (Issued, error) {
 	key, ok := tenant.FromContext(ctx)
 	if !ok {
-		return Issued{}, postgres.ErrNoTenant
+		return Issued{}, errx.NewUnavailableError("access tokens require a tenant", postgres.ErrNoTenant)
 	}
 
 	if s.production && key == tenant.Production() {

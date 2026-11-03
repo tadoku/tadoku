@@ -8,9 +8,9 @@ sidebar_position: 5.5
 
 Read this when you change a TLA+ model, or change code that a model describes.
 
-A model is a small, hand-written TLA+ description of a concurrent design. TLC, the TLA+ model checker, explores
-every reachable state of the model within small bounds and fails when any
-ordering of steps breaks a rule. Models catch design bugs where each line of
+A model is a small, hand-written TLA+ description of a concurrent design. TLC,
+the TLA+ model checker, explores every reachable state of the model within
+small bounds and fails when any ordering of steps breaks a rule. Models catch design bugs where each line of
 code is correct but two transactions interleave badly. They do not test the Go
 or SQL itself, and nothing checks automatically that the code matches a model.
 
@@ -31,7 +31,8 @@ bazel test //services/tadoku-api/spec/tla:<model>_test     # one model
 ```
 
 TLC runs on the remote JDK that `.bazelrc` selects and `MODULE.bazel` pins
-through rules_java, so no local Java install is needed. Targets tagged `manual` are not part of `//...`; run them by name.
+through rules_java, so no local Java install is needed. Targets tagged
+`manual` are not part of `//...`; run them by name.
 
 ## Layout
 
@@ -70,7 +71,8 @@ The models run in the `bazel test //...` step of `build-bazel.yaml`. Bazel
 caches test results by their inputs, and a model's inputs are only its `.tla`
 and `.cfg` files, the runner script and the pinned tools. A pull request that
 changes no model gets cached results. One that edits a model reruns only that
-model. Changing TLC, the runner script or the JDK reruns them all once. The
+model. Changing TLC, the JDK, `tlc.bzl` or the runner script reruns them all
+once. The
 `small` test size stops a model after 60 seconds; keep each CI configuration
 to a few seconds. TLC runs with two worker threads and a 512 MiB heap.
 

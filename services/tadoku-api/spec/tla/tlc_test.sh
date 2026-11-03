@@ -17,5 +17,5 @@ cd "$work"
 
 exec "$java" -XX:+UseParallelGC -XX:ParallelGCThreads=2 -Xmx512m -Djava.io.tmpdir="$TEST_TMPDIR" \
   -cp "$jar" tlc2.TLC \
-  -workers 2 -cleanup -metadir "$TEST_TMPDIR/states" \
+  -workers 2 -fp 0 -seed 0 -cleanup -metadir "$TEST_TMPDIR/states" \
   -config "$(basename "$config")" "$(basename "$spec")"

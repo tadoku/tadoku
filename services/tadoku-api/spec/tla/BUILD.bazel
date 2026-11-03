@@ -1,0 +1,7 @@
+load(":tlc.bzl", "tlc_test")
+
+tlc_test(
+    name = "helloworld_test",
+    config = "HelloWorld.cfg",
+    spec = "HelloWorld.tla",
+)

@@ -131,3 +131,51 @@ tlc_test(
     spec = "LeaderboardCache.tla",
     tags = ["manual"],
 )
+
+# Deletion, moderation and registration detaches against one log.
+tlc_test(
+    name = "logevents_test",
+    config = "LogEvents.cfg",
+    spec = "LogEvents.tla",
+)
+
+# Updates and attachment changes against a deletion.
+tlc_test(
+    name = "logevents_requests_test",
+    config = "LogEvents_requests.cfg",
+    spec = "LogEvents.tla",
+)
+
+# Writers whose time reading follows every earlier commit about the log: those that read it under the users row lock,
+# create, and the delete job, which reads it after filing has shut out every writer.
+tlc_test(
+    name = "logevents_feed_test",
+    config = "LogEvents_feed.cfg",
+    spec = "LogEvents.tla",
+)
+
+# Every log writer at once: larger bounds than CI runs.
+tlc_test(
+    name = "logevents_large_test",
+    size = "medium",
+    config = "LogEvents_large.cfg",
+    spec = "LogEvents.tla",
+    tags = ["manual"],
+)
+
+# Known gap: a request that reads the time before it waits for the users row lock stamps its events before the
+# commit it waited for, so a log's feed can show an update or withdrawal before the submission it follows.
+tlc_test(
+    name = "logevents_order_test",
+    config = "LogEvents_order.cfg",
+    spec = "LogEvents.tla",
+    tags = ["manual"],
+)
+
+# Known gap: dropping a registration language detaches logs without recomputing eligible_official_leaderboard.
+tlc_test(
+    name = "logevents_eligibility_test",
+    config = "LogEvents_eligibility.cfg",
+    spec = "LogEvents.tla",
+    tags = ["manual"],
+)

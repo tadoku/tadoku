@@ -42,7 +42,9 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U postgres"
+          --health-cmd "pg_isready -h 127.0.0.1 -U postgres"
+          --health-start-period 30s
+          --health-start-interval 1s
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -63,6 +65,8 @@ jobs:
           - 6432:6432
         options: >-
           --health-cmd "pg_isready -h 127.0.0.1 -p 6432 -U postgres"
+          --health-start-period 30s
+          --health-start-interval 1s
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -72,6 +76,8 @@ jobs:
           - 6379:6379
         options: >-
           --health-cmd "valkey-cli ping"
+          --health-start-period 30s
+          --health-start-interval 1s
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5

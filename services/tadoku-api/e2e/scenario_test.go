@@ -6,8 +6,10 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"io"
 	"log/slog"
+	mathrand "math/rand"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -27,6 +29,8 @@ import (
 	fliptclient "github.com/tadoku/tadoku/services/tadoku-api/infra/flipt"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/uuidx"
 )
 
 // scenario owns one independent E2E scenario: a private test tenant per semantic role, their seeds, signed cast,
@@ -36,12 +40,30 @@ import (
 type scenario struct {
 	tenants map[string]tenant.TestKey
 
-	// executionContext, when set, derives every request and worker context; runners use it to attach the
-	// scenario's business clock and ID source.
-	executionContext func(context.Context) context.Context
+	// clock starts at fixtureInstant; set or advance it to move this scenario's business time alone.
+	clock *timex.Clock
+	ids   *scenarioIDs
 
 	mu      sync.Mutex
 	workers []*scenarioWorker
+}
+
+type scenarioIDs struct {
+	mu     sync.Mutex
+	random *mathrand.Rand
+}
+
+// newScenarioIDs seeds a scenario's UUID stream from its first tenant, so concurrent scenarios draw different IDs.
+func newScenarioIDs(key tenant.TestKey) *scenarioIDs {
+	seed := fnv.New64a()
+	seed.Write([]byte(key.String()))
+	return &scenarioIDs{random: mathrand.New(mathrand.NewSource(int64(seed.Sum64())))}
+}
+
+func (ids *scenarioIDs) Read(p []byte) (int, error) {
+	ids.mu.Lock()
+	defer ids.mu.Unlock()
+	return ids.random.Read(p)
 }
 
 type scenarioWorker struct {
@@ -89,7 +111,7 @@ func newScenario(t testing.TB, roles ...string) *scenario {
 		t.Fatal("a scenario needs at least one tenant role")
 	}
 
-	s := &scenario{tenants: make(map[string]tenant.TestKey, len(roles))}
+	s := &scenario{tenants: make(map[string]tenant.TestKey, len(roles)), clock: timex.NewClock(fixtureInstant)}
 	keys := make([]tenant.TestKey, 0, len(roles))
 	for _, role := range roles {
 		if _, duplicate := s.tenants[role]; duplicate {
@@ -102,6 +124,7 @@ func newScenario(t testing.TB, roles ...string) *scenario {
 		s.tenants[role] = key
 		keys = append(keys, key)
 	}
+	s.ids = newScenarioIDs(keys[0])
 
 	lifecycle := scenarioLifecycle()
 	t.Cleanup(func() {
@@ -275,6 +298,18 @@ func (s *scenario) seed(t testing.TB, role string, files tenantSeed) {
 // token; none sends no credentials.
 func (s *scenario) serve(t testing.TB, role string, as member, request *http.Request) *httptest.ResponseRecorder {
 	t.Helper()
+	return s.serveWith(t, api.handler, role, as, request)
+}
+
+// serveWith is serve through handler, such as a private router built on the shared pools.
+func (s *scenario) serveWith(
+	t testing.TB,
+	handler http.Handler,
+	role string,
+	as member,
+	request *http.Request,
+) *httptest.ResponseRecorder {
+	t.Helper()
 	key := s.tenant(t, role)
 
 	request.Header.Del("Authorization")
@@ -285,12 +320,10 @@ func (s *scenario) serve(t testing.TB, role string, as member, request *http.Req
 		}
 		request.Header.Set("Authorization", "Bearer "+token)
 	}
-	if s.executionContext != nil {
-		request = request.WithContext(s.executionContext(request.Context()))
-	}
+	request = request.WithContext(s.executionContext(request.Context()))
 
 	recorder := httptest.NewRecorder()
-	api.handler.ServeHTTP(recorder, request)
+	handler.ServeHTTP(recorder, request)
 	return recorder
 }
 
@@ -315,10 +348,7 @@ func (s *scenario) startWorker(t testing.TB, role string) (stop func()) {
 		t.Fatal(err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	if s.executionContext != nil {
-		ctx = s.executionContext(ctx)
-	}
+	ctx, cancel := context.WithCancel(s.executionContext(context.Background()))
 	running := &scenarioWorker{cancel: cancel, done: make(chan error, 1)}
 	s.mu.Lock()
 	s.workers = append(s.workers, running)
@@ -341,6 +371,10 @@ func (s *scenario) runWorker(t testing.TB, role string) {
 	if failed := waitForWorker(t, api, s.tenant(t, role).String()); failed != 0 {
 		t.Fatalf("scenario worker failed %d jobs", failed)
 	}
+}
+
+func (s *scenario) executionContext(ctx context.Context) context.Context {
+	return uuidx.WithSource(timex.WithClock(ctx, s.clock), s.ids)
 }
 
 func (s *scenario) stopWorkers(t testing.TB) {

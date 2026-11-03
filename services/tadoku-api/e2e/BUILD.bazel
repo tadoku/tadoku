@@ -124,6 +124,7 @@ go_test(
         "valkey_test.go",
         "worker_journey_test.go",
     ],
+    args = ["-test.parallel=2"],
     data = glob([
         "testdata/**/*.http",
         "testdata/**/*.json",

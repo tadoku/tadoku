@@ -211,3 +211,87 @@ func readConcurrentContestEvents(t *testing.T, path string, tokens map[member]st
 	}
 	return page
 }
+
+func TestContestEventsOfALogFollowCommitOrder(t *testing.T) {
+	const contestID = "f0000000-0000-4000-8000-000000000002"
+	const logID = "d0000000-0000-4000-8000-000000000002"
+
+	useContestEventUUIDs(t)
+	cleanupContestEventUnit(t)
+	resetJourney(t, api, "testdata/journeys/ContestEventConcurrentPublication")
+	tokens, err := loadCast([]step{{as: user}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	previous := jwt.TimeFunc
+	jwt.TimeFunc = func() time.Time { return fixtureInstant }
+	defer func() { jwt.TimeFunc = previous }()
+
+	attach := httptest.NewRequest(http.MethodPut, "/immersion/logs/"+logID+"/contest-registrations",
+		strings.NewReader(`{"registration_ids":["e0000000-0000-4000-8000-000000000001",`+
+			`"e0000000-0000-4000-8000-000000000002"]}`))
+	attach.Header.Set("Content-Type", "application/json")
+	authorize(attach, user, tokens)
+	remove := httptest.NewRequest(http.MethodDelete, "/immersion/logs/"+logID, nil)
+	authorize(remove, user, tokens)
+	holder := holdRow(t, "select 1 from users where id = $1 for update", readerUserID)
+
+	timex.TheWorld(fixtureInstant, func() {
+		attached, attachFinished := serveScoringAsync(attach)
+		var removeFinished <-chan struct{}
+		// Test safety: releasing the row and waiting for both requests here keeps them inside this scope on every
+		// path, including a failed lock wait.
+		defer func() {
+			_ = holder.Rollback(context.Background())
+			<-attachFinished
+			if removeFinished != nil {
+				<-removeFinished
+			}
+		}()
+
+		waitForLockWaiters(t, 1, attached)
+		var removed <-chan *httptest.ResponseRecorder
+		removed, removeFinished = serveScoringAsync(remove)
+		waitForLockWaiters(t, 2, removed)
+		timex.Advance(time.Minute)
+		if err := holder.Commit(t.Context()); err != nil {
+			t.Fatal(err)
+		}
+		requireBody(t, <-attached, http.StatusOK, "")
+		requireBody(t, <-removed, http.StatusOK, "")
+	})
+
+	request := httptest.NewRequest(http.MethodGet, "/immersion/contests/"+contestID+"/events", nil)
+	authorize(request, user, tokens)
+	response := httptest.NewRecorder()
+	api.handler.ServeHTTP(response, request)
+	var page concurrentContestEventPage
+	if err := json.Unmarshal(response.Body.Bytes(), &page); err != nil {
+		t.Fatalf("status=%d body=%s: %v", response.Code, response.Body, err)
+	}
+
+	var history []string
+	for _, event := range page.Events {
+		if event.LogID == logID {
+			history = append(history, event.Event+"@"+event.OccurredAt.Format(time.TimeOnly))
+		}
+	}
+	if len(history) != 2 || !strings.HasPrefix(history[0], "log.submitted@") ||
+		!strings.HasPrefix(history[1], "log.withdrawn@") {
+		t.Fatalf("the deleted log's events in feed order are %v, want its submission and then its withdrawal", history)
+	}
+}
+
+// serveScoringAsync serves request through the scoring-enabled handler on another goroutine. finished closes once
+// the response is delivered.
+func serveScoringAsync(request *http.Request) (served <-chan *httptest.ResponseRecorder, finished <-chan struct{}) {
+	responses := make(chan *httptest.ResponseRecorder, 1)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		response := httptest.NewRecorder()
+		scoringEnabledHandler.ServeHTTP(response, request)
+		responses <- response
+	}()
+	return responses, done
+}

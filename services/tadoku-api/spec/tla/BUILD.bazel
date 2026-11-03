@@ -138,8 +138,7 @@ tlc_test(
     spec = "LogEvents.tla",
 )
 
-# Writers whose time reading follows every earlier commit about the log: those that read it under the users row lock,
-# create, and the delete job, which reads it after filing has shut out every writer.
+# Creates, attachment changes, moderation and registration against account deletion, with the feed's order.
 tlc_test(
     name = "logevents_feed_test",
     config = "LogEvents_feed.cfg",
@@ -155,13 +154,11 @@ tlc_test(
     tags = ["manual"],
 )
 
-# Known gap: a request that reads the time before it waits for the users row lock stamps its events before the
-# commit it waited for, so a log's feed can show an update or withdrawal before the submission it follows.
+# Creates, updates, deletions and attachment changes against one log, with the feed's order.
 tlc_test(
     name = "logevents_order_test",
     config = "LogEvents_order.cfg",
     spec = "LogEvents.tla",
-    tags = ["manual"],
 )
 
 # Known gap: dropping a registration language detaches logs without recomputing eligible_official_leaderboard.

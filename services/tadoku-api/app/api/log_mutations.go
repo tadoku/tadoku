@@ -39,8 +39,7 @@ func (a *Application) CreateLog(ctx context.Context, p LogCreateParameters) (*Lo
 	}
 	actor := identity.FromContext(ctx)
 
-	now := timex.Now()
-	userID, err := a.profile.SynchronizeUser(ctx, actor, now)
+	userID, err := a.profile.SynchronizeUser(ctx, actor, timex.Now())
 	if err != nil {
 		return nil, err
 	}
@@ -50,6 +49,7 @@ func (a *Application) CreateLog(ctx context.Context, p LogCreateParameters) (*Lo
 		if err := a.profile.LockUser(ctx, userID); err != nil {
 			return err
 		}
+		now := timex.Now()
 
 		input, err := a.scoring.NormalizeLogInput(logscore.Input{
 			UnitID:          p.UnitID,
@@ -110,11 +110,11 @@ func (a *Application) UpdateLog(ctx context.Context, p LogUpdateParameters) (*Lo
 		return nil, err
 	}
 
-	now := timex.Now()
 	err = postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
 		if err := a.profile.LockUser(ctx, existing.UserID); err != nil {
 			return err
 		}
+		now := timex.Now()
 		current, err := a.logs.FindLog(ctx, p.ID)
 		if err != nil {
 			return err

@@ -12,6 +12,6 @@ select
     from jobs) as jobs,
   (select count(*) from moderation_audit_log) as audit_events
 from users
-where users.tenant = 'tadoku/prod'
+where users.tenant = current_setting('tadoku.tenant')
   and users.id = '11111111-1111-4111-8111-111111111111'
 order by users.id

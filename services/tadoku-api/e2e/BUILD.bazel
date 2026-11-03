@@ -15,6 +15,7 @@ go_test(
         "access_tokens_test.go",
         "account_deletion_journeys_test.go",
         "account_deletion_locks_test.go",
+        "account_deletion_scenario_test.go",
         "account_deletion_test.go",
         "account_fixtures_test.go",
         "announcement_create_test.go",

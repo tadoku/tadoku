@@ -51,3 +51,43 @@ tlc_test(
     spec = "JobQueue.tla",
     tags = ["manual"],
 )
+
+tlc_test(
+    name = "emaildelivery_test",
+    config = "EmailDelivery.cfg",
+    spec = "EmailDelivery.tla",
+)
+
+# Three attempts and two replays: larger bounds than CI runs.
+tlc_test(
+    name = "emaildelivery_large_test",
+    size = "medium",
+    config = "EmailDelivery_large.cfg",
+    spec = "EmailDelivery.tla",
+    tags = ["manual"],
+)
+
+# Known gap: a delivery's Finish(sent) is lost when the email was already settled failed,
+# by a replay inserted after reconciliation's snapshot or by a run whose lease lapsed.
+tlc_test(
+    name = "emaildelivery_lost_test",
+    config = "EmailDelivery_lost.cfg",
+    spec = "EmailDelivery.tla",
+    tags = ["manual"],
+)
+
+# Known gap: a replayed send job completes without sending a failed email.
+tlc_test(
+    name = "emaildelivery_replay_test",
+    config = "EmailDelivery_replay.cfg",
+    spec = "EmailDelivery.tla",
+    tags = ["manual"],
+)
+
+# Accepted at-least-once delivery: the provider can receive an email twice.
+tlc_test(
+    name = "emaildelivery_duplicates_test",
+    config = "EmailDelivery_duplicates.cfg",
+    spec = "EmailDelivery.tla",
+    tags = ["manual"],
+)

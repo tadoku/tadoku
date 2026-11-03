@@ -1,7 +1,31 @@
 load(":tlc.bzl", "tlc_test")
 
 tlc_test(
-    name = "helloworld_test",
-    config = "HelloWorld.cfg",
-    spec = "HelloWorld.tla",
+    name = "jobqueue_test",
+    config = "JobQueue.cfg",
+    spec = "JobQueue.tla",
+)
+
+# Two jobs live at once, without replays.
+tlc_test(
+    name = "jobqueue_concurrent_test",
+    config = "JobQueue_concurrent.cfg",
+    spec = "JobQueue.tla",
+)
+
+# Known gap: a failed job can have two replays pending, or be replayed after a replay succeeded.
+tlc_test(
+    name = "jobqueue_replay_test",
+    config = "JobQueue_replay.cfg",
+    spec = "JobQueue.tla",
+    tags = ["manual"],
+)
+
+# Two original jobs with a replay: larger bounds than CI runs.
+tlc_test(
+    name = "jobqueue_large_test",
+    size = "medium",
+    config = "JobQueue_large.cfg",
+    spec = "JobQueue.tla",
+    tags = ["manual"],
 )

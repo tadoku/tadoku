@@ -37,9 +37,10 @@ through rules_java, so no local Java install is needed. Targets tagged
 ## Layout
 
 A model is `<Name>.tla` with its CI configuration `<Name>.cfg`, which sets the
-bounds and lists the invariants and properties to check. A configuration that
-checks larger bounds, or a property the code is known to break, is
-`<Name>_<purpose>.cfg` with a `manual` test target. Add a target with the
+bounds and lists the invariants and properties to check. Further configurations
+are `<Name>_<purpose>.cfg`. One that stays within CI's budget gets an ordinary
+test target. One that checks larger bounds, or a property the code is known to
+break, gets a `manual` target. Add a target with the
 `tlc_test` macro from `services/tadoku-api/spec/tla/tlc.bzl`. The macro fails
 when a target with a larger `size` or any `timeout` is not tagged `manual`.
 

@@ -109,6 +109,7 @@ jobs:
         id: race
         run: >-
           bazel test --lockfile_mode=error --test_output=errors --@rules_go//go/config:race
+          --nocache_test_results
           --profile="$RUNNER_TEMP/bazel-race.profile"
           --build_event_json_file="$RUNNER_TEMP/bazel-race.json"
           //services/tadoku-api/internal/permissions:permissions_test

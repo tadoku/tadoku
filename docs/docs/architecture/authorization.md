@@ -299,8 +299,10 @@ re-run.
   `reader@tadoku.app`) in the canonical tenant. Passwords come from
   `TADOKU_DEV_ADMIN_PASSWORD` and `TADOKU_DEV_READER_PASSWORD`. An account with
   the same email that the seed does not own is never modified.
-- Grants the administrator `admins` on `app:root` in `tadoku/prod` with SQL,
-  keeping an existing grant. The reader gets no role.
+- Grants the administrator `admins` on `app:root` in `tadoku/prod` with SQL
+  under its `users` row lock, keeping an existing grant. A banned
+  administrator fails the seed without a grant; unban them deliberately
+  through `PUT /authz/users/{id}/role` first. The reader gets no role.
 - Loads the application seed data from `scripts/dev/seed/`.
 
 See [Development data](../develop/development-data.md#seed-data) for fixture UUIDs, reruns and branch seeding, and

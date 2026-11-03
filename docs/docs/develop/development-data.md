@@ -26,8 +26,9 @@ tenant `tadoku/prod`. It needs `kubectl` and Bazel. It:
 - runs only against the `homelab-talos-dev` context at `https://omni.lab:8100`;
 - waits for Postgres and the base migrations;
 - creates the two native fixture accounts, as described below;
-- grants Dev Admin `admins` on `app:root` in `tadoku/prod`, keeping an
-  existing grant;
+- grants Dev Admin `admins` on `app:root` in `tadoku/prod` under its `users`
+  row lock, keeping an existing grant, and fails without granting while Dev
+  Admin is banned;
 - loads the fixtures in `scripts/dev/seed/` into the base `tadoku` database.
 
 Dev Admin and Dev Reader keep the UUIDs that own the seeded contests

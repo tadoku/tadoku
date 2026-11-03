@@ -149,6 +149,7 @@ jobs:
           path: |
             ${{ runner.temp }}/bazel-*.profile
             ${{ runner.temp }}/bazel-*.json
+            bazel-testlogs/**/test.xml
           retention-days: 7
 
   alert:

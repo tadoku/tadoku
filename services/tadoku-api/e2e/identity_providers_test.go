@@ -9,14 +9,18 @@ import (
 )
 
 func TestIdentityV2IPThrottleAndFailOpen(t *testing.T) {
-	resetIdentity(t,
-		"testdata/IdentityV2/setup.sql",
-		"testdata/IdentityV2/production-password-cost.sql",
-		"testdata/IdentityV2/ip-throttle-accounts.sql",
-	)
+	t.Parallel()
+	s := newScenario(t, "identity-a", "identity-b")
+	seed := tenantSeed{finalize: []string{
+		"testdata/IdentityV2/scenario-production-password-cost.sql",
+		"testdata/IdentityV2/scenario-ip-throttle-accounts.sql",
+	}}
+	s.seed(t, "identity-a", seed)
+	s.seed(t, "identity-b", seed)
+
 	for i := 0; i < 51; i++ {
 		body := fmt.Sprintf(`{"email":"unknown%d@example.test","password":"Independent-653!"}`, i)
-		response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/login", body, "",
+		response := s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/login", body, "",
 			func(r *http.Request) {
 				r.RemoteAddr = fmt.Sprintf("10.42.0.%d:12345", i+1)
 				r.Header.Set("X-Real-IP", "198.51.100.30")
@@ -29,7 +33,7 @@ func TestIdentityV2IPThrottleAndFailOpen(t *testing.T) {
 	}
 	for i := 0; i < 51; i++ {
 		body := fmt.Sprintf(`{"email":"unknown%d@example.test","password":"Independent-653!"}`, i)
-		response := identityRequest(t, api.handler, identityBranchB, "POST", "/identity/login", body, "",
+		response := s.identityRequest(t, api.handler, "identity-b", "POST", "/identity/login", body, "",
 			func(r *http.Request) { r.Header.Set("X-Real-IP", fmt.Sprintf("198.51.100.%d", i+1)) })
 		want := http.StatusUnauthorized
 		if i == 50 {
@@ -49,7 +53,7 @@ func TestIdentityV2IPThrottleAndFailOpen(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	response := identityRequest(t, handler, identityBranchA, "POST", "/identity/login",
+	response := s.identityRequest(t, handler, "identity-a", "POST", "/identity/login",
 		`{"email":"reader@example.test","password":"Fixture-login-482!"}`, "", nil)
 	requireIdentityStatus(t, response, http.StatusOK)
 }

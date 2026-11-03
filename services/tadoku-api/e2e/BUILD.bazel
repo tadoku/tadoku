@@ -55,6 +55,7 @@ go_test(
         "flipt_tenant_test.go",
         "golden_test.go",
         "identity_account_deletion_test.go",
+        "identity_accounts_scenario_test.go",
         "identity_accounts_test.go",
         "identity_errors_test.go",
         "identity_expiry_test.go",

@@ -270,6 +270,99 @@ func pttl(t *testing.T, client valkeygo.Client, key string) int64 {
 	return ttl
 }
 
+func TestFetchPageMissesWhenValkeyLosesTheSortedSet(t *testing.T) {
+	client := newLeaderboardTestClient(t)
+	cache, tenantCtx, key := newKeyLossFixture(t, client)
+
+	generation, err := cache.generation(tenantCtx, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	board := []score{{userID: uuid.New(), value: 10}}
+	published, err := cache.rebuild(tenantCtx, key, board, generation)
+	if err != nil || !published {
+		t.Fatalf("publish board: published=%t error=%v", published, err)
+	}
+	loseKey(t, client, key)
+
+	page, exists, err := cache.fetchPage(tenantCtx, key, 0, 25)
+	if err != nil || exists {
+		t.Errorf("fetch after the set was lost: page=%+v exists=%t error=%v; want a miss", page, exists, err)
+	}
+}
+
+func TestRebuildIsRefusedAfterValkeyLosesTheGeneration(t *testing.T) {
+	client := newLeaderboardTestClient(t)
+	cache, tenantCtx, key := newKeyLossFixture(t, client)
+	stale := []score{{userID: uuid.New(), value: 10}}
+
+	beforeFirstInvalidation, err := cache.generation(tenantCtx, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cache.invalidate(tenantCtx, key); err != nil {
+		t.Fatal(err)
+	}
+	loseKey(t, client, key+":generation")
+	published, err := cache.rebuild(tenantCtx, key, stale, beforeFirstInvalidation)
+	if err != nil || published {
+		t.Errorf("rebuild read before the first invalidation: published=%t error=%v; want refused", published, err)
+	}
+
+	if err := cache.invalidate(tenantCtx, key); err != nil {
+		t.Fatal(err)
+	}
+	beforeLoss, err := cache.generation(tenantCtx, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	loseKey(t, client, key+":generation")
+	if err := cache.invalidate(tenantCtx, key); err != nil {
+		t.Fatal(err)
+	}
+	published, err = cache.rebuild(tenantCtx, key, stale, beforeLoss)
+	if err != nil || published {
+		t.Errorf("rebuild read before the generation was lost: published=%t error=%v; want refused", published, err)
+	}
+
+	current, err := cache.generation(tenantCtx, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	published, err = cache.rebuild(tenantCtx, key, stale, current)
+	if err != nil || !published {
+		t.Fatalf("publish board: published=%t error=%v", published, err)
+	}
+	loseKey(t, client, key+":generation")
+	page, exists, err := cache.fetchPage(tenantCtx, key, 0, 25)
+	if err != nil || exists {
+		t.Errorf("fetch after the generation was lost: page=%+v exists=%t error=%v; want a miss", page, exists, err)
+	}
+}
+
+func newKeyLossFixture(t *testing.T, client valkeygo.Client) (*Cache, context.Context, string) {
+	t.Helper()
+	tenantKey, err := tenant.Parse("e2e/keyloss-" + uuid.NewString())
+	if err != nil {
+		t.Fatal(err)
+	}
+	tenantCtx := tenant.WithKey(t.Context(), tenantKey)
+	cache := NewCache(client, time.Second)
+	key, err := cache.cacheKey(tenantCtx, globalKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cleanupLeaderboardKeys(t, client, key)
+	return cache, tenantCtx, key
+}
+
+func loseKey(t *testing.T, client valkeygo.Client, key string) {
+	t.Helper()
+	if err := client.Do(t.Context(), client.B().Del().Key(key).Build()).Error(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestTenantLeaderboardInvalidationKeepsOtherTenantWarm(t *testing.T) {
 	client := newLeaderboardTestClient(t)
 	cache := NewCache(client, time.Second)

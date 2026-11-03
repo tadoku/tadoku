@@ -17,6 +17,8 @@ import (
 )
 
 func TestWorkerShutdownCancelsActiveJob(t *testing.T) {
+	t.Parallel()
+
 	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
@@ -89,6 +91,8 @@ func TestWorkerShutdownCancelsActiveJob(t *testing.T) {
 }
 
 func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
+	t.Parallel()
+
 	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
@@ -169,6 +173,8 @@ func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
 }
 
 func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
+	t.Parallel()
+
 	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
@@ -253,6 +259,8 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 }
 
 func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
+	t.Parallel()
+
 	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {

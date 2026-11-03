@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 )
 
@@ -43,31 +44,32 @@ func identityLoginCookie(t *testing.T) string {
 
 func TestIdentityRecoveryEnumerationAndTransactionalEmail(t *testing.T) {
 	resetIdentity(t)
-	var durations [2][]time.Duration
-	for n := 0; n < 4; n++ {
-		for i, email := range []string{"READER@EXAMPLE.TEST", "unknown@example.test"} {
-			start := time.Now()
-			response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/recovery",
-				fmt.Sprintf(`{"email":%q,"return_to":%q}`, email, recoverySettingsURL), "", nil)
-			durations[i] = append(durations[i], time.Since(start))
-			requireIdentityStatus(t, response, http.StatusAccepted)
-			if response.Body.Len() != 0 || response.Header().Get("Set-Cookie") != "" ||
-				response.Header().Get("Cache-Control") != "private, no-store" {
-				t.Fatal("recovery disclosed existence or created a session")
+	synctest.Test(t, func(t *testing.T) {
+		handler := recoveryTimingHandler(t, &recoveryWriteDelay{})
+		var durations [2][]time.Duration
+		for n := 0; n < 4; n++ {
+			for i, email := range []string{"READER@EXAMPLE.TEST", "unknown@example.test"} {
+				request := newIdentityRequest(t, identityBranchA, "POST", "/identity/recovery",
+					fmt.Sprintf(`{"email":%q,"return_to":%q}`, email, recoverySettingsURL), "", nil)
+				response := httptest.NewRecorder()
+				atFixtureInstant(func() {
+					start := time.Now()
+					handler.ServeHTTP(response, request)
+					elapsed := time.Since(start)
+					durations[i] = append(durations[i], elapsed)
+					if elapsed != 300*time.Millisecond {
+						t.Errorf("%s elapsed=%s, want 300ms", email, elapsed)
+					}
+				})
+				requireIdentityStatus(t, response, http.StatusAccepted)
+				if response.Body.Len() != 0 || response.Header().Get("Set-Cookie") != "" ||
+					response.Header().Get("Cache-Control") != "private, no-store" {
+					t.Fatal("recovery disclosed existence or created a session")
+				}
 			}
 		}
-	}
-	var means [2]time.Duration
-	for i, samples := range durations {
-		for _, duration := range samples {
-			means[i] += duration / time.Duration(len(samples))
-		}
-	}
-	if means[0] < 200*time.Millisecond || means[1] < 200*time.Millisecond ||
-		means[0] > means[1]+100*time.Millisecond || means[1] > means[0]+100*time.Millisecond {
-		t.Errorf("recovery timing known=%s unknown=%s", means[0], means[1])
-	}
-	t.Logf("recovery means known=%s unknown=%s; samples=%v", means[0], means[1], durations)
+		t.Logf("recovery known/unknown samples=%v", durations)
+	})
 
 	var tokens, emails, jobs int
 	err := api.db.Pool.QueryRow(t.Context(), `select

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,11 +15,16 @@ import (
 const leaderboardValkeyLeaseKey = "tadoku-api:e2e:leaderboard:lease"
 
 type leaderboardValkeyFixture struct {
-	client valkeygo.Client
-	token  string
+	client   valkeygo.Client
+	token    string
+	database int
 }
 
 func newLeaderboardValkeyFixture(ctx context.Context) (_ *leaderboardValkeyFixture, err error) {
+	database, err := shardValkeyDatabase(os.Getenv("TEST_TOTAL_SHARDS"), os.Getenv("TEST_SHARD_INDEX"))
+	if err != nil {
+		return nil, err
+	}
 	rawURL, err := testvalkey.URL()
 	if err != nil {
 		return nil, err
@@ -27,8 +33,8 @@ func newLeaderboardValkeyFixture(ctx context.Context) (_ *leaderboardValkeyFixtu
 	if err != nil {
 		return nil, fmt.Errorf("parse test Valkey URL: %w", err)
 	}
-	// Test safety: DB 15 is reserved for this E2E suite.
-	option.SelectDB = leaderboardValkeyDatabase()
+	// Test safety: each process leases its reserved logical database before any reset.
+	option.SelectDB = database
 	option.ForceSingleClient = true
 	option.DisableRetry = true
 	client, err := valkeygo.NewClient(option)
@@ -46,12 +52,12 @@ func newLeaderboardValkeyFixture(ctx context.Context) (_ *leaderboardValkeyFixtu
 	result := client.Do(ctx, client.B().Set().Key(leaderboardValkeyLeaseKey).Value(token).Nx().Build())
 	if result.Error() != nil {
 		if errors.Is(result.Error(), valkeygo.Nil) {
-			return nil, fmt.Errorf("test Valkey DB %d is already leased", leaderboardValkeyDatabase())
+			return nil, fmt.Errorf("test Valkey DB %d is already leased", database)
 		}
-		return nil, fmt.Errorf("lease test Valkey DB %d: %w", leaderboardValkeyDatabase(), result.Error())
+		return nil, fmt.Errorf("lease test Valkey DB %d: %w", database, result.Error())
 	}
 
-	fixture := &leaderboardValkeyFixture{client: client, token: token}
+	fixture := &leaderboardValkeyFixture{client: client, token: token, database: database}
 	defer func() {
 		if !complete {
 			cleanupCtx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -65,7 +71,7 @@ func newLeaderboardValkeyFixture(ctx context.Context) (_ *leaderboardValkeyFixtu
 		return nil, fmt.Errorf("inspect test leaderboard keys: %w", err)
 	}
 	if len(keys) != 0 {
-		return nil, fmt.Errorf("test Valkey DB %d contains leaderboard keys; refusing to overwrite them", leaderboardValkeyDatabase())
+		return nil, fmt.Errorf("test Valkey DB %d contains leaderboard keys; refusing to overwrite them", database)
 	}
 
 	complete = true
@@ -91,7 +97,7 @@ func newClosedLeaderboardValkeyClient() (valkeygo.Client, error) {
 }
 
 func leaderboardValkeyDatabase() int {
-	return 15
+	return leaderboardValkey.database
 }
 
 func (f *leaderboardValkeyFixture) reset(ctx context.Context) error {
@@ -156,7 +162,7 @@ func (f *leaderboardValkeyFixture) ownsLease(ctx context.Context) error {
 		return fmt.Errorf("read test Valkey lease: %w", err)
 	}
 	if token != f.token {
-		return fmt.Errorf("test Valkey DB %d lease ownership changed", leaderboardValkeyDatabase())
+		return fmt.Errorf("test Valkey DB %d lease ownership changed", f.database)
 	}
 	return nil
 }

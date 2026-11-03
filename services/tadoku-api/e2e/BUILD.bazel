@@ -1,5 +1,10 @@
 load("@rules_go//go:def.bzl", "go_test")
 
+config_setting(
+    name = "race_enabled",
+    flag_values = {"@rules_go//go/config:race": "true"},
+)
+
 go_test(
     name = "e2e_test",
     size = "medium",
@@ -109,6 +114,7 @@ go_test(
         "scoring_rule_set_create_test.go",
         "scoring_rule_set_lifecycle_test.go",
         "scoring_rule_set_list_test.go",
+        "sharding_test.go",
         "tenant_isolation_test.go",
         "user_journeys_test.go",
         "valkey_test.go",
@@ -132,6 +138,10 @@ go_test(
         "TADOKU_TEST_POSTGRES_URL",
         "TADOKU_TEST_VALKEY_URL",
     ],
+    shard_count = select({
+        ":race_enabled": 1,
+        "//conditions:default": 3,
+    }),
     tags = [
         "no-cache",
         "no-remote-exec",

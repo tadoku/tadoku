@@ -12,7 +12,7 @@ values
 
 insert into accounts (tenant, user_id, email, email_normalized, password_hash, created_at, updated_at)
 select tenant, id, 'reader@example.test', 'reader@example.test',
-  '$2b$12$TP8U/FQ8vCC/fzTCu5Fgve4WAHMgvG1jZ7V7bKWjDJRA.KeeC1xqK', created_at, updated_at
+  '$2b$04$Kr8WFdLSHO4NBQGmsmwqMe.2VlUTBQIIIXxP6HTw2nPq4IhuQ/P1W', created_at, updated_at
 from users
 where id in ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
   'cccccccc-cccc-4ccc-8ccc-cccccccccccc');

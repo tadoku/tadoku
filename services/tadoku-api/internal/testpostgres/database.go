@@ -55,7 +55,13 @@ func New(ctx context.Context) (_ *Database, err error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	admin, err := pgxpool.New(ctx, raw)
+	adminConfig, err := pgxpool.ParseConfig(raw)
+	if err != nil {
+		return nil, fmt.Errorf("configure test admin: %w", err)
+	}
+	adminConfig.MaxConns = 2
+
+	admin, err := pgxpool.NewWithConfig(ctx, adminConfig)
 	if err != nil {
 		return nil, fmt.Errorf("open test admin: %w", err)
 	}

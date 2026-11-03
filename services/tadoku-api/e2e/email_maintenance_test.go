@@ -26,103 +26,117 @@ func TestEmailWorkerReconciliation(t *testing.T) {
 		t.Run(map[bool]string{false: "disabled", true: "enabled"}[enabled], func(t *testing.T) {
 			api.reset(t, "")
 			fixture := emailSMTPServer(t, false)
-			var sender email.Sender
-			if enabled {
-				var err error
-				sender, err = smtpinfra.New(fixture.config)
+			synctest.Test(t, func(t *testing.T) {
+				ownerPool, err := pgxpool.NewWithConfig(t.Context(), api.db.Pool.Config())
 				if err != nil {
 					t.Fatal(err)
 				}
-			}
-			service := email.NewService(email.NewRepository(api.db.AppPool), sender)
-			ctx := tenant.WithKey(t.Context(), tenant.Production())
-			ids := make(map[string]uuid.UUID)
-			for _, name := range []string{"failed", "abandoned", "pending replay", "running replay"} {
-				id := writeEmail(t, ctx, service, recoveryMail())
-				ids[name] = id
-				var jobID int64
-				err := api.db.Pool.QueryRow(ctx, `update jobs
-					set state = 'failed', attempts = 5, failed_at = now(), last_error = 'lease_expired'
-					where tenant = 'tadoku/prod' and payload->>'email_id' = $1
-					returning id`, id.String()).Scan(&jobID)
-				if err != nil {
-					t.Fatal(err)
-				}
+				defer ownerPool.Close()
 
-				if name == "abandoned" {
-					_, err = api.db.Pool.Exec(ctx, `update jobs
-						set state = 'running', failed_at = null, last_error = null,
-							claim_token = $2, lease_expires_at = now() - interval '1 minute'
-						where id = $1`, jobID, uuid.New())
-				} else if name == "pending replay" || name == "running replay" {
-					_, err = api.db.Pool.Exec(ctx, `insert into jobs (
-						tenant, task_type, payload, replay_of_id, replay_actor, replay_reason, next_attempt_at
-					)
-					select tenant, task_type, payload, id, 'fixture', 'repaired', now() + interval '1 day'
-					from jobs where id = $1`, jobID)
-					if err == nil && name == "running replay" {
-						_, err = api.db.Pool.Exec(ctx, `update jobs
-							set state = 'running', claim_token = $2, lease_expires_at = now() + interval '1 day'
-							where replay_of_id = $1`, jobID, uuid.New())
+				pool, err := pgxpool.NewWithConfig(t.Context(), api.db.AppPool.Config())
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer pool.Close()
+
+				var sender email.Sender
+				if enabled {
+					var err error
+					sender, err = smtpinfra.New(fixture.config)
+					if err != nil {
+						t.Fatal(err)
 					}
 				}
-				if err != nil {
-					t.Fatal(err)
-				}
-			}
+				service := email.NewService(email.NewRepository(pool), sender)
+				ctx := tenant.WithKey(t.Context(), tenant.Production())
+				ids := make(map[string]uuid.UUID)
+				for _, name := range []string{"failed", "abandoned", "pending replay", "running replay"} {
+					id := writeEmailWithPool(t, ctx, pool, service, recoveryMail())
+					ids[name] = id
+					var jobID int64
+					err := ownerPool.QueryRow(ctx, `update jobs
+						set state = 'failed', attempts = 5, failed_at = now(), last_error = 'lease_expired'
+						where tenant = 'tadoku/prod' and payload->>'email_id' = $1
+						returning id`, id.String()).Scan(&jobID)
+					if err != nil {
+						t.Fatal(err)
+					}
 
-			scope, _ := jobqueue.AllTenantsExcept(jobqueue.WorkerComponent)
-			application := emailWorker(t, service, jobqueue.NewRepository(api.db.AppPool), scope)
-			workerCtx, cancel := context.WithCancel(t.Context())
-			done := make(chan error, 1)
-			go func() { done <- application.Run(workerCtx) }()
-			defer func() {
-				cancel()
-				if err := <-done; err != nil {
-					t.Error(err)
+					if name == "abandoned" {
+						_, err = ownerPool.Exec(ctx, `update jobs
+							set state = 'running', failed_at = null, last_error = null,
+								claim_token = $2, lease_expires_at = now() - interval '1 minute'
+							where id = $1`, jobID, uuid.New())
+					} else if name == "pending replay" || name == "running replay" {
+						_, err = ownerPool.Exec(ctx, `insert into jobs (
+							tenant, task_type, payload, replay_of_id, replay_actor, replay_reason, next_attempt_at
+						)
+						select tenant, task_type, payload, id, 'fixture', 'repaired', now() + interval '1 day'
+						from jobs where id = $1`, jobID)
+						if err == nil && name == "running replay" {
+							_, err = ownerPool.Exec(ctx, `update jobs
+								set state = 'running', claim_token = $2, lease_expires_at = now() + interval '1 day'
+								where replay_of_id = $1`, jobID, uuid.New())
+						}
+					}
+					if err != nil {
+						t.Fatal(err)
+					}
 				}
-			}()
 
-			var want email.Delivery = email.Held{}
-			if enabled {
-				want = email.Failed{Error: "lease_expired"}
-			}
-			deadline := time.Now().Add(20 * time.Second)
-			for {
-				row, err := service.Find(ctx, ids["abandoned"])
-				if err != nil {
-					t.Fatal(err)
-				}
-				if row.Delivery == want {
-					break
-				}
-				if time.Now().After(deadline) {
-					t.Fatalf("abandoned final lease: delivery=%+v want %+v", row.Delivery, want)
-				}
-				time.Sleep(20 * time.Millisecond)
-			}
+				scope, _ := jobqueue.AllTenantsExcept(jobqueue.WorkerComponent)
+				application := emailWorker(t, service, pool, scope)
+				workerCtx, cancel := context.WithCancel(t.Context())
+				done := make(chan error, 1)
+				go func() { done <- application.Run(workerCtx) }()
+				defer func() {
+					cancel()
+					if err := <-done; err != nil {
+						t.Error(err)
+					}
+				}()
 
-			for name, id := range ids {
-				row, err := service.Find(ctx, id)
-				if err != nil {
-					t.Fatal(err)
+				var want email.Delivery = email.Held{}
+				if enabled {
+					want = email.Failed{Error: "lease_expired"}
 				}
-				expected := want
-				if strings.Contains(name, "replay") {
-					expected = email.Pending{}
+				deadline := time.Now().Add(20 * time.Second)
+				for {
+					row, err := service.Find(ctx, ids["abandoned"])
+					if err != nil {
+						t.Fatal(err)
+					}
+					if row.Delivery == want {
+						break
+					}
+					if time.Now().After(deadline) {
+						t.Fatalf("abandoned final lease: delivery=%+v want %+v", row.Delivery, want)
+					}
+					time.Sleep(20 * time.Millisecond)
 				}
-				if row.Delivery != expected {
-					t.Errorf("%s delivery=%+v want %+v", name, row.Delivery, expected)
+
+				for name, id := range ids {
+					row, err := service.Find(ctx, id)
+					if err != nil {
+						t.Fatal(err)
+					}
+					expected := want
+					if strings.Contains(name, "replay") {
+						expected = email.Pending{}
+					}
+					if row.Delivery != expected {
+						t.Errorf("%s delivery=%+v want %+v", name, row.Delivery, expected)
+					}
+					if failed, ok := row.Delivery.(email.Failed); ok && failed.Error != "lease_expired" {
+						t.Errorf("%s failure=%q want lease_expired", name, failed.Error)
+					}
 				}
-				if failed, ok := row.Delivery.(email.Failed); ok && failed.Error != "lease_expired" {
-					t.Errorf("%s failure=%q want lease_expired", name, failed.Error)
+				fixture.mu.Lock()
+				defer fixture.mu.Unlock()
+				if fixture.attempts != 0 {
+					t.Errorf("maintenance made %d SMTP attempts", fixture.attempts)
 				}
-			}
-			fixture.mu.Lock()
-			defer fixture.mu.Unlock()
-			if fixture.attempts != 0 {
-				t.Errorf("maintenance made %d SMTP attempts", fixture.attempts)
-			}
+			})
 		})
 	}
 }
@@ -256,7 +270,7 @@ func TestEmailWorkerReconciliationRules(t *testing.T) {
 	}
 
 	scope, _ := jobqueue.AllTenantsExcept(jobqueue.WorkerComponent)
-	application := emailWorker(t, service, jobqueue.NewRepository(api.db.AppPool), scope)
+	application := emailWorker(t, service, api.db.AppPool, scope)
 	workerCtx, cancel := context.WithCancel(t.Context())
 	done := make(chan error, 1)
 	go func() { done <- application.Run(workerCtx) }()
@@ -298,12 +312,11 @@ func TestEmailWorkerReconciliationRules(t *testing.T) {
 func emailWorker(
 	t *testing.T,
 	service *email.Service,
-	repository *jobqueue.Repository,
+	pool *pgxpool.Pool,
 	scope jobqueue.Scope,
 ) *worker.Application {
 	t.Helper()
-	deps := workerDependencies(t, api.db.AppPool)
-	deps.JobQueue = jobqueue.NewService(repository)
+	deps := workerDependencies(t, pool)
 	deps.Email = service
 	application, err := worker.NewApplication(deps, worker.Config{
 		Scope:           scope,
@@ -379,7 +392,7 @@ func TestEmailWorkerStartupAndDailyRetention(t *testing.T) {
 		}
 
 		scope, _ := jobqueue.AllTenantsExcept(jobqueue.WorkerComponent)
-		application := emailWorker(t, service, jobqueue.NewRepository(pool), scope)
+		application := emailWorker(t, service, pool, scope)
 		workerCtx, cancel := context.WithCancel(t.Context())
 		done := make(chan error, 1)
 		go func() { done <- application.Run(workerCtx) }()

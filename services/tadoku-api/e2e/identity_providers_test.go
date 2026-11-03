@@ -9,7 +9,11 @@ import (
 )
 
 func TestIdentityV2IPThrottleAndFailOpen(t *testing.T) {
-	resetIdentity(t)
+	resetIdentity(t,
+		"testdata/IdentityV2/setup.sql",
+		"testdata/IdentityV2/production-password-cost.sql",
+		"testdata/IdentityV2/ip-throttle-accounts.sql",
+	)
 	for i := 0; i < 51; i++ {
 		body := fmt.Sprintf(`{"email":"unknown%d@example.test","password":"Independent-653!"}`, i)
 		response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/login", body, "",

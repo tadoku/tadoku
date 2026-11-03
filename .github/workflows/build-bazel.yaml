@@ -143,12 +143,13 @@ jobs:
         run: |
           cat > "$HOME/.bazelrc" <<EOF
           startup --output_user_root=$RUNNER_TEMP/bazel
+          startup --experimental_remote_repo_contents_cache
           common --repository_cache=$HOME/bazelisk/repositories
           common --remote_cache=https://bazel-cache.lab
           common --tls_certificate=/usr/local/share/ca-certificates/ca.crt
           common --remote_timeout=5s
           common --remote_retries=1
-          build --remote_upload_local_results=$UPLOAD_RESULTS
+          common --remote_upload_local_results=$UPLOAD_RESULTS
           build --jobs=3
           test --local_test_jobs=3
           test --remote_download_outputs=minimal

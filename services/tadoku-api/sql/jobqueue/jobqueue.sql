@@ -108,19 +108,74 @@ update jobs as task set state = 'failed', claim_token = null,
   last_error = sqlc.arg('error_code')::text
 from locked where task.id = locked.id and locked.lease_expires_at > clock_timestamp();
 
+-- name: LockReplayLineage :one
+with recursive ancestry as (
+  select id, replay_of_id
+  from jobs
+  where id = sqlc.arg('failed_id')::bigint
+    and state = 'failed'
+    and task_type = any(sqlc.arg('supported_types')::text[])
+  union
+  select parent.id, parent.replay_of_id
+  from jobs as parent
+  join ancestry on parent.id = ancestry.replay_of_id
+)
+select root.id
+from jobs as root
+join ancestry on root.id = ancestry.id
+where ancestry.replay_of_id is null
+for update of root;
+
 -- name: Replay :one
-insert into jobs (task_type, payload, created_at, next_attempt_at,
-  replay_of_id, replay_actor, replay_reason)
-select task_type, payload, sqlc.arg('now')::timestamptz, sqlc.arg('now')::timestamptz,
-  id, sqlc.arg('actor')::text, sqlc.arg('reason')::text
-from jobs where id = sqlc.arg('failed_id')::bigint and state = 'failed'
-  and task_type = any(sqlc.arg('supported_types')::text[])
-returning id;
+with recursive ancestry as (
+  select id, replay_of_id
+  from jobs
+  where id = sqlc.arg('failed_id')::bigint
+  union
+  select parent.id, parent.replay_of_id
+  from jobs as parent
+  join ancestry on parent.id = ancestry.replay_of_id
+), lineage as (
+  select id, state, replay_of_id
+  from jobs
+  where id = (select id from ancestry where replay_of_id is null)
+  union
+  select child.id, child.state, child.replay_of_id
+  from jobs as child
+  join lineage on child.replay_of_id = lineage.id
+), blocker as (
+  select id, state
+  from lineage
+  where state in ('pending', 'running', 'completed')
+    or replay_of_id = sqlc.arg('failed_id')::bigint
+  order by
+    case state
+      when 'completed' then 0
+      when 'failed' then 2
+      else 1
+    end,
+    id
+  limit 1
+), inserted as (
+  insert into jobs (task_type, payload, created_at, next_attempt_at,
+    replay_of_id, replay_actor, replay_reason)
+  select task_type, payload, sqlc.arg('now')::timestamptz, sqlc.arg('now')::timestamptz,
+    id, sqlc.arg('actor')::text, sqlc.arg('reason')::text
+  from jobs
+  where id = sqlc.arg('failed_id')::bigint
+    and state = 'failed'
+    and not exists (select 1 from blocker)
+  returning id
+)
+select coalesce((select id from inserted), 0)::bigint as replay_id,
+  coalesce((select id from blocker), 0)::bigint as blocker_id,
+  coalesce((select state from blocker), '')::text as blocker_state;
 
 -- name: CleanupCompleted :execrows
 with removable as (
   select parent.id from jobs as parent
   where parent.state = 'completed'
+    and parent.replay_of_id is null
     and parent.completed_at < sqlc.arg('cutoff')::timestamptz
     and not exists (select 1 from jobs child where child.replay_of_id = parent.id)
   order by parent.completed_at, parent.id

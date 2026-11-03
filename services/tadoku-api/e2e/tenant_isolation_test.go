@@ -189,7 +189,7 @@ func TestTenantIsolation(t *testing.T) {
 		t.Fatalf("fail replay fixture: changed=%t error=%v", changed, err)
 	}
 
-	replayed, err := worker.Replay(ctx, queue, claimed[0].ID, "isolation-test", "cascade replay chain")
+	replayed, err := worker.Replay(ctx, api.db.AppPool, claimed[0].ID, "isolation-test", "cascade replay chain")
 	if err != nil || replayed <= claimed[0].ID {
 		t.Fatalf("replay chain: old=%d new=%d error=%v", claimed[0].ID, replayed, err)
 	}

@@ -13,12 +13,11 @@ tlc_test(
     spec = "JobQueue.tla",
 )
 
-# Known gap: a failed job can have two replays pending, or be replayed after a replay succeeded.
+# Two operators replaying a failed job and its replays, from a fresh or forked lineage.
 tlc_test(
     name = "jobqueue_replay_test",
     config = "JobQueue_replay.cfg",
     spec = "JobQueue.tla",
-    tags = ["manual"],
 )
 
 # Two original jobs with a replay: larger bounds than CI runs.
@@ -49,5 +48,14 @@ tlc_test(
     name = "accountdeletion_roles_test",
     config = "AccountDeletion_roles.cfg",
     spec = "AccountDeletion.tla",
+    tags = ["manual"],
+)
+
+# Three operators replaying a forked lineage: larger bounds than CI runs.
+tlc_test(
+    name = "jobqueue_replay_large_test",
+    size = "medium",
+    config = "JobQueue_replay_large.cfg",
+    spec = "JobQueue.tla",
     tags = ["manual"],
 )

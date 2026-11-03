@@ -46,7 +46,10 @@ go_binary(
 
 go_test(
     name = "tadoku-worker_test",
-    srcs = ["main_test.go"],
+    srcs = [
+        "main_test.go",
+        "replay_test.go",
+    ],
     embed = [":tadoku-worker_lib"],
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
     tags = [
@@ -54,7 +57,10 @@ go_test(
         "no-remote-exec",
         "requires-network",
     ],
-    deps = ["//services/tadoku-api/internal/testpostgres"],
+    deps = [
+        "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/testpostgres",
+    ],
 )
 
 pkg_tar(

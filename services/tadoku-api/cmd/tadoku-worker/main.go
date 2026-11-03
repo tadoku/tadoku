@@ -258,7 +258,7 @@ func replay(ctx context.Context, args []string, logger *slog.Logger) error {
 	}
 	defer pool.Close()
 
-	newID, err := worker.Replay(ctx, jobqueue.NewService(jobqueue.NewRepository(pool)), *id, *actor, *reason)
+	newID, err := worker.Replay(ctx, pool, *id, *actor, *reason)
 	if err != nil {
 		return fmt.Errorf("replay job %d in tenant %s: %w", *id, key, err)
 	}

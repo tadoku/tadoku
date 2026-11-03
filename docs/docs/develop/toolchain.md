@@ -1,12 +1,13 @@
 ---
 title: Toolchain and repository
-description: The build tools, code generators, package managers and CI workflows in the Tadoku monorepo, with the commands to run each one.
+description: The build tools, code generators and package managers in the Tadoku monorepo, with the commands to run each one.
 sidebar_position: 1
 ---
 
 # Toolchain and repository
 
-Read this when you need to build, test or regenerate code, or want to know what CI checks on a pull request.
+Read this when you need to build, test or regenerate code. What CI checks on a
+pull request is in [CI workflows](./ci-workflows.md).
 
 Run every command from the repository root unless a directory is given.
 

@@ -207,6 +207,23 @@ seed_admin() {
       -h "${DB_NAME}.${DB_NAMESPACE}" -U tadoku -d tadoku <<'SQL'
 begin;
 select set_config('tadoku.tenant', :'tenant', true) as tenant \gset
+-- Bans take the users row lock too, so none commits between the check and the grant.
+select id from users where tenant = :'tenant' and id = :'admin_user_id'::uuid for update \g /dev/null
+select format(
+  'do $$ begin raise exception %L; end $$',
+  'Dev Admin ' || lower(:'admin_user_id') || ' is banned in ' || :'tenant'
+    || '; ask another administrator to unban them, or remove the ban with the unban SQL in'
+    || ' docs/docs/architecture/authorization.md, then rerun make dev-seed'
+)
+where exists (
+  select from permission_relationships
+  where tenant = :'tenant'
+    and object_type = 'app'
+    and object_id = 'root'
+    and relation = 'banned'
+    and subject_type = 'user'
+    and subject_id = lower(:'admin_user_id')
+) \gexec
 insert into permission_relationships (tenant, object_type, object_id, relation, subject_type, subject_id)
 values (:'tenant', 'app', 'root', 'admins', 'user', lower(:'admin_user_id'))
 on conflict do nothing;

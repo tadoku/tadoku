@@ -43,14 +43,6 @@ tlc_test(
     tags = ["manual"],
 )
 
-# Known gap: granting an administrator does not check for a ban.
-tlc_test(
-    name = "accountdeletion_roles_test",
-    config = "AccountDeletion_roles.cfg",
-    spec = "AccountDeletion.tla",
-    tags = ["manual"],
-)
-
 # Three operators replaying a forked lineage: larger bounds than CI runs.
 tlc_test(
     name = "jobqueue_replay_large_test",

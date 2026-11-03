@@ -17,6 +17,7 @@ go_library(
         "//services/tadoku-api/features/identity",
         "//services/tadoku-api/features/jobqueue",
         "//services/tadoku-api/features/leaderboard",
+        "//services/tadoku-api/features/profile",
         "//services/tadoku-api/generated/sqlc/tenantlifecycle",
         "//services/tadoku-api/infra/fliptmanagement",
         "//services/tadoku-api/infra/postgres",

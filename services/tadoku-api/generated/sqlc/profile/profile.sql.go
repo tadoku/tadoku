@@ -43,7 +43,8 @@ func (q *Queries) FindUserDisplayNames(ctx context.Context, ids []pgtype.UUID) (
 const lockUser = `-- name: LockUser :one
 select deletion_locked_at, deleted_at
 from users
-where id = $1
+where tenant = current_setting('tadoku.tenant')
+  and id = $1
 for update
 `
 

@@ -117,8 +117,17 @@ func (r *Roles) SetBanned(ctx context.Context, userID uuid.UUID, banned bool) er
 	return r.relationships.Revoke(ctx, bannedRelationship(userID))
 }
 
-// GrantAdmin makes the user an administrator of the context tenant and joins the context's transaction. Build
-// relationships from a model that includes Permissions.
+// GrantAdmin makes the user an administrator of the context tenant and joins the context's transaction, or returns
+// ErrBannedUser for a banned user. Hold the user's users row lock, as bans do, so no ban commits between the check
+// and the grant. Build relationships from a model that includes Permissions.
 func GrantAdmin(ctx context.Context, relationships *permissions.Relationships, userID uuid.UUID) error {
+	bans, err := relationships.Read(ctx, permissions.ForUser(userID).Relation(bannedRelation))
+	if err != nil {
+		return err
+	}
+	if len(bans) > 0 {
+		return ErrBannedUser
+	}
+
 	return relationships.Grant(ctx, adminRelationship(userID))
 }

@@ -76,6 +76,9 @@ and `is_banned`, `Related("banned")`.
 Nothing is inherited between tenants: a test or branch tenant starts with no
 administrators and no bans.
 
+A user is never both an administrator and banned: a ban refuses an
+administrator, and a grant refuses a banned user.
+
 Administrators can change only the `banned` relation through the API
 (`PUT /authz/users/{id}/role`), and never for another administrator. No API
 grants `admins`; see [Granting an administrator](#granting-an-administrator).
@@ -89,8 +92,9 @@ returns `404`.
 
 Grant or revoke an administrator in a deployed environment with operator SQL
 as the runtime role, setting the tenant inside the transaction as
-[Tenancy](../tadoku-api/database.md#tenancy) requires. To grant a production
-administrator:
+[Tenancy](../tadoku-api/database.md#tenancy) requires. A banned user cannot be
+made an administrator: the grant inserts nothing while a `banned` relationship
+exists. To grant a production administrator:
 
 ```sql
 begin;
@@ -98,15 +102,29 @@ select set_config('tadoku.tenant', 'tadoku/prod', true);
 select deletion_locked_at, deleted_at from users where id = '<lowercase user UUID>' for update;
 -- If either value is set, the account is being deleted: run rollback; instead.
 insert into permission_relationships (tenant, object_type, object_id, relation, subject_type, subject_id)
-values ('tadoku/prod', 'app', 'root', 'admins', 'user', '<lowercase user UUID>')
-on conflict do nothing;
+select current_setting('tadoku.tenant'), 'app', 'root', 'admins', 'user', '<lowercase user UUID>'
+where not exists (
+  select from permission_relationships
+  where tenant = current_setting('tadoku.tenant')
+    and object_type = 'app'
+    and object_id = 'root'
+    and relation = 'banned'
+    and subject_type = 'user'
+    and subject_id = '<lowercase user UUID>'
+);
+-- INSERT 0 1: granted. INSERT 0 0: nothing was granted because the user is banned; roll back.
 commit;
 ```
 
 Locking the `users` row first, as role updates do, makes an account deletion
-filed at the same moment either see the new administrator and refuse, or be
-filed first. A filed deletion still runs, so roll the grant back when the lock
-shows `deletion_locked_at` or `deleted_at` set.
+or a ban filed at the same moment either see the new administrator and refuse,
+or commit first. A filed deletion still runs, so roll the grant back when the
+lock shows `deletion_locked_at` or `deleted_at` set. When the insert reports
+`INSERT 0 0`, the user is banned: roll back, and grant only after deliberately
+unbanning them. Ask another administrator to unban them through
+`PUT /authz/users/{id}/role`, or, when there is none, remove the ban with the
+unban block below. A duplicate key error means the user is already an
+administrator; roll back.
 
 To revoke one:
 
@@ -114,7 +132,7 @@ To revoke one:
 begin;
 select set_config('tadoku.tenant', 'tadoku/prod', true);
 delete from permission_relationships
-where tenant = 'tadoku/prod'
+where tenant = current_setting('tadoku.tenant')
   and object_type = 'app'
   and object_id = 'root'
   and relation = 'admins'
@@ -123,9 +141,32 @@ where tenant = 'tadoku/prod'
 commit;
 ```
 
-For a production branch tenant, use its key instead of `tadoku/prod`. In
+To unban a user without another administrator:
+
+```sql
+begin;
+select set_config('tadoku.tenant', 'tadoku/prod', true);
+select id from users where id = '<lowercase user UUID>' for update;
+delete from permission_relationships
+where tenant = current_setting('tadoku.tenant')
+  and object_type = 'app'
+  and object_id = 'root'
+  and relation = 'banned'
+  and subject_type = 'user'
+  and subject_id = '<lowercase user UUID>';
+commit;
+```
+
+The lock orders the unban with role updates and grants. Unlike the API, it
+writes no `moderation_audit_log` entry, because no administrator acts.
+
+These blocks name the tenant only in `set_config`. For a production branch
+tenant, use its key there instead of `tadoku/prod`. In
 development, `tadoku-tenant development-accounts` grants Dev Admin `admins` on
-each branch tenant; see
+each branch tenant through `authz.GrantAdmin` under Dev Admin's `users` row
+lock, so a concurrent ban either commits first and the grant returns
+`authz.ErrBannedUser`, a conflict, or waits and refuses the new administrator;
+see
 [Development data](../develop/development-data.md#branch-tenants).
 
 ## Request pipeline
@@ -279,8 +320,12 @@ re-run.
   `reader@tadoku.app`) in the canonical tenant. Passwords come from
   `TADOKU_DEV_ADMIN_PASSWORD` and `TADOKU_DEV_READER_PASSWORD`. An account with
   the same email that the seed does not own is never modified.
-- Grants the administrator `admins` on `app:root` in `tadoku/prod` with SQL,
-  keeping an existing grant. The reader gets no role.
+- Grants the administrator `admins` on `app:root` in `tadoku/prod` with SQL
+  under its `users` row lock, keeping an existing grant. A banned
+  administrator fails the seed without a grant. Ask another administrator to
+  unban them through `PUT /authz/users/{id}/role`, or remove the ban with the
+  [unban block](#granting-an-administrator), then rerun. The reader gets no
+  role.
 - Loads the application seed data from `scripts/dev/seed/`.
 
 See [Development data](../develop/development-data.md#seed-data) for fixture UUIDs, reruns and branch seeding, and

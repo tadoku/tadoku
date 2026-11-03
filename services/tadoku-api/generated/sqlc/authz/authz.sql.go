@@ -120,14 +120,16 @@ func (q *Queries) InsertRelationships(ctx context.Context, arg InsertRelationshi
 const readRelationships = `-- name: ReadRelationships :many
 select object_type, object_id, relation, subject_type, subject_id, subject_relation
 from permission_relationships
-where object_type = $1::text
+where tenant = current_setting('tadoku.tenant')
+  and object_type = $1::text
   and object_id = $2::text
   and $3::text = ''
   and ($4::text = '' or relation = $4::text)
 union all
 select object_type, object_id, relation, subject_type, subject_id, subject_relation
 from permission_relationships
-where subject_type = 'user'
+where tenant = current_setting('tadoku.tenant')
+  and subject_type = 'user'
   and subject_id = $3::text
   and $2::text = ''
   and ($1::text = '' or object_type = $1::text)

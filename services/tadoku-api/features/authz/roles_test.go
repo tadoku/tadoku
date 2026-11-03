@@ -283,6 +283,50 @@ func TestRolesUserRoles(t *testing.T) {
 	}
 }
 
+func TestGrantAdmin(t *testing.T) {
+	t.Parallel()
+	ctx := tenant.WithKey(t.Context(), tenant.Production())
+
+	db := newTestDatabase(t)
+	roles, relationships := newTestRoles(t, db.AppPool)
+	user, bannedUser, unbanned := uuid.New(), uuid.New(), uuid.New()
+	for _, userID := range []uuid.UUID{bannedUser, unbanned} {
+		if err := roles.SetBanned(ctx, userID, true); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := roles.SetBanned(ctx, unbanned, false); err != nil {
+		t.Fatal(err)
+	}
+
+	cases := []struct {
+		name     string
+		userID   uuid.UUID
+		wantErr  error
+		wantRole Role
+	}{
+		{"user", user, nil, RoleAdmin},
+		{"unbanned user", unbanned, nil, RoleAdmin},
+		{"banned user", bannedUser, ErrBannedUser, RoleBanned},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := GrantAdmin(ctx, relationships, tc.userID)
+
+			if !errors.Is(err, tc.wantErr) {
+				t.Errorf("GrantAdmin error = %v, want %v", err, tc.wantErr)
+			}
+			got, err := roles.UserRoles(ctx, []uuid.UUID{tc.userID})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got[tc.userID] != tc.wantRole {
+				t.Errorf("role after GrantAdmin = %q, want %q", got[tc.userID], tc.wantRole)
+			}
+		})
+	}
+}
+
 func newTestRoles(t *testing.T, pool *pgxpool.Pool) (*Roles, *permissions.Relationships) {
 	t.Helper()
 

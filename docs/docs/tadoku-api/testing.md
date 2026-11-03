@@ -228,6 +228,9 @@ guard until it has the required protections.
 
 All HTTP E2E application repositories and the real journey worker use
 `AppPool`; reset, fixture mutations and `verify.sql` keep `Pool`.
+[Scenario fixture](./scenario-fixtures.md) seeds use `Pool` connections that
+switch transaction-locally to the restricted application role and the
+scenario's tenant, so row-level security confines them.
 
 Tests using `testing/synctest` create and close every database pool used in the
 bubble inside that same bubble. Copy the fixture pool configuration to preserve

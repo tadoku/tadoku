@@ -87,6 +87,7 @@ files in an area, read its page; those rules are as binding as this file.
 | Any Go test | `docs/docs/tadoku-api/testing.md` |
 | A TLA+ model in `services/tadoku-api/spec/tla/`, or code a model describes | `docs/docs/tadoku-api/formal-specs.md` |
 | HTTP golden cases, fixture tokens or relationships | `docs/docs/tadoku-api/http-e2e.md` |
+| An E2E scenario that owns its tenants | `docs/docs/tadoku-api/scenario-fixtures.md` |
 | A user journey | `docs/docs/tadoku-api/user-journeys.md` |
 | An import, package, feature or Bazel visibility | `docs/docs/tadoku-api/import-boundaries.md` |
 | Startup, environment variables, provider clients or the leaderboard worker | `docs/docs/tadoku-api/configuration.md` |

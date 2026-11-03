@@ -77,6 +77,13 @@ def main():
         key('openapi', expected=1)
         checks.append('untracked fragment disables reuse')
         commit()
+        (root / '.gitignore').write_text('*.out\n')
+        commit()
+        ignored = fragment.with_name('unexpected.out')
+        ignored.write_text('paths: {}\n')
+        key('openapi', expected=1)
+        checks.append('ignored untracked fragment disables reuse')
+        ignored.unlink()
         link = root / 'tools/oapi-codegen/tools/bazel'
         link.parent.mkdir(parents=True)
         link.symlink_to('../../bazel')

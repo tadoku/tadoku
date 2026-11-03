@@ -28,7 +28,7 @@ def input_fingerprint(kind):
     patterns = WRAPPER_INPUTS if kind == 'wrapper' else OPENAPI_INPUTS
     root = Path(subprocess.check_output(['git', 'rev-parse', '--show-toplevel'], text=True).strip())
     subprocess.run(['git', 'diff', '--quiet', 'HEAD', '--', *patterns], cwd=root, check=True)
-    unknown = subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard', '-z', '--', *patterns], cwd=root)
+    unknown = subprocess.check_output(['git', 'ls-files', '--others', '-z', '--', *patterns], cwd=root)
     if unknown:
         raise RuntimeError('Untracked setup inputs disable reuse')
     manifest = subprocess.check_output(['git', 'ls-files', '--stage', '-z', '--', *patterns], cwd=root)

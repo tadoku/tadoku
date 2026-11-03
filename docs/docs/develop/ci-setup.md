@@ -33,6 +33,7 @@ modes and raw file bytes. Content-only hashes can miss same-byte renames.
 Dirty tracked inputs, untracked selected inputs and symlinks whose targets are
 outside the selected closure disable reuse. The successful receipt contains no
 source or generated output archive.
+Ignored untracked inputs also disable reuse: generation can read files Git ignores.
 
 `tools/ci/setup_fingerprint.py` identifies the runtime using installed package
 versions, native executable hashes and versions, Python version, kernel and

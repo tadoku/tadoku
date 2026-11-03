@@ -6,6 +6,7 @@
 \*   services/tadoku-api/app/api/account_deletion.go
 \*   services/tadoku-api/app/api/identity_account_deletion.go
 \*   services/tadoku-api/app/api/authz.go
+\*   services/tadoku-api/app/tenantlifecycle/development_accounts.go
 \*   services/tadoku-api/app/worker/account_deletion.go
 \*   services/tadoku-api/app/worker/runtime.go
 \*   services/tadoku-api/features/profile/profile_service.go
@@ -17,6 +18,7 @@
 \*   services/tadoku-api/sql/identity/identity.sql
 \*   services/tadoku-api/sql/profile/profile.sql
 \*   docs/docs/architecture/authorization.md (granting an administrator, refused for a banned user)
+\*   scripts/dev/seed-db.sh (seed_admin)
 \*
 \* Each step is one SQL statement, named after its query or function in its
 \* comment, except that a transaction's statements and Go checks that run while
@@ -254,8 +256,9 @@ RoleCommit ==
 
 Role == RoleLockUser \/ RoleCommit
 
-\* Operator SQL grants an administrator after locking the users row; GrantAdmin
-\* expects its caller to hold that lock. Both insert nothing for a banned user.
+\* The operator SQL and SeedDevelopmentAccounts lock the users row, grant nothing
+\* to a user being deleted and insert nothing for a banned user. The development
+\* seed takes the same lock and refuses a banned user, but checks no deletion.
 GrantLockUser ==
     /\ pc["grant"] = "start"
     /\ lockU = None

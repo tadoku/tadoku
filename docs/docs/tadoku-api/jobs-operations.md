@@ -43,9 +43,8 @@ persistence, or a rebuild that stops partway is only a miss. A generation is a
 random value created before a miss loads the board and incremented by
 invalidations, so a lost generation never returns to a value a pending rebuild
 read. The development Valkey evicts with `allkeys-lru` and keeps nothing across
-restarts. Production's eviction setting lives in Upstash, outside this
-repository; it is assumed to be the default, eviction off, but that is not
-confirmed.
+restarts. Production's Valkey is Upstash, configured outside this repository,
+with eviction off.
 
 Filtered reads use PostgreSQL, and Valkey errors fall back to PostgreSQL.
 Those paths do not make an already warm key fresh while its invalidation

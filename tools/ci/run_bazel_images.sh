@@ -41,13 +41,44 @@ resolve_runfile() {
   return 1
 }
 
+run_operation() {
+  echo "::group::$1"
+  "$2"
+  echo "::endgroup::"
+}
+
+pids=()
+status=0
+wait_batch() {
+  local pid
+  for pid in "${pids[@]}"; do
+    wait "${pid}" || status=1
+  done
+  pids=()
+}
+
+if [[ "${TADOKU_PARALLEL_IMAGE_PUSH:-0}" == 1 ]]; then
+  trap 'wait' EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  trap 'exit 129' HUP
+fi
+
 for image_operation in "$@"; do
   if ! resolved_operation="$(resolve_runfile "${image_operation}")"; then
     echo "could not resolve ${image_operation}" >&2
     exit 1
   fi
 
-  echo "::group::${image_operation}"
-  "${resolved_operation}"
-  echo "::endgroup::"
+  if [[ "${TADOKU_PARALLEL_IMAGE_PUSH:-0}" == 1 ]]; then
+    run_operation "${image_operation}" "${resolved_operation}" &
+    pids+=("$!")
+    if (( ${#pids[@]} == 3 )); then
+      wait_batch
+    fi
+  else
+    run_operation "${image_operation}" "${resolved_operation}"
+  fi
 done
+wait_batch
+exit "${status}"

@@ -68,6 +68,12 @@ CI image publication authenticates through the Docker config file written by
 `docker login`, normally under `$HOME/.docker/`, or through `DOCKER_CONFIG`.
 `tools/ci/run_bazel_images.sh` invokes the OCI push programs after the build lock
 is released. Registry tokens do not need to enter the Bazel server environment.
+`//:push_images` opts into batches of at most three independent image repositories
+with `TADOKU_PARALLEL_IMAGE_PUSH=1`; `//:load_images` uses the serial default.
+Each native OCI push still publishes its digest before its tags. The runner waits
+for every started operation and returns failure if any operation fails. Publication
+across repositories is not atomic: another image may already be published when
+one fails. There is no automatic rollback.
 
 Run the real execution checks with Python 3, Bazelisk and Linux `flock`; the
 publication check additionally needs Docker. Choose new evidence directories
@@ -81,7 +87,12 @@ python3 tools/ci/check_bazel_publish.py --evidence-dir /tmp/tadoku-publish-check
 The publication check uses synthetic credentials and a disposable registry bound
 to loopback. It runs the same image runner and OCI push rules as CI, rejects an
 unauthenticated push, then verifies both Docker config paths and reads the
-published manifest back. It does not publish to GHCR. The build workflow retains
+published manifests back by digest and both tags for distinct images. It checks
+bounded publication overlap, serial Docker loading and a rejected push among
+successful peers. Bounded synthetic children cover failure and unresolved-runfile
+reaping separately from the real OCI operations. Reports retain child intervals,
+exit statuses and commands. Loopback timings do not establish GHCR performance.
+It does not publish to GHCR. The build workflow retains
 the checks' reports and logs as the `bazel-wrapper` artifact for seven days.
 
 Tadoku API integration tests need disposable loopback PostgreSQL 17,

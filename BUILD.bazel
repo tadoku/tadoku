@@ -54,4 +54,5 @@ sh_binary(
         "//services/token-reflector:push",
         "@bazel_tools//tools/bash/runfiles",
     ],
+    env = {"TADOKU_PARALLEL_IMAGE_PUSH": "1"},
 )

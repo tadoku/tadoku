@@ -132,32 +132,27 @@ func TestIdentityV2ExpiredSessionIsGuest(t *testing.T) {
 }
 
 func TestIdentityGuestGatewayAdmissionPreservesBanGate(t *testing.T) {
-	resetIdentity(t)
-	response := identityRequest(t, api.handler, "tadoku/prod", "POST", "/identity/login",
+	t.Parallel()
+	s := newIdentityScenario(t)
+
+	response := s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/login",
 		`{"email":"reader@example.test","password":"Fixture-login-482!"}`, "", nil)
 	requireIdentityStatus(t, response, http.StatusOK)
 	cookie := response.Result().Cookies()[0].String()
-	if err := resetRelationships(
-		t.Context(),
-		api.db.Pool,
-		"testdata/IdentityV2/banned.json",
-	); err != nil {
-		t.Fatal(err)
-	}
+	s.seed(t, "identity-a", tenantSeed{relationships: []string{"testdata/IdentityV2/banned-reader.json"}})
 
 	protected := readHTTPRequest(t, "testdata/BannedUsers/403_banned")
-	denied := httptest.NewRecorder()
-	atFixtureInstant(func() { api.handler.ServeHTTP(denied, protected) })
+	denied := s.serve(t, "identity-a", user, protected)
 	requireIdentityStatus(t, denied, http.StatusForbidden)
 
-	response = identityRequest(t, api.handler, "tadoku/prod", "GET", "/identity/session", "", cookie, nil)
+	response = s.identityRequest(t, api.handler, "identity-a", "GET", "/identity/session", "", cookie, nil)
 	view := identityView(t, response)
-	if view.Account == nil || view.Account.ID != "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" {
+	if view.Account == nil || view.Account.ID != scenarioCast[user].subject {
 		t.Fatal("anonymous gateway admission failed to return the banned cookie account")
 	}
-	response = identityRequest(t, api.handler, "tadoku/prod", "POST", "/identity/logout", "", cookie, nil)
+	response = s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/logout", "", cookie, nil)
 	requireIdentityStatus(t, response, http.StatusNoContent)
-	response = identityRequest(t, api.handler, "tadoku/prod", "GET", "/identity/session", "", cookie, nil)
+	response = s.identityRequest(t, api.handler, "identity-a", "GET", "/identity/session", "", cookie, nil)
 	if identityView(t, response).Account != nil {
 		t.Error("banned cookie account could not revoke its session")
 	}

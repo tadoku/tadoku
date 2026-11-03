@@ -2,16 +2,12 @@ package e2e_test
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
@@ -26,29 +22,10 @@ func newPairedIdentityScenario(t *testing.T) *scenario {
 	return s
 }
 
-// guestIdentityRequest sends an identity request as a guest of the scenario role's tenant.
-func guestIdentityRequest(
-	t *testing.T,
-	s *scenario,
-	role, method, path, body, cookie string,
-	edit func(*http.Request),
-) *httptest.ResponseRecorder {
-	t.Helper()
-	return s.serve(t, role, guest, newIdentityRequest(t, "", method, path, body, cookie, edit))
-}
-
 func recoverFromRole(t *testing.T, s *scenario, role, email, peer, forwarded string) *httptest.ResponseRecorder {
 	t.Helper()
 	body := fmt.Sprintf(`{"email":%q,"return_to":%q}`, email, recoverySettingsURL)
-	return guestIdentityRequest(t, s, role, "POST", "/identity/recovery", body, "", fromPeer(peer, forwarded))
-}
-
-func loginCookieIn(t *testing.T, s *scenario, role string) string {
-	t.Helper()
-	response := guestIdentityRequest(t, s, role, "POST", "/identity/login",
-		`{"email":"reader@example.test","password":"Fixture-login-482!"}`, "", nil)
-	requireIdentityStatus(t, response, http.StatusOK)
-	return response.Result().Cookies()[0].String()
+	return s.identityRequest(t, api.handler, role, "POST", "/identity/recovery", body, "", fromPeer(peer, forwarded))
 }
 
 // writeTenantRows runs sql in tenantKey: a test tenant through the confined seeding login, the canonical tenant
@@ -73,25 +50,6 @@ func writeTenantRows(t *testing.T, tenantKey, sql string, arguments ...any) {
 	if err != nil {
 		t.Fatal(err)
 	}
-}
-
-// seedRecoveryTokenIn stores a recovery token for the cast reader of the scenario role's tenant.
-func seedRecoveryTokenIn(
-	t *testing.T,
-	s *scenario,
-	role string,
-	marker byte,
-	expires time.Time,
-	used *time.Time,
-) string {
-	t.Helper()
-	raw := base64.RawURLEncoding.EncodeToString([]byte(strings.Repeat(string(marker), 32)))
-	digest := sha256.Sum256([]byte(raw))
-	writeTenantRows(t, s.tenant(t, role).String(), `insert into recovery_tokens
-		(token_hash, user_id, expires_at, used_at)
-		values ($1, $2, $3, $4)`,
-		hex.EncodeToString(digest[:]), scenarioCast[user].subject, expires, used)
-	return raw
 }
 
 // recoveryLocation is the Settings URL a consumed recovery link of the scenario role's tenant opens.

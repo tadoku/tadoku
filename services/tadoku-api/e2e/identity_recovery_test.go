@@ -121,8 +121,8 @@ func TestIdentityRecoveryInvalidTokens(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := newPairedIdentityScenario(t)
 
-			token := seedRecoveryTokenIn(t, s, "identity-a", 'a', tc.expires, tc.used)
-			response := guestIdentityRequest(t, s, tc.role, "GET", "/identity/recovery/"+token, "", "", nil)
+			token := s.seedRecoveryToken(t, "identity-a", 'a', tc.expires, tc.used)
+			response := s.identityRequest(t, api.handler, tc.role, "GET", "/identity/recovery/"+token, "", "", nil)
 			requireIdentityStatus(t, response, http.StatusBadRequest)
 			if !strings.Contains(response.Body.String(), `"code":"invalid_recovery_token"`) ||
 				response.Header().Get("Set-Cookie") != "" {
@@ -135,11 +135,11 @@ func TestIdentityRecoveryInvalidTokens(t *testing.T) {
 func TestIdentityRecoveryConsumeRevokesAndSetsPassword(t *testing.T) {
 	t.Parallel()
 	s := newIdentityScenario(t)
-	old := loginCookieIn(t, s, "identity-a")
-	first := seedRecoveryTokenIn(t, s, "identity-a", 'a', fixtureInstant.Add(time.Hour), nil)
-	second := seedRecoveryTokenIn(t, s, "identity-a", 'b', fixtureInstant.Add(time.Hour), nil)
+	old := s.identityLoginCookie(t, "identity-a")
+	first := s.seedRecoveryToken(t, "identity-a", 'a', fixtureInstant.Add(time.Hour), nil)
+	second := s.seedRecoveryToken(t, "identity-a", 'b', fixtureInstant.Add(time.Hour), nil)
 
-	response := guestIdentityRequest(t, s, "identity-a", "GET",
+	response := s.identityRequest(t, api.handler, "identity-a", "GET",
 		"/identity/recovery/"+first+"?return_to="+url.QueryEscape(recoverySettingsURL), "", "", nil)
 	requireIdentityStatus(t, response, http.StatusSeeOther)
 	want := recoveryLocation(t, s, "identity-a") + "&return_to=" + url.QueryEscape(recoverySettingsURL)
@@ -150,22 +150,22 @@ func TestIdentityRecoveryConsumeRevokesAndSetsPassword(t *testing.T) {
 	if !cookie.HttpOnly || !cookie.Secure || cookie.SameSite != http.SameSiteLaxMode {
 		t.Fatal("recovery cookie weakened session security")
 	}
-	response = guestIdentityRequest(t, s, "identity-a", "GET", "/identity/session", "", old, nil)
+	response = s.identityRequest(t, api.handler, "identity-a", "GET", "/identity/session", "", old, nil)
 	if identityView(t, response).Account != nil {
 		t.Fatal("recovery left an old session active")
 	}
 	for _, token := range []string{first, second} {
-		response = guestIdentityRequest(t, s, "identity-a", "GET", "/identity/recovery/"+token, "", "", nil)
+		response = s.identityRequest(t, api.handler, "identity-a", "GET", "/identity/recovery/"+token, "", "", nil)
 		requireIdentityStatus(t, response, http.StatusBadRequest)
 	}
 
-	response = guestIdentityRequest(t, s, "identity-a", "PUT", "/identity/settings/password",
+	response = s.identityRequest(t, api.handler, "identity-a", "PUT", "/identity/settings/password",
 		`{"password":"Replacement-839!"}`, cookie.String(), nil)
 	requireIdentityStatus(t, response, http.StatusNoContent)
-	response = guestIdentityRequest(t, s, "identity-a", "POST", "/identity/login",
+	response = s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/login",
 		`{"email":"reader@example.test","password":"Replacement-839!"}`, "", nil)
 	requireIdentityStatus(t, response, http.StatusOK)
-	response = guestIdentityRequest(t, s, "identity-a", "POST", "/identity/login",
+	response = s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/login",
 		`{"email":"reader@example.test","password":"Fixture-login-482!"}`, "", nil)
 	requireIdentityStatus(t, response, http.StatusUnauthorized)
 }
@@ -175,10 +175,10 @@ func TestIdentityRecoveryConcurrentConsumption(t *testing.T) {
 	for _, sameToken := range []bool{true, false} {
 		t.Run(fmt.Sprintf("sameToken=%t", sameToken), func(t *testing.T) {
 			s := newIdentityScenario(t)
-			first := seedRecoveryTokenIn(t, s, "identity-a", 'a', fixtureInstant.Add(time.Hour), nil)
+			first := s.seedRecoveryToken(t, "identity-a", 'a', fixtureInstant.Add(time.Hour), nil)
 			second := first
 			if !sameToken {
-				second = seedRecoveryTokenIn(t, s, "identity-a", 'b', fixtureInstant.Add(time.Hour), nil)
+				second = s.seedRecoveryToken(t, "identity-a", 'b', fixtureInstant.Add(time.Hour), nil)
 			}
 
 			responses := make([]*httptest.ResponseRecorder, 2)
@@ -208,12 +208,12 @@ func TestIdentityRecoveryConcurrentConsumption(t *testing.T) {
 func TestIdentityRecoveryRejectsRedirectBeforeConsuming(t *testing.T) {
 	t.Parallel()
 	s := newIdentityScenario(t)
-	token := seedRecoveryTokenIn(t, s, "identity-a", 'a', fixtureInstant.Add(time.Hour), nil)
+	token := s.seedRecoveryToken(t, "identity-a", 'a', fixtureInstant.Add(time.Hour), nil)
 
-	response := guestIdentityRequest(t, s, "identity-a", "GET",
+	response := s.identityRequest(t, api.handler, "identity-a", "GET",
 		"/identity/recovery/"+token+"?return_to=https%3A%2F%2Fevil.test", "", "", nil)
 	requireIdentityStatus(t, response, http.StatusBadRequest)
-	response = guestIdentityRequest(t, s, "identity-a", "GET", "/identity/recovery/"+token, "", "", nil)
+	response = s.identityRequest(t, api.handler, "identity-a", "GET", "/identity/recovery/"+token, "", "", nil)
 	requireIdentityStatus(t, response, http.StatusSeeOther)
 	if response.Header().Get("Location") != recoveryLocation(t, s, "identity-a") {
 		t.Fatal("default Settings redirect escaped the token tenant or closed the Password editor")
@@ -240,7 +240,8 @@ func TestIdentityRecoveryRejectsUnrepresentableReturnTo(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			response := guestIdentityRequest(t, s, "identity-a", "POST", "/identity/recovery", string(body), "", nil)
+			response := s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/recovery", string(body),
+				"", nil)
 			requireIdentityStatus(t, response, tc.want)
 		})
 	}
@@ -284,8 +285,8 @@ func TestIdentityRecoveryRequiresUsableAccount(t *testing.T) {
 			}
 			requireRecoveryWrites(t, tenantKey, written)
 
-			token := seedRecoveryTokenIn(t, s, "identity-a", 'z', fixtureInstant.Add(time.Hour), nil)
-			consumed := guestIdentityRequest(t, s, "identity-a", "GET", "/identity/recovery/"+token, "", "", nil)
+			token := s.seedRecoveryToken(t, "identity-a", 'z', fixtureInstant.Add(time.Hour), nil)
+			consumed := s.identityRequest(t, api.handler, "identity-a", "GET", "/identity/recovery/"+token, "", "", nil)
 			if test.usable {
 				requireIdentityStatus(t, consumed, http.StatusSeeOther)
 				return
@@ -307,7 +308,7 @@ func TestIdentityRecoveryDoesNotWaitForTheDeletionWorker(t *testing.T) {
 			body := fmt.Sprintf(`{"email":"reader@example.test","return_to":%q}`, recoverySettingsURL)
 			request := newIdentityRequest(t, "", "POST", "/identity/recovery", body, "", nil)
 			if consume {
-				token := seedRecoveryTokenIn(t, s, "identity-a", 'z', fixtureInstant.Add(time.Hour), nil)
+				token := s.seedRecoveryToken(t, "identity-a", 'z', fixtureInstant.Add(time.Hour), nil)
 				request = newIdentityRequest(t, "", "GET", "/identity/recovery/"+token, "", "", nil)
 			}
 			worker, err := api.db.Pool.Begin(t.Context())

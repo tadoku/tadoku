@@ -162,7 +162,7 @@ func TestIdentityStoredAccountRecoveryWithoutDelivery(t *testing.T) {
 			seedStoredRecoveryToken(t, tenantKey)
 
 			body := fmt.Sprintf(`{"email":%s,"return_to":%q}`, strconv.Quote(tc.login), storedReturnTo)
-			response := guestIdentityRequest(t, s, "identity-a", "POST", "/identity/recovery", body, "", nil)
+			response := s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/recovery", body, "", nil)
 
 			checkStoredRow(t, tenantKey, original, "Stored Reader")
 			if seededStoredTokenUsed(t, tenantKey) {
@@ -177,7 +177,7 @@ func TestIdentityStoredAccountRecoveryWithoutDelivery(t *testing.T) {
 		s, tenantKey := newStoredScenario(t, account, "identity-a")
 
 		body := fmt.Sprintf(`{"email":"unknown@example.test","return_to":%q}`, storedReturnTo)
-		response := guestIdentityRequest(t, s, "identity-a", "POST", "/identity/recovery", body, "", nil)
+		response := s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/recovery", body, "", nil)
 
 		requireRecoveryAccepted(t, response)
 		if messages := storedMessages(t, tenantKey, "account.recovery"); len(messages) != 0 {
@@ -195,7 +195,7 @@ func TestIdentityStoredAccountEmailChange(t *testing.T) {
 			seedStoredRecoveryToken(t, tenantKey)
 			cookie := insertStoredSession(t, tenantKey)
 
-			response := guestIdentityRequest(t, s, "identity-a", "PATCH", "/identity/settings/profile",
+			response := s.identityRequest(t, api.handler, "identity-a", "PATCH", "/identity/settings/profile",
 				`{"email":"changed@example.test","display_name":"Changed Reader"}`, cookie, nil)
 
 			if tc.mailbox == "" {
@@ -221,7 +221,7 @@ func TestIdentityStoredAccountEmailChange(t *testing.T) {
 			seedStoredRecoveryToken(t, tenantKey)
 			cookie := insertStoredSession(t, tenantKey)
 
-			response := guestIdentityRequest(t, s, "identity-a", "PATCH", "/identity/settings/profile",
+			response := s.identityRequest(t, api.handler, "identity-a", "PATCH", "/identity/settings/profile",
 				`{"email":`+strconv.Quote(tc.login)+`,"display_name":"Renamed Reader"}`, cookie, nil)
 
 			switch {
@@ -258,7 +258,7 @@ func TestIdentityStoredAccountEmailChange(t *testing.T) {
 		writeTenantRows(t, tenantKey, `update sessions set authenticated_at = $2
 			where tenant = $3 and user_id = $1`, storedAccountID, fixtureInstant.Add(-2*time.Hour), tenantKey)
 
-		response := guestIdentityRequest(t, s, "identity-a", "PATCH", "/identity/settings/profile",
+		response := s.identityRequest(t, api.handler, "identity-a", "PATCH", "/identity/settings/profile",
 			`{"email":"changed@example.test"}`, cookie, nil)
 
 		requireIdentityStatus(t, response, http.StatusUnauthorized)
@@ -273,7 +273,7 @@ func TestIdentityStoredAccountEmailChange(t *testing.T) {
 		s, tenantKey := newStoredScenario(t, original, "identity-a", "identity-b")
 		cookie := insertStoredSession(t, tenantKey)
 
-		response := guestIdentityRequest(t, s, "identity-b", "PATCH", "/identity/settings/profile",
+		response := s.identityRequest(t, api.handler, "identity-b", "PATCH", "/identity/settings/profile",
 			`{"email":"changed@example.test"}`, cookie, nil)
 
 		requireIdentityStatus(t, response, http.StatusUnauthorized)

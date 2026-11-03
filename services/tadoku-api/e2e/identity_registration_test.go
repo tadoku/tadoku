@@ -34,17 +34,20 @@ func TestIdentityV2UniqueAccountTenantIsolation(t *testing.T) {
 }
 
 func TestIdentityV2DuplicateRegistrationIsAtomic(t *testing.T) {
-	resetIdentity(t)
+	t.Parallel()
+	s := newIdentityScenario(t)
+	branchA := s.tenant(t, "identity-a").String()
+
 	var before, after int
-	err := api.db.Pool.QueryRow(t.Context(), "select count(*) from users where tenant = $1", identityBranchA).Scan(&before)
+	err := api.db.Pool.QueryRow(t.Context(), "select count(*) from users where tenant = $1", branchA).Scan(&before)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/registration",
+	response := s.identityRequest(t, api.handler, "identity-a", "POST", "/identity/registration",
 		`{"email":"READER@EXAMPLE.TEST","display_name":"Duplicate Reader","password":"Independent-653!"}`, "", nil)
 	requireIdentityStatus(t, response, http.StatusConflict)
-	err = api.db.Pool.QueryRow(t.Context(), "select count(*) from users where tenant = $1", identityBranchA).Scan(&after)
+	err = api.db.Pool.QueryRow(t.Context(), "select count(*) from users where tenant = $1", branchA).Scan(&after)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +57,9 @@ func TestIdentityV2DuplicateRegistrationIsAtomic(t *testing.T) {
 }
 
 func TestIdentityRegistrationPreservesUTCInNonUTCSession(t *testing.T) {
-	resetIdentity(t)
+	t.Parallel()
+	s := newIdentityScenario(t)
+
 	config := api.db.AppPool.Config()
 	config.ConnConfig.RuntimeParams["timezone"] = "Asia/Tokyo"
 	pool, err := pgxpool.NewWithConfig(t.Context(), config)
@@ -79,12 +84,12 @@ func TestIdentityRegistrationPreservesUTCInNonUTCSession(t *testing.T) {
 	}
 
 	instant := time.Date(2026, time.September, 12, 12, 0, 0, 0, time.UTC)
-	response := identityRequest(t, handler, identityBranchA, "POST", "/identity/registration",
+	response := s.identityRequest(t, handler, "identity-a", "POST", "/identity/registration",
 		`{"email":"utc@example.test","display_name":"UTC Reader","password":"Independent-653!"}`, "", nil)
 	requireIdentityStatus(t, response, http.StatusCreated)
 	cookie := response.Result().Cookies()[0]
 
-	response = identityRequest(t, handler, identityBranchA, "GET", "/identity/session", "", cookie.String(), nil)
+	response = s.identityRequest(t, handler, "identity-a", "GET", "/identity/session", "", cookie.String(), nil)
 	view := identityView(t, response)
 	if view.Account == nil {
 		t.Fatal("registered session has no account")
@@ -93,7 +98,7 @@ func TestIdentityRegistrationPreservesUTCInNonUTCSession(t *testing.T) {
 		t.Errorf("session account created_at=%s, want %s", view.Account.CreatedAt, instant)
 	}
 
-	response = identityRequest(t, handler, identityBranchA, "POST", "/identity/login",
+	response = s.identityRequest(t, handler, "identity-a", "POST", "/identity/login",
 		`{"email":"utc@example.test","password":"Independent-653!"}`, "", nil)
 	view = identityView(t, response)
 	if view.Account == nil || !view.Account.CreatedAt.Equal(instant) {

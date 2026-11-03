@@ -45,9 +45,9 @@ cases still use `reset`; a scenario never calls it.
 - `executionContext`, when a runner sets it, derives every request and worker
   context, so a scenario can supply its own business clock and ID source.
 - Cleanup is registered before provisioning. It stops and joins the
-  scenario's workers, then tears down every allocated tenant with a fresh
-  bounded context, including partially provisioned ones, and reports failures
-  with `t.Error`. Teardown removes the tenant's rows, Flipt namespace and every
+  scenario's workers, then tears down every allocated tenant, including
+  partially provisioned ones, each with its own fresh bounded context, and
+  reports failures with `t.Error`. Teardown removes the tenant's rows, Flipt namespace and every
   `tenant:<key>:` Valkey key, which covers leaderboard and identity throttle
   keys.
 

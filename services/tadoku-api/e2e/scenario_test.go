@@ -100,10 +100,11 @@ func newScenario(t testing.TB, roles ...string) *scenario {
 	t.Cleanup(func() {
 		s.stopWorkers(t)
 
-		ctx, cancel := context.WithTimeout(context.Background(), scenarioTeardownTimeout)
-		defer cancel()
 		for _, key := range keys {
-			if err := lifecycle.Teardown(ctx, key); err != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), scenarioTeardownTimeout)
+			err := lifecycle.Teardown(ctx, key)
+			cancel()
+			if err != nil {
 				t.Errorf("tear down scenario tenant %s: %v", key, err)
 				continue
 			}

@@ -11,6 +11,9 @@
 \*   services/tadoku-api/app/worker/emails.go
 \*   services/tadoku-api/app/worker/runtime.go
 \*   services/tadoku-api/infra/smtp/smtp.go
+\*   services/tadoku-api/sql/jobqueue/jobqueue.sql
+\*   services/tadoku-api/features/jobqueue/jobqueue_repository.go
+\*   services/tadoku-api/features/jobqueue/jobqueue_service.go
 \*   services/tadoku-api/spec/tla/JobQueue.tla (the job contract)
 \*
 \* The job queue is JobQueue.tla's contract, not re-modelled: a claim is fenced
@@ -20,8 +23,9 @@
 \* a replay inserts one pending job only while every job in the lineage has
 \* failed and the target has no replay. JobQueue.tla checks that guard under
 \* its lineage lock, so a replay is one step here. Replay op inserts slot 1 + op
-\* and replays the slot before it: a failed job without a replay is always the
-\* lineage's last one.
+\* and replays the slot before it: under the guard, a failed job without a
+\* replay is always the lineage's last one. Lineages replayed before the guard,
+\* JobQueue.tla's ForkedHistory, are out of scope.
 \*
 \* SendAttempt runs its statements outside any transaction: Find, then one
 \* Finish update guarded by status = 'pending'. Finish runs on a detached
@@ -32,6 +36,10 @@
 \* that returns nil after its deadline is retried. ReconcileFailures is one
 \* update: its jobs subqueries read the statement's snapshot, and the emails
 \* row is rechecked for status = 'pending' when the update locks it.
+\* Leaving clocks out lets a stale Finish land at any time. In the code it lands
+\* after the lease lapsed only with clock skew, a starved renew loop or a commit
+\* that outlives its cancelled client; a replay inserted after reconciliation's
+\* snapshot needs none of these.
 \* SendAttempt and ReconcileFailures share the hold rule, fixed per tenant and
 \* sender, so both values are checked. Retention deletes rows only after days
 \* and is not modelled; nor are error texts.
@@ -50,7 +58,7 @@ VARIABLES
     email,     \* emails.status
     delivered, \* messages the provider accepted
     hold,      \* the hold rule: a non-production tenant or no sender
-    lostSent,  \* a Finish(sent) after delivery found the email already failed or held
+    lostSent,  \* a Finish(sent) after delivery found the email already failed
     state,     \* jobs.state, "absent" for an unused replay slot and "removed" after cleanup
     attempts,  \* jobs.attempts
     token,     \* jobs.claim_token as the attempt that set it, None when not running
@@ -211,7 +219,7 @@ FinishTo(w, from, status, next) ==
 
 FinishSent(w) ==
     /\ FinishTo(w, "finishSent", "sent", "ok")
-    /\ lostSent' = (lostSent \/ email \in {"failed", "held"})
+    /\ lostSent' = (lostSent \/ email = "failed")
 
 FinishFailed(w) == FinishTo(w, "finishFailed", "failed", "err") /\ UNCHANGED lostSent
 

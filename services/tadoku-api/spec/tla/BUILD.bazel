@@ -67,7 +67,8 @@ tlc_test(
     tags = ["manual"],
 )
 
-# Known gap: a delivery's Finish(sent) is lost when the email was already settled failed.
+# Known gap: a delivery's Finish(sent) is lost when the email was already settled failed,
+# by a replay inserted after reconciliation's snapshot or by a run whose lease lapsed.
 tlc_test(
     name = "emaildelivery_lost_test",
     config = "EmailDelivery_lost.cfg",

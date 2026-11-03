@@ -270,7 +270,7 @@ jobs:
         run: bazel run --lockfile_mode=error --config=release //:load_images
 
       - name: Install Trivy
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && runner.environment == 'github-hosted'
         uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
         with:
           version: v0.72.0
@@ -285,6 +285,7 @@ jobs:
             ghcr.io/tadoku/tadoku/tadoku-api-migrations:latest
             ghcr.io/tadoku/tadoku/token-reflector:latest
         run: |
+          trivy --version | grep -F -x 'Version: 0.72.0'
           scan_status=0
           while read -r image; do
             [[ -z "${image}" ]] && continue

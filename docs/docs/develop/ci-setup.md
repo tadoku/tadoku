@@ -72,9 +72,11 @@ uncached: every run checks the real workspace, including changed Go and BUILD
 files. Its workspace anchor is the exported root policy file. This avoids a
 separate Bazel invocation and repeats no analysis solely to run Gazelle.
 
-Normal builds allow three local test jobs within the existing three-action,
-2 GiB action-memory budget and runner limits. Race execution keeps its separate
-profile. The performance artifact also retains runner cgroup limits, peaks and
+Normal builds allow three local test jobs within the existing three-action limit.
+The wrapper supplies `--local_resources=memory=HOST_RAM*0.25` unless the invocation
+explicitly overrides it. This command-line default takes precedence over Bazel RC
+settings; container resource limits are enforced separately. Race execution keeps
+its separate profile. The performance artifact also retains runner cgroup limits, peaks and
 events plus each disposable service's cgroup peak/events. Missing counters or
 unavailable services remain visible in these diagnostic files. These snapshots
 include setup and the complete normal build/test phase; they do not replace a

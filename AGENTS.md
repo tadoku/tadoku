@@ -97,7 +97,7 @@ files in an area, read its page; those rules are as binding as this file.
 | webv2, admin or the `ui` package | `docs/docs/frontend/conventions.md` |
 | A frontend call to Tadoku API or `frontend/packages/api-client` | `docs/docs/frontend/api-client.md` |
 | A Paper application or `paper-ui` | `docs/docs/frontend/paper-composition.md` |
-| Build tooling, code generation or CI | `docs/docs/develop/toolchain.md` |
+| Build tooling, code generation or CI | `docs/docs/develop/toolchain.md`, and `docs/docs/develop/ci-workflows.md` for CI |
 | Running your branch on the development cluster | `docs/docs/develop/environment.md` |
 | Deploying a branch to production | `docs/docs/develop/production-branches.md` |
 | Using dev-cli for live branch edits | `.agents/skills/dev-cli/SKILL.md` |

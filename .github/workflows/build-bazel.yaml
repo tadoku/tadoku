@@ -150,8 +150,8 @@ jobs:
           common --remote_timeout=5s
           common --remote_retries=1
           common --remote_upload_local_results=$UPLOAD_RESULTS
-          build --jobs=3
-          test --local_test_jobs=3
+          build --jobs=4
+          test --local_test_jobs=4
           test --remote_download_outputs=minimal
           test --remote_download_regex=.*test[.](xml|log)$
           build --local_resources=memory=2048

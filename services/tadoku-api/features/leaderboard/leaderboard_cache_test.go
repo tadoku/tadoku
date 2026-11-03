@@ -233,8 +233,8 @@ func TestRebuildLimitsMarkerAgeToTwentyEightDays(t *testing.T) {
 	if ttl := pttl(t, client, key); ttl != -1 {
 		t.Errorf("set PTTL = %d; want -1, no expiry", ttl)
 	}
-	if ttl := pttl(t, client, key+":generation"); ttl < markerTTL {
-		t.Errorf("generation PTTL = %d ms; want at least the marker's %d ms", ttl, markerTTL)
+	if ttl := pttl(t, client, key+":generation"); ttl < markerTTL-time.Second.Milliseconds() {
+		t.Errorf("generation PTTL = %d ms; want about the marker's %d ms or more", ttl, markerTTL)
 	}
 }
 

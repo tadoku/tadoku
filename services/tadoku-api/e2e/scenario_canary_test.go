@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
@@ -64,9 +65,12 @@ func TestScenarioTeardownPreservesActiveScenario(t *testing.T) {
 func TestScenarioSeedIsConfinedToItsTenant(t *testing.T) {
 	active := newScenario(t, "identity-b")
 	populateScenario(t, active, "identity-b")
-	activeBefore := scenarioState(t, active.tenant(t, "identity-b"))
-	productionBefore := tenantRows(t, tenant.Production(), "accounts") +
-		tenantRows(t, tenant.Production(), "permission_relationships")
+	activeKey := active.tenant(t, "identity-b")
+	if err := scenarioLifecycle().SetOverride(t.Context(), activeKey, jobqueue.WorkerComponent); err != nil {
+		t.Fatal(err)
+	}
+	activeBefore := scenarioState(t, activeKey)
+	sharedBefore := sharedSeedTargets(t)
 
 	confined := newScenario(t, "identity-a")
 	confined.seed(t, "identity-a", tenantSeed{finalize: []string{"testdata/ScenarioIsolation/unscoped_delete.sql"}})
@@ -74,16 +78,48 @@ func TestScenarioSeedIsConfinedToItsTenant(t *testing.T) {
 	if rows := tenantRows(t, confined.tenant(t, "identity-a").Key(), "accounts"); rows != "[]" {
 		t.Errorf("unscoped delete left the seeding tenant's accounts: %s", rows)
 	}
-	if after := scenarioState(t, active.tenant(t, "identity-b")); !maps.Equal(activeBefore, after) {
-		t.Errorf("another scenario's seed changed %s: before=%v after=%v",
-			active.tenant(t, "identity-b"), activeBefore, after)
+	for _, file := range []string{
+		"delete_tenants.sql",
+		"update_overrides.sql",
+		"write_shared.sql",
+		"insert_tenant.sql",
+		"write_migrations.sql",
+	} {
+		t.Run(strings.TrimSuffix(file, ".sql"), func(t *testing.T) {
+			failures := runAborted(t, func(test *abortedTest) {
+				s := newScenario(test, "identity-a")
+				s.seed(test, "identity-a", tenantSeed{setup: []string{"testdata/ScenarioIsolation/" + file}})
+			}, func() {})
+
+			if len(failures) != 1 || !strings.Contains(failures[0], "permission denied") {
+				t.Errorf("failures=%q, want the seed refused with permission denied", failures)
+			}
+		})
 	}
-	productionAfter := tenantRows(t, tenant.Production(), "accounts") +
-		tenantRows(t, tenant.Production(), "permission_relationships")
-	if productionAfter != productionBefore {
-		t.Errorf("scenario seed changed canonical rows: before=%s after=%s", productionBefore, productionAfter)
+
+	if after := scenarioState(t, activeKey); !maps.Equal(activeBefore, after) {
+		t.Errorf("another scenario's seed changed %s: before=%v after=%v", activeKey, activeBefore, after)
+	}
+	if after := sharedSeedTargets(t); after != sharedBefore {
+		t.Errorf("scenario seeds changed shared state: before=%s after=%s", sharedBefore, after)
 	}
 	requireScenarioReadable(t, active, "identity-b")
+}
+
+// sharedSeedTargets snapshots the canonical rows, test tenant registry and shared reference rows that the confinement
+// canary's seeds try to change.
+func sharedSeedTargets(t *testing.T) string {
+	t.Helper()
+	var shared string
+	err := api.db.Pool.QueryRow(t.Context(), `select jsonb_build_array(
+		(select jsonb_agg(key order by key) from tenants where key not like 'e2e/identity-a-%'),
+		(select jsonb_agg(to_jsonb(language) order by code) from languages language)
+	)::text`).Scan(&shared)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return shared + tenantRows(t, tenant.Production(), "accounts") +
+		tenantRows(t, tenant.Production(), "permission_relationships")
 }
 
 func TestScenarioWorkerClaimsOnlyItsTenant(t *testing.T) {
@@ -168,6 +204,14 @@ func TestScenarioCleanupAfterAbortedSetup(t *testing.T) {
 				s.seed(test, "primary", tenantSeed{setup: []string{"testdata/ScenarioIsolation/foreign_tenant.sql"}})
 			},
 			wantFailure: "row-level security",
+		},
+		{
+			name: "seed_widens_its_binding",
+			body: func(test *abortedTest) {
+				s := newScenario(test, "primary")
+				s.seed(test, "primary", tenantSeed{setup: []string{"testdata/ScenarioIsolation/widen_binding.sql"}})
+			},
+			wantFailure: "changed its tenant binding",
 		},
 	}
 	for _, test := range cases {

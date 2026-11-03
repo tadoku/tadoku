@@ -171,24 +171,9 @@ func provisionScenarioTenant(
 	if err := lifecycle.Provision(ctx, key, features); err != nil {
 		return err
 	}
-	return inScenarioTenant(ctx, key, func(tx pgx.Tx) error {
+	return api.db.SeedTenant(ctx, key, func(ctx context.Context, tx pgx.Tx) error {
 		_, err := tx.Exec(ctx, "delete from pages_content; delete from pages")
 		return err
-	})
-}
-
-// inScenarioTenant runs work in an owner-pool transaction bound to key that has switched to the restricted application
-// role, so row-level security confines every statement to key's rows and refuses shared-table writes.
-func inScenarioTenant(ctx context.Context, key tenant.TestKey, work func(pgx.Tx) error) error {
-	applicationRole := pgx.Identifier{api.db.AppPool.Config().ConnConfig.User}.Sanitize()
-	return pgx.BeginFunc(ctx, api.db.Pool, func(tx pgx.Tx) error {
-		if _, err := tx.Exec(ctx, "select set_config('tadoku.tenant', $1, true)", key.String()); err != nil {
-			return err
-		}
-		if _, err := tx.Exec(ctx, "set local role "+applicationRole); err != nil {
-			return err
-		}
-		return work(tx)
 	})
 }
 
@@ -248,7 +233,7 @@ func (s *scenario) seed(t testing.TB, role string, files tenantSeed) {
 		}
 	}
 
-	err := inScenarioTenant(t.Context(), key, func(tx pgx.Tx) error {
+	err := api.db.SeedTenant(t.Context(), key, func(ctx context.Context, tx pgx.Tx) error {
 		for _, path := range sqlFiles {
 			contents, err := os.ReadFile(path)
 			if errors.Is(err, os.ErrNotExist) {
@@ -257,11 +242,11 @@ func (s *scenario) seed(t testing.TB, role string, files tenantSeed) {
 			if err != nil {
 				return err
 			}
-			if _, err := tx.Exec(t.Context(), string(contents)); err != nil {
+			if _, err := tx.Exec(ctx, string(contents)); err != nil {
 				return fmt.Errorf("execute seed %s: %w", path, err)
 			}
 		}
-		return tx.SendBatch(t.Context(), batch).Close()
+		return tx.SendBatch(ctx, batch).Close()
 	})
 	if err != nil {
 		t.Fatalf("seed scenario tenant %s: %v", key, err)

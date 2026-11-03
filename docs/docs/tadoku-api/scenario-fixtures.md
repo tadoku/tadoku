@@ -24,11 +24,16 @@ cases still use `reset`; a scenario never calls it.
   a Flipt namespace from `k8s/dev/base/flipt/features.yaml`.
 - `seed(t, role, tenantSeed{...})` runs the role's `setup` SQL,
   `testdata/tenant_accounts.sql` and its `finalize` SQL, then inserts its
-  `relationships` rows, in one transaction bound to the role's tenant that has
-  switched to the restricted application role. Row-level security confines
-  every statement, including an unscoped `update` or `delete`, to that tenant
-  and refuses writes to another tenant or a shared table. Scenario relationship
-  rows omit `tenant`; the role supplies it.
+  `relationships` rows, in one transaction through
+  `testpostgres.Database.SeedTenant`. Its login holds DML only on tables whose
+  every row-level security policy binds `tenant` to `tadoku.tenant`, and on
+  their sequences. Row-level security confines every statement, including an
+  unscoped `update` or `delete`, to the role's tenant. Writes to the tenant
+  registry, tenant overrides, shared reference tables such as `languages` and
+  migration metadata fail with `permission denied`, so a seed cannot register
+  tenants or read shared reference rows. A seed that leaves its transaction
+  bound to another tenant or to all tenants fails. Scenario relationship rows
+  omit `tenant`; the role supplies it.
 - `serve(t, role, member, request)` runs the request through the production
   router with a freshly signed token for that cast member and tenant. Tokens
   carry the checked-in cast's subjects, traits and timing relative to

@@ -147,20 +147,25 @@ func TestIdentityGeneratedRecoveryJourney(t *testing.T) {
 }
 
 func TestIdentityRecoverySettingsLocationBounds(t *testing.T) {
-	settings := "https://identity-a-0123abcd.account.tadoku.dev.lab/?edit=password"
+	t.Parallel()
+	first := newIdentityScenario(t)
 	prefix := "https://tadoku.dev.lab/?q="
-	boundary := prefix + strings.Repeat("a", 2048-len(settings+"&return_to=")-len(url.QueryEscape(prefix)))
+	limit := 2048 - len(recoveryLocation(t, first, "identity-a")+"&return_to=") - len(url.QueryEscape(prefix))
+	boundary := prefix + strings.Repeat("a", limit)
 	fitsWithoutEditor := boundary + strings.Repeat("a", len("edit=password&"))
-	for _, destination := range []string{"", "https://admin.tadoku.app/users?a=1&b=2#here", boundary} {
-		resetIdentity(t)
-		token := seedRecoveryToken(t, 'a', fixtureInstant.Add(time.Hour), nil)
+	for i, destination := range []string{"", "https://admin.tadoku.app/users?a=1&b=2#here", boundary} {
+		s := first
+		if i > 0 {
+			s = newIdentityScenario(t)
+		}
+		token := seedRecoveryTokenIn(t, s, "identity-a", 'a', fixtureInstant.Add(time.Hour), nil)
 		path := "/identity/recovery/" + token
 		if destination != "" {
 			path += "?return_to=" + url.QueryEscape(destination)
 		}
-		response := identityRequest(t, api.handler, identityBranchA, "GET", path, "", "", nil)
+		response := guestIdentityRequest(t, s, "identity-a", "GET", path, "", "", nil)
 		requireIdentityStatus(t, response, http.StatusSeeOther)
-		want := settings
+		want := recoveryLocation(t, s, "identity-a")
 		if destination != "" {
 			want += "&return_to=" + url.QueryEscape(destination)
 		}
@@ -176,26 +181,26 @@ func TestIdentityRecoverySettingsLocationBounds(t *testing.T) {
 		"https://evil.test/",
 		"https://foreign.example/",
 	} {
-		resetIdentity(t)
-		token := seedRecoveryToken(t, 'a', fixtureInstant.Add(time.Hour), nil)
+		s := newIdentityScenario(t)
+		token := seedRecoveryTokenIn(t, s, "identity-a", 'a', fixtureInstant.Add(time.Hour), nil)
 		for _, email := range []string{"reader@example.test", "unknown@example.test"} {
 			body, _ := json.Marshal(map[string]string{"email": email, "return_to": destination})
-			response := identityRequest(
-				t, api.handler, identityBranchA, "POST", "/identity/recovery", string(body), "", nil,
-			)
+			response := guestIdentityRequest(t, s, "identity-a", "POST", "/identity/recovery", string(body), "", nil)
 			if response.Code != http.StatusBadRequest ||
 				!strings.Contains(response.Body.String(), `"code":"invalid_return_to"`) {
 				t.Fatalf("%d-byte return_to: status=%d body=%s, want 400 invalid_return_to",
 					len(destination), response.Code, response.Body)
 			}
 		}
-		response := identityRequest(t, api.handler, identityBranchA, "GET",
+		response := guestIdentityRequest(t, s, "identity-a", "GET",
 			"/identity/recovery/"+token+"?return_to="+url.QueryEscape(destination), "", "", nil)
 		requireIdentityStatus(t, response, http.StatusBadRequest)
-		response = identityRequest(t, api.handler, identityBranchA, "GET", "/identity/recovery/"+token, "", "", nil)
+		response = guestIdentityRequest(t, s, "identity-a", "GET", "/identity/recovery/"+token, "", "", nil)
 		requireIdentityStatus(t, response, http.StatusSeeOther)
 	}
-	response := identityRequest(t, api.handler, identityBranchB, "GET",
-		"/identity/recovery/"+seedRecoveryToken(t, 'b', fixtureInstant.Add(time.Hour), nil), "", "", nil)
+
+	s := newPairedIdentityScenario(t)
+	token := seedRecoveryTokenIn(t, s, "identity-a", 'b', fixtureInstant.Add(time.Hour), nil)
+	response := guestIdentityRequest(t, s, "identity-b", "GET", "/identity/recovery/"+token, "", "", nil)
 	requireIdentityStatus(t, response, http.StatusBadRequest)
 }

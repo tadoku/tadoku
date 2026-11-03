@@ -89,7 +89,7 @@ func TestIdentityStoredAccountEmailResponses(t *testing.T) {
 				t.Errorf("login stored %d sessions, want 1", sessions)
 			}
 
-			cookie := insertStoredSession(t)
+			cookie := insertStoredSession(t, "tadoku/prod")
 			session := identityRequest(t, api.handler, "tadoku/prod", "GET", "/identity/session", "", cookie, nil)
 			checkStoredAccount(t, "session", session, tc.wire, "Stored Reader")
 			checkStoredCallback(t, cookie, tc.wire)
@@ -102,7 +102,7 @@ func TestIdentityStoredAccountEmailResponses(t *testing.T) {
 			profile := identityRequest(t, api.handler, "tadoku/prod", "PATCH", "/identity/settings/profile",
 				`{"display_name":"Renamed Reader"}`, cookie, nil)
 			checkStoredAccount(t, "profile", profile, tc.wire, "Renamed Reader")
-			checkStoredRow(t, tc, "Renamed Reader")
+			checkStoredRow(t, "tadoku/prod", tc, "Renamed Reader")
 		})
 	}
 }
@@ -111,24 +111,41 @@ func seedStoredAccount(t *testing.T, tc storedEmailCase) {
 	t.Helper()
 
 	resetIdentity(t)
+	insertStoredAccount(t, "tadoku/prod", tc)
+}
+
+// newStoredScenario provisions a tenant per role, each with the account cast, stores the account in the first role's
+// tenant and returns that tenant's key.
+func newStoredScenario(t *testing.T, tc storedEmailCase, roles ...string) (*scenario, string) {
+	t.Helper()
+
+	s := newScenario(t, roles...)
+	for _, role := range roles {
+		s.seed(t, role, tenantSeed{})
+	}
+	tenantKey := s.tenant(t, roles[0]).String()
+	insertStoredAccount(t, tenantKey, tc)
+	return s, tenantKey
+}
+
+func insertStoredAccount(t *testing.T, tenantKey string, tc storedEmailCase) {
+	t.Helper()
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(storedPassword), bcrypt.MinCost)
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = api.db.Pool.Exec(t.Context(), `with stored_user as (
+	writeTenantRows(t, tenantKey, `with stored_user as (
 		insert into users (tenant, id, display_name)
-		values ('tadoku/prod', $1, 'Stored Reader')
+		values ($6, $1, 'Stored Reader')
 		returning tenant, id
 	)
 	insert into accounts (tenant, user_id, email, email_normalized, password_hash, created_at)
 	select tenant, id, $2, $3, $4, $5
-	from stored_user`, storedAccountID, tc.stored, tc.login, string(hash), storedCreatedAt)
-	if err != nil {
-		t.Fatal(err)
-	}
+	from stored_user`, storedAccountID, tc.stored, tc.login, string(hash), storedCreatedAt, tenantKey)
 }
 
-func checkStoredRow(t *testing.T, tc storedEmailCase, displayName string) {
+func checkStoredRow(t *testing.T, tenantKey string, tc storedEmailCase, displayName string) {
 	t.Helper()
 
 	var email, normalized, hash, name string
@@ -137,7 +154,7 @@ func checkStoredRow(t *testing.T, tc storedEmailCase, displayName string) {
 		u.display_name
 		from accounts a
 		join users u on u.tenant = a.tenant and u.id = a.user_id
-		where a.tenant = 'tadoku/prod' and a.user_id = $1`, storedAccountID,
+		where a.tenant = $1 and a.user_id = $2`, tenantKey, storedAccountID,
 	).Scan(&email, &normalized, &hash, &created, &name)
 	if err != nil {
 		t.Fatal(err)
@@ -231,19 +248,21 @@ func checkStoredCallback(t *testing.T, cookie, wire string) {
 	}
 }
 
-func insertStoredSession(t *testing.T) string {
+func insertStoredSession(t *testing.T, tenantKey string) string {
 	t.Helper()
 
 	value := base64.RawURLEncoding.EncodeToString(bytes.Repeat([]byte{0x5a}, 32))
 	digest := sha256.Sum256([]byte(value))
-	_, err := api.db.Pool.Exec(t.Context(), `insert into sessions
+	writeTenantRows(t, tenantKey, `insert into sessions
 		(tenant, token_hash, user_id, authenticated_at, expires_at, created_at)
-		values ('tadoku/prod', $1, $2, $3, $3::timestamptz + interval '1 day', $3)`,
-		hex.EncodeToString(digest[:]), storedAccountID, fixtureInstant)
-	if err != nil {
-		t.Fatal(err)
+		values ($4, $1, $2, $3, $3::timestamptz + interval '1 day', $3)`,
+		hex.EncodeToString(digest[:]), storedAccountID, fixtureInstant, tenantKey)
+
+	name := "tadoku_session"
+	if tenantKey != "tadoku/prod" {
+		name += "_" + strings.ReplaceAll(tenantKey, "/", "_")
 	}
-	return "tadoku_session=" + value
+	return name + "=" + value
 }
 
 func storedSessions(t *testing.T) int {

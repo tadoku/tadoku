@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"reflect"
 	"strings"
 	"sync"
@@ -116,9 +115,9 @@ func requireRecoveryWrites(t *testing.T, tenantKey string, want int) {
 	}
 }
 
-func seedSecondRecoveryAccount(t *testing.T) {
+func seedSecondRecoveryAccount(t *testing.T, tenantKey string) {
 	t.Helper()
-	_, err := api.db.Pool.Exec(t.Context(), `with reader as (
+	writeTenantRows(t, tenantKey, `with reader as (
 			select password_hash from accounts where tenant = $1 and email_normalized = 'reader@example.test'
 		), created as (
 			insert into users (tenant, id, display_name, created_at, updated_at)
@@ -129,16 +128,15 @@ func seedSecondRecoveryAccount(t *testing.T) {
 		select created.tenant, created.id, 'second@example.test', 'second@example.test',
 			reader.password_hash, created.created_at, created.created_at
 		from created cross join reader`,
-		identityBranchA,
+		tenantKey,
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
 }
 
 func TestIdentityRecoveryRecipientSuppression(t *testing.T) {
-	resetIdentity(t)
-	seedSecondRecoveryAccount(t)
+	t.Parallel()
+	s := newPairedIdentityScenario(t)
+	tenantA, tenantB := s.tenant(t, "identity-a").String(), s.tenant(t, "identity-b").String()
+	seedSecondRecoveryAccount(t, tenantA)
 	variants := []string{"reader@example.test", "READER@example.test", "Reader@Example.Test", "reader@EXAMPLE.TEST"}
 	peers := []struct{ peer, forwarded string }{
 		{"198.51.100.30", ""},
@@ -149,47 +147,49 @@ func TestIdentityRecoveryRecipientSuppression(t *testing.T) {
 
 	var known http.Header
 	for i := 0; i <= recoveryRecipientBudget; i++ {
-		response := recoverFrom(t, api.handler, identityBranchA, variants[i], peers[i].peer, peers[i].forwarded)
+		response := recoverFromRole(t, s, "identity-a", variants[i], peers[i].peer, peers[i].forwarded)
 		known = requireRecoveryAccepted(t, response)
 	}
-	requireRecoveryWrites(t, identityBranchA, recoveryRecipientBudget)
+	requireRecoveryWrites(t, tenantA, recoveryRecipientBudget)
 
 	for i := 0; i <= recoveryRecipientBudget; i++ {
 		email := "nobody" + strings.TrimPrefix(strings.ToLower(variants[i]), "reader")
 		unknown := requireRecoveryAccepted(t,
-			recoverFrom(t, api.handler, identityBranchA, email, peers[i].peer, peers[i].forwarded))
+			recoverFromRole(t, s, "identity-a", email, peers[i].peer, peers[i].forwarded))
 		if !reflect.DeepEqual(unknown, known) {
 			t.Fatalf("unknown recovery headers %v differ from suppressed known headers %v", unknown, known)
 		}
 	}
-	requireRecoveryWrites(t, identityBranchA, recoveryRecipientBudget)
+	requireRecoveryWrites(t, tenantA, recoveryRecipientBudget)
 
-	requireRecoveryAccepted(t, recoverFrom(t, api.handler, identityBranchA, "second@example.test", "198.51.100.30", ""))
-	requireRecoveryWrites(t, identityBranchA, recoveryRecipientBudget+1)
+	requireRecoveryAccepted(t, recoverFromRole(t, s, "identity-a", "second@example.test", "198.51.100.30", ""))
+	requireRecoveryWrites(t, tenantA, recoveryRecipientBudget+1)
 
-	requireRecoveryAccepted(t, recoverFrom(t, api.handler, identityBranchB, "READER@example.test", "198.51.100.30", ""))
-	requireRecoveryWrites(t, identityBranchB, 1)
+	requireRecoveryAccepted(t, recoverFromRole(t, s, "identity-b", "READER@example.test", "198.51.100.30", ""))
+	requireRecoveryWrites(t, tenantB, 1)
 }
 
 func TestIdentityRecoveryClientBudget(t *testing.T) {
-	resetIdentity(t)
+	t.Parallel()
+	s := newPairedIdentityScenario(t)
+	tenantA, tenantB := s.tenant(t, "identity-a").String(), s.tenant(t, "identity-b").String()
 	const peer = "198.51.100.40"
 	for _, body := range []string{
 		`{"email":"not-an-address","return_to":"https://account.tadoku.dev.lab/"}`,
 		`{"email":"reader@example.test","return_to":"https://evil.example/"}`,
 		`{"email":"reader@example.test","return_to":"https://account.tadoku.dev.lab/` + strings.Repeat("a", 2040) + `"}`,
 	} {
-		response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/recovery", body, "",
-			func(r *http.Request) { r.RemoteAddr = peer + ":12345" })
+		response := guestIdentityRequest(t, s, "identity-a", "POST", "/identity/recovery", body, "",
+			fromPeer(peer, ""))
 		requireIdentityStatus(t, response, http.StatusBadRequest)
 	}
 
 	for i := 0; i < recoveryClientBudget-1; i++ {
 		requireRecoveryAccepted(t,
-			recoverFrom(t, api.handler, identityBranchA, fmt.Sprintf("budget%d@example.test", i), peer, ""))
+			recoverFromRole(t, s, "identity-a", fmt.Sprintf("budget%d@example.test", i), peer, ""))
 	}
-	requireRecoveryAccepted(t, recoverFrom(t, api.handler, identityBranchA, "reader@example.test", peer, ""))
-	requireRecoveryWrites(t, identityBranchA, 1)
+	requireRecoveryAccepted(t, recoverFromRole(t, s, "identity-a", "reader@example.test", peer, ""))
+	requireRecoveryWrites(t, tenantA, 1)
 
 	for _, attempt := range []struct{ email, peer, forwarded string }{
 		{"reader@example.test", peer, ""},
@@ -197,63 +197,53 @@ func TestIdentityRecoveryClientBudget(t *testing.T) {
 		{"reader@example.test", peer, "198.51.100.77"},
 		{"reader@example.test", "10.42.0.9", peer},
 	} {
-		response := recoverFrom(t, api.handler, identityBranchA, attempt.email, attempt.peer, attempt.forwarded)
+		response := recoverFromRole(t, s, "identity-a", attempt.email, attempt.peer, attempt.forwarded)
 		requireRecoveryRejected(t, response, http.StatusTooManyRequests, "throttled")
 	}
-	requireRecoveryWrites(t, identityBranchA, 1)
+	requireRecoveryWrites(t, tenantA, 1)
 
-	requireRecoveryAccepted(t, recoverFrom(t, api.handler, identityBranchA, "reader@example.test", "203.0.113.41", ""))
+	requireRecoveryAccepted(t, recoverFromRole(t, s, "identity-a", "reader@example.test", "203.0.113.41", ""))
 	requireRecoveryAccepted(t,
-		recoverFrom(t, api.handler, identityBranchA, "reader@example.test", "10.42.0.9", "198.51.100.42"))
-	requireRecoveryWrites(t, identityBranchA, 3)
-	requireRecoveryAccepted(t, recoverFrom(t, api.handler, identityBranchB, "reader@example.test", peer, ""))
-	requireRecoveryWrites(t, identityBranchB, 1)
+		recoverFromRole(t, s, "identity-a", "reader@example.test", "10.42.0.9", "198.51.100.42"))
+	requireRecoveryWrites(t, tenantA, 3)
+	requireRecoveryAccepted(t, recoverFromRole(t, s, "identity-b", "reader@example.test", peer, ""))
+	requireRecoveryWrites(t, tenantB, 1)
 
-	response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/login",
-		`{"email":"reader@example.test","password":"Fixture-login-482!"}`, "",
-		func(r *http.Request) { r.RemoteAddr = peer + ":12345" })
+	response := guestIdentityRequest(t, s, "identity-a", "POST", "/identity/login",
+		`{"email":"reader@example.test","password":"Fixture-login-482!"}`, "", fromPeer(peer, ""))
 	requireIdentityStatus(t, response, http.StatusOK)
-	requireIdentityStatus(t,
-		registerFrom(t, api.handler, identityBranchA, "registered@example.test", peer, ""), http.StatusCreated)
+	response = guestIdentityRequest(t, s, "identity-a", "POST", "/identity/registration",
+		`{"email":"registered@example.test","display_name":"Budget Reader","password":"Independent-653!"}`, "",
+		fromPeer(peer, ""))
+	requireIdentityStatus(t, response, http.StatusCreated)
 }
 
 func TestIdentityRecoveryAdmissionConcurrency(t *testing.T) {
-	resetIdentity(t)
-	contents, err := os.ReadFile("testdata/IdentityV2/tokens.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	var tokens map[string]string
-	if err := json.Unmarshal(contents, &tokens); err != nil {
-		t.Fatal(err)
-	}
+	t.Parallel()
+	s := newIdentityScenario(t)
 	const attempts = 8
 
 	responses := make([]*httptest.ResponseRecorder, attempts)
-	atFixtureInstant(func() {
-		var group sync.WaitGroup
-		start := make(chan struct{})
-		for i := range responses {
-			body := fmt.Sprintf(`{"email":"reader@example.test","return_to":%q}`, recoverySettingsURL)
-			request := httptest.NewRequest("POST", "https://tadoku.dev.lab/identity/recovery", strings.NewReader(body))
-			request.Header.Set("Authorization", "Bearer "+tokens[identityBranchA])
-			request.Header.Set("Content-Type", "application/json")
-			request.Header.Set("Origin", "https://tadoku.dev.lab")
-			request.RemoteAddr = fmt.Sprintf("198.51.100.%d:12345", 50+i)
-			responses[i] = httptest.NewRecorder()
-			group.Go(func() {
-				<-start
-				api.handler.ServeHTTP(responses[i], request)
-			})
-		}
-		close(start)
-		group.Wait()
-	})
+	var group sync.WaitGroup
+	start := make(chan struct{})
+	for i := range responses {
+		body := fmt.Sprintf(`{"email":"reader@example.test","return_to":%q}`, recoverySettingsURL)
+		request := httptest.NewRequest("POST", "https://tadoku.dev.lab/identity/recovery", strings.NewReader(body))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set("Origin", "https://tadoku.dev.lab")
+		request.RemoteAddr = fmt.Sprintf("198.51.100.%d:12345", 50+i)
+		group.Go(func() {
+			<-start
+			responses[i] = s.serve(t, "identity-a", guest, request)
+		})
+	}
+	close(start)
+	group.Wait()
 
 	for _, response := range responses {
 		requireRecoveryAccepted(t, response)
 	}
-	requireRecoveryWrites(t, identityBranchA, recoveryRecipientBudget)
+	requireRecoveryWrites(t, s.tenant(t, "identity-a").String(), recoveryRecipientBudget)
 }
 
 func identityThrottleKeys(t *testing.T, tenantKey, operation string) map[string]int64 {

@@ -122,7 +122,9 @@ one E2E process while retaining the complete suite. Overall test-target
 concurrency still needs a runner-appropriate limit.
 
 Use native Bazel `shard_count` to select top-level tests; do not add an
-application test selector or parallelize cases that share fixture state.
+application test selector. Within a process, only scenario tests that meet the
+[parallel scenario](./scenario-fixtures.md#parallel-scenarios) rules call
+`t.Parallel`, at most two at a time; cases that share fixture state stay serial.
 `--test_sharding_strategy=disabled` runs the same target in one process for
 comparison. Keep `--nocache_test_results` on measured runs.
 

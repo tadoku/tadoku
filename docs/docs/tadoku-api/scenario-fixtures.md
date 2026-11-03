@@ -26,14 +26,19 @@ cases still use `reset`; a scenario never calls it.
   `testdata/tenant_accounts.sql` and its `finalize` SQL, then inserts its
   `relationships` rows, in one transaction through
   `testpostgres.Database.SeedTenant`. Its login holds DML only on tables whose
-  every row-level security policy binds `tenant` to `tadoku.tenant`, and on
-  their sequences. Row-level security confines every statement, including an
-  unscoped `update` or `delete`, to the role's tenant. Writes to the tenant
-  registry, tenant overrides, shared reference tables such as `languages` and
+  every row-level security policy is exactly the `tadoku.tenant` binding, and
+  on their sequences. Row-level security confines every statement, including
+  an unscoped `update` or `delete`, to the role's tenant. Writes to the tenant
+  registry, tenant overrides, `jobs` (whose policy also honours
+  `tadoku.all_tenants`), shared reference tables such as `languages` and
   migration metadata fail with `permission denied`, so a seed cannot register
-  tenants or read shared reference rows. A seed that leaves its transaction
-  bound to another tenant or to all tenants fails. Scenario relationship rows
+  tenants, seed jobs or read shared reference rows. Scenario relationship rows
   omit `tenant`; the role supplies it.
+- A scenario seed file must not change session state: the fixture refuses a
+  file containing `set_config(`, a `set` or `reset` statement, or a reference
+  to `tadoku.tenant` or `tadoku.all_tenants`, outside comments, and names the
+  file. Rows take their tenant from the column defaults. `SeedTenant` also
+  fails if the transaction ends bound to another tenant or to all tenants.
 - `serve(t, role, member, request)` runs the request through the production
   router with a freshly signed token for that cast member and tenant. Tokens
   carry the checked-in cast's subjects, traits and timing relative to

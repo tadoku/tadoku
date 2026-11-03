@@ -78,11 +78,12 @@ Never point tests at shared development or production services.
 
   `SeedTenant` runs a fixture transaction bound to one test tenant through a
   second per-database login, capped at two connections. The login holds DML
-  only on tables whose every row-level security policy binds `tenant` to
-  `tadoku.tenant`, derived from the catalog, plus their sequences. It has
-  nothing on the tenant registry, overrides, shared reference tables or
-  migration metadata, and the same pool shutdown, role cleanup and
-  partial-setup handling.
+  only on tables whose every row-level security policy is exactly the
+  `tadoku.tenant` binding, derived from the catalog, plus their sequences. It
+  has nothing on the tenant registry, overrides, `jobs`, shared reference
+  tables or migration metadata, and the same pool shutdown, role cleanup and
+  partial-setup handling. It fails if the transaction ends bound to another
+  tenant or to all tenants.
 - **PgBouncer:** PostgreSQL transport tests require
   `TADOKU_TEST_PGBOUNCER_URL` with the same loopback, synthetic credential and
   database guard. Run PgBouncer 1.25.2 in transaction mode, with a wildcard

@@ -11,8 +11,9 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
-// Test safety: the seeding login gets DML only on tables whose every policy binds both reads and writes to
-// tadoku.tenant, which excludes the registry, overrides and shared reference tables.
+// Test safety: the seeding login gets DML only on tables whose every policy is exactly the tadoku.tenant binding,
+// which excludes the registry, overrides, shared reference tables and jobs, whose policy also honours
+// tadoku.all_tenants.
 const tenantScopedTablesSQL = `select c.oid::regclass::text
 	from pg_class c
 	join pg_namespace n on n.oid = c.relnamespace
@@ -22,8 +23,8 @@ const tenantScopedTablesSQL = `select c.oid::regclass::text
 		and c.relrowsecurity
 	group by c.oid
 	having bool_and(
-		coalesce(pg_get_expr(p.polqual, p.polrelid), '') like '%tenant = current_setting(''tadoku.tenant''::text%'
-		and coalesce(pg_get_expr(p.polwithcheck, p.polrelid), '') like '%tenant = current_setting(''tadoku.tenant''::text%'
+		pg_get_expr(p.polqual, p.polrelid) = '(tenant = current_setting(''tadoku.tenant''::text))'
+		and pg_get_expr(p.polwithcheck, p.polrelid) = '(tenant = current_setting(''tadoku.tenant''::text))'
 	)
 	order by 1`
 

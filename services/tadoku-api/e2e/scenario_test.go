@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"regexp"
 	"slices"
 	"sync"
 	"testing"
@@ -59,6 +60,12 @@ type tenantSeed struct {
 }
 
 const scenarioTeardownTimeout = 30 * time.Second
+
+// Test safety: scenario seeds may not change session state or name the tenant bindings, so a seed cannot widen or
+// switch its tenant even if it restores the binding before it ends.
+var sessionStatePattern = regexp.MustCompile(`(?i)set_config\s*\(|tadoku\.(tenant|all_tenants)|(^|;)\s*(set|reset)\b`)
+
+var sqlComments = regexp.MustCompile(`(?s)--[^\n]*|/\*.*?\*/`)
 
 var allocatedScenarioTenants sync.Map
 
@@ -234,16 +241,26 @@ func (s *scenario) seed(t testing.TB, role string, files tenantSeed) {
 		}
 	}
 
+	statements := map[string]string{}
+	var paths []string
+	for _, path := range sqlFiles {
+		contents, err := os.ReadFile(path)
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		if sessionStatePattern.MatchString(sqlComments.ReplaceAllString(string(contents), "")) {
+			t.Fatalf("scenario seed %s changes session state; scenario seeds run bound to their tenant", path)
+		}
+		statements[path] = string(contents)
+		paths = append(paths, path)
+	}
+
 	err := api.db.SeedTenant(t.Context(), key, func(ctx context.Context, tx pgx.Tx) error {
-		for _, path := range sqlFiles {
-			contents, err := os.ReadFile(path)
-			if errors.Is(err, os.ErrNotExist) {
-				continue
-			}
-			if err != nil {
-				return err
-			}
-			if _, err := tx.Exec(ctx, string(contents)); err != nil {
+		for _, path := range paths {
+			if _, err := tx.Exec(ctx, statements[path]); err != nil {
 				return fmt.Errorf("execute seed %s: %w", path, err)
 			}
 		}

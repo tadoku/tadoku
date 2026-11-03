@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"maps"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -78,21 +80,43 @@ func TestScenarioSeedIsConfinedToItsTenant(t *testing.T) {
 	if rows := tenantRows(t, confined.tenant(t, "identity-a").Key(), "accounts"); rows != "[]" {
 		t.Errorf("unscoped delete left the seeding tenant's accounts: %s", rows)
 	}
-	for _, file := range []string{
-		"delete_tenants.sql",
-		"update_overrides.sql",
-		"write_shared.sql",
-		"insert_tenant.sql",
-		"write_migrations.sql",
-	} {
-		t.Run(strings.TrimSuffix(file, ".sql"), func(t *testing.T) {
-			failures := runAborted(t, func(test *abortedTest) {
-				s := newScenario(test, "identity-a")
-				s.seed(test, "identity-a", tenantSeed{setup: []string{"testdata/ScenarioIsolation/" + file}})
+	switched := filepath.Join(t.TempDir(), "switch_tenant.sql")
+	switchScript := fmt.Sprintf(`select set_config('canary.saved', current_setting('tadoku.tenant'), true);
+select set_config('tadoku.tenant', '%s', true);
+delete from sessions;
+select set_config('tadoku.tenant', current_setting('canary.saved'), true);
+`, activeKey)
+	err := os.WriteFile(switched, []byte(switchScript), 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+	refused := []struct {
+		name string
+		file string
+		want string
+	}{
+		{name: "delete_tenants", file: "testdata/ScenarioIsolation/delete_tenants.sql", want: "permission denied"},
+		{name: "update_overrides", file: "testdata/ScenarioIsolation/update_overrides.sql", want: "permission denied"},
+		{name: "write_shared", file: "testdata/ScenarioIsolation/write_shared.sql", want: "permission denied"},
+		{name: "insert_tenant", file: "testdata/ScenarioIsolation/insert_tenant.sql", want: "permission denied"},
+		{name: "write_migrations", file: "testdata/ScenarioIsolation/write_migrations.sql", want: "permission denied"},
+		{name: "write_jobs", file: "testdata/ScenarioIsolation/write_jobs.sql", want: "permission denied"},
+		{
+			name: "widen_and_restore",
+			file: "testdata/ScenarioIsolation/widen_and_restore.sql",
+			want: "changes session state",
+		},
+		{name: "switch_tenant_and_restore", file: switched, want: "changes session state"},
+	}
+	for _, test := range refused {
+		t.Run(test.name, func(t *testing.T) {
+			failures := runAborted(t, func(aborted *abortedTest) {
+				s := newScenario(aborted, "identity-a")
+				s.seed(aborted, "identity-a", tenantSeed{setup: []string{test.file}})
 			}, func() {})
 
-			if len(failures) != 1 || !strings.Contains(failures[0], "permission denied") {
-				t.Errorf("failures=%q, want the seed refused with permission denied", failures)
+			if len(failures) != 1 || !strings.Contains(failures[0], test.want) {
+				t.Errorf("failures=%q, want the seed refused with %q", failures, test.want)
 			}
 		})
 	}
@@ -204,14 +228,6 @@ func TestScenarioCleanupAfterAbortedSetup(t *testing.T) {
 				s.seed(test, "primary", tenantSeed{setup: []string{"testdata/ScenarioIsolation/foreign_tenant.sql"}})
 			},
 			wantFailure: "row-level security",
-		},
-		{
-			name: "seed_widens_its_binding",
-			body: func(test *abortedTest) {
-				s := newScenario(test, "primary")
-				s.seed(test, "primary", tenantSeed{setup: []string{"testdata/ScenarioIsolation/widen_binding.sql"}})
-			},
-			wantFailure: "changed its tenant binding",
 		},
 	}
 	for _, test := range cases {

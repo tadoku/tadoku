@@ -125,9 +125,9 @@ earlier than that cutoff. Exact-boundary completions remain. The cutoff does not
 depend on the database session's timezone.
 
 Completed replays stay indefinitely, like the failed jobs they replay. A
-lineage's successful replay is what refuses further
-[replays](#inspect-and-replay-retained-work) of it, so removing the replay
-would make its failed job replayable again. Automatic cleanup never deletes
+completed replay is what refuses further
+[replays](#inspect-and-replay-retained-work) in its lineage, so removing it
+would make the lineage replayable again. Automatic cleanup never deletes
 pending, running or failed records, regardless of age.
 
 Record important completion evidence before successful history expires. A
@@ -201,13 +201,21 @@ tadoku-worker replay --tenant tadoku/prod --id 123 --actor operator-name --reaso
   reason. It logs `job replayed` with the tenant, `source_job_id` and the new
   `job_id`. The failed original stays unchanged. A worker serving that tenant
   processes the new job.
-- Each job is replayed at most once. A failed job and the replays made from it
-  form a chain, and only its newest job can be replayed, while it is `failed`.
-  For a job that already has a replay, the command exits with
-  `job was already replayed as job <id>`, naming that replay, and inserts
-  nothing. To retry after a replay failed, replay that failed replay. Once a
-  replay in the chain completes, no job in it can be replayed. Replays of one
-  job lock it, so two run at the same time insert at most one job.
+- A job's lineage is the original job and every job replayed from it,
+  directly or through other replays. A lineage has at most one `pending` or
+  `running` job at a time, and once any job in it completes, none of it can be
+  replayed. A failed job can be replayed only if it has no replay yet; to retry
+  after a replay failed, replay that failed replay. The command refuses, names
+  the job that blocks the replay and inserts nothing:
+  - `job lineage cannot be replayed: job <id> is completed`, or `is pending`
+    or `is running`, when a job in the lineage completed or is still
+    unfinished. A completed job is named first.
+  - `job was already replayed as job <id>` when the job's replay failed.
+    Replay that job instead.
+
+  A replay locks its lineage's original job, so two replays in one lineage
+  that run at the same time insert at most one job. The rule covers the whole
+  lineage, including one where a job has several replays.
 - Verify the new job reaches `completed`. An invalid payload remains invalid on
   replay; repair requires its own reviewed procedure, not repeated replay or a
   name change.

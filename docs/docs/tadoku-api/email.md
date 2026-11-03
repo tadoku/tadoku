@@ -47,7 +47,8 @@ The worker registers email delivery with concurrency 2, a 20-second handler
 bound and five attempts. It holds a pending row unless both the deployment
 has enabled sending and the persisted tenant is `tadoku/prod`. A missing ID in
 the job's tenant is harmless; a guessed ID cannot reach another tenant's row.
-Terminal rows are not sent again.
+Terminal rows are not sent again, so replaying a failed send job completes
+without sending once its email is `failed`.
 
 Enabled production delivery uses authenticated SMTP over STARTTLS, verifies
 the server certificate and records `sent`, the sending time and the provider's
@@ -66,8 +67,13 @@ running or completed send job stays pending. A settled email becomes `held`, or
 startup and with the worker's 15-second maintenance pass.
 
 SMTP cannot make the external send and PostgreSQL update atomic. A crash after
-SMTP accepts a message and before `sent` is persisted can deliver twice. The
-submitted Message-ID does not provide a deduplication guarantee.
+SMTP accepts a message and before `sent` is persisted can deliver twice, as can
+an SMTP error after the provider accepted the message, a failed `sent` update,
+or a handler that keeps sending after its lease lapsed while a new claim sends
+again. The submitted Message-ID does not provide a deduplication guarantee.
+The `sent` update applies only to a pending email. A send that finishes after
+its email was settled `failed` leaves it `failed`: a handler whose lease lapsed,
+or a replay inserted after reconciliation's statement snapshot.
 See [Execution guarantees](./jobs.md#execution-and-failure-guarantees).
 
 ## Read retained messages

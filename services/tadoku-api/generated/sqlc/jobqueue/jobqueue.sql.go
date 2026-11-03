@@ -266,21 +266,32 @@ func (q *Queries) FailExhausted(ctx context.Context, arg FailExhaustedParams) ([
 	return items, nil
 }
 
-const lockReplaySource = `-- name: LockReplaySource :one
-select id from jobs
-where id = $1::bigint
-  and state = 'failed'
-  and task_type = any($2::text[])
-for update
+const lockReplayLineage = `-- name: LockReplayLineage :one
+with recursive ancestry as (
+  select id, replay_of_id
+  from jobs
+  where id = $1::bigint
+    and state = 'failed'
+    and task_type = any($2::text[])
+  union
+  select parent.id, parent.replay_of_id
+  from jobs as parent
+  join ancestry on parent.id = ancestry.replay_of_id
+)
+select root.id
+from jobs as root
+join ancestry on root.id = ancestry.id
+where ancestry.replay_of_id is null
+for update of root
 `
 
-type LockReplaySourceParams struct {
+type LockReplayLineageParams struct {
 	FailedID       int64
 	SupportedTypes []string
 }
 
-func (q *Queries) LockReplaySource(ctx context.Context, arg LockReplaySourceParams) (int64, error) {
-	row := q.db.QueryRow(ctx, lockReplaySource, arg.FailedID, arg.SupportedTypes)
+func (q *Queries) LockReplayLineage(ctx context.Context, arg LockReplayLineageParams) (int64, error) {
+	row := q.db.QueryRow(ctx, lockReplayLineage, arg.FailedID, arg.SupportedTypes)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -313,10 +324,34 @@ func (q *Queries) Renew(ctx context.Context, arg RenewParams) (pgtype.Timestampt
 }
 
 const replay = `-- name: Replay :one
-with existing as (
-  select id from jobs
-  where replay_of_id = $1::bigint
-  order by id
+with recursive ancestry as (
+  select id, replay_of_id
+  from jobs
+  where id = $1::bigint
+  union
+  select parent.id, parent.replay_of_id
+  from jobs as parent
+  join ancestry on parent.id = ancestry.replay_of_id
+), lineage as (
+  select id, state, replay_of_id
+  from jobs
+  where id = (select id from ancestry where replay_of_id is null)
+  union
+  select child.id, child.state, child.replay_of_id
+  from jobs as child
+  join lineage on child.replay_of_id = lineage.id
+), blocker as (
+  select id, state
+  from lineage
+  where state in ('pending', 'running', 'completed')
+    or replay_of_id = $1::bigint
+  order by
+    case state
+      when 'completed' then 0
+      when 'failed' then 2
+      else 1
+    end,
+    id
   limit 1
 ), inserted as (
   insert into jobs (task_type, payload, created_at, next_attempt_at,
@@ -325,11 +360,13 @@ with existing as (
     id, $3::text, $4::text
   from jobs
   where id = $1::bigint
-    and not exists (select 1 from existing)
+    and state = 'failed'
+    and not exists (select 1 from blocker)
   returning id
 )
 select coalesce((select id from inserted), 0)::bigint as replay_id,
-  coalesce((select id from existing), 0)::bigint as existing_replay_id
+  coalesce((select id from blocker), 0)::bigint as blocker_id,
+  coalesce((select state from blocker), '')::text as blocker_state
 `
 
 type ReplayParams struct {
@@ -340,8 +377,9 @@ type ReplayParams struct {
 }
 
 type ReplayRow struct {
-	ReplayID         int64
-	ExistingReplayID int64
+	ReplayID     int64
+	BlockerID    int64
+	BlockerState string
 }
 
 func (q *Queries) Replay(ctx context.Context, arg ReplayParams) (ReplayRow, error) {
@@ -352,7 +390,7 @@ func (q *Queries) Replay(ctx context.Context, arg ReplayParams) (ReplayRow, erro
 		arg.Reason,
 	)
 	var i ReplayRow
-	err := row.Scan(&i.ReplayID, &i.ExistingReplayID)
+	err := row.Scan(&i.ReplayID, &i.BlockerID, &i.BlockerState)
 	return i, err
 }
 

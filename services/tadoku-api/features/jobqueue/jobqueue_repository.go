@@ -167,7 +167,7 @@ func (r *Repository) Fail(ctx context.Context, task ClaimedJob, code string) (bo
 	return count == 1, err
 }
 
-func (r *Repository) LockReplaySource(ctx context.Context, failedID int64, supported []jobs.Type) error {
+func (r *Repository) LockReplayLineage(ctx context.Context, failedID int64, supported []jobs.Type) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
@@ -177,7 +177,7 @@ func (r *Repository) LockReplaySource(ctx context.Context, failedID int64, suppo
 		names[i] = string(typ)
 	}
 
-	_, err = queries.New(executor).LockReplaySource(ctx, queries.LockReplaySourceParams{
+	_, err = queries.New(executor).LockReplayLineage(ctx, queries.LockReplayLineageParams{
 		FailedID:       failedID,
 		SupportedTypes: names,
 	})
@@ -185,7 +185,7 @@ func (r *Repository) LockReplaySource(ctx context.Context, failedID int64, suppo
 		return ErrNotFailed
 	}
 	if err != nil {
-		return fmt.Errorf("lock replay source: %w", err)
+		return fmt.Errorf("lock replay lineage: %w", err)
 	}
 	return nil
 }
@@ -208,8 +208,10 @@ func (r *Repository) Replay(ctx context.Context, failedID int64, actor, reason s
 	switch {
 	case row.ReplayID != 0:
 		return row.ReplayID, nil
-	case row.ExistingReplayID != 0:
-		return 0, fmt.Errorf("%w as job %d", ErrAlreadyReplayed, row.ExistingReplayID)
+	case row.BlockerState == "failed":
+		return 0, fmt.Errorf("%w as job %d", ErrAlreadyReplayed, row.BlockerID)
+	case row.BlockerID != 0:
+		return 0, fmt.Errorf("%w: job %d is %s", ErrLineageBlocked, row.BlockerID, row.BlockerState)
 	default:
 		return 0, ErrNotFailed
 	}

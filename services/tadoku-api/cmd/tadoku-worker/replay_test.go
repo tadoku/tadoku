@@ -82,7 +82,7 @@ func wantRefused(t *testing.T, err error, id int64, want string) {
 func TestReplayCommandRefusesAJobThatWasAlreadyReplayed(t *testing.T) {
 	db := workerTestDatabase(t)
 	failedID := insertLineageJob(t, db, "failed", 0)
-	replayID := insertLineageJob(t, db, "pending", failedID)
+	replayID := insertLineageJob(t, db, "failed", failedID)
 
 	err := replayJob(t, failedID)
 
@@ -133,7 +133,7 @@ func TestReplayCommandInsertsOneReplayWhenTwoRunAtOnce(t *testing.T) {
 	if got := countReplays(t, db, failedID); got != 1 {
 		t.Errorf("replays of job %d after two concurrent replays = %d, want 1", failedID, got)
 	}
-	wantRefused(t, result, failedID, fmt.Sprintf("job was already replayed as job %d", competingID))
+	wantRefused(t, result, failedID, fmt.Sprintf("job lineage cannot be replayed: job %d is pending", competingID))
 }
 
 func waitForBlockedOrDone(
@@ -187,13 +187,13 @@ func TestReplayCommandReplaysOnlyTheNewestJobOfALineage(t *testing.T) {
 		t,
 		replayJob(t, originalID),
 		originalID,
-		fmt.Sprintf("job was already replayed as job %d", failedReplayID),
+		fmt.Sprintf("job lineage cannot be replayed: job %d is pending", newestID),
 	)
 	wantRefused(
 		t,
 		replayJob(t, failedReplayID),
 		failedReplayID,
-		fmt.Sprintf("job was already replayed as job %d", newestID),
+		fmt.Sprintf("job lineage cannot be replayed: job %d is pending", newestID),
 	)
 	if got := countReplays(t, db, originalID) + countReplays(t, db, failedReplayID); got != 2 {
 		t.Errorf("replays in the lineage = %d, want 2", got)
@@ -210,8 +210,8 @@ func TestReplayCommandRefusesALineageWhoseReplaySucceeded(t *testing.T) {
 		id   int64
 		want string
 	}{
-		{originalID, fmt.Sprintf("job was already replayed as job %d", failedReplayID)},
-		{failedReplayID, fmt.Sprintf("job was already replayed as job %d", succeededID)},
+		{originalID, fmt.Sprintf("job lineage cannot be replayed: job %d is completed", succeededID)},
+		{failedReplayID, fmt.Sprintf("job lineage cannot be replayed: job %d is completed", succeededID)},
 		{succeededID, "job is not failed or supported"},
 	} {
 		wantRefused(t, replayJob(t, tc.id), tc.id, tc.want)

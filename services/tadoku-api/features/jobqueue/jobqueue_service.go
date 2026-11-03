@@ -112,7 +112,7 @@ func (s *Service) Fail(ctx context.Context, task ClaimedJob, code string) (bool,
 	return s.repository.Fail(ctx, task, code)
 }
 
-// Replay must run inside a transaction: the source job's row lock serializes replays of it until commit.
+// Replay must run inside a transaction: the lineage root's row lock serializes replays in a lineage until commit.
 func (s *Service) Replay(ctx context.Context, failedID int64, actor, reason string, supported []jobs.Type) (int64, error) {
 	if failedID < 1 {
 		return 0, errx.NewInvalidInputError("failed job ID must be positive")
@@ -126,7 +126,7 @@ func (s *Service) Replay(ctx context.Context, failedID int64, actor, reason stri
 		return 0, errx.NewInvalidInputError("replay reason must be 1 to 500 characters after trimming whitespace")
 	}
 
-	if err := s.repository.LockReplaySource(ctx, failedID, supported); err != nil {
+	if err := s.repository.LockReplayLineage(ctx, failedID, supported); err != nil {
 		return 0, err
 	}
 	return s.repository.Replay(ctx, failedID, actor, reason)

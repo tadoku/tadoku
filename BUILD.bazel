@@ -39,7 +39,6 @@ sh_binary(
 sh_binary(
     name = "push_images",
     srcs = ["tools/ci/run_bazel_images.sh"],
-    env = {"TADOKU_PARALLEL_IMAGE_PUSH": "1"},
     args = [
         "$(rlocationpath //services/image-webhook-gateway:push)",
         "$(rlocationpath //services/tadoku-api:push)",
@@ -55,4 +54,5 @@ sh_binary(
         "//services/token-reflector:push",
         "@bazel_tools//tools/bash/runfiles",
     ],
+    env = {"TADOKU_PARALLEL_IMAGE_PUSH": "1"},
 )

@@ -30,12 +30,42 @@ func recoverFrom(
 ) *httptest.ResponseRecorder {
 	t.Helper()
 	body := fmt.Sprintf(`{"email":%q,"return_to":%q}`, email, recoverySettingsURL)
-	return identityRequest(t, handler, tenantKey, "POST", "/identity/recovery", body, "", func(r *http.Request) {
+	return identityRequest(t, handler, tenantKey, "POST", "/identity/recovery", body, "", fromPeer(peer, forwarded))
+}
+
+// recoverIn requests recovery as a guest of the scenario's identity-a tenant.
+func recoverIn(
+	t *testing.T,
+	s *scenario,
+	handler http.Handler,
+	email, peer string,
+	edit func(*http.Request),
+) *httptest.ResponseRecorder {
+	t.Helper()
+	body := fmt.Sprintf(`{"email":%q,"return_to":%q}`, email, recoverySettingsURL)
+	request := newIdentityRequest(t, s.tenant(t, "identity-a").String(), "POST", "/identity/recovery", body, "",
+		fromPeer(peer, ""))
+	if edit != nil {
+		edit(request)
+	}
+	return s.serveWith(t, handler, "identity-a", guest, request)
+}
+
+func fromPeer(peer, forwarded string) func(*http.Request) {
+	return func(r *http.Request) {
 		r.RemoteAddr = peer + ":12345"
 		if forwarded != "" {
 			r.Header.Set("X-Real-IP", forwarded)
 		}
-	})
+	}
+}
+
+// newIdentityScenario provisions one identity-a tenant holding the account cast.
+func newIdentityScenario(t *testing.T) *scenario {
+	t.Helper()
+	s := newScenario(t, "identity-a")
+	s.seed(t, "identity-a", tenantSeed{})
+	return s
 }
 
 func requireRecoveryAccepted(t *testing.T, response *httptest.ResponseRecorder) http.Header {
@@ -246,13 +276,16 @@ func identityThrottleKeys(t *testing.T, tenantKey, operation string) map[string]
 }
 
 func TestIdentityRecoveryAdmissionWindow(t *testing.T) {
-	resetIdentity(t)
+	t.Parallel()
+	s := newIdentityScenario(t)
+	tenantKey := s.tenant(t, "identity-a").String()
+
 	const peer = "198.51.100.60"
 	for i := 0; i < recoveryRecipientBudget; i++ {
-		requireRecoveryAccepted(t, recoverFrom(t, api.handler, identityBranchA, "reader@example.test", peer, ""))
+		requireRecoveryAccepted(t, recoverIn(t, s, api.handler, "reader@example.test", peer, nil))
 	}
 
-	first := identityThrottleKeys(t, identityBranchA, "recovery")
+	first := identityThrottleKeys(t, tenantKey, "recovery")
 	if len(first) != 2 {
 		t.Fatalf("recovery admission keys = %v, want one client and one recipient counter", first)
 	}
@@ -261,13 +294,13 @@ func TestIdentityRecoveryAdmissionWindow(t *testing.T) {
 			t.Fatalf("recovery admission key %q exposes input or has window %dms, want (0, 900000]", key, ttl)
 		}
 	}
-	requireRecoveryAccepted(t, recoverFrom(t, api.handler, identityBranchA, "reader@example.test", peer, ""))
-	for key, ttl := range identityThrottleKeys(t, identityBranchA, "recovery") {
+	requireRecoveryAccepted(t, recoverIn(t, s, api.handler, "reader@example.test", peer, nil))
+	for key, ttl := range identityThrottleKeys(t, tenantKey, "recovery") {
 		if ttl > first[key] {
 			t.Fatalf("suppressed request extended %q from %dms to %dms", key, first[key], ttl)
 		}
 	}
-	requireRecoveryWrites(t, identityBranchA, recoveryRecipientBudget)
+	requireRecoveryWrites(t, tenantKey, recoveryRecipientBudget)
 
 	client := leaderboardValkey.client
 	for key := range first {
@@ -275,8 +308,8 @@ func TestIdentityRecoveryAdmissionWindow(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	requireRecoveryAccepted(t, recoverFrom(t, api.handler, identityBranchA, "reader@example.test", peer, ""))
-	requireRecoveryWrites(t, identityBranchA, recoveryRecipientBudget+1)
+	requireRecoveryAccepted(t, recoverIn(t, s, api.handler, "reader@example.test", peer, nil))
+	requireRecoveryWrites(t, tenantKey, recoveryRecipientBudget+1)
 }
 
 type stalledRecoveryValkey struct {
@@ -293,7 +326,10 @@ func (client *stalledRecoveryValkey) Do(ctx context.Context, _ valkeygo.Complete
 }
 
 func TestIdentityRecoveryAdmissionFailsClosed(t *testing.T) {
-	resetIdentity(t)
+	t.Parallel()
+	s := newIdentityScenario(t)
+	tenantKey := s.tenant(t, "identity-a").String()
+
 	closed, err := newClosedLeaderboardValkeyClient()
 	if err != nil {
 		t.Fatal(err)
@@ -320,15 +356,13 @@ func TestIdentityRecoveryAdmissionFailsClosed(t *testing.T) {
 		}
 		var answers []string
 		for _, email := range []string{"reader@example.test", "unknown@example.test"} {
-			body := fmt.Sprintf(`{"email":%q,"return_to":%q}`, email, recoverySettingsURL)
-			response := identityRequest(t, handler, identityBranchA, "POST", "/identity/recovery", body, "",
-				func(r *http.Request) {
-					if tc.cancel {
-						ctx, cancel := context.WithCancel(r.Context())
-						stalled.cancel = cancel
-						*r = *r.WithContext(ctx)
-					}
-				})
+			response := recoverIn(t, s, handler, email, "198.51.100.20", func(r *http.Request) {
+				if tc.cancel {
+					ctx, cancel := context.WithCancel(r.Context())
+					stalled.cancel = cancel
+					*r = *r.WithContext(ctx)
+				}
+			})
 			stalled.cancel = nil
 			requireIdentityStatus(t, response, tc.status)
 			answers = append(answers, fmt.Sprintf("%v %s", response.Header(), response.Body))
@@ -336,11 +370,11 @@ func TestIdentityRecoveryAdmissionFailsClosed(t *testing.T) {
 		if answers[0] != answers[1] {
 			t.Errorf("%s: known and unknown failures differ:\n%s\n%s", tc.name, answers[0], answers[1])
 		}
-		requireRecoveryWrites(t, identityBranchA, 0)
+		requireRecoveryWrites(t, tenantKey, 0)
 	}
 
-	requireRecoveryAccepted(t, recoverFrom(t, api.handler, identityBranchA, "reader@example.test", "198.51.100.20", ""))
-	requireRecoveryWrites(t, identityBranchA, 1)
+	requireRecoveryAccepted(t, recoverIn(t, s, api.handler, "reader@example.test", "198.51.100.20", nil))
+	requireRecoveryWrites(t, tenantKey, 1)
 }
 
 func TestIdentityRecoveryRetryAfterQueueFailure(t *testing.T) {

@@ -25,7 +25,9 @@ The general test principles are in [Testing](./testing.md).
   database; each golden case and journey owns its business clock and UUID
   stream. Golden cases and journeys run sequentially within a process. Call
   `reset` before each of them, never between dependent requests.
-  [Scenario fixtures](./scenario-fixtures.md) own private tenants instead.
+  [Scenario fixtures](./scenario-fixtures.md) own private tenants, clocks and
+  ID streams instead, and eligible scenario tests run in parallel after every
+  serial test has finished.
 - The router uses the default deployed API request budget of 30 seconds,
   including cost-12 password hashing. The complete E2E target uses an explicit
   `timeout = "long"` (900-second) budget so race instrumentation can cover real

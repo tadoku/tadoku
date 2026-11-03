@@ -17,38 +17,41 @@
 \*   services/tadoku-api/features/contests/contests_service.go
 \*   services/tadoku-api/features/contests/contests_removal_service.go
 \*   services/tadoku-api/app/worker/account_deletion.go
+\*   services/tadoku-api/spec/tla/JobQueue.tla (the job contract)
 \*   k8s/dev/base/data/cache.yaml (allkeys-lru, no persistence)
 \*
 \* A board has three Valkey keys: the sorted set, its ":last_updated" marker
 \* and its ":generation" counter. Each Valkey command a request sends is one
 \* step, and each Lua script (rebuildScript, pageScript, invalidateScript) is
 \* one atomic step. A script that errors keeps the writes it made before the
-\* error: rebuildScript deletes the set before ZADD, and Lua's unpack fails
-\* for a board of 4000 or more scores, so such a rebuild leaves the set deleted
-\* and the marker unchanged. TooLargeFrom is the first version that large.
-\* Every producer enqueues its invalidation job in the
-\* transaction of the write that changes a board, so a write is one step that
-\* raises the board's PostgreSQL version and enqueues the job. Version 0 is the
-\* empty board, which Valkey stores as an absent sorted set, so an invalidated
-\* or evicted set reads as version 0. A missing generation reads as "0", and
-\* INCR starts it at 1. A request's PostgreSQL
-\* read is one statement, which sees the versions committed when it started;
-\* ContestExists is folded into it.
+\* error. rebuildScript deletes the set before ZADD, and on Valkey 9 Lua's
+\* unpack fails for a board of 4000 or more scores, so such a rebuild leaves
+\* the set deleted and the marker unchanged; production's Upstash runtime is
+\* not verified. TooLargeFrom is the first version whose board has 4000 or more
+\* scores; boards grow with each write.
 \*
-\* An invalidation job invalidates the keys in Keys in order, one script each. A job
-\* runs at least once: an attempt can fail before or after any script applies,
-\* retries until MaxAttempts and then fails, and an operator replays a failed
-\* job as a new row. MaxFailures bounds transient failures. A duplicate run of
-\* one job acts on a key like a run of another job on that key, which the
-\* configurations with two writes cover; JobQueue.tla covers duplicates. Any Valkey
-\* error sends a request to PostgreSQL, which changes no cache state. Filtered
-\* reads only read PostgreSQL and are not modelled.
+\* Every producer enqueues its invalidation job in the transaction of the write
+\* that changes a board, so a write is one step that raises the board's
+\* PostgreSQL version and enqueues the job. Version 0 is the empty board, which
+\* Valkey stores as an absent sorted set, so an invalidated or evicted set
+\* reads as version 0. A missing generation reads as "0", and INCR starts it at
+\* 1. A request's PostgreSQL read is one statement, which sees the versions
+\* committed when it started; ContestExists is folded into it.
+\*
+\* An invalidation job invalidates the keys in Keys in order, one script each.
+\* A job runs at least once: an attempt can fail before or after any script
+\* applies, retries until MaxAttempts and then fails, and an operator replays a
+\* failed job as a new row. MaxFailures bounds transient failures. A duplicate
+\* run of one job acts on a key like a run of another job on that key, which
+\* the configurations with two writes cover; JobQueue.tla covers duplicates.
+\* Any Valkey error sends a request to PostgreSQL, which changes no cache
+\* state. Filtered reads only read PostgreSQL and are not modelled.
 \*
 \* Losses lists how Valkey may lose keys, and MaxLosses bounds how often:
 \* eviction of one key ("data", "marker" or "generation"), since allkeys-lru
-\* evicts keys one at a time, or a "restart" without persistence that drops every
-\* key. Production's eviction setting is not in this repository; CI checks a
-\* Valkey that never loses keys.
+\* evicts keys one at a time, or a "restart" without persistence that drops
+\* every key. Production's eviction setting is not in this repository; CI
+\* checks a Valkey that never loses keys.
 EXTENDS Integers, Sequences
 
 CONSTANTS OfficialJob, Readers, MaxWrites, TooLargeFrom, MaxAttempts, MaxFailures, Losses, MaxLosses, OperatorReplays
@@ -305,7 +308,8 @@ Spec == Init /\ [][Next]_vars /\ Fairness
 \* that applies while the request runs is concurrent with it.
 ServedFenced == ~staleServe
 
-\* A rebuild that loaded older data never publishes over a completed invalidation.
+\* A key the cache would serve never holds a board older than the last
+\* invalidation applied to it.
 PublishedFenced == \A k \in KeySet : Servable(k) => data[k] >= covered[k]
 
 \* A marker always names the key's current generation: an invalidation deletes

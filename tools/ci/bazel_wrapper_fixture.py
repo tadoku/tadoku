@@ -50,7 +50,7 @@ docker = pathlib.Path(os.environ.get("DOCKER_CONFIG", os.environ["HOME"] + "/.do
 out.write_text(json.dumps({"argv": args, "stdin": sys.stdin.read(), "env": env,
     "cwd": os.getcwd(), "runfile": pathlib.Path("payload.txt").read_text(),
     "docker": (docker / "config.json").is_file()}))
-print("intentional setup receipt failure probe")
+print("probe stdout")
 print("probe stderr", file=sys.stderr)
 sys.exit(17 if mode == "exit" else 0)
 '''

@@ -19,6 +19,6 @@ select
     where emails.tenant = users.tenant
       and emails.recipient = 'reader@example.test') as emails
 from users
-where users.tenant = 'tadoku/prod'
+where users.tenant = current_setting('tadoku.tenant')
   and users.id = '11111111-1111-4111-8111-111111111111'
 order by users.id

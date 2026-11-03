@@ -52,6 +52,7 @@ go_test(
         "requires-network",
     ],
     deps = [
+        "//services/tadoku-api/features/authz",
         "//services/tadoku-api/internal/testpostgres",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//:pgx",

@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -309,6 +312,101 @@ func TestDevelopmentAccountsConcurrentSeed(t *testing.T) {
 	if err != nil || count != 2 {
 		t.Fatalf("concurrent seeds: accounts=%d error=%v", count, err)
 	}
+}
+
+func TestDevelopmentAccountsRefuseConcurrentBan(t *testing.T) {
+	db := developmentDatabase(t)
+	args := developmentArgs(developmentTenant)
+	if err := run(t.Context(), args); err != nil {
+		t.Fatal(err)
+	}
+	_, err := db.Pool.Exec(t.Context(), `delete from permission_relationships
+		where tenant = $1 and relation = 'admins' and subject_id = $2`,
+		developmentTenant,
+		developmentAdmin,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ban, err := db.Pool.Begin(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = ban.Rollback(context.Background()) }()
+	var holder int32
+	err = ban.QueryRow(t.Context(), `select pg_backend_pid() from users where tenant = $1 and id = $2 for update`,
+		developmentTenant,
+		developmentAdmin,
+	).Scan(&holder)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = ban.Exec(t.Context(), `insert into permission_relationships
+		(tenant, object_type, object_id, relation, subject_type, subject_id)
+		values ($1, 'app', 'root', 'banned', 'user', $2)`,
+		developmentTenant,
+		developmentAdmin,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	done := make(chan error, 1)
+	go func() { done <- run(t.Context(), args) }()
+	finished, result := waitForBlockedOrDone(t, db, holder, done)
+	if err := ban.Commit(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if !finished {
+		result = <-done
+	}
+
+	if !errors.Is(result, authz.ErrBannedUser) {
+		t.Errorf("seed during a ban: error = %v, want %v", result, authz.ErrBannedUser)
+	}
+	var relations []string
+	err = db.Pool.QueryRow(t.Context(), `select coalesce(array_agg(relation order by relation), '{}')
+		from permission_relationships
+		where tenant = $1 and subject_id = $2`,
+		developmentTenant,
+		developmentAdmin,
+	).Scan(&relations)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(relations, []string{"banned"}) {
+		t.Errorf("Dev Admin relations after a seed during a ban = %q, want only banned", relations)
+	}
+}
+
+func waitForBlockedOrDone(t *testing.T, db *testpostgres.Database, holder int32, done <-chan error) (bool, error) {
+	t.Helper()
+
+	deadline := time.Now().Add(10 * time.Second)
+	for time.Now().Before(deadline) {
+		select {
+		case err := <-done:
+			return true, err
+		default:
+		}
+
+		var blocked bool
+		err := db.Pool.QueryRow(
+			t.Context(),
+			`select exists (select 1 from pg_stat_activity where $1 = any(pg_blocking_pids(pid)))`,
+			holder,
+		).Scan(&blocked)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if blocked {
+			return false, nil
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatal("seed neither finished nor waited for the held users row lock")
+	return false, nil
 }
 
 func TestDevelopmentAccountsCanonicalAge(t *testing.T) {

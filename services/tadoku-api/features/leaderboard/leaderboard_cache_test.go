@@ -184,6 +184,44 @@ func (client *republishAfterPageRead) Do(ctx context.Context, command valkeygo.C
 	return client.Client.Do(ctx, command)
 }
 
+func TestRebuildPublishesBoardOf5001Scores(t *testing.T) {
+	client := newLeaderboardTestClient(t)
+	tenantKey, err := tenant.Parse("e2e/large-" + uuid.NewString())
+	if err != nil {
+		t.Fatal(err)
+	}
+	tenantCtx := tenant.WithKey(t.Context(), tenantKey)
+	cache := NewCache(client, 5*time.Second)
+	key, err := cache.cacheKey(tenantCtx, globalKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cleanupLeaderboardKeys(t, client, key)
+
+	small := []score{{userID: uuid.New(), value: 1}}
+	published, err := cache.rebuild(tenantCtx, key, small, "0")
+	if err != nil || !published {
+		t.Fatalf("publish small board: published=%t error=%v", published, err)
+	}
+
+	large := make([]score, 5001)
+	for i := range large {
+		large[i] = score{userID: uuid.New(), value: float64(i + 1)}
+	}
+	published, err = cache.rebuild(tenantCtx, key, large, "0")
+	if err != nil || !published {
+		t.Errorf("rebuild 5001 scores at the published generation: published=%t error=%v", published, err)
+	}
+
+	page, exists, err := cache.fetchPage(tenantCtx, key, 5000, 1)
+	if err != nil || !exists {
+		t.Fatalf("fetch last page: exists=%t error=%v", exists, err)
+	}
+	if page.totalCount != 5001 || len(page.scores) != 1 || page.scores[0] != large[0] {
+		t.Errorf("last page = %+v; want the lowest of 5001 scores", page)
+	}
+}
+
 func TestTenantLeaderboardInvalidationKeepsOtherTenantWarm(t *testing.T) {
 	client := newLeaderboardTestClient(t)
 	cache := NewCache(client, time.Second)

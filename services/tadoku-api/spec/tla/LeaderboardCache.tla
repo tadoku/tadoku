@@ -23,12 +23,13 @@
 \* A board has three Valkey keys: the sorted set, its ":last_updated" marker
 \* and its ":generation" counter. Each Valkey command a request sends is one
 \* step, and each Lua script (rebuildScript, pageScript, invalidateScript) is
-\* one atomic step. A script that errors keeps the writes it made before the
-\* error. rebuildScript deletes the set before ZADD, and on Valkey 9 Lua's
-\* unpack fails for a board of 4000 or more scores, so such a rebuild leaves
-\* the set deleted and the marker unchanged; production's Upstash runtime is
-\* not verified. TooLargeFrom is the first version whose board has 4000 or more
-\* scores; boards grow with each write.
+\* one atomic step that keeps the writes it made before an error.
+\* rebuildScript adds scores in chunks small enough for Lua's unpack, and
+\* Valkey refuses a memory-growing or replica write only before a script's
+\* first write, so the script cannot fail after its first write for numeric
+\* scores. A NaN score would fail ZADD after the DEL and leave a truncated set
+\* beside the marker; the model leaves that out. Verified on Valkey 9;
+\* production's Upstash runtime is not verified.
 \*
 \* Every producer enqueues its invalidation job in the transaction of the write
 \* that changes a board, so a write is one step that raises the board's
@@ -54,7 +55,7 @@
 \* checks a Valkey that never loses keys.
 EXTENDS Integers, Sequences
 
-CONSTANTS OfficialJob, Readers, MaxWrites, TooLargeFrom, MaxAttempts, MaxFailures, Losses, MaxLosses, OperatorReplays
+CONSTANTS OfficialJob, Readers, MaxWrites, MaxAttempts, MaxFailures, Losses, MaxLosses, OperatorReplays
 
 \* The keys a job invalidates, in order: InvalidateOfficial's yearly then
 \* global board, or InvalidateContest's one board.
@@ -192,16 +193,14 @@ Load(r) ==
     /\ ReqOnly
 
 \* rebuildScript publishes the loaded board only while the generation is the one
-\* read before the load. A board too large to unpack fails after the DEL. The
-\* request serves its PostgreSQL board either way.
+\* read before the load. The request serves its PostgreSQL board either way.
 RebuildScript(r) ==
     LET k == req[r].key IN
     /\ req[r].pc = "rebuild"
-    /\ CASE gen[k] # req[r].gen -> UNCHANGED <<data, marker>>
-         [] req[r].load >= TooLargeFrom -> data' = [data EXCEPT ![k] = 0] /\ UNCHANGED marker
-         [] OTHER ->
-            /\ data' = [data EXCEPT ![k] = req[r].load]
+    /\ IF gen[k] = req[r].gen
+       THEN /\ data' = [data EXCEPT ![k] = req[r].load]
             /\ marker' = [marker EXCEPT ![k] = req[r].gen]
+       ELSE UNCHANGED <<data, marker>>
     /\ Set(r, ReqIdle)
     /\ UNCHANGED <<pg, gen, covered, jobVars, losses, staleServe>>
 

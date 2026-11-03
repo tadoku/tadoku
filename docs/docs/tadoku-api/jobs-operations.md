@@ -42,13 +42,6 @@ and keeps nothing across restarts. Production's eviction setting lives in
 Upstash, outside this repository; it is assumed to be the default, eviction
 off, but that is not confirmed.
 
-On Valkey 9, a board of 4000 or more scores is never cached: the rebuild
-script fails with `too many results to unpack` after deleting the sorted set,
-and the request serves PostgreSQL. Production's Upstash runtime is not
-verified. When a smaller board was published at the same generation,
-that failure leaves its marker beside the deleted set, and the API serves an
-empty board until the next invalidation.
-
 Filtered reads use PostgreSQL, and Valkey errors fall back to PostgreSQL.
 Those paths do not make an already warm key fresh while its invalidation
 remains unprocessed.

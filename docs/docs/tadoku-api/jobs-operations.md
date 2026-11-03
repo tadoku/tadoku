@@ -23,8 +23,10 @@ The API does not check worker readiness
 or the queue before serving a warm key. It can therefore serve an outdated
 leaderboard while the worker is down, while that key's invalidation job is
 pending or running, and after the job has failed terminally. A rebuild sets
-the board's `:last_updated` marker to expire after 28 days; the sorted set and
-`:generation` do not expire. Once the marker lapses, the next read
+the board's `:last_updated` marker to expire after 28 days, and its
+`:generation` with it; only the sorted set does not expire. A `:generation`
+that a miss creates expires after an hour unless a rebuild publishes under it.
+Once the marker lapses, the next read
 misses and rebuilds from PostgreSQL. A failed invalidation therefore leaves the
 key stale until the first of three events: another write affecting the same
 contest or year publishes a new invalidation, an operator replays the failed

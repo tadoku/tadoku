@@ -27,6 +27,7 @@ for i = 2, #ARGV, 2000 do
   redis.call('ZADD', KEYS[1], unpack(ARGV, i, math.min(i + 1999, #ARGV)))
 end
 redis.call('SET', KEYS[2], 'native:' .. ARGV[1] .. ':' .. redis.call('ZCARD', KEYS[1]), 'EX', 2419200)
+redis.call('EXPIRE', KEYS[3], 2419200)
 return 1
 `)
 
@@ -49,15 +50,19 @@ return reply
 `)
 
 var generationScript = valkeygo.NewLuaScript(`
-redis.call('SET', KEYS[1], ARGV[1], 'NX')
-return redis.call('GET', KEYS[1])
+local value = redis.call('GET', KEYS[1])
+if not value or tonumber(value) < 4294967296 then
+  redis.call('SET', KEYS[1], ARGV[1], 'EX', 3600)
+  return ARGV[1]
+end
+return value
 `)
 
 var invalidateScript = valkeygo.NewLuaScript(`
 if redis.call('EXISTS', KEYS[3]) == 1 then
   redis.call('INCR', KEYS[3])
 else
-  redis.call('SET', KEYS[3], ARGV[1])
+  redis.call('SET', KEYS[3], ARGV[1], 'EX', 3600)
 end
 redis.call('DEL', KEYS[1], KEYS[2])
 return 1

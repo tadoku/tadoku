@@ -29,10 +29,12 @@
 \* is a miss. A generation is a random value: generationScript creates one when
 \* it is missing, before a request loads, and invalidateScript increments it,
 \* or sets a new random value when it is missing. Random values are assumed
-\* never to collide, so every new generation is fresh: a lost generation never
-\* comes back to a value a request read. rebuildScript publishes only under the
-\* generation the request read: it deletes the marker and the set, adds the
-\* scores, then writes the marker with the set's size. It adds scores in
+\* never to collide, so a new generation differs from every value a key, marker
+\* or request holds: a lost generation never comes back to a value a request
+\* read. The model reuses only values none of them holds, which no comparison
+\* tells from fresh ones. rebuildScript publishes only under the generation
+\* the request read: it deletes the marker and the set, adds the scores, then
+\* writes the marker with the set's size. It adds scores in
 \* chunks small enough for Lua's unpack, and Valkey refuses a memory-growing or
 \* replica write only before a script's first write; only a NaN score fails
 \* after the DELs, leaving a truncated set without a marker. Verified on Valkey
@@ -56,10 +58,14 @@
 \* Any Valkey error sends a request to PostgreSQL, which changes no cache
 \* state. Filtered reads only read PostgreSQL and are not modelled.
 \*
-\* rebuildScript sets the marker with a 28-day expiry. With MarkerExpiry,
-\* MarkerExpires lets a marker lapse at any point, and fairness makes every
-\* marker lapse eventually; a later rebuild sets a new one. Configurations
-\* without it check that invalidation alone makes boards fresh.
+\* rebuildScript sets the marker with a 28-day expiry. A generation expires an
+\* hour after a script creates it, unless a rebuild publishes under it, which
+\* gives it the marker's expiry. With Expiry, MarkerExpires lets a marker lapse
+\* at any point and GenerationExpires lets a generation without a marker lapse;
+\* fairness makes every marker lapse eventually, and a later rebuild sets a new
+\* one. Configurations without it check that invalidation alone makes boards
+\* fresh. generationScript also replaces a value below 2^32, which only the
+\* previous release's INCR produces; the model has no previous release.
 \*
 \* Faults lists what may go wrong in Valkey, and MaxFaults bounds how often:
 \* eviction of one key ("data", "marker" or "generation"), since allkeys-lru
@@ -68,7 +74,7 @@
 \* Production's eviction setting is not in this repository.
 EXTENDS Integers, Sequences, FiniteSets
 
-CONSTANTS OfficialJob, Readers, MaxWrites, MaxAttempts, MaxFailures, Faults, MaxFaults, OperatorReplays, MarkerExpiry
+CONSTANTS OfficialJob, Readers, MaxWrites, MaxAttempts, MaxFailures, Faults, MaxFaults, OperatorReplays, Expiry
 
 \* The keys a job invalidates, in order: InvalidateOfficial's yearly then
 \* global board, or InvalidateContest's one board.
@@ -84,14 +90,13 @@ NoGeneration == 0
 \* A set's size as far as the marker can tell boards apart.
 Size(v) == IF v = 0 THEN 0 ELSE 1
 
-MaxGen == 1 + MaxWrites * Len(Keys) * (MaxAttempts + MaxFailures) + Len(Keys) * (Cardinality(Readers) + MaxFaults)
+MaxGen == 2 * Len(Keys) + Cardinality(Readers) + 1
 
 VARIABLES
     pg,         \* the board's version in PostgreSQL: committed writes
     data,       \* the version each key's sorted set holds; 0 when absent
     marker,     \* each ":last_updated" marker as <<generation, size>>, or NoMarker
     gen,        \* each ":generation", or NoGeneration
-    nextGen,    \* the next fresh generation value
     covered,    \* the PostgreSQL version when an invalidation last applied to each key
     job,        \* each write's invalidation job: none, pending, running, done or failed
     step,       \* the position in Keys of the running job's next script
@@ -101,9 +106,8 @@ VARIABLES
     req,        \* each request: its next step, key, generation and loaded version
     staleServe  \* a request served a cached board older than an invalidation before it
 
-vars == <<pg, data, marker, gen, nextGen, covered, job, step, attempts, failures, faults,
-          req, staleServe>>
-cache == <<data, marker, gen, nextGen, covered>>
+vars == <<pg, data, marker, gen, covered, job, step, attempts, failures, faults, req, staleServe>>
+cache == <<data, marker, gen, covered>>
 jobVars == <<job, step, attempts, failures>>
 ReqIdle == [pc |-> "idle", key |-> Keys[1], gen |-> NoGeneration, load |-> 0]
 
@@ -112,7 +116,6 @@ TypeOK ==
     /\ data \in [KeySet -> Versions \cup {Truncated}]
     /\ marker \in [KeySet -> {NoMarker} \cup ((1..MaxGen) \X {0, 1})]
     /\ gen \in [KeySet -> {NoGeneration} \cup 1..MaxGen]
-    /\ nextGen \in 1..(MaxGen + 1)
     /\ covered \in [KeySet -> Versions]
     /\ job \in [Jobs -> {"none", "pending", "running", "done", "failed"}]
     /\ step \in [Jobs -> 1..(Len(Keys) + 1)]
@@ -128,7 +131,6 @@ Init ==
     /\ data = [k \in KeySet |-> 0]
     /\ marker = [k \in KeySet |-> NoMarker]
     /\ gen = [k \in KeySet |-> NoGeneration]
-    /\ nextGen = 1
     /\ covered = [k \in KeySet |-> 0]
     /\ job = [j \in Jobs |-> "none"]
     /\ step = [j \in Jobs |-> 1]
@@ -139,6 +141,14 @@ Init ==
     /\ staleServe = FALSE
 
 Set(r, rec) == req' = [req EXCEPT ![r] = rec]
+
+\* The generations a key, marker or request holds, and a value none of them
+\* holds.
+Held ==
+    {gen[k] : k \in KeySet}
+    \cup {marker[k][1] : k \in {m \in KeySet : marker[m] # NoMarker}}
+    \cup {req[r].gen : r \in Readers}
+NewGen == CHOOSE v \in 1..MaxGen : v \notin Held
 
 \* A request step that changes only the request's own state.
 ReqOnly == UNCHANGED <<pg, cache, jobVars, faults, staleServe>>
@@ -175,11 +185,10 @@ GenerationScript(r) ==
     LET k == req[r].key IN
     /\ req[r].pc = "missgen"
     /\ IF gen[k] = NoGeneration
-       THEN /\ gen' = [gen EXCEPT ![k] = nextGen]
-            /\ nextGen' = nextGen + 1
-            /\ Set(r, [req[r] EXCEPT !.pc = "load", !.gen = nextGen])
+       THEN /\ gen' = [gen EXCEPT ![k] = NewGen]
+            /\ Set(r, [req[r] EXCEPT !.pc = "load", !.gen = NewGen])
        ELSE /\ Set(r, [req[r] EXCEPT !.pc = "load", !.gen = gen[k]])
-            /\ UNCHANGED <<gen, nextGen>>
+            /\ UNCHANGED gen
     /\ UNCHANGED <<pg, data, marker, covered, jobVars, faults, staleServe>>
 
 \* ContestLeaderboard or OfficialLeaderboard.
@@ -199,7 +208,7 @@ RebuildScript(r) ==
             /\ marker' = [marker EXCEPT ![k] = <<req[r].gen, Size(req[r].load)>>]
        ELSE UNCHANGED <<data, marker>>
     /\ Set(r, ReqIdle)
-    /\ UNCHANGED <<pg, gen, nextGen, covered, jobVars, faults, staleServe>>
+    /\ UNCHANGED <<pg, gen, covered, jobVars, faults, staleServe>>
 
 \* A NaN score stops rebuildScript after its DELs and some chunks: the set is
 \* truncated and the marker is gone.
@@ -213,7 +222,7 @@ RebuildScriptTruncates(r) ==
     /\ data' = [data EXCEPT ![k] = Truncated]
     /\ marker' = [marker EXCEPT ![k] = NoMarker]
     /\ Set(r, ReqIdle)
-    /\ UNCHANGED <<pg, gen, nextGen, covered, jobVars, staleServe>>
+    /\ UNCHANGED <<pg, gen, covered, jobVars, staleServe>>
 
 \* A Valkey error or timeout: the request reads PostgreSQL instead. A rebuild
 \* that errors after its script applied is RebuildScript.
@@ -242,8 +251,7 @@ InvalidateScript(j) ==
     LET k == Keys[step[j]] IN
     /\ job[j] = "running"
     /\ step[j] <= Len(Keys)
-    /\ gen' = [gen EXCEPT ![k] = nextGen]
-    /\ nextGen' = nextGen + 1
+    /\ gen' = [gen EXCEPT ![k] = NewGen]
     /\ data' = [data EXCEPT ![k] = 0]
     /\ marker' = [marker EXCEPT ![k] = NoMarker]
     /\ covered' = [covered EXCEPT ![k] = pg]
@@ -275,15 +283,24 @@ OperatorReplay(j) ==
 Invalidation(j) == Claim(j) \/ InvalidateScript(j) \/ Complete(j)
 
 ----
-\* Valkey loses keys: the marker's expiry, allkeys-lru evicting one key, or a
-\* restart without persistence dropping every key.
+\* Valkey loses keys: the marker's or generation's expiry, allkeys-lru evicting
+\* one key, or a restart without persistence dropping every key.
 
 \* The marker's 28-day expiry runs out.
 MarkerExpires(k) ==
-    /\ MarkerExpiry
+    /\ Expiry
     /\ marker[k] # NoMarker
     /\ marker' = [marker EXCEPT ![k] = NoMarker]
-    /\ UNCHANGED <<pg, data, gen, nextGen, covered, jobVars, faults, req, staleServe>>
+    /\ UNCHANGED <<pg, data, gen, covered, jobVars, faults, req, staleServe>>
+
+\* The generation's expiry runs out: an hour after a script created it, or with
+\* its marker once a rebuild published under it.
+GenerationExpires(k) ==
+    /\ Expiry
+    /\ gen[k] # NoGeneration
+    /\ marker[k] = NoMarker
+    /\ gen' = [gen EXCEPT ![k] = NoGeneration]
+    /\ UNCHANGED <<pg, data, marker, covered, jobVars, faults, req, staleServe>>
 
 Evict(k, part) ==
     /\ part \in Faults
@@ -292,7 +309,7 @@ Evict(k, part) ==
     /\ data' = IF part = "data" THEN [data EXCEPT ![k] = 0] ELSE data
     /\ marker' = IF part = "marker" THEN [marker EXCEPT ![k] = NoMarker] ELSE marker
     /\ gen' = IF part = "generation" THEN [gen EXCEPT ![k] = NoGeneration] ELSE gen
-    /\ UNCHANGED <<pg, nextGen, covered, jobVars, req, staleServe>>
+    /\ UNCHANGED <<pg, covered, jobVars, req, staleServe>>
 
 Restart ==
     /\ "restart" \in Faults
@@ -301,17 +318,17 @@ Restart ==
     /\ data' = [k \in KeySet |-> 0]
     /\ marker' = [k \in KeySet |-> NoMarker]
     /\ gen' = [k \in KeySet |-> NoGeneration]
-    /\ UNCHANGED <<pg, nextGen, covered, jobVars, req, staleServe>>
+    /\ UNCHANGED <<pg, covered, jobVars, req, staleServe>>
 
 Next ==
     \/ Write
     \/ \E r \in Readers : Request(r)
     \/ \E j \in Jobs : Invalidation(j) \/ JobFails(j) \/ OperatorReplay(j)
-    \/ \E k \in KeySet : MarkerExpires(k)
+    \/ \E k \in KeySet : MarkerExpires(k) \/ GenerationExpires(k)
     \/ \E k \in KeySet, part \in Parts : Evict(k, part)
     \/ Restart
 
-\* Jobs keep running and, with MarkerExpiry, markers expire. With
+\* Jobs keep running and, with Expiry, markers expire. With
 \* OperatorReplays, an operator eventually replays a failed job. Requests,
 \* writes, failures and faults are never forced.
 Fairness ==

@@ -141,8 +141,10 @@ commit;
 
 For a production branch tenant, use its key instead of `tadoku/prod`. In
 development, `tadoku-tenant development-accounts` grants Dev Admin `admins` on
-each branch tenant through `authz.GrantAdmin`, which returns
-`authz.ErrBannedUser`, a conflict, for a banned user; see
+each branch tenant through `authz.GrantAdmin` under Dev Admin's `users` row
+lock, so a concurrent ban either commits first and the grant returns
+`authz.ErrBannedUser`, a conflict, or waits and refuses the new administrator;
+see
 [Development data](../develop/development-data.md#branch-tenants).
 
 ## Request pipeline

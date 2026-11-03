@@ -130,10 +130,11 @@ for any of them instead of deadlocking.
 - A settings write queued behind filing's account lock gets the row after
   filing commits, rechecks its session and fails before it touches the `users`
   row.
-- A login or recovery request queued the same way can still store a session or
-  send a recovery email. The session never authenticates, because session lookup
-  excludes deletion-locked users, and the worker deletes it and the recovery
-  token.
+- A login queued the same way can still store a session, and a recovery request
+  can still send a recovery email. The session never authenticates, because
+  session lookup excludes deletion-locked users, and the worker deletes it and
+  the recovery token. Completing a recovery stores no session: it creates the
+  session after it holds the account row, so it sees the lock.
 
 ## File a deletion
 

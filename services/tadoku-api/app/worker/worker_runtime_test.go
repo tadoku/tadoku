@@ -224,7 +224,7 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 		t.Fatalf("exhausted job: state=%q attempts=%d code=%q", state, attempts, code)
 	}
 
-	replayedID, err := Replay(tenantCtx, jobqueue.NewService(repository), id, "worker-e2e", "deadline repaired")
+	replayedID, err := Replay(tenantCtx, f.db, id, "worker-e2e", "deadline repaired")
 	if err != nil {
 		t.Fatal(err)
 	}

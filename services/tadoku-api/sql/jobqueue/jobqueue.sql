@@ -108,19 +108,37 @@ update jobs as task set state = 'failed', claim_token = null,
   last_error = sqlc.arg('error_code')::text
 from locked where task.id = locked.id and locked.lease_expires_at > clock_timestamp();
 
--- name: Replay :one
-insert into jobs (task_type, payload, created_at, next_attempt_at,
-  replay_of_id, replay_actor, replay_reason)
-select task_type, payload, sqlc.arg('now')::timestamptz, sqlc.arg('now')::timestamptz,
-  id, sqlc.arg('actor')::text, sqlc.arg('reason')::text
-from jobs where id = sqlc.arg('failed_id')::bigint and state = 'failed'
+-- name: LockReplaySource :one
+select id from jobs
+where id = sqlc.arg('failed_id')::bigint
+  and state = 'failed'
   and task_type = any(sqlc.arg('supported_types')::text[])
-returning id;
+for update;
+
+-- name: Replay :one
+with existing as (
+  select id from jobs
+  where replay_of_id = sqlc.arg('failed_id')::bigint
+  order by id
+  limit 1
+), inserted as (
+  insert into jobs (task_type, payload, created_at, next_attempt_at,
+    replay_of_id, replay_actor, replay_reason)
+  select task_type, payload, sqlc.arg('now')::timestamptz, sqlc.arg('now')::timestamptz,
+    id, sqlc.arg('actor')::text, sqlc.arg('reason')::text
+  from jobs
+  where id = sqlc.arg('failed_id')::bigint
+    and not exists (select 1 from existing)
+  returning id
+)
+select coalesce((select id from inserted), 0)::bigint as replay_id,
+  coalesce((select id from existing), 0)::bigint as existing_replay_id;
 
 -- name: CleanupCompleted :execrows
 with removable as (
   select parent.id from jobs as parent
   where parent.state = 'completed'
+    and parent.replay_of_id is null
     and parent.completed_at < sqlc.arg('cutoff')::timestamptz
     and not exists (select 1 from jobs child where child.replay_of_id = parent.id)
   order by parent.completed_at, parent.id

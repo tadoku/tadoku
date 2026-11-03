@@ -18,6 +18,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
 
@@ -180,7 +181,7 @@ func (a *Application) Run(ctx context.Context) error {
 	return nil
 }
 
-func Replay(ctx context.Context, queue *jobqueue.Service, id int64, actor, reason string) (int64, error) {
+func Replay(ctx context.Context, db *pgxpool.Pool, id int64, actor, reason string) (int64, error) {
 	handlers, err := registrations(
 		ignoreJob[jobs.InvalidateContestLeaderboardV1],
 		ignoreJob[jobs.InvalidateOfficialLeaderboardV1],
@@ -190,7 +191,14 @@ func Replay(ctx context.Context, queue *jobqueue.Service, id int64, actor, reaso
 	if err != nil {
 		return 0, err
 	}
-	return queue.Replay(ctx, id, actor, reason, handlers.types())
+
+	queue := jobqueue.NewService(jobqueue.NewRepository(db))
+	var replayID int64
+	err = postgres.RunInTransaction(ctx, db, func(ctx context.Context) error {
+		replayID, err = queue.Replay(ctx, id, actor, reason, handlers.types())
+		return err
+	})
+	return replayID, err
 }
 
 func ignoreJob[J jobs.Job](context.Context, J) error { return nil }

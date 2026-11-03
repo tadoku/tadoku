@@ -15,7 +15,8 @@ import (
 )
 
 var (
-	ErrNotFailed = errx.NewConflictError("job is not failed or supported")
+	ErrNotFailed       = errx.NewConflictError("job is not failed or supported")
+	ErrAlreadyReplayed = errx.NewConflictError("job was already replayed")
 )
 
 const WorkerComponent = "tadoku-worker"

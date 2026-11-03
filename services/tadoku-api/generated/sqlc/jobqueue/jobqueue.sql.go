@@ -101,6 +101,7 @@ const cleanupCompleted = `-- name: CleanupCompleted :execrows
 with removable as (
   select parent.id from jobs as parent
   where parent.state = 'completed'
+    and parent.replay_of_id is null
     and parent.completed_at < $1::timestamptz
     and not exists (select 1 from jobs child where child.replay_of_id = parent.id)
   order by parent.completed_at, parent.id
@@ -265,6 +266,26 @@ func (q *Queries) FailExhausted(ctx context.Context, arg FailExhaustedParams) ([
 	return items, nil
 }
 
+const lockReplaySource = `-- name: LockReplaySource :one
+select id from jobs
+where id = $1::bigint
+  and state = 'failed'
+  and task_type = any($2::text[])
+for update
+`
+
+type LockReplaySourceParams struct {
+	FailedID       int64
+	SupportedTypes []string
+}
+
+func (q *Queries) LockReplaySource(ctx context.Context, arg LockReplaySourceParams) (int64, error) {
+	row := q.db.QueryRow(ctx, lockReplaySource, arg.FailedID, arg.SupportedTypes)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const renew = `-- name: Renew :one
 with locked as materialized (
   select id, lease_expires_at from jobs
@@ -292,34 +313,47 @@ func (q *Queries) Renew(ctx context.Context, arg RenewParams) (pgtype.Timestampt
 }
 
 const replay = `-- name: Replay :one
-insert into jobs (task_type, payload, created_at, next_attempt_at,
-  replay_of_id, replay_actor, replay_reason)
-select task_type, payload, $1::timestamptz, $1::timestamptz,
-  id, $2::text, $3::text
-from jobs where id = $4::bigint and state = 'failed'
-  and task_type = any($5::text[])
-returning id
+with existing as (
+  select id from jobs
+  where replay_of_id = $1::bigint
+  order by id
+  limit 1
+), inserted as (
+  insert into jobs (task_type, payload, created_at, next_attempt_at,
+    replay_of_id, replay_actor, replay_reason)
+  select task_type, payload, $2::timestamptz, $2::timestamptz,
+    id, $3::text, $4::text
+  from jobs
+  where id = $1::bigint
+    and not exists (select 1 from existing)
+  returning id
+)
+select coalesce((select id from inserted), 0)::bigint as replay_id,
+  coalesce((select id from existing), 0)::bigint as existing_replay_id
 `
 
 type ReplayParams struct {
-	Now            pgtype.Timestamptz
-	Actor          string
-	Reason         string
-	FailedID       int64
-	SupportedTypes []string
+	FailedID int64
+	Now      pgtype.Timestamptz
+	Actor    string
+	Reason   string
 }
 
-func (q *Queries) Replay(ctx context.Context, arg ReplayParams) (int64, error) {
+type ReplayRow struct {
+	ReplayID         int64
+	ExistingReplayID int64
+}
+
+func (q *Queries) Replay(ctx context.Context, arg ReplayParams) (ReplayRow, error) {
 	row := q.db.QueryRow(ctx, replay,
+		arg.FailedID,
 		arg.Now,
 		arg.Actor,
 		arg.Reason,
-		arg.FailedID,
-		arg.SupportedTypes,
 	)
-	var id int64
-	err := row.Scan(&id)
-	return id, err
+	var i ReplayRow
+	err := row.Scan(&i.ReplayID, &i.ExistingReplayID)
+	return i, err
 }
 
 const retry = `-- name: Retry :execrows

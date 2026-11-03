@@ -167,29 +167,52 @@ func (r *Repository) Fail(ctx context.Context, task ClaimedJob, code string) (bo
 	return count == 1, err
 }
 
-func (r *Repository) Replay(ctx context.Context, failedID int64, actor, reason string, supported []jobs.Type) (int64, error) {
+func (r *Repository) LockReplaySource(ctx context.Context, failedID int64, supported []jobs.Type) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	names := make([]string, len(supported))
 	for i, typ := range supported {
 		names[i] = string(typ)
 	}
-	id, err := queries.New(executor).Replay(ctx, queries.ReplayParams{
-		Now:            postgres.Timestamptz(timex.Now()),
-		Actor:          actor,
-		Reason:         reason,
+
+	_, err = queries.New(executor).LockReplaySource(ctx, queries.LockReplaySourceParams{
 		FailedID:       failedID,
 		SupportedTypes: names,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return 0, ErrNotFailed
+		return ErrNotFailed
 	}
+	if err != nil {
+		return fmt.Errorf("lock replay source: %w", err)
+	}
+	return nil
+}
+
+func (r *Repository) Replay(ctx context.Context, failedID int64, actor, reason string) (int64, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return 0, err
+	}
+	row, err := queries.New(executor).Replay(ctx, queries.ReplayParams{
+		Now:      postgres.Timestamptz(timex.Now()),
+		Actor:    actor,
+		Reason:   reason,
+		FailedID: failedID,
+	})
 	if err != nil {
 		return 0, fmt.Errorf("replay job: %w", err)
 	}
-	return id, nil
+
+	switch {
+	case row.ReplayID != 0:
+		return row.ReplayID, nil
+	case row.ExistingReplayID != 0:
+		return 0, fmt.Errorf("%w as job %d", ErrAlreadyReplayed, row.ExistingReplayID)
+	default:
+		return 0, ErrNotFailed
+	}
 }
 
 func (r *Repository) CleanupCompleted(ctx context.Context, cutoff time.Time, limit int) (int64, error) {

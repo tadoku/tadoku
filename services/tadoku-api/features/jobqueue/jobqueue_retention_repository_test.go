@@ -22,7 +22,7 @@ func TestRetryReplayAndRetention(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = repo.Replay(tenantCtx, id, "operator", "repair", []jobs.Type{jobs.LeaderboardInvalidateOfficialV1})
+	_, err = replayJob(tenantCtx, db.Pool, id, jobs.LeaderboardInvalidateOfficialV1)
 	if !errors.Is(err, ErrNotFailed) || errx.KindOf(err) != errx.Conflict {
 		t.Errorf("replay pending = %v, kind=%v", err, errx.KindOf(err))
 	}
@@ -56,7 +56,7 @@ func TestRetryReplayAndRetention(t *testing.T) {
 
 	var replayID int64
 	at(t, jobTestTime.Add(2*time.Minute), func() {
-		replayID, err = repo.Replay(tenantCtx, id, "operator", "repair", []jobs.Type{jobs.LeaderboardInvalidateOfficialV1})
+		replayID, err = replayJob(tenantCtx, db.Pool, id, jobs.LeaderboardInvalidateOfficialV1)
 	})
 	if err != nil || replayID == 0 {
 		t.Fatalf("replay = %d, %v", replayID, err)
@@ -140,10 +140,10 @@ func TestReplayRequiresRegisteredVersion(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := repo.Replay(tenantCtx, id, "operator", "repair", []jobs.Type{jobs.LeaderboardInvalidateContestV1}); !errors.Is(err, ErrNotFailed) {
+	if _, err := replayJob(tenantCtx, db.Pool, id, jobs.LeaderboardInvalidateContestV1); !errors.Is(err, ErrNotFailed) {
 		t.Fatalf("unregistered replay = %v", err)
 	}
-	replayID, err := repo.Replay(tenantCtx, id, "operator", "repair", []jobs.Type{"future.job.v2"})
+	replayID, err := replayJob(tenantCtx, db.Pool, id, "future.job.v2")
 	if err != nil || replayID <= id {
 		t.Fatalf("registered replay = %d, %v", replayID, err)
 	}

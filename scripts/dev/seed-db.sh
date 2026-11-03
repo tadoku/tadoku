@@ -212,7 +212,8 @@ select id from users where tenant = :'tenant' and id = :'admin_user_id'::uuid fo
 select format(
   'do $$ begin raise exception %L; end $$',
   'Dev Admin ' || lower(:'admin_user_id') || ' is banned in ' || :'tenant'
-    || '; unban them through PUT /authz/users/{id}/role, then rerun make dev-seed'
+    || '; ask another administrator to unban them, or remove the ban with the unban SQL in'
+    || ' docs/docs/architecture/authorization.md, then rerun make dev-seed'
 )
 where exists (
   select from permission_relationships

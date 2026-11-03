@@ -25,5 +25,10 @@ sh_test(
         "//tools/ci/repopolicy",
         "@bazel_tools//tools/bash/runfiles",
     ],
-    tags = ["external", "local", "no-cache", "no-sandbox"],
+    tags = [
+        "external",
+        "local",
+        "no-cache",
+        "no-sandbox",
+    ],
 )

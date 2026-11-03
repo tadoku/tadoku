@@ -61,7 +61,8 @@
 \* rebuildScript sets the marker with a 28-day expiry. A generation expires an
 \* hour after a script creates it, unless a rebuild publishes under it, which
 \* gives it the marker's expiry. With Expiry, MarkerExpires lets a marker lapse
-\* at any point and GenerationExpires lets a generation without a marker lapse;
+\* at any point and GenerationExpires lets a generation that no marker names
+\* lapse;
 \* fairness makes every marker lapse eventually, and a later rebuild sets a new
 \* one. Configurations without it check that invalidation alone makes boards
 \* fresh. generationScript also replaces a value below 2^32, which only the
@@ -298,7 +299,7 @@ MarkerExpires(k) ==
 GenerationExpires(k) ==
     /\ Expiry
     /\ gen[k] # NoGeneration
-    /\ marker[k] = NoMarker
+    /\ IF marker[k] = NoMarker THEN TRUE ELSE marker[k][1] # gen[k]
     /\ gen' = [gen EXCEPT ![k] = NoGeneration]
     /\ UNCHANGED <<pg, data, marker, covered, jobVars, faults, req, staleServe>>
 

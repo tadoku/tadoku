@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/uuidx"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -62,11 +62,7 @@ func (s *Service) Register(ctx context.Context, registration Registration) (Logi
 	if err != nil {
 		return LoginResult{}, err
 	}
-	id, err := uuid.NewRandom()
-	if err != nil {
-		return LoginResult{}, err
-	}
-	account := Account{ID: id, Email: email, DisplayName: name, CreatedAt: timex.Now(ctx)}
+	account := Account{ID: uuidx.New(ctx), Email: email, DisplayName: name, CreatedAt: timex.Now(ctx)}
 	result, err := s.newLogin(ctx, account)
 	if err != nil {
 		return LoginResult{}, err

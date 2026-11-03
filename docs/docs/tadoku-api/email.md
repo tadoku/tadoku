@@ -47,15 +47,20 @@ The worker registers email delivery with concurrency 2, a 20-second handler
 bound and five attempts. It holds a pending row unless both the deployment
 has enabled sending and the persisted tenant is `tadoku/prod`. A missing ID in
 the job's tenant is harmless; a guessed ID cannot reach another tenant's row.
-Terminal rows are not sent again, so replaying a failed send job completes
-without sending once its email is `failed`.
+Sent and held rows are not sent again; a failed row is. Replaying its failed
+send job resends it; a `sent` outcome or the replay's final failure replaces
+the recorded failure. If the failed email had in fact been delivered, for
+example after a crash that followed SMTP acceptance, the replay delivers it
+again, so replaying is the operator's call. A replay in a tenant that holds
+its mail completes without sending and leaves the email `failed`; a replay of
+an email that retention deleted also completes without sending.
 
 Enabled production delivery uses authenticated SMTP over STARTTLS, verifies
 the server certificate and records `sent`, the sending time and the provider's
 message ID returned by SMTP. The sender supplies an RFC Message-ID derived from
 the email ID, but [SES replaces Message-ID and Date headers](https://docs.aws.amazon.com/ses/latest/dg/header-fields.html).
 Use the recorded provider message ID to investigate a delivered message.
-A failed SMTP attempt leaves the email pending until the fifth attempt, which
+A failed SMTP attempt leaves the email unchanged until the fifth attempt, which
 records `failed` and its error. Worker maintenance also reconciles pending rows
 whose delivery jobs have all failed, including abandoned final leases. For each
 tenant, `email.Service.ReconcileFailures` applies the delivery hold rule that
@@ -73,8 +78,8 @@ or a handler that keeps sending after its lease lapsed while a new claim sends
 again. The submitted Message-ID does not provide a deduplication guarantee.
 A send that finishes after its email was settled `failed`, from a handler whose
 lease lapsed or a replay inserted after reconciliation's statement snapshot,
-still records `sent`: provider acceptance replaces `failed`. Held and sent
-emails never change.
+still records `sent`: provider acceptance replaces `failed`, as a newer
+failure does. Held and sent emails never change.
 See [Execution guarantees](./jobs.md#execution-and-failure-guarantees).
 
 ## Read retained messages

@@ -109,7 +109,8 @@ policy excludes application, feature, generated, infrastructure, storage and
 `{"email_id":"<uuid>"}`. A zero UUID is invalid. The tenant comes from the queue
 row and handler context, never from the payload. Recipients, rendered content,
 parameters and credentials stay outside this job. The handler reads current
-email state and must tolerate retries without resending terminal deliveries.
+email state. It never resends a sent or held email and sends a failed one
+again, which is how a replay resends it.
 The worker registers this handler with concurrency 2, a 20-second bound and five
 attempts. Sending is disabled by default; every non-production tenant holds its
 mail. See [Retained email](./email.md) for transactional writing, SMTP outcomes,

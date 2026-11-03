@@ -125,7 +125,9 @@ func (s *Service) SendAttempt(ctx context.Context, id uuid.UUID, final bool) err
 	if err != nil {
 		return err
 	}
-	if _, ok := row.Delivery.(Pending); !ok {
+	switch row.Delivery.(type) {
+	case Pending, Failed:
+	default:
 		return nil
 	}
 	if s.holds(row.Tenant) {

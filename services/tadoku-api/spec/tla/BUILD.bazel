@@ -67,14 +67,6 @@ tlc_test(
     tags = ["manual"],
 )
 
-# Known gap: a replayed send job completes without sending a failed email.
-tlc_test(
-    name = "emaildelivery_replay_test",
-    config = "EmailDelivery_replay.cfg",
-    spec = "EmailDelivery.tla",
-    tags = ["manual"],
-)
-
 # Accepted at-least-once delivery: the provider can receive an email twice.
 tlc_test(
     name = "emaildelivery_duplicates_test",

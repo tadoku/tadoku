@@ -28,8 +28,9 @@
 \* JobQueue.tla's ForkedHistory, are out of scope.
 \*
 \* SendAttempt runs its statements outside any transaction: Find, then one
-\* Finish update guarded by status = 'pending'; Finish(sent) also replaces a
-\* failed row, since the provider accepted the message. Finish runs on a
+\* Finish update. It sends a pending or failed email, so a replay resends a
+\* failed one. Finish(held) replaces only a pending row; Finish(sent) and
+\* Finish(failed) also replace a failed one. Finish runs on a
 \* detached context and is not fenced by the claim, so a handler whose lease
 \* lapsed still records its outcome; two workers let such a stale run overlap a
 \* fresh claim. A run can crash at any step, a Finish statement can fail, and the
@@ -188,10 +189,11 @@ Replay(op) ==
 ----
 \* SendAttempt, one step per statement or provider exchange.
 
-\* Find: a missing or non-pending email returns nil; a held one is finished as held.
+\* Find: a missing, sent or held email returns nil; a held tenant finishes held;
+\* a pending or failed email is sent.
 Find(w) ==
     /\ run[w].pc = "find"
-    /\ Goto(w, CASE email # "pending" -> "ok"
+    /\ Goto(w, CASE email \in {"sent", "held"} -> "ok"
                  [] hold -> "finishHeld"
                  [] OTHER -> "send")
     /\ UNCHANGED <<email, delivered, hold, lostSent, state, attempts, token, lease, recon>>
@@ -211,7 +213,7 @@ SendFails(w) ==
     /\ Goto(w, IF run[w].final THEN "finishFailed" ELSE "err")
     /\ UNCHANGED <<email, hold, lostSent, state, attempts, token, lease, recon>>
 
-\* Finish: update emails ... where status = 'pending', or 'failed' for sent.
+\* Finish: update emails ... where status = 'pending', or 'failed' for sent and failed.
 FinishTo(w, from, status, replaces, next) ==
     /\ run[w].pc = from
     /\ email' = IF email \in replaces THEN status ELSE email
@@ -222,7 +224,7 @@ FinishSent(w) ==
     /\ FinishTo(w, "finishSent", "sent", {"pending", "failed"}, "ok")
     /\ lostSent' = (lostSent \/ email' = "failed")
 
-FinishFailed(w) == FinishTo(w, "finishFailed", "failed", {"pending"}, "err") /\ UNCHANGED lostSent
+FinishFailed(w) == FinishTo(w, "finishFailed", "failed", {"pending", "failed"}, "err") /\ UNCHANGED lostSent
 
 FinishHeld(w) == FinishTo(w, "finishHeld", "held", {"pending"}, "ok") /\ UNCHANGED lostSent
 
@@ -301,7 +303,8 @@ CompletedJobNotPending == \A j \in Ids : state[j] \in {"completed", "removed"} =
 \* A pending email always has a job that can still settle it.
 PendingHasJob == email = "pending" => \E j \in Ids : state[j] \notin Gone
 
-\* A settled email never changes, except that a late Finish(sent) turns failed into sent.
+\* A settled email never changes, except that a Finish(sent) turns failed into sent.
+\* A newer failure leaves it failed; error texts are not modelled.
 TerminalEmailFinal ==
     [][email # "pending" =>
         \/ email' = email
@@ -312,15 +315,16 @@ TerminalEmailFinal ==
 \* does not replace a failed row.
 SentNeverLost == ~lostSent
 
+\* A completed send job, such as a replay, leaves its email sent or held. It
+\* relies on the hold rule being fixed and on retention not deleting the email.
+CompletedJobDelivered == \A j \in Ids : state[j] = "completed" => email \in {"sent", "held"}
+
 \* Liveness: every email leaves pending.
 EmailSettles == email = "pending" ~> email # "pending"
 
 ----
-\* Known gaps, checked by manual configurations.
+\* Accepted at-least-once behaviour, checked by a manual configuration.
 
-\* A completed send job, such as a replay, leaves its email sent or held.
-CompletedJobDelivered == \A j \in Ids : state[j] = "completed" => email \in {"sent", "held"}
-
-\* Accepted at-least-once behaviour: the provider can receive an email twice.
+\* Broken by design: the provider can receive an email twice.
 AtMostOnceDelivery == delivered <= 1
 ====

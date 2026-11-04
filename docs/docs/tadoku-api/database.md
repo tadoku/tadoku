@@ -142,8 +142,8 @@ tenant column with the strict `current_setting('tadoku.tenant')` default. Ordina
 also admits the restricted all-tenants worker scope; jobs still require a
 non-null, registered tenant.
 
-`languages` and `log_units` are shared reference tables. Everyone can read
-them, but only `tadoku/prod` can insert, update or delete their rows. The
+`languages` is a shared reference table. Everyone can read it, but only
+`tadoku/prod` can insert, update or delete its rows. The
 `tenants` and `tenant_overrides` registry policies permit test-tenant
 management while protecting the canonical production entry. Deleting a test
 entry cascades to its tenant-owned rows, including replayed jobs.

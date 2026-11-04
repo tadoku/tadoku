@@ -86,7 +86,7 @@ func seed(ctx context.Context, args []string) error {
      when c <= 4 then 60 * SCALE
      else 60
    end) u`,
-		`insert into logs (tenant, id, user_id, language_code, log_activity_id, unit_id, unit_key,
+		`insert into logs (tenant, id, user_id, language_code, log_activity_id, unit_key,
     description, amount, modifier, duration_seconds, computed_score,
     eligible_official_leaderboard, created_at, updated_at, deleted_at)
    select 'tadoku/prod', md5('log-' || i)::uuid,
@@ -99,18 +99,7 @@ func seed(ctx context.Context, args []string) error {
     end)::uuid,
     (array['jpn', 'jpn', 'eng', 'deu'])[1 + i % 4], 1 + i % 2,
     case
-     when i % 20 = 0 then null
-     else
-     (select id from log_units
-      where unit_key = case
-       when i % 2 = 0 then 'reading_page'
-       else 'listening_minute'
-      end
-      order by id
-      limit 1)
-    end,
-    case
-      when i % 2 = 0 then 'reading_page'
+      when i % 2 = 0 then 'pages'
       else 'listening_minute'
     end,
     'Synthetic activity ' || i || repeat(' reading', 20), case
@@ -135,7 +124,7 @@ func seed(ctx context.Context, args []string) error {
 		`insert into logs (tenant, id, user_id, language_code, log_activity_id, unit_key,
     description, amount, modifier, duration_seconds, eligible_official_leaderboard, created_at, updated_at)
    values ('climb/other', md5('other-log-1')::uuid, md5('user-1')::uuid, 'jpn', 1,
-    'reading_page', 'Other tenant activity', 999, 1, 120, true, '2026-01-01', '2026-01-01')`,
+    'pages', 'Other tenant activity', 999, 1, 120, true, '2026-01-01', '2026-01-01')`,
 		`insert into contest_logs (tenant, contest_id, log_id, unit_key, amount, modifier,
     duration_seconds, computed_score)
    select 'tadoku/prod', md5('contest-' ||
@@ -145,7 +134,7 @@ func seed(ctx context.Context, args []string) error {
       when i <= 15300 * SCALE then 3
       else 4
     end)::uuid,
-    md5('log-' || i)::uuid, 'reading_page', case
+    md5('log-' || i)::uuid, 'pages', case
       when i % 71 = 0 then 0
       else i % 5 * 10
     end,

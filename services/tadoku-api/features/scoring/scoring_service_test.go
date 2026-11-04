@@ -23,7 +23,7 @@ func TestEvaluateSelectsAndCombinesRules(t *testing.T) {
 			Priority:     40,
 			Stackable:    true,
 			ActivityID:   1,
-			UnitKey:      "reading_page",
+			UnitKey:      "pages",
 			LanguageCode: "jpn",
 			Tag:          "book",
 			Source:       SourceAmount,
@@ -70,7 +70,7 @@ func TestEvaluateSelectsAndCombinesRules(t *testing.T) {
 			Priority:   70,
 			Stackable:  true,
 			ActivityID: 1,
-			UnitKey:    "reading_sentence",
+			UnitKey:    "sentences",
 			Source:     SourceAmount,
 			Rate:       100,
 		},
@@ -88,7 +88,7 @@ func TestEvaluateSelectsAndCombinesRules(t *testing.T) {
 
 	estimate, matched, err := evaluate(scoringInput{
 		activityID:   1,
-		unitKey:      "reading_page",
+		unitKey:      "pages",
 		languageCode: "jpn",
 		tags:         []string{"book"},
 		amount:       &amount,

@@ -10,7 +10,6 @@ import (
 func (s *server) ImmersionScorePreview(ctx context.Context, request openapi.ImmersionScorePreviewRequestObject) (openapi.ImmersionScorePreviewResponseObject, error) {
 	body := request.Body
 	parameters := api.ScorePreviewParameters{
-		UnitID:          body.UnitId,
 		UnitKey:         body.UnitKey,
 		ActivityID:      body.ActivityId,
 		LanguageCode:    body.LanguageCode,

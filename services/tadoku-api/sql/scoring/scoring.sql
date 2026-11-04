@@ -80,16 +80,6 @@ where scope = 'contest'
   and contest_id = sqlc.arg('contest_id')
 order by version desc;
 
--- name: ListLogUnitsByID :many
-select id, unit_key, modifier, log_activity_id, language_code
-from log_units
-where id = sqlc.arg('id');
-
--- name: ListLogUnitsByKeys :many
-select id, unit_key, modifier, log_activity_id, language_code
-from log_units
-where unit_key = any(sqlc.arg('unit_keys')::text[]);
-
 -- name: NextPlatformScoringRuleSetVersion :one
 select (coalesce(max(version), 0) + 1)::integer
 from scoring_rule_sets

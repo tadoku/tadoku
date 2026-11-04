@@ -6,30 +6,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
-	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 func (s *Service) Preview(ctx context.Context, parameters PreviewParameters) (*Preview, error) {
-	normalized, err := s.normalizeLegacyUnit(ctx, logscore.Input{
-		UnitID:          parameters.UnitID,
-		UnitKey:         parameters.UnitKey,
-		ActivityID:      parameters.ActivityID,
-		LanguageCode:    parameters.LanguageCode,
-		Amount:          parameters.Amount,
-		DurationSeconds: parameters.DurationSeconds,
-		Tags:            parameters.Tags,
-	})
-	if err != nil {
-		return nil, err
-	}
-	parameters.UnitID = normalized.UnitID
-	parameters.UnitKey = normalized.UnitKey
-	parameters.Amount = normalized.Amount
-	parameters.DurationSeconds = normalized.DurationSeconds
-	parameters.Tags = normalized.Tags
-
-	unitKey, err := s.resolveUnit(ctx, parameters)
+	unitKey, err := resolveUnitKey(parameters)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +80,7 @@ func (s *Service) Preview(ctx context.Context, parameters PreviewParameters) (*P
 }
 
 func (s *Service) ScorePlatform(ctx context.Context, parameters PreviewParameters) (Estimate, bool, error) {
-	unitKey, err := s.resolveUnit(ctx, parameters)
+	unitKey, err := resolveUnitKey(parameters)
 	if err != nil {
 		return Estimate{}, false, err
 	}
@@ -123,7 +104,7 @@ func (s *Service) ScorePlatform(ctx context.Context, parameters PreviewParameter
 }
 
 func (s *Service) ScoreContest(ctx context.Context, parameters PreviewParameters, contestID uuid.UUID, platform Estimate) (Estimate, error) {
-	unitKey, err := s.resolveUnit(ctx, parameters)
+	unitKey, err := resolveUnitKey(parameters)
 	if err != nil {
 		return Estimate{}, err
 	}
@@ -179,48 +160,37 @@ func (s *Service) scoreContest(ctx context.Context, input scoringInput, contestI
 	return &estimate, err
 }
 
-func (s *Service) resolveUnit(ctx context.Context, parameters PreviewParameters) (string, error) {
+func resolveUnit(parameters PreviewParameters) (*activities.Unit, error) {
 	if !validActivity(parameters.ActivityID) {
-		return "", errx.NewInvalidInputError("activity_id is not valid")
+		return nil, errx.NewInvalidInputError("activity_id is not valid")
 	}
-	if parameters.UnitKey != nil && !activities.UnitValidForActivity(*parameters.UnitKey, parameters.ActivityID) {
-		return "", errx.NewInvalidInputError("unit_key is not valid for activity_id")
-	}
-	hasUnit := parameters.UnitID != nil || parameters.UnitKey != nil
-	if (parameters.Amount != nil) != hasUnit {
-		return "", errx.NewInvalidInputError("amount and a unit identifier must be supplied together")
+	if (parameters.Amount != nil) != (parameters.UnitKey != nil) {
+		return nil, errx.NewInvalidInputError("amount and unit_key must be supplied together")
 	}
 	if parameters.DurationSeconds != nil && *parameters.DurationSeconds <= 0 {
-		return "", errx.NewInvalidInputError("duration_seconds must be positive")
+		return nil, errx.NewInvalidInputError("duration_seconds must be positive")
 	}
 	if parameters.Amount != nil && (!finite(*parameters.Amount) || *parameters.Amount <= 0) {
-		return "", errx.NewInvalidInputError("amount must be positive and finite")
+		return nil, errx.NewInvalidInputError("amount must be positive and finite")
 	}
 	if parameters.Amount == nil && parameters.DurationSeconds == nil {
-		return "", errx.NewInvalidInputError("amount/unit or duration_seconds is required")
+		return nil, errx.NewInvalidInputError("amount/unit_key or duration_seconds is required")
 	}
 	if parameters.Amount == nil {
-		return "", nil
+		return nil, nil
 	}
 
-	unit, err := s.findApplicableUnit(
-		ctx,
-		parameters.UnitID,
-		parameters.UnitKey,
-		parameters.ActivityID,
-		parameters.LanguageCode,
-	)
+	unit, err := activities.ResolveUnit(parameters.ActivityID, *parameters.UnitKey, parameters.LanguageCode)
 	if err != nil {
+		return nil, errx.NewInvalidInputError(err.Error())
+	}
+	return &unit, nil
+}
+
+func resolveUnitKey(parameters PreviewParameters) (string, error) {
+	unit, err := resolveUnit(parameters)
+	if err != nil || unit == nil {
 		return "", err
-	}
-	if unit == nil && parameters.UnitID != nil {
-		return "", errx.NewInvalidInputError("unit_id is not valid for activity_id and language_code")
-	}
-	if unit == nil {
-		return "", errx.NewInvalidInputError("unit_key is not valid for activity_id and language_code")
-	}
-	if parameters.UnitKey != nil && unit.Key != activities.CanonicalUnitKey(parameters.ActivityID, *parameters.UnitKey) {
-		return "", errx.NewInvalidInputError("unit_id and unit_key identify different units")
 	}
 	return unit.Key, nil
 }

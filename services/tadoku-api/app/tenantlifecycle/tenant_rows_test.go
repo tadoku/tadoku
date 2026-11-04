@@ -57,14 +57,13 @@ func seedEveryTenantTable(t *testing.T, db *testpostgres.Database, key string) {
 			'Lifecycle user', false, current_date, current_date + 7, current_date + 7, 'Lifecycle', array[1], false);
 		insert into contest_registrations (tenant, contest_id, user_id, language_codes)
 		values ($1, uuid_generate_v5(uuid_nil(), $1 || '/contest'), uuid_generate_v5(uuid_nil(), $1 || '/user'), array['jpn']);
-		insert into logs (tenant, id, user_id, language_code, log_activity_id, unit_id, unit_key,
+		insert into logs (tenant, id, user_id, language_code, log_activity_id, unit_key,
 			amount, modifier, computed_score, eligible_official_leaderboard)
 		values ($1, uuid_generate_v5(uuid_nil(), $1 || '/log'), uuid_generate_v5(uuid_nil(), $1 || '/user'),
-			'jpn', 1, (select id from log_units where unit_key in ('reading_page', 'pages')
-				and log_activity_id = 1 and language_code is null), 'reading_page', 10, 1, 10, true);
+			'jpn', 1, 'pages', 10, 1, 10, true);
 		insert into contest_logs (tenant, contest_id, log_id, unit_key, amount, modifier, computed_score)
 		values ($1, uuid_generate_v5(uuid_nil(), $1 || '/contest'), uuid_generate_v5(uuid_nil(), $1 || '/log'),
-			'reading_page', 10, 1, 10);
+			'pages', 10, 1, 10);
 		insert into log_tags (tenant, log_id, user_id, tag)
 		values ($1, uuid_generate_v5(uuid_nil(), $1 || '/log'), uuid_generate_v5(uuid_nil(), $1 || '/user'), 'lifecycle');
 		insert into pages (tenant, id, namespace, slug, current_content_id)

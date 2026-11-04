@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
@@ -28,23 +27,19 @@ const (
 	LogUpdate LogOperation = "update"
 )
 
-func (s *Service) ScoreLog(ctx context.Context, operation LogOperation, input logscore.Input, targets []logscore.Target) (logscore.Result, error) {
+func (s *Service) ScoreLog(
+	ctx context.Context,
+	operation LogOperation,
+	input logscore.Input,
+	targets []logscore.Target,
+) (logscore.Result, error) {
 	input, err := s.NormalizeLogInput(input)
 	if err != nil {
 		return logscore.Result{}, err
 	}
-	input, err = s.normalizeLegacyUnit(ctx, input)
-	if err != nil {
-		return logscore.Result{}, err
-	}
 
-	base, err := s.resolveLogTracking(ctx, input)
-	if err != nil {
-		return logscore.Result{}, err
-	}
 	tags := input.Tags
 	parameters := PreviewParameters{
-		UnitID:          input.UnitID,
 		UnitKey:         input.UnitKey,
 		ActivityID:      input.ActivityID,
 		LanguageCode:    input.LanguageCode,
@@ -52,6 +47,12 @@ func (s *Service) ScoreLog(ctx context.Context, operation LogOperation, input lo
 		DurationSeconds: input.DurationSeconds,
 		Tags:            tags,
 	}
+	unit, err := resolveUnit(parameters)
+	if err != nil {
+		return logscore.Result{}, err
+	}
+	base := legacyTracking(parameters, unit)
+
 	official := make([]bool, 0, len(targets))
 	for _, target := range targets {
 		official = append(official, target.Official)
@@ -137,79 +138,19 @@ func (s *Service) NormalizeLogInput(input logscore.Input) (logscore.Input, error
 	return input, nil
 }
 
-func (s *Service) resolveLogTracking(ctx context.Context, input logscore.Input) (logscore.Tracking, error) {
-	if !validActivity(input.ActivityID) {
-		return logscore.Tracking{}, errx.NewInvalidInputError("invalid log activity")
+func legacyTracking(parameters PreviewParameters, unit *activities.Unit) logscore.Tracking {
+	tracking := logscore.Tracking{DurationSeconds: parameters.DurationSeconds}
+	if unit == nil {
+		rate, _ := activities.LegacyDurationScorePerMinute(parameters.ActivityID)
+		tracking.Score = float32(*parameters.DurationSeconds) / 60 * rate
+		return tracking
 	}
-	legacyDurationRate, _ := activities.LegacyDurationScorePerMinute(input.ActivityID)
-	if input.UnitKey != nil && !activities.UnitValidForActivity(*input.UnitKey, input.ActivityID) {
-		return logscore.Tracking{}, errx.NewInvalidInputError("unit_key is not valid for activity_id")
-	}
-	var unit *logUnit
-	if input.Amount != nil && (input.UnitID != nil || input.UnitKey != nil) {
-		var err error
-		unit, err = s.findApplicableUnit(ctx, input.UnitID, input.UnitKey, input.ActivityID, input.LanguageCode)
-		if err != nil {
-			return logscore.Tracking{}, err
-		}
-		if unit == nil && input.UnitID != nil {
-			return logscore.Tracking{}, errx.NewInvalidInputError("unit_id is not valid")
-		}
-		if unit == nil {
-			return logscore.Tracking{}, errx.NewInvalidInputError("unit_key is not valid")
-		}
-	}
-	if unit != nil && input.UnitKey != nil && unit.Key != activities.CanonicalUnitKey(input.ActivityID, *input.UnitKey) {
-		return logscore.Tracking{}, errx.NewInvalidInputError("unit_id and unit_key identify different units")
-	}
-	hasAmount := input.Amount != nil
-	hasUnit := input.UnitID != nil || input.UnitKey != nil
-	if input.DurationSeconds != nil && *input.DurationSeconds <= 0 {
-		return logscore.Tracking{}, errx.NewInvalidInputError("duration_seconds must be positive")
-	}
-	if input.Amount != nil && (!finite(*input.Amount) || *input.Amount <= 0) {
-		return logscore.Tracking{}, errx.NewInvalidInputError("amount must be positive")
-	}
-	if hasAmount != hasUnit {
-		return logscore.Tracking{}, errx.NewInvalidInputError("amount and a unit identifier must be supplied together")
-	}
-	if !hasAmount && input.DurationSeconds == nil {
-		return logscore.Tracking{}, errx.NewInvalidInputError("amount/unit or duration_seconds is required")
-	}
-	tracking := logscore.Tracking{DurationSeconds: input.DurationSeconds}
-	if hasAmount {
-		if unit == nil {
-			return logscore.Tracking{}, errx.NewInvalidInputError("unit is required for amount scoring")
-		}
-		tracking.UnitID = &unit.ID
-		tracking.UnitKey = unit.Key
-		tracking.Amount = input.Amount
-		tracking.Modifier = &unit.Modifier
-		tracking.Score = *input.Amount * unit.Modifier
-	} else {
-		tracking.Score = float32(*input.DurationSeconds) / 60 * legacyDurationRate
-	}
-	return tracking, nil
-}
 
-func (s *Service) findApplicableUnit(
-	ctx context.Context,
-	id *uuid.UUID,
-	key *string,
-	activityID int32,
-	languageCode string,
-) (*logUnit, error) {
-	var candidates []unitCandidate
-	var err error
-	if id != nil {
-		candidates, err = s.repository.ListUnitsByID(ctx, *id)
-	} else {
-		candidates, err = s.repository.ListUnitsByKeys(ctx, activities.UnitKeySpellings(activityID, *key))
-	}
-	if err != nil {
-		return nil, err
-	}
-	return applicableUnit(candidates, activityID, languageCode), nil
+	tracking.UnitKey = unit.Key
+	tracking.Amount = parameters.Amount
+	tracking.Modifier = &unit.Modifier
+	tracking.Score = *parameters.Amount * unit.Modifier
+	return tracking
 }
 
 func scoringErrorType(err error) string {

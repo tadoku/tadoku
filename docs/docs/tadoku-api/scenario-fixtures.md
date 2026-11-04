@@ -154,7 +154,7 @@ is the only exclusion: a serial subtest under a parallel parent, or a mutex
 that only fault tests take, does not keep ordinary scenarios out. Scenarios do
 not reset, so a serial test that writes shared reference data, such as
 `languages`, restores it before it returns: it calls `resetAfter`, or removes
-the rows it added in cleanup, as the log unit cases do.
+the rows it added in cleanup.
 
 Keep every step of a scenario sequential. Parallel subtests are only for
 scenarios that deliberately overlap and wait for each other with

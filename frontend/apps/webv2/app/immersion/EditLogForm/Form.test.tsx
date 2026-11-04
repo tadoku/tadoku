@@ -28,8 +28,7 @@ type EditedLog = React.ComponentProps<typeof EditLogForm>['log']
 
 const reading = { id: 1, name: 'Reading', input_type: 'amount_primary' as const }
 const listening = { id: 2, name: 'Listening', input_type: 'time_primary' as const }
-const unit = (id: string, unit_key: string, log_activity_id: number, name: string) => ({
-  id,
+const unit = (unit_key: string, log_activity_id: number, name: string) => ({
   unit_key,
   log_activity_id,
   name,
@@ -40,9 +39,9 @@ const options: LogConfigurationOptions = {
   languages: [{ code: 'jpn', name: 'Japanese' }],
   activities: [reading, listening],
   units: [
-    unit('a0000000-0000-4000-8000-000000000001', 'reading_page', 1, 'Page'),
-    unit('a0000000-0000-4000-8000-000000000002', 'reading_character', 1, 'Character'),
-    unit('a0000000-0000-4000-8000-000000000003', 'listening_minute', 2, 'Minute'),
+    unit('pages', 1, 'Page'),
+    unit('characters', 1, 'Character'),
+    unit('listening_minute', 2, 'Minute'),
   ],
   user_language_codes: [],
   scoring_engine_enabled: true,
@@ -71,16 +70,16 @@ afterEach(() => {
 
 describe('editing a log', () => {
   it('saves the unit key of an amount log', async () => {
-    const log = storedLog({ amount: 12, unit_key: 'reading_character' })
+    const log = storedLog({ amount: 12, unit_key: 'characters' })
     render(<EditLogForm options={options} log={log} />)
 
-    expect(unitSelect()!.value).toBe('reading_character')
+    expect(unitSelect()!.value).toBe('characters')
     save()
 
     await waitFor(() =>
       expect(updateLog).toHaveBeenCalledWith({
         logId: log.id,
-        payload: { tags: [], description: 'before', amount: 12, unit_key: 'reading_character' },
+        payload: { tags: [], description: 'before', amount: 12, unit_key: 'characters' },
       }),
     )
   })

@@ -2,6 +2,6 @@ POST /immersion/logs HTTP/1.1
 Host: api.test
 Content-Type: application/json
 X-Request-Id: 22222222-2222-4222-8222-222222222222
-Content-Length: 178
+Content-Length: 171
 
-{"registration_ids":["eeeeeeee-eeee-4eee-8eee-000000000002"],"language_code":"eng","activity_id":1,"amount":10,"unit_key":"reading_page","tags":[],"description":"attached later"}
+{"registration_ids":["eeeeeeee-eeee-4eee-8eee-000000000002"],"language_code":"eng","activity_id":1,"amount":10,"unit_key":"pages","tags":[],"description":"attached later"}

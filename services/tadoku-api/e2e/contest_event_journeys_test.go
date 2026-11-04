@@ -17,26 +17,7 @@ func contestEventUUIDs() io.Reader {
 	return bytes.NewReader(randomBytes)
 }
 
-func cleanupContestEventUnit(t *testing.T) {
-	t.Helper()
-	cleanupLogUnit(t, "7e000000-0000-4000-8000-000000000001")
-}
-
-func cleanupLogUnit(t *testing.T, id string) {
-	t.Helper()
-	t.Cleanup(func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		_, err := api.db.Pool.Exec(ctx, "delete from log_units where id = $1", id)
-		if err != nil {
-			t.Error(err)
-		}
-	})
-}
-
 func TestContestEventsJourney(t *testing.T) {
-	cleanupContestEventUnit(t)
-
 	steps := []step{
 		{request: "empty_now", as: guest, want: http.StatusOK},
 		{request: "create_a", as: user, want: http.StatusOK},
@@ -66,12 +47,10 @@ func TestContestEventsJourney(t *testing.T) {
 		steps[index].at = fixtureInstant.Add(time.Duration(index) * time.Second)
 	}
 
-	runJourneyWithSetup(t, api, scoringEnabledHandler, "ContestEvents", nil, contestEventUUIDs(), steps)
+	runScenarioJourney(t, scoringEnabledHandler, "ContestEvents", contestEventUUIDs(), steps)
 }
 
 func TestContestEventWithdrawalsJourney(t *testing.T) {
-	cleanupContestEventUnit(t)
-
 	steps := []step{
 		{request: "existing_logs_have_no_synthetic_history", as: guest, want: http.StatusOK},
 		{request: "unchanged_log", as: user, want: http.StatusOK},
@@ -98,12 +77,10 @@ func TestContestEventWithdrawalsJourney(t *testing.T) {
 		steps[index].at = fixtureInstant.Add(time.Duration(index) * time.Second)
 	}
 
-	runJourneyWithSetup(t, api, scoringEnabledHandler, "ContestEventWithdrawals", nil, contestEventUUIDs(), steps)
+	runScenarioJourney(t, scoringEnabledHandler, "ContestEventWithdrawals", contestEventUUIDs(), steps)
 }
 
 func TestContestEventFrozenScoresJourney(t *testing.T) {
-	cleanupContestEventUnit(t)
-
 	steps := []step{
 		{request: "personal_tracking_changes", as: admin, want: http.StatusOK},
 		{request: "closed_contest_silent", as: guest, want: http.StatusOK},
@@ -118,12 +95,10 @@ func TestContestEventFrozenScoresJourney(t *testing.T) {
 		steps[index].at = fixtureInstant.Add(time.Duration(index) * time.Second)
 	}
 
-	runJourneyWithSetup(t, api, scoringEnabledHandler, "ContestEventFrozenScores", nil, contestEventUUIDs(), steps)
+	runScenarioJourney(t, scoringEnabledHandler, "ContestEventFrozenScores", contestEventUUIDs(), steps)
 }
 
 func TestContestEventRollbackJourney(t *testing.T) {
-	cleanupContestEventUnit(t)
-
 	runJourneyWithSetup(t, api, scoringEnabledHandler, "ContestEventRollback", func(t *testing.T) {
 		t.Cleanup(func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

@@ -141,10 +141,6 @@ func newTestAPI(ctx context.Context) (_ *suite, err error) {
 			err = errors.Join(err, db.Close())
 		}
 	}()
-	if err := normalizeLogUnitIDs(ctx, db.Pool); err != nil {
-		return nil, err
-	}
-
 	leaderboardService := leaderboard.NewService(
 		leaderboard.NewRepository(db.AppPool),
 		leaderboard.NewCache(leaderboardValkey.client, time.Second),

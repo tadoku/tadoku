@@ -1,7 +1,5 @@
 package activities
 
-import "slices"
-
 type ActivityInputType string
 
 const (
@@ -34,79 +32,4 @@ func LegacyDurationScorePerMinute(id int32) (float32, bool) {
 		}
 	}
 	return 0, false
-}
-
-var unitActivities = map[string][]int32{
-	"pages":                   {1, 3},
-	"sentences":               {1, 3},
-	"characters":              {1, 3},
-	"reading_page":            {1},
-	"reading_two_column_page": {1},
-	"reading_comic_page":      {1},
-	"reading_sentence":        {1},
-	"reading_character":       {1},
-	"listening_minute":        {2},
-	"listening_dense_minutes": {2},
-	"writing_page":            {3},
-	"writing_sentence":        {3},
-	"writing_character":       {3},
-	"speaking_minute":         {4},
-	"speaking_dense_minutes":  {4},
-	"study_minute":            {5},
-}
-
-var legacyUnitKeys = map[string]string{
-	"reading_page":      "pages",
-	"reading_sentence":  "sentences",
-	"reading_character": "characters",
-	"writing_page":      "pages",
-	"writing_sentence":  "sentences",
-	"writing_character": "characters",
-}
-
-func UnitValidForActivity(key string, activityID int32) bool {
-	return slices.Contains(unitActivities[key], activityID)
-}
-
-// CanonicalUnitKey returns the plural key for an activity-prefixed reading or writing key of the activity, and key
-// otherwise. Compare unit keys in this form: stored log units and rules may carry either spelling.
-func CanonicalUnitKey(activityID int32, key string) string {
-	if plural, legacy := legacyUnitKeys[key]; legacy && UnitValidForActivity(key, activityID) {
-		return plural
-	}
-	return key
-}
-
-// PrefixedUnitKey returns the activity-prefixed spelling of a plural key for the activity, such as reading_page for
-// pages on reading, and key otherwise. The scoring_rules check constraint accepts this spelling before and after the
-// plural keys are introduced.
-func PrefixedUnitKey(activityID int32, key string) string {
-	for legacy, plural := range legacyUnitKeys {
-		if plural == key && UnitValidForActivity(legacy, activityID) {
-			return legacy
-		}
-	}
-	return key
-}
-
-// UnitKeySpellings returns key followed by its other spelling for the activity, when it has one.
-func UnitKeySpellings(activityID int32, key string) []string {
-	if other := CanonicalUnitKey(activityID, key); other != key {
-		return []string{key, other}
-	}
-	if other := PrefixedUnitKey(activityID, key); other != key {
-		return []string{key, other}
-	}
-	return []string{key}
-}
-
-var pluralUnitKeys = []string{"pages", "sentences", "characters"}
-
-func PluralUnitKeys() []string { return slices.Clone(pluralUnitKeys) }
-
-func IsPluralUnitKey(key string) bool { return slices.Contains(pluralUnitKeys, key) }
-
-func IsLegacyUnitKey(key string) bool {
-	_, legacy := legacyUnitKeys[key]
-	return legacy
 }

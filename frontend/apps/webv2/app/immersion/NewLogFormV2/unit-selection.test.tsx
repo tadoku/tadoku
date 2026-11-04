@@ -30,18 +30,16 @@ const reading = { id: 1, name: 'Reading', input_type: 'amount_primary' as const 
 const listening = { id: 2, name: 'Listening', input_type: 'time_primary' as const }
 const writing = { id: 3, name: 'Writing', input_type: 'amount_primary' as const }
 const unit = (
-  id: string,
   unit_key: string,
   log_activity_id: number,
   name: string,
   language_code?: string,
-) => ({ id, unit_key, log_activity_id, name, modifier: 1, language_code })
-const readingPage = unit('a0000000-0000-4000-8000-000000000001', 'reading_page', 1, 'Page')
-const readingCharacter = unit('a0000000-0000-4000-8000-000000000002', 'reading_character', 1, 'Character')
-const readingCharacterJpn = unit('a0000000-0000-4000-8000-000000000003', 'reading_character', 1, 'Character', 'jpn')
-const readingCharacterKor = unit('a0000000-0000-4000-8000-000000000004', 'reading_character', 1, 'Character', 'kor')
-const writingPage = unit('a0000000-0000-4000-8000-000000000005', 'writing_page', 3, 'Page')
-const listeningMinute = unit('a0000000-0000-4000-8000-000000000006', 'listening_minute', 2, 'Minute')
+) => ({ unit_key, log_activity_id, name, modifier: 1, language_code })
+const readingPage = unit('pages', 1, 'Page')
+const readingCharacter = unit('characters', 1, 'Character')
+const readingCharacterJpn = unit('characters', 1, 'Character', 'jpn')
+const readingCharacterKor = unit('characters', 1, 'Character', 'kor')
+const writingPage = unit('pages', 3, 'Page')
 
 const options = {
   languages: [
@@ -56,7 +54,6 @@ const options = {
     readingCharacterJpn,
     readingCharacterKor,
     writingPage,
-    listeningMinute,
   ],
   tags: [],
   user_language_codes: [],
@@ -77,27 +74,27 @@ describe('new log unit selection', () => {
     const language = field('languageCode')
     const unitSelect = field('amountUnit')
 
-    fireEvent.change(unitSelect, { target: { value: 'reading_character' } })
+    fireEvent.change(unitSelect, { target: { value: 'characters' } })
     fireEvent.change(language, { target: { value: 'kor' } })
-    expect(unitSelect.value).toBe('reading_character')
+    expect(unitSelect.value).toBe('characters')
 
     fireEvent.change(language, { target: { value: 'eng' } })
-    expect(unitSelect.value).toBe('reading_character')
+    expect(unitSelect.value).toBe('characters')
   })
 
   it('selects the first unit when the activity has no matching unit', () => {
     render(<LogFormV2 options={options} defaultValues={{ languageCode: 'jpn' }} />)
     const unitSelect = field('amountUnit')
 
-    fireEvent.change(unitSelect, { target: { value: 'reading_character' } })
+    fireEvent.change(unitSelect, { target: { value: 'characters' } })
     fireEvent.change(field('activityId'), { target: { value: String(writing.id) } })
-    expect(unitSelect.value).toBe('writing_page')
+    expect(unitSelect.value).toBe('pages')
   })
 
   it('submits the selected unit key', async () => {
     render(<LogFormV2 options={options} defaultValues={{ languageCode: 'jpn' }} />)
 
-    fireEvent.change(field('amountUnit'), { target: { value: 'reading_character' } })
+    fireEvent.change(field('amountUnit'), { target: { value: 'characters' } })
     fireEvent.change(screen.getByLabelText('Amount', { selector: 'input' }), {
       target: { value: '12' },
     })
@@ -108,7 +105,7 @@ describe('new log unit selection', () => {
         language_code: 'jpn',
         activity_id: reading.id,
         amount: 12,
-        unit_key: 'reading_character',
+        unit_key: 'characters',
         tags: [],
         description: '',
       }),

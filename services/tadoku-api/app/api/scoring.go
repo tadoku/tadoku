@@ -13,7 +13,6 @@ import (
 
 type ScorePreviewParameters struct {
 	RegistrationIDs []uuid.UUID
-	UnitID          *uuid.UUID
 	UnitKey         *string
 	ActivityID      int32
 	LanguageCode    string
@@ -48,7 +47,6 @@ func (a *Application) PreviewScore(ctx context.Context, parameters ScorePreviewP
 	}
 
 	featureParameters := scoring.PreviewParameters{
-		UnitID:          parameters.UnitID,
 		UnitKey:         parameters.UnitKey,
 		ActivityID:      parameters.ActivityID,
 		LanguageCode:    parameters.LanguageCode,

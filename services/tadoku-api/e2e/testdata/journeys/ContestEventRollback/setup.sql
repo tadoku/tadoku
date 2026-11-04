@@ -14,7 +14,7 @@ insert into scoring_rules (
   tenant, id, rule_set_id, priority, stackable, activity_id, unit_key, score_source, rate
 ) values
   ('tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-000000000001', 'aaaaaaaa-aaaa-4aaa-8aaa-000000000001',
-   1, false, 1, 'reading_page', 'amount', 2);
+   1, false, 1, 'pages', 'amount', 2);
 
 insert into platform_scoring_config (tenant, singleton, active_rule_set_id) values
   ('tadoku/prod', true, 'aaaaaaaa-aaaa-4aaa-8aaa-000000000001');
@@ -41,7 +41,7 @@ insert into scoring_rules (
   tenant, id, rule_set_id, priority, stackable, activity_id, unit_key, score_source, rate
 ) values
   ('tadoku/prod', 'dddddddd-dddd-4ddd-8ddd-000000000001', 'cccccccc-cccc-4ccc-8ccc-000000000001',
-   1, false, 1, 'reading_page', 'amount', 4);
+   1, false, 1, 'pages', 'amount', 4);
 
 update contests set scoring_rule_set_id = 'cccccccc-cccc-4ccc-8ccc-000000000001'
 where tenant = 'tadoku/prod' and id = 'f0000000-0000-4000-8000-000000000001';
@@ -49,6 +49,3 @@ where tenant = 'tadoku/prod' and id = 'f0000000-0000-4000-8000-000000000001';
 insert into contest_registrations (tenant, id, contest_id, user_id, language_codes) values
   ('tadoku/prod', 'e0000000-0000-4000-8000-000000000001', 'f0000000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', '{eng,jpn}'),
   ('tadoku/prod', 'e0000000-0000-4000-8000-000000000002', 'f0000000-0000-4000-8000-000000000002', '11111111-1111-4111-8111-111111111111', '{eng,jpn}');
-
-insert into log_units (id, log_activity_id, name, modifier, language_code, unit_key) values
-  ('7e000000-0000-4000-8000-000000000001', 1, 'Page', 1, 'eng', 'reading_page');

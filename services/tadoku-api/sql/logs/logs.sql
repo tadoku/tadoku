@@ -1,14 +1,3 @@
--- name: ListUnits :many
-select
-  id,
-  unit_key,
-  log_activity_id,
-  name,
-  modifier,
-  language_code
-from log_units
-order by log_activity_id asc;
-
 -- name: ListDistinctLanguageCodesForUser :many
 select distinct language_code
 from logs
@@ -117,9 +106,7 @@ with filters as not materialized (
     logs.language_code,
     languages.name as language_name,
     logs.log_activity_id as activity_id,
-    logs.unit_id,
-    coalesce(contest_logs.unit_key, '') as unit_key,
-    coalesce(log_units.name, '') as unit_name,
+    coalesce(logs.unit_key, '') as unit_key,
     logs.description,
     contest_logs.amount,
     contest_logs.modifier,
@@ -143,7 +130,6 @@ with filters as not materialized (
   from contest_logs
   inner join logs on (logs.id = contest_logs.log_id)
   inner join languages on (languages.code = logs.language_code)
-  left join log_units on (log_units.id = logs.unit_id)
   inner join users on (users.id = logs.user_id)
   cross join filters
   where
@@ -157,9 +143,7 @@ with filters as not materialized (
     eligible_logs.language_code,
     eligible_logs.language_name,
     eligible_logs.activity_id,
-    eligible_logs.unit_id,
     eligible_logs.unit_key,
-    eligible_logs.unit_name,
     eligible_logs.description,
     eligible_logs.amount,
     eligible_logs.modifier,
@@ -188,9 +172,7 @@ select
   page.language_code,
   page.language_name,
   page.activity_id,
-  page.unit_id,
   page.unit_key,
-  page.unit_name,
   page.description,
   page.amount,
   page.modifier,
@@ -226,9 +208,7 @@ with eligible_logs as (
     logs.language_code,
     languages.name as language_name,
     logs.log_activity_id as activity_id,
-    logs.unit_id,
     coalesce(logs.unit_key, '') as unit_key,
-    coalesce(log_units.name, '') as unit_name,
     logs.description,
     logs.amount,
     logs.modifier,
@@ -247,7 +227,6 @@ with eligible_logs as (
     )::text[] as tags
   from logs
   inner join languages on (languages.code = logs.language_code)
-  left join log_units on (log_units.id = logs.unit_id)
   where
     (sqlc.arg('include_deleted')::boolean or logs.deleted_at is null)
     and logs.user_id = sqlc.arg('user_id')
@@ -259,9 +238,7 @@ with eligible_logs as (
     eligible_logs.language_code,
     eligible_logs.language_name,
     eligible_logs.activity_id,
-    eligible_logs.unit_id,
     eligible_logs.unit_key,
-    eligible_logs.unit_name,
     eligible_logs.description,
     eligible_logs.amount,
     eligible_logs.modifier,
@@ -289,9 +266,7 @@ select
   page.language_code,
   page.language_name,
   page.activity_id,
-  page.unit_id,
   page.unit_key,
-  page.unit_name,
   page.description,
   page.amount,
   page.modifier,
@@ -318,9 +293,7 @@ select
   logs.language_code,
   languages.name as language_name,
   logs.log_activity_id as activity_id,
-  logs.unit_id,
   coalesce(logs.unit_key, '') as unit_key,
-  coalesce(log_units.name, '') as unit_name,
   logs.description,
   logs.amount,
   logs.modifier,
@@ -342,9 +315,6 @@ from logs
 inner join lateral (
   select name from languages where code = logs.language_code limit 1
 ) languages on true
-left join lateral (
-  select name from log_units where id = logs.unit_id limit 1
-) log_units on true
 inner join users on (users.id = logs.user_id)
 where
   (sqlc.arg('include_deleted')::boolean or logs.deleted_at is null)
@@ -381,12 +351,12 @@ for update;
 
 -- name: CreateLog :exec
 insert into logs (
-  id, user_id, language_code, log_activity_id, unit_id, unit_key, amount, modifier,
+  id, user_id, language_code, log_activity_id, unit_key, amount, modifier,
   duration_seconds, computed_score, score_rule_set_id, score_rule_ids, score_rates,
   score_source, eligible_official_leaderboard, description, created_at, updated_at
 ) values (
   sqlc.arg('id'), sqlc.arg('user_id'), sqlc.arg('language_code'), sqlc.arg('activity_id'),
-  sqlc.arg('unit_id'), sqlc.arg('unit_key'), sqlc.arg('amount'), sqlc.arg('modifier'),
+  sqlc.arg('unit_key'), sqlc.arg('amount'), sqlc.arg('modifier'),
   sqlc.arg('duration_seconds'), sqlc.arg('computed_score'), sqlc.arg('score_rule_set_id'),
   sqlc.arg('score_rule_ids'), sqlc.arg('score_rates'), sqlc.arg('score_source'),
   sqlc.arg('eligible_official_leaderboard'), sqlc.arg('description'), sqlc.arg('created_at'),
@@ -415,7 +385,7 @@ from logs where id = sqlc.arg('log_id');
 
 -- name: UpdateLog :exec
 update logs set
-  unit_id = sqlc.arg('unit_id'), unit_key = sqlc.arg('unit_key'), amount = sqlc.arg('amount'),
+  unit_key = sqlc.arg('unit_key'), amount = sqlc.arg('amount'),
   modifier = sqlc.arg('modifier'), duration_seconds = sqlc.arg('duration_seconds'),
   computed_score = sqlc.arg('computed_score'), score_rule_set_id = sqlc.arg('score_rule_set_id'),
   score_rule_ids = sqlc.arg('score_rule_ids'), score_rates = sqlc.arg('score_rates'),
@@ -484,7 +454,7 @@ select
   languages.name as language_name,
   logs.log_activity_id,
   logs.amount,
-  log_units.name as unit_name,
+  logs.unit_key,
   logs.duration_seconds,
   coalesce(logs.computed_score, logs.score) as score,
   coalesce(
@@ -494,7 +464,6 @@ select
   logs.description
 from logs
 inner join languages on languages.code = logs.language_code
-left join log_units on log_units.id = logs.unit_id
 where logs.user_id = sqlc.arg('user_id')
   and logs.deleted_at is null
   and (

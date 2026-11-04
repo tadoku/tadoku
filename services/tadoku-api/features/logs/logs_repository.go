@@ -46,7 +46,6 @@ func (r *LogsRepository) CreateLog(ctx context.Context, mutation logMutation) er
 		UserID:                      postgres.UUID(mutation.UserID),
 		LanguageCode:                mutation.LanguageCode,
 		ActivityID:                  int16(mutation.ActivityID),
-		UnitID:                      p.unitID,
 		UnitKey:                     p.unitKey,
 		Amount:                      p.amount,
 		Modifier:                    p.modifier,
@@ -129,7 +128,6 @@ func (r *LogsRepository) UpdateLog(ctx context.Context, mutation logMutation) er
 	}
 	p := trackingParams(mutation.Tracking)
 	return queries.New(executor).UpdateLog(ctx, queries.UpdateLogParams{
-		UnitID:          p.unitID,
 		UnitKey:         p.unitKey,
 		Amount:          p.amount,
 		Modifier:        p.modifier,
@@ -198,7 +196,6 @@ func (r *LogsRepository) UpdateOngoingContestLogs(
 }
 
 type logTrackingParams struct {
-	unitID    pgtype.UUID
 	unitKey   pgtype.Text
 	amount    pgtype.Float4
 	modifier  pgtype.Float4
@@ -215,7 +212,6 @@ func trackingParams(t logscore.Tracking) logTrackingParams {
 		modifier:  postgres.NullableFloat4(t.Modifier),
 		duration:  postgres.NullableInt4(t.DurationSeconds),
 		source:    postgres.NullableNonEmptyText(&t.Source),
-		unitID:    postgres.NullableUUID(t.UnitID),
 		ruleSetID: postgres.NullableUUID(t.RuleSetID),
 	}
 	for _, id := range t.RuleIDs {

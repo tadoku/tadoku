@@ -19,18 +19,12 @@ func NewService(logs *LogsRepository, scoringEngineEnabled bool) *Service {
 }
 
 func (s *Service) ConfigurationOptions(ctx context.Context, userID uuid.UUID) (*ConfigurationOptions, error) {
-	units, err := s.logs.ListUnits(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	codes, err := s.logs.ListUserLanguageCodes(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &ConfigurationOptions{
-		Units:                currentUnits(units),
 		UserLanguageCodes:    codes,
 		ScoringEngineEnabled: s.scoringEngineEnabled,
 	}, nil

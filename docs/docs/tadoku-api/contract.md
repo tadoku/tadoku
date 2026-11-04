@@ -100,6 +100,10 @@ then language code ascending when scores are equal.
   bypass the generated decoder, for example to alter empty-body behavior. The
   shared byte cap is the only wrapper around a request body.
 - Do not add XML or form adapters to work around generated request decoding.
+- Request bodies are open objects unless the contract sets
+  `additionalProperties: false`. The decoder ignores a property the contract
+  does not declare, so a client that still sends a removed field gets the
+  response it would get without it.
 
 ## Code generation
 

@@ -7,7 +7,6 @@ import (
 )
 
 type Input struct {
-	UnitID          *uuid.UUID
 	UnitKey         *string
 	ActivityID      int32
 	LanguageCode    string
@@ -23,7 +22,6 @@ type Target struct {
 }
 
 type Tracking struct {
-	UnitID          *uuid.UUID
 	UnitKey         string
 	Amount          *float32
 	Modifier        *float32

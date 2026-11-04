@@ -22,7 +22,6 @@ func (s *server) ImmersionLogFindByID(ctx context.Context, request openapi.Immer
 
 func logDetailResponse(log api.Log) openapi.ImmersionLog {
 	response := logResponse(log)
-	response.UnitId = &log.UnitID
 	if log.UnitKey != "" {
 		response.UnitKey = &log.UnitKey
 	}
@@ -121,7 +120,6 @@ func logResponse(log api.Log) openapi.ImmersionLog {
 		Score:           log.Score,
 		DurationSeconds: log.DurationSeconds,
 		Tags:            log.Tags,
-		UnitId:          &openapiTypes.UUID{},
 		UnitName:        log.UnitName,
 		UserId:          log.UserID,
 		UserDisplayName: log.UserDisplayName,

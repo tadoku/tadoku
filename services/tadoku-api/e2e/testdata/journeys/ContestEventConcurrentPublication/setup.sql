@@ -14,7 +14,7 @@ insert into scoring_rules (
   tenant, id, rule_set_id, priority, stackable, activity_id, unit_key, score_source, rate
 ) values
   ('tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-000000000001', 'aaaaaaaa-aaaa-4aaa-8aaa-000000000001',
-   1, false, 1, 'reading_page', 'amount', 2);
+   1, false, 1, 'pages', 'amount', 2);
 
 insert into platform_scoring_config (tenant, singleton, active_rule_set_id) values
   ('tadoku/prod', true, 'aaaaaaaa-aaaa-4aaa-8aaa-000000000001');
@@ -41,7 +41,7 @@ insert into scoring_rules (
   tenant, id, rule_set_id, priority, stackable, activity_id, unit_key, score_source, rate
 ) values
   ('tadoku/prod', 'dddddddd-dddd-4ddd-8ddd-000000000001', 'cccccccc-cccc-4ccc-8ccc-000000000001',
-   1, false, 1, 'reading_page', 'amount', 4);
+   1, false, 1, 'pages', 'amount', 4);
 
 update contests set scoring_rule_set_id = 'cccccccc-cccc-4ccc-8ccc-000000000001'
 where tenant = 'tadoku/prod' and id = 'f0000000-0000-4000-8000-000000000001';
@@ -50,42 +50,39 @@ insert into contest_registrations (tenant, id, contest_id, user_id, language_cod
   ('tadoku/prod', 'e0000000-0000-4000-8000-000000000001', 'f0000000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', '{eng,jpn}'),
   ('tadoku/prod', 'e0000000-0000-4000-8000-000000000002', 'f0000000-0000-4000-8000-000000000002', '11111111-1111-4111-8111-111111111111', '{eng,jpn}');
 
-insert into log_units (id, log_activity_id, name, modifier, language_code, unit_key) values
-  ('7e000000-0000-4000-8000-000000000001', 1, 'Page', 1, 'eng', 'reading_page');
-
 insert into logs (
-  tenant, id, user_id, language_code, log_activity_id, unit_id, unit_key, amount, modifier,
+  tenant, id, user_id, language_code, log_activity_id, unit_key, amount, modifier,
   computed_score, eligible_official_leaderboard, description, created_at, updated_at
 ) values
   ('tadoku/prod', 'd0000000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', 'eng', 1,
-   '7e000000-0000-4000-8000-000000000001', 'reading_page', 10, 1, 20, false,
+   'pages', 10, 1, 20, false,
    'unchanged', '2026-09-12', '2026-09-12'),
   ('tadoku/prod', 'd0000000-0000-4000-8000-000000000002', '11111111-1111-4111-8111-111111111111', 'jpn', 1,
-   '7e000000-0000-4000-8000-000000000001', 'reading_page', 5, 1, 10, false,
+   'pages', 5, 1, 10, false,
    'Japanese log', '2026-09-12', '2026-09-12'),
   ('tadoku/prod', 'd0000000-0000-4000-8000-000000000003', '44444444-4444-4444-8444-444444444444', 'eng', 1,
-   '7e000000-0000-4000-8000-000000000001', 'reading_page', 3, 1, 6, false,
+   'pages', 3, 1, 6, false,
    'Other user log', '2026-09-12', '2026-09-12');
 
 insert into contest_logs (tenant, contest_id, log_id, unit_key, amount, modifier, computed_score) values
-  ('tadoku/prod', 'f0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000001', 'reading_page', 10, 1, 40),
-  ('tadoku/prod', 'f0000000-0000-4000-8000-000000000002', 'd0000000-0000-4000-8000-000000000001', 'reading_page', 10, 1, 20),
-  ('tadoku/prod', 'f0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000002', 'reading_page', 5, 1, 20),
-  ('tadoku/prod', 'f0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000003', 'reading_page', 3, 1, 12);
+  ('tadoku/prod', 'f0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000001', 'pages', 10, 1, 40),
+  ('tadoku/prod', 'f0000000-0000-4000-8000-000000000002', 'd0000000-0000-4000-8000-000000000001', 'pages', 10, 1, 20),
+  ('tadoku/prod', 'f0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000002', 'pages', 5, 1, 20),
+  ('tadoku/prod', 'f0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000003', 'pages', 3, 1, 12);
 
 insert into log_tags (tenant, log_id, user_id, tag) values
   ('tadoku/prod', 'd0000000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', 'book');
 
 insert into logs (
-  tenant, id, user_id, language_code, log_activity_id, unit_id, unit_key, amount,
+  tenant, id, user_id, language_code, log_activity_id, unit_key, amount,
   modifier, computed_score, eligible_official_leaderboard, created_at, updated_at
 ) values (
   'tadoku/prod', 'd0000000-0000-4000-8000-000000000004', '11111111-1111-4111-8111-111111111111',
-  'eng', 1, '7e000000-0000-4000-8000-000000000001', 'reading_page', 4, 1, 8, false,
+  'eng', 1, 'pages', 4, 1, 8, false,
   '2026-09-12', '2026-09-12'
 );
 
 insert into contest_logs (tenant, contest_id, log_id, unit_key, amount, modifier, computed_score) values (
   'tadoku/prod', 'f0000000-0000-4000-8000-000000000002',
-  'd0000000-0000-4000-8000-000000000004', 'reading_page', 4, 1, 8
+  'd0000000-0000-4000-8000-000000000004', 'pages', 4, 1, 8
 );

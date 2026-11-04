@@ -123,13 +123,9 @@ export function isTimed(options: LogOptions, activityId: string) {
   return activity?.input_type === 'time_primary'
 }
 
-// Two-column and comic pages are legacy reading units; Webv2's log form records them as tag modifiers instead.
-const legacyUnitKeys = new Set(['reading_two_column_page', 'reading_comic_page'])
-
 /** The activity's units, where a unit specific to the language replaces the general unit with the same key. */
 export function unitsFor(options: LogOptions, languageCode: string, activityId: string) {
-  const units = options.configuration.units.filter(unit =>
-    String(unit.log_activity_id) === activityId && !legacyUnitKeys.has(unit.unit_key))
+  const units = options.configuration.units.filter(unit => String(unit.log_activity_id) === activityId)
   const specific = new Set(units.filter(unit => unit.language_code === languageCode).map(unit => unit.unit_key))
 
   return units.filter(unit => unit.language_code === languageCode || (!unit.language_code && !specific.has(unit.unit_key)))

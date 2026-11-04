@@ -2,6 +2,6 @@ PUT /immersion/logs/00000000-0000-4000-8000-000000000004 HTTP/1.1
 Host: api.test
 X-Request-Id: contest-event-journey
 Content-Type: application/json
-Content-Length: 77
+Content-Length: 70
 
-{"amount":9,"unit_key":"reading_page","description":"second","tags":["book"]}
+{"amount":9,"unit_key":"pages","description":"second","tags":["book"]}

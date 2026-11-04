@@ -15,31 +15,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
 
-func (r *LogsRepository) ListUnits(ctx context.Context) ([]Unit, error) {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := queries.New(executor).ListUnits(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("list log units: %w", err)
-	}
-
-	result := make([]Unit, 0, len(rows))
-	for _, row := range rows {
-		result = append(result, Unit{
-			ID:            uuid.UUID(row.ID.Bytes),
-			Key:           row.UnitKey,
-			LogActivityID: int(row.LogActivityID),
-			Name:          row.Name,
-			Modifier:      row.Modifier,
-			LanguageCode:  postgres.TextPointer(row.LanguageCode),
-		})
-	}
-	return result, nil
-}
-
 func (r *LogsRepository) ListUserLanguageCodes(ctx context.Context, userID uuid.UUID) ([]string, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
@@ -101,10 +76,8 @@ func (r *LogsRepository) FindLog(ctx context.Context, id uuid.UUID, includeDelet
 	if row.ScoreSource.Valid {
 		tracking.Source = row.ScoreSource.String
 	}
-	unitKey := activities.CanonicalUnitKey(int32(row.ActivityID), row.UnitKey)
 	if row.Amount.Valid && row.Modifier.Valid {
-		tracking.UnitID = postgres.UUIDPointer(row.UnitID)
-		tracking.UnitKey = unitKey
+		tracking.UnitKey = row.UnitKey
 		tracking.Amount = postgres.Float4Pointer(row.Amount)
 		tracking.Modifier = postgres.Float4Pointer(row.Modifier)
 	}
@@ -116,9 +89,8 @@ func (r *LogsRepository) FindLog(ctx context.Context, id uuid.UUID, includeDelet
 		LanguageCode:    row.LanguageCode,
 		LanguageName:    row.LanguageName,
 		Activity:        activities.Activity{ID: int32(row.ActivityID)},
-		UnitID:          uuid.UUID(row.UnitID.Bytes),
-		UnitKey:         unitKey,
-		UnitName:        row.UnitName,
+		UnitKey:         row.UnitKey,
+		UnitName:        unitName(int32(row.ActivityID), row.UnitKey, row.LanguageCode),
 		Tags:            row.Tags,
 		Amount:          row.Amount.Float32,
 		Modifier:        row.Modifier.Float32,
@@ -165,9 +137,8 @@ func (r *LogsRepository) ListUserLogs(
 			LanguageCode:    row.LanguageCode.String,
 			LanguageName:    row.LanguageName.String,
 			Activity:        activities.Activity{ID: int32(row.ActivityID.Int16)},
-			UnitID:          uuid.UUID(row.UnitID.Bytes),
-			UnitKey:         activities.CanonicalUnitKey(int32(row.ActivityID.Int16), row.UnitKey.String),
-			UnitName:        row.UnitName.String,
+			UnitKey:         row.UnitKey.String,
+			UnitName:        unitName(int32(row.ActivityID.Int16), row.UnitKey.String, row.LanguageCode.String),
 			Tags:            row.Tags,
 			Amount:          row.Amount.Float32,
 			Modifier:        row.Modifier.Float32,
@@ -213,9 +184,8 @@ func (r *LogsRepository) ListContestLogs(ctx context.Context, parameters ListPar
 			LanguageCode:    row.LanguageCode.String,
 			LanguageName:    row.LanguageName.String,
 			Activity:        activities.Activity{ID: int32(row.ActivityID.Int16)},
-			UnitID:          uuid.UUID(row.UnitID.Bytes),
-			UnitKey:         activities.CanonicalUnitKey(int32(row.ActivityID.Int16), row.UnitKey.String),
-			UnitName:        row.UnitName.String,
+			UnitKey:         row.UnitKey.String,
+			UnitName:        unitName(int32(row.ActivityID.Int16), row.UnitKey.String, row.LanguageCode.String),
 			Tags:            row.Tags,
 			Amount:          row.Amount.Float32,
 			Modifier:        row.Modifier.Float32,
@@ -271,7 +241,10 @@ func (r *LogsRepository) ListActiveUserLogsAfter(
 			Description:     postgres.TextPointer(row.Description),
 		}
 		if row.Amount.Valid {
-			log.Amount = &ExportedAmount{Value: row.Amount.Float32, UnitName: row.UnitName.String}
+			log.Amount = &ExportedAmount{
+				Value:    row.Amount.Float32,
+				UnitName: unitName(int32(row.LogActivityID), row.UnitKey.String, row.LanguageCode),
+			}
 		}
 		result = append(result, log)
 	}

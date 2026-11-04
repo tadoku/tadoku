@@ -80,7 +80,7 @@ func TestTenantIsolation(t *testing.T) {
 			tokens[who],
 			http.MethodPost,
 			"/immersion/logs",
-			`{"language_code":"eng","activity_id":1,"amount":10,"unit_key":"reading_page","description":"`+who+`"}`,
+			`{"language_code":"eng","activity_id":1,"amount":10,"unit_key":"pages","description":"`+who+`"}`,
 			http.StatusOK,
 		)
 		var log struct{ ID string }

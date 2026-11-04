@@ -143,7 +143,6 @@ export const zImmersionActivitySplit = z.object({
 });
 
 export const zImmersionUnit = z.object({
-    id: z.string().guid().optional(),
     unit_key: z.string(),
     log_activity_id: z.int(),
     name: z.string(),
@@ -362,7 +361,6 @@ export const zImmersionLog = z.object({
     description: z.string().optional(),
     language: zImmersionLanguage,
     activity: zImmersionActivity,
-    unit_id: z.string().guid().optional(),
     unit_key: z.string().optional(),
     unit_name: z.string(),
     tags: z.array(z.string()),
@@ -929,7 +927,6 @@ export const zImmersionLogCreateBody = z.object({
     language_code: z.string(),
     activity_id: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
     amount: z.number().optional(),
-    unit_id: z.string().guid().optional(),
     unit_key: z.string().optional(),
     duration_seconds: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     tags: z.array(z.string()),
@@ -955,7 +952,6 @@ export const zImmersionScorePreviewBody = z.object({
     language_code: z.string(),
     activity_id: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
     amount: z.number().optional(),
-    unit_id: z.string().guid().optional(),
     unit_key: z.string().optional(),
     duration_seconds: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     tags: z.array(z.string())
@@ -981,7 +977,6 @@ export const zImmersionLogFindByIdResponse = zImmersionLog;
 
 export const zImmersionLogUpdateBody = z.object({
     amount: z.number().optional(),
-    unit_id: z.string().guid().optional(),
     unit_key: z.string().optional(),
     duration_seconds: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     tags: z.array(z.string()),

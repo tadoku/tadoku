@@ -12,7 +12,7 @@ import (
 type LogConfigurationOptions struct {
 	Languages            []languages.Language
 	Activities           []activities.Activity
-	Units                []logs.Unit
+	Units                []activities.Unit
 	UserLanguageCodes    []string
 	ScoringEngineEnabled bool
 }
@@ -39,7 +39,7 @@ func (a *Application) LogConfigurationOptions(ctx context.Context) (*LogConfigur
 	return &LogConfigurationOptions{
 		Languages:            languages,
 		Activities:           activities.All(),
-		Units:                options.Units,
+		Units:                activities.Units(),
 		UserLanguageCodes:    options.UserLanguageCodes,
 		ScoringEngineEnabled: options.ScoringEngineEnabled,
 	}, nil

@@ -29,9 +29,8 @@ func (s *server) ImmersionLogGetConfigurations(ctx context.Context, _ openapi.Im
 	}
 	for _, unit := range options.Units {
 		response.Units = append(response.Units, openapi.ImmersionUnit{
-			Id:            &unit.ID,
 			UnitKey:       unit.Key,
-			LogActivityId: unit.LogActivityID,
+			LogActivityId: int(unit.ActivityID),
 			Name:          unit.Name,
 			Modifier:      unit.Modifier,
 			LanguageCode:  unit.LanguageCode,

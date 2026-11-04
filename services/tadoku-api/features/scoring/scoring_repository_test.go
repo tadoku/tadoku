@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
@@ -101,7 +100,7 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 		Priority:     2,
 		Stackable:    true,
 		ActivityID:   1,
-		UnitKey:      "pages",
+		UnitKey:      "reading_page",
 		LanguageCode: "jpn",
 		Tag:          "ebook",
 		Source:       SourceAmount,
@@ -140,7 +139,9 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := []Rule{general, specific}; !reflect.DeepEqual(rules, want) {
+	canonical := specific
+	canonical.UnitKey = "pages"
+	if want := []Rule{general, canonical}; !reflect.DeepEqual(rules, want) {
 		t.Errorf("rules=%+v, want %+v", rules, want)
 	}
 
@@ -338,105 +339,6 @@ func TestScoringRepositoryContestRuleSets(t *testing.T) {
 	}
 	if !deletedUnconfigured {
 		t.Error("deleted contest scoring_rule_set_id changed, want unchanged null")
-	}
-}
-
-func TestScoringRepositoryUnitLookups(t *testing.T) {
-	t.Parallel()
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
-	db, err := testpostgres.New(tenantCtx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Error(err)
-		}
-	})
-
-	seededUnit := func(key string, languageCode *string) logUnit {
-		t.Helper()
-
-		unit := logUnit{Key: activities.CanonicalUnitKey(1, key)}
-		err := db.Pool.QueryRow(tenantCtx, `
-			select id, modifier from log_units
-			where unit_key = any($1) and log_activity_id = 1 and language_code is not distinct from $2`,
-			activities.UnitKeySpellings(1, key), languageCode,
-		).Scan(&unit.ID, &unit.Modifier)
-		if err != nil {
-			t.Fatal(err)
-		}
-		return unit
-	}
-
-	jpn := "jpn"
-	fallback := unitCandidate{logUnit: seededUnit("reading_character", nil), activityID: 1}
-	characters := []unitCandidate{fallback}
-	for _, code := range []string{"jpn", "kor", "zho", "cmn", "yue", "wuu"} {
-		unit := seededUnit("reading_character", &code)
-		characters = append(characters, unitCandidate{logUnit: unit, activityID: 1, languageCode: &code})
-	}
-	japanese := characters[1]
-	jpnOnly := unitCandidate{logUnit: seededUnit("reading_two_column_page", &jpn), activityID: 1, languageCode: &jpn}
-
-	repository := NewScoringRepository(db.Pool)
-	missingID := uuid.MustParse("ffffffff-ffff-4fff-8fff-ffffffffffff")
-
-	idTests := []struct {
-		name string
-		id   uuid.UUID
-		want []unitCandidate
-	}{
-		{name: "language specific", id: japanese.ID, want: []unitCandidate{japanese}},
-		{name: "without language", id: fallback.ID, want: []unitCandidate{fallback}},
-		{name: "missing", id: missingID},
-	}
-	for _, tt := range idTests {
-		t.Run("by id "+tt.name, func(t *testing.T) {
-			candidates, err := repository.ListUnitsByID(tenantCtx, tt.id)
-
-			assertUnitCandidates(t, candidates, err, tt.want)
-		})
-	}
-
-	keyTests := []struct {
-		name string
-		keys []string
-		want []unitCandidate
-	}{
-		{name: "with and without language", keys: []string{"reading_character", "characters"}, want: characters},
-		{name: "language specific only", keys: []string{"reading_two_column_page"}, want: []unitCandidate{jpnOnly}},
-		{
-			name: "any of several keys",
-			keys: []string{"reading_two_column_page", "missing_unit", "reading_character", "characters"},
-			want: append([]unitCandidate{jpnOnly}, characters...),
-		},
-		{name: "missing", keys: []string{"missing_unit"}},
-	}
-	for _, tt := range keyTests {
-		t.Run("by key "+tt.name, func(t *testing.T) {
-			candidates, err := repository.ListUnitsByKeys(tenantCtx, tt.keys)
-			reading := slices.DeleteFunc(candidates, func(candidate unitCandidate) bool { return candidate.activityID != 1 })
-
-			assertUnitCandidates(t, reading, err, tt.want)
-		})
-	}
-}
-
-func assertUnitCandidates(t *testing.T, candidates []unitCandidate, err error, want []unitCandidate) {
-	t.Helper()
-
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(candidates) != len(want) {
-		t.Fatalf("unit candidates=%+v, want %d candidates", candidates, len(want))
-	}
-	for _, wanted := range want {
-		matches := func(candidate unitCandidate) bool { return reflect.DeepEqual(candidate, wanted) }
-		if !slices.ContainsFunc(candidates, matches) {
-			t.Errorf("unit candidates=%+v, want %+v with language %v", candidates, wanted.logUnit, wanted.languageCode)
-		}
 	}
 }
 

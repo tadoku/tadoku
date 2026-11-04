@@ -18,7 +18,6 @@ import (
 func TestContestEventConcurrentPublication(t *testing.T) {
 	for _, commitPending := range []bool{true, false} {
 		t.Run(fmt.Sprintf("commit_pending_%t", commitPending), func(t *testing.T) {
-			cleanupContestEventUnit(t)
 			resetJourney(t, api, "testdata/journeys/ContestEventConcurrentPublication")
 			tokens, err := loadCast([]step{{as: guest}, {as: user}, {as: user2}})
 			if err != nil {
@@ -83,7 +82,7 @@ func proveContestEventPublication(t *testing.T, tokens map[member]string, commit
 	}
 
 	request := httptest.NewRequest(http.MethodPut, "/immersion/logs/"+logID,
-		strings.NewReader(`{"amount":7,"unit_key":"reading_page","description":"concurrent update"}`))
+		strings.NewReader(`{"amount":7,"unit_key":"pages","description":"concurrent update"}`))
 	request.Header.Set("Content-Type", "application/json")
 	authorize(request, user2, tokens)
 	publish(writtenAt, request)
@@ -136,7 +135,7 @@ func proveContestEventPublication(t *testing.T, tokens map[member]string, commit
 
 	independent := httptest.NewRequest(http.MethodPut,
 		"/immersion/logs/d0000000-0000-4000-8000-000000000004",
-		strings.NewReader(`{"amount":5,"unit_key":"reading_page"}`))
+		strings.NewReader(`{"amount":5,"unit_key":"pages"}`))
 	independent.Header.Set("Content-Type", "application/json")
 	authorize(independent, user, tokens)
 	publish(createdAt, independent)
@@ -214,7 +213,6 @@ func TestContestEventsOfALogFollowCommitOrder(t *testing.T) {
 
 	uuid.SetRand(contestEventUUIDs())
 	t.Cleanup(func() { uuid.SetRand(nil) })
-	cleanupContestEventUnit(t)
 	resetJourney(t, api, "testdata/journeys/ContestEventConcurrentPublication")
 	tokens, err := loadCast([]step{{as: user}})
 	if err != nil {

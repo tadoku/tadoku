@@ -72,21 +72,6 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	repository, db := newTestLogsRepository(t)
 
-	units, err := repository.ListUnits(tenantCtx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var unit *Unit
-	for i := range units {
-		if units[i].LogActivityID == 1 && units[i].LanguageCode == nil {
-			unit = &units[i]
-			break
-		}
-	}
-	if unit == nil {
-		t.Fatal("no seeded reading unit without language")
-	}
-
 	var ruleSetID uuid.UUID
 	if err := db.Pool.QueryRow(tenantCtx, `select id from scoring_rule_sets limit 1`).Scan(&ruleSetID); err != nil {
 		t.Fatal(err)
@@ -97,12 +82,11 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 	createdAt := time.Date(2026, 9, 1, 12, 30, 0, 0, time.UTC)
 	description := "Chapter 3"
 	amount := float32(12.5)
-	modifier := unit.Modifier
+	modifier := float32(1)
 	ruleID := uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1")
 
 	tracking := logscore.Tracking{
-		UnitID:    &unit.ID,
-		UnitKey:   "reading_page",
+		UnitKey:   "pages",
 		Amount:    &amount,
 		Modifier:  &modifier,
 		Score:     20,
@@ -112,7 +96,7 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 		Source:    "amount",
 	}
 
-	err = repository.CreateLog(tenantCtx, logMutation{
+	err := repository.CreateLog(tenantCtx, logMutation{
 		ID:           amountLogID,
 		UserID:       testUserID,
 		LanguageCode: "jpn",
@@ -139,8 +123,6 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 	}
 
 	displayName := "Reader"
-	wantTracking := tracking
-	wantTracking.UnitKey = "pages"
 	want := &Log{
 		ID:              amountLogID,
 		UserID:          testUserID,
@@ -149,15 +131,14 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 		LanguageCode:    "jpn",
 		LanguageName:    "Japanese",
 		Activity:        activities.Activity{ID: 1},
-		UnitID:          unit.ID,
 		UnitKey:         "pages",
-		UnitName:        unit.Name,
+		UnitName:        "Page",
 		Tags:            []string{"book", "fiction"},
 		Amount:          amount,
 		Modifier:        modifier,
 		Score:           20,
 		CreatedAt:       found.CreatedAt,
-		Tracking:        wantTracking,
+		Tracking:        tracking,
 	}
 
 	if !found.CreatedAt.Equal(createdAt) {

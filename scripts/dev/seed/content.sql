@@ -69,7 +69,7 @@ values
     '<p>This page is seeded by the Tadoku dev environment.</p>',
     now()
   )
-on conflict (id) do nothing;
+on conflict (tenant, id) do nothing;
 
 insert into posts (
   tenant,
@@ -111,7 +111,7 @@ values
     'This seeded post gives the dev site a small content dataset.',
     now()
   )
-on conflict (id) do nothing;
+on conflict (tenant, id) do nothing;
 
 insert into announcements (
   tenant,
@@ -140,6 +140,6 @@ values
     now(),
     now()
   )
-on conflict (id) do nothing;
+on conflict (tenant, id) do nothing;
 
 commit;

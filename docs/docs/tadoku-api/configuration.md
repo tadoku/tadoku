@@ -187,6 +187,14 @@ PostgreSQL pool; it reads tenant-local accounts only. See
   route reports mode `native` and an empty upstream.
 - `tadoku_scoring_shadow_comparisons_total` also carries `tenant_kind`, alongside
   its existing scoring outcome, operation, mode, activity and source labels.
+- `tadoku_log_unit_normalizations_total` counts log creates, updates and score
+  previews whose amount arrived in a legacy unit shape, by `kind` and
+  `tenant_kind`: `minute_amount` for minutes on a timed activity, which become
+  `duration_seconds`, `retired_unit` for a comic or two-column page, which
+  becomes a page with a `comic` or `two_column` tag, and `legacy_key_spelling`
+  for an activity-prefixed key such as `reading_page` once the unit is stored
+  under its plural key. Inputs already in the current shape are not counted, and
+  each kind starts at zero for `production`.
 - The API feature-flag metrics report bounded provider initialization,
   refresh, error and evaluation labels, without user identities.
 

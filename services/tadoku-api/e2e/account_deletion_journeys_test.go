@@ -6,7 +6,7 @@ import (
 )
 
 func TestAccountDeletionSelfServiceJourney(t *testing.T) {
-	runJourney(t, api, "AccountDeletion", []step{
+	runScenarioJourney(t, api.handler, "AccountDeletion", nil, []step{
 		{request: "running_leaderboard_before", as: guest, want: http.StatusOK},
 		{request: "delete_account", as: guest, want: http.StatusAccepted},
 		{request: "session_after_request", as: guest, want: http.StatusOK},

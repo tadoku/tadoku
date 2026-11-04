@@ -389,13 +389,13 @@ func (q *Queries) ListLogUnitsByID(ctx context.Context, id pgtype.UUID) ([]ListL
 	return items, nil
 }
 
-const listLogUnitsByKey = `-- name: ListLogUnitsByKey :many
+const listLogUnitsByKeys = `-- name: ListLogUnitsByKeys :many
 select id, unit_key, modifier, log_activity_id, language_code
 from log_units
-where unit_key = $1
+where unit_key = any($1::text[])
 `
 
-type ListLogUnitsByKeyRow struct {
+type ListLogUnitsByKeysRow struct {
 	ID            pgtype.UUID
 	UnitKey       string
 	Modifier      float32
@@ -403,15 +403,15 @@ type ListLogUnitsByKeyRow struct {
 	LanguageCode  pgtype.Text
 }
 
-func (q *Queries) ListLogUnitsByKey(ctx context.Context, unitKey string) ([]ListLogUnitsByKeyRow, error) {
-	rows, err := q.db.Query(ctx, listLogUnitsByKey, unitKey)
+func (q *Queries) ListLogUnitsByKeys(ctx context.Context, unitKeys []string) ([]ListLogUnitsByKeysRow, error) {
+	rows, err := q.db.Query(ctx, listLogUnitsByKeys, unitKeys)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListLogUnitsByKeyRow{}
+	items := []ListLogUnitsByKeysRow{}
 	for rows.Next() {
-		var i ListLogUnitsByKeyRow
+		var i ListLogUnitsByKeysRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UnitKey,

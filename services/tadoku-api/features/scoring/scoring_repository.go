@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/scoring"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
@@ -112,7 +113,7 @@ func (r *ScoringRepository) ListRules(ctx context.Context, ruleSetID uuid.UUID) 
 			Priority:     row.Priority,
 			Stackable:    row.Stackable,
 			ActivityID:   int32(row.ActivityID),
-			UnitKey:      row.UnitKey.String,
+			UnitKey:      activities.CanonicalUnitKey(int32(row.ActivityID), row.UnitKey.String),
 			LanguageCode: row.LanguageCode.String,
 			Tag:          row.Tag.String,
 			Source:       Source(row.ScoreSource),
@@ -139,13 +140,13 @@ func (r *ScoringRepository) ListUnitsByID(ctx context.Context, id uuid.UUID) ([]
 	return candidates, nil
 }
 
-func (r *ScoringRepository) ListUnitsByKey(ctx context.Context, key string) ([]unitCandidate, error) {
+func (r *ScoringRepository) ListUnitsByKeys(ctx context.Context, keys []string) ([]unitCandidate, error) {
 	q, err := r.queries(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := q.ListLogUnitsByKey(ctx, key)
+	rows, err := q.ListLogUnitsByKeys(ctx, keys)
 	if err != nil {
 		return nil, fmt.Errorf("list log units: %w", err)
 	}
@@ -157,9 +158,14 @@ func (r *ScoringRepository) ListUnitsByKey(ctx context.Context, key string) ([]u
 }
 
 func unitCandidateFromRow(row queries.ListLogUnitsByIDRow) unitCandidate {
+	activityID := int32(row.LogActivityID)
 	return unitCandidate{
-		logUnit:      logUnit{ID: row.ID.Bytes, Key: row.UnitKey, Modifier: row.Modifier},
-		activityID:   int32(row.LogActivityID),
+		logUnit: logUnit{
+			ID:       row.ID.Bytes,
+			Key:      activities.CanonicalUnitKey(activityID, row.UnitKey),
+			Modifier: row.Modifier,
+		},
+		activityID:   activityID,
 		languageCode: postgres.TextPointer(row.LanguageCode),
 	}
 }
@@ -210,13 +216,14 @@ func (r *ScoringRepository) CreateRule(ctx context.Context, ruleSetID uuid.UUID,
 		return err
 	}
 
+	storedUnitKey := activities.PrefixedUnitKey(rule.ActivityID, rule.UnitKey)
 	if err := q.CreateScoringRule(ctx, queries.CreateScoringRuleParams{
 		ID:           postgres.UUID(rule.ID),
 		RuleSetID:    postgres.UUID(ruleSetID),
 		Priority:     rule.Priority,
 		Stackable:    rule.Stackable,
 		ActivityID:   int16(rule.ActivityID),
-		UnitKey:      postgres.NullableNonEmptyText(&rule.UnitKey),
+		UnitKey:      postgres.NullableNonEmptyText(&storedUnitKey),
 		LanguageCode: postgres.NullableNonEmptyText(&rule.LanguageCode),
 		Tag:          postgres.NullableNonEmptyText(&rule.Tag),
 		ScoreSource:  string(rule.Source),

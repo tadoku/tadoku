@@ -26,6 +26,8 @@ func TestImmersionScorePreview(t *testing.T) {
 		{description: []string{"duplicate", "registrations", "preserve", "order"}, want: http.StatusOK},
 		{description: []string{"generic", "unit", "id", "for", "any", "language"}, want: http.StatusOK},
 		{description: []string{"language", "specific", "unit", "by", "id"}, want: http.StatusOK},
+		{description: []string{"dense", "minute", "amount", "key"}, want: http.StatusOK},
+		{description: []string{"comic", "page", "key"}, want: http.StatusOK},
 		{description: []string{"registration", "not", "owned"}, want: http.StatusBadRequest},
 		{description: []string{"registration", "language", "not", "allowed"}, want: http.StatusBadRequest},
 		{description: []string{"registration", "activity", "not", "allowed"}, want: http.StatusBadRequest},

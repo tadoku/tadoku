@@ -33,6 +33,10 @@ func (s *Service) ScoreLog(ctx context.Context, operation LogOperation, input lo
 	if err != nil {
 		return logscore.Result{}, err
 	}
+	input, err = s.normalizeLegacyUnit(ctx, input)
+	if err != nil {
+		return logscore.Result{}, err
+	}
 
 	base, err := s.resolveLogTracking(ctx, input)
 	if err != nil {
@@ -138,8 +142,7 @@ func (s *Service) resolveLogTracking(ctx context.Context, input logscore.Input) 
 		return logscore.Tracking{}, errx.NewInvalidInputError("invalid log activity")
 	}
 	legacyDurationRate, _ := activities.LegacyDurationScorePerMinute(input.ActivityID)
-	unitActivity, knownUnit := activities.UnitActivityID(stringValue(input.UnitKey))
-	if input.UnitKey != nil && (!knownUnit || unitActivity != input.ActivityID) {
+	if input.UnitKey != nil && !activities.UnitValidForActivity(*input.UnitKey, input.ActivityID) {
 		return logscore.Tracking{}, errx.NewInvalidInputError("unit_key is not valid for activity_id")
 	}
 	var unit *logUnit
@@ -156,7 +159,7 @@ func (s *Service) resolveLogTracking(ctx context.Context, input logscore.Input) 
 			return logscore.Tracking{}, errx.NewInvalidInputError("unit_key is not valid")
 		}
 	}
-	if unit != nil && input.UnitKey != nil && unit.Key != *input.UnitKey {
+	if unit != nil && input.UnitKey != nil && unit.Key != activities.CanonicalUnitKey(input.ActivityID, *input.UnitKey) {
 		return logscore.Tracking{}, errx.NewInvalidInputError("unit_id and unit_key identify different units")
 	}
 	hasAmount := input.Amount != nil
@@ -201,7 +204,7 @@ func (s *Service) findApplicableUnit(
 	if id != nil {
 		candidates, err = s.repository.ListUnitsByID(ctx, *id)
 	} else {
-		candidates, err = s.repository.ListUnitsByKey(ctx, *key)
+		candidates, err = s.repository.ListUnitsByKeys(ctx, activities.UnitKeySpellings(activityID, *key))
 	}
 	if err != nil {
 		return nil, err

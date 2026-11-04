@@ -74,8 +74,7 @@ func applicableUnit(candidates []unitCandidate, activityID int32, languageCode s
 	var generic *logUnit
 	for i := range candidates {
 		candidate := &candidates[i]
-		unitActivity, knownUnit := activities.UnitActivityID(candidate.Key)
-		if candidate.activityID != activityID || !knownUnit || unitActivity != activityID {
+		if candidate.activityID != activityID || !activities.UnitValidForActivity(candidate.Key, activityID) {
 			continue
 		}
 
@@ -160,10 +159,10 @@ func (p *DraftRules) normalize(languages []domainlanguages.Language) error {
 		if !validActivity(rule.ActivityID) {
 			return errx.NewInvalidInputError("rule activity_id is not valid")
 		}
-		unitActivity, knownUnit := activities.UnitActivityID(rule.UnitKey)
-		if rule.UnitKey != "" && (!knownUnit || unitActivity != rule.ActivityID) {
+		if rule.UnitKey != "" && !activities.UnitValidForActivity(rule.UnitKey, rule.ActivityID) {
 			return errx.NewInvalidInputError("rule unit_key is not valid for activity_id")
 		}
+		rule.UnitKey = activities.CanonicalUnitKey(rule.ActivityID, rule.UnitKey)
 		if len(rule.LanguageCode) > 10 {
 			return errx.NewInvalidInputError("rule language_code is too long")
 		}
@@ -331,7 +330,8 @@ func ruleMatches(rule Rule, input scoringInput, source Source, tags map[string]s
 	if rule.Source != source || rule.ActivityID != input.activityID {
 		return false
 	}
-	if rule.UnitKey != "" && rule.UnitKey != input.unitKey {
+	ruleUnitKey := activities.CanonicalUnitKey(rule.ActivityID, rule.UnitKey)
+	if rule.UnitKey != "" && ruleUnitKey != activities.CanonicalUnitKey(input.activityID, input.unitKey) {
 		return false
 	}
 	if rule.LanguageCode != "" && rule.LanguageCode != input.languageCode {

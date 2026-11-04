@@ -101,9 +101,10 @@ func (r *LogsRepository) FindLog(ctx context.Context, id uuid.UUID, includeDelet
 	if row.ScoreSource.Valid {
 		tracking.Source = row.ScoreSource.String
 	}
+	unitKey := activities.CanonicalUnitKey(int32(row.ActivityID), row.UnitKey)
 	if row.Amount.Valid && row.Modifier.Valid {
 		tracking.UnitID = postgres.UUIDPointer(row.UnitID)
-		tracking.UnitKey = row.UnitKey
+		tracking.UnitKey = unitKey
 		tracking.Amount = postgres.Float4Pointer(row.Amount)
 		tracking.Modifier = postgres.Float4Pointer(row.Modifier)
 	}
@@ -116,7 +117,7 @@ func (r *LogsRepository) FindLog(ctx context.Context, id uuid.UUID, includeDelet
 		LanguageName:    row.LanguageName,
 		Activity:        activities.Activity{ID: int32(row.ActivityID)},
 		UnitID:          uuid.UUID(row.UnitID.Bytes),
-		UnitKey:         row.UnitKey,
+		UnitKey:         unitKey,
 		UnitName:        row.UnitName,
 		Tags:            row.Tags,
 		Amount:          row.Amount.Float32,
@@ -165,7 +166,7 @@ func (r *LogsRepository) ListUserLogs(
 			LanguageName:    row.LanguageName.String,
 			Activity:        activities.Activity{ID: int32(row.ActivityID.Int16)},
 			UnitID:          uuid.UUID(row.UnitID.Bytes),
-			UnitKey:         row.UnitKey.String,
+			UnitKey:         activities.CanonicalUnitKey(int32(row.ActivityID.Int16), row.UnitKey.String),
 			UnitName:        row.UnitName.String,
 			Tags:            row.Tags,
 			Amount:          row.Amount.Float32,
@@ -213,7 +214,7 @@ func (r *LogsRepository) ListContestLogs(ctx context.Context, parameters ListPar
 			LanguageName:    row.LanguageName.String,
 			Activity:        activities.Activity{ID: int32(row.ActivityID.Int16)},
 			UnitID:          uuid.UUID(row.UnitID.Bytes),
-			UnitKey:         row.UnitKey.String,
+			UnitKey:         activities.CanonicalUnitKey(int32(row.ActivityID.Int16), row.UnitKey.String),
 			UnitName:        row.UnitName.String,
 			Tags:            row.Tags,
 			Amount:          row.Amount.Float32,

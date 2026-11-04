@@ -102,7 +102,7 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 
 	tracking := logscore.Tracking{
 		UnitID:    &unit.ID,
-		UnitKey:   unit.Key,
+		UnitKey:   "reading_page",
 		Amount:    &amount,
 		Modifier:  &modifier,
 		Score:     20,
@@ -139,6 +139,8 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 	}
 
 	displayName := "Reader"
+	wantTracking := tracking
+	wantTracking.UnitKey = "pages"
 	want := &Log{
 		ID:              amountLogID,
 		UserID:          testUserID,
@@ -148,14 +150,14 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 		LanguageName:    "Japanese",
 		Activity:        activities.Activity{ID: 1},
 		UnitID:          unit.ID,
-		UnitKey:         unit.Key,
+		UnitKey:         "pages",
 		UnitName:        unit.Name,
 		Tags:            []string{"book", "fiction"},
 		Amount:          amount,
 		Modifier:        modifier,
 		Score:           20,
 		CreatedAt:       found.CreatedAt,
-		Tracking:        tracking,
+		Tracking:        wantTracking,
 	}
 
 	if !found.CreatedAt.Equal(createdAt) {

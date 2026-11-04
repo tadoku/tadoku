@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"testing"
-
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 func TestImmersionFetchLeaderboardGlobal(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		description []string
 		want        int
@@ -42,6 +43,8 @@ func TestImmersionFetchLeaderboardGlobal(t *testing.T) {
 }
 
 func TestImmersionFetchLeaderboardForYear(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		description []string
 		want        int
@@ -73,6 +76,8 @@ func TestImmersionFetchLeaderboardForYear(t *testing.T) {
 }
 
 func TestImmersionContestFetchLeaderboard(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		description []string
 		want        int
@@ -113,20 +118,26 @@ func TestImmersionContestFetchLeaderboard(t *testing.T) {
 	}
 }
 
+// runLeaderboardCase runs the case in its own fixtureScenario, in parallel with other scenario cases, with cache
+// describing the primary tenant's cacheKey before and after the request.
 func runLeaderboardCase(t *testing.T, name string, want int, cache, cacheKey string) {
 	t.Helper()
 	t.Run(name+"/tadoku-api", func(t *testing.T) {
-		dir := "testdata/" + name
-		api.reset(t, dir)
+		t.Parallel()
+
+		dir := filepath.Join("testdata", name)
+		impl := implementation{name: "tadoku-api", handler: api.handler}
+		s := newFixtureScenario(t)
+		tenantKey := s.tenant(t, primaryRole).String()
 		if cache == "hit" || cache == "hit_tie" || cache == "hit_many" {
-			seedLeaderboardCache(t, tenant.Production().String(), cacheKey, cache)
+			seedLeaderboardCache(t, tenantKey, cacheKey, cache)
 		}
-		atFixtureInstant(func() { checkHTTPGolden(t, api.handler, dir, want, *updateGoldens) })
+		s.runCase(t, dir, want, fixtureInstant, impl)
 		if cache == "miss" || cache == "miss_then_hit" {
-			verifyRebuiltLeaderboardCache(t, cacheKey)
+			verifyRebuiltLeaderboardCache(t, tenantKey, cacheKey)
 		}
 		if cache == "miss_then_hit" || cache == "miss_then_miss" {
-			atFixtureInstant(func() { checkHTTPGolden(t, api.handler, dir, want, *updateGoldens) })
+			s.checkCase(t, dir, want, impl)
 		}
 	})
 }
@@ -178,9 +189,9 @@ func cachedLeaderboardScore(t *testing.T, tenantKey, key string) float64 {
 	return 0
 }
 
-func verifyRebuiltLeaderboardCache(t *testing.T, key string) {
+func verifyRebuiltLeaderboardCache(t *testing.T, tenantKey, key string) {
 	t.Helper()
-	cacheKey := "tenant:tadoku/prod:" + key
+	cacheKey := "tenant:" + tenantKey + ":" + key
 	client := leaderboardValkey.client
 	marker, err := client.Do(t.Context(), client.B().Get().Key(cacheKey+":last_updated").Build()).ToString()
 	if err != nil || marker == "" {

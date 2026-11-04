@@ -159,10 +159,10 @@ func (p *DraftRules) normalize(languages []domainlanguages.Language) error {
 		if !validActivity(rule.ActivityID) {
 			return errx.NewInvalidInputError("rule activity_id is not valid")
 		}
-		if rule.UnitKey != "" &&
-			(!activities.UnitValidForActivity(rule.UnitKey, rule.ActivityID) || activities.IsPluralUnitKey(rule.UnitKey)) {
+		if rule.UnitKey != "" && !activities.UnitValidForActivity(rule.UnitKey, rule.ActivityID) {
 			return errx.NewInvalidInputError("rule unit_key is not valid for activity_id")
 		}
+		rule.UnitKey = activities.CanonicalUnitKey(rule.ActivityID, rule.UnitKey)
 		if len(rule.LanguageCode) > 10 {
 			return errx.NewInvalidInputError("rule language_code is too long")
 		}

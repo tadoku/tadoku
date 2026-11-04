@@ -77,15 +77,25 @@ func CanonicalUnitKey(activityID int32, key string) string {
 	return key
 }
 
-// UnitKeySpellings returns key followed by its other spelling for the activity, when it has one.
-func UnitKeySpellings(activityID int32, key string) []string {
-	if plural, legacy := legacyUnitKeys[key]; legacy && UnitValidForActivity(key, activityID) {
-		return []string{key, plural}
-	}
+// PrefixedUnitKey returns the activity-prefixed spelling of a plural key for the activity, such as reading_page for
+// pages on reading, and key otherwise. The scoring_rules check constraint accepts this spelling before and after the
+// plural keys are introduced.
+func PrefixedUnitKey(activityID int32, key string) string {
 	for legacy, plural := range legacyUnitKeys {
 		if plural == key && UnitValidForActivity(legacy, activityID) {
-			return []string{key, legacy}
+			return legacy
 		}
+	}
+	return key
+}
+
+// UnitKeySpellings returns key followed by its other spelling for the activity, when it has one.
+func UnitKeySpellings(activityID int32, key string) []string {
+	if other := CanonicalUnitKey(activityID, key); other != key {
+		return []string{key, other}
+	}
+	if other := PrefixedUnitKey(activityID, key); other != key {
+		return []string{key, other}
 	}
 	return []string{key}
 }

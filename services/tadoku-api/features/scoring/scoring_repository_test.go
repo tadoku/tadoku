@@ -101,7 +101,7 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 		Priority:     2,
 		Stackable:    true,
 		ActivityID:   1,
-		UnitKey:      "reading_page",
+		UnitKey:      "pages",
 		LanguageCode: "jpn",
 		Tag:          "ebook",
 		Source:       SourceAmount,

@@ -113,7 +113,7 @@ func (r *ScoringRepository) ListRules(ctx context.Context, ruleSetID uuid.UUID) 
 			Priority:     row.Priority,
 			Stackable:    row.Stackable,
 			ActivityID:   int32(row.ActivityID),
-			UnitKey:      row.UnitKey.String,
+			UnitKey:      activities.CanonicalUnitKey(int32(row.ActivityID), row.UnitKey.String),
 			LanguageCode: row.LanguageCode.String,
 			Tag:          row.Tag.String,
 			Source:       Source(row.ScoreSource),
@@ -216,13 +216,14 @@ func (r *ScoringRepository) CreateRule(ctx context.Context, ruleSetID uuid.UUID,
 		return err
 	}
 
+	storedUnitKey := activities.PrefixedUnitKey(rule.ActivityID, rule.UnitKey)
 	if err := q.CreateScoringRule(ctx, queries.CreateScoringRuleParams{
 		ID:           postgres.UUID(rule.ID),
 		RuleSetID:    postgres.UUID(ruleSetID),
 		Priority:     rule.Priority,
 		Stackable:    rule.Stackable,
 		ActivityID:   int16(rule.ActivityID),
-		UnitKey:      postgres.NullableNonEmptyText(&rule.UnitKey),
+		UnitKey:      postgres.NullableNonEmptyText(&storedUnitKey),
 		LanguageCode: postgres.NullableNonEmptyText(&rule.LanguageCode),
 		Tag:          postgres.NullableNonEmptyText(&rule.Tag),
 		ScoreSource:  string(rule.Source),

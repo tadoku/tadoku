@@ -3829,7 +3829,6 @@ components:
     ImmersionUnit:
       type: object
       required:
-        - id
         - unit_key
         - log_activity_id
         - name
@@ -4450,7 +4449,6 @@ components:
         - user_id
         - language
         - activity
-        - unit_id
         - unit_name
         - tags
         - amount

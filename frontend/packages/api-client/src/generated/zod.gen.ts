@@ -143,7 +143,7 @@ export const zImmersionActivitySplit = z.object({
 });
 
 export const zImmersionUnit = z.object({
-    id: z.string().guid(),
+    id: z.string().guid().optional(),
     unit_key: z.string(),
     log_activity_id: z.int(),
     name: z.string(),
@@ -362,7 +362,7 @@ export const zImmersionLog = z.object({
     description: z.string().optional(),
     language: zImmersionLanguage,
     activity: zImmersionActivity,
-    unit_id: z.string().guid(),
+    unit_id: z.string().guid().optional(),
     unit_key: z.string().optional(),
     unit_name: z.string(),
     tags: z.array(z.string()),

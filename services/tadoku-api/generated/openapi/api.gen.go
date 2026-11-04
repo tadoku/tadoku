@@ -1070,8 +1070,8 @@ type ImmersionLog struct {
 	Score           float32                                  `json:"score"`
 
 	// Tags Example: ["Book","Fiction"]
-	Tags   []string           `json:"tags"`
-	UnitId openapi_types.UUID `json:"unit_id"`
+	Tags   []string            `json:"tags"`
+	UnitId *openapi_types.UUID `json:"unit_id,omitempty"`
 
 	// UnitKey Example: reading_page
 	UnitKey *string `json:"unit_key,omitempty"`
@@ -1264,7 +1264,7 @@ type ImmersionTagSuggestions struct {
 
 // ImmersionUnit defines model for ImmersionUnit.
 type ImmersionUnit struct {
-	Id openapi_types.UUID `json:"id"`
+	Id *openapi_types.UUID `json:"id,omitempty"`
 
 	// LanguageCode Example: jpa
 	LanguageCode  *string `json:"language_code,omitempty"`

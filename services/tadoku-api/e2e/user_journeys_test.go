@@ -135,7 +135,7 @@ func TestLanguageLifecycleJourney(t *testing.T) {
 func TestContestCreationJourney(t *testing.T) {
 	ids := append(bytes.Repeat([]byte{0x11}, 16), bytes.Repeat([]byte{0x22}, 16)...)
 
-	runJourneyWithSetup(t, api, api.handler, "ContestCreation", nil, bytes.NewReader(ids), []step{
+	runScenarioJourney(t, api.handler, "ContestCreation", bytes.NewReader(ids), []step{
 		{
 			request: "reject_invalid_contest",
 			as:      user,
@@ -187,7 +187,7 @@ func TestContestCreationJourney(t *testing.T) {
 }
 
 func TestScoringRuleSetDraftJourney(t *testing.T) {
-	runJourney(t, api, "ScoringRuleSetDraft", []step{
+	runScenarioJourney(t, api.handler, "ScoringRuleSetDraft", nil, []step{
 		{request: "create_platform_draft", as: admin, want: http.StatusOK, others: cast{user: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "platform_draft_visible_to_admin", as: admin, want: http.StatusOK},
 		{request: "platform_draft_hidden_from_member", as: user, want: http.StatusOK},
@@ -197,14 +197,14 @@ func TestScoringRuleSetDraftJourney(t *testing.T) {
 }
 
 func TestScoringRuleSetDraftAtomicFailureJourney(t *testing.T) {
-	runJourney(t, api, "ScoringRuleSetDraftAtomicFailure", []step{
+	runScenarioJourney(t, api.handler, "ScoringRuleSetDraftAtomicFailure", nil, []step{
 		{request: "create_two_rule_draft_with_collision", as: admin, want: http.StatusInternalServerError},
 		{request: "failed_draft_left_no_version", as: admin, want: http.StatusOK},
 	})
 }
 
 func TestPlatformScoringRuleSetLifecycleJourney(t *testing.T) {
-	runJourney(t, api, "PlatformScoringRuleSetLifecycle", []step{
+	runScenarioJourney(t, api.handler, "PlatformScoringRuleSetLifecycle", nil, []step{
 		{request: "create_draft", as: admin, want: http.StatusOK, others: cast{user: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "publish_draft", as: admin, want: http.StatusOK, others: cast{user: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "published_not_active", as: admin, want: http.StatusOK},
@@ -215,7 +215,7 @@ func TestPlatformScoringRuleSetLifecycleJourney(t *testing.T) {
 
 func TestContestScoringRuleSetLifecycleJourney(t *testing.T) {
 	start := fixtureInstant.Add(12 * time.Hour)
-	runJourney(t, api, "ContestScoringRuleSetLifecycle", []step{
+	runScenarioJourney(t, api.handler, "ContestScoringRuleSetLifecycle", nil, []step{
 		{request: "create_override_draft", as: user, want: http.StatusOK, others: cast{user2: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "publish_draft", as: user, want: http.StatusOK, others: cast{user2: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "activate_published", as: user, want: http.StatusNoContent, others: cast{user2: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
@@ -228,7 +228,7 @@ func TestContestScoringRuleSetLifecycleJourney(t *testing.T) {
 
 func TestContestModerationDetachLogJourney(t *testing.T) {
 	mutationTime := time.Date(2027, 1, 2, 12, 0, 0, 0, time.UTC)
-	runJourney(t, api, "ContestModerationDetachLog", []step{
+	runScenarioJourney(t, api.handler, "ContestModerationDetachLog", nil, []step{
 		{request: "detach", as: user2, want: http.StatusOK, others: cast{user: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}, at: mutationTime},
 		{request: "owner_reads_detached", as: user, want: http.StatusOK, at: mutationTime},
 		{request: "repeat_absent_detach", as: user2, want: http.StatusOK, at: mutationTime},
@@ -238,7 +238,7 @@ func TestContestModerationDetachLogJourney(t *testing.T) {
 }
 
 func TestContestRegistrationJourney(t *testing.T) {
-	runJourney(t, api, "ContestRegistration", []step{
+	runScenarioJourney(t, api.handler, "ContestRegistration", nil, []step{
 		{
 			request: "create_ongoing_contest",
 			as:      user,
@@ -301,7 +301,7 @@ func TestContestRegistrationJourney(t *testing.T) {
 }
 
 func TestYearlyContestRegistrationJourney(t *testing.T) {
-	runJourney(t, api, "YearlyContestRegistration", []step{
+	runScenarioJourney(t, api.handler, "YearlyContestRegistration", nil, []step{
 		{request: "create_private_contest", as: user, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "register_private_contest", as: user, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "owner_reads_private_history", as: user, want: http.StatusOK},
@@ -315,7 +315,7 @@ func TestYearlyContestRegistrationJourney(t *testing.T) {
 }
 
 func TestContestRegistrationDetachJourney(t *testing.T) {
-	runJourney(t, api, "ContestRegistrationDetach", []step{
+	runScenarioJourney(t, api.handler, "ContestRegistrationDetach", nil, []step{
 		{
 			request: "existing_registration",
 			as:      user,
@@ -349,7 +349,7 @@ func TestContestRegistrationDetachJourney(t *testing.T) {
 func TestContestRegistrationFrozenAfterEndJourney(t *testing.T) {
 	dayAfterEnd := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
 
-	runJourney(t, api, "ContestRegistrationFrozenAfterEnd", []step{
+	runScenarioJourney(t, api.handler, "ContestRegistrationFrozenAfterEnd", nil, []step{
 		{request: "remove_language_after_end", as: user, want: http.StatusForbidden, at: dayAfterEnd},
 		{request: "registration_unchanged", as: user, want: http.StatusOK, at: dayAfterEnd},
 		{verify: "logs_and_registration_kept"},
@@ -367,7 +367,7 @@ func TestYearlyScoresLanguageNameChangeJourney(t *testing.T) {
 }
 
 func TestContestParticipantDetachJourney(t *testing.T) {
-	runJourney(t, api, "ContestParticipantDetach", []step{
+	runScenarioJourney(t, api.handler, "ContestParticipantDetach", nil, []step{
 		{request: "scores_before", as: user2, want: http.StatusOK},
 		{request: "activity_before", as: guest, want: http.StatusOK},
 		{request: "remove_language", as: user, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
@@ -377,7 +377,7 @@ func TestContestParticipantDetachJourney(t *testing.T) {
 }
 
 func TestLogRegistrationDetachJourney(t *testing.T) {
-	runJourney(t, api, "LogRegistrationDetach", []step{
+	runScenarioJourney(t, api.handler, "LogRegistrationDetach", nil, []step{
 		{request: "log_before", as: user, want: http.StatusOK},
 		{request: "contest_logs_before", as: user2, want: http.StatusOK},
 		{request: "remove_language", as: user, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},

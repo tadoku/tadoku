@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 	"testing"
+
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 func TestImmersionFetchLeaderboardGlobal(t *testing.T) {
@@ -117,7 +119,7 @@ func runLeaderboardCase(t *testing.T, name string, want int, cache, cacheKey str
 		dir := "testdata/" + name
 		api.reset(t, dir)
 		if cache == "hit" || cache == "hit_tie" || cache == "hit_many" {
-			seedLeaderboardCache(t, cacheKey, cache)
+			seedLeaderboardCache(t, tenant.Production().String(), cacheKey, cache)
 		}
 		atFixtureInstant(func() { checkHTTPGolden(t, api.handler, dir, want, *updateGoldens) })
 		if cache == "miss" || cache == "miss_then_hit" {
@@ -129,9 +131,9 @@ func runLeaderboardCase(t *testing.T, name string, want int, cache, cacheKey str
 	})
 }
 
-func seedLeaderboardCache(t *testing.T, key, cache string) {
+func seedLeaderboardCache(t *testing.T, tenantKey, key, cache string) {
 	t.Helper()
-	key = "tenant:tadoku/prod:" + key
+	key = "tenant:" + tenantKey + ":" + key
 	client := leaderboardValkey.client
 	builder := client.B().Zadd().Key(key).ScoreMember().ScoreMember(77, "11111111-1111-4111-8111-111111111111")
 	if cache == "hit_many" {
@@ -160,9 +162,9 @@ func seedLeaderboardCache(t *testing.T, key, cache string) {
 	}
 }
 
-func cachedLeaderboardScore(t *testing.T, key string) float64 {
+func cachedLeaderboardScore(t *testing.T, tenantKey, key string) float64 {
 	t.Helper()
-	key = "tenant:tadoku/prod:" + key
+	key = "tenant:" + tenantKey + ":" + key
 	entries, err := leaderboardValkey.client.Do(t.Context(), leaderboardValkey.client.B().Zrange().Key(key).Min("0").Max("-1").Withscores().Build()).AsZScores()
 	if err != nil {
 		t.Fatal(err)

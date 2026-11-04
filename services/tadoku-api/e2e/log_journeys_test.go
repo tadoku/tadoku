@@ -12,7 +12,7 @@ import (
 
 func TestLogMutationJourney(t *testing.T) {
 	end := time.Date(2027, 1, 1, 0, 0, 0, 0, time.UTC)
-	runJourneyWithHandler(t, api, scoringEnabledHandler, "LogMutation", []step{
+	runScenarioJourney(t, scoringEnabledHandler, "LogMutation", nil, []step{
 		{request: "create", as: user, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "read_created", as: user, want: http.StatusOK},
 		{request: "update_at_contest_end", as: user, want: http.StatusOK, others: cast{user2: http.StatusForbidden, banned: http.StatusForbidden}, at: end},
@@ -24,8 +24,10 @@ func TestLogMutationJourney(t *testing.T) {
 }
 
 func TestStandaloneWorkerLeaderboardJourney(t *testing.T) {
-	runJourneyWithSetup(t, api, scoringEnabledHandler, "LeaderboardJobs", func(t *testing.T) {
-		seedLeaderboardCache(t, "leaderboard:global", "hit")
+	var tenantKey string
+	runScenarioJourneyWithSetup(t, scoringEnabledHandler, "LeaderboardJobs", func(t *testing.T, s *fixtureScenario) {
+		tenantKey = s.tenant(t, primaryRole).String()
+		seedLeaderboardCache(t, tenantKey, "leaderboard:global", "hit")
 	}, nil, []step{
 		{request: "create_log", as: user, want: http.StatusOK},
 		{request: "before_worker_stale_cache", as: guest, want: http.StatusOK},
@@ -35,7 +37,7 @@ func TestStandaloneWorkerLeaderboardJourney(t *testing.T) {
 	if t.Failed() {
 		return
 	}
-	if score := cachedLeaderboardScore(t, "leaderboard:global"); score != 10 {
+	if score := cachedLeaderboardScore(t, tenantKey, "leaderboard:global"); score != 10 {
 		t.Errorf("rebuilt leaderboard cache score = %v, want 10", score)
 	}
 }
@@ -67,7 +69,7 @@ func TestLogCreateAtomicFailureJourney(t *testing.T) {
 }
 
 func TestLogCreateValidationSyncJourney(t *testing.T) {
-	runJourneyWithHandler(t, api, scoringEnabledHandler, "LogCreateValidationSync", []step{
+	runScenarioJourney(t, scoringEnabledHandler, "LogCreateValidationSync", nil, []step{
 		{request: "reject_invalid", as: user, want: http.StatusBadRequest, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{verify: "user_was_synchronized"},
 		{request: "unknown_language_commits_before_readback", as: user, want: http.StatusNotFound},
@@ -76,7 +78,7 @@ func TestLogCreateValidationSyncJourney(t *testing.T) {
 }
 
 func TestLogAttachmentAndDeleteJourney(t *testing.T) {
-	runJourneyWithHandler(t, api, scoringEnabledHandler, "LogAttachmentAndDelete", []step{
+	runScenarioJourney(t, scoringEnabledHandler, "LogAttachmentAndDelete", nil, []step{
 		{request: "create", as: user, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "attach", as: user, want: http.StatusOK, others: cast{user2: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "read_attached", as: user, want: http.StatusOK},
@@ -89,7 +91,7 @@ func TestLogAttachmentAndDeleteJourney(t *testing.T) {
 }
 
 func TestFrozenLogRefusalsJourney(t *testing.T) {
-	runJourneyWithHandler(t, api, scoringEnabledHandler, "FrozenLogRefusals", []step{
+	runScenarioJourney(t, scoringEnabledHandler, "FrozenLogRefusals", nil, []step{
 		{request: "update_refused", as: user, want: http.StatusConflict},
 		{request: "registrations_refused", as: user, want: http.StatusConflict},
 		{request: "delete_refused", as: user, want: http.StatusConflict},
@@ -99,7 +101,7 @@ func TestFrozenLogRefusalsJourney(t *testing.T) {
 }
 
 func TestLogOfficialEligibilityJourney(t *testing.T) {
-	runJourney(t, api, "LogOfficialEligibility", []step{
+	runScenarioJourney(t, api.handler, "LogOfficialEligibility", nil, []step{
 		{request: "create_unofficial", as: user, want: http.StatusOK},
 		{request: "create_official", as: user, want: http.StatusOK},
 		{verify: "created"},
@@ -117,7 +119,7 @@ func TestLogOfficialEligibilityJourney(t *testing.T) {
 }
 
 func TestLogAttachmentAtomicFailureJourney(t *testing.T) {
-	runJourneyWithHandler(t, api, scoringEnabledHandler, "LogAttachmentAtomicFailure", []step{
+	runScenarioJourney(t, scoringEnabledHandler, "LogAttachmentAtomicFailure", nil, []step{
 		{request: "replace_with_duplicate", as: user, want: http.StatusInternalServerError},
 		{request: "original_attachment_remains", as: user, want: http.StatusOK},
 		{verify: "no_partial_effects"},

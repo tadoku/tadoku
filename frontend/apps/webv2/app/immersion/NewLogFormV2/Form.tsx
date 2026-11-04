@@ -48,7 +48,7 @@ export const LogFormV2 = ({
             options.units,
             defaultActivity.id,
             originalDefaultValues?.languageCode,
-          )[0]?.id
+          )[0]?.unit_key
         : undefined,
     allUnits: options.units,
     allActivities: options.activities,
@@ -87,7 +87,7 @@ export const LogFormV2 = ({
   const usesAmountUnit = activityInputType === 'amount_primary'
   const units = filterUnits(options.units, activity?.id, languageCode)
   const unitsAsOptions: Option[] = units.map(it => ({
-    value: it.id,
+    value: it.unit_key,
     label: it.name,
   }))
   const activitiesAsOptions: Option[] = options.activities.map(it => ({
@@ -201,8 +201,7 @@ export const LogFormV2 = ({
     return () => subscription.unsubscribe()
   }, [methods, options.activities, options.units])
 
-  // Runs after render so the unit select already lists the new options;
-  // keeps the same kind of unit (e.g. characters) when the language changes.
+  // Runs after render so the unit select already lists the new options.
   const amountUnit = methods.watch('amountUnit')
   useEffect(() => {
     if (!usesAmountUnit) {
@@ -210,15 +209,11 @@ export const LogFormV2 = ({
     }
 
     const units = filterUnits(options.units, activityId, languageCode)
-    if (units.some(it => it.id === amountUnit)) {
+    if (units.some(it => it.unit_key === amountUnit)) {
       return
     }
 
-    const unitKey = options.units.find(it => it.id === amountUnit)?.unit_key
-    methods.setValue(
-      'amountUnit',
-      (units.find(it => it.unit_key === unitKey) ?? units[0])?.id,
-    )
+    methods.setValue('amountUnit', units[0]?.unit_key)
   }, [
     activityId,
     amountUnit,

@@ -138,11 +138,6 @@ A top-level E2E test may call `t.Parallel` only when all of these hold:
   `timex.Advance`, `uuid.SetRand` or `jwt.TimeFunc` write, no `t.Setenv`, no
   schema, trigger or sequence fault, and no write to shared reference data or
   the canonical tenant.
-- None of its fixed or generated IDs land in a table whose primary key is
-  `id` alone: `contests`, `contest_registrations`, `logs`,
-  `scoring_rule_sets`, `scoring_rules`, `posts`, `posts_content`, `pages`,
-  `pages_content`, `announcements` and `moderation_audit_log`. Two tenants
-  writing the same ID there collide.
 - It does not depend on process-wide fixture state that a serial test may
   leave behind, such as the Flipt fixture's unavailable mode, which lasts
   until the next reset.

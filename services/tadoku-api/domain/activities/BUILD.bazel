@@ -1,8 +1,17 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "activities",
-    srcs = ["activities.go"],
+    srcs = [
+        "activities.go",
+        "units.go",
+    ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/domain/activities",
     visibility = ["//services/tadoku-api:domain_consumers"],
+)
+
+go_test(
+    name = "activities_test",
+    srcs = ["units_test.go"],
+    embed = [":activities"],
 )

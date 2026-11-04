@@ -86,9 +86,19 @@ func fixtureJWKS() ([]byte, error) {
 // signCastToken issues the checked-in cast's claims for key, valid one minute either side of the JWT verification
 // clock.
 func signCastToken(key tenant.Key, as member) (string, error) {
+	claims, err := castClaimsFor(key.String(), as)
+	if err != nil {
+		return "", err
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	token.Header["kid"] = scenarioSigner.kid
+	return token.SignedString(scenarioSigner.key)
+}
+
+func castClaimsFor(tenantKey string, as member) (castClaims, error) {
 	identity, ok := scenarioCast[as]
 	if !ok {
-		return "", fmt.Errorf("cast has no member %q", as)
+		return castClaims{}, fmt.Errorf("cast has no member %q", as)
 	}
 
 	now := jwt.TimeFunc()
@@ -101,15 +111,12 @@ func signCastToken(key tenant.Key, as member) (string, error) {
 			ExpiresAt: jwt.NewNumericDate(now.Add(time.Minute)),
 		},
 		Type:   "user",
-		Tenant: key.String(),
+		Tenant: tenantKey,
 	}
 	if as != guest {
 		claims.Session = &castSession{}
 		claims.Session.Identity.Traits.DisplayName = identity.displayName
 		claims.Session.Identity.Traits.Email = identity.email
 	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Header["kid"] = scenarioSigner.kid
-	return token.SignedString(scenarioSigner.key)
+	return claims, nil
 }

@@ -79,7 +79,95 @@ func runJourneyWithSetup(
 	steps []step,
 ) {
 	t.Helper()
+	directory, names, tokens := prepareJourney(t, name, steps)
 
+	resetJourney(t, s, directory)
+	if afterReset != nil {
+		afterReset(t)
+	}
+
+	if ids == nil {
+		ids = rand.New(rand.NewSource(1))
+	}
+	clock := timex.NewClock(fixtureInstant)
+	fixture := suiteJourney{suite: s, clock: clock, ctx: scenarioContext(t, clock, ids)}
+	runJourneySteps(t, fixture, handler, directory, names, steps, tokens)
+}
+
+// journeyFixture is what a journey's steps run against: the suite after a whole-database reset, or a
+// fixtureScenario's private tenants.
+type journeyFixture interface {
+	businessClock() *timex.Clock
+	// serveFixture sends a checked-in request with a fixture token; an empty token sends no credentials.
+	serveFixture(t *testing.T, handler http.Handler, request *http.Request, token string) *httptest.ResponseRecorder
+	// normalize maps generated tenant keys in a response, verify result or cache key to stable aliases.
+	normalize(text string) string
+	verifyQuery(t *testing.T, query string) string
+	cacheKeys(t *testing.T) []string
+	workerStep(t *testing.T, forTenant string)
+}
+
+// suiteJourney runs a journey against the suite: requests carry their fixture tokens unchanged and share one context
+// with the journey's clock and UUID stream.
+type suiteJourney struct {
+	suite *suite
+	clock *timex.Clock
+	ctx   context.Context
+}
+
+func (j suiteJourney) businessClock() *timex.Clock {
+	return j.clock
+}
+
+func (j suiteJourney) serveFixture(
+	t *testing.T,
+	handler http.Handler,
+	request *http.Request,
+	token string,
+) *httptest.ResponseRecorder {
+	t.Helper()
+	request = request.WithContext(j.ctx)
+	if token != "" {
+		request.Header.Set("Authorization", "Bearer "+token)
+	}
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, request)
+	return recorder
+}
+
+func (suiteJourney) normalize(text string) string {
+	return text
+}
+
+func (j suiteJourney) verifyQuery(t *testing.T, query string) string {
+	t.Helper()
+	var rows string
+	if err := j.suite.db.Pool.QueryRow(t.Context(), wrapVerifyQuery(query)).Scan(&rows); err != nil {
+		t.Fatalf("run verify query: %v", err)
+	}
+	return rows
+}
+
+func (suiteJourney) cacheKeys(t *testing.T) []string {
+	t.Helper()
+	if err := leaderboardValkey.ownsLease(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	keys, err := leaderboardValkey.cacheKeys(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return keys
+}
+
+func (j suiteJourney) workerStep(t *testing.T, forTenant string) {
+	t.Helper()
+	runWorkerStep(t, j.ctx, j.suite, forTenant)
+}
+
+// prepareJourney checks the journey's step table, fixture files and cast before anything is seeded.
+func prepareJourney(t *testing.T, name string, steps []step) (string, []string, map[member]string) {
+	t.Helper()
 	directory := filepath.Join(journeysDir, name)
 	names, err := stepDirNames(steps)
 	if err != nil {
@@ -92,44 +180,45 @@ func runJourneyWithSetup(
 	if err != nil {
 		t.Fatal(err)
 	}
+	return directory, names, tokens
+}
 
-	resetJourney(t, s, directory)
-	if afterReset != nil {
-		afterReset(t)
-	}
-
-	if ids == nil {
-		ids = rand.New(rand.NewSource(1))
-	}
-	clock := timex.NewClock(fixtureInstant)
-	ctx := scenarioContext(t, clock, ids)
-
+// runJourneySteps runs the steps in order, each at its own business time, and stops at the first failing step.
+func runJourneySteps(
+	t *testing.T,
+	fixture journeyFixture,
+	handler http.Handler,
+	directory string,
+	names []string,
+	steps []step,
+	tokens map[member]string,
+) {
+	t.Helper()
 	for index, current := range steps {
 		stepDir := filepath.Join(directory, names[index])
 		at := current.at
 		if at.IsZero() {
 			at = fixtureInstant
 		}
-
-		clock.Set(at)
+		fixture.businessClock().Set(at)
 
 		passed := t.Run(names[index], func(t *testing.T) {
 			switch {
 			case current.verify != "":
-				checkVerifyGolden(t, s, stepDir)
+				query := readVerifyQuery(t, stepDir)
+				checkJSONGolden(t, stepDir, []byte(fixture.normalize(fixture.verifyQuery(t, query))))
 			case current.valkey != "":
-				checkValkeyGolden(t, stepDir)
+				checkValkeyGolden(t, fixture, stepDir)
 			case current.job != "":
-				runJobStep(t, ctx, s, current)
+				runJobStep(t, fixture, current)
 			default:
-				runRequestStep(t, ctx, s, handler, stepDir, current, tokens)
+				runRequestStep(t, fixture, handler, stepDir, current, tokens)
 			}
 		})
 		if !passed {
 			return
 		}
 	}
-
 }
 
 func stepDirNames(steps []step) ([]string, error) {
@@ -228,11 +317,11 @@ func checkJourneyFiles(directory string, steps []step, names []string) error {
 	return nil
 }
 
-func runJobStep(t *testing.T, ctx context.Context, s *suite, current step) {
+func runJobStep(t *testing.T, fixture journeyFixture, current step) {
 	t.Helper()
 	switch current.job {
 	case "run_worker", "run_branch_worker":
-		runWorkerStep(t, ctx, s, current.forTenant)
+		fixture.workerStep(t, current.forTenant)
 	default:
 		t.Fatalf("unknown journey job %q", current.job)
 	}
@@ -318,8 +407,7 @@ func resetJourney(t *testing.T, s *suite, directory string) {
 
 func runRequestStep(
 	t *testing.T,
-	ctx context.Context,
-	s *suite,
+	fixture journeyFixture,
 	handler http.Handler,
 	directory string,
 	current step,
@@ -337,11 +425,7 @@ func runRequestStep(
 	}
 	slices.Sort(others)
 	for _, other := range others {
-		replay := readHTTPRequest(t, directory).WithContext(ctx)
-		authorize(replay, other, tokens)
-
-		recorder := httptest.NewRecorder()
-		handler.ServeHTTP(recorder, replay)
+		recorder := fixture.serveFixture(t, handler, readHTTPRequest(t, directory), tokens[other])
 		if recorder.Code != current.others[other] {
 			t.Errorf("%s: status=%d, want %d", other, recorder.Code, current.others[other])
 		}
@@ -350,9 +434,10 @@ func runRequestStep(
 		return
 	}
 
-	request := readHTTPRequest(t, directory).WithContext(ctx)
-	authorize(request, current.as, tokens)
-	checkHTTPResponseGolden(t, handler, request, directory, current.want, *updateGoldens)
+	request := readHTTPRequest(t, directory)
+	defer request.Body.Close()
+	recorder := fixture.serveFixture(t, handler, request, tokens[current.as])
+	checkRecordedHTTPGolden(t, request, recorder, directory, current.want, *updateGoldens, fixture.normalize)
 }
 
 func authorize(request *http.Request, who member, tokens map[member]string) {
@@ -364,27 +449,24 @@ func authorize(request *http.Request, who member, tokens map[member]string) {
 
 func checkVerifyGolden(t *testing.T, s *suite, directory string) {
 	t.Helper()
+	fixture := suiteJourney{suite: s}
+	checkJSONGolden(t, directory, []byte(fixture.verifyQuery(t, readVerifyQuery(t, directory))))
+}
 
+func readVerifyQuery(t testing.TB, directory string) string {
+	t.Helper()
 	query, err := os.ReadFile(filepath.Join(directory, "verify.sql"))
 	if err != nil {
 		t.Fatalf("read verify query: %v", err)
 	}
-
-	var rows string
-	if err := s.db.Pool.QueryRow(t.Context(), wrapVerifyQuery(string(query))).Scan(&rows); err != nil {
-		t.Fatalf("run verify query: %v", err)
-	}
-	checkJSONGolden(t, directory, []byte(rows))
+	return string(query)
 }
 
-func checkValkeyGolden(t *testing.T, directory string) {
+func checkValkeyGolden(t *testing.T, fixture journeyFixture, directory string) {
 	t.Helper()
-	if err := leaderboardValkey.ownsLease(t.Context()); err != nil {
-		t.Fatal(err)
-	}
-	keys, err := leaderboardValkey.cacheKeys(t.Context())
-	if err != nil {
-		t.Fatal(err)
+	keys := fixture.cacheKeys(t)
+	for index, key := range keys {
+		keys[index] = fixture.normalize(key)
 	}
 	slices.Sort(keys)
 	encoded, err := json.Marshal(slices.Compact(keys))

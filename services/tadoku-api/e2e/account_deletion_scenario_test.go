@@ -1,10 +1,7 @@
 package e2e_test
 
 import (
-	"context"
 	"net/http"
-	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -52,24 +49,5 @@ func (s *scenario) runJobs(t *testing.T) (failed int) {
 // table it reads.
 func (s *scenario) checkVerifyGolden(t *testing.T, directory string) {
 	t.Helper()
-	query, err := os.ReadFile(filepath.Join(directory, "verify.sql"))
-	if err != nil {
-		t.Fatalf("read verify query: %v", err)
-	}
-
-	tx, err := api.db.AppPool.Begin(t.Context())
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = tx.Rollback(context.Background()) }()
-
-	_, err = tx.Exec(t.Context(), "select set_config('tadoku.tenant', $1, true)", s.tenant(t, deletionRole).String())
-	if err != nil {
-		t.Fatal(err)
-	}
-	var rows string
-	if err := tx.QueryRow(t.Context(), wrapVerifyQuery(string(query))).Scan(&rows); err != nil {
-		t.Fatalf("run verify query: %v", err)
-	}
-	checkJSONGolden(t, directory, []byte(rows))
+	checkJSONGolden(t, directory, []byte(s.verifyRows(t, deletionRole, readVerifyQuery(t, directory))))
 }

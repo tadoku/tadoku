@@ -120,7 +120,9 @@ and a journey by calling `runScenarioJourney` instead of `runJourney`,
   with process-wide fixtures stay on the serial runners. So does a case that
   tests its own credential: the runner signs a fresh token for any token whose
   claims equal the cast's, which would replace a bad signature or unknown key
-  under test, and refuses every other credential.
+  under test, and refuses every other credential. A journey whose setup
+  touches only its own tenants, such as seeding its tenant's leaderboard cache,
+  passes it to `runScenarioJourneyWithSetup`, which runs it after seeding.
 
 `TestFixtureScenarioCasesStayInTheirTenants` in
 `services/tadoku-api/e2e/fixture_scenario_canary_test.go` runs the same golden

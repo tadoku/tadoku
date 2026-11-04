@@ -28,23 +28,21 @@ insert into contests (
 
 update contests set deleted_at = '2026-09-10' where tenant = 'tadoku/prod' and id = 'f0000000-0000-4000-8000-000000000004';
 
-
-
 insert into logs (
   tenant, id, user_id, language_code, log_activity_id, unit_id, unit_key, amount,
   modifier, computed_score, eligible_official_leaderboard, description, created_at, updated_at
 ) values
   ('tadoku/prod', 'd0000000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', 'eng', 1,
-   (select id from log_units where unit_key = 'reading_page' and language_code is null), 'reading_page', 10, 1, 20, false,
+   '026e644b-ec51-61cd-a392-55231a6ab4a0', 'reading_page', 10, 1, 20, false,
    'Contest preview', '2026-09-12', '2026-09-12'),
   ('tadoku/prod', 'd0000000-0000-4000-8000-000000000003', '11111111-1111-4111-8111-111111111111', 'eng', 1,
-   (select id from log_units where unit_key = 'reading_page' and language_code is null), 'reading_page', 3, 1, 6, false,
+   '026e644b-ec51-61cd-a392-55231a6ab4a0', 'reading_page', 3, 1, 6, false,
    'Unattached personal log', '2026-09-12', '2026-09-12'),
   ('tadoku/prod', 'd0000000-0000-4000-8000-000000000004', '11111111-1111-4111-8111-111111111111', 'eng', 1,
-   (select id from log_units where unit_key = 'reading_page' and language_code is null), 'reading_page', 4, 1, 8, false,
+   '026e644b-ec51-61cd-a392-55231a6ab4a0', 'reading_page', 4, 1, 8, false,
    'Deleted log', '2026-09-12', '2026-09-12'),
   ('e2e/alpha-0000000a', 'd1000000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', 'eng', 1,
-   (select id from log_units where unit_key = 'reading_page' and language_code is null), 'reading_page', 7, 1, 14, false,
+   '026e644b-ec51-61cd-a392-55231a6ab4a0', 'reading_page', 7, 1, 14, false,
    'Branch-only preview', '2026-09-12', '2026-09-12');
 
 update logs set deleted_at = '2026-09-12' where tenant = 'tadoku/prod' and id = 'd0000000-0000-4000-8000-000000000004';

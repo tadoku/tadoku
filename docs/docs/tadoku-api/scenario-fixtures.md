@@ -120,7 +120,9 @@ and a journey by calling `runScenarioJourney` instead of `runJourney`,
   with process-wide fixtures stay on the serial runners. So does a case that
   tests its own credential: the runner signs a fresh token for any token whose
   claims equal the cast's, which would replace a bad signature or unknown key
-  under test, and refuses every other credential.
+  under test, and refuses every other credential. A journey whose setup
+  touches only its own tenants, such as seeding its tenant's leaderboard cache,
+  passes it to `runScenarioJourneyWithSetup`, which runs it after seeding.
 
 `TestFixtureScenarioCasesStayInTheirTenants` in
 `services/tadoku-api/e2e/fixture_scenario_canary_test.go` runs the same golden
@@ -149,7 +151,10 @@ Every other test stays a serial top-level test. Go starts parallel top-level
 tests only after every serial top-level test has returned, so serial resets,
 faults and canonical-only tests never overlap a parallel scenario. That barrier
 is the only exclusion: a serial subtest under a parallel parent, or a mutex
-that only fault tests take, does not keep ordinary scenarios out.
+that only fault tests take, does not keep ordinary scenarios out. Scenarios do
+not reset, so a serial test that writes shared reference data, such as
+`languages`, restores it before it returns: it calls `resetAfter`, or removes
+the rows it added in cleanup, as the log unit cases do.
 
 Keep every step of a scenario sequential. Parallel subtests are only for
 scenarios that deliberately overlap and wait for each other with

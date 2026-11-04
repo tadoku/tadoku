@@ -9,12 +9,13 @@ type featureFlagCase struct {
 	description []string
 	want        int
 	unavailable bool
+	canonical   bool
 }
 
 func TestImmersionFeatureFlagDecisions(t *testing.T) {
 	tests := []featureFlagCase{
-		{description: []string{"named", "user", "enabled"}, want: http.StatusOK},
-		{description: []string{"test", "tenant", "provider", "disabled"}, want: http.StatusOK},
+		{description: []string{"named", "user", "enabled"}, want: http.StatusOK, canonical: true},
+		{description: []string{"test", "tenant", "provider", "disabled"}, want: http.StatusOK, canonical: true},
 		{description: []string{"guest", "safe", "default"}, want: http.StatusOK},
 		{description: []string{"provider", "unavailable", "safe", "default"}, want: http.StatusOK, unavailable: true},
 	}
@@ -26,9 +27,13 @@ func TestImmersionFeatureFlagDecisions(t *testing.T) {
 			if test.unavailable {
 				handler = withFliptUnavailable(handler)
 			}
-			runCase(t, api, name, test.want,
-				implementation{name: "tadoku-api", handler: handler},
-			)
+			impl := implementation{name: "tadoku-api", handler: handler}
+			if test.unavailable || test.canonical {
+				runCase(t, api, name, test.want, impl)
+				return
+			}
+
+			runScenarioCase(t, name, test.want, impl)
 		})
 	}
 }

@@ -41,10 +41,6 @@ insert into contest_registrations (id,contest_id,user_id,language_codes) values
  ('eeeeeeee-eeee-4eee-8eee-000000000004','f0000000-0000-4000-8000-000000000004','11111111-1111-4111-8111-111111111111','{eng}'),
  ('eeeeeeee-eeee-4eee-8eee-000000000005','f0000000-0000-4000-8000-000000000005','11111111-1111-4111-8111-111111111111','{eng}');
 
-update log_units
-set id = '026e644b-ec51-61cd-a392-55231a6ab4a0'
-where unit_key = 'reading_page' and language_code is null;
-
 insert into logs (id,user_id,language_code,log_activity_id,unit_id,unit_key,amount,modifier,duration_seconds,computed_score,eligible_official_leaderboard,description,created_at,updated_at) values
  ('d1000000-0000-4000-8000-000000000001','11111111-1111-4111-8111-111111111111','eng',1,'026e644b-ec51-61cd-a392-55231a6ab4a0','reading_page',4,1,120,4,true,'before','2025-12-31','2026-01-01'),
  ('d1000000-0000-4000-8000-000000000002','11111111-1111-4111-8111-111111111111','eng',1,'026e644b-ec51-61cd-a392-55231a6ab4a0','reading_page',4,1,120,4,false,'frozen','2026-01-01','2026-01-01'),

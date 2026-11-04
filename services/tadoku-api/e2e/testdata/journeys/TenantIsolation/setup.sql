@@ -50,6 +50,3 @@ insert into contest_registrations (tenant, id, contest_id, user_id, language_cod
   ('e2e/alpha-0000000a', 'eeeeeeee-eeee-4eee-8eee-000000000002',
    'f0000000-0000-4000-8000-000000000002', '44444444-4444-4444-8444-444444444444', '{eng}');
 
-update log_units
-set id = '026e644b-ec51-61cd-a392-55231a6ab4a0'
-where unit_key = 'reading_page' and language_code is null;

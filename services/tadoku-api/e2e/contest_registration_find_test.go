@@ -6,6 +6,8 @@ import (
 )
 
 func TestFindContestRegistration(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		description []string
 		want        int
@@ -25,7 +27,7 @@ func TestFindContestRegistration(t *testing.T) {
 		name := APITestName("FindContestRegistration", test.want, test.description...)
 
 		t.Run(name, func(t *testing.T) {
-			runCase(t, api, name, test.want,
+			runScenarioCase(t, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
 			)
 		})

@@ -7,6 +7,8 @@ import (
 )
 
 func TestImmersionLogContestRegistrationUpdate(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		description          []string
 		want                 int
@@ -40,7 +42,7 @@ func TestImmersionLogContestRegistrationUpdate(t *testing.T) {
 			if at.IsZero() {
 				at = fixtureInstant
 			}
-			runCaseAt(t, api, name, test.want, at,
+			runScenarioCaseAt(t, name, test.want, at,
 				implementation{name: "tadoku-api", handler: handler},
 			)
 		})
@@ -48,6 +50,8 @@ func TestImmersionLogContestRegistrationUpdate(t *testing.T) {
 }
 
 func TestImmersionLogDeleteByID(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		description []string
 		want        int
@@ -66,7 +70,7 @@ func TestImmersionLogDeleteByID(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("ImmersionLogDeleteByID", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			runCase(t, api, name, test.want,
+			runScenarioCase(t, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
 			)
 		})
@@ -74,6 +78,8 @@ func TestImmersionLogDeleteByID(t *testing.T) {
 }
 
 func TestImmersionContestModerationDetachLog(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		description []string
 		want        int
@@ -94,7 +100,7 @@ func TestImmersionContestModerationDetachLog(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("ImmersionContestModerationDetachLog", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			runCase(t, api, name, test.want,
+			runScenarioCase(t, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
 			)
 		})

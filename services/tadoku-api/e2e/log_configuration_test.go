@@ -6,6 +6,8 @@ import (
 )
 
 func TestImmersionLogGetConfigurations(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		description          []string
 		want                 int
@@ -25,7 +27,7 @@ func TestImmersionLogGetConfigurations(t *testing.T) {
 			if test.scoringEngineEnabled {
 				handler = scoringEnabledHandler
 			}
-			runCase(t, api, name, test.want,
+			runScenarioCase(t, name, test.want,
 				implementation{name: "tadoku-api", handler: handler},
 			)
 		})

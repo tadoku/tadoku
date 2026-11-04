@@ -95,7 +95,12 @@ func (s *fixtureScenario) runCase(
 	)
 	s.clock.Set(businessTime)
 	s.useIDs(impl.uuidReader())
+	s.checkCase(t, directory, want, impl)
+}
 
+// checkCase sends the case's request to the implementation and checks its golden, without seeding.
+func (s *fixtureScenario) checkCase(t *testing.T, directory string, want int, impl implementation) {
+	t.Helper()
 	request := readHTTPRequest(t, directory)
 	defer request.Body.Close()
 	token, found := strings.CutPrefix(request.Header.Get("Authorization"), "Bearer ")
@@ -118,6 +123,21 @@ func runScenarioJourney(
 	others ...fixtureTenant,
 ) {
 	t.Helper()
+	runScenarioJourneyWithSetup(t, handler, name, nil, ids, steps, others...)
+}
+
+// runScenarioJourneyWithSetup is runScenarioJourney that runs afterSeed with the journey's scenario once its fixtures
+// are seeded, before the first step. afterSeed may only touch that scenario's tenants.
+func runScenarioJourneyWithSetup(
+	t *testing.T,
+	handler http.Handler,
+	name string,
+	afterSeed func(*testing.T, *fixtureScenario),
+	ids io.Reader,
+	steps []step,
+	others ...fixtureTenant,
+) {
+	t.Helper()
 	t.Parallel()
 
 	directory, names, tokens := prepareJourney(t, name, steps)
@@ -127,6 +147,9 @@ func runScenarioJourney(
 		nil,
 		[]string{filepath.Join(journeysDir, "relationships.json"), filepath.Join(directory, "relationships.json")},
 	)
+	if afterSeed != nil {
+		afterSeed(t, s)
+	}
 	if ids == nil {
 		ids = rand.New(rand.NewSource(1))
 	}

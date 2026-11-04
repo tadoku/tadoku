@@ -96,7 +96,7 @@ values
     now(),
     now()
   )
-on conflict (id) do update
+on conflict (tenant, id) do update
 set
   owner_user_id = excluded.owner_user_id,
   owner_user_display_name = excluded.owner_user_display_name,
@@ -221,7 +221,7 @@ values
     now(),
     now()
   )
-on conflict (id) do update
+on conflict (tenant, id) do update
 set
   user_id = excluded.user_id,
   updated_at = now()

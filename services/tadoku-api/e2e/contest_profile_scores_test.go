@@ -6,6 +6,8 @@ import (
 )
 
 func TestImmersionContestProfileFetchScores(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		description []string
 		want        int
@@ -41,7 +43,7 @@ func TestImmersionContestProfileFetchScores(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("ImmersionContestProfileFetchScores", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			runCase(t, api, name, test.want,
+			runScenarioCase(t, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
 			)
 		})

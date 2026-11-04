@@ -6,6 +6,6 @@ X-Test-Identity-Created-At: 2026-09-12T11:59:00Z
 X-Test-Identity-Display-Name: Banned One
 X-Test-Identity-Email: banned@example.test
 X-Test-Identity-Subject: 33333333-3333-4333-8333-333333333333
-X-Test-Tenant: e2e/{other}
+X-Test-Tenant: e2e/alpha-0000000a
 
 {"status":"success"}

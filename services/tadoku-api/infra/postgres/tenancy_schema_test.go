@@ -31,7 +31,7 @@ func TestTenancySchemaGuard(t *testing.T) {
 			left join pg_attribute a on a.attrelid = c.oid and a.attname = 'tenant' and not a.attisdropped
 			left join pg_attrdef d on d.adrelid = c.oid and d.adnum = a.attnum
 			where n.nspname = current_schema() and c.relkind in ('r', 'p')
-				and c.relname not in ('tenants', 'tenant_overrides', 'languages', 'log_units', 'schema_migrations')
+				and c.relname not in ('tenants', 'tenant_overrides', 'languages', 'schema_migrations')
 				and not starts_with(c.relname, 'tadoku_test_')
 		), shared_policy(name, command, using_expression, check_expression) as (
 			values ('shared_read', 'SELECT', 'true', null),

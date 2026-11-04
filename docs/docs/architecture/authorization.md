@@ -272,8 +272,8 @@ contests listings return, and official contests cannot be private.
 
 ## Shared data
 
-`languages` and `log_units` have no tenant column: every tenant, including
-production, reads the same rows. The `tenants` and `tenant_overrides`
+`languages` has no tenant column: every tenant, including production, reads
+the same rows. The `tenants` and `tenant_overrides`
 registry is also shared, but only the owner `tadoku-tenant` command writes
 it. Any tenant may read shared data. Application operations that write it
 call `RequireProductionAdmin`, so an administrator acting through a test

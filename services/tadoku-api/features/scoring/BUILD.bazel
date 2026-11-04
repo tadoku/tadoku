@@ -8,6 +8,7 @@ go_library(
         "scoring_repository.go",
         "scoring_rule_sets_service.go",
         "scoring_service.go",
+        "scoring_unit_service.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/scoring",
     visibility = ["//services/tadoku-api:feature_consumers"],
@@ -32,6 +33,7 @@ go_test(
     srcs = [
         "scoring_repository_test.go",
         "scoring_service_test.go",
+        "scoring_unit_service_test.go",
     ],
     args = ["-test.parallel=4"],
     embed = [":scoring"],
@@ -42,6 +44,7 @@ go_test(
         "requires-network",
     ],
     deps = [
+        "//services/tadoku-api/domain/logscore",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/tenant",
         "//services/tadoku-api/internal/testpostgres",

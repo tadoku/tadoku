@@ -6,10 +6,29 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 func (s *Service) Preview(ctx context.Context, parameters PreviewParameters) (*Preview, error) {
+	normalized, err := s.normalizeLegacyUnit(ctx, logscore.Input{
+		UnitID:          parameters.UnitID,
+		UnitKey:         parameters.UnitKey,
+		ActivityID:      parameters.ActivityID,
+		LanguageCode:    parameters.LanguageCode,
+		Amount:          parameters.Amount,
+		DurationSeconds: parameters.DurationSeconds,
+		Tags:            parameters.Tags,
+	})
+	if err != nil {
+		return nil, err
+	}
+	parameters.UnitID = normalized.UnitID
+	parameters.UnitKey = normalized.UnitKey
+	parameters.Amount = normalized.Amount
+	parameters.DurationSeconds = normalized.DurationSeconds
+	parameters.Tags = normalized.Tags
+
 	unitKey, err := s.resolveUnit(ctx, parameters)
 	if err != nil {
 		return nil, err
@@ -164,8 +183,7 @@ func (s *Service) resolveUnit(ctx context.Context, parameters PreviewParameters)
 	if !validActivity(parameters.ActivityID) {
 		return "", errx.NewInvalidInputError("activity_id is not valid")
 	}
-	unitActivity, knownUnit := activities.UnitActivityID(stringValue(parameters.UnitKey))
-	if parameters.UnitKey != nil && (!knownUnit || unitActivity != parameters.ActivityID) {
+	if parameters.UnitKey != nil && !activities.UnitValidForActivity(*parameters.UnitKey, parameters.ActivityID) {
 		return "", errx.NewInvalidInputError("unit_key is not valid for activity_id")
 	}
 	hasUnit := parameters.UnitID != nil || parameters.UnitKey != nil

@@ -139,13 +139,13 @@ func (r *ScoringRepository) ListUnitsByID(ctx context.Context, id uuid.UUID) ([]
 	return candidates, nil
 }
 
-func (r *ScoringRepository) ListUnitsByKey(ctx context.Context, key string) ([]unitCandidate, error) {
+func (r *ScoringRepository) ListUnitsByKeys(ctx context.Context, keys []string) ([]unitCandidate, error) {
 	q, err := r.queries(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := q.ListLogUnitsByKey(ctx, key)
+	rows, err := q.ListLogUnitsByKeys(ctx, keys)
 	if err != nil {
 		return nil, fmt.Errorf("list log units: %w", err)
 	}

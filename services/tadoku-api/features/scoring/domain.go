@@ -74,8 +74,7 @@ func applicableUnit(candidates []unitCandidate, activityID int32, languageCode s
 	var generic *logUnit
 	for i := range candidates {
 		candidate := &candidates[i]
-		unitActivity, knownUnit := activities.UnitActivityID(candidate.Key)
-		if candidate.activityID != activityID || !knownUnit || unitActivity != activityID {
+		if candidate.activityID != activityID || !activities.UnitValidForActivity(candidate.Key, activityID) {
 			continue
 		}
 
@@ -160,8 +159,8 @@ func (p *DraftRules) normalize(languages []domainlanguages.Language) error {
 		if !validActivity(rule.ActivityID) {
 			return errx.NewInvalidInputError("rule activity_id is not valid")
 		}
-		unitActivity, knownUnit := activities.UnitActivityID(rule.UnitKey)
-		if rule.UnitKey != "" && (!knownUnit || unitActivity != rule.ActivityID) {
+		if rule.UnitKey != "" &&
+			(!activities.UnitValidForActivity(rule.UnitKey, rule.ActivityID) || activities.IsPluralUnitKey(rule.UnitKey)) {
 			return errx.NewInvalidInputError("rule unit_key is not valid for activity_id")
 		}
 		if len(rule.LanguageCode) > 10 {

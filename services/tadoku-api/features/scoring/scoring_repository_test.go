@@ -400,16 +400,21 @@ func TestScoringRepositoryUnitLookups(t *testing.T) {
 
 	keyTests := []struct {
 		name string
-		key  string
+		keys []string
 		want []unitCandidate
 	}{
-		{name: "with and without language", key: "reading_character", want: characters},
-		{name: "language specific only", key: "reading_two_column_page", want: []unitCandidate{jpnOnly}},
-		{name: "missing", key: "missing_unit"},
+		{name: "with and without language", keys: []string{"reading_character"}, want: characters},
+		{name: "language specific only", keys: []string{"reading_two_column_page"}, want: []unitCandidate{jpnOnly}},
+		{
+			name: "any of several keys",
+			keys: []string{"reading_two_column_page", "missing_unit", "reading_character"},
+			want: append([]unitCandidate{jpnOnly}, characters...),
+		},
+		{name: "missing", keys: []string{"missing_unit"}},
 	}
 	for _, tt := range keyTests {
 		t.Run("by key "+tt.name, func(t *testing.T) {
-			candidates, err := repository.ListUnitsByKey(tenantCtx, tt.key)
+			candidates, err := repository.ListUnitsByKeys(tenantCtx, tt.keys)
 
 			assertUnitCandidates(t, candidates, err, tt.want)
 		})

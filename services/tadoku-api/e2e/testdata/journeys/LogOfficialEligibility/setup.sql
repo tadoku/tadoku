@@ -8,6 +8,3 @@ insert into contest_registrations (id,contest_id,user_id,language_codes) values
  ('eeeeeeee-eeee-4eee-8eee-000000000001','f0000000-0000-4000-8000-000000000001','11111111-1111-4111-8111-111111111111','{eng}'),
  ('eeeeeeee-eeee-4eee-8eee-000000000002','f0000000-0000-4000-8000-000000000002','11111111-1111-4111-8111-111111111111','{eng}');
 
-update log_units
-set id = '026e644b-ec51-61cd-a392-55231a6ab4a0'
-where unit_key = 'reading_page' and language_code is null;

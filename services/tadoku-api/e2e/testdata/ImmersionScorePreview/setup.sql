@@ -40,5 +40,3 @@ insert into contest_registrations (id,contest_id,user_id,language_codes) values
  ('eeeeeeee-eeee-4eee-8eee-000000000004','f0000000-0000-4000-8000-000000000004','11111111-1111-4111-8111-111111111111','{eng}'),
  ('eeeeeeee-eeee-4eee-8eee-000000000005','f0000000-0000-4000-8000-000000000005','11111111-1111-4111-8111-111111111111','{eng}');
 
-update log_units
-set id = md5(unit_key || ':' || coalesce(language_code, ''))::uuid;

@@ -77,6 +77,7 @@ go_test(
         "identity_skeleton_test.go",
         "identity_stored_delivery_test.go",
         "identity_stored_email_test.go",
+        "immersion_scenario_test.go",
         "journey_test.go",
         "language_create_test.go",
         "language_list_test.go",

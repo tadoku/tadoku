@@ -1,7 +1,4 @@
 -- Insert attached contests in reverse ID order so responses cannot rely on insertion order.
--- Use the same deterministic unit identities as the configuration fixtures.
-update log_units set id = md5(unit_key || ':' || coalesce(language_code, ''))::uuid
-where id <> md5(unit_key || ':' || coalesce(language_code, ''))::uuid;
 
 insert into users (id, display_name, created_at, updated_at) values
   ('11111111-1111-4111-8111-111111111111', 'Stored Reader', '2026-01-01', '2026-09-13'),
@@ -25,7 +22,7 @@ insert into contest_logs (contest_id, log_id, duration_seconds, computed_score) 
   ('f1111111-1111-4111-8111-111111111111', 'd1111111-1111-4111-8111-111111111111', 60, 1),
   ('f1111111-1111-4111-8111-111111111111', 'd2222222-2222-4222-8222-222222222222', 60, 1),
   ('f1111111-1111-4111-8111-111111111111', 'd3333333-3333-4333-8333-333333333333', 60, 1);
-update logs set created_at='2026-09-01 01:00:00', updated_at='2026-09-02', amount=10, modifier=2, computed_score=0, unit_key='reading_page', unit_id=(select id from log_units where unit_key='reading_page' limit 1), description='A detailed log' where id='d1111111-1111-4111-8111-111111111111';
+update logs set created_at='2026-09-01 01:00:00', updated_at='2026-09-02', amount=10, modifier=2, computed_score=0, unit_key='reading_page', unit_id='026e644b-ec51-61cd-a392-55231a6ab4a0', description='A detailed log' where id='d1111111-1111-4111-8111-111111111111';
 update logs set created_at='2026-09-03', computed_score=null where id='d2222222-2222-4222-8222-222222222222';
 update logs set created_at='2026-09-04' where id='d3333333-3333-4333-8333-333333333333';
 update contest_logs set amount=3, modifier=4, duration_seconds=120, computed_score=null where log_id='d1111111-1111-4111-8111-111111111111' and contest_id='f1111111-1111-4111-8111-111111111111';

@@ -1,0 +1,1 @@
+-- Validation has no inverse; migration 0070 down drops the constraints.

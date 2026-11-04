@@ -9,7 +9,7 @@ import (
 func TestAnnouncementLifecycleJourney(t *testing.T) {
 	afterExpiry := fixtureInstant.Add(8 * 24 * time.Hour)
 
-	runJourney(t, api, "AnnouncementLifecycle", []step{
+	runScenarioJourney(t, api.handler, "AnnouncementLifecycle", nil, []step{
 		{
 			request: "nothing_announced",
 			as:      guest,
@@ -69,7 +69,7 @@ func TestPageLifecycleJourney(t *testing.T) {
 	saved := fixtureInstant.Add(5 * time.Hour)
 	deleted := fixtureInstant.Add(6 * time.Hour)
 
-	runJourney(t, api, "PageLifecycle", []step{
+	runScenarioJourney(t, api.handler, "PageLifecycle", nil, []step{
 		{
 			request: "create_draft",
 			as:      admin,
@@ -246,7 +246,7 @@ func TestPostLifecycleJourney(t *testing.T) {
 	saved := fixtureInstant.Add(5 * time.Hour)
 	deleted := fixtureInstant.Add(6 * time.Hour)
 
-	runJourney(t, api, "PostLifecycle", []step{
+	runScenarioJourney(t, api.handler, "PostLifecycle", nil, []step{
 		{
 			request: "create_draft",
 			as:      admin,

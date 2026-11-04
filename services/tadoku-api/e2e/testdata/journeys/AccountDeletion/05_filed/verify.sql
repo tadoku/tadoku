@@ -21,6 +21,5 @@ select
     from moderation_audit_log as audit
     where audit.tenant = users.tenant) as audit
 from users
-where users.tenant = 'tadoku/prod'
-  and users.id = '11111111-1111-4111-8111-111111111111'
+where users.id = '11111111-1111-4111-8111-111111111111'
 order by users.id

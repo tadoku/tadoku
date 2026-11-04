@@ -82,7 +82,7 @@ func requireLogged(t *testing.T, logs *bytes.Buffer, fragments ...string) {
 }
 
 func TestAuthorizationVisibilityJourney(t *testing.T) {
-	runJourney(t, api, "AuthorizationVisibility", []step{
+	runScenarioJourney(t, api.handler, "AuthorizationVisibility", nil, []step{
 		{
 			request: "guest_role",
 			as:      guest,
@@ -107,7 +107,7 @@ func TestAuthorizationVisibilityJourney(t *testing.T) {
 }
 
 func TestUserListingJourney(t *testing.T) {
-	runJourney(t, api, "UserListing", []step{
+	runScenarioJourney(t, api.handler, "UserListing", nil, []step{
 		{
 			request: "list_users",
 			as:      admin,

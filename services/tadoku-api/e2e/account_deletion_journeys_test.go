@@ -24,7 +24,7 @@ func TestAccountDeletionSelfServiceJourney(t *testing.T) {
 }
 
 func TestAccountDeletionRefusalsJourney(t *testing.T) {
-	runJourney(t, api, "AccountDeletionRefusals", []step{
+	runScenarioJourney(t, api.handler, "AccountDeletionRefusals", nil, []step{
 		{request: "guest", as: guest, want: http.StatusUnauthorized},
 		{request: "guest_malformed_address", as: guest, want: http.StatusUnauthorized},
 		{request: "stale_session", as: guest, want: http.StatusUnauthorized},

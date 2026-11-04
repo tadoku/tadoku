@@ -65,6 +65,8 @@ func TestTenantIsolationJourney(t *testing.T) {
 }
 
 func TestLanguageLifecycleJourney(t *testing.T) {
+	resetAfter(t)
+
 	runJourney(t, api, "LanguageCreateList", []step{
 		{
 			request: "list_languages",
@@ -355,6 +357,8 @@ func TestContestRegistrationFrozenAfterEndJourney(t *testing.T) {
 }
 
 func TestYearlyScoresLanguageNameChangeJourney(t *testing.T) {
+	resetAfter(t)
+
 	runJourney(t, api, "YearlyScoresLanguageNameChange", []step{
 		{request: "scores_before", as: user, want: http.StatusOK},
 		{request: "update_language_name", as: admin, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, user: http.StatusForbidden, banned: http.StatusForbidden}},

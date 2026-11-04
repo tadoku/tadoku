@@ -6,6 +6,8 @@ import (
 )
 
 func TestUpdateLanguage(t *testing.T) {
+	resetAfter(t)
+
 	tests := []struct {
 		description []string
 		want        int

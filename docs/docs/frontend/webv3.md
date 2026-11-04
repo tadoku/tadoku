@@ -269,8 +269,8 @@ validates their responses, with the session cookies described above. A
 registration without its ID or contest makes the options unavailable. The API
 owns scoring, contest eligibility, authorization and persistence; Webv3 does not
 calculate a provisional score.
-Legacy two-column and comic page units are not offered. A saved amount names its unit
-by the configuration's `unit_key`; the API resolves the language's variant.
+A saved amount names its unit by the configuration's `unit_key`; the API resolves
+the language's variant.
 
 A successful save navigates to `/logs/$logId` using the returned ID and displays
 the persisted language, measure, tags, score and contests. Reload reads that

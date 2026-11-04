@@ -6,6 +6,8 @@ import (
 )
 
 func TestImmersionContestListLogs(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		description []string
 		want        int
@@ -62,7 +64,7 @@ func TestImmersionContestListLogs(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("ImmersionContestListLogs", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			runCase(t, api, name, test.want,
+			runScenarioCase(t, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
 			)
 		})

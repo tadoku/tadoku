@@ -13,12 +13,13 @@ func TestImmersionLogCreate(t *testing.T) {
 		description          []string
 		want                 int
 		scoringEngineEnabled bool
+		canonical            bool
 	}{
 		{description: []string{"amount", "unit", "tags", "disabled"}, want: http.StatusOK},
 		{description: []string{"language", "specific", "unit", "disabled"}, want: http.StatusOK},
 		{description: []string{"generic", "unit", "for", "other", "language"}, want: http.StatusOK},
 		{description: []string{"language", "specific", "unit", "by", "id"}, want: http.StatusOK},
-		{description: []string{"unit", "key", "skips", "stored", "activity", "mismatch"}, want: http.StatusOK},
+		{description: []string{"unit", "key", "skips", "stored", "activity", "mismatch"}, want: http.StatusOK, canonical: true},
 		{description: []string{"duration", "disabled", "without", "platform"}, want: http.StatusOK},
 		{description: []string{"both", "authoritative", "priority", "modifiers"}, want: http.StatusOK, scoringEngineEnabled: true},
 		{description: []string{"authoritative", "contest", "modes"}, want: http.StatusOK, scoringEngineEnabled: true},
@@ -36,8 +37,8 @@ func TestImmersionLogCreate(t *testing.T) {
 		{description: []string{"unit", "id", "other", "activity"}, want: http.StatusBadRequest},
 		{description: []string{"unknown", "unit", "id"}, want: http.StatusBadRequest},
 		{description: []string{"unit", "key", "other", "language"}, want: http.StatusBadRequest},
-		{description: []string{"unit", "id", "stored", "activity", "mismatch"}, want: http.StatusBadRequest},
-		{description: []string{"unit", "id", "key", "activity", "mismatch"}, want: http.StatusBadRequest},
+		{description: []string{"unit", "id", "stored", "activity", "mismatch"}, want: http.StatusBadRequest, canonical: true},
+		{description: []string{"unit", "id", "key", "activity", "mismatch"}, want: http.StatusBadRequest, canonical: true},
 		{description: []string{"account", "deletion", "locked"}, want: http.StatusConflict},
 		{description: []string{"duration", "unknown", "language", "readback"}, want: http.StatusNotFound},
 		{description: []string{"guest", "empty", "body"}, want: http.StatusUnauthorized},
@@ -50,14 +51,20 @@ func TestImmersionLogCreate(t *testing.T) {
 			if test.scoringEngineEnabled {
 				handler = scoringEnabledHandler
 			}
-			runCase(t, api, name, test.want,
-				implementation{name: "tadoku-api", handler: handler},
-			)
+			impl := implementation{name: "tadoku-api", handler: handler}
+			if test.canonical {
+				runCase(t, api, name, test.want, impl)
+				return
+			}
+
+			runScenarioCase(t, name, test.want, impl)
 		})
 	}
 }
 
 func TestImmersionLogUpdate(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		description          []string
 		want                 int
@@ -92,7 +99,7 @@ func TestImmersionLogUpdate(t *testing.T) {
 			if at.IsZero() {
 				at = fixtureInstant
 			}
-			runCaseAt(t, api, name, test.want, at,
+			runScenarioCaseAt(t, name, test.want, at,
 				implementation{name: "tadoku-api", handler: handler},
 			)
 		})

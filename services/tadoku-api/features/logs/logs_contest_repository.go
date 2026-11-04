@@ -43,7 +43,7 @@ func contestLogViewFromRow(row queries.ReadContestLogViewsRow) contestLogView {
 			LanguageCode:    row.LanguageCode,
 			LanguageName:    row.LanguageName,
 			Activity:        activities.Activity{ID: int32(row.ActivityID)},
-			UnitName:        row.UnitName,
+			UnitName:        unitName(int32(row.ActivityID), row.UnitKey, row.LanguageCode),
 			Description:     postgres.TextPointer(row.Description),
 			Amount:          row.Amount,
 			Modifier:        row.Modifier,

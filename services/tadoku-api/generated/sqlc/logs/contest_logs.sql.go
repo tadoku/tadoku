@@ -20,7 +20,7 @@ select
   logs.language_code,
   languages.name as language_name,
   logs.log_activity_id as activity_id,
-  coalesce(log_units.name, '')::text as unit_name,
+  coalesce(logs.unit_key, '')::text as unit_key,
   logs.description,
   coalesce(contest_logs.amount, 0)::real as amount,
   coalesce(contest_logs.modifier, 0)::real as modifier,
@@ -35,7 +35,6 @@ from contest_logs
 inner join logs on logs.id = contest_logs.log_id
 inner join users on users.id = logs.user_id
 inner join languages on languages.code = logs.language_code
-left join log_units on log_units.id = logs.unit_id
 where logs.id = $1
   and logs.deleted_at is null
   and ($2::uuid is null or contest_logs.contest_id = $2::uuid)
@@ -55,7 +54,7 @@ type ReadContestLogViewsRow struct {
 	LanguageCode    string
 	LanguageName    string
 	ActivityID      int16
-	UnitName        string
+	UnitKey         string
 	Description     pgtype.Text
 	Amount          float32
 	Modifier        float32
@@ -82,7 +81,7 @@ func (q *Queries) ReadContestLogViews(ctx context.Context, arg ReadContestLogVie
 			&i.LanguageCode,
 			&i.LanguageName,
 			&i.ActivityID,
-			&i.UnitName,
+			&i.UnitKey,
 			&i.Description,
 			&i.Amount,
 			&i.Modifier,

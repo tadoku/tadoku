@@ -49,7 +49,7 @@ func TestTenancySchemaGuard(t *testing.T) {
 						and p.permissive = 'PERMISSIVE' and p.roles = array['public']::name[]
 						and p.qual = o.policy_expression and p.with_check = o.policy_expression)
 			union all
-			select 'shared table: ' || shared.table_name from unnest(array['languages', 'log_units']) shared(table_name)
+			select 'shared table: ' || shared.table_name from unnest(array['languages']) shared(table_name)
 			where not exists (select 1 from pg_class c join pg_namespace n on n.oid = c.relnamespace
 				where n.nspname = current_schema() and c.relname = shared.table_name and c.relrowsecurity)
 				or (select count(*) from pg_policies p where p.schemaname = current_schema() and p.tablename = shared.table_name) <> 4

@@ -12,7 +12,6 @@ func (s *server) ImmersionLogCreate(ctx context.Context, request openapi.Immersi
 	parameters := api.LogCreateParameters{}
 	if body != nil {
 		parameters = api.LogCreateParameters{
-			UnitID:          body.UnitId,
 			UnitKey:         body.UnitKey,
 			ActivityID:      body.ActivityId,
 			LanguageCode:    body.LanguageCode,
@@ -37,7 +36,6 @@ func (s *server) ImmersionLogUpdate(ctx context.Context, request openapi.Immersi
 	body := request.Body
 	updated, err := s.application.UpdateLog(ctx, api.LogUpdateParameters{
 		ID:              request.Id,
-		UnitID:          body.UnitId,
 		UnitKey:         body.UnitKey,
 		Amount:          body.Amount,
 		DurationSeconds: body.DurationSeconds,

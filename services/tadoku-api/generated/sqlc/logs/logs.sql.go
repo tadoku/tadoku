@@ -111,16 +111,16 @@ func (q *Queries) CreateContestLog(ctx context.Context, arg CreateContestLogPara
 
 const createLog = `-- name: CreateLog :exec
 insert into logs (
-  id, user_id, language_code, log_activity_id, unit_id, unit_key, amount, modifier,
+  id, user_id, language_code, log_activity_id, unit_key, amount, modifier,
   duration_seconds, computed_score, score_rule_set_id, score_rule_ids, score_rates,
   score_source, eligible_official_leaderboard, description, created_at, updated_at
 ) values (
   $1, $2, $3, $4,
-  $5, $6, $7, $8,
-  $9, $10, $11,
-  $12, $13, $14,
-  $15, $16, $17,
-  $18
+  $5, $6, $7,
+  $8, $9, $10,
+  $11, $12, $13,
+  $14, $15, $16,
+  $17
 )
 `
 
@@ -129,7 +129,6 @@ type CreateLogParams struct {
 	UserID                      pgtype.UUID
 	LanguageCode                string
 	ActivityID                  int16
-	UnitID                      pgtype.UUID
 	UnitKey                     pgtype.Text
 	Amount                      pgtype.Float4
 	Modifier                    pgtype.Float4
@@ -151,7 +150,6 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) error {
 		arg.UserID,
 		arg.LanguageCode,
 		arg.ActivityID,
-		arg.UnitID,
 		arg.UnitKey,
 		arg.Amount,
 		arg.Modifier,
@@ -383,9 +381,7 @@ select
   logs.language_code,
   languages.name as language_name,
   logs.log_activity_id as activity_id,
-  logs.unit_id,
   coalesce(logs.unit_key, '') as unit_key,
-  coalesce(log_units.name, '') as unit_name,
   logs.description,
   logs.amount,
   logs.modifier,
@@ -407,9 +403,6 @@ from logs
 inner join lateral (
   select name from languages where code = logs.language_code limit 1
 ) languages on true
-left join lateral (
-  select name from log_units where id = logs.unit_id limit 1
-) log_units on true
 inner join users on (users.id = logs.user_id)
 where
   ($1::boolean or logs.deleted_at is null)
@@ -428,9 +421,7 @@ type FindLogByIDRow struct {
 	LanguageCode                string
 	LanguageName                string
 	ActivityID                  int16
-	UnitID                      pgtype.UUID
 	UnitKey                     string
-	UnitName                    string
 	Description                 pgtype.Text
 	Amount                      pgtype.Float4
 	Modifier                    pgtype.Float4
@@ -457,9 +448,7 @@ func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindL
 		&i.LanguageCode,
 		&i.LanguageName,
 		&i.ActivityID,
-		&i.UnitID,
 		&i.UnitKey,
-		&i.UnitName,
 		&i.Description,
 		&i.Amount,
 		&i.Modifier,
@@ -502,7 +491,7 @@ select
   languages.name as language_name,
   logs.log_activity_id,
   logs.amount,
-  log_units.name as unit_name,
+  logs.unit_key,
   logs.duration_seconds,
   coalesce(logs.computed_score, logs.score) as score,
   coalesce(
@@ -512,7 +501,6 @@ select
   logs.description
 from logs
 inner join languages on languages.code = logs.language_code
-left join log_units on log_units.id = logs.unit_id
 where logs.user_id = $1
   and logs.deleted_at is null
   and (
@@ -540,7 +528,7 @@ type ListActiveLogsForUserAfterRow struct {
 	LanguageName    string
 	LogActivityID   int16
 	Amount          pgtype.Float4
-	UnitName        pgtype.Text
+	UnitKey         pgtype.Text
 	DurationSeconds pgtype.Int4
 	Score           pgtype.Float4
 	Tags            []string
@@ -568,7 +556,7 @@ func (q *Queries) ListActiveLogsForUserAfter(ctx context.Context, arg ListActive
 			&i.LanguageName,
 			&i.LogActivityID,
 			&i.Amount,
-			&i.UnitName,
+			&i.UnitKey,
 			&i.DurationSeconds,
 			&i.Score,
 			&i.Tags,
@@ -683,9 +671,7 @@ with filters as not materialized (
     logs.language_code,
     languages.name as language_name,
     logs.log_activity_id as activity_id,
-    logs.unit_id,
-    coalesce(contest_logs.unit_key, '') as unit_key,
-    coalesce(log_units.name, '') as unit_name,
+    coalesce(logs.unit_key, '') as unit_key,
     logs.description,
     contest_logs.amount,
     contest_logs.modifier,
@@ -709,7 +695,6 @@ with filters as not materialized (
   from contest_logs
   inner join logs on (logs.id = contest_logs.log_id)
   inner join languages on (languages.code = logs.language_code)
-  left join log_units on (log_units.id = logs.unit_id)
   inner join users on (users.id = logs.user_id)
   cross join filters
   where
@@ -723,9 +708,7 @@ with filters as not materialized (
     eligible_logs.language_code,
     eligible_logs.language_name,
     eligible_logs.activity_id,
-    eligible_logs.unit_id,
     eligible_logs.unit_key,
-    eligible_logs.unit_name,
     eligible_logs.description,
     eligible_logs.amount,
     eligible_logs.modifier,
@@ -754,9 +737,7 @@ select
   page.language_code,
   page.language_name,
   page.activity_id,
-  page.unit_id,
   page.unit_key,
-  page.unit_name,
   page.description,
   page.amount,
   page.modifier,
@@ -799,9 +780,7 @@ type ListLogsForContestRow struct {
 	LanguageCode    pgtype.Text
 	LanguageName    pgtype.Text
 	ActivityID      pgtype.Int2
-	UnitID          pgtype.UUID
 	UnitKey         pgtype.Text
-	UnitName        pgtype.Text
 	Description     pgtype.Text
 	Amount          pgtype.Float4
 	Modifier        pgtype.Float4
@@ -840,9 +819,7 @@ func (q *Queries) ListLogsForContest(ctx context.Context, arg ListLogsForContest
 			&i.LanguageCode,
 			&i.LanguageName,
 			&i.ActivityID,
-			&i.UnitID,
 			&i.UnitKey,
-			&i.UnitName,
 			&i.Description,
 			&i.Amount,
 			&i.Modifier,
@@ -877,9 +854,7 @@ with eligible_logs as (
     logs.language_code,
     languages.name as language_name,
     logs.log_activity_id as activity_id,
-    logs.unit_id,
     coalesce(logs.unit_key, '') as unit_key,
-    coalesce(log_units.name, '') as unit_name,
     logs.description,
     logs.amount,
     logs.modifier,
@@ -898,7 +873,6 @@ with eligible_logs as (
     )::text[] as tags
   from logs
   inner join languages on (languages.code = logs.language_code)
-  left join log_units on (log_units.id = logs.unit_id)
   where
     ($1::boolean or logs.deleted_at is null)
     and logs.user_id = $2
@@ -910,9 +884,7 @@ with eligible_logs as (
     eligible_logs.language_code,
     eligible_logs.language_name,
     eligible_logs.activity_id,
-    eligible_logs.unit_id,
     eligible_logs.unit_key,
-    eligible_logs.unit_name,
     eligible_logs.description,
     eligible_logs.amount,
     eligible_logs.modifier,
@@ -940,9 +912,7 @@ select
   page.language_code,
   page.language_name,
   page.activity_id,
-  page.unit_id,
   page.unit_key,
-  page.unit_name,
   page.description,
   page.amount,
   page.modifier,
@@ -976,9 +946,7 @@ type ListLogsForUserRow struct {
 	LanguageCode    pgtype.Text
 	LanguageName    pgtype.Text
 	ActivityID      pgtype.Int2
-	UnitID          pgtype.UUID
 	UnitKey         pgtype.Text
-	UnitName        pgtype.Text
 	Description     pgtype.Text
 	Amount          pgtype.Float4
 	Modifier        pgtype.Float4
@@ -1016,9 +984,7 @@ func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams
 			&i.LanguageCode,
 			&i.LanguageName,
 			&i.ActivityID,
-			&i.UnitID,
 			&i.UnitKey,
-			&i.UnitName,
 			&i.Description,
 			&i.Amount,
 			&i.Modifier,
@@ -1084,54 +1050,6 @@ func (q *Queries) ListTagSuggestionsForUser(ctx context.Context, arg ListTagSugg
 	return items, nil
 }
 
-const listUnits = `-- name: ListUnits :many
-select
-  id,
-  unit_key,
-  log_activity_id,
-  name,
-  modifier,
-  language_code
-from log_units
-order by log_activity_id asc
-`
-
-type ListUnitsRow struct {
-	ID            pgtype.UUID
-	UnitKey       string
-	LogActivityID int16
-	Name          string
-	Modifier      float32
-	LanguageCode  pgtype.Text
-}
-
-func (q *Queries) ListUnits(ctx context.Context) ([]ListUnitsRow, error) {
-	rows, err := q.db.Query(ctx, listUnits)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ListUnitsRow{}
-	for rows.Next() {
-		var i ListUnitsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.UnitKey,
-			&i.LogActivityID,
-			&i.Name,
-			&i.Modifier,
-			&i.LanguageCode,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const lockLogForMutation = `-- name: LockLogForMutation :one
 select frozen_at
 from logs
@@ -1181,17 +1099,16 @@ func (q *Queries) SoftDeleteLog(ctx context.Context, arg SoftDeleteLogParams) er
 
 const updateLog = `-- name: UpdateLog :exec
 update logs set
-  unit_id = $1, unit_key = $2, amount = $3,
-  modifier = $4, duration_seconds = $5,
-  computed_score = $6, score_rule_set_id = $7,
-  score_rule_ids = $8, score_rates = $9,
-  score_source = $10, description = $11,
-  updated_at = $12
-where id = $13 and deleted_at is null and frozen_at is null
+  unit_key = $1, amount = $2,
+  modifier = $3, duration_seconds = $4,
+  computed_score = $5, score_rule_set_id = $6,
+  score_rule_ids = $7, score_rates = $8,
+  score_source = $9, description = $10,
+  updated_at = $11
+where id = $12 and deleted_at is null and frozen_at is null
 `
 
 type UpdateLogParams struct {
-	UnitID          pgtype.UUID
 	UnitKey         pgtype.Text
 	Amount          pgtype.Float4
 	Modifier        pgtype.Float4
@@ -1208,7 +1125,6 @@ type UpdateLogParams struct {
 
 func (q *Queries) UpdateLog(ctx context.Context, arg UpdateLogParams) error {
 	_, err := q.db.Exec(ctx, updateLog,
-		arg.UnitID,
 		arg.UnitKey,
 		arg.Amount,
 		arg.Modifier,

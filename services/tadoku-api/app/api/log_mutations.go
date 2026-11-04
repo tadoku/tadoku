@@ -13,7 +13,6 @@ import (
 
 type LogCreateParameters struct {
 	RegistrationIDs []uuid.UUID
-	UnitID          *uuid.UUID
 	UnitKey         *string
 	ActivityID      int32
 	LanguageCode    string
@@ -25,7 +24,6 @@ type LogCreateParameters struct {
 
 type LogUpdateParameters struct {
 	ID              uuid.UUID
-	UnitID          *uuid.UUID
 	UnitKey         *string
 	Amount          *float32
 	DurationSeconds *int32
@@ -52,7 +50,6 @@ func (a *Application) CreateLog(ctx context.Context, p LogCreateParameters) (*Lo
 		now := timex.Now(ctx)
 
 		input, err := a.scoring.NormalizeLogInput(logscore.Input{
-			UnitID:          p.UnitID,
 			UnitKey:         p.UnitKey,
 			ActivityID:      p.ActivityID,
 			LanguageCode:    p.LanguageCode,
@@ -121,7 +118,6 @@ func (a *Application) UpdateLog(ctx context.Context, p LogUpdateParameters) (*Lo
 		}
 
 		input := logscore.Input{
-			UnitID:          p.UnitID,
 			UnitKey:         p.UnitKey,
 			ActivityID:      current.Activity.ID,
 			LanguageCode:    current.LanguageCode,

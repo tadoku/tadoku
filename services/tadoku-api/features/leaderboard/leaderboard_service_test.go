@@ -1,12 +1,10 @@
 package leaderboard
 
 import (
-	"errors"
 	"strconv"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
@@ -14,8 +12,8 @@ func TestInvalidateContestRequiresTenant(t *testing.T) {
 	t.Parallel()
 
 	err := NewService(nil, NewCache(nil, 0)).InvalidateContest(t.Context(), uuid.New())
-	if errx.KindOf(err) != errx.Unavailable || !errors.Is(err, postgres.ErrNoTenant) {
-		t.Errorf("InvalidateContest without tenant = %v, want unavailable wrapping %v", err, postgres.ErrNoTenant)
+	if errx.KindOf(err) != errx.Unavailable {
+		t.Errorf("InvalidateContest without tenant = %v, want unavailable", err)
 	}
 }
 

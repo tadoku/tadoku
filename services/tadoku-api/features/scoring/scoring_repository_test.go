@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
@@ -356,11 +357,11 @@ func TestScoringRepositoryUnitLookups(t *testing.T) {
 	seededUnit := func(key string, languageCode *string) logUnit {
 		t.Helper()
 
-		unit := logUnit{Key: key}
+		unit := logUnit{Key: activities.CanonicalUnitKey(1, key)}
 		err := db.Pool.QueryRow(tenantCtx, `
 			select id, modifier from log_units
-			where unit_key = $1 and log_activity_id = 1 and language_code is not distinct from $2`,
-			key, languageCode,
+			where unit_key = any($1) and log_activity_id = 1 and language_code is not distinct from $2`,
+			activities.UnitKeySpellings(1, key), languageCode,
 		).Scan(&unit.ID, &unit.Modifier)
 		if err != nil {
 			t.Fatal(err)
@@ -403,11 +404,11 @@ func TestScoringRepositoryUnitLookups(t *testing.T) {
 		keys []string
 		want []unitCandidate
 	}{
-		{name: "with and without language", keys: []string{"reading_character"}, want: characters},
+		{name: "with and without language", keys: []string{"reading_character", "characters"}, want: characters},
 		{name: "language specific only", keys: []string{"reading_two_column_page"}, want: []unitCandidate{jpnOnly}},
 		{
 			name: "any of several keys",
-			keys: []string{"reading_two_column_page", "missing_unit", "reading_character"},
+			keys: []string{"reading_two_column_page", "missing_unit", "reading_character", "characters"},
 			want: append([]unitCandidate{jpnOnly}, characters...),
 		},
 		{name: "missing", keys: []string{"missing_unit"}},
@@ -415,8 +416,9 @@ func TestScoringRepositoryUnitLookups(t *testing.T) {
 	for _, tt := range keyTests {
 		t.Run("by key "+tt.name, func(t *testing.T) {
 			candidates, err := repository.ListUnitsByKeys(tenantCtx, tt.keys)
+			reading := slices.DeleteFunc(candidates, func(candidate unitCandidate) bool { return candidate.activityID != 1 })
 
-			assertUnitCandidates(t, candidates, err, tt.want)
+			assertUnitCandidates(t, reading, err, tt.want)
 		})
 	}
 }

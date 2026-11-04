@@ -13,9 +13,9 @@ import (
 func TestConvertLegacyUnit(t *testing.T) {
 	unitID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
 	pageID := uuid.MustParse("22222222-2222-4222-8222-222222222222")
-	page := &logUnit{ID: pageID, Key: "reading_page", Modifier: 1}
-	readingPage := "reading_page"
+	page := &logUnit{ID: pageID, Key: "pages", Modifier: 1}
 	pages := "pages"
+	sentences := "sentences"
 	tests := []struct {
 		name     string
 		input    logscore.Input
@@ -25,25 +25,25 @@ func TestConvertLegacyUnit(t *testing.T) {
 		wantKind string
 	}{
 		{
-			name:  "current key",
-			input: logscore.Input{ActivityID: 1, UnitKey: &readingPage, Amount: floatPointerForTest(10)},
-			unit:  logUnit{ID: unitID, Key: "reading_page"},
-			want:  logscore.Input{ActivityID: 1, UnitKey: &readingPage, Amount: floatPointerForTest(10)},
+			name:  "plural key",
+			input: logscore.Input{ActivityID: 1, UnitKey: &pages, Amount: floatPointerForTest(10)},
+			unit:  logUnit{ID: unitID, Key: "pages"},
+			want:  logscore.Input{ActivityID: 1, UnitKey: &pages, Amount: floatPointerForTest(10)},
 		},
 		{
-			name:  "current unit id",
+			name:  "unit id",
 			input: logscore.Input{ActivityID: 3, UnitID: &unitID, Amount: floatPointerForTest(2)},
-			unit:  logUnit{ID: unitID, Key: "writing_page"},
+			unit:  logUnit{ID: unitID, Key: "pages"},
 			want:  logscore.Input{ActivityID: 3, UnitID: &unitID, Amount: floatPointerForTest(2)},
 		},
 		{
-			name:  "plural key before the rename",
-			input: logscore.Input{ActivityID: 1, UnitKey: &pages, Amount: floatPointerForTest(10)},
-			unit:  logUnit{ID: unitID, Key: "reading_page"},
-			want:  logscore.Input{ActivityID: 1, UnitKey: &readingPage, Amount: floatPointerForTest(10)},
+			name:  "key naming another unit",
+			input: logscore.Input{ActivityID: 1, UnitID: &unitID, UnitKey: &sentences, Amount: floatPointerForTest(2)},
+			unit:  logUnit{ID: unitID, Key: "pages"},
+			want:  logscore.Input{ActivityID: 1, UnitID: &unitID, UnitKey: &sentences, Amount: floatPointerForTest(2)},
 		},
 		{
-			name: "legacy key after the rename",
+			name: "activity-prefixed key",
 			input: logscore.Input{
 				ActivityID: 3,
 				UnitKey:    stringPointerForTest("writing_character"),
@@ -52,7 +52,7 @@ func TestConvertLegacyUnit(t *testing.T) {
 			unit: logUnit{ID: unitID, Key: "characters"},
 			want: logscore.Input{
 				ActivityID: 3,
-				UnitKey:    stringPointerForTest("characters"),
+				UnitKey:    stringPointerForTest("writing_character"),
 				Amount:     floatPointerForTest(10),
 			},
 			wantKind: "legacy_key_spelling",
@@ -113,7 +113,7 @@ func TestConvertLegacyUnit(t *testing.T) {
 			want: logscore.Input{
 				ActivityID: 1,
 				UnitID:     &pageID,
-				UnitKey:    stringPointerForTest("reading_page"),
+				UnitKey:    &pages,
 				Amount:     floatPointerForTest(10),
 				Tags:       []string{"comic"},
 			},

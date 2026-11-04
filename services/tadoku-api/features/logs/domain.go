@@ -1,7 +1,9 @@
 package logs
 
 import (
+	"cmp"
 	"math"
+	"slices"
 	"time"
 	"unicode/utf8"
 
@@ -20,6 +22,34 @@ type Unit struct {
 	Name          string
 	Modifier      float32
 	LanguageCode  *string
+}
+
+// currentUnits returns the reading and writing units under their plural keys, ordered by activity, key and language.
+func currentUnits(units []Unit) []Unit {
+	current := make([]Unit, 0, len(units))
+	for _, unit := range units {
+		unit.Key = activities.CanonicalUnitKey(int32(unit.LogActivityID), unit.Key)
+		if activities.IsPluralUnitKey(unit.Key) {
+			current = append(current, unit)
+		}
+	}
+
+	keys := activities.PluralUnitKeys()
+	slices.SortStableFunc(current, func(a, b Unit) int {
+		return cmp.Or(
+			cmp.Compare(a.LogActivityID, b.LogActivityID),
+			cmp.Compare(slices.Index(keys, a.Key), slices.Index(keys, b.Key)),
+			cmp.Compare(languageOrder(a.LanguageCode), languageOrder(b.LanguageCode)),
+		)
+	})
+	return current
+}
+
+func languageOrder(code *string) string {
+	if code == nil {
+		return ""
+	}
+	return *code
 }
 
 type ConfigurationOptions struct {

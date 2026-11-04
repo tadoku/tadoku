@@ -60,7 +60,8 @@ func seedEveryTenantTable(t *testing.T, db *testpostgres.Database, key string) {
 		insert into logs (tenant, id, user_id, language_code, log_activity_id, unit_id, unit_key,
 			amount, modifier, computed_score, eligible_official_leaderboard)
 		values ($1, uuid_generate_v5(uuid_nil(), $1 || '/log'), uuid_generate_v5(uuid_nil(), $1 || '/user'),
-			'jpn', 1, (select id from log_units where unit_key = 'reading_page' limit 1), 'reading_page', 10, 1, 10, true);
+			'jpn', 1, (select id from log_units where unit_key in ('reading_page', 'pages')
+				and log_activity_id = 1 and language_code is null), 'reading_page', 10, 1, 10, true);
 		insert into contest_logs (tenant, contest_id, log_id, unit_key, amount, modifier, computed_score)
 		values ($1, uuid_generate_v5(uuid_nil(), $1 || '/contest'), uuid_generate_v5(uuid_nil(), $1 || '/log'),
 			'reading_page', 10, 1, 10);

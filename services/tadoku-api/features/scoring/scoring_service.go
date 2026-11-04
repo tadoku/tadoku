@@ -159,7 +159,7 @@ func (s *Service) resolveLogTracking(ctx context.Context, input logscore.Input) 
 			return logscore.Tracking{}, errx.NewInvalidInputError("unit_key is not valid")
 		}
 	}
-	if unit != nil && input.UnitKey != nil && unit.Key != *input.UnitKey {
+	if unit != nil && input.UnitKey != nil && unit.Key != activities.CanonicalUnitKey(input.ActivityID, *input.UnitKey) {
 		return logscore.Tracking{}, errx.NewInvalidInputError("unit_id and unit_key identify different units")
 	}
 	hasAmount := input.Amount != nil

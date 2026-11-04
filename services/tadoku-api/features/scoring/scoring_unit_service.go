@@ -28,8 +28,9 @@ var retiredUnitTags = map[string]string{
 	"reading_two_column_page": "two_column",
 }
 
-// normalizeLegacyUnit rewrites an amount in a legacy unit shape into the shape the platform rule set scores. Input
-// it cannot resolve is returned unchanged, so the caller's validation reports it.
+// normalizeLegacyUnit rewrites an amount in a minute or retired unit into the shape the platform rule set scores, and
+// counts that and any activity-prefixed key spelling. Input it cannot resolve is returned unchanged, so the caller's
+// validation reports it.
 func (s *Service) normalizeLegacyUnit(ctx context.Context, input logscore.Input) (logscore.Input, error) {
 	if input.Amount == nil || (input.UnitID == nil && input.UnitKey == nil) {
 		return input, nil
@@ -60,11 +61,8 @@ func (s *Service) normalizeLegacyUnit(ctx context.Context, input logscore.Input)
 }
 
 func convertLegacyUnit(input logscore.Input, unit logUnit, page *logUnit) (logscore.Input, string, error) {
-	if input.UnitKey != nil {
-		spellings := activities.UnitKeySpellings(input.ActivityID, *input.UnitKey)
-		if !slices.Contains(spellings, unit.Key) {
-			return input, "", nil
-		}
+	if input.UnitKey != nil && activities.CanonicalUnitKey(input.ActivityID, *input.UnitKey) != unit.Key {
+		return input, "", nil
 	}
 	if tag, minutes := minuteUnitTags[unit.Key]; minutes {
 		return convertMinuteAmount(input, tag)
@@ -85,15 +83,10 @@ func convertLegacyUnit(input logscore.Input, unit logUnit, page *logUnit) (logsc
 		return input, "retired_unit", nil
 	}
 
-	if input.UnitKey == nil || *input.UnitKey == unit.Key {
-		return input, "", nil
+	if input.UnitKey != nil && activities.IsLegacyUnitKey(*input.UnitKey) {
+		return input, "legacy_key_spelling", nil
 	}
-	kind := ""
-	if activities.IsLegacyUnitKey(*input.UnitKey) {
-		kind = "legacy_key_spelling"
-	}
-	input.UnitKey = &unit.Key
-	return input, kind, nil
+	return input, "", nil
 }
 
 func convertMinuteAmount(input logscore.Input, tag string) (logscore.Input, string, error) {

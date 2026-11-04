@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/scoring"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
@@ -157,9 +158,14 @@ func (r *ScoringRepository) ListUnitsByKeys(ctx context.Context, keys []string) 
 }
 
 func unitCandidateFromRow(row queries.ListLogUnitsByIDRow) unitCandidate {
+	activityID := int32(row.LogActivityID)
 	return unitCandidate{
-		logUnit:      logUnit{ID: row.ID.Bytes, Key: row.UnitKey, Modifier: row.Modifier},
-		activityID:   int32(row.LogActivityID),
+		logUnit: logUnit{
+			ID:       row.ID.Bytes,
+			Key:      activities.CanonicalUnitKey(activityID, row.UnitKey),
+			Modifier: row.Modifier,
+		},
+		activityID:   activityID,
 		languageCode: postgres.TextPointer(row.LanguageCode),
 	}
 }

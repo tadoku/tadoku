@@ -330,7 +330,8 @@ func ruleMatches(rule Rule, input scoringInput, source Source, tags map[string]s
 	if rule.Source != source || rule.ActivityID != input.activityID {
 		return false
 	}
-	if rule.UnitKey != "" && rule.UnitKey != input.unitKey {
+	ruleUnitKey := activities.CanonicalUnitKey(rule.ActivityID, rule.UnitKey)
+	if rule.UnitKey != "" && ruleUnitKey != activities.CanonicalUnitKey(input.activityID, input.unitKey) {
 		return false
 	}
 	if rule.LanguageCode != "" && rule.LanguageCode != input.languageCode {

@@ -30,7 +30,7 @@ func (s *Service) ConfigurationOptions(ctx context.Context, userID uuid.UUID) (*
 	}
 
 	return &ConfigurationOptions{
-		Units:                units,
+		Units:                currentUnits(units),
 		UserLanguageCodes:    codes,
 		ScoringEngineEnabled: s.scoringEngineEnabled,
 	}, nil

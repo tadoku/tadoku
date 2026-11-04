@@ -44,6 +44,7 @@ go_test(
         "requires-network",
     ],
     deps = [
+        "//services/tadoku-api/domain/activities",
         "//services/tadoku-api/domain/logscore",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/tenant",

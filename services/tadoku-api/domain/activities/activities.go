@@ -68,8 +68,16 @@ func UnitValidForActivity(key string, activityID int32) bool {
 	return slices.Contains(unitActivities[key], activityID)
 }
 
-// UnitKeySpellings returns key followed by its other spelling for the activity, when it has one. Reading and writing
-// units have an activity-prefixed legacy key and a plural key, and a stored log unit carries either.
+// CanonicalUnitKey returns the plural key for an activity-prefixed reading or writing key of the activity, and key
+// otherwise. Compare unit keys in this form: stored log units and rules may carry either spelling.
+func CanonicalUnitKey(activityID int32, key string) string {
+	if plural, legacy := legacyUnitKeys[key]; legacy && UnitValidForActivity(key, activityID) {
+		return plural
+	}
+	return key
+}
+
+// UnitKeySpellings returns key followed by its other spelling for the activity, when it has one.
 func UnitKeySpellings(activityID int32, key string) []string {
 	if plural, legacy := legacyUnitKeys[key]; legacy && UnitValidForActivity(key, activityID) {
 		return []string{key, plural}
@@ -82,14 +90,11 @@ func UnitKeySpellings(activityID int32, key string) []string {
 	return []string{key}
 }
 
-func IsPluralUnitKey(key string) bool {
-	for _, plural := range legacyUnitKeys {
-		if plural == key {
-			return true
-		}
-	}
-	return false
-}
+var pluralUnitKeys = []string{"pages", "sentences", "characters"}
+
+func PluralUnitKeys() []string { return slices.Clone(pluralUnitKeys) }
+
+func IsPluralUnitKey(key string) bool { return slices.Contains(pluralUnitKeys, key) }
 
 func IsLegacyUnitKey(key string) bool {
 	_, legacy := legacyUnitKeys[key]

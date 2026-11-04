@@ -192,9 +192,9 @@ PostgreSQL pool; it reads tenant-local accounts only. See
   `tenant_kind`: `minute_amount` for minutes on a timed activity, which become
   `duration_seconds`, `retired_unit` for a comic or two-column page, which
   becomes a page with a `comic` or `two_column` tag, and `legacy_key_spelling`
-  for an activity-prefixed key such as `reading_page` once the unit is stored
-  under its plural key. Inputs already in the current shape are not counted, and
-  each kind starts at zero for `production`.
+  for an activity-prefixed key such as `reading_page` instead of `pages`,
+  `sentences` or `characters`. Inputs already in the current shape are not
+  counted, and each kind starts at zero for `production`.
 - The API feature-flag metrics report bounded provider initialization,
   refresh, error and evaluation labels, without user identities.
 

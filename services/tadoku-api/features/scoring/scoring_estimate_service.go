@@ -219,7 +219,7 @@ func (s *Service) resolveUnit(ctx context.Context, parameters PreviewParameters)
 	if unit == nil {
 		return "", errx.NewInvalidInputError("unit_key is not valid for activity_id and language_code")
 	}
-	if parameters.UnitKey != nil && unit.Key != *parameters.UnitKey {
+	if parameters.UnitKey != nil && unit.Key != activities.CanonicalUnitKey(parameters.ActivityID, *parameters.UnitKey) {
 		return "", errx.NewInvalidInputError("unit_id and unit_key identify different units")
 	}
 	return unit.Key, nil

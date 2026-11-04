@@ -109,7 +109,7 @@ images:
   - name: tadoku-api-migrations-image
     newName: ghcr.io/tadoku/tadoku/tadoku-api-migrations
     newTag: latest
-    digest: sha256:3d12345f78f88cfac3d9dfa8bb2e9e51df992a90c0508c265ceedd3dc09f5710
+    digest: sha256:dcab817791bc1c6b74e436269eb6479f50fcad40eacf141abe093566a1993a4f
   - name: tadoku-api-image
     newName: ghcr.io/tadoku/tadoku/tadoku-api
     newTag: latest

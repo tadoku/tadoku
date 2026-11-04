@@ -5,16 +5,12 @@ import (
 	"testing"
 )
 
-// Test safety: cases seeding this shared log unit must run inside a test that removes it on cleanup.
-const mismatchedActivityUnitID = "556e957a-f75a-1692-1d44-b455a20a06ea"
-
 func TestImmersionScorePreview(t *testing.T) {
-	cleanupLogUnit(t, mismatchedActivityUnitID)
+	t.Parallel()
 
 	tests := []struct {
 		description []string
 		want        int
-		canonical   bool
 	}{
 		{description: []string{"platform", "amount", "tag", "priority"}, want: http.StatusOK},
 		{description: []string{"amount", "precedes", "duration"}, want: http.StatusOK},
@@ -24,22 +20,14 @@ func TestImmersionScorePreview(t *testing.T) {
 		{description: []string{"contest", "inherits", "platform"}, want: http.StatusOK},
 		{description: []string{"contest", "replace", "no", "match"}, want: http.StatusOK},
 		{description: []string{"duplicate", "registrations", "preserve", "order"}, want: http.StatusOK},
-		{description: []string{"generic", "unit", "id", "for", "any", "language"}, want: http.StatusOK},
-		{description: []string{"language", "specific", "unit", "by", "id"}, want: http.StatusOK},
-		{description: []string{"dense", "minute", "amount", "key"}, want: http.StatusOK},
-		{description: []string{"comic", "page", "key"}, want: http.StatusOK},
 		{description: []string{"registration", "not", "owned"}, want: http.StatusBadRequest},
 		{description: []string{"registration", "language", "not", "allowed"}, want: http.StatusBadRequest},
 		{description: []string{"registration", "activity", "not", "allowed"}, want: http.StatusBadRequest},
 		{description: []string{"registration", "not", "ongoing"}, want: http.StatusBadRequest},
 		{description: []string{"deleted", "contest"}, want: http.StatusNotFound},
-		{description: []string{"unit", "id", "key", "mismatch"}, want: http.StatusBadRequest},
-		{description: []string{"unit", "id", "other", "language"}, want: http.StatusBadRequest},
-		{description: []string{"unit", "id", "other", "activity"}, want: http.StatusBadRequest},
-		{description: []string{"unknown", "unit", "id"}, want: http.StatusBadRequest},
-		{description: []string{"unit", "key", "other", "language"}, want: http.StatusBadRequest},
-		{description: []string{"unit", "id", "stored", "activity", "mismatch"}, want: http.StatusBadRequest, canonical: true},
-		{description: []string{"unit", "id", "key", "activity", "mismatch"}, want: http.StatusBadRequest, canonical: true},
+		{description: []string{"old", "unit", "key"}, want: http.StatusBadRequest},
+		{description: []string{"retired", "unit", "key"}, want: http.StatusBadRequest},
+		{description: []string{"pages", "on", "listening"}, want: http.StatusBadRequest},
 		{description: []string{"duration", "with", "unit", "without", "amount"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "duration", "with", "amount"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "tags"}, want: http.StatusBadRequest},
@@ -52,13 +40,7 @@ func TestImmersionScorePreview(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("ImmersionScorePreview", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			impl := implementation{name: "tadoku-api", handler: api.handler}
-			if test.canonical {
-				runCase(t, api, name, test.want, impl)
-				return
-			}
-
-			runScenarioCase(t, name, test.want, impl)
+			runScenarioCase(t, name, test.want, implementation{name: "tadoku-api", handler: api.handler})
 		})
 	}
 }

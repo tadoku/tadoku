@@ -1,6 +1,0 @@
->>> POST /immersion/logs
-HTTP/1.1 200 OK
-Content-Length: 443
-Content-Type: application/json; charset=UTF-8
-
-{"activity":{"id":2,"input_type":"time_primary","name":"Listening"},"amount":0,"created_at":"2026-09-12T12:00:00Z","deleted":false,"duration_seconds":1800,"id":"11111111-1111-4111-9111-111111111111","language":{"code":"jpn","name":"Japanese"},"modifier":0,"registrations":[],"score":12,"tags":[],"unit_id":"00000000-0000-0000-0000-000000000000","unit_name":"","user_display_name":"Reader One","user_id":"11111111-1111-4111-8111-111111111111"}

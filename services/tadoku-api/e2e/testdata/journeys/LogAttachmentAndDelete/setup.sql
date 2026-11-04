@@ -6,8 +6,8 @@ insert into scoring_rule_sets (id, scope, version, status, created_at, published
  ('aaaaaaaa-aaaa-4aaa-8aaa-000000000002','platform',2,'draft','2026-02-01',null),
  ('aaaaaaaa-aaaa-4aaa-8aaa-000000000003','platform',3,'published','2026-02-02','2026-02-03');
 insert into scoring_rules (id,rule_set_id,priority,stackable,activity_id,unit_key,language_code,tag,score_source,rate) values
- ('bbbbbbbb-bbbb-4bbb-8bbb-000000000002','aaaaaaaa-aaaa-4aaa-8aaa-000000000001',20,false,1,'reading_page',null,null,'amount',2),
- ('bbbbbbbb-bbbb-4bbb-8bbb-000000000001','aaaaaaaa-aaaa-4aaa-8aaa-000000000001',10,true,1,'reading_page',null,'manga','amount',0.5),
+ ('bbbbbbbb-bbbb-4bbb-8bbb-000000000002','aaaaaaaa-aaaa-4aaa-8aaa-000000000001',20,false,1,'pages',null,null,'amount',2),
+ ('bbbbbbbb-bbbb-4bbb-8bbb-000000000001','aaaaaaaa-aaaa-4aaa-8aaa-000000000001',10,true,1,'pages',null,'manga','amount',0.5),
  ('bbbbbbbb-bbbb-4bbb-8bbb-000000000003','aaaaaaaa-aaaa-4aaa-8aaa-000000000001',30,false,5,null,null,null,'duration_minutes',0.5),
  ('bbbbbbbb-bbbb-4bbb-8bbb-000000000004','aaaaaaaa-aaaa-4aaa-8aaa-000000000002',5,false,2,null,null,null,'amount',3),
  ('bbbbbbbb-bbbb-4bbb-8bbb-000000000005','aaaaaaaa-aaaa-4aaa-8aaa-000000000003',5,false,5,null,null,null,'duration_minutes',0.8);
@@ -41,22 +41,22 @@ insert into contest_registrations (id,contest_id,user_id,language_codes) values
  ('eeeeeeee-eeee-4eee-8eee-000000000004','f0000000-0000-4000-8000-000000000004','11111111-1111-4111-8111-111111111111','{eng}'),
  ('eeeeeeee-eeee-4eee-8eee-000000000005','f0000000-0000-4000-8000-000000000005','11111111-1111-4111-8111-111111111111','{eng}');
 
-insert into logs (id,user_id,language_code,log_activity_id,unit_id,unit_key,amount,modifier,duration_seconds,computed_score,eligible_official_leaderboard,description,created_at,updated_at) values
- ('d1000000-0000-4000-8000-000000000001','11111111-1111-4111-8111-111111111111','eng',1,'026e644b-ec51-61cd-a392-55231a6ab4a0','reading_page',4,1,120,4,true,'before','2025-12-31','2026-01-01'),
- ('d1000000-0000-4000-8000-000000000002','11111111-1111-4111-8111-111111111111','eng',1,'026e644b-ec51-61cd-a392-55231a6ab4a0','reading_page',4,1,120,4,false,'frozen','2026-01-01','2026-01-01'),
- ('d1000000-0000-4000-8000-000000000003','11111111-1111-4111-8111-111111111111','eng',1,'026e644b-ec51-61cd-a392-55231a6ab4a0','reading_page',4,1,120,4,false,'locked owner','2026-01-01','2026-01-01');
+insert into logs (id,user_id,language_code,log_activity_id,unit_key,amount,modifier,duration_seconds,computed_score,eligible_official_leaderboard,description,created_at,updated_at) values
+ ('d1000000-0000-4000-8000-000000000001','11111111-1111-4111-8111-111111111111','eng',1,'pages',4,1,120,4,true,'before','2025-12-31','2026-01-01'),
+ ('d1000000-0000-4000-8000-000000000002','11111111-1111-4111-8111-111111111111','eng',1,'pages',4,1,120,4,false,'frozen','2026-01-01','2026-01-01'),
+ ('d1000000-0000-4000-8000-000000000003','11111111-1111-4111-8111-111111111111','eng',1,'pages',4,1,120,4,false,'locked owner','2026-01-01','2026-01-01');
 update logs set frozen_at='2026-09-01' where id='d1000000-0000-4000-8000-000000000002';
 insert into contest_logs (contest_id,log_id,unit_key,amount,modifier,duration_seconds,computed_score) values
- ('f0000000-0000-4000-8000-000000000001','d1000000-0000-4000-8000-000000000001','reading_page',4,1,120,4),
- ('f0000000-0000-4000-8000-000000000005','d1000000-0000-4000-8000-000000000001','reading_page',4,1,120,4);
+ ('f0000000-0000-4000-8000-000000000001','d1000000-0000-4000-8000-000000000001','pages',4,1,120,4),
+ ('f0000000-0000-4000-8000-000000000005','d1000000-0000-4000-8000-000000000001','pages',4,1,120,4);
 insert into log_tags(log_id,user_id,tag) values ('d1000000-0000-4000-8000-000000000001','11111111-1111-4111-8111-111111111111','old');
 
 insert into users (id,display_name,created_at,updated_at) values ('44444444-4444-4444-8444-444444444444','User Two','2026-01-01','2026-01-01');
-insert into logs (id,user_id,language_code,log_activity_id,unit_id,unit_key,amount,modifier,duration_seconds,computed_score,score_rule_set_id,score_rule_ids,score_rates,score_source,eligible_official_leaderboard,description,created_at,updated_at) values
- ('d2000000-0000-4000-8000-000000000002','11111111-1111-4111-8111-111111111111','eng',1,'99999999-0000-4000-8000-000000000001','retired_reading_unit',10,1.7,null,17,'aaaaaaaa-aaaa-4aaa-8aaa-000000000001','{bbbbbbbb-bbbb-4bbb-8bbb-000000000002}','{1.7}','amount',false,'historical unit','2025-12-31','2026-01-01'),
- ('d3000000-0000-4000-8000-000000000003','11111111-1111-4111-8111-111111111111','eng',1,null,null,null,null,60,1,null,null,null,null,false,'missing tracking no-op','2025-12-31','2026-01-01'),
- ('d4000000-0000-4000-8000-000000000004','11111111-1111-4111-8111-111111111111','eng',1,null,null,null,null,60,1,null,null,null,null,false,'missing tracking detach','2025-12-31','2026-01-01'),
- ('d5000000-0000-4000-8000-000000000005','11111111-1111-4111-8111-111111111111','eng',5,null,null,null,null,600,17,'aaaaaaaa-aaaa-4aaa-8aaa-000000000001','{bbbbbbbb-bbbb-4bbb-8bbb-000000000003}','{1.7}','duration_minutes',false,'duration baseline','2025-12-31','2026-01-01');
+insert into logs (id,user_id,language_code,log_activity_id,unit_key,amount,modifier,duration_seconds,computed_score,score_rule_set_id,score_rule_ids,score_rates,score_source,eligible_official_leaderboard,description,created_at,updated_at) values
+ ('d2000000-0000-4000-8000-000000000002','11111111-1111-4111-8111-111111111111','eng',1,'retired_reading_unit',10,1.7,null,17,'aaaaaaaa-aaaa-4aaa-8aaa-000000000001','{bbbbbbbb-bbbb-4bbb-8bbb-000000000002}','{1.7}','amount',false,'historical unit','2025-12-31','2026-01-01'),
+ ('d3000000-0000-4000-8000-000000000003','11111111-1111-4111-8111-111111111111','eng',1,null,null,null,60,1,null,null,null,null,false,'missing tracking no-op','2025-12-31','2026-01-01'),
+ ('d4000000-0000-4000-8000-000000000004','11111111-1111-4111-8111-111111111111','eng',1,null,null,null,60,1,null,null,null,null,false,'missing tracking detach','2025-12-31','2026-01-01'),
+ ('d5000000-0000-4000-8000-000000000005','11111111-1111-4111-8111-111111111111','eng',5,null,null,null,600,17,'aaaaaaaa-aaaa-4aaa-8aaa-000000000001','{bbbbbbbb-bbbb-4bbb-8bbb-000000000003}','{1.7}','duration_minutes',false,'duration baseline','2025-12-31','2026-01-01');
 insert into contest_logs(contest_id,log_id,duration_seconds,computed_score) values
  ('f0000000-0000-4000-8000-000000000004','d3000000-0000-4000-8000-000000000003',60,17),
  ('f0000000-0000-4000-8000-000000000004','d4000000-0000-4000-8000-000000000004',60,17);

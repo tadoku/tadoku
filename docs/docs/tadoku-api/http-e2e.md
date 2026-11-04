@@ -43,11 +43,6 @@ The general test principles are in [Testing](./testing.md).
 - Migration-seeded static tables and `schema_migrations` are preserved. When a
   preserved table's foreign key makes PostgreSQL reject `truncate`, use
   `delete` instead and document the exception in `cleanup.sql`.
-- Migrations give log units random IDs, so `TestMain` sets each unit's ID to
-  `md5(key || ':' || coalesce(language_code, ''))` once per database, where
-  `key` is the activity-prefixed spelling, such as `reading_page`, even for a
-  row stored as `pages`. Fixtures and goldens name units by those IDs and do not
-  update `log_units`.
 - Cases load their starting data from their own SQL and relationship files;
   fixtures are not generated in Go.
 - Reset and seeding commit before requests run, so requests use normal

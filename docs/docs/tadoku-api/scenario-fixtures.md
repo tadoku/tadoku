@@ -12,8 +12,9 @@ instead of resetting the whole database, or make an E2E test parallel. Golden-ca
 [User journeys](./user-journeys.md).
 
 `services/tadoku-api/e2e/scenario_test.go` gives one independent scenario its
-own tenants instead of a whole-database reset. Existing golden and journey
-cases still use `reset`; a scenario never calls it.
+own tenants instead of a whole-database reset. A scenario never calls `reset`.
+Golden cases and journeys use `reset` unless they run as scenarios; see
+[Golden cases and journeys as scenarios](#golden-cases-and-journeys-as-scenarios).
 
 - `newScenario(t, roles...)` allocates a fresh `e2e/<role>-<8 hex>` test
   tenant per semantic role, such as `identity-a` and `identity-b` for a paired
@@ -68,12 +69,70 @@ deterministic provisioning, cleanup after fatal, cancelled and failed setup,
 and that overlapping scenarios write their own clock's timestamps and IDs
 through requests and a worker.
 
+## Golden cases and journeys as scenarios
+
+`services/tadoku-api/e2e/fixture_scenario_test.go` runs a checked-in golden
+case or journey in its own scenario. The fixture layout, seed resolution and
+step table stay as [HTTP end-to-end tests](./http-e2e.md) and
+[User journeys](./user-journeys.md) describe them. A case switches by calling
+`runScenarioCase` or `runScenarioCaseAt` instead of `runCase` or `runCaseAt`,
+and a journey by calling `runScenarioJourney` instead of `runJourney`,
+`runJourneyWithHandler` or `runJourneyWithSetup`. Only the rules for
+[parallel scenarios](#parallel-scenarios) decide whether it may switch.
+
+- **Tenants.** The `primary` role stands in for `tadoku/prod`, which fixture
+  SQL defaults to. Every test tenant that a case's tokens, relationships or
+  cookies name needs a `fixtureTenant` mapping it to its own role, such as
+  `alphaAsOther` for `e2e/alpha-0000000a`. An unmapped fixture tenant fails the
+  case.
+- **Seeds.** The resolved `setup.sql`, the account cast and the resolved
+  `finalize.sql` run in `primary` with the seed rules above; every other role
+  gets the cast alone. Each relationship row is seeded into the role standing
+  in for its `tenant`. A seed that names its tenant fails under row-level
+  security, so let the column defaults supply it.
+- **Requests.** Each fixture token's claims must equal the cast member's claims
+  for the token's tenant exactly; the runner signs the same claims for the
+  stand-in tenant. Session cookies named for a fixture tenant (`tadoku_session`
+  for `tadoku/prod`, otherwise `tadoku_session_` plus the key with `/` replaced
+  by `_`) are renamed for the stand-in. A request that names a fixture tenant
+  anywhere else, in its path, another header or its body, fails.
+- **Comparison.** Before comparing, the runner replaces each scenario tenant's
+  generated route, such as `primary-1a2b3c4d` in `e2e/primary-1a2b3c4d`, with
+  `{role}`. That covers the tenant key, its session cookie name and its
+  recovery host, so goldens name `e2e/{primary}` and `e2e/{other}`. Every
+  other value, `tadoku/prod` and IDs included, is compared unchanged, and goldens
+  are never rewritten except by `-update-goldens`.
+- **Steps.** Verify queries run in a read-only transaction bound to `primary`
+  under the restricted application role. Valkey snapshots scan only
+  `tenant:<key>:*` for the scenario's tenants. `run_worker` runs a
+  `jobqueue.OnlyTenant` worker for each scenario tenant until its jobs,
+  including jobs they enqueue, complete; `run_branch_worker` runs only the
+  stand-in for `forTenant`.
+- **Time and IDs.** A case runs at its business time with its implementation's
+  UUID stream, and a journey with its `ids` reader or the fixed seed, so goldens
+  match the serial runners'. Identical IDs in different tenants are safe only in
+  tables keyed by tenant.
+- **Parallelism.** `runScenarioCase` calls `t.Parallel` on the case's subtest
+  and `runScenarioJourney` on the journey's test. A table whose cases all run as
+  scenarios also calls `t.Parallel` on its top-level test. A table that keeps
+  serial cases stays a serial top-level test; its scenario cases start after
+  its serial cases have returned. Journeys with an `afterReset` fault and cases
+  with process-wide fixtures stay on the serial runners.
+
+`TestFixtureScenarioCasesStayInTheirTenants` in
+`services/tadoku-api/e2e/fixture_scenario_canary_test.go` runs the same golden
+cases with identical seeds, clocks and UUID streams in two overlapping
+scenarios. It proves that each tenant's request writes, cache keys and verify
+reads stay its own, and that one scenario's worker, including the job its job
+enqueues, leaves the other's job pending.
+
 ## Parallel scenarios
 
 A top-level E2E test may call `t.Parallel` only when all of these hold:
 
 - It is a scenario test: it calls `newScenario` after `t.Parallel`, and sends
-  every request and runs every worker through that scenario.
+  every request and runs every worker through that scenario. The scenario
+  golden and journey runners do this for their cases.
 - It reaches no process-wide or shared mutation: no `reset`, `resetIdentity`
   or `db.Reset`, no Flipt `Reset` or `SetUnavailable`, no `timex.TheWorld`,
   `timex.Advance`, `uuid.SetRand` or `jwt.TimeFunc` write, no `t.Setenv`, no

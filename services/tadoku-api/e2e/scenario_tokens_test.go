@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"reflect"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -119,4 +120,39 @@ func castClaimsFor(tenantKey string, as member) (castClaims, error) {
 		claims.Session.Identity.Traits.Email = identity.email
 	}
 	return claims, nil
+}
+
+// parseCastToken reads a checked-in fixture token's tenant and cast member without verifying its signature. It fails
+// unless the claims are exactly the cast member's claims for that tenant, so re-signing them for another tenant
+// changes nothing else.
+func parseCastToken(token string) (string, member, error) {
+	got := jwt.MapClaims{}
+	if _, _, err := jwt.NewParser().ParseUnverified(token, got); err != nil {
+		return "", "", fmt.Errorf("parse fixture token: %w", err)
+	}
+	subject, _ := got["sub"].(string)
+	tenantKey, _ := got["tenant"].(string)
+
+	for as, identity := range scenarioCast {
+		if identity.subject != subject {
+			continue
+		}
+		claims, err := castClaimsFor(tenantKey, as)
+		if err != nil {
+			return "", "", err
+		}
+		encoded, err := json.Marshal(claims)
+		if err != nil {
+			return "", "", err
+		}
+		want := jwt.MapClaims{}
+		if err := json.Unmarshal(encoded, &want); err != nil {
+			return "", "", err
+		}
+		if !reflect.DeepEqual(got, want) {
+			return "", "", fmt.Errorf("fixture token for %s in %q carries claims other than the cast's", as, tenantKey)
+		}
+		return tenantKey, as, nil
+	}
+	return "", "", fmt.Errorf("fixture token subject %q is not a cast member", subject)
 }

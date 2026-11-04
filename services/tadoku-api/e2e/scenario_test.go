@@ -50,20 +50,26 @@ type scenario struct {
 
 type scenarioIDs struct {
 	mu     sync.Mutex
-	random *mathrand.Rand
+	source io.Reader
 }
 
 // newScenarioIDs seeds a scenario's UUID stream from its first tenant, so concurrent scenarios draw different IDs.
 func newScenarioIDs(key tenant.TestKey) *scenarioIDs {
 	seed := fnv.New64a()
 	seed.Write([]byte(key.String()))
-	return &scenarioIDs{random: mathrand.New(mathrand.NewSource(int64(seed.Sum64())))}
+	return &scenarioIDs{source: mathrand.New(mathrand.NewSource(int64(seed.Sum64())))}
 }
 
 func (ids *scenarioIDs) Read(p []byte) (int, error) {
 	ids.mu.Lock()
 	defer ids.mu.Unlock()
-	return ids.random.Read(p)
+	return ids.source.Read(p)
+}
+
+// useIDs replaces the scenario's UUID stream, such as with a golden case's fixed stream. Call it before the scenario's
+// first request or worker.
+func (s *scenario) useIDs(source io.Reader) {
+	s.ids = &scenarioIDs{source: source}
 }
 
 type scenarioWorker struct {

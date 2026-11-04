@@ -53,6 +53,8 @@ go_test(
         "email_read_test.go",
         "email_write_test.go",
         "feature_flags_test.go",
+        "fixture_scenario_canary_test.go",
+        "fixture_scenario_test.go",
         "flipt_tenant_test.go",
         "golden_test.go",
         "identity_account_deletion_test.go",

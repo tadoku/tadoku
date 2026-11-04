@@ -58,36 +58,6 @@ type RuleSet struct {
 	PublishedAt       *time.Time
 }
 
-type logUnit struct {
-	ID       uuid.UUID
-	Key      string
-	Modifier float32
-}
-
-type unitCandidate struct {
-	logUnit
-	activityID   int32
-	languageCode *string
-}
-
-func applicableUnit(candidates []unitCandidate, activityID int32, languageCode string) *logUnit {
-	var generic *logUnit
-	for i := range candidates {
-		candidate := &candidates[i]
-		if candidate.activityID != activityID || !activities.UnitValidForActivity(candidate.Key, activityID) {
-			continue
-		}
-
-		if candidate.languageCode != nil && *candidate.languageCode == languageCode {
-			return &candidate.logUnit
-		}
-		if candidate.languageCode == nil && generic == nil {
-			generic = &candidate.logUnit
-		}
-	}
-	return generic
-}
-
 type DraftRules struct {
 	Rules []Rule
 }
@@ -159,10 +129,11 @@ func (p *DraftRules) normalize(languages []domainlanguages.Language) error {
 		if !validActivity(rule.ActivityID) {
 			return errx.NewInvalidInputError("rule activity_id is not valid")
 		}
-		if rule.UnitKey != "" && !activities.UnitValidForActivity(rule.UnitKey, rule.ActivityID) {
-			return errx.NewInvalidInputError("rule unit_key is not valid for activity_id")
+		if rule.UnitKey != "" {
+			if _, err := activities.ResolveUnit(rule.ActivityID, rule.UnitKey, ""); err != nil {
+				return errx.NewInvalidInputError("rule " + err.Error())
+			}
 		}
-		rule.UnitKey = activities.CanonicalUnitKey(rule.ActivityID, rule.UnitKey)
 		if len(rule.LanguageCode) > 10 {
 			return errx.NewInvalidInputError("rule language_code is too long")
 		}
@@ -189,7 +160,6 @@ func (p *DraftRules) normalize(languages []domainlanguages.Language) error {
 }
 
 type PreviewParameters struct {
-	UnitID          *uuid.UUID
 	UnitKey         *string
 	ActivityID      int32
 	LanguageCode    string
@@ -330,8 +300,7 @@ func ruleMatches(rule Rule, input scoringInput, source Source, tags map[string]s
 	if rule.Source != source || rule.ActivityID != input.activityID {
 		return false
 	}
-	ruleUnitKey := activities.CanonicalUnitKey(rule.ActivityID, rule.UnitKey)
-	if rule.UnitKey != "" && ruleUnitKey != activities.CanonicalUnitKey(input.activityID, input.unitKey) {
+	if rule.UnitKey != "" && rule.UnitKey != input.unitKey {
 		return false
 	}
 	if rule.LanguageCode != "" && rule.LanguageCode != input.languageCode {

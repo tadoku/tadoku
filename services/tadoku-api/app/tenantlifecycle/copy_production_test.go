@@ -81,7 +81,7 @@ func assertCopiedPlatformScoring(t *testing.T, db *testpostgres.Database, key te
 	ctx := tenant.WithKey(t.Context(), key.Key())
 
 	service := scoring.NewService(scoring.NewScoringRepository(db.AppPool), true, nil)
-	unit := "reading_page"
+	unit := "pages"
 	amount := float32(10)
 	estimate, eligible, err := service.ScorePlatform(ctx, scoring.PreviewParameters{
 		UnitKey:      &unit,

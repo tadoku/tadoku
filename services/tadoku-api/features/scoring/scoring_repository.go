@@ -113,7 +113,7 @@ func (r *ScoringRepository) ListRules(ctx context.Context, ruleSetID uuid.UUID) 
 			Priority:     row.Priority,
 			Stackable:    row.Stackable,
 			ActivityID:   int32(row.ActivityID),
-			UnitKey:      activities.CanonicalUnitKey(int32(row.ActivityID), row.UnitKey.String),
+			UnitKey:      activities.CanonicalStoredUnitKey(int32(row.ActivityID), row.UnitKey.String),
 			LanguageCode: row.LanguageCode.String,
 			Tag:          row.Tag.String,
 			Source:       Source(row.ScoreSource),
@@ -121,53 +121,6 @@ func (r *ScoringRepository) ListRules(ctx context.Context, ruleSetID uuid.UUID) 
 		}
 	}
 	return rules, nil
-}
-
-func (r *ScoringRepository) ListUnitsByID(ctx context.Context, id uuid.UUID) ([]unitCandidate, error) {
-	q, err := r.queries(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := q.ListLogUnitsByID(ctx, postgres.UUID(id))
-	if err != nil {
-		return nil, fmt.Errorf("list log units: %w", err)
-	}
-	candidates := make([]unitCandidate, len(rows))
-	for i, row := range rows {
-		candidates[i] = unitCandidateFromRow(row)
-	}
-	return candidates, nil
-}
-
-func (r *ScoringRepository) ListUnitsByKeys(ctx context.Context, keys []string) ([]unitCandidate, error) {
-	q, err := r.queries(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := q.ListLogUnitsByKeys(ctx, keys)
-	if err != nil {
-		return nil, fmt.Errorf("list log units: %w", err)
-	}
-	candidates := make([]unitCandidate, len(rows))
-	for i, row := range rows {
-		candidates[i] = unitCandidateFromRow(queries.ListLogUnitsByIDRow(row))
-	}
-	return candidates, nil
-}
-
-func unitCandidateFromRow(row queries.ListLogUnitsByIDRow) unitCandidate {
-	activityID := int32(row.LogActivityID)
-	return unitCandidate{
-		logUnit: logUnit{
-			ID:       row.ID.Bytes,
-			Key:      activities.CanonicalUnitKey(activityID, row.UnitKey),
-			Modifier: row.Modifier,
-		},
-		activityID:   activityID,
-		languageCode: postgres.TextPointer(row.LanguageCode),
-	}
 }
 
 func (r *ScoringRepository) NextPlatformDraftVersion(ctx context.Context) (int32, error) {
@@ -216,14 +169,13 @@ func (r *ScoringRepository) CreateRule(ctx context.Context, ruleSetID uuid.UUID,
 		return err
 	}
 
-	storedUnitKey := activities.PrefixedUnitKey(rule.ActivityID, rule.UnitKey)
 	if err := q.CreateScoringRule(ctx, queries.CreateScoringRuleParams{
 		ID:           postgres.UUID(rule.ID),
 		RuleSetID:    postgres.UUID(ruleSetID),
 		Priority:     rule.Priority,
 		Stackable:    rule.Stackable,
 		ActivityID:   int16(rule.ActivityID),
-		UnitKey:      postgres.NullableNonEmptyText(&storedUnitKey),
+		UnitKey:      postgres.NullableNonEmptyText(&rule.UnitKey),
 		LanguageCode: postgres.NullableNonEmptyText(&rule.LanguageCode),
 		Tag:          postgres.NullableNonEmptyText(&rule.Tag),
 		ScoreSource:  string(rule.Source),

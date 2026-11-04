@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 	"math"
-	"slices"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -13,8 +12,6 @@ import (
 )
 
 const maxAppliedRuleIDs = 10
-
-var unitNormalizationKinds = []string{"minute_amount", "retired_unit", "legacy_key_spelling"}
 
 type ScoringComparison struct {
 	Operation      string
@@ -32,9 +29,8 @@ type ScoringComparison struct {
 }
 
 type ScoringObserver struct {
-	comparisons        *prometheus.CounterVec
-	unitNormalizations *prometheus.CounterVec
-	logger             *slog.Logger
+	comparisons *prometheus.CounterVec
+	logger      *slog.Logger
 }
 
 func NewScoringObserver(registry *prometheus.Registry, logger *slog.Logger, enabled bool) *ScoringObserver {
@@ -49,23 +45,9 @@ func NewScoringObserver(registry *prometheus.Registry, logger *slog.Logger, enab
 	if enabled {
 		engineEnabled.Set(1)
 	}
-	unitNormalizations := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "tadoku_log_unit_normalizations_total",
-		Help: "Log and score preview inputs converted from a legacy unit shape.",
-	}, []string{"kind", "tenant_kind"})
-	for _, kind := range unitNormalizationKinds {
-		unitNormalizations.WithLabelValues(kind, "production")
-	}
-	registry.MustRegister(comparisons, engineEnabled, unitNormalizations)
+	registry.MustRegister(comparisons, engineEnabled)
 
-	return &ScoringObserver{comparisons: comparisons, unitNormalizations: unitNormalizations, logger: logger}
-}
-
-func (o *ScoringObserver) ObserveUnitNormalization(ctx context.Context, kind string) {
-	if o == nil || o.unitNormalizations == nil || !slices.Contains(unitNormalizationKinds, kind) {
-		return
-	}
-	o.unitNormalizations.WithLabelValues(kind, tenant.MetricKind(ctx)).Inc()
+	return &ScoringObserver{comparisons: comparisons, logger: logger}
 }
 
 func (o *ScoringObserver) Observe(ctx context.Context, comparison ScoringComparison) {

@@ -336,6 +336,63 @@ func TestScoringObserverToleranceAndZeroDelta(t *testing.T) {
 	}
 }
 
+func TestUnitNormalizationCountsBoundedKinds(t *testing.T) {
+	registry := prometheus.NewRegistry()
+	observer := NewScoringObserver(registry, nil, true)
+	key, err := tenant.Parse("e2e/observation-0123abcd")
+	if err != nil {
+		t.Fatal(err)
+	}
+	production := tenant.WithKey(t.Context(), tenant.Production())
+	test := tenant.WithKey(t.Context(), key)
+	kinds := []string{"minute_amount", "retired_unit", "legacy_key_spelling"}
+
+	for _, kind := range kinds {
+		got := metricValue(t, registry, "tadoku_log_unit_normalizations_total", map[string]string{
+			"kind":        kind,
+			"tenant_kind": "production",
+		})
+		if got != 0 {
+			t.Errorf("initial %s normalization count=%v, want 0", kind, got)
+		}
+	}
+
+	observer.ObserveUnitNormalization(production, "retired_unit")
+	observer.ObserveUnitNormalization(production, "retired_unit")
+	observer.ObserveUnitNormalization(test, "minute_amount")
+	observer.ObserveUnitNormalization(production, "")
+	observer.ObserveUnitNormalization(production, "other")
+	(*ScoringObserver)(nil).ObserveUnitNormalization(production, "minute_amount")
+
+	for _, want := range []struct {
+		kind       string
+		tenantKind string
+		count      float64
+	}{
+		{"retired_unit", "production", 2},
+		{"minute_amount", "production", 0},
+		{"minute_amount", "test", 1},
+		{"legacy_key_spelling", "production", 0},
+	} {
+		got := metricValue(t, registry, "tadoku_log_unit_normalizations_total", map[string]string{
+			"kind":        want.kind,
+			"tenant_kind": want.tenantKind,
+		})
+		if got != want.count {
+			t.Errorf("%s %s normalization count=%v, want %v", want.tenantKind, want.kind, got, want.count)
+		}
+	}
+	families, err := registry.Gather()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, family := range families {
+		if family.GetName() == "tadoku_log_unit_normalizations_total" && len(family.Metric) != 4 {
+			t.Errorf("normalization series=%d, want 4", len(family.Metric))
+		}
+	}
+}
+
 func score(value float32) *float32 { return &value }
 
 func decodeEvent(t *testing.T, data []byte) map[string]any {

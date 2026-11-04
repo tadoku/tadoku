@@ -6,6 +6,8 @@ import (
 )
 
 func TestFindAnnouncementByID(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		description []string
 		want        int
@@ -23,12 +25,14 @@ func TestFindAnnouncementByID(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("FindAnnouncementByID", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			runCase(t, api, name, test.want, implementation{name: "tadoku-api", handler: api.handler})
+			runScenarioCase(t, name, test.want, implementation{name: "tadoku-api", handler: api.handler})
 		})
 	}
 }
 
 func TestListAnnouncements(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		description []string
 		want        int
@@ -53,12 +57,14 @@ func TestListAnnouncements(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("ListAnnouncements", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			runCase(t, api, name, test.want, implementation{name: "tadoku-api", handler: api.handler})
+			runScenarioCase(t, name, test.want, implementation{name: "tadoku-api", handler: api.handler})
 		})
 	}
 }
 
 func TestListActiveAnnouncements(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		description []string
 		want        int
@@ -74,7 +80,7 @@ func TestListActiveAnnouncements(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("ListActiveAnnouncements", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			runCase(t, api, name, test.want, implementation{name: "tadoku-api", handler: api.handler})
+			runScenarioCase(t, name, test.want, implementation{name: "tadoku-api", handler: api.handler})
 		})
 	}
 }

@@ -129,7 +129,7 @@ func TestUserListingJourney(t *testing.T) {
 func TestUserModerationJourney(t *testing.T) {
 	unbannedAt := fixtureInstant.Add(time.Minute)
 
-	runJourney(t, api, "UserModeration", []step{
+	runScenarioJourney(t, api.handler, "UserModeration", nil, []step{
 		{
 			request: "users_before_ban",
 			as:      admin,
@@ -300,7 +300,7 @@ func TestAdminAccountDeletionJourney(t *testing.T) {
 }
 
 func TestAccountDeletionEndsAccessJourney(t *testing.T) {
-	runJourney(t, api, "AccountDeletionEndsAccess", []step{
+	runScenarioJourney(t, api.handler, "AccountDeletionEndsAccess", nil, []step{
 		{
 			request: "session_before_filing",
 			as:      guest,

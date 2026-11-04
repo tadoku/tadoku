@@ -104,6 +104,22 @@ func checkHTTPResponseGolden(t *testing.T, handler http.Handler, request *http.R
 
 	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, request)
+	unchanged := func(text string) string { return text }
+	checkRecordedHTTPGolden(t, request, recorder, directory, wantStatus, update, unchanged)
+}
+
+// checkRecordedHTTPGolden compares a served response with the directory's golden after normalize, which maps
+// scenario-generated tenant keys to their stable aliases.
+func checkRecordedHTTPGolden(
+	t *testing.T,
+	request *http.Request,
+	recorder *httptest.ResponseRecorder,
+	directory string,
+	wantStatus int,
+	update bool,
+	normalize func(string) string,
+) {
+	t.Helper()
 	response := recorder.Result()
 	defer response.Body.Close()
 
@@ -116,7 +132,7 @@ func checkHTTPResponseGolden(t *testing.T, handler http.Handler, request *http.R
 	if err != nil {
 		t.Fatal(err)
 	}
-	updated, err := reconcileHTTPGolden(goldenPath, got, response.StatusCode, wantStatus, update)
+	updated, err := reconcileHTTPGolden(goldenPath, normalize(got), response.StatusCode, wantStatus, update)
 	if err != nil {
 		t.Error(err)
 		return

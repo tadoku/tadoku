@@ -117,23 +117,33 @@ func (f *leaderboardValkeyFixture) reset(ctx context.Context) error {
 func (f *leaderboardValkeyFixture) cacheKeys(ctx context.Context) ([]string, error) {
 	var keys []string
 	for _, pattern := range []string{"leaderboard:*", "tenant:*:leaderboard:*", "tenant:*:identity:*"} {
-		var cursor uint64
-		for {
-			page, err := f.client.Do(
-				ctx,
-				f.client.B().Scan().Cursor(cursor).Match(pattern).Count(100).Build(),
-			).AsScanEntry()
-			if err != nil {
-				return nil, err
-			}
-			keys = append(keys, page.Elements...)
-			if page.Cursor == 0 {
-				break
-			}
-			cursor = page.Cursor
+		matched, err := f.keysMatching(ctx, pattern)
+		if err != nil {
+			return nil, err
 		}
+		keys = append(keys, matched...)
 	}
 	return keys, nil
+}
+
+// keysMatching scans the leased database for pattern; a key can appear more than once.
+func (f *leaderboardValkeyFixture) keysMatching(ctx context.Context, pattern string) ([]string, error) {
+	var keys []string
+	var cursor uint64
+	for {
+		page, err := f.client.Do(
+			ctx,
+			f.client.B().Scan().Cursor(cursor).Match(pattern).Count(100).Build(),
+		).AsScanEntry()
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, page.Elements...)
+		if page.Cursor == 0 {
+			return keys, nil
+		}
+		cursor = page.Cursor
+	}
 }
 
 func (f *leaderboardValkeyFixture) close() error {

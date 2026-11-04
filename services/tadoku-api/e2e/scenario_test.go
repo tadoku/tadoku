@@ -50,20 +50,26 @@ type scenario struct {
 
 type scenarioIDs struct {
 	mu     sync.Mutex
-	random *mathrand.Rand
+	source io.Reader
 }
 
 // newScenarioIDs seeds a scenario's UUID stream from its first tenant, so concurrent scenarios draw different IDs.
 func newScenarioIDs(key tenant.TestKey) *scenarioIDs {
 	seed := fnv.New64a()
 	seed.Write([]byte(key.String()))
-	return &scenarioIDs{random: mathrand.New(mathrand.NewSource(int64(seed.Sum64())))}
+	return &scenarioIDs{source: mathrand.New(mathrand.NewSource(int64(seed.Sum64())))}
 }
 
 func (ids *scenarioIDs) Read(p []byte) (int, error) {
 	ids.mu.Lock()
 	defer ids.mu.Unlock()
-	return ids.random.Read(p)
+	return ids.source.Read(p)
+}
+
+// useIDs replaces the scenario's UUID stream, such as with a golden case's fixed stream. Call it before the scenario's
+// first request or worker.
+func (s *scenario) useIDs(source io.Reader) {
+	s.ids = &scenarioIDs{source: source}
 }
 
 type scenarioWorker struct {
@@ -247,26 +253,40 @@ func (s *scenario) tenant(t testing.TB, role string) tenant.TestKey {
 // Missing files are skipped.
 func (s *scenario) seed(t testing.TB, role string, files tenantSeed) {
 	t.Helper()
-	key := s.tenant(t, role)
-
-	sqlFiles := slices.Concat(files.setup, []string{"testdata/tenant_accounts.sql"}, files.finalize)
-	batch := &pgx.Batch{}
+	var relationships []fixtureRelationship
 	for _, file := range files.relationships {
-		relationships, err := readRelationships(file)
+		rows, err := readRelationships(file)
 		if err != nil {
 			t.Fatal(err)
 		}
-		for index, relationship := range relationships {
+		for index, relationship := range rows {
 			if relationship.Tenant != "" {
 				t.Fatalf("scenario relationship seed %s[%d] names tenant %q", file, index, relationship.Tenant)
 			}
-			relationship.queue(batch, key.String())
 		}
+		relationships = append(relationships, rows...)
+	}
+	s.seedTenant(t, role, files.setup, files.finalize, relationships)
+}
+
+// seedTenant is seed with relationships already read; their tenant must be empty.
+func (s *scenario) seedTenant(
+	t testing.TB,
+	role string,
+	setup, finalize []string,
+	relationships []fixtureRelationship,
+) {
+	t.Helper()
+	key := s.tenant(t, role)
+
+	batch := &pgx.Batch{}
+	for _, relationship := range relationships {
+		relationship.queue(batch, key.String())
 	}
 
 	statements := map[string]string{}
 	var paths []string
-	for _, path := range sqlFiles {
+	for _, path := range slices.Concat(setup, []string{"testdata/tenant_accounts.sql"}, finalize) {
 		contents, err := os.ReadFile(path)
 		if errors.Is(err, os.ErrNotExist) {
 			continue
@@ -292,6 +312,25 @@ func (s *scenario) seed(t testing.TB, role string, files tenantSeed) {
 	if err != nil {
 		t.Fatalf("seed scenario tenant %s: %v", key, err)
 	}
+}
+
+// verifyRows runs a verify query in a read-only transaction bound to the role's tenant under the restricted
+// application role, so row-level security confines every table it reads, and returns its rows as one JSON array.
+func (s *scenario) verifyRows(t testing.TB, role, query string) string {
+	t.Helper()
+	key := s.tenant(t, role)
+
+	var rows string
+	err := pgx.BeginTxFunc(t.Context(), api.db.AppPool, pgx.TxOptions{AccessMode: pgx.ReadOnly}, func(tx pgx.Tx) error {
+		if _, err := tx.Exec(t.Context(), "select set_config('tadoku.tenant', $1, true)", key.String()); err != nil {
+			return err
+		}
+		return tx.QueryRow(t.Context(), wrapVerifyQuery(query)).Scan(&rows)
+	})
+	if err != nil {
+		t.Fatalf("run verify query in %s: %v", key, err)
+	}
+	return rows
 }
 
 // serve sends request through the production router as the cast member in the role's tenant, with a freshly signed

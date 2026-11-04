@@ -23,10 +23,11 @@ The general test principles are in [Testing](./testing.md).
 - Bazel uses native rules_go process sharding. Each process owns its database,
   application role, router, JWT verification clock and leased Valkey logical
   database; each golden case and journey owns its business clock and UUID
-  stream. Golden cases and journeys run sequentially within a process. Call
-  `reset` before each of them, never between dependent requests.
-  [Scenario fixtures](./scenario-fixtures.md) own private tenants, clocks and
-  ID streams instead, and eligible scenario tests run in parallel after every
+  stream. Serial golden cases and journeys run one after another within a
+  process, each after `reset`, never between dependent requests. Cases and
+  journeys that run as
+  [scenarios](./scenario-fixtures.md#golden-cases-and-journeys-as-scenarios)
+  own private tenants instead of a reset, and run in parallel after every
   serial test has finished.
 - The router uses the default deployed API request budget of 30 seconds,
   including cost-12 password hashing. The complete E2E target uses an explicit
@@ -150,11 +151,13 @@ fail decoding:
 ]
 ```
 
-The harness runs the resolved `setup.sql`, `testdata/accounts.sql` and the
+The serial harness runs the resolved `setup.sql`, `testdata/accounts.sql` and the
 resolved `finalize.sql`, then replaces every stored relationship with the
 resolved file's rows. A row's tenant must be registered by then: for a test
 tenant, insert its registry row in the case's `setup.sql` with
-`on conflict (key) do nothing`.
+`on conflict (key) do nothing`. A scenario case seeds the same files into its
+own tenants instead, giving each row to the tenant that stands in for the row's
+`tenant`.
 
 ### Comparison
 
@@ -166,7 +169,10 @@ tenant, insert its registry row in the case's `setup.sql` with
   handler uses.
 - Explicit seed IDs, a per-case UUID source and frozen business time make
   responses deterministic; see [Time in tests](#time-in-tests). Never rewrite
-  SQL inside a test connector or rewrite response fields.
+  SQL inside a test connector or rewrite response fields. The one exception is
+  a scenario case's
+  [tenant alias](./scenario-fixtures.md#golden-cases-and-journeys-as-scenarios),
+  which names each generated test tenant by its role.
 - Buffered response goldens are serialized with `httputil.DumpResponse`. When
   `ContentLength` is unknown, fill it from the recorder body's byte length
   before serialization. Preserve known declared lengths and explicitly set

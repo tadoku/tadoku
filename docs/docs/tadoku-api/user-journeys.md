@@ -1,6 +1,6 @@
 ---
 title: User journeys
-description: How Tadoku API user journeys chain real requests against one reset to prove the important user flows, and how steps, cast members, time and goldens work.
+description: How Tadoku API user journeys chain real requests against one reset or their own scenario tenants to prove the important user flows, and how steps, cast members, time and goldens work.
 sidebar_position: 7
 ---
 
@@ -18,7 +18,7 @@ user can observe another's writes. Journeys keep the functionality users expect
 working, so cover every important user journey in the application.
 
 Journeys are grouped by domain, one explicit Go step table per journey passed
-to `runJourney`:
+to `runJourney` or `runScenarioJourney`:
 
 | File | Journeys |
 | --- | --- |
@@ -87,6 +87,12 @@ e2e/testdata/journeys/
 
 ### Reset and time
 
+- A journey passed to `runScenarioJourney` seeds the same files into its own
+  tenants instead of a reset and runs in parallel with other scenarios. Its
+  requests, verify queries, Valkey snapshots and worker steps are confined to
+  those tenants, and goldens name them by role;
+  [Scenario fixtures](./scenario-fixtures.md#golden-cases-and-journeys-as-scenarios)
+  describes the contract. The rest of this section is the serial runner.
 - The runner resets PostgreSQL and Valkey once per journey: cleanup, then the
   optional shared `journeys/setup.sql`, the journey's own `setup.sql` and the
   account cast, then the shared and the journey's own `relationships.json`, as

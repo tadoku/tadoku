@@ -23,11 +23,11 @@ export const filterUnits = (
   )
 
   const grouped = base.reduce((acc, unit) => {
-    if (!acc.has(unit.name)) {
-      acc.set(unit.name, [])
+    if (!acc.has(unit.unit_key)) {
+      acc.set(unit.unit_key, [])
     }
 
-    acc.get(unit.name)?.push(unit)
+    acc.get(unit.unit_key)?.push(unit)
 
     return acc
   }, new Map<string, Unit[]>())
@@ -48,6 +48,15 @@ export const filterUnits = (
 
   return filteredUnits
 }
+
+const activityHasUnit = (
+  units: Unit[],
+  activityId: number,
+  unitKey: string | undefined,
+) =>
+  units.some(
+    unit => unit.unit_key === unitKey && unit.log_activity_id === activityId,
+  )
 
 const optionalNumber = z.preprocess(
   (value: number | undefined) =>
@@ -82,14 +91,10 @@ export const NewLogFormV2Schema = z
   .superRefine((log, ctx) => {
     const activity = log.allActivities.find(it => it.id === log.activityId)
     const inputType = activity?.input_type ?? 'amount_primary'
-    const unit = log.allUnits.find(it => it.id === log.amountUnit)
     const hasAmount = log.amountValue !== undefined
     const hasPositiveAmount =
       log.amountValue !== undefined && log.amountValue > 0
     const hasUnit = log.amountUnit !== undefined && log.amountUnit !== ''
-    const hasDuration = log.durationMinutes !== undefined
-    const hasValidAmountUnit =
-      hasPositiveAmount && hasUnit && unit?.log_activity_id === log.activityId
     const durationSeconds = durationSecondsFromMinutes(log.durationMinutes)
 
     if (durationSeconds !== undefined && durationSeconds <= 0) {
@@ -100,20 +105,9 @@ export const NewLogFormV2Schema = z
       })
     }
 
+    // Timed activities are logged only by duration; any amount or unit left in the form is ignored.
     if (inputType === 'time_primary') {
-      if (hasDuration) {
-        return
-      }
-
-      if (hasAmount && !hasPositiveAmount) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['amountValue'],
-          message: 'Amount must be greater than 0',
-        })
-      }
-
-      if (!hasValidAmountUnit) {
+      if (durationSeconds === undefined) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['durationMinutes'],
@@ -146,7 +140,7 @@ export const NewLogFormV2Schema = z
       return
     }
 
-    if (unit?.log_activity_id !== log.activityId) {
+    if (!activityHasUnit(log.allUnits, log.activityId, log.amountUnit)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['amountUnit'],
@@ -160,13 +154,6 @@ export type NewLogFormV2Schema = z.infer<typeof NewLogFormV2Schema>
 export const NewLogV2APISchema = NewLogFormV2Schema.transform(log => {
   const activity = log.allActivities.find(it => it.id === log.activityId)
   const inputType = activity?.input_type ?? 'amount_primary'
-  const unit = log.allUnits.find(it => it.id === log.amountUnit)
-  const hasValidAmountUnit =
-    log.amountValue !== undefined &&
-    log.amountValue > 0 &&
-    log.amountUnit !== undefined &&
-    log.amountUnit !== '' &&
-    unit?.log_activity_id === log.activityId
   const durationSeconds = durationSecondsFromMinutes(log.durationMinutes)
   const base = {
     language_code: log.languageCode,
@@ -175,18 +162,22 @@ export const NewLogV2APISchema = NewLogFormV2Schema.transform(log => {
     description: log.description,
   }
 
-  if (inputType === 'time_primary' && durationSeconds !== undefined) {
-    return {
-      ...base,
-      duration_seconds: durationSeconds,
-    }
+  if (inputType === 'time_primary') {
+    return durationSeconds === undefined
+      ? base
+      : { ...base, duration_seconds: durationSeconds }
   }
 
-  if (hasValidAmountUnit) {
+  if (
+    log.amountValue !== undefined &&
+    log.amountValue > 0 &&
+    log.amountUnit !== undefined &&
+    activityHasUnit(log.allUnits, log.activityId, log.amountUnit)
+  ) {
     return {
       ...base,
       amount: log.amountValue,
-      unit_id: log.amountUnit,
+      unit_key: log.amountUnit,
       ...(durationSeconds !== undefined
         ? { duration_seconds: durationSeconds }
         : {}),

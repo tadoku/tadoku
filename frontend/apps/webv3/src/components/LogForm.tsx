@@ -38,11 +38,11 @@ export function LogForm({ options, viewerId }: { options: LogOptions; viewerId: 
   const activityId = useStore(form.store, state => state.values.activityId)
 
   const selectDependents = (language: string, activity: string) => {
-    const { unitId, registrationIds } = dependentFields(options, language, activity)
-    form.setFieldValue('unitId', unitId)
+    const { unitKey, registrationIds } = dependentFields(options, language, activity)
+    form.setFieldValue('unitKey', unitKey)
     form.setFieldValue('registrationIds', registrationIds)
   }
-  const units = unitsFor(options, languageCode, activityId).map(unit => ({ value: unit.id, label: unit.name }))
+  const units = unitsFor(options, languageCode, activityId).map(unit => ({ value: unit.unit_key, label: unit.name }))
   const eligible = eligibleRegistrations(options, languageCode, activityId)
   const disabled = !hydrated || pending
 
@@ -124,7 +124,7 @@ const MeasureField = withPaperForm({
     }
     // The amount field must be the innermost, because AmountWithUnit binds the field it is rendered in.
     return (
-      <form.AppField name="unitId">
+      <form.AppField name="unitKey">
         {unitField => (
           <form.AppField name="amount">
             {field => (

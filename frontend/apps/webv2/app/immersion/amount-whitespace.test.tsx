@@ -50,7 +50,7 @@ describe('logging amount', () => {
         languageCode: 'jpn',
         activityId: 1,
         amountValue: 0,
-        amountUnit: unit.id,
+        amountUnit: unit.unit_key,
         allUnits: [unit],
         allActivities: [activity],
         tags: [],
@@ -68,7 +68,7 @@ describe('logging amount', () => {
             label="Amount"
             min={0}
             step="any"
-            units={[{ value: unit.id, label: unit.name }]}
+            units={[{ value: unit.unit_key, label: unit.name }]}
             {...inputProps}
           />
           <output data-testid="preview">

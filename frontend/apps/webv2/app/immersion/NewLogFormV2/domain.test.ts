@@ -45,7 +45,7 @@ describe('NewLogV2APISchema', () => {
       ...validFormValues,
       activityId: timeActivity.id,
       amountValue: 0,
-      amountUnit: '00000000-0000-0000-0000-000000000000',
+      amountUnit: amountUnit.unit_key,
       durationMinutes: 15,
     })
 
@@ -58,44 +58,58 @@ describe('NewLogV2APISchema', () => {
     })
   })
 
-  it('still rejects a zero amount for an amount-primary activity', () => {
-    const result = NewLogV2APISchema.safeParse({
-      ...validFormValues,
-      activityId: amountActivity.id,
-      amountValue: 0,
-      amountUnit: amountUnit.id,
-    })
-
-    expect(result.success).toBe(false)
-  })
-
-  it('still supports a legacy amount-only listening log', () => {
+  it('sends the unit key for an amount-primary activity', () => {
     const result = NewLogV2APISchema.parse({
       ...validFormValues,
-      activityId: timeActivity.id,
-      amountValue: 15,
-      amountUnit: timeUnit.id,
+      activityId: amountActivity.id,
+      amountValue: 12,
+      amountUnit: amountUnit.unit_key,
     })
 
     expect(result).toEqual({
       language_code: 'jpn',
-      activity_id: timeActivity.id,
-      amount: 15,
-      unit_id: timeUnit.id,
+      activity_id: amountActivity.id,
+      amount: 12,
+      unit_key: amountUnit.unit_key,
       tags: [],
       description: '',
     })
   })
 
-  it('rejects a zero amount for a legacy amount-only listening log', () => {
+  it('still rejects a zero amount for an amount-primary activity', () => {
     const result = NewLogV2APISchema.safeParse({
       ...validFormValues,
-      activityId: timeActivity.id,
+      activityId: amountActivity.id,
       amountValue: 0,
-      amountUnit: timeUnit.id,
+      amountUnit: amountUnit.unit_key,
     })
 
     expect(result.success).toBe(false)
+  })
+
+  it('rejects a unit key of another activity', () => {
+    const result = NewLogV2APISchema.safeParse({
+      ...validFormValues,
+      activityId: amountActivity.id,
+      amountValue: 12,
+      amountUnit: timeUnit.unit_key,
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  it('requires a duration instead of an amount for a time-primary activity', () => {
+    const result = NewLogV2APISchema.safeParse({
+      ...validFormValues,
+      activityId: timeActivity.id,
+      amountValue: 15,
+      amountUnit: timeUnit.unit_key,
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.error?.issues.map(issue => issue.path)).toEqual([
+      ['durationMinutes'],
+    ])
   })
 })
 
@@ -136,6 +150,33 @@ describe('filterUnits', () => {
     expect(filterUnits(readingUnits, 1, 'jpn').map(unit => unit.unit_key)).toEqual([
       'reading_page',
       'reading_sentence',
+    ])
+  })
+
+  it('replaces the general unit with the language-specific unit of the same key', () => {
+    const characterUnits = [
+      {
+        id: 'character',
+        unit_key: 'reading_character',
+        log_activity_id: 1,
+        name: 'Character',
+        modifier: 0.0025,
+      },
+      {
+        id: 'character-jpn',
+        unit_key: 'reading_character',
+        log_activity_id: 1,
+        name: 'Kanji character',
+        modifier: 0.005,
+        language_code: 'jpn',
+      },
+    ]
+
+    expect(filterUnits(characterUnits, 1, 'jpn').map(unit => unit.id)).toEqual([
+      'character-jpn',
+    ])
+    expect(filterUnits(characterUnits, 1, 'kor').map(unit => unit.id)).toEqual([
+      'character',
     ])
   })
 })

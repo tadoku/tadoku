@@ -72,7 +72,7 @@ export async function saveLog(log: NewLog): Promise<LogResult<ImmersionLog>> {
   if (viewer.userId !== log.viewerId) return { ok: false, reason: 'switched' }
 
   const measure = log.measure.kind === 'amount'
-    ? { amount: log.measure.amount, unit_id: log.measure.unitId }
+    ? { amount: log.measure.amount, unit_key: log.measure.unitKey }
     : { duration_seconds: log.measure.seconds }
   return answer(immersionLogCreate({
     ...sessionRequest(cookie),

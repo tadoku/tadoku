@@ -24,27 +24,34 @@ import { ScorePreviewEstimate } from '@app/immersion/components/ScorePreviewEsti
 
 interface Props {
   options: LogConfigurationOptions
-  log: Log
+  log: Pick<
+    Log,
+    | 'id'
+    | 'language'
+    | 'activity'
+    | 'amount'
+    | 'unit_key'
+    | 'duration_seconds'
+    | 'tags'
+    | 'description'
+  >
 }
 
 export const EditLogForm = ({ options, log }: Props) => {
   const activity =
     options.activities.find(it => it.id === log.activity.id) ?? log.activity
   const activityInputType = activity.input_type ?? 'amount_primary'
-  const isLegacyAmountEdit =
-    activityInputType === 'time_primary' &&
-    log.duration_seconds === undefined
-  const usesAmountUnit =
-    activityInputType === 'amount_primary' || isLegacyAmountEdit
+  const usesAmountUnit = activityInputType === 'amount_primary'
+  // Older timed logs stored their minutes as an amount; they are edited and saved as a duration.
+  const durationSeconds =
+    log.duration_seconds ?? (usesAmountUnit ? undefined : log.amount * 60)
   const defaultValues: Partial<NewLogFormV2Schema> = {
     languageCode: log.language.code,
     activityId: log.activity.id,
     amountValue: usesAmountUnit ? log.amount : undefined,
-    amountUnit: usesAmountUnit ? log.unit_id : undefined,
+    amountUnit: usesAmountUnit ? log.unit_key : undefined,
     durationMinutes:
-      log.duration_seconds !== undefined
-        ? log.duration_seconds / 60
-        : undefined,
+      durationSeconds !== undefined ? durationSeconds / 60 : undefined,
     tags: log.tags,
     description: log.description ?? '',
     allUnits: options.units,
@@ -62,7 +69,7 @@ export const EditLogForm = ({ options, log }: Props) => {
 
   const units = filterUnits(options.units, log.activity.id, log.language.code)
   const unitsAsOptions: Option[] = units.map(it => ({
-    value: it.id,
+    value: it.unit_key,
     label: it.name,
   }))
   const parsedPreviewValues = NewLogV2APISchema.safeParse(formValues)
@@ -98,7 +105,7 @@ export const EditLogForm = ({ options, log }: Props) => {
       tags: parsed.tags,
       description: parsed.description,
       ...('amount' in parsed ? { amount: parsed.amount } : {}),
-      ...('unit_id' in parsed ? { unit_id: parsed.unit_id } : {}),
+      ...('unit_key' in parsed ? { unit_key: parsed.unit_key } : {}),
       ...('duration_seconds' in parsed
         ? { duration_seconds: parsed.duration_seconds }
         : {}),
@@ -142,17 +149,15 @@ export const EditLogForm = ({ options, log }: Props) => {
                   unitsLabel="Unit"
                 />
               )}
-              {!isLegacyAmountEdit && (
-                <Input
-                  name="durationMinutes"
-                  label="Time spent"
-                  type="number"
-                  min={0}
-                  step="any"
-                  hint="minutes"
-                  options={{ valueAsNumber: true }}
-                />
-              )}
+              <Input
+                name="durationMinutes"
+                label="Time spent"
+                type="number"
+                min={0}
+                step="any"
+                hint="minutes"
+                options={{ valueAsNumber: true }}
+              />
               <Input
                 name="description"
                 label="Description"

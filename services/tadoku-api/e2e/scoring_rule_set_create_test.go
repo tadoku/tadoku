@@ -15,6 +15,7 @@ func TestImmersionScoringRuleSetCreatePlatform(t *testing.T) {
 		{description: []string{"admin", "multi", "rule", "normalizes"}, want: http.StatusOK},
 		{description: []string{"admin", "empty", "rules"}, want: http.StatusOK},
 		{description: []string{"admin", "ignores", "contest", "fields"}, want: http.StatusOK},
+		{description: []string{"admin", "plural", "unit", "keys"}, want: http.StatusBadRequest},
 		{description: []string{"member"}, want: http.StatusForbidden},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 	}

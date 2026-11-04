@@ -155,7 +155,7 @@ export type ImmersionLogConfigurationOptions = ImmersionLanguages & ImmersionAct
 };
 
 export type ImmersionUnit = {
-    id: string;
+    id?: string;
     unit_key: string;
     log_activity_id: number;
     name: string;
@@ -404,7 +404,7 @@ export type ImmersionLog = {
     description?: string;
     language: ImmersionLanguage;
     activity: ImmersionActivity;
-    unit_id: string;
+    unit_id?: string;
     unit_key?: string;
     unit_name: string;
     tags: Array<string>;

@@ -7,7 +7,6 @@ components:
         - user_id
         - language
         - activity
-        - unit_id
         - unit_name
         - tags
         - amount

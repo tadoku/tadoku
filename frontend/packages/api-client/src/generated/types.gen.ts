@@ -155,7 +155,6 @@ export type ImmersionLogConfigurationOptions = ImmersionLanguages & ImmersionAct
 };
 
 export type ImmersionUnit = {
-    id?: string;
     unit_key: string;
     log_activity_id: number;
     name: string;
@@ -404,7 +403,6 @@ export type ImmersionLog = {
     description?: string;
     language: ImmersionLanguage;
     activity: ImmersionActivity;
-    unit_id?: string;
     unit_key?: string;
     unit_name: string;
     tags: Array<string>;
@@ -1823,7 +1821,6 @@ export type ImmersionLogCreateData = {
         language_code: string;
         activity_id: number;
         amount?: number;
-        unit_id?: string;
         unit_key?: string;
         duration_seconds?: number;
         tags: Array<string>;
@@ -1902,7 +1899,6 @@ export type ImmersionScorePreviewData = {
         language_code: string;
         activity_id: number;
         amount?: number;
-        unit_id?: string;
         unit_key?: string;
         duration_seconds?: number;
         tags: Array<string>;
@@ -2011,7 +2007,6 @@ export type ImmersionLogFindByIdResponse = ImmersionLogFindByIdResponses[keyof I
 export type ImmersionLogUpdateData = {
     body: {
         amount?: number;
-        unit_id?: string;
         unit_key?: string;
         duration_seconds?: number;
         tags: Array<string>;

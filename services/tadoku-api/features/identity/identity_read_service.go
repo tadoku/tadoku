@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
@@ -47,7 +48,10 @@ func (s *ReadService) ListAccounts(ctx context.Context, query ListAccounts) (Acc
 		query.Limit = 500
 	}
 
-	key, _ := tenant.FromContext(ctx)
+	key, ok := tenant.FromContext(ctx)
+	if !ok {
+		return AccountPage{}, errx.NewUnavailableError("identity accounts require a tenant", postgres.ErrNoTenant)
+	}
 	after := uuid.Nil
 	if query.Cursor != "" {
 		raw, decodeErr := base64.RawURLEncoding.DecodeString(query.Cursor)

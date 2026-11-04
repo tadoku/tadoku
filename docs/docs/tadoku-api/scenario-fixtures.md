@@ -117,7 +117,10 @@ and a journey by calling `runScenarioJourney` instead of `runJourney`,
   scenarios also calls `t.Parallel` on its top-level test. A table that keeps
   serial cases stays a serial top-level test; its scenario cases start after
   its serial cases have returned. Journeys with an `afterReset` fault and cases
-  with process-wide fixtures stay on the serial runners.
+  with process-wide fixtures stay on the serial runners. So does a case that
+  tests its own credential: the runner signs a fresh token for any token whose
+  claims equal the cast's, which would replace a bad signature or unknown key
+  under test, and refuses every other credential.
 
 `TestFixtureScenarioCasesStayInTheirTenants` in
 `services/tadoku-api/e2e/fixture_scenario_canary_test.go` runs the same golden

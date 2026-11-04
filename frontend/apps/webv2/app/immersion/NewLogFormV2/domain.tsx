@@ -2,11 +2,6 @@ import { zImmersionActivity, zImmersionUnit } from 'api-client'
 import { z } from 'zod'
 import { Unit } from '@app/immersion/api'
 
-const legacyReadingUnitKeys = new Set([
-  'reading_two_column_page',
-  'reading_comic_page',
-])
-
 export const filterUnits = (
   units: Unit[],
   activityId: number | undefined,
@@ -16,11 +11,7 @@ export const filterUnits = (
     return []
   }
 
-  const base = units.filter(
-    unit =>
-      unit.log_activity_id === activityId &&
-      !legacyReadingUnitKeys.has(unit.unit_key),
-  )
+  const base = units.filter(unit => unit.log_activity_id === activityId)
 
   const grouped = base.reduce((acc, unit) => {
     if (!acc.has(unit.unit_key)) {

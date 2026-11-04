@@ -2,14 +2,14 @@ import { z } from 'zod'
 import type { LogOptions, Registration } from './logs'
 
 /**
- * What the activity form holds. Amount activities use `amount` and `unitId`, timed ones `minutes`; `toNewLog` sends
+ * What the activity form holds. Amount activities use `amount` and `unitKey`, timed ones `minutes`; `toNewLog` sends
  * only the measure that applies.
  */
 export type LogDraft = {
   languageCode: string
   activityId: string
   amount: number
-  unitId: string
+  unitKey: string
   minutes: number
   description: string
   tags: string
@@ -17,7 +17,7 @@ export type LogDraft = {
 }
 
 const amountRule = z.number({ error: 'Enter an amount.' }).positive('Enter an amount greater than zero.')
-const unitRule = z.guid('Choose a unit.')
+const unitRule = z.string().min(1, 'Choose a unit.')
 const minutesRule = z.number({ error: 'Enter minutes.' })
   .positive('Enter minutes greater than zero.')
   .max(1440, 'Enter at most 1440 minutes.')
@@ -42,7 +42,7 @@ export const newLogSchema = z.object({
   languageCode: z.string().length(3),
   activityId: z.int().positive(),
   measure: z.discriminatedUnion('kind', [
-    z.object({ kind: z.literal('amount'), amount: amountRule, unitId: unitRule }),
+    z.object({ kind: z.literal('amount'), amount: amountRule, unitKey: unitRule }),
     z.object({ kind: z.literal('duration'), seconds: z.int().positive().max(86_400) }),
   ]),
   description: descriptionRule,
@@ -68,7 +68,7 @@ export function logDraftSchema(options: LogOptions) {
     } else {
       check('amount', amountRule, draft.amount)
       // AmountWithUnit shows one error for the amount and its unit, so a missing unit is reported on the amount.
-      check('amount', unitRule, draft.unitId)
+      check('amount', unitRule, draft.unitKey)
     }
     check('description', descriptionRule, draft.description.trim())
     check('tags', tagsRule, parseTags(draft.tags))
@@ -96,7 +96,7 @@ export function firstDraft(options: LogOptions): LogDraft {
 /** The unit and contests to select again after the language or activity changes. */
 export function dependentFields(options: LogOptions, languageCode: string, activityId: string) {
   return {
-    unitId: unitsFor(options, languageCode, activityId)[0]?.id ?? '',
+    unitKey: unitsFor(options, languageCode, activityId)[0]?.unit_key ?? '',
     registrationIds: eligibleRegistrations(options, languageCode, activityId).map(registration => registration.id),
   }
 }
@@ -111,7 +111,7 @@ export function toNewLog(draft: LogDraft, options: LogOptions, viewerId: string)
     activityId: Number(draft.activityId),
     measure: isTimed(options, draft.activityId)
       ? { kind: 'duration', seconds: Math.round(draft.minutes * 60) }
-      : { kind: 'amount', amount: draft.amount, unitId: draft.unitId },
+      : { kind: 'amount', amount: draft.amount, unitKey: draft.unitKey },
     description: draft.description.trim(),
     tags: parseTags(draft.tags),
     registrationIds: selected.map(registration => registration.id),
@@ -126,13 +126,13 @@ export function isTimed(options: LogOptions, activityId: string) {
 // Two-column and comic pages are legacy reading units; Webv2's log form records them as tag modifiers instead.
 const legacyUnitKeys = new Set(['reading_two_column_page', 'reading_comic_page'])
 
-/** The activity's units, where a unit specific to the language replaces the general unit of the same name. */
+/** The activity's units, where a unit specific to the language replaces the general unit with the same key. */
 export function unitsFor(options: LogOptions, languageCode: string, activityId: string) {
   const units = options.configuration.units.filter(unit =>
     String(unit.log_activity_id) === activityId && !legacyUnitKeys.has(unit.unit_key))
-  const specific = new Set(units.filter(unit => unit.language_code === languageCode).map(unit => unit.name))
+  const specific = new Set(units.filter(unit => unit.language_code === languageCode).map(unit => unit.unit_key))
 
-  return units.filter(unit => unit.language_code === languageCode || (!unit.language_code && !specific.has(unit.name)))
+  return units.filter(unit => unit.language_code === languageCode || (!unit.language_code && !specific.has(unit.unit_key)))
 }
 
 /** The viewer's ongoing registrations whose contest accepts this language and activity. */

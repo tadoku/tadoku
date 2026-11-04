@@ -261,7 +261,7 @@ test('a different signed-in learner cannot change another learner\'s activity', 
     language_code: before.language.code,
     activity_id: before.activity.id,
     amount: 99,
-    unit_id: before.unit_id,
+    unit_key: before.unit_key,
     tags: [],
     description: 'unauthorized change',
   }

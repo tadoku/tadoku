@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	valkeygo "github.com/valkey-io/valkey-go"
 )
@@ -83,7 +85,7 @@ func NewCache(client valkeygo.Client, operationTimeout time.Duration) *Cache {
 func (c *Cache) cacheKey(ctx context.Context, key string) (string, error) {
 	tenantKey, ok := tenant.FromContext(ctx)
 	if !ok {
-		return "", fmt.Errorf("leaderboard cache requires a tenant")
+		return "", errx.NewUnavailableError("leaderboard cache requires a tenant", postgres.ErrNoTenant)
 	}
 
 	return "tenant:" + tenantKey.String() + ":" + key, nil

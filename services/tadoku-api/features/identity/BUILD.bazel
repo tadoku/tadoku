@@ -45,12 +45,14 @@ go_library(
 go_test(
     name = "identity_test",
     srcs = [
+        "identity_read_service_test.go",
         "identity_recovery_service_test.go",
         "identity_service_test.go",
         "identity_values_test.go",
     ],
     embed = [":identity"],
     deps = [
+        "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/tenant",
         "//services/tadoku-api/internal/uuidx",

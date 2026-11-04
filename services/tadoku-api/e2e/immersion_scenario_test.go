@@ -9,12 +9,28 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// normalizeLogUnitIDs gives every migration-seeded log unit the id md5(unit_key || ':' || language_code), once per
-// test database, so fixtures and goldens name units by stable ids without writing the shared log_units table.
+// normalizeLogUnitIDs gives every migration-seeded log unit the id md5(key || ':' || language_code), once per test
+// database, so fixtures and goldens name units by stable ids without writing the shared log_units table. The key is
+// the activity-prefixed spelling, such as reading_page, whichever spelling the row carries.
 func normalizeLogUnitIDs(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, `update log_units
-		set id = md5(unit_key || ':' || coalesce(language_code, ''))::uuid
-		where id <> md5(unit_key || ':' || coalesce(language_code, ''))::uuid`)
+	_, err := pool.Exec(ctx, `with stable as (
+		select
+			id,
+			md5(
+				case
+					when unit_key in ('pages', 'sentences', 'characters') then
+						(case log_activity_id when 1 then 'reading_' else 'writing_' end) ||
+						(case unit_key when 'pages' then 'page' when 'sentences' then 'sentence' else 'character' end)
+					else unit_key
+				end || ':' || coalesce(language_code, '')
+			)::uuid as stable_id
+		from log_units
+	)
+	update log_units
+	set id = stable.stable_id
+	from stable
+	where log_units.id = stable.id
+		and log_units.id <> stable.stable_id`)
 	if err != nil {
 		return fmt.Errorf("normalize log unit ids: %w", err)
 	}

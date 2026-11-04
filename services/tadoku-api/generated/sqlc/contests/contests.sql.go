@@ -861,7 +861,7 @@ insert into contest_registrations (
   $4,
   $5,
   $6
-) on conflict (id) do update set
+) on conflict (tenant, id) do update set
   language_codes = $4,
   updated_at = $6
 `

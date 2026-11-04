@@ -273,7 +273,7 @@ insert into contest_registrations (
   sqlc.arg(language_codes),
   sqlc.arg(created_at),
   sqlc.arg(updated_at)
-) on conflict (id) do update set
+) on conflict (tenant, id) do update set
   language_codes = sqlc.arg(language_codes),
   updated_at = sqlc.arg(updated_at);
 

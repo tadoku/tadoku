@@ -14,6 +14,7 @@ func TestImmersionScorePreview(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
+		canonical   bool
 	}{
 		{description: []string{"platform", "amount", "tag", "priority"}, want: http.StatusOK},
 		{description: []string{"amount", "precedes", "duration"}, want: http.StatusOK},
@@ -35,8 +36,8 @@ func TestImmersionScorePreview(t *testing.T) {
 		{description: []string{"unit", "id", "other", "activity"}, want: http.StatusBadRequest},
 		{description: []string{"unknown", "unit", "id"}, want: http.StatusBadRequest},
 		{description: []string{"unit", "key", "other", "language"}, want: http.StatusBadRequest},
-		{description: []string{"unit", "id", "stored", "activity", "mismatch"}, want: http.StatusBadRequest},
-		{description: []string{"unit", "id", "key", "activity", "mismatch"}, want: http.StatusBadRequest},
+		{description: []string{"unit", "id", "stored", "activity", "mismatch"}, want: http.StatusBadRequest, canonical: true},
+		{description: []string{"unit", "id", "key", "activity", "mismatch"}, want: http.StatusBadRequest, canonical: true},
 		{description: []string{"duration", "with", "unit", "without", "amount"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "duration", "with", "amount"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "tags"}, want: http.StatusBadRequest},
@@ -49,9 +50,13 @@ func TestImmersionScorePreview(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("ImmersionScorePreview", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			runCase(t, api, name, test.want,
-				implementation{name: "tadoku-api", handler: api.handler},
-			)
+			impl := implementation{name: "tadoku-api", handler: api.handler}
+			if test.canonical {
+				runCase(t, api, name, test.want, impl)
+				return
+			}
+
+			runScenarioCase(t, name, test.want, impl)
 		})
 	}
 }

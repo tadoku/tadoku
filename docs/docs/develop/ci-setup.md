@@ -40,7 +40,10 @@ versions, native executable hashes and versions, Python version, kernel and
 architecture, UID, relevant tool/locale environment, Bazel and Go configuration,
 Docker client/server/runtime/security/storage configuration and resource limits.
 It rejects RC imports because they can refer to files outside the known input
-set. Unsupported hosts rerun the checks. Do not add an external input to a
+set. The RC digest ignores only the value of the exact
+`common --remote_upload_local_results=true|false` line, which differs between
+PR and push events and none of the cached checks read, so PRs can reuse
+receipts from `main`; any other RC change invalidates them. Unsupported hosts rerun the checks. Do not add an external input to a
 cached check without extending its fingerprint. The OpenAPI receipt includes
 the frozen module graph and checked-in outputs, so a hand-edited generated file
 forces regeneration and the existing diff check. New untracked generated files also fail validation.

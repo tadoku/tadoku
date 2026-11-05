@@ -37,6 +37,12 @@ def main():
         rc = Path(directory) / '.bazelrc'
         rc.write_text('build --jobs=1\n')
         assert before != run('rc-change', env)
+        rc.write_text('build --jobs=1\ncommon --remote_upload_local_results=true\n')
+        push = run('rc-upload-push', env)
+        rc.write_text('build --jobs=1\ncommon --remote_upload_local_results=false\n')
+        assert push == run('rc-upload-pull-request', env), 'upload policy split PR and push fingerprints'
+        rc.write_text('build --jobs=2\ncommon --remote_upload_local_results=false\n')
+        assert push != run('rc-change-beside-upload', env)
         rc.write_text('import /does/not/exist\n')
         run('unknown-rc-input', env, expected=1)
     run('missing-tools', {'PATH': '/does/not/exist'}, expected=1)

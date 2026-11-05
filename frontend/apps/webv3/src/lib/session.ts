@@ -24,6 +24,9 @@ export function viewerKey(viewer: Viewer | undefined) {
   return viewer && 'userId' in viewer ? viewer.userId : viewer?.status ?? 'anonymous'
 }
 
+/** The authv2 login URL on `accountUrl` that returns to `returnTo`. */
+export const loginHref = (accountUrl: string, returnTo: string) => `${accountUrl}/login?return_to=${encodeURIComponent(returnTo)}`
+
 /** The authv2 login URL that returns to the current page. */
 export function useLoginUrl() {
   const { accountUrl, pageUrl } = useLoaderData({ from: rootRouteId })
@@ -33,5 +36,5 @@ export function useLoginUrl() {
   useRouterState({ select: state => state.location.href })
 
   const current = hydrated ? window.location.href : pageUrl
-  return `${accountUrl}/login?return_to=${encodeURIComponent(current)}`
+  return loginHref(accountUrl, current)
 }

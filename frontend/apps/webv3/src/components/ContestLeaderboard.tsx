@@ -1,23 +1,28 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
+import type { ImmersionContestView } from 'api-client'
 import { Button, DescriptionList, EmptyState, Flash, SectionHeading, StatusTag, buttonClassName } from 'paper-ui'
+import type { ReactNode } from 'react'
 import { formatDate, formatPeriod, numberFormat } from '../lib/format'
-import { latestBoardQuery, leaderboardHref, registeredQuery, standingsQuery, type ContestBoard } from '../lib/leaderboard'
+import { latestBoardQuery, leaderboardHref, standingsQuery, contestPhase, readDay, type ContestBoard, type ContestPhase } from '../lib/leaderboard'
 import { useLinks } from '../lib/links'
-import { useLoginUrl, viewerKey, viewerQueryOptions } from '../lib/session'
+import { useParticipation } from '../lib/registration'
+import { useLoginUrl, viewerQueryOptions } from '../lib/session'
 import { LeaderboardFrame, StandingsFootnote } from './LeaderboardPage'
 import { Standings } from './Standings'
+
+export function RoundStatus({ phase }: { phase: ContestPhase }) {
+  if (phase.ended) return <StatusTag>Ended</StatusTag>
+  return phase.started ? <StatusTag tone="success">Live now</StatusTag> : <StatusTag tone="information">Upcoming</StatusTag>
+}
 
 /** The latest official contest's board, or why there is none. */
 export function LatestLeaderboard({ page }: { page: number }) {
   const latest = useQuery(latestBoardQuery())
-  // The route loader read the board; its read time decides the contest day on the server and after hydration.
-  const today = new Date(latest.dataUpdatedAt).toISOString().slice(0, 10)
+  const today = readDay(latest.dataUpdatedAt)
   const currentYear = Number(today.slice(0, 4))
 
-  if (latest.data?.kind === 'board') {
-    return <ContestLeaderboard board={latest.data.board} today={today} page={page} pageHref={leaderboardHref.latest} />
-  }
+  if (latest.data?.kind === 'board') return <LatestBoard board={latest.data.board} today={today} page={page} />
   return (
     <LeaderboardFrame period="latest" currentYear={currentYear}>
       {latest.data?.kind === 'none' ? (
@@ -38,44 +43,60 @@ export function LatestLeaderboard({ page }: { page: number }) {
   )
 }
 
-/** One contest's standings with its join and logging actions, conditions, summary and recent activity. */
-function ContestLeaderboard({ board, today, page, pageHref }: {
-  board: ContestBoard
-  /** The UTC calendar day the board was read, which decides the contest's phase. */
-  today: string
-  page: number
-  pageHref: (page: number) => string
-}) {
+/** The latest contest's board with Webv2's two actions: join while registration is open, then log while it runs. */
+function LatestBoard({ board, today, page }: { board: ContestBoard; today: string; page: number }) {
   const links = useLinks()
-  const loginUrl = useLoginUrl()
-  const { contest, summary, recentLogs } = board
-  const { data: viewer } = useQuery(viewerQueryOptions())
-  const signedIn = viewer?.status === 'signed-in'
-  const registered = useQuery({ ...registeredQuery(contest.id, viewerKey(viewer)), enabled: signedIn }).data ?? null
-  const standings = useQuery(standingsQuery({ kind: 'contest', contestId: contest.id }, page))
+  const { contest } = board
+  const phase = contestPhase(contest, today)
+  const { viewer, registered } = useParticipation(contest.id)
 
-  const started = today >= contest.contest_start
-  const ended = today > contest.contest_end
-  const ongoing = started && !ended
-  const registrationOpen = !ended && today <= contest.registration_end
-  const status = ended ? { tone: 'neutral' as const, label: 'Complete' }
-    : started ? { tone: 'success' as const, label: 'Live now' }
-    : { tone: 'information' as const, label: 'Upcoming' }
-
-  const actions = ongoing && signedIn && registered === true
+  const actions = phase.ongoing && registered
     ? <a className={buttonClassName({ variant: 'outline' })} href={links.logs}>Log activity</a>
-    : registrationOpen && registered !== true
+    : phase.registrationOpen && !registered && viewer?.status !== 'banned'
       ? <a className={buttonClassName()} href={links.joinContest(contest.id)}>Join contest</a>
       : null
 
   return (
     <LeaderboardFrame period="latest" currentYear={Number(today.slice(0, 4))} actions={actions}>
-      {viewer?.status === 'anonymous' && !ended ? (
+      <ContestBoardBody
+        board={board}
+        phase={phase}
+        page={page}
+        pageHref={leaderboardHref.latest}
+        title={contest.title}
+        status={<RoundStatus phase={phase} />}
+        asideLink={<a className="text-link" href={links.contest(contest.id)}>Contest details</a>}
+      />
+    </LeaderboardFrame>
+  )
+}
+
+/** A contest's notices, standings, conditions, summary and, while it runs, its ten most recent logs. */
+export function ContestBoardBody({ board, phase, page, pageHref, title, status, asideLink }: {
+  board: ContestBoard
+  phase: ContestPhase
+  page: number
+  pageHref: (page: number) => string
+  /** The standings sheet's heading. */
+  title: string
+  status?: ReactNode
+  /** The link that closes the conditions section. */
+  asideLink: ReactNode
+}) {
+  const links = useLinks()
+  const loginUrl = useLoginUrl()
+  const { contest, summary, recentLogs } = board
+  const { data: viewer } = useQuery(viewerQueryOptions())
+  const standings = useQuery(standingsQuery({ kind: 'contest', contestId: contest.id }, page))
+
+  return (
+    <>
+      {viewer?.status === 'anonymous' && !phase.ended ? (
         <Flash className="standings-notice" action={<a className="text-link" href={loginUrl}>Log in</a>}>
           You need to log in to participate in this contest.
         </Flash>
       ) : null}
-      {ended ? (
+      {phase.ended ? (
         <Flash className="standings-notice" variant="warning">
           This contest has already ended and does not accept any new participants.
         </Flash>
@@ -87,8 +108,8 @@ function ContestLeaderboard({ board, today, page, pageHref }: {
               level={2}
               id="standings-title"
               className="standings-context"
-              title={contest.title}
-              status={<StatusTag tone={status.tone}>{status.label}</StatusTag>}
+              title={title}
+              status={status}
               description={`${formatPeriod(contest)} · ${contest.official ? 'Official contest' : 'Community contest'}`}
             />
             <Standings
@@ -99,7 +120,7 @@ function ContestLeaderboard({ board, today, page, pageHref }: {
               profileHref={userId => links.contestProfile(contest.id, userId)}
               empty={{
                 title: 'No participants yet',
-                description: started ? 'Join the round and log your first activity.' : 'Scores begin when the round starts.',
+                description: phase.started ? 'Join the round and log your first activity.' : 'Scores begin when the round starts.',
               }}
               retrying={standings.isFetching}
               onRetry={() => void standings.refetch()}
@@ -110,18 +131,9 @@ function ContestLeaderboard({ board, today, page, pageHref }: {
         <aside className="standings-aside">
           <section aria-labelledby="standings-conditions">
             <h2 id="standings-conditions" className="paper-type-component">Contest conditions</h2>
-            <DescriptionList
-              items={[
-                { label: started ? 'Started' : 'Starts', value: formatDate(contest.contest_start) },
-                { label: ended ? 'Ended' : 'Ends', value: formatDate(contest.contest_end) },
-                { label: 'Registration', value: registrationOpen ? `Open until ${formatDate(contest.registration_end)}` : 'Closed to new participants' },
-                { label: 'Languages', value: contest.allowed_languages?.length ? contest.allowed_languages.map(language => language.name).join(', ') : 'No restrictions' },
-                { label: 'Activities', value: contest.allowed_activities.map(activity => activity.name).join(', ') || 'No restrictions' },
-                { label: 'Administered by', value: contest.official ? 'Tadoku' : contest.owner_user_display_name ?? 'Unknown user' },
-              ]}
-            />
+            <ContestFacts contest={contest} phase={phase} />
             {contest.description ? <p className="standings-description">{contest.description}</p> : null}
-            <a className="text-link" href={links.contest(contest.id)}>Contest details</a>
+            {asideLink}
           </section>
           {summary ? (
             <section aria-labelledby="standings-summary">
@@ -133,7 +145,7 @@ function ContestLeaderboard({ board, today, page, pageHref }: {
               </p>
             </section>
           ) : null}
-          {ongoing && recentLogs.length > 0 ? (
+          {phase.ongoing && recentLogs.length > 0 ? (
             <section aria-labelledby="standings-recent">
               <h2 id="standings-recent" className="paper-type-component">Recent updates</h2>
               <ul className="standings-activity">
@@ -150,6 +162,29 @@ function ContestLeaderboard({ board, today, page, pageHref }: {
           ) : null}
         </aside>
       </div>
-    </LeaderboardFrame>
+    </>
+  )
+}
+
+/** A contest's dates, registration, eligibility, listing and organizer. Dates are UTC calendar days. */
+export function ContestFacts({ contest, phase }: { contest: ImmersionContestView; phase: ContestPhase }) {
+  const links = useLinks()
+  const organizer = contest.official
+    ? 'Tadoku'
+    : contest.owner_user_id
+      ? <a className="text-link" href={links.profile(contest.owner_user_id)}>{contest.owner_user_display_name ?? 'Unknown user'}</a>
+      : contest.owner_user_display_name ?? 'Unknown user'
+  return (
+    <DescriptionList
+      items={[
+        { label: phase.started ? 'Started' : 'Starts', value: formatDate(contest.contest_start) },
+        { label: phase.ended ? 'Ended' : 'Ends', value: formatDate(contest.contest_end) },
+        { label: 'Registration', value: phase.registrationOpen ? `Open until ${formatDate(contest.registration_end)}` : 'Closed to new participants' },
+        { label: 'Languages', value: contest.allowed_languages?.length ? contest.allowed_languages.map(language => language.name).join(', ') : 'No restrictions' },
+        { label: 'Activities', value: contest.allowed_activities.map(activity => activity.name).join(', ') || 'No restrictions' },
+        ...(contest.private ? [{ label: 'Listing', value: 'Unlisted: left out of contest lists, open to anyone with the link' }] : []),
+        { label: 'Administered by', value: organizer },
+      ]}
+    />
   )
 }

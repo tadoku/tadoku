@@ -1,14 +1,15 @@
 import {
   immersionContestFetchLeaderboard,
   immersionContestFetchSummary,
+  immersionContestFindById,
   immersionContestFindLatestOfficial,
-  immersionContestFindRegistration,
   immersionContestListLogs,
   immersionFetchLeaderboardForYear,
   immersionFetchLeaderboardGlobal,
+  type ImmersionContestView,
   type ImmersionLeaderboard,
 } from 'api-client'
-import type { LatestBoard, Read, StandingsScope } from './leaderboard'
+import type { BoardRead, Read, StandingsScope } from './leaderboard'
 import { standingsPageSize } from './leaderboard'
 import { sessionCookie, sessionRequest } from './session.server'
 
@@ -34,10 +35,23 @@ export function readStandings(scope: StandingsScope, page: number): Promise<Read
   }
 }
 
-export async function readLatestBoard(): Promise<LatestBoard> {
-  const latest = await immersionContestFindLatestOfficial(sessionRequest()).catch(() => ({ data: undefined, response: undefined }))
-  if (latest.response?.status === 404) return { kind: 'none' }
-  const contest = latest.data
+const failed = { data: undefined, response: undefined }
+
+export async function readLatestBoard(): Promise<BoardRead> {
+  return readBoard(await immersionContestFindLatestOfficial(sessionRequest()).catch(() => failed))
+}
+
+/** Reads the contest as the visitor, whose role decides whether a deleted contest is found; a rejected session reads it anonymously. */
+export async function readContestBoard(id: string): Promise<BoardRead> {
+  const cookie = sessionCookie()
+  const find = (session?: string) => immersionContestFindById({ ...sessionRequest(session), path: { id } }).catch(() => failed)
+  const found = await find(cookie)
+  return readBoard(found.response?.status === 401 && cookie ? await find() : found)
+}
+
+async function readBoard(found: { data?: ImmersionContestView; response?: Response }): Promise<BoardRead> {
+  if (found.response?.status === 404) return { kind: 'none' }
+  const contest = found.data
   if (!contest?.id) return { kind: 'unavailable' }
 
   const path = { id: contest.id }
@@ -53,15 +67,4 @@ export async function readLatestBoard(): Promise<LatestBoard> {
       recentLogs: logs.ok ? logs.data.logs : [],
     },
   }
-}
-
-/** Whether the visitor has joined the contest: 204 means they haven't. */
-export async function readRegistered(contestId: string): Promise<boolean | null> {
-  const cookie = sessionCookie()
-  if (!cookie) return null
-
-  const { data, response } = await immersionContestFindRegistration({ ...sessionRequest(cookie), path: { id: contestId } })
-    .catch(() => ({ data: undefined, response: undefined }))
-  if (response?.status === 204) return false
-  return data ? true : null
 }

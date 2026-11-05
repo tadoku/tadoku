@@ -31,8 +31,8 @@ export interface ContestBoard {
   recentLogs: ImmersionLog[]
 }
 
-/** The latest official contest's board, or `none` when no official contest exists yet. */
-export type LatestBoard = { kind: 'board'; board: ContestBoard } | { kind: 'none' } | { kind: 'unavailable' }
+/** A contest's board, or `none` when the contest doesn't exist: no official contest yet, or an unknown ID. */
+export type BoardRead = { kind: 'board'; board: ContestBoard } | { kind: 'none' } | { kind: 'unavailable' }
 
 const standingsInput = z.object({
   scope: z.discriminatedUnion('kind', [
@@ -55,11 +55,11 @@ const getLatestBoard = createServerFn({ method: 'GET' }).handler(async () => {
   return readLatestBoard()
 })
 
-const getRegistered = createServerFn({ method: 'GET' })
+const getContestBoard = createServerFn({ method: 'GET' })
   .inputValidator(z.guid())
   .handler(async ({ data }) => {
-    const { readRegistered } = await import('./leaderboard.server')
-    return readRegistered(data)
+    const { readContestBoard } = await import('./leaderboard.server')
+    return readContestBoard(data)
   })
 
 /** One page of standings, counted from 1. */
@@ -72,15 +72,15 @@ export const standingsQuery = (scope: StandingsScope, page: number) => queryOpti
 
 export const latestBoardQuery = () => queryOptions({
   queryKey: ['latest-board'],
-  queryFn: (): Promise<LatestBoard> => getLatestBoard(),
+  queryFn: (): Promise<BoardRead> => getLatestBoard(),
   staleTime: 30_000,
   retry: false,
 })
 
-/** Whether the signed-in viewer `viewerKey` names has joined the contest; null when that can't be read. */
-export const registeredQuery = (contestId: string, viewerKey: string) => queryOptions({
-  queryKey: ['registered', contestId, viewerKey],
-  queryFn: (): Promise<boolean | null> => getRegistered({ data: contestId }),
+/** A contest's board as the viewer `viewerKey` names sees it: administrators can also open deleted contests. */
+export const contestBoardQuery = (contestId: string, viewerKey: string) => queryOptions({
+  queryKey: ['contest-board', contestId, viewerKey],
+  queryFn: (): Promise<BoardRead> => getContestBoard({ data: contestId }),
   staleTime: 30_000,
   retry: false,
 })
@@ -92,3 +92,22 @@ export function pathNumber(segment: string | undefined, fallback: number) {
 }
 
 export const pageNumber = (segment: string | undefined) => Math.max(1, pathNumber(segment, 1))
+
+/** Where a contest's round and its registration stand on one UTC calendar day. Registration closes separately from the round. */
+export interface ContestPhase {
+  started: boolean
+  ended: boolean
+  ongoing: boolean
+  /** Whether the contest accepts new participants. Registered participants can change languages until it ends. */
+  registrationOpen: boolean
+}
+
+/** The phase on `today`, a `YYYY-MM-DD` UTC day: contest days run from the start's first to the end's last UTC second. */
+export function contestPhase(contest: Pick<ImmersionContestView, 'contest_start' | 'contest_end' | 'registration_end'>, today: string): ContestPhase {
+  const started = today >= contest.contest_start
+  const ended = today > contest.contest_end
+  return { started, ended, ongoing: started && !ended, registrationOpen: !ended && today <= contest.registration_end }
+}
+
+/** The UTC calendar day a query's answer was read, which decides a contest's phase on the server and after hydration. */
+export const readDay = (dataUpdatedAt: number) => new Date(dataUpdatedAt).toISOString().slice(0, 10)

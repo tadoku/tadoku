@@ -35,16 +35,15 @@ function statuses(contest: Contest, today = new Date().toISOString().slice(0, 10
   return [round, today <= contest.registration_end ? 'Registration open' : 'Registration closed']
 }
 
-/** Every API contest is a row in the API's order, linking to its Webv2 standings, with its privacy and status tags. */
+/** Every API contest is a row in the API's order, linking to its contest page, with its privacy and status tags. */
 async function expectRows(page: Page, data: Contests, pageNumber = 1) {
   const rows = page.locator('.contest-row')
   await expect(rows).toHaveCount(data.contests.length)
-  const origin = webv2
   for (const [index, contest] of data.contests.entries()) {
     const row = rows.nth(index)
     await expect(row.getByRole('heading', { level: 2 })).toHaveText(contest.title)
     await expect(row.getByRole('link', { name: contest.title, exact: true }))
-      .toHaveAttribute('href', `${origin}/contests/${contest.id}/leaderboard/1`)
+      .toHaveAttribute('href', `/contests/${contest.id}/leaderboard/1`)
     await expect(row.locator('.contest-row__title .paper-status-tag')).toHaveText(contest.private ? ['Unlisted'] : [])
     await expect(row.locator('.contest-row__status .paper-status-tag')).toHaveText(statuses(contest))
   }
@@ -93,7 +92,7 @@ test.beforeEach(() => {
   test.skip(!webv3 || !api, 'Set WEBV3_BASE_URL and TADOKU_API_URL')
 })
 
-test('server-rendered official and community lists show the API contests and link to their Webv2 standings', async ({ browser, request }, testInfo) => {
+test('server-rendered official and community lists show the API contests and link to their contest pages', async ({ browser, request }, testInfo) => {
   const context = await browser.newContext({ javaScriptEnabled: false })
   // A stale session cookie leaves the visitor a guest, whom the configuration endpoint also answers.
   await context.addCookies([{ name: 'tadoku_session', value: 'expired', url: webv3! }])

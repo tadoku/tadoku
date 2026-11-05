@@ -17,12 +17,14 @@ import { Route as LogsNewRouteImport } from './routes/logs/new'
 import { Route as PagesSlugRouteImport } from './routes/pages/$slug'
 import { Route as PagesManualRouteImport } from './routes/pages/manual'
 import { Route as BlogPostsSlugRouteImport } from './routes/blog/posts/$slug'
+import { Route as ContestsIdRegistrationRouteImport } from './routes/contests/$id/registration'
 import { Route as ContestsMyContestsSplatRouteImport } from './routes/contests/my-contests/$'
 import { Route as ContestsOfficialSplatRouteImport } from './routes/contests/official/$'
 import { Route as ContestsUserContestsSplatRouteImport } from './routes/contests/user-contests/$'
 import { Route as LeaderboardAllTimeSplatRouteImport } from './routes/leaderboard/all-time/$'
 import { Route as LeaderboardLatestSplatRouteImport } from './routes/leaderboard/latest/$'
 import { Route as LogsLogIdEditRouteImport } from './routes/logs/$logId_.edit'
+import { Route as ContestsIdLeaderboardSplatRouteImport } from './routes/contests/$id/leaderboard/$'
 import { Route as LeaderboardYearlyYearSplatRouteImport } from './routes/leaderboard/yearly/$year/$'
 import { Route as ProfileIdStatisticsChar123YearChar125RouteImport } from './routes/profile/$id/statistics/{-$year}'
 import { Route as ProfileIdUpdatesChar123PageChar125RouteImport } from './routes/profile/$id/updates/{-$page}'
@@ -67,6 +69,11 @@ const BlogPostsSlugRoute = BlogPostsSlugRouteImport.update({
   path: '/blog/posts/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContestsIdRegistrationRoute = ContestsIdRegistrationRouteImport.update({
+  id: '/contests/$id/registration',
+  path: '/contests/$id/registration',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContestsMyContestsSplatRoute = ContestsMyContestsSplatRouteImport.update({
   id: '/contests/my-contests/$',
   path: '/contests/my-contests/$',
@@ -98,6 +105,12 @@ const LogsLogIdEditRoute = LogsLogIdEditRouteImport.update({
   path: '/logs/$logId/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContestsIdLeaderboardSplatRoute =
+  ContestsIdLeaderboardSplatRouteImport.update({
+    id: '/contests/$id/leaderboard/$',
+    path: '/contests/$id/leaderboard/$',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LeaderboardYearlyYearSplatRoute =
   LeaderboardYearlyYearSplatRouteImport.update({
     id: '/leaderboard/yearly/$year/$',
@@ -126,12 +139,14 @@ export interface FileRoutesByFullPath {
   '/pages/$slug': typeof PagesSlugRoute
   '/pages/manual': typeof PagesManualRoute
   '/blog/posts/$slug': typeof BlogPostsSlugRoute
+  '/contests/$id/registration': typeof ContestsIdRegistrationRoute
   '/contests/my-contests/$': typeof ContestsMyContestsSplatRoute
   '/contests/official/$': typeof ContestsOfficialSplatRoute
   '/contests/user-contests/$': typeof ContestsUserContestsSplatRoute
   '/leaderboard/all-time/$': typeof LeaderboardAllTimeSplatRoute
   '/leaderboard/latest/$': typeof LeaderboardLatestSplatRoute
   '/logs/$logId/edit': typeof LogsLogIdEditRoute
+  '/contests/$id/leaderboard/$': typeof ContestsIdLeaderboardSplatRoute
   '/leaderboard/yearly/$year/$': typeof LeaderboardYearlyYearSplatRoute
   '/profile/$id/statistics/{-$year}': typeof ProfileIdStatisticsChar123YearChar125Route
   '/profile/$id/updates/{-$page}': typeof ProfileIdUpdatesChar123PageChar125Route
@@ -145,12 +160,14 @@ export interface FileRoutesByTo {
   '/pages/$slug': typeof PagesSlugRoute
   '/pages/manual': typeof PagesManualRoute
   '/blog/posts/$slug': typeof BlogPostsSlugRoute
+  '/contests/$id/registration': typeof ContestsIdRegistrationRoute
   '/contests/my-contests/$': typeof ContestsMyContestsSplatRoute
   '/contests/official/$': typeof ContestsOfficialSplatRoute
   '/contests/user-contests/$': typeof ContestsUserContestsSplatRoute
   '/leaderboard/all-time/$': typeof LeaderboardAllTimeSplatRoute
   '/leaderboard/latest/$': typeof LeaderboardLatestSplatRoute
   '/logs/$logId/edit': typeof LogsLogIdEditRoute
+  '/contests/$id/leaderboard/$': typeof ContestsIdLeaderboardSplatRoute
   '/leaderboard/yearly/$year/$': typeof LeaderboardYearlyYearSplatRoute
   '/profile/$id/statistics/{-$year}': typeof ProfileIdStatisticsChar123YearChar125Route
   '/profile/$id/updates/{-$page}': typeof ProfileIdUpdatesChar123PageChar125Route
@@ -165,12 +182,14 @@ export interface FileRoutesById {
   '/pages/$slug': typeof PagesSlugRoute
   '/pages/manual': typeof PagesManualRoute
   '/blog/posts/$slug': typeof BlogPostsSlugRoute
+  '/contests/$id/registration': typeof ContestsIdRegistrationRoute
   '/contests/my-contests/$': typeof ContestsMyContestsSplatRoute
   '/contests/official/$': typeof ContestsOfficialSplatRoute
   '/contests/user-contests/$': typeof ContestsUserContestsSplatRoute
   '/leaderboard/all-time/$': typeof LeaderboardAllTimeSplatRoute
   '/leaderboard/latest/$': typeof LeaderboardLatestSplatRoute
   '/logs/$logId_/edit': typeof LogsLogIdEditRoute
+  '/contests/$id/leaderboard/$': typeof ContestsIdLeaderboardSplatRoute
   '/leaderboard/yearly/$year/$': typeof LeaderboardYearlyYearSplatRoute
   '/profile/$id/statistics/{-$year}': typeof ProfileIdStatisticsChar123YearChar125Route
   '/profile/$id/updates/{-$page}': typeof ProfileIdUpdatesChar123PageChar125Route
@@ -186,12 +205,14 @@ export interface FileRouteTypes {
     | '/pages/$slug'
     | '/pages/manual'
     | '/blog/posts/$slug'
+    | '/contests/$id/registration'
     | '/contests/my-contests/$'
     | '/contests/official/$'
     | '/contests/user-contests/$'
     | '/leaderboard/all-time/$'
     | '/leaderboard/latest/$'
     | '/logs/$logId/edit'
+    | '/contests/$id/leaderboard/$'
     | '/leaderboard/yearly/$year/$'
     | '/profile/$id/statistics/{-$year}'
     | '/profile/$id/updates/{-$page}'
@@ -205,12 +226,14 @@ export interface FileRouteTypes {
     | '/pages/$slug'
     | '/pages/manual'
     | '/blog/posts/$slug'
+    | '/contests/$id/registration'
     | '/contests/my-contests/$'
     | '/contests/official/$'
     | '/contests/user-contests/$'
     | '/leaderboard/all-time/$'
     | '/leaderboard/latest/$'
     | '/logs/$logId/edit'
+    | '/contests/$id/leaderboard/$'
     | '/leaderboard/yearly/$year/$'
     | '/profile/$id/statistics/{-$year}'
     | '/profile/$id/updates/{-$page}'
@@ -224,12 +247,14 @@ export interface FileRouteTypes {
     | '/pages/$slug'
     | '/pages/manual'
     | '/blog/posts/$slug'
+    | '/contests/$id/registration'
     | '/contests/my-contests/$'
     | '/contests/official/$'
     | '/contests/user-contests/$'
     | '/leaderboard/all-time/$'
     | '/leaderboard/latest/$'
     | '/logs/$logId_/edit'
+    | '/contests/$id/leaderboard/$'
     | '/leaderboard/yearly/$year/$'
     | '/profile/$id/statistics/{-$year}'
     | '/profile/$id/updates/{-$page}'
@@ -244,12 +269,14 @@ export interface RootRouteChildren {
   PagesSlugRoute: typeof PagesSlugRoute
   PagesManualRoute: typeof PagesManualRoute
   BlogPostsSlugRoute: typeof BlogPostsSlugRoute
+  ContestsIdRegistrationRoute: typeof ContestsIdRegistrationRoute
   ContestsMyContestsSplatRoute: typeof ContestsMyContestsSplatRoute
   ContestsOfficialSplatRoute: typeof ContestsOfficialSplatRoute
   ContestsUserContestsSplatRoute: typeof ContestsUserContestsSplatRoute
   LeaderboardAllTimeSplatRoute: typeof LeaderboardAllTimeSplatRoute
   LeaderboardLatestSplatRoute: typeof LeaderboardLatestSplatRoute
   LogsLogIdEditRoute: typeof LogsLogIdEditRoute
+  ContestsIdLeaderboardSplatRoute: typeof ContestsIdLeaderboardSplatRoute
   LeaderboardYearlyYearSplatRoute: typeof LeaderboardYearlyYearSplatRoute
   ProfileIdStatisticsChar123YearChar125Route: typeof ProfileIdStatisticsChar123YearChar125Route
   ProfileIdUpdatesChar123PageChar125Route: typeof ProfileIdUpdatesChar123PageChar125Route
@@ -313,6 +340,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogPostsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contests/$id/registration': {
+      id: '/contests/$id/registration'
+      path: '/contests/$id/registration'
+      fullPath: '/contests/$id/registration'
+      preLoaderRoute: typeof ContestsIdRegistrationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contests/my-contests/$': {
       id: '/contests/my-contests/$'
       path: '/contests/my-contests/$'
@@ -355,6 +389,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LogsLogIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contests/$id/leaderboard/$': {
+      id: '/contests/$id/leaderboard/$'
+      path: '/contests/$id/leaderboard/$'
+      fullPath: '/contests/$id/leaderboard/$'
+      preLoaderRoute: typeof ContestsIdLeaderboardSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/leaderboard/yearly/$year/$': {
       id: '/leaderboard/yearly/$year/$'
       path: '/leaderboard/yearly/$year/$'
@@ -388,12 +429,14 @@ const rootRouteChildren: RootRouteChildren = {
   PagesSlugRoute: PagesSlugRoute,
   PagesManualRoute: PagesManualRoute,
   BlogPostsSlugRoute: BlogPostsSlugRoute,
+  ContestsIdRegistrationRoute: ContestsIdRegistrationRoute,
   ContestsMyContestsSplatRoute: ContestsMyContestsSplatRoute,
   ContestsOfficialSplatRoute: ContestsOfficialSplatRoute,
   ContestsUserContestsSplatRoute: ContestsUserContestsSplatRoute,
   LeaderboardAllTimeSplatRoute: LeaderboardAllTimeSplatRoute,
   LeaderboardLatestSplatRoute: LeaderboardLatestSplatRoute,
   LogsLogIdEditRoute: LogsLogIdEditRoute,
+  ContestsIdLeaderboardSplatRoute: ContestsIdLeaderboardSplatRoute,
   LeaderboardYearlyYearSplatRoute: LeaderboardYearlyYearSplatRoute,
   ProfileIdStatisticsChar123YearChar125Route:
     ProfileIdStatisticsChar123YearChar125Route,

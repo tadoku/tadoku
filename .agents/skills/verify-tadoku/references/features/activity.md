@@ -105,6 +105,9 @@ actions and cannot open the edit form. From a personal log's detail, open
 Manage contest submissions, submit it to an eligible contest, reload the detail
 and compare the API's registrations and score; then remove it and confirm the
 API lists none. Another account and an anonymous visitor get no contest choices.
+Webv2's query parameters still apply: `/logs/new?amount=12` prefills the amount,
+and `/logs/<id>/contests?preselect=1` selects every eligible contest for a log not
+yet submitted anywhere.
 
 Run the Webv3 `logging.spec.ts`, `logging-edit.spec.ts`, `logging-contests.spec.ts` and `logging-session.spec.ts` with the
 documented fixture environment and Lab CA. Native login admits ten logins per

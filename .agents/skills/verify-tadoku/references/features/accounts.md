@@ -217,7 +217,10 @@ Authv2 uses `/` for Settings, `/login`, `/register` and `/recovery` on `account.
 Use `dev url --owner <owner> --host next.tadoku.dev.lab '/plan?source=next#entry'`.
 Anonymous HTML shows Log in with path and search; hydration adds the fragment.
 Sign in through authv2 on the sibling account host, confirm the exact return and
-display name, reload, then POST Log out and verify home is anonymous, the
+display name, reload, then open the account menu: a learner sees Profile,
+Account settings (authv2 `/settings` returning to the page) and Log out, and an
+administrator also sees Admin on the branch admin host. Log out from the menu and
+verify home is anonymous, the
 tenant's `tadoku_session_<tenant>` cookie is cleared and `GET /identity/session`
 on the branch API returns no account for the old cookie. Check a foreign-origin
 logout returns 403 without ending the session.

@@ -28,11 +28,21 @@ those pages while their display window is active.
 
 Generate its selected link with `dev url --owner <owner> --host next.tadoku.dev.lab '/'`.
 The homepage reads its branch's official contest and standings through the matching
-Webv2 API gateway; `/plan` saves only a local browser goal. Check product anchors in
-the server HTML and after hydration, then follow Daily goal and verify the links
-still use `<route>.tadoku.dev.lab`. Log activity must reach that same Webv2 branch,
-including its account login redirect. Compare two branch hosts in one browser
-profile to detect selection leaks; do not change shared identities or credentials.
+branch API gateway; `/plan` saves only a local browser goal. Check in the server
+HTML and after hydration that the main navigation (Home, Leaderboard, Contests,
+Blog, Guide) and the footer (Webv2's destinations plus GitHub, Discord and Twitter)
+stay on the `next.` host, and that Log in, Sign up and the account menu's Account
+settings and Admin open `<route>.account.tadoku.dev.lab` and
+`<route>.admin.tadoku.dev.lab`. Active CMS announcements appear above each page;
+dismiss one, reload and confirm it stays hidden. `/contests` must answer 308 to
+`/contests/official`. Compare two branch hosts in one browser profile to detect
+selection leaks; do not change shared identities or credentials.
+
+For the member's main path, run `frontend/apps/webv3/e2e/member-journey.spec.ts`
+with the logging fixture environment: signed in as Dev Reader it follows the
+homepage's contest link, a participant in the standings, their main profile and
+Log activity, saves a log and fails if any navigation leaves the `next.` host.
+It writes one log in the branch tenant.
 
 Webv3 serves the manual, CMS pages and blog itself at Webv2's paths; see
 [Webv3 content pages](../../../../../docs/docs/frontend/webv3-content.md) for its journey.
@@ -41,8 +51,9 @@ Check the unavailable-data state and `/healthz` when its configured API fails.
 The container smoke suite proves runtime URL overrides and concurrent Host isolation
 with synthetic read-only data; live ingress, tenant selection and login require
 separate development verification. Production canonical `next.tadoku.app` uses
-`tadoku.app` links, while `<route>.next.preview.tadoku.app` uses
-`<route>.preview.tadoku.app` links.
+`account.tadoku.app` and `admin.tadoku.app`, while `<route>.next.preview.tadoku.app`
+uses the matching `<route>.account.preview.tadoku.app` and
+`<route>.admin.preview.tadoku.app` hosts.
 
 ## Traps
 

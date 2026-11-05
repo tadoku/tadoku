@@ -14,7 +14,9 @@ Language and activity determine the available unit or duration input and
 eligible contests. Amount activities also accept an optional time spent. Eligible contests are selected initially; a user can uncheck
 them to save a personal record. Changing the activity clears the quantity,
 because activities count in different units. A missing unit is reported on the
-amount field, which shows one error for the amount and its unit.
+amount field, which shows one error for the amount and its unit. As in Webv2,
+`/logs/new?amount=<n>` prefills a positive whole amount; any other value is
+ignored.
 
 The draft has three owners:
 
@@ -69,8 +71,9 @@ record is someone else's, and an anonymous visitor is asked to sign in. Each
 registration is offered unless the contest does not allow the log's activity,
 the registration lacks its language or the contest has ended, in that order,
 and the reason is shown beside it. The owner's current submissions start
-selected. Saving sends the selection to the contest registration update
-operation, which adds and removes submissions to unfinished contests and keeps
+selected; with `?preselect=1`, a log not yet submitted anywhere starts with every
+eligible registration selected, as Webv2's link after saving does. Saving sends
+the selection to the contest registration update operation, which adds and removes submissions to unfinished contests and keeps
 submissions to finished contests and their saved scores; the page lists those
 as finished. A save opens the updated detail, and saving again is safe. Without
 an eligible registration the page links to the contest lists. Removing a

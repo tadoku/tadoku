@@ -1,6 +1,6 @@
 ---
 title: Webv3
-description: The TanStack Start homepage, request-scoped API and sibling links, local goal form, dev-cli overlays, container and preview deployment workflow.
+description: The Tadoku product application on TanStack Start, its navigation and shell, request-scoped API and sibling links, dev-cli overlays, container and preview deployment workflow.
 sidebar_position: 3
 ---
 
@@ -8,8 +8,10 @@ sidebar_position: 3
 
 Read this when you run or extend `frontend/apps/webv3`.
 
-Webv3 is a small application foundation. Its homepage follows the
-Paper playground composition and reads the current official contest, summary,
+Webv3 is the complete Tadoku product application. It serves every Webv2 product
+page at the same paths, so cutover is a host switch, and its links leave the host
+only for the account and admin applications, the log export download and
+external sites. Its homepage follows the Paper playground composition and reads the current official contest, summary,
 standings and next scheduled round from the configured Tadoku API. `/plan`
 demonstrates a validated immersion goal kept in the current browser. It does not
 sync the goal to a Tadoku account. [Native activity logging](webv3-logging.md), including a saved log's contest submissions, uses the existing account session and API.
@@ -36,8 +38,9 @@ legacy applications keep their existing compatibility.
 - `frontend/apps/webv3/src/lib/home.ts` owns response schemas and the homepage
   query. `frontend/apps/webv3/src/lib/home.server.ts` makes public GET requests to
   the configured API; it accepts no browser-supplied upstream URL or credentials.
-- `frontend/apps/webv3/src/lib/links.ts` links native pages on the same host and
-  sends unfinished product journeys to the configured existing Webv2 application.
+- `frontend/apps/webv3/src/lib/links.ts` links every product page on the same
+  host. Only the account and admin applications, the log export download and
+  external sites leave it.
 - `frontend/apps/webv3/src/components/` owns the Paper screen composition,
   navigation, appearance and local goal interactions.
 - The goal form uses `usePaperForm` and bound Paper controls through TanStack
@@ -53,6 +56,33 @@ invented schedule replace unavailable API data.
 The mobile menu, appearance toggle and local goal controls stay disabled until
 hydration completes and their browser handlers can respond. Ordinary links work
 in the server-rendered HTML.
+
+## Navigation and shell
+
+`frontend/apps/webv3/src/components/AppShell.tsx` gives every page Webv2's
+destinations in Paper's layout. The main navigation links Home, Leaderboard,
+Contests, Blog and the Guide. Anonymous visitors see Log in and Sign up, which
+open authv2's `/login` and `/register` and return to the current page. A
+signed-in account sees Log activity and a menu named after it with Profile,
+Admin for administrators, Account settings and Log out; at narrow widths the
+menu's entries join the mobile navigation. Admin opens the sibling admin host
+and Account settings opens authv2's `/settings` with the current page as
+`return_to`. The menu trigger stays disabled until hydration.
+A suspended account sees the suspended screen, with a Discord contact link and
+Log out, in place of every page. An unavailable account service names itself
+in the header and leaves public pages readable.
+
+The footer links Home, Leaderboard, Contests, Blog, About, Guide, Rules,
+Questions & help, Privacy and Contact, Tadoku's GitHub, Discord and Twitter,
+and the theme toggle. `frontend/apps/webv3/src/components/Announcements.tsx`
+shows the CMS's active announcements above each page after hydration, rendering
+their Markdown as the blog does, with Learn more unless the announcement links
+to the current page. A dismissal is stored in the browser under Webv2's
+`dismissed_announcements` key, so it survives the host switch, and is forgotten
+once its announcement ends. An unavailable announcement list shows nothing.
+
+`/contests` redirects permanently to `/contests/official`, as Webv2 does.
+Unknown paths render the not-found page with a link home and status 404.
 
 ## Local development
 
@@ -86,14 +116,14 @@ verification.
 | Variable | Local default | Purpose |
 | --- | --- | --- |
 | `TADOKU_API_URL` | `https://tadoku.dev.lab/api/internal` | Server-only Tadoku API root |
-| `TADOKU_WEB_URL` | `https://tadoku.dev.lab` | Runtime Webv2 origin for product links |
+| `TADOKU_WEB_URL` | `https://tadoku.dev.lab` | Runtime public web origin; the account and admin hosts are its siblings |
 | `HOST` | `0.0.0.0` | Local development listener |
 | `PORT` | `5183` | Local development port |
 
 The TanStack server function performs upstream reads, so the browser does not
 need cross-origin API cookies or a CORS exception. Account sessions are resolved
 server-side through the identity API; public homepage reads remain anonymous.
-Local runs default to development API data and Webv2 links; the
+Local runs default to development API data and account hosts; the
 production image defaults both origins to `https://tadoku.app`.
 
 ## Branch routing
@@ -114,21 +144,22 @@ retains its separately configured heap limit.
 
 `frontend/apps/webv3/src/lib/urls.server.ts` resolves URLs from the configured
 runtime origins and the request Host. Development branch reads go through
-`https://<route>.tadoku.dev.lab/api/internal`; product links use that same branch's
-Webv2 origin. Production branches at `<route>.next.preview.tadoku.app` use
-`https://<route>.preview.tadoku.app/api/internal` and the matching Webv2 links.
+`https://<route>.tadoku.dev.lab/api/internal`; account, admin and log export links
+use that same branch's sibling hosts. Production branches at
+`<route>.next.preview.tadoku.app` use `https://<route>.preview.tadoku.app/api/internal`
+and the matching sibling hosts.
 These public gateways select the branch tenant even when the API itself falls
 back to its base deployment. The resolver accepts one valid DNS label beneath
 the trusted branch root and rejects malformed or nested branch hosts. Incoming
 forwarded-host or branch headers cannot choose an upstream URL.
 
-The root route loader resolves the product-link origin once per request, and SSR
+The root route loader resolves these origins once per request, and SSR
 serializes that loader data for hydration. Client navigation and intent preloads
 reuse it without another server call. Links are resolved when a screen renders;
 they are never frozen into a production build or shared across requests. Log
 activity stays on the same Webv3 host, and its login link opens the matching
 branch's account host. Canonical `next.tadoku.app` uses production data and the
-canonical `tadoku.app` product links.
+canonical `account.tadoku.app` and `admin.tadoku.app` hosts.
 
 ## Checks
 
@@ -162,8 +193,10 @@ create community contests in the selected tenant.
 rule sets in the selected tenant.
 These suites require reachable contest and standings data and Chromium installed through
 Playwright. It preserves HTML reports and screenshots outside the source tree.
-Suites expect Webv2 links at a development host's sibling, otherwise at
-`TADOKU_WEB_URL`, defaulting to the image's `https://tadoku.app`.
+`frontend/apps/webv3/e2e/member-journey.spec.ts` signs in, walks from the
+homepage through the current contest's standings, a participant's contest and
+main profiles and the activity form to the saved log, and fails if any
+navigation leaves the Webv3 host; it writes one log in the selected tenant.
 `WEBV3_BASE_URL` selects the running server; `PLAYWRIGHT_OUTPUT_DIR` selects the
 artifact directory, defaulting to a temporary directory.
 
@@ -213,8 +246,8 @@ image.
 
 The active production GitOps configuration makes `next.tadoku.app` follow
 the `prod` digest automatically through Image Updater and Argo CD. Webv3 uses the same production
-backend as Webv2; the homepage, leaderboards, contest lists and contest pages read contest data, content pages read the CMS and blog, native logging, contest registration and log moderation use the existing account, activity and contest API, and contest creation and scoring use its contest and scoring API. Unfinished journeys
-continue to open production Webv2.
+backend as Webv2; the homepage, leaderboards, contest lists and contest pages read contest data, content pages read the CMS and blog, native logging, contest registration and log moderation use the existing account, activity and contest API, and contest creation and scoring use its contest and scoring API. No product
+journey opens Webv2.
 Merging source that matches the Webv3 workflow's paths, including the shared
 lockfile, therefore republishes `latest` and `prod` and rolls this production
 preview through Image Updater and Argo CD's automatic sync.
@@ -248,7 +281,7 @@ after hydration. Without JavaScript the server cannot preserve a fragment.
 Authv2 follows only returns on the identity API's
 [app host allowlist](../tadoku-api/identity.md#http-boundaries).
 
-Log out is a plain POST form to `/logout`. After the Origin check below, the
+Log out submits a plain POST form to `/logout` from the account menu. After the Origin check below, the
 route sends `POST /identity/logout` with the session cookies and the app's own
 Origin, relays the API's cookie-clearing `Set-Cookie` and returns home. Any
 other answer, including a timeout, shows an unavailable message and keeps the

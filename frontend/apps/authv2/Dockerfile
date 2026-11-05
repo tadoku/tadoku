@@ -1,4 +1,4 @@
-FROM docker.io/node:22-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392 AS build
+FROM docker.io/node:22-bookworm-slim@sha256:5ec23b7c622b00547753bc6ffd78085dd868a68aeb41c8e0a1418f033e13d96d AS build
 
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.10.0 --activate
@@ -12,7 +12,7 @@ RUN pnpm install --frozen-lockfile --offline --filter authv2...
 ENV NODE_OPTIONS=--max-old-space-size=3072
 RUN pnpm --filter paper-ui build && pnpm --filter authv2 build
 
-FROM docker.io/node:22-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392 AS release
+FROM docker.io/node:22-bookworm-slim@sha256:5ec23b7c622b00547753bc6ffd78085dd868a68aeb41c8e0a1418f033e13d96d AS release
 LABEL org.opencontainers.image.source="https://github.com/tadoku/tadoku"
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=3000 TADOKU_WEB_URL=https://tadoku.app TADOKU_API_URL=https://tadoku.app/api/internal
 WORKDIR /app

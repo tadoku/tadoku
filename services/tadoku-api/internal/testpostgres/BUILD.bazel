@@ -28,6 +28,7 @@ go_test(
     srcs = [
         "application_pool_test.go",
         "database_test.go",
+        "template_test.go",
     ],
     data = glob(["testdata/*.sql"]),
     embed = [":testpostgres"],

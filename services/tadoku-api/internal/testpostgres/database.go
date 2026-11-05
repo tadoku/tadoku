@@ -2,7 +2,9 @@ package testpostgres
 
 import (
 	"context"
+	"crypto/sha256"
 	_ "embed"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/url"
@@ -34,34 +36,13 @@ type Database struct {
 }
 
 func New(ctx context.Context) (_ *Database, err error) {
-	raw := os.Getenv("TADOKU_TEST_POSTGRES_URL")
-	u, err := url.Parse(raw)
-	if err != nil || u == nil || u.User == nil {
-		return nil, errors.New("TADOKU_TEST_POSTGRES_URL must be a disposable loopback PostgreSQL DSN")
-	}
-
-	password, _ := u.User.Password()
-	if u.Scheme != "postgres" ||
-		(u.Hostname() != "localhost" && u.Hostname() != "127.0.0.1") ||
-		u.Port() == "" ||
-		u.Path != "/postgres" ||
-		u.RawPath != "" ||
-		u.Opaque != "" ||
-		u.User.Username() != "postgres" ||
-		password != "postgres" ||
-		u.RawQuery != "sslmode=disable" ||
-		u.Fragment != "" {
-		return nil, errors.New("TADOKU_TEST_POSTGRES_URL must use postgres:postgres on loopback with an explicit port, /postgres and sslmode=disable")
+	adminConfig, err := adminConfig()
+	if err != nil {
+		return nil, err
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
-
-	adminConfig, err := pgxpool.ParseConfig(raw)
-	if err != nil {
-		return nil, fmt.Errorf("configure test admin: %w", err)
-	}
-	adminConfig.MaxConns = 2
 
 	admin, err := pgxpool.NewWithConfig(ctx, adminConfig)
 	if err != nil {
@@ -74,30 +55,31 @@ func New(ctx context.Context) (_ *Database, err error) {
 		}
 	}()
 
+	dir, err := migrationsDir()
+	if err != nil {
+		return nil, err
+	}
+	template, err := templateName(dir)
+	if err != nil {
+		return nil, err
+	}
+	if err := ensureTemplate(ctx, admin, dir, template); err != nil {
+		return nil, err
+	}
+
 	name := "tadoku_test_" + strings.ReplaceAll(uuid.NewString(), "-", "")
-	if _, err := admin.Exec(ctx, `create database "`+name+`"`); err != nil {
+	createSQL := "create database " + pgx.Identifier{name}.Sanitize() + " template " + pgx.Identifier{template}.Sanitize()
+	if _, err := admin.Exec(ctx, createSQL); err != nil {
 		return nil, fmt.Errorf("create disposable database: %w", err)
 	}
 	db.name = name
 
+	u, err := url.Parse(adminConfig.ConnString())
+	if err != nil {
+		return nil, fmt.Errorf("parse test admin DSN: %w", err)
+	}
 	u.Path = "/" + name
 	db.DSN = u.String()
-
-	first, err := bazel.Runfile("services/tadoku-api/migrations/0001_init.up.sql")
-	if err != nil {
-		return nil, fmt.Errorf("resolve canonical migrations: %w", err)
-	}
-
-	migrator, err := migrate.New((&url.URL{Scheme: "file", Path: filepath.Dir(first)}).String(), db.DSN)
-	if err != nil {
-		return nil, fmt.Errorf("open canonical migrations: %w", err)
-	}
-
-	migrationErr := migrator.Up()
-	sourceErr, databaseErr := migrator.Close()
-	if err := errors.Join(migrationErr, sourceErr, databaseErr); err != nil {
-		return nil, fmt.Errorf("migrate test database: %w", err)
-	}
 
 	cfg, err := pgxpool.ParseConfig(db.DSN)
 	if err != nil {
@@ -115,7 +97,7 @@ func New(ctx context.Context) (_ *Database, err error) {
 
 	role := name + "_app"
 	roleSQL := pgx.Identifier{role}.Sanitize()
-	password = uuid.NewString()
+	password := uuid.NewString()
 	if _, err := admin.Exec(ctx, "create role "+roleSQL+" login nosuperuser nobypassrls password '"+password+"'"); err != nil {
 		return nil, fmt.Errorf("create test application role: %w", err)
 	}
@@ -158,6 +140,123 @@ func New(ctx context.Context) (_ *Database, err error) {
 	}
 
 	return db, nil
+}
+
+func adminConfig() (*pgxpool.Config, error) {
+	raw := os.Getenv("TADOKU_TEST_POSTGRES_URL")
+	u, err := url.Parse(raw)
+	if err != nil || u == nil || u.User == nil {
+		return nil, errors.New("TADOKU_TEST_POSTGRES_URL must be a disposable loopback PostgreSQL DSN")
+	}
+
+	password, _ := u.User.Password()
+	if u.Scheme != "postgres" ||
+		(u.Hostname() != "localhost" && u.Hostname() != "127.0.0.1") ||
+		u.Port() == "" ||
+		u.Path != "/postgres" ||
+		u.RawPath != "" ||
+		u.Opaque != "" ||
+		u.User.Username() != "postgres" ||
+		password != "postgres" ||
+		u.RawQuery != "sslmode=disable" ||
+		u.Fragment != "" {
+		return nil, errors.New("TADOKU_TEST_POSTGRES_URL must use postgres:postgres on loopback with an explicit port, /postgres and sslmode=disable")
+	}
+
+	config, err := pgxpool.ParseConfig(raw)
+	if err != nil {
+		return nil, fmt.Errorf("configure test admin: %w", err)
+	}
+	config.MaxConns = 2
+	return config, nil
+}
+
+func migrationsDir() (string, error) {
+	first, err := bazel.Runfile("services/tadoku-api/migrations/0001_init.up.sql")
+	if err != nil {
+		return "", fmt.Errorf("resolve canonical migrations: %w", err)
+	}
+	return filepath.Dir(first), nil
+}
+
+func templateName(dir string) (string, error) {
+	files, err := filepath.Glob(filepath.Join(dir, "*.up.sql"))
+	if err != nil {
+		return "", fmt.Errorf("list canonical migrations: %w", err)
+	}
+	if len(files) == 0 {
+		return "", errors.New("no canonical up migrations")
+	}
+
+	hash := sha256.New()
+	for _, file := range files {
+		contents, err := os.ReadFile(file)
+		if err != nil {
+			return "", fmt.Errorf("read canonical migration: %w", err)
+		}
+		fmt.Fprintf(hash, "%s\x00%d\x00", filepath.Base(file), len(contents))
+		hash.Write(contents)
+	}
+	return "tadoku_test_template_" + hex.EncodeToString(hash.Sum(nil))[:16], nil
+}
+
+func ensureTemplate(ctx context.Context, admin *pgxpool.Pool, dir, name string) (err error) {
+	conn, err := admin.Acquire(ctx)
+	if err != nil {
+		return fmt.Errorf("acquire template connection: %w", err)
+	}
+	defer conn.Release()
+
+	if _, err := conn.Exec(ctx, "select pg_advisory_lock(hashtextextended($1, 0))", name); err != nil {
+		return fmt.Errorf("lock migrated template: %w", err)
+	}
+	defer func() {
+		unlockCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if _, unlockErr := conn.Exec(unlockCtx, "select pg_advisory_unlock(hashtextextended($1, 0))", name); unlockErr != nil {
+			err = errors.Join(err, fmt.Errorf("unlock migrated template: %w", unlockErr), conn.Conn().Close(unlockCtx))
+		}
+	}()
+
+	var ready bool
+	err = conn.QueryRow(ctx, "select datistemplate from pg_database where datname = $1", name).Scan(&ready)
+	if err == nil && ready {
+		return nil
+	}
+	nameSQL := pgx.Identifier{name}.Sanitize()
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+	case err != nil:
+		return fmt.Errorf("inspect migrated template: %w", err)
+	default:
+		if _, err := conn.Exec(ctx, "drop database "+nameSQL+" with (force)"); err != nil {
+			return fmt.Errorf("drop interrupted template: %w", err)
+		}
+	}
+
+	if _, err := conn.Exec(ctx, "create database "+nameSQL); err != nil {
+		return fmt.Errorf("create migrated template: %w", err)
+	}
+	u, err := url.Parse(admin.Config().ConnString())
+	if err != nil {
+		return fmt.Errorf("parse test admin DSN: %w", err)
+	}
+	u.Path = "/" + name
+
+	migrator, err := migrate.New((&url.URL{Scheme: "file", Path: dir}).String(), u.String())
+	if err != nil {
+		return fmt.Errorf("open canonical migrations: %w", err)
+	}
+	migrationErr := migrator.Up()
+	sourceErr, databaseErr := migrator.Close()
+	if err := errors.Join(migrationErr, sourceErr, databaseErr); err != nil {
+		return fmt.Errorf("migrate template: %w", err)
+	}
+
+	if _, err := conn.Exec(ctx, "alter database "+nameSQL+" with is_template true allow_connections false"); err != nil {
+		return fmt.Errorf("mark migrated template: %w", err)
+	}
+	return nil
 }
 
 func (d *Database) Close() error {

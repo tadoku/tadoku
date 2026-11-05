@@ -103,6 +103,7 @@ Case files are language-neutral and reviewable:
 ```text
 e2e/testdata/<operation>/
   setup.sql              # optional operation-level seed
+  setup.<role>.sql       # optional seed for a scenario role's tenant
   relationships.json     # optional operation-level permission relationships
   <status>_<description>/
     setup.sql            # optional
@@ -157,7 +158,9 @@ resolved file's rows. A row's tenant must be registered by then: for a test
 tenant, insert its registry row in the case's `setup.sql` with
 `on conflict (key) do nothing`. A scenario case seeds the same files into its
 own tenants instead, giving each row to the tenant that stands in for the row's
-`tenant`.
+`tenant`. Its SQL for a test tenant goes in the operation's `setup.<role>.sql`
+instead of `setup.sql`; see
+[Golden cases and journeys as scenarios](./scenario-fixtures.md#golden-cases-and-journeys-as-scenarios).
 
 ### Comparison
 

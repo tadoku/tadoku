@@ -97,8 +97,13 @@ and description, and review selected eligible contests. Save once, record the
 returned ID and values, then reload the detail and compare a fresh API read.
 Confirm `X-Dev-Selected` and that the canonical tenant cannot read the branch ID.
 Public detail is readable; contest submissions and management remain owner-only.
+As the owner, edit the log from its detail page, compare the estimated score
+with a direct score-preview API call, save, reload and compare a fresh API read
+with the record before the edit. Delete another log after confirming; the API
+must then answer 404. Another account and an anonymous visitor see no owner
+actions and cannot open the edit form.
 
-Run the Webv3 `logging.spec.ts` and `logging-session.spec.ts` with the
+Run the Webv3 `logging.spec.ts`, `logging-edit.spec.ts` and `logging-session.spec.ts` with the
 documented fixture environment and Lab CA. Native login admits ten logins per
 account in 15 minutes, so wait that long before repeating a complete run. It verifies invalid-field focus, real amount/time writes, contest selection,
 reload, duplicate-submit prevention, keyboard layouts and expired-session draft

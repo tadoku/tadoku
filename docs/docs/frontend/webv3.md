@@ -12,7 +12,7 @@ Webv3 is a small application foundation. Its homepage follows the
 Paper playground composition and reads the current official contest, summary,
 standings and next scheduled round from the configured Tadoku API. `/plan`
 demonstrates a validated immersion goal kept in the current browser. It does not
-sync the goal to a Tadoku account. Native activity logging uses the existing account session and API.
+sync the goal to a Tadoku account. [Native activity logging](webv3-logging.md) uses the existing account session and API.
 The latest official, yearly and all-time [leaderboards](webv3-leaderboards.md)
 read their standings from the API, and the official, community and My contests
 [contest lists](webv3-contests.md) list contests as the visitor sees them.
@@ -143,7 +143,7 @@ storage, theme persistence, mobile navigation and unknown routes.
 rows, scope and profile links with the API, follows page, year and period links,
 checks a signed-in participant's row and contest action, and checks containment
 at 390px and 1280px. It needs `TADOKU_API_URL` and the Dev Reader credentials
-described under native activity logging, and signs in once.
+described under [native activity logging](webv3-logging.md), and signs in once.
 `frontend/apps/webv3/e2e/contests.spec.ts` covers the
 [contest lists](webv3-contests.md); its signed-in journeys use both fixture
 accounts and create community contests in the selected tenant.
@@ -251,78 +251,3 @@ account to remain signed in. After logout it checks that the API no longer
 accepts the old session cookie. Set
 `TADOKU_API_URL` to the branch's public API root for that check. Authenticated
 tests disable traces and videos and retain no browser storage.
-
-## Native activity logging
-
-`/logs/new` prompts anonymous visitors to sign in through authv2, then loads
-configuration and ongoing contest registrations from the selected tenant.
-Language and activity determine the available unit or duration input and
-eligible contests. Eligible contests are selected initially; a user can uncheck
-them to save a personal record. Changing the activity clears the quantity,
-because activities count in different units. A missing unit is reported on the
-amount field, which shows one error for the amount and its unit.
-
-The draft has three owners:
-
-- `frontend/apps/webv3/src/lib/log-draft.ts` owns the form's values: their
-  defaults, the unit and contests that follow a language or activity change,
-  validation with the API's rules, and conversion to the `NewLog` the server
-  function accepts.
-- `frontend/apps/webv3/src/components/LogForm.tsx` composes the screen from
-  `usePaperForm` and Paper's bound controls, and owns navigation and failure
-  messages.
-- `frontend/apps/webv3/src/lib/logs.ts` owns the server functions, their query
-  keys and `useSaveLog()`, which caches a saved log for its detail page and
-  refreshes the viewer after an account switch.
-
-`frontend/apps/webv3/src/lib/logs.server.ts` calls the configuration,
-registrations, create and detail operations through the generated client, which
-validates their responses, with the session cookies described above. A
-registration without its ID or contest makes the options unavailable. The API
-owns scoring, contest eligibility, authorization and persistence; Webv3 does not
-calculate a provisional score.
-A saved amount names its unit by the configuration's `unit_key`; the API resolves
-the language's variant.
-
-A successful save navigates to `/logs/$logId` using the returned ID and displays
-the persisted language, measure, tags, score and contests. Reload reads that
-record again. An expired session cookie retries a public detail read
-anonymously. Public detail omits private contest submissions; only the owner
-gets the contest management link to Webv2. History, edit, delete and score
-preview remain Webv2 journeys.
-
-Invalid input focuses the first invalid control. Validation follows the API's
-text rules: a description allows 255 characters, and tags are normalized as Go's
-`strings.TrimSpace` and `strings.ToLower` do and deduplicated before the limits
-of 10 tags and 50 UTF-8 bytes per tag apply. Unicode white space is trimmed and
-each character is lowercased on its own, so `İ` becomes `i` and `Σ` becomes `σ`
-in every position. A pending save disables
-controls and repeated submits. Rejected saves keep the draft. Each save checks
-the current session against the account that started the draft; an account
-switch is refused before the API write, updates the header and offers an
-explicit new draft for the new account. The first signed-in account anchors the
-draft even when the page started anonymously and login happened in another tab.
-An unavailable account check reports that nothing was saved. An expired session
-offers login in a new tab so the original form survives. An ambiguous transport
-failure asks the user to check their activity before retrying; the API has no
-idempotency key, so retrying an ambiguous save can create another record. Drafts
-are held in memory and are lost when the form is reloaded or closed.
-
-`logging.spec.ts` covers the form, saves, detail, ownership and tenant
-isolation; `logging-session.spec.ts` covers expiry, CSRF, suspension and account
-switches. Run them with `WEBV3_BASE_URL`, `TADOKU_API_URL`, `E2E_READER_EMAIL`
-and `E2E_READER_PASSWORD` for the documented development fixture. Ownership,
-suspension and account-switch cases also use `E2E_SECOND_EMAIL` and
-`E2E_SECOND_PASSWORD` for Dev Admin; the suspension case first checks that the
-administrator reaches the selected branch and restores the Reader role there.
-The identity API admits ten logins per account in 15 minutes, counting
-successful ones. `frontend/apps/webv3/e2e/logging-fixtures.ts` therefore shares
-one real session per account, held in memory, across journeys where login is
-incidental. Both logging files and the account E2E together sign in with Dev
-Reader eight times and Dev Admin five times, so wait 15 minutes after the last
-login before repeating a complete run. A failed test restarts the Playwright
-worker, whose shared sessions then sign in again, and rejected attempts count
-towards the limit too. Set `NODE_EXTRA_CA_CERTS` to the trusted Lab CA
-and `PLAYWRIGHT_OUTPUT_DIR` outside the checkout. Authenticated runs disable
-traces and videos; browser-boundary delay and abort cases cover repeated submits
-and transport errors without mocking the API's successful writes.

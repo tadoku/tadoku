@@ -173,6 +173,8 @@ for (const width of [390, 1280]) {
     await page.keyboard.press('Tab')
     await expect(page.getByLabel('Unit', { exact: true })).toBeFocused()
     await page.keyboard.press('Tab')
+    await expect(page.getByLabel('Time spent', { exact: true })).toBeFocused()
+    await page.keyboard.press('Tab')
     const description = `keyboard-${width}-${Date.now()}`
     await page.keyboard.type(description)
     await page.keyboard.press('Tab')

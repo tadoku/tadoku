@@ -115,10 +115,28 @@ a { text-underline-offset: .2em; }
 .profile-contests li { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding-block: 12px; border-block-end: 1px solid var(--paper-color-rule-default); overflow-wrap: anywhere; }
 .profile-contests li:first-child { padding-block-start: 0; }
 .profile-contests + .paper-pagination { margin-block-start: 20px; }
+.profile-activity { margin-block-start: 32px; }
+.profile-day { margin-block-end: 16px; }
+.profile-entries { list-style: none; padding: 0; margin: 0; border-block-start: 1px solid var(--paper-color-rule-default); }
+.profile-entries > li { display: grid; grid-template-columns: 7rem minmax(0, 1fr) 4rem; gap: 24px; align-items: start; padding-block: 24px; border-block-end: 1px solid var(--paper-color-rule-default); }
+.profile-entry-date { padding-block-start: 3px; color: var(--paper-color-text-muted); font-size: .8125rem; }
+.profile-entry-body { min-width: 0; }
+.profile-entry-title { font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; text-decoration-thickness: 1px; text-underline-offset: .2em; }
+.profile-entry-meta { margin: 6px 0 0; color: var(--paper-color-text-muted); font-size: .8125rem; }
+.profile-entry-nsfw { margin-block-start: 10px; font-size: .875rem; }
+.profile-entry-nsfw summary { cursor: pointer; color: var(--paper-color-text-muted); }
+.profile-entry-nsfw p { max-inline-size: 60ch; margin: 8px 0 0; line-height: 1.7; overflow-wrap: anywhere; }
+.profile-entry-score { text-align: end; font-weight: 700; font-variant-numeric: tabular-nums; }
+.profile-entry-score small { display: block; color: var(--paper-color-text-muted); font-size: .75rem; font-weight: 400; }
+.profile-entries-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding-block: 16px; }
+.profile-entries-footer > p { margin: 0; font-size: .8125rem; color: var(--paper-color-text-muted); }
+.profile-entries-footer .paper-pagination__list { flex-wrap: wrap; }
 @media (max-width: 900px) { .profile-columns { grid-auto-flow: row; } }
 @media (max-width: 520px) {
   .profile-year { padding: 20px; }
   .profile-avatar { display: none; }
+  .profile-entries > li { grid-template-columns: minmax(0, 1fr) 3rem; gap: 6px 16px; }
+  .profile-entry-date { grid-column: 1 / -1; padding: 0; }
 }
 
 @media (max-width: 1000px) {

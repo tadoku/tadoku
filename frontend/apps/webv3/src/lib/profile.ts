@@ -2,6 +2,7 @@ import { queryOptions } from '@tanstack/react-query'
 import { createServerFn } from '@tanstack/react-start'
 import type {
   ImmersionActivitySplit,
+  ImmersionLogs,
   ImmersionProfileScores,
   ImmersionUserActivity,
   ImmersionUserProfile,
@@ -9,6 +10,7 @@ import type {
 import { z } from 'zod'
 
 export const contestPageSize = 50
+export const activityPageSize = 50
 
 /** One independently loaded part of a profile year; Webv2 reports each part's failure on its own. */
 export type Section<T> = { ok: true; data: T } | { ok: false }
@@ -46,6 +48,33 @@ const getProfileStatistics = createServerFn({ method: 'GET' })
 export const profileStatisticsQuery = (input: z.infer<typeof statisticsInput>, viewerKey: string) => queryOptions({
   queryKey: ['profile-statistics', input.userId, input.year, input.page, viewerKey],
   queryFn: () => getProfileStatistics({ data: input }),
+  retry: false,
+  staleTime: 30_000,
+})
+
+/** A page of a profile's logs, newest first; its list fails on its own while the profile header still shows. */
+export type ProfileActivity =
+  | { status: 'found'; profile: ImmersionUserProfile; logs: Section<ImmersionLogs> }
+  | { status: 'not-found' }
+  | { status: 'unavailable' }
+
+const activityInput = z.object({
+  userId: z.guid(),
+  page: z.number().int().min(1),
+  /** Only one UTC calendar day's logs, as the statistics calendar links them. */
+  date: z.iso.date().optional(),
+})
+
+const getProfileActivity = createServerFn({ method: 'GET' })
+  .inputValidator(activityInput)
+  .handler(async ({ data }) => {
+    const { readProfileActivity } = await import('./profile.server')
+    return readProfileActivity(data.userId, data.page, data.date)
+  })
+
+export const profileActivityQuery = (input: z.infer<typeof activityInput>) => queryOptions({
+  queryKey: ['profile-activity', input.userId, input.page, input.date],
+  queryFn: () => getProfileActivity({ data: input }),
   retry: false,
   staleTime: 30_000,
 })

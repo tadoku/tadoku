@@ -22,11 +22,13 @@ function createLinks(base: string) {
     legacyUrl,
     home: legacyUrl('/'),
     contests: legacyUrl('/contests/official/1'),
-    leaderboard: legacyUrl('/leaderboard/latest/1'),
+    leaderboard: '/leaderboard/latest/1',
     guide: legacyUrl('/pages/manual'),
     logs: '/logs/new',
     contest: (id: string) => legacyUrl(`/contests/${encodeURIComponent(id)}/leaderboard/1`),
     joinContest: (id: string) => legacyUrl(`/contests/${encodeURIComponent(id)}/registration`),
+    contestProfile: (contestId: string, userId: string) =>
+      legacyUrl(`/contests/${encodeURIComponent(contestId)}/profile/${encodeURIComponent(userId)}/1`),
     profile: (id: string) => legacyUrl(`/profile/${encodeURIComponent(id)}/statistics`),
   }
 }

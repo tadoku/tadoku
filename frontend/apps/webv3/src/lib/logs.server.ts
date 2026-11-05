@@ -1,10 +1,14 @@
 import {
   immersionContestFindOngoingRegistrations,
   immersionLogCreate,
+  immersionLogDeleteById,
   immersionLogFindById,
   immersionLogGetConfigurations,
+  immersionLogUpdate,
+  immersionScorePreview,
+  type ImmersionScorePreview,
 } from 'api-client'
-import type { NewLog } from './log-draft'
+import type { LogUpdate, NewLog, ScorePreviewInput } from './log-draft'
 import type { ImmersionLog, LogFailure, LogOptions, LogResult, Registration } from './logs'
 import { readViewer, sessionCookie, sessionRequest } from './session.server'
 
@@ -58,8 +62,11 @@ export async function readLog(id: string): Promise<LogResult<ImmersionLog>> {
   return result
 }
 
-/** Saves the log for the account that started its draft, refusing it when another account or none is signed in. */
-export async function saveLog(log: NewLog): Promise<LogResult<ImmersionLog>> {
+/**
+ * The session cookie while it belongs to the account that started a change. Another account, or none, is refused before
+ * the API is asked, so a change is never made for an account that did not start it.
+ */
+async function draftOwnerCookie(viewerId: string): Promise<LogResult<string>> {
   const cookie = sessionCookie()
   if (!cookie) return { ok: false, reason: 'signed-out' }
 
@@ -69,20 +76,62 @@ export async function saveLog(log: NewLog): Promise<LogResult<ImmersionLog>> {
     case 'unavailable': return { ok: false, reason: 'account-unavailable' }
     case 'banned': return { ok: false, reason: 'forbidden' }
   }
-  if (viewer.userId !== log.viewerId) return { ok: false, reason: 'switched' }
+  if (viewer.userId !== viewerId) return { ok: false, reason: 'switched' }
+  return { ok: true, data: cookie }
+}
 
-  const measure = log.measure.kind === 'amount'
-    ? { amount: log.measure.amount, unit_key: log.measure.unitKey }
-    : { duration_seconds: log.measure.seconds }
+function measureBody(measure: NewLog['measure']) {
+  return measure.kind === 'amount'
+    ? { amount: measure.amount, unit_key: measure.unitKey, duration_seconds: measure.seconds }
+    : { duration_seconds: measure.seconds }
+}
+
+export async function saveLog(log: NewLog): Promise<LogResult<ImmersionLog>> {
+  const session = await draftOwnerCookie(log.viewerId)
+  if (!session.ok) return session
+
   return answer(immersionLogCreate({
-    ...sessionRequest(cookie),
+    ...sessionRequest(session.data),
     body: {
       language_code: log.languageCode,
       activity_id: log.activityId,
-      ...measure,
+      ...measureBody(log.measure),
       description: log.description,
       tags: log.tags,
       registration_ids: log.registrationIds,
+    },
+  }))
+}
+
+/** Updates a log's measure, description and tags. The API rescores its submissions to unfinished contests. */
+export async function updateLog(change: LogUpdate): Promise<LogResult<ImmersionLog>> {
+  const session = await draftOwnerCookie(change.viewerId)
+  if (!session.ok) return session
+
+  return answer(immersionLogUpdate({
+    ...sessionRequest(session.data),
+    path: { id: change.logId },
+    body: { ...measureBody(change.measure), description: change.description, tags: change.tags },
+  }))
+}
+
+/** Deletes a log. A log that is already gone counts as deleted. */
+export async function deleteLog({ viewerId, logId }: { viewerId: string; logId: string }): Promise<LogResult<null>> {
+  const session = await draftOwnerCookie(viewerId)
+  if (!session.ok) return session
+
+  const result = await answer(immersionLogDeleteById({ ...sessionRequest(session.data), path: { id: logId } }))
+  return result.ok || result.reason === 'not-found' ? { ok: true, data: null } : result
+}
+
+export async function readScorePreview(input: ScorePreviewInput): Promise<LogResult<ImmersionScorePreview>> {
+  return answer(immersionScorePreview({
+    ...sessionRequest(sessionCookie()),
+    body: {
+      language_code: input.languageCode,
+      activity_id: input.activityId,
+      ...measureBody(input.measure),
+      tags: input.tags,
     },
   }))
 }

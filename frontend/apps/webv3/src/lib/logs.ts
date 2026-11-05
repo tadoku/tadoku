@@ -1,4 +1,4 @@
-import { queryOptions, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, queryOptions, skipToken, useQueryClient } from '@tanstack/react-query'
 import { createServerFn } from '@tanstack/react-start'
 import type {
   ImmersionContestRegistration,
@@ -7,7 +7,14 @@ import type {
   ImmersionLogConfigurationOptions,
 } from 'api-client'
 import { z } from 'zod'
-import { newLogSchema, type NewLog } from './log-draft'
+import {
+  logUpdateSchema,
+  newLogSchema,
+  scorePreviewSchema,
+  type LogUpdate,
+  type NewLog,
+  type ScorePreviewInput,
+} from './log-draft'
 import { viewerQueryOptions } from './session'
 
 export type { ImmersionLog }
@@ -49,6 +56,28 @@ const createLog = createServerFn({ method: 'POST' })
     return saveLog(data)
   })
 
+const changeLog = createServerFn({ method: 'POST' })
+  .inputValidator(logUpdateSchema)
+  .handler(async ({ data }) => {
+    const { updateLog } = await import('./logs.server')
+    return updateLog(data)
+  })
+
+const removeLog = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ viewerId: z.guid(), logId: z.guid() }))
+  .handler(async ({ data }) => {
+    const { deleteLog } = await import('./logs.server')
+    return deleteLog(data)
+  })
+
+// A GET, because an estimate changes nothing.
+const getScorePreview = createServerFn({ method: 'GET' })
+  .inputValidator(scorePreviewSchema)
+  .handler(async ({ data }) => {
+    const { readScorePreview } = await import('./logs.server')
+    return readScorePreview(data)
+  })
+
 /** The form's options for the account that started a draft; they don't change while that draft is open. */
 export const logOptionsQuery = (viewerId: string) => queryOptions({
   queryKey: ['log-options', viewerId],
@@ -70,17 +99,50 @@ export const logQuery = (id: string, viewerKey: string) => queryOptions({
  * viewer. A failed request is reported as `unavailable`, because the log may or may not have been saved.
  */
 export function useSaveLog() {
+  const settle = useSettle()
+  return async (log: NewLog) => settle(log.viewerId, await createLog({ data: log }).catch(unconfirmed<ImmersionLog>))
+}
+
+/** Updates a log like `useSaveLog` saves one. */
+export function useUpdateLog() {
+  const settle = useSettle()
+  return async (change: LogUpdate) =>
+    settle(change.viewerId, await changeLog({ data: change }).catch(unconfirmed<ImmersionLog>))
+}
+
+/** Deletes a log for the account that viewed it. A failed request is `unavailable`: the log may or may not be gone. */
+export function useDeleteLog() {
   const queryClient = useQueryClient()
 
-  return async (log: NewLog): Promise<LogResult<ImmersionLog>> => {
-    const result = await createLog({ data: log })
-      .catch((): LogResult<ImmersionLog> => ({ ok: false, reason: 'unavailable' }))
+  return async (viewerId: string, logId: string) => {
+    const result = await removeLog({ data: { viewerId, logId } }).catch(unconfirmed<null>)
+    if (!result.ok && result.reason === 'switched') {
+      await queryClient.invalidateQueries({ queryKey: viewerQueryOptions().queryKey })
+    }
+    return result
+  }
+}
 
+const unconfirmed = <T>(): LogResult<T> => ({ ok: false, reason: 'unavailable' })
+
+function useSettle() {
+  const queryClient = useQueryClient()
+
+  return async (viewerId: string, result: LogResult<ImmersionLog>) => {
     if (result.ok) {
-      queryClient.setQueryData(logQuery(result.data.id, log.viewerId).queryKey, result)
+      queryClient.setQueryData(logQuery(result.data.id, viewerId).queryKey, result)
     } else if (result.reason === 'switched') {
       await queryClient.invalidateQueries({ queryKey: viewerQueryOptions().queryKey })
     }
     return result
   }
 }
+
+/** The API's estimate for a complete draft. The previous estimate stays visible while the next one loads. */
+export const scorePreviewQuery = (input: ScorePreviewInput | undefined) => queryOptions({
+  queryKey: ['score-preview', input],
+  queryFn: input ? () => getScorePreview({ data: input }) : skipToken,
+  placeholderData: keepPreviousData,
+  retry: false,
+  staleTime: Infinity,
+})

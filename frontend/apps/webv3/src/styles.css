@@ -250,3 +250,6 @@ a { text-underline-offset: .2em; }
   .contest-row__status { grid-column: 2; flex-direction: row; flex-wrap: wrap; align-items: center; margin-top: 12px; }
   .contests-pagination .paper-pagination__list { flex-wrap: wrap; }
 }
+
+.log-estimate { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; margin: 0; padding-top: 18px; border-top: 1px solid var(--paper-color-rule-default); font-size: .875rem; }
+.log-estimate strong { font-size: 1.125rem; font-variant-numeric: tabular-nums; }

@@ -1,9 +1,9 @@
 import { z } from 'zod'
-import type { LogOptions, Registration } from './logs'
+import type { ImmersionLog, LogOptions, Registration } from './logs'
 
 /**
- * What the activity form holds. Amount activities use `amount` and `unitKey`, timed ones `minutes`; `toNewLog` sends
- * only the measure that applies.
+ * What the activity form holds. Amount activities use `amount`, `unitKey` and optionally `minutes`, timed ones
+ * `minutes`; `toNewLog` and `toLogUpdate` send only the measure that applies.
  */
 export type LogDraft = {
   languageCode: string
@@ -35,15 +35,16 @@ const tagRule = z.string()
     'Use shorter tags. A tag allows 50 bytes, and most non-Latin characters take 2 to 4 bytes.',
   )
 const tagsRule = z.array(tagRule).max(10, 'Use at most 10 different tags.')
+const secondsRule = z.int().positive().max(86_400)
 
-/** The activity a viewer saves, as the API receives it. */
+/** The activity a viewer saves, as the API receives it. An amount may also record the time spent. */
 export const newLogSchema = z.object({
   viewerId: z.guid(),
   languageCode: z.string().length(3),
   activityId: z.int().positive(),
   measure: z.discriminatedUnion('kind', [
-    z.object({ kind: z.literal('amount'), amount: amountRule, unitKey: unitRule }),
-    z.object({ kind: z.literal('duration'), seconds: z.int().positive().max(86_400) }),
+    z.object({ kind: z.literal('amount'), amount: amountRule, unitKey: unitRule, seconds: secondsRule.optional() }),
+    z.object({ kind: z.literal('duration'), seconds: secondsRule }),
   ]),
   description: descriptionRule,
   tags: tagsRule,
@@ -51,6 +52,18 @@ export const newLogSchema = z.object({
 })
 
 export type NewLog = z.infer<typeof newLogSchema>
+
+/** A change to a saved log. Its language, activity and contest submissions stay as they are. */
+export const logUpdateSchema = newLogSchema
+  .pick({ viewerId: true, measure: true, description: true, tags: true })
+  .extend({ logId: z.guid() })
+
+export type LogUpdate = z.infer<typeof logUpdateSchema>
+
+/** What the API needs to estimate a draft's score. */
+export const scorePreviewSchema = newLogSchema.pick({ languageCode: true, activityId: true, measure: true, tags: true })
+
+export type ScorePreviewInput = z.infer<typeof scorePreviewSchema>
 
 /**
  * Validates the form's values with the API's rules, reporting each problem on the field that holds it. Only the
@@ -69,6 +82,7 @@ export function logDraftSchema(options: LogOptions) {
       check('amount', amountRule, draft.amount)
       // AmountWithUnit shows one error for the amount and its unit, so a missing unit is reported on the amount.
       check('amount', unitRule, draft.unitKey)
+      if (!Number.isNaN(draft.minutes)) check('minutes', minutesRule, draft.minutes)
     }
     check('description', descriptionRule, draft.description.trim())
     check('tags', tagsRule, parseTags(draft.tags))
@@ -101,20 +115,56 @@ export function dependentFields(options: LogOptions, languageCode: string, activ
   }
 }
 
+/**
+ * The draft of a saved log. Timed logs saved before durations were recorded hold their minutes as the amount; they are
+ * edited and saved as a duration.
+ */
+export function draftFromLog(options: LogOptions, log: ImmersionLog): LogDraft {
+  const languageCode = log.language.code
+  const activityId = String(log.activity.id)
+  const timed = isTimed(options, activityId)
+  const seconds = log.duration_seconds ?? (timed ? log.amount * 60 : undefined)
+
+  return {
+    languageCode,
+    activityId,
+    amount: timed ? Number.NaN : log.amount,
+    unitKey: (timed ? undefined : log.unit_key) ?? unitsFor(options, languageCode, activityId)[0]?.unit_key ?? '',
+    minutes: seconds === undefined ? Number.NaN : seconds / 60,
+    description: log.description ?? '',
+    tags: log.tags.join(', '),
+    registrationIds: [],
+  }
+}
+
 export function toNewLog(draft: LogDraft, options: LogOptions, viewerId: string): NewLog {
   const selected = eligibleRegistrations(options, draft.languageCode, draft.activityId)
     .filter(registration => draft.registrationIds.includes(registration.id))
 
   return {
+    ...toScorePreview(draft, options),
     viewerId,
+    description: draft.description.trim(),
+    registrationIds: selected.map(registration => registration.id),
+  }
+}
+
+export function toLogUpdate(draft: LogDraft, options: LogOptions, viewerId: string, logId: string): LogUpdate {
+  const { measure, tags } = toScorePreview(draft, options)
+  return { viewerId, logId, measure, description: draft.description.trim(), tags }
+}
+
+/** The estimate request for a draft that passes `logDraftSchema`. */
+export function toScorePreview(draft: LogDraft, options: LogOptions): ScorePreviewInput {
+  const seconds = Math.round(draft.minutes * 60)
+
+  return {
     languageCode: draft.languageCode,
     activityId: Number(draft.activityId),
     measure: isTimed(options, draft.activityId)
-      ? { kind: 'duration', seconds: Math.round(draft.minutes * 60) }
-      : { kind: 'amount', amount: draft.amount, unitKey: draft.unitKey },
-    description: draft.description.trim(),
+      ? { kind: 'duration', seconds }
+      : { kind: 'amount', amount: draft.amount, unitKey: draft.unitKey, ...(Number.isNaN(seconds) ? {} : { seconds }) },
     tags: parseTags(draft.tags),
-    registrationIds: selected.map(registration => registration.id),
   }
 }
 

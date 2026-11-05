@@ -1,10 +1,20 @@
 import { useQuery } from '@tanstack/react-query'
-import { createFileRoute, notFound, useHydrated } from '@tanstack/react-router'
-import { DescriptionList, EmptyState, PageHeader, SectionHeading, StatGrid, Surface } from 'paper-ui'
-import { useEffect } from 'react'
+import { Link, createFileRoute, notFound, useHydrated } from '@tanstack/react-router'
+import {
+  Button,
+  DescriptionList,
+  EmptyState,
+  Modal,
+  PageHeader,
+  SectionHeading,
+  StatGrid,
+  Surface,
+  buttonClassName,
+} from 'paper-ui'
+import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
 import { useLinks } from '../../lib/links'
-import { logQuery, type ImmersionLog } from '../../lib/logs'
+import { logQuery, useDeleteLog, type ImmersionLog, type LogFailure } from '../../lib/logs'
 import { viewerKey, viewerQueryOptions } from '../../lib/session'
 
 export const Route = createFileRoute('/logs/$logId')({
@@ -40,7 +50,11 @@ function LogDetail() {
   const subject = `${log.language.name} ${log.activity.name}`
   return (
     <div className="goal-page">
-      <PageHeader title={log.description || subject} lead={`${log.language.name} · ${log.activity.name}`} />
+      <PageHeader
+        title={log.description || subject}
+        lead={`${log.language.name} · ${log.activity.name}`}
+        actions={owner ? <OwnerActions log={log} /> : null}
+      />
       <StatGrid stats={[measure(log), { label: 'Score', value: scoreFormat.format(log.score) }]} />
       <Surface className="log-surface">
         <DescriptionList
@@ -55,6 +69,71 @@ function LogDetail() {
       <LogContests log={log} owner={owner} />
     </div>
   )
+}
+
+/** Editing and deleting, offered only to the log's owner. The API refuses both to anyone else. */
+function OwnerActions({ log }: { log: ImmersionLog }) {
+  const links = useLinks()
+  const deleteLog = useDeleteLog()
+  const hydrated = useHydrated()
+  const [open, setOpen] = useState(false)
+  const [pending, setPending] = useState(false)
+  const [failure, setFailure] = useState<LogFailure | null>(null)
+  const keepRef = useRef<HTMLButtonElement>(null)
+
+  const confirm = async () => {
+    setPending(true)
+    setFailure(null)
+    const result = await deleteLog(log.user_id, log.id)
+    if (result.ok) {
+      window.location.assign(links.profile(log.user_id))
+      return
+    }
+    setPending(false)
+    setFailure(result.reason)
+  }
+
+  return (
+    <>
+      <Link className={buttonClassName({ variant: 'outline' })} to="/logs/$logId/edit" params={{ logId: log.id }}>
+        Edit log
+      </Link>
+      <Modal
+        trigger={<Button variant="ghost" disabled={!hydrated}>Delete log</Button>}
+        title="Delete this log?"
+        initialFocus={keepRef}
+        open={open}
+        onOpenChange={next => {
+          if (pending) return
+          setOpen(next)
+          setFailure(null)
+        }}
+        footer={(
+          <>
+            <Button ref={keepRef} variant="outline" disabled={pending} onClick={() => setOpen(false)}>Keep log</Button>
+            <Button variant="destructive" disabled={pending} onClick={() => void confirm()}>
+              {pending ? 'Deleting…' : 'Delete log'}
+            </Button>
+          </>
+        )}
+      >
+        <p>
+          Deletion cannot be undone. The log will be permanently removed from all contests and your personal tracking
+          history.
+        </p>
+        {failure ? <p role="alert">{deleteFailures[failure] ?? deleteFailures.unavailable}</p> : null}
+      </Modal>
+    </>
+  )
+}
+
+const deleteFailures: Partial<Record<LogFailure, string>> = {
+  switched: 'You are now signed in as a different account. Nothing was deleted.',
+  'signed-out': 'Your session ended. Log in again, then delete the log.',
+  'account-unavailable': 'Account service unavailable. Nothing was deleted. Try again later.',
+  forbidden: 'This log cannot be deleted. A log submitted to a finished contest stays in its results.',
+  deleting: 'Your account is being deleted.',
+  unavailable: 'We could not confirm the deletion. Reload this page to check whether the log still exists.',
 }
 
 /** Contest submissions are private: only the log's owner sees them and the way to manage them. */

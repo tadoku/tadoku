@@ -1,5 +1,10 @@
 load("@rules_go//go:def.bzl", "go_library")
 
+exports_files(
+    ["leaderboard.sql"],
+    visibility = ["//services/tadoku-api/features/leaderboard:__pkg__"],
+)
+
 go_library(
     name = "leaderboard",
     srcs = ["generate.go"],

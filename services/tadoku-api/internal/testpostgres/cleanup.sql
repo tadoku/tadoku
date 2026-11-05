@@ -4,7 +4,7 @@
 -- scoring_rule_sets table has a foreign key to it, even when no row references it.
 truncate table public.announcements, public.contest_events, public.contest_logs, public.contest_registrations,
   public.accounts, public.sessions, public.recovery_tokens,
-  public.emails, public.jobs, public.log_tags, public.logs,
+  public.emails, public.jobs, public.leaderboard_versions, public.log_tags, public.logs,
   public.moderation_audit_log, public.pages, public.pages_content, public.permission_relationships,
   public.posts, public.posts_content restart identity;
 

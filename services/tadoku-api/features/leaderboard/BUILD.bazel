@@ -28,9 +28,17 @@ go_test(
         "leaderboard_cache_test.go",
         "leaderboard_lifecycle_test.go",
         "leaderboard_service_test.go",
+        "leaderboard_versions_concurrency_test.go",
+        "leaderboard_versions_coverage_test.go",
+        "leaderboard_versions_test.go",
     ],
+    args = ["-test.parallel=4"],
+    data = ["//services/tadoku-api/sql/leaderboard:leaderboard.sql"],
     embed = [":leaderboard"],
-    env_inherit = ["TADOKU_TEST_VALKEY_URL"],
+    env_inherit = [
+        "TADOKU_TEST_POSTGRES_URL",
+        "TADOKU_TEST_VALKEY_URL",
+    ],
     tags = [
         "no-cache",
         "no-remote-exec",
@@ -39,8 +47,14 @@ go_test(
     deps = [
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/tenant",
+        "//services/tadoku-api/internal/testpostgres",
         "//services/tadoku-api/internal/testvalkey",
         "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgconn",
+        "@com_github_jackc_pgx_v5//pgxpool",
+        "@com_github_pganalyze_pg_query_go_v6//:pg_query_go",
         "@com_github_valkey_io_valkey_go//:valkey-go",
+        "@rules_go//go/tools/bazel",
     ],
 )

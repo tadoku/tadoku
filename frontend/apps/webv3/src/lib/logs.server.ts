@@ -1,5 +1,6 @@
 import {
   immersionContestFindOngoingRegistrations,
+  immersionLogContestRegistrationUpdate,
   immersionLogCreate,
   immersionLogDeleteById,
   immersionLogFindById,
@@ -8,7 +9,7 @@ import {
   immersionScorePreview,
   type ImmersionScorePreview,
 } from 'api-client'
-import type { LogUpdate, NewLog, ScorePreviewInput } from './log-draft'
+import type { LogContestsUpdate, LogUpdate, NewLog, ScorePreviewInput } from './log-draft'
 import type { ImmersionLog, LogFailure, LogOptions, LogResult, Registration } from './logs'
 import { readViewer, sessionCookie, sessionRequest } from './session.server'
 
@@ -112,6 +113,21 @@ export async function updateLog(change: LogUpdate): Promise<LogResult<ImmersionL
     ...sessionRequest(session.data),
     path: { id: change.logId },
     body: { ...measureBody(change.measure), description: change.description, tags: change.tags },
+  }))
+}
+
+/**
+ * Replaces a log's submissions to unfinished contests with the chosen registrations. The API keeps submissions to finished
+ * contests and their scores.
+ */
+export async function updateLogContests(change: LogContestsUpdate): Promise<LogResult<ImmersionLog>> {
+  const session = await draftOwnerCookie(change.viewerId)
+  if (!session.ok) return session
+
+  return answer(immersionLogContestRegistrationUpdate({
+    ...sessionRequest(session.data),
+    path: { id: change.logId },
+    body: { registration_ids: change.registrationIds },
   }))
 }
 

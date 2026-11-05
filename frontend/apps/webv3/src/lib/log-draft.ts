@@ -60,6 +60,13 @@ export const logUpdateSchema = newLogSchema
 
 export type LogUpdate = z.infer<typeof logUpdateSchema>
 
+/** The registrations a saved log is submitted to among the viewer's ongoing ones. */
+export const logContestsUpdateSchema = newLogSchema
+  .pick({ viewerId: true, registrationIds: true })
+  .extend({ logId: z.guid() })
+
+export type LogContestsUpdate = z.infer<typeof logContestsUpdateSchema>
+
 /** What the API needs to estimate a draft's score. */
 export const scorePreviewSchema = newLogSchema.pick({ languageCode: true, activityId: true, measure: true, tags: true })
 
@@ -188,6 +195,27 @@ export function eligibleRegistrations(options: LogOptions, languageCode: string,
   return options.registrations.filter(registration =>
     registration.languages.some(language => language.code === languageCode) &&
     registration.contest.allowed_activities.some(activity => String(activity.id) === activityId))
+}
+
+/** An ongoing registration a saved log can be submitted to, or why it cannot. */
+export type ContestChoice =
+  | { kind: 'eligible'; registration: Registration }
+  | { kind: 'ineligible'; registration: Registration; reason: string }
+
+/**
+ * Webv2's rules for submitting a saved log, in its order. `today` is the UTC date: a contest accepts submissions through
+ * the end of its last UTC day.
+ */
+export function contestChoices(log: ImmersionLog, registrations: Registration[], today: string): ContestChoice[] {
+  return registrations.map(registration => {
+    const reason = !registration.contest.allowed_activities.some(activity => activity.id === log.activity.id)
+      ? 'Activity not allowed in this contest'
+      : !registration.languages.some(language => language.code === log.language.code)
+        ? 'Language not registered for this contest'
+        : registration.contest.contest_end < today ? 'Contest has ended' : undefined
+
+    return reason ? { kind: 'ineligible', registration, reason } : { kind: 'eligible', registration }
+  })
 }
 
 /**

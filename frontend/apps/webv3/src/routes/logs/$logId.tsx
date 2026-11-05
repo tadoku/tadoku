@@ -162,7 +162,7 @@ function OwnContests({ log }: { log: ImmersionLog }) {
           ))}
         </ul>
       ) : <p>Saved to your personal record only.</p>}
-      <a className="text-link" href={links.legacyUrl(`/logs/${log.id}/contests`)}>Manage contest submissions</a>
+      <Link className="text-link" to="/logs/$logId/contests" params={{ logId: log.id }}>Manage contest submissions</Link>
     </>
   )
 }

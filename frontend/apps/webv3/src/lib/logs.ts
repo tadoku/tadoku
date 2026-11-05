@@ -8,9 +8,11 @@ import type {
 } from 'api-client'
 import { z } from 'zod'
 import {
+  logContestsUpdateSchema,
   logUpdateSchema,
   newLogSchema,
   scorePreviewSchema,
+  type LogContestsUpdate,
   type LogUpdate,
   type NewLog,
   type ScorePreviewInput,
@@ -63,6 +65,13 @@ const changeLog = createServerFn({ method: 'POST' })
     return updateLog(data)
   })
 
+const changeLogContests = createServerFn({ method: 'POST' })
+  .inputValidator(logContestsUpdateSchema)
+  .handler(async ({ data }) => {
+    const { updateLogContests } = await import('./logs.server')
+    return updateLogContests(data)
+  })
+
 const removeLog = createServerFn({ method: 'POST' })
   .inputValidator(z.object({ viewerId: z.guid(), logId: z.guid() }))
   .handler(async ({ data }) => {
@@ -108,6 +117,13 @@ export function useUpdateLog() {
   const settle = useSettle()
   return async (change: LogUpdate) =>
     settle(change.viewerId, await changeLog({ data: change }).catch(unconfirmed<ImmersionLog>))
+}
+
+/** Changes a log's contest submissions like `useSaveLog` saves a log. Repeating the same change is safe. */
+export function useUpdateLogContests() {
+  const settle = useSettle()
+  return async (change: LogContestsUpdate) =>
+    settle(change.viewerId, await changeLogContests({ data: change }).catch(unconfirmed<ImmersionLog>))
 }
 
 /** Deletes a log for the account that viewed it. A failed request is `unavailable`: the log may or may not be gone. */

@@ -152,11 +152,10 @@ jobs:
           common --remote_timeout=5s
           common --remote_retries=1
           common --remote_upload_local_results=$UPLOAD_RESULTS
-          build --jobs=4
-          test --local_test_jobs=4
+          build --jobs=8
+          test --local_test_jobs=8
           test --remote_download_outputs=minimal
           test --remote_download_regex=.*test[.](xml|log)$
-          build --local_resources=memory=2048
           EOF
           if test -r "$HOME/bazelisk/repositories/prewarm.json"; then
             cp "$HOME/bazelisk/repositories/prewarm.json" "$RUNNER_TEMP/bazel-prewarm.json"
@@ -281,9 +280,24 @@ jobs:
             <(bazel query --lockfile_mode=error 'kind("oci_push", labels(data, //:push_images))' | sort) \
           || { echo "//:push_images is out of sync with production oci_push targets named :push under //services/..." >&2; exit 1; }
 
+      # The service data is disposable, so test fixtures need no durable commits.
+      - name: Disable PostgreSQL durability
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: >-
+          docker exec "$POSTGRES_CONTAINER" psql -U postgres -v ON_ERROR_STOP=1
+          -c 'alter system set fsync = off'
+          -c 'alter system set full_page_writes = off'
+          -c 'alter system set synchronous_commit = off'
+          -c 'select pg_reload_conf()'
+
       - name: Build and run tests
         id: tests
-        run: bazel test --lockfile_mode=error --nobuild_tests_only --test_output=errors --profile="$RUNNER_TEMP/bazel-tests.profile" --build_event_json_file="$RUNNER_TEMP/bazel-tests.json" //...
+        run: |
+          mapfile -t excluded < tools/ci/dev_image_targets
+          bazel test --lockfile_mode=error --nobuild_tests_only --test_output=errors \
+            --profile="$RUNNER_TEMP/bazel-tests.profile" --build_event_json_file="$RUNNER_TEMP/bazel-tests.json" \
+            -- //... "${excluded[@]/#/-}"
 
       - name: Retain HTTP E2E diagnostics after test failure
         if: failure() && steps.tests.outcome == 'failure'
@@ -305,23 +319,7 @@ jobs:
           POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
           PGBOUNCER_CONTAINER: ${{ job.services.pgbouncer.id }}
           VALKEY_CONTAINER: ${{ job.services.valkey.id }}
-        run: |
-          set -euo pipefail
-          cgroup="/sys/fs/cgroup$(sed -n 's/^0:://p' /proc/self/cgroup)"
-          if [[ ! -d "$cgroup" ]]; then cgroup=/sys/fs/cgroup; fi
-          for counter in memory.peak memory.max memory.events memory.stat cpu.max cpu.stat; do
-            if [[ -r "$cgroup/$counter" ]]; then
-              cat "$cgroup/$counter" > "$RUNNER_TEMP/bazel-cgroup-$counter"
-            fi
-          done
-          for service in postgres pgbouncer valkey; do
-            variable="${service^^}_CONTAINER"
-            container="${!variable}"
-            if [[ -n "$container" ]]; then
-              docker exec "$container" sh -c 'cgroup="/sys/fs/cgroup$(sed -n "s/^0:://p" /proc/self/cgroup)"; if ! test -d "$cgroup"; then cgroup=/sys/fs/cgroup; fi; for counter in memory.peak memory.events cpu.stat; do echo "$counter"; cat "$cgroup/$counter"; done' \
-                > "$RUNNER_TEMP/bazel-cgroup-$service" 2>&1 || true
-            fi
-          done
+        run: ./tools/ci/record_test_resources.sh
 
       - name: Print release image digests
         run: |
@@ -385,6 +383,42 @@ jobs:
             ${{ runner.temp }}/openapi-verification.json
             bazel-testlogs/**/test.xml
           retention-days: 7
+
+  dev-images:
+    name: Build development images
+    runs-on: ${{ inputs.runner || ((github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'tadoku-ci' || 'ubuntu-latest') }}
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup hosted Bazel
+        if: runner.environment == 'github-hosted'
+        uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86 # 0.19.0
+
+      - name: Configure private Bazel cache
+        if: runner.environment == 'self-hosted'
+        env:
+          UPLOAD_RESULTS: ${{ github.event_name != 'pull_request' }}
+        run: |
+          cat > "$HOME/.bazelrc" <<EOF
+          startup --output_user_root=$RUNNER_TEMP/bazel
+          startup --experimental_remote_repo_contents_cache
+          common --repository_cache=$HOME/bazelisk/repositories
+          common --remote_cache=https://bazel-cache.lab
+          common --tls_certificate=/usr/local/share/ca-certificates/ca.crt
+          common --remote_timeout=5s
+          common --remote_retries=1
+          common --remote_upload_local_results=$UPLOAD_RESULTS
+          build --jobs=4
+          build --remote_download_outputs=minimal
+          EOF
+
+      - name: Build development images
+        run: |
+          mapfile -t targets < tools/ci/dev_image_targets
+          bazel build --lockfile_mode=error -- "${targets[@]}"
 
   migration-safety-override:
     name: Approve migration safety findings

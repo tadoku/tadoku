@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { APIRequestContext, BrowserContext, Page } from '@playwright/test'
-import { admin, api, expect, reader, test, webv2, webv3 } from './logging-fixtures'
+import { admin, api, expect, reader, test, webv3 } from './logging-fixtures'
 import { apiJson, board, expectRows, expectTotal } from './standings'
 
 interface Contest {
@@ -66,10 +66,9 @@ test('the server-rendered contest page shows its details, API standings and an a
   await expect(page).toHaveTitle(`${contest.title} · Tadoku`)
   await expect(page.getByRole('heading', { level: 1, name: contest.title })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Official contests' })).toHaveAttribute('href', '/contests/official/1')
-  const origin = webv2
-  await expectRows(page, data.entries, userId => `${origin}/contests/${contest.id}/profile/${userId}/1`)
+  await expectRows(page, data.entries, userId => `/contests/${contest.id}/profile/${userId}/1`)
   await expectTotal(page, data)
-  await expect(page.getByRole('link', { name: 'Contest updates' })).toHaveAttribute('href', `${origin}/contests/${contest.id}/updates/1`)
+  await expect(page.getByRole('link', { name: 'Contest updates' })).toHaveAttribute('href', `/contests/${contest.id}/updates/1`)
 
   const today = day()
   const ended = today > contest.contest_end

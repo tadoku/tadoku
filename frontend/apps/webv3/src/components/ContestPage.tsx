@@ -1,20 +1,25 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { Button, EmptyState, PageHeader, StatusTag, buttonClassName } from 'paper-ui'
+import { Button, EmptyState, PageHeader, StatusTag, Tabbar, buttonClassName } from 'paper-ui'
 import { contestsHref } from '../lib/contests'
 import { contestBoardQuery, contestPhase, readDay, type ContestBoard } from '../lib/leaderboard'
 import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
 import { viewerKey, viewerQueryOptions } from '../lib/session'
 import { ContestBoardBody, RoundStatus } from './ContestLeaderboard'
+import { ContestUpdates } from './ContestUpdates'
 import { renderLink } from './router-link'
 
-/** A contest's main page: its details and standings, with the actions this viewer may take. */
-export function ContestPage({ contestId, page }: { contestId: string; page: number }) {
+export type ContestView = 'standings' | 'updates'
+
+/** A contest's page: its standings or its updates, with the actions this viewer may take. */
+export function ContestPage({ contestId, view, page }: { contestId: string; view: ContestView; page: number }) {
   const { data: viewer } = useQuery(viewerQueryOptions())
   const board = useQuery(contestBoardQuery(contestId, viewerKey(viewer)))
 
-  if (board.data?.kind === 'board') return <ContestBoardPage board={board.data.board} today={readDay(board.dataUpdatedAt)} page={page} />
+  if (board.data?.kind === 'board') {
+    return <ContestBoardPage board={board.data.board} today={readDay(board.dataUpdatedAt)} view={view} page={page} />
+  }
   if (board.data?.kind === 'none') return <ContestNotFound />
   return (
     <EmptyState
@@ -41,7 +46,7 @@ export function ContestNotFound() {
  * Webv2's actions: join while registration is open, change languages until the contest ends, log while it runs and
  * the scoring rules for administrators. Anonymous visitors who join are sent to log in first.
  */
-function ContestBoardPage({ board, today, page }: { board: ContestBoard; today: string; page: number }) {
+function ContestBoardPage({ board, today, view, page }: { board: ContestBoard; today: string; view: ContestView; page: number }) {
   const links = useLinks()
   const { contest } = board
   const phase = contestPhase(contest, today)
@@ -74,14 +79,24 @@ function ContestBoardPage({ board, today, page }: { board: ContestBoard; today: 
         status={<><RoundStatus phase={phase} />{contest.private ? <StatusTag>Unlisted</StatusTag> : null}</>}
         actions={actions}
       />
-      <ContestBoardBody
-        board={board}
-        phase={phase}
-        page={page}
-        pageHref={next => links.contest(contest.id, next)}
-        title="Standings"
-        asideLink={<a className="text-link" href={links.contestUpdates(contest.id)}>Contest updates</a>}
+      <Tabbar
+        label="Contest views"
+        renderLink={renderLink}
+        links={[
+          { id: 'standings', label: 'Standings', href: links.contest(contest.id), current: view === 'standings' },
+          { id: 'updates', label: 'Updates', href: links.contestUpdates(contest.id), current: view === 'updates' },
+        ]}
       />
+      {view === 'standings' ? (
+        <ContestBoardBody
+          board={board}
+          phase={phase}
+          page={page}
+          pageHref={next => links.contest(contest.id, next)}
+          title="Standings"
+          asideLink={<a className="text-link" href={links.contestUpdates(contest.id)}>Contest updates</a>}
+        />
+      ) : <ContestUpdates contest={contest} page={page} />}
     </div>
   )
 }

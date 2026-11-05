@@ -85,6 +85,21 @@ const fixture = createServer((request, response) => {
     data = { logs: learnerLogs.slice(start, start + size), total_size: learnerLogs.length, next_page_token: '' }
   }
   else if (path.startsWith('/immersion/logs/')) data = learnerLogs.find(log => path === `/immersion/logs/${log.id}`)
+  // The contest's updates are the learner's logs, two pages of 50; the learner is its only participant.
+  else if (path === `/immersion/contests/${contest.id}/logs`) {
+    const size = Number(url.searchParams.get('page_size') ?? 50)
+    const start = Number(url.searchParams.get('page') ?? 0) * size
+    const logs = [learner.id, null].includes(url.searchParams.get('user_id')) ? learnerLogs : []
+    data = { logs: logs.slice(start, start + size), total_size: logs.length, next_page_token: '' }
+  }
+  else if (path === `/immersion/contests/${contest.id}/profile/${learner.id}/scores`) data = {
+    overall_score: 13319.6455, scores: [{ language_code: 'jpn', language_name: 'Japanese', score: 13319.6455 }],
+    registration: { id: '22222222-2222-4222-8222-222222222222', contest_id: contest.id, user_id: learner.id,
+      user_display_name: learner.display_name, languages: [{ code: 'jpn', name: 'Japanese' }], contest },
+  }
+  else if (path === `/immersion/contests/${contest.id}/profile/${learner.id}/activity`) data = {
+    rows: [{ date: '2024-03-03', language_code: 'jpn', score: 13319.6455 }],
+  }
   else {
     const match = path.match(new RegExp(`^/immersion/users/${learner.id}/([a-z-]+)/(\\d{4})$`))
     if (match) data = profileYear(match[1], match[2])

@@ -31,14 +31,14 @@ function createLinks(base: string) {
     logs: '/logs/new',
     contest: (id: string, page = 1) => `/contests/${encodeURIComponent(id)}/leaderboard/${page}`,
     joinContest: (id: string) => `/contests/${encodeURIComponent(id)}/registration`,
-    contestUpdates: (id: string) => legacyUrl(`/contests/${encodeURIComponent(id)}/updates/1`),
+    contestUpdates: (id: string, page = 1) => `/contests/${encodeURIComponent(id)}/updates/${page}`,
     contestScoring: (id: string) => `/contests/${encodeURIComponent(id)}/scoring`,
     profile: (id: string) => `/profile/${encodeURIComponent(id)}/statistics`,
     /** A profile's updates, optionally only one UTC day's (`YYYY-MM-DD`). */
     profileUpdates: (id: string, date?: string) =>
       `/profile/${encodeURIComponent(id)}/updates/1${date ? `?date=${date}` : ''}`,
-    contestProfile: (contestId: string, userId: string) =>
-      legacyUrl(`/contests/${encodeURIComponent(contestId)}/profile/${encodeURIComponent(userId)}/1`),
+    contestProfile: (contestId: string, userId: string, page = 1) =>
+      `/contests/${encodeURIComponent(contestId)}/profile/${encodeURIComponent(userId)}/${page}`,
     /** The signed-in account's own logs as a download, through Webv2's API path. */
     logExport: (format: 'csv' | 'json') => legacyUrl(`/api/internal/immersion/logs/export?format=${format}`),
   }

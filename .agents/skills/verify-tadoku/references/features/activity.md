@@ -101,9 +101,12 @@ As the owner, edit the log from its detail page, compare the estimated score
 with a direct score-preview API call, save, reload and compare a fresh API read
 with the record before the edit. Delete another log after confirming; the API
 must then answer 404. Another account and an anonymous visitor see no owner
-actions and cannot open the edit form.
+actions and cannot open the edit form. From a personal log's detail, open
+Manage contest submissions, submit it to an eligible contest, reload the detail
+and compare the API's registrations and score; then remove it and confirm the
+API lists none. Another account and an anonymous visitor get no contest choices.
 
-Run the Webv3 `logging.spec.ts`, `logging-edit.spec.ts` and `logging-session.spec.ts` with the
+Run the Webv3 `logging.spec.ts`, `logging-edit.spec.ts`, `logging-contests.spec.ts` and `logging-session.spec.ts` with the
 documented fixture environment and Lab CA. Native login admits ten logins per
 account in 15 minutes, so wait that long before repeating a complete run. It verifies invalid-field focus, real amount/time writes, contest selection,
 reload, duplicate-submit prevention, keyboard layouts and expired-session draft

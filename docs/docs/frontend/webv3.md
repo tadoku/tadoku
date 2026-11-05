@@ -12,7 +12,7 @@ Webv3 is a small application foundation. Its homepage follows the
 Paper playground composition and reads the current official contest, summary,
 standings and next scheduled round from the configured Tadoku API. `/plan`
 demonstrates a validated immersion goal kept in the current browser. It does not
-sync the goal to a Tadoku account. [Native activity logging](webv3-logging.md) uses the existing account session and API.
+sync the goal to a Tadoku account. [Native activity logging](webv3-logging.md), including a saved log's contest submissions, uses the existing account session and API.
 The latest official, yearly and all-time [leaderboards](webv3-leaderboards.md)
 read their standings from the API, and the official, community and My contests
 [contest lists](webv3-contests.md) list contests as the visitor sees them.

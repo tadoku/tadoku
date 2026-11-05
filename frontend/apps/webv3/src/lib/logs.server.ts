@@ -13,7 +13,7 @@ import type { LogContestsUpdate, LogUpdate, NewLog, ScorePreviewInput } from './
 import type { ImmersionLog, LogFailure, LogOptions, LogResult, Registration } from './logs'
 import { readViewer, sessionCookie, sessionRequest } from './session.server'
 
-const failures: Partial<Record<number, LogFailure>> = {
+export const logFailures: Partial<Record<number, LogFailure>> = {
   400: 'invalid',
   401: 'signed-out',
   403: 'forbidden',
@@ -27,7 +27,7 @@ export async function answer<T>(request: Promise<{ data?: T; response?: Response
   if (data !== undefined) return { ok: true, data }
 
   const status = response && !response.ok ? response.status : undefined
-  return { ok: false, reason: (status && failures[status]) || 'unavailable' }
+  return { ok: false, reason: (status && logFailures[status]) || 'unavailable' }
 }
 
 export async function readLogOptions(): Promise<LogResult<LogOptions>> {

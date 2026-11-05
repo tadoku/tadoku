@@ -23,6 +23,6 @@ export const Route = createFileRoute('/contests/$id/leaderboard/$')({
   notFoundComponent: ContestNotFound,
   component: function ContestRoute() {
     const { id, _splat: page } = Route.useParams()
-    return <ContestPage contestId={id} page={pageNumber(page)} />
+    return <ContestPage contestId={id} view="standings" page={pageNumber(page)} />
   },
 })

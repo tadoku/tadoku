@@ -60,7 +60,8 @@ query key; `readProfileActivity` in `frontend/apps/webv3/src/lib/profile.server.
 reads the profile and the page of logs together. The list fails on its own while
 the profile header still shows. Search, filters and their applied-filter
 summary in the Paper design need API support and are not built.
-`frontend/apps/webv3/src/components/ProfileActivity.tsx` renders the list.
+`frontend/apps/webv3/src/components/ProfileActivity.tsx` renders the page around
+the log list in `frontend/apps/webv3/src/components/LogEntries.tsx`.
 
 `profile-activity.spec.ts` follows a homepage standings profile to its activity,
 compares each page with the API, pages forward and opens an entry. With fixture

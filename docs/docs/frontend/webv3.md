@@ -16,10 +16,11 @@ sync the goal to a Tadoku account. [Native activity logging](webv3-logging.md), 
 The latest official, yearly and all-time [leaderboards](webv3-leaderboards.md)
 read their standings from the API, and the official, community and My contests
 [contest lists](webv3-contests.md) list contests as the visitor sees them.
-Each [contest page](webv3-contest.md) shows its standings and the viewer's
-actions, and signed-in learners join contests and change their languages there.
-Permitted accounts [create contests](webv3-contest-admin.md), and administrators
-manage a contest's scoring rules.
+Each [contest page](webv3-contest.md) shows its standings, its updates and the
+viewer's actions and opens each participant's contest profile. Signed-in learners
+join contests and change their languages there, and organizers and administrators
+remove logs from a contest. Permitted accounts [create contests](webv3-contest-admin.md),
+and administrators manage a contest's scoring rules.
 [Profile statistics and activity](webv3-profile.md) read a learner's yearly records
 and logs from the API.
 The manual, CMS pages and blog are [content pages](webv3-content.md) on the same host.
@@ -151,9 +152,11 @@ checks a signed-in participant's row and contest action, and checks containment
 at 390px and 1280px. It needs `TADOKU_API_URL` and the Dev Reader credentials
 described under [native activity logging](webv3-logging.md), and signs in once.
 `frontend/apps/webv3/e2e/contests.spec.ts` covers the
-[contest lists](webv3-contests.md) and `frontend/apps/webv3/e2e/contest.spec.ts`
-the [contest page and registration](webv3-contest.md); their signed-in journeys
-use both fixture accounts and create community contests in the selected tenant.
+[contest lists](webv3-contests.md), `frontend/apps/webv3/e2e/contest.spec.ts`
+the [contest page and registration](webv3-contest.md) and
+`frontend/apps/webv3/e2e/contest-activity.spec.ts` its updates, participant
+profiles and moderation; their signed-in journeys use both fixture accounts and
+create community contests in the selected tenant.
 `frontend/apps/webv3/e2e/contest-admin.spec.ts` covers
 [contest creation and scoring](webv3-contest-admin.md) and writes contests and
 rule sets in the selected tenant.
@@ -188,7 +191,7 @@ pnpm --filter webv3 exec playwright install chromium
 PLAYWRIGHT_OUTPUT_DIR=/tmp/webv3-evidence node scripts/smoke-webv3-image.mjs webv3:check
 ```
 
-The smoke command starts its own labeled container and synthetic GET-only API, including one contest and one standings learner's profile year,
+The smoke command starts its own labeled container and synthetic GET-only API, including one contest with its logs and one standings learner's profile year and contest profile,
 uses nullable language lists by default (`WEBV3_LANGUAGE_FIXTURE=array` selects
 nonempty lists), checks server rendering, built assets, non-root/read-only operation and the
 existing browser journeys, then disconnects the API and checks health again.
@@ -210,7 +213,7 @@ image.
 
 The active production GitOps configuration makes `next.tadoku.app` follow
 the `prod` digest automatically through Image Updater and Argo CD. Webv3 uses the same production
-backend as Webv2; the homepage, leaderboards, contest lists and contest pages read contest data, content pages read the CMS and blog, native logging and contest registration use the existing account, activity and contest API, and contest creation and scoring use its contest and scoring API. Unfinished journeys
+backend as Webv2; the homepage, leaderboards, contest lists and contest pages read contest data, content pages read the CMS and blog, native logging, contest registration and log moderation use the existing account, activity and contest API, and contest creation and scoring use its contest and scoring API. Unfinished journeys
 continue to open production Webv2.
 Merging source that matches the Webv3 workflow's paths, including the shared
 lockfile, therefore republishes `latest` and `prod` and rolls this production

@@ -10,10 +10,12 @@ Main navigation **Leaderboard** opens `/leaderboard/latest`; also cover
 `/leaderboard/yearly/<year>` and `/leaderboard/all-time` when aggregation changes.
 Webv3's navigation opens the native versions of these three leaderboards, the
 three contest lists, contest creation and a contest's `/leaderboard`,
-`/registration` and `/scoring` pages on the `next.` host;
-`frontend/apps/webv3/e2e/leaderboard.spec.ts`, `frontend/apps/webv3/e2e/contests.spec.ts`,
-`frontend/apps/webv3/e2e/contest.spec.ts` and `frontend/apps/webv3/e2e/contest-admin.spec.ts`
-compare them with the API, register a learner and create contests and rule sets
+`/registration`, `/scoring`, `/updates` and participant `/profile/<user-id>`
+pages on the `next.` host; `frontend/apps/webv3/e2e/leaderboard.spec.ts`,
+`frontend/apps/webv3/e2e/contests.spec.ts`, `frontend/apps/webv3/e2e/contest.spec.ts`,
+`frontend/apps/webv3/e2e/contest-admin.spec.ts` and
+`frontend/apps/webv3/e2e/contest-activity.spec.ts` compare them with the API,
+register a learner, create contests and rule sets and remove a log from a contest
 in the selected tenant.
 
 ## Verify

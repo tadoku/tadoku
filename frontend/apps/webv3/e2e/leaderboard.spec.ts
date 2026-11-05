@@ -1,4 +1,4 @@
-import { api, expect, reader, test, webv2, webv3 } from './logging-fixtures'
+import { api, expect, reader, test, webv3 } from './logging-fixtures'
 import { apiJson, board, expectRows, expectTotal } from './standings'
 
 const year = new Date().getUTCFullYear()
@@ -17,7 +17,7 @@ test('server-rendered boards show the API standings, their scopes and profile li
       path: '/leaderboard/latest/1',
       api: `/immersion/contests/${latest.id}/leaderboard`,
       scope: latest.title,
-      profile: (origin: string) => (userId: string) => `${origin}/contests/${latest.id}/profile/${userId}/1`,
+      profile: () => (userId: string) => `/contests/${latest.id}/profile/${userId}/1`,
     },
     {
       path: `/leaderboard/yearly/${year}/1`,
@@ -43,7 +43,7 @@ test('server-rendered boards show the API standings, their scopes and profile li
     await expect(page.getByRole('heading', { level: 2, name: item.scope, exact: true })).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Leaderboard period' }).locator('[aria-current="page"]')).toHaveCount(1)
     await expect(page.getByRole('link', { name: 'Leaderboard', exact: true }).first()).toHaveAttribute('href', '/leaderboard/latest/1')
-    await expectRows(page, data.entries, item.profile(webv2))
+    await expectRows(page, data.entries, item.profile())
     await expectTotal(page, data)
     await page.screenshot({ path: testInfo.outputPath(`ssr-${item.path.split('/')[2]}.png`), fullPage: true })
   }

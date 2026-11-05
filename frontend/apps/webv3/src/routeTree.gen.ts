@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlanRouteImport } from './routes/plan'
 import { Route as BlogSplatRouteImport } from './routes/blog/$'
+import { Route as ContestsIndexRouteImport } from './routes/contests/index'
 import { Route as ContestsNewRouteImport } from './routes/contests/new'
 import { Route as LogsLogIdRouteImport } from './routes/logs/$logId'
 import { Route as LogsNewRouteImport } from './routes/logs/new'
@@ -47,6 +48,11 @@ const PlanRoute = PlanRouteImport.update({
 const BlogSplatRoute = BlogSplatRouteImport.update({
   id: '/blog/$',
   path: '/blog/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContestsIndexRoute = ContestsIndexRouteImport.update({
+  id: '/contests/',
+  path: '/contests/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContestsNewRoute = ContestsNewRouteImport.update({
@@ -170,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/logs/new': typeof LogsNewRoute
   '/pages/$slug': typeof PagesSlugRoute
   '/pages/manual': typeof PagesManualRoute
+  '/contests/': typeof ContestsIndexRoute
   '/blog/posts/$slug': typeof BlogPostsSlugRoute
   '/contests/$id/registration': typeof ContestsIdRegistrationRoute
   '/contests/$id/scoring': typeof ContestsIdScoringRoute
@@ -196,6 +203,7 @@ export interface FileRoutesByTo {
   '/logs/new': typeof LogsNewRoute
   '/pages/$slug': typeof PagesSlugRoute
   '/pages/manual': typeof PagesManualRoute
+  '/contests': typeof ContestsIndexRoute
   '/blog/posts/$slug': typeof BlogPostsSlugRoute
   '/contests/$id/registration': typeof ContestsIdRegistrationRoute
   '/contests/$id/scoring': typeof ContestsIdScoringRoute
@@ -223,6 +231,7 @@ export interface FileRoutesById {
   '/logs/new': typeof LogsNewRoute
   '/pages/$slug': typeof PagesSlugRoute
   '/pages/manual': typeof PagesManualRoute
+  '/contests/': typeof ContestsIndexRoute
   '/blog/posts/$slug': typeof BlogPostsSlugRoute
   '/contests/$id/registration': typeof ContestsIdRegistrationRoute
   '/contests/$id/scoring': typeof ContestsIdScoringRoute
@@ -251,6 +260,7 @@ export interface FileRouteTypes {
     | '/logs/new'
     | '/pages/$slug'
     | '/pages/manual'
+    | '/contests/'
     | '/blog/posts/$slug'
     | '/contests/$id/registration'
     | '/contests/$id/scoring'
@@ -277,6 +287,7 @@ export interface FileRouteTypes {
     | '/logs/new'
     | '/pages/$slug'
     | '/pages/manual'
+    | '/contests'
     | '/blog/posts/$slug'
     | '/contests/$id/registration'
     | '/contests/$id/scoring'
@@ -303,6 +314,7 @@ export interface FileRouteTypes {
     | '/logs/new'
     | '/pages/$slug'
     | '/pages/manual'
+    | '/contests/'
     | '/blog/posts/$slug'
     | '/contests/$id/registration'
     | '/contests/$id/scoring'
@@ -330,6 +342,7 @@ export interface RootRouteChildren {
   LogsNewRoute: typeof LogsNewRoute
   PagesSlugRoute: typeof PagesSlugRoute
   PagesManualRoute: typeof PagesManualRoute
+  ContestsIndexRoute: typeof ContestsIndexRoute
   BlogPostsSlugRoute: typeof BlogPostsSlugRoute
   ContestsIdRegistrationRoute: typeof ContestsIdRegistrationRoute
   ContestsIdScoringRoute: typeof ContestsIdScoringRoute
@@ -369,6 +382,13 @@ declare module '@tanstack/react-router' {
       path: '/blog/$'
       fullPath: '/blog/$'
       preLoaderRoute: typeof BlogSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contests/': {
+      id: '/contests/'
+      path: '/contests'
+      fullPath: '/contests/'
+      preLoaderRoute: typeof ContestsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contests/new': {
@@ -530,6 +550,7 @@ const rootRouteChildren: RootRouteChildren = {
   LogsNewRoute: LogsNewRoute,
   PagesSlugRoute: PagesSlugRoute,
   PagesManualRoute: PagesManualRoute,
+  ContestsIndexRoute: ContestsIndexRoute,
   BlogPostsSlugRoute: BlogPostsSlugRoute,
   ContestsIdRegistrationRoute: ContestsIdRegistrationRoute,
   ContestsIdScoringRoute: ContestsIdScoringRoute,

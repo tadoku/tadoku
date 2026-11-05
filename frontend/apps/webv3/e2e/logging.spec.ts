@@ -124,6 +124,16 @@ test('text limits follow the API: description characters, tag bytes and normaliz
   expect([...record.tags].sort()).toEqual(['book', 'fiction', 'i'.repeat(17), 'οσ', '\ufeffbook'].sort())
 })
 
+test('`?amount=` prefills a positive whole amount and ignores anything else, as in Webv2', async ({ readerContext }) => {
+  test.skip(!webv3 || !reader.email, 'Set development fixture credentials')
+  const page = await readerContext.newPage()
+  for (const [query, expected] of [['12', '12'], ['0', ''], ['-3', ''], ['1.5', ''], ['many', '']]) {
+    await page.goto(`/logs/new?amount=${query}`)
+    await expect(saveButton(page)).toBeEnabled({ timeout: 15_000 })
+    await expect(amountInput(page)).toHaveValue(expected)
+  }
+})
+
 test('changing the activity clears the quantity entered for the previous one', async ({ readerContext }) => {
   test.skip(!webv3 || !reader.email, 'Set development fixture credentials')
   const page = await readerContext.newPage()

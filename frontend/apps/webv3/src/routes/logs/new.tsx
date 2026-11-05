@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
+import { z } from 'zod'
 import { Button, EmptyState, buttonClassName } from 'paper-ui'
 import { DraftOwnerGate } from '../../components/DraftOwnerGate'
 import { LogForm } from '../../components/LogForm'
@@ -8,6 +9,8 @@ import { useLoginUrl, viewerQueryOptions } from '../../lib/session'
 
 export const Route = createFileRoute('/logs/new')({
   head: () => ({ meta: [{ title: 'Log activity · Tadoku' }] }),
+  // Webv2 prefills a positive whole amount from `?amount=` and ignores anything else.
+  validateSearch: z.object({ amount: z.coerce.number().int().positive().optional().catch(undefined) }),
   loader: async ({ context }) => {
     const viewer = await context.queryClient.ensureQueryData(viewerQueryOptions())
     if (viewer.status === 'signed-in') await context.queryClient.ensureQueryData(logOptionsQuery(viewer.userId))
@@ -25,11 +28,12 @@ function NewLog() {
 }
 
 function DraftForm({ viewerId }: { viewerId: string }) {
+  const { amount } = Route.useSearch()
   const optionsQuery = useQuery(logOptionsQuery(viewerId))
   const loginUrl = useLoginUrl()
   const result = optionsQuery.data
 
-  if (result?.ok) return <LogForm options={result.data} viewerId={viewerId} target={{ kind: 'new' }} />
+  if (result?.ok) return <LogForm options={result.data} viewerId={viewerId} target={{ kind: 'new', amount }} />
   if (result && result.reason === 'signed-out') {
     return (
       <EmptyState

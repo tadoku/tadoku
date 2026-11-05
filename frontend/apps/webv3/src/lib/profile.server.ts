@@ -1,11 +1,19 @@
 import {
   immersionProfileFindByUserId,
+  immersionProfileListLogs,
   immersionProfileYearlyActivityByUserId,
   immersionProfileYearlyActivitySplitByUserId,
   immersionProfileYearlyContestRegistrationsByUserId,
   immersionProfileYearlyScoresByUserId,
 } from 'api-client'
-import { contestPageSize, type ContestHistory, type ProfileStatistics, type Section } from './profile'
+import {
+  activityPageSize,
+  contestPageSize,
+  type ContestHistory,
+  type ProfileActivity,
+  type ProfileStatistics,
+  type Section,
+} from './profile'
 import { sessionCookie, sessionRequest } from './session.server'
 
 /** A generated operation's validated answer; any refusal, failure or malformed answer leaves the section unavailable. */
@@ -61,4 +69,19 @@ export async function readProfileStatistics(userId: string, year: number, page: 
     split,
     contests,
   }
+}
+
+export async function readProfileActivity(userId: string, page: number, date?: string): Promise<ProfileActivity> {
+  const [profile, logs] = await Promise.all([
+    immersionProfileFindByUserId({ ...sessionRequest(), path: { userId } }).catch(() => undefined),
+    section(immersionProfileListLogs({
+      ...sessionRequest(),
+      path: { user_id: userId },
+      query: { page_size: activityPageSize, page: page - 1, include_deleted: false, ...(date ? { date } : {}) },
+    })),
+  ])
+
+  if (profile?.response?.status === 404) return { status: 'not-found' }
+  if (!profile?.data) return { status: 'unavailable' }
+  return { status: 'found', profile: profile.data, logs }
 }

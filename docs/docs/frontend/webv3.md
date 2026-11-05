@@ -16,7 +16,8 @@ sync the goal to a Tadoku account. [Native activity logging](webv3-logging.md) u
 The latest official, yearly and all-time [leaderboards](webv3-leaderboards.md)
 read their standings from the API, and the official, community and My contests
 [contest lists](webv3-contests.md) list contests as the visitor sees them.
-[Profile statistics](webv3-profile.md) read a learner's yearly records from the API.
+[Profile statistics and activity](webv3-profile.md) read a learner's yearly records
+and logs from the API.
 
 ## Stack and ownership
 

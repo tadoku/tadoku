@@ -126,7 +126,7 @@ test('a visitor opens a standings profile, server-rendered without owner tools',
   if (visible.activity.total_updates > 0) await expect(page.locator('.paper-heatmap rect[data-date]')).not.toHaveCount(0)
   await expect(page.getByRole('link', { name: /Download/ })).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Activity', exact: true }))
-    .toHaveAttribute('href', new RegExp(`^https://[^/]+/profile/${userId}/updates/1$`))
+    .toHaveAttribute('href', `/profile/${userId}/updates/1`)
   await context.close()
 })
 

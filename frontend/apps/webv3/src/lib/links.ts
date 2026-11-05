@@ -29,9 +29,9 @@ function createLinks(base: string) {
     contest: (id: string) => legacyUrl(`/contests/${encodeURIComponent(id)}/leaderboard/1`),
     joinContest: (id: string) => legacyUrl(`/contests/${encodeURIComponent(id)}/registration`),
     profile: (id: string) => `/profile/${encodeURIComponent(id)}/statistics`,
-    /** A profile's updates on Webv2, optionally only one UTC day's (`YYYY-MM-DD`). */
+    /** A profile's updates, optionally only one UTC day's (`YYYY-MM-DD`). */
     profileUpdates: (id: string, date?: string) =>
-      legacyUrl(`/profile/${encodeURIComponent(id)}/updates/1${date ? `?date=${date}` : ''}`),
+      `/profile/${encodeURIComponent(id)}/updates/1${date ? `?date=${date}` : ''}`,
     contestProfile: (contestId: string, userId: string) =>
       legacyUrl(`/contests/${encodeURIComponent(contestId)}/profile/${encodeURIComponent(userId)}/1`),
     /** The signed-in account's own logs as a download, through Webv2's API path. */

@@ -10,7 +10,7 @@ export function requestUrls() {
 }
 
 /**
- * The Webv2, API, Webv3 and account URLs for a request to `host`. A branch's Webv3 host selects that branch's sites.
+ * The Webv2, API, Webv3, account and admin URLs for a request to `host`. A branch's Webv3 host selects that branch's sites.
  * Server routes outside TanStack Start pass their own Host header; everything else uses `requestUrls()`.
  */
 export function urlsForHost(host: string | null | undefined) {
@@ -27,8 +27,9 @@ export function urlsForHost(host: string | null | undefined) {
   // Branches live under preview.tadoku.app in production and under the development domain otherwise.
   const branchDomain = web.hostname === 'tadoku.app' ? 'preview.tadoku.app' : web.hostname
   const branch = host ? branchName(host, branchDomain) : undefined
-  // The account app is the sibling `account.` host, as in authv2 and ui/app-urls.
-  const accountHost = branch ? `${branch}.account.${branchDomain}` : `account.${web.hostname}`
+  // The account and admin apps are the sibling `account.` and `admin.` hosts, as in authv2 and ui/app-urls.
+  const sibling = (app: string) =>
+    `${web.protocol}//${branch ? `${branch}.${app}.${branchDomain}` : `${app}.${web.hostname}`}${web.port ? `:${web.port}` : ''}`
   if (branch) {
     web.hostname = `${branch}.${branchDomain}`
     api.href = new URL(api.pathname + api.search, web).href
@@ -38,7 +39,8 @@ export function urlsForHost(host: string | null | undefined) {
     webUrl: web.origin,
     apiUrl: api.href.replace(/\/$/, ''),
     appOrigin,
-    accountUrl: `${web.protocol}//${accountHost}${web.port ? `:${web.port}` : ''}`,
+    accountUrl: sibling('account'),
+    adminUrl: sibling('admin'),
   }
 }
 

@@ -322,7 +322,7 @@ function FailureAction({ failure, viewerId }: { failure: LogFailure; viewerId: s
       return (
         <a
           className="text-link"
-          href={links.legacyUrl(`/profile/${viewerId}/updates`)}
+          href={links.profileUpdates(viewerId)}
           target="_blank"
           rel="noopener noreferrer"
         >

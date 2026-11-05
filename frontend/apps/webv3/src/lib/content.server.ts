@@ -1,7 +1,13 @@
-import { contentPageFindBySlug, contentPostFindBySlug, contentPostList, type ContentPost } from 'api-client'
+import {
+  contentAnnouncementListActive,
+  contentPageFindBySlug,
+  contentPostFindBySlug,
+  contentPostList,
+  type ContentPost,
+} from 'api-client'
 import createDOMPurify from 'dompurify'
 import { JSDOM } from 'jsdom'
-import type { BlogPage, BlogPost, CmsPage, Content, SanitizedHtml } from './content'
+import type { Announcement, BlogPage, BlogPost, CmsPage, Content, SanitizedHtml } from './content'
 import { blogPageSize } from './content'
 import type { Read } from './leaderboard'
 import { sessionRequest } from './session.server'
@@ -52,3 +58,13 @@ export async function readPosts(page: number): Promise<Read<BlogPage>> {
     ? { ok: true, data: { posts, total: data.total_size } }
     : { ok: false }
 }
+
+/** The announcements running now; an unavailable list shows none, as in Webv2. */
+export async function readAnnouncements(): Promise<Announcement[]> {
+  const { data } = await contentAnnouncementListActive({ ...sessionRequest(), path: { namespace } })
+    .catch(() => ({ data: undefined }))
+  return (data?.announcements ?? []).flatMap(({ id, content, style, href }) =>
+    id ? [{ id, content, tone: tones[style], href: href || undefined }] : [])
+}
+
+const tones = { info: 'information', success: 'success', warning: 'warning', error: 'danger' } as const

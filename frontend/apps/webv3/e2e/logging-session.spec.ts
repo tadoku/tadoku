@@ -9,6 +9,7 @@ import {
   expectDraftKept,
   fillDraft,
   isSaveRequest,
+  logOut,
   logsDescribed,
   openForm,
   reader,
@@ -129,7 +130,7 @@ test('a draft cannot be saved under an account switched in another tab', async (
 
   const other = await context.newPage()
   await other.goto(`${webv3}/plan`)
-  await other.getByRole('button', { name: 'Log out', exact: true }).click()
+  await logOut(other)
   await signIn(other, admin)
   const adminId = await accountId(context)
 
@@ -137,7 +138,7 @@ test('a draft cannot be saved under an account switched in another tab', async (
   await saveButton(page).click()
   await expect(page.getByRole('alert')).toContainText('different account. Nothing was saved')
   await expectDraftKept(page, '11', description)
-  await expect(header(page).getByText('Dev Admin', { exact: true })).toBeVisible()
+  await expect(header(page).getByRole('button', { name: 'Dev Admin', exact: true })).toBeVisible()
   for (const userId of [readerId, adminId]) {
     expect(await logsDescribed(context, userId, description)).toHaveLength(0)
   }
@@ -181,7 +182,7 @@ for (const change of ['expiry', 'account switch']) {
 
     // End or switch the session in the other tab.
     await other.bringToFront()
-    await other.getByRole('button', { name: 'Log out', exact: true }).click()
+    await logOut(other)
     if (change === 'account switch') await signIn(other, admin)
     await page.bringToFront()
     if (change === 'expiry') {
@@ -195,7 +196,7 @@ for (const change of ['expiry', 'account switch']) {
     await expect(page.getByRole('alert')).toContainText(refusal)
     await expectDraftKept(page, '13', description)
     if (change === 'account switch') {
-      await expect(header(page).getByText('Dev Admin', { exact: true })).toBeVisible()
+      await expect(header(page).getByRole('button', { name: 'Dev Admin', exact: true })).toBeVisible()
       await expect(page.getByRole('link', { name: 'Start a new activity for this account' })).toBeVisible()
     }
     await page.screenshot({ path: testInfo.outputPath(`anonymous-entry-${change.replace(' ', '-')}.png`), fullPage: true })

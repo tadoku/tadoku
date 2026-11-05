@@ -139,7 +139,15 @@ a { text-underline-offset: .2em; }
 }
 
 .app-account-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-3, .75rem); }
-.app-account-actions form { margin: 0; }
+.app-account-menu--desktop .paper-button > span { max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-mobile-account { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--paper-color-rule-subtle); }
+.app-mobile-account__name { margin: 0 0 4px; padding-inline: var(--paper-field-padding-inline); font-size: .875rem; font-weight: 600; color: var(--paper-color-text-muted); overflow-wrap: anywhere; }
+.app-mobile-account .paper-button { justify-content: flex-start; width: 100%; }
+@media (width < 48rem) { .app-account-menu--desktop { display: none; } }
+.app-announcements { display: grid; gap: 8px; margin-bottom: 24px; }
+.app-announcement { display: grid; gap: 4px; overflow-wrap: anywhere; }
+.app-announcement p { margin: 0; }
+.app-footer__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; font-size: .875rem; }
 @media (max-width: 600px) { .app-account-actions { font-size: .8rem; gap: .4rem; max-width: 12rem; } }
 .log-surface { max-width: 48rem; padding: clamp(1rem, 4vw, 2rem); overflow-wrap: anywhere; }
 .registration-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 24px; }

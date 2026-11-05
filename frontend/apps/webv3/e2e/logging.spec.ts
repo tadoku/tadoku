@@ -16,13 +16,14 @@ import {
   webv3,
 } from './logging-fixtures'
 
-test('native activity link opens an anonymous sign-in prompt', async ({ page }) => {
+test('the activity form asks an anonymous visitor to sign in, and guests get no header Log activity', async ({ page }) => {
   test.skip(!webv3, 'Set WEBV3_BASE_URL')
+  // As in Webv2, guests get Log in and Sign up in the header instead.
   await page.goto('/plan')
-  const link = page.getByRole('link', { name: 'Log activity', exact: true }).first()
-  await expect(link).toHaveAttribute('href', '/logs/new')
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Sign up', exact: true })).toBeVisible()
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Log activity', exact: true })).toHaveCount(0)
 
-  await link.click()
+  await page.goto('/logs/new')
   await expect(page.getByRole('heading', { name: 'Sign in to log activity' })).toBeVisible()
 })
 

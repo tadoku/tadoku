@@ -2,13 +2,13 @@ import { rootRouteId, useLoaderData } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { useMemo } from 'react'
 
-/** Where links lead for this request: Webv2, the account app and the requested page itself. */
+/** Where links lead for this request: the public web origin, the account and admin apps and the requested page itself. */
 export const getPageUrls = createServerFn({ method: 'GET' }).handler(async () => {
   const { requestUrls } = await import('./urls.server')
   const { getRequest } = await import('@tanstack/react-start/server')
-  const { webUrl, appOrigin, accountUrl } = requestUrls()
+  const { webUrl, appOrigin, accountUrl, adminUrl } = requestUrls()
   const request = new URL(getRequest().url)
-  return { webUrl, accountUrl, pageUrl: appOrigin + request.pathname + request.search }
+  return { webUrl, accountUrl, adminUrl, pageUrl: appOrigin + request.pathname + request.search }
 })
 
 export function useLinks() {
@@ -17,10 +17,8 @@ export function useLinks() {
 }
 
 function createLinks(base: string) {
-  const legacyUrl = (path: string) => new URL(path, base).href
   return {
-    legacyUrl,
-    home: legacyUrl('/'),
+    home: '/',
     contests: '/contests/official/1',
     newContest: '/contests/new',
     leaderboard: '/leaderboard/latest/1',
@@ -39,7 +37,7 @@ function createLinks(base: string) {
       `/profile/${encodeURIComponent(id)}/updates/1${date ? `?date=${date}` : ''}`,
     contestProfile: (contestId: string, userId: string, page = 1) =>
       `/contests/${encodeURIComponent(contestId)}/profile/${encodeURIComponent(userId)}/${page}`,
-    /** The signed-in account's own logs as a download, through Webv2's API path. */
-    logExport: (format: 'csv' | 'json') => legacyUrl(`/api/internal/immersion/logs/export?format=${format}`),
+    /** The signed-in account's own logs as a download, from the API gateway on the public web origin. */
+    logExport: (format: 'csv' | 'json') => new URL(`/api/internal/immersion/logs/export?format=${format}`, base).href,
   }
 }

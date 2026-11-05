@@ -29,6 +29,11 @@ export const loginHref = (accountUrl: string, returnTo: string) => `${accountUrl
 
 /** The authv2 login URL that returns to the current page. */
 export function useLoginUrl() {
+  return useAccountUrls().login
+}
+
+/** The authv2 login, registration and settings URLs, each returning to the current page. */
+export function useAccountUrls() {
   const { accountUrl, pageUrl } = useLoaderData({ from: rootRouteId })
   const hydrated = useHydrated()
   // Re-render on every navigation: in the browser the return URL is the full current URL, fragment included, which
@@ -36,5 +41,10 @@ export function useLoginUrl() {
   useRouterState({ select: state => state.location.href })
 
   const current = hydrated ? window.location.href : pageUrl
-  return loginHref(accountUrl, current)
+  const returnTo = encodeURIComponent(current)
+  return {
+    login: loginHref(accountUrl, current),
+    register: `${accountUrl}/register?return_to=${returnTo}`,
+    settings: `${accountUrl}/settings?return_to=${returnTo}`,
+  }
 }

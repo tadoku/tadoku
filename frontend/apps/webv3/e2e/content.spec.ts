@@ -103,9 +103,38 @@ test('the manual and its navigation are server-rendered and fit a phone', async 
   await expect(page.getByRole('region', { name: 'Reading' }).getByRole('row', { name: /^Japanese/ })).toHaveText(/Japanese\s*1\s*1\.6\s*0\.2\s*0\.05\s*0\.0025/)
 
   const header = page.getByRole('banner')
-  await expect(header.getByRole('link', { name: 'Guide', exact: true }).first()).toHaveAttribute('href', '/pages/manual')
+  const main = header.getByRole('navigation', { name: 'Main navigation' })
+  // Webv2's main navigation plus the guide.
+  for (const [name, href] of [
+    ['Home', '/'],
+    ['Leaderboard', '/leaderboard/latest/1'],
+    ['Contests', '/contests/official/1'],
+    ['Blog', '/blog/1'],
+    ['Guide', '/pages/manual'],
+  ]) {
+    await expect(main.getByRole('link', { name, exact: true }).first()).toHaveAttribute('href', href)
+  }
   const footer = page.getByRole('navigation', { name: 'Footer' })
-  for (const [name, href] of [['About Tadoku', '/pages/about'], ['Guide', '/pages/manual'], ['Questions & help', '/pages/faq'], ['Blog', '/blog/1'], ['Contact', '/pages/contact'], ['Privacy', '/pages/privacy']]) {
+  // Webv2's footer destinations, in its order.
+  await expect(footer.getByRole('link')).toHaveText([
+    'Home', 'Leaderboard', 'Contests', 'Blog', 'About Tadoku', 'Guide', 'Rules', 'Questions & help', 'Privacy', 'Contact',
+    'GitHub', 'Discord', 'Twitter',
+  ])
+  for (const [name, href] of [
+    ['Home', '/'],
+    ['Leaderboard', '/leaderboard/latest/1'],
+    ['Contests', '/contests/official/1'],
+    ['Blog', '/blog/1'],
+    ['About Tadoku', '/pages/about'],
+    ['Guide', '/pages/manual'],
+    ['Rules', '/pages/rules'],
+    ['Questions & help', '/pages/faq'],
+    ['Privacy', '/pages/privacy'],
+    ['Contact', '/pages/contact'],
+    ['GitHub', 'https://github.com/tadoku'],
+    ['Discord', 'https://discord.gg/AsC9vZs2Ex'],
+    ['Twitter', 'https://twitter.com/tadoku_app'],
+  ]) {
     await expect(footer.getByRole('link', { name, exact: true })).toHaveAttribute('href', href)
   }
   await page.screenshot({ path: testInfo.outputPath('manual-1280.png'), fullPage: true })
@@ -211,4 +240,27 @@ test('published content an administrator adds appears, sanitized and paginated, 
   await expectSanitized(page)
   await page.screenshot({ path: testInfo.outputPath('cms-sanitized.png'), fullPage: true })
   await context.close()
+})
+
+test('active announcements show above pages until this browser dismisses them', async ({ page, request }, testInfo) => {
+  test.skip(!api, 'Set TADOKU_API_URL')
+  const { announcements } = await apiJson<{ announcements: { id: string; href?: string | null }[] }>(
+    request,
+    '/content/announcements/tadoku/active',
+  )
+  test.skip(announcements.length === 0, 'The selected tenant has no active announcement')
+
+  await page.goto('/blog/1')
+  const banners = page.locator('main .paper-flash')
+  await expect(banners).toHaveCount(announcements.length)
+  const first = banners.first()
+  if (announcements[0].href) await expect(first.getByRole('link', { name: 'Learn more' })).toHaveAttribute('href', announcements[0].href)
+  await page.screenshot({ path: testInfo.outputPath('announcement.png') })
+
+  await first.getByRole('button', { name: 'Dismiss announcement' }).click()
+  await expect(banners).toHaveCount(announcements.length - 1)
+  expect(JSON.parse((await page.evaluate(() => localStorage.getItem('dismissed_announcements')))!)).toEqual([announcements[0].id])
+  await page.reload()
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  await expect(banners).toHaveCount(announcements.length - 1)
 })

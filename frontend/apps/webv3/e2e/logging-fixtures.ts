@@ -28,6 +28,13 @@ export async function signIn(page: Page, account = reader) {
   await expect(saveButton(page)).toBeEnabled({ timeout: 15_000 })
 }
 
+/** Logs out from the account menu, as Webv2's user dropdown does. */
+export async function logOut(page: Page, name = 'Dev Reader') {
+  await expect(page.getByRole('button', { name, exact: true })).toBeEnabled()
+  await page.getByRole('button', { name, exact: true }).click()
+  await page.getByRole('menuitem', { name: 'Log out', exact: true }).click()
+}
+
 /** Opens the activity form in a context that already holds a session from `signIn`. */
 export async function openForm(page: Page) {
   await page.goto('/logs/new')

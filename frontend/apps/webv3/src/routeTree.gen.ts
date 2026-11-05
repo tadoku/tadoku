@@ -23,6 +23,7 @@ import { Route as ContestsOfficialSplatRouteImport } from './routes/contests/off
 import { Route as ContestsUserContestsSplatRouteImport } from './routes/contests/user-contests/$'
 import { Route as LeaderboardAllTimeSplatRouteImport } from './routes/leaderboard/all-time/$'
 import { Route as LeaderboardLatestSplatRouteImport } from './routes/leaderboard/latest/$'
+import { Route as LogsLogIdContestsRouteImport } from './routes/logs/$logId_.contests'
 import { Route as LogsLogIdEditRouteImport } from './routes/logs/$logId_.edit'
 import { Route as ContestsIdLeaderboardSplatRouteImport } from './routes/contests/$id/leaderboard/$'
 import { Route as LeaderboardYearlyYearSplatRouteImport } from './routes/leaderboard/yearly/$year/$'
@@ -100,6 +101,11 @@ const LeaderboardLatestSplatRoute = LeaderboardLatestSplatRouteImport.update({
   path: '/leaderboard/latest/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LogsLogIdContestsRoute = LogsLogIdContestsRouteImport.update({
+  id: '/logs/$logId_/contests',
+  path: '/logs/$logId/contests',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LogsLogIdEditRoute = LogsLogIdEditRouteImport.update({
   id: '/logs/$logId_/edit',
   path: '/logs/$logId/edit',
@@ -145,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/contests/user-contests/$': typeof ContestsUserContestsSplatRoute
   '/leaderboard/all-time/$': typeof LeaderboardAllTimeSplatRoute
   '/leaderboard/latest/$': typeof LeaderboardLatestSplatRoute
+  '/logs/$logId/contests': typeof LogsLogIdContestsRoute
   '/logs/$logId/edit': typeof LogsLogIdEditRoute
   '/contests/$id/leaderboard/$': typeof ContestsIdLeaderboardSplatRoute
   '/leaderboard/yearly/$year/$': typeof LeaderboardYearlyYearSplatRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByTo {
   '/contests/user-contests/$': typeof ContestsUserContestsSplatRoute
   '/leaderboard/all-time/$': typeof LeaderboardAllTimeSplatRoute
   '/leaderboard/latest/$': typeof LeaderboardLatestSplatRoute
+  '/logs/$logId/contests': typeof LogsLogIdContestsRoute
   '/logs/$logId/edit': typeof LogsLogIdEditRoute
   '/contests/$id/leaderboard/$': typeof ContestsIdLeaderboardSplatRoute
   '/leaderboard/yearly/$year/$': typeof LeaderboardYearlyYearSplatRoute
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/contests/user-contests/$': typeof ContestsUserContestsSplatRoute
   '/leaderboard/all-time/$': typeof LeaderboardAllTimeSplatRoute
   '/leaderboard/latest/$': typeof LeaderboardLatestSplatRoute
+  '/logs/$logId_/contests': typeof LogsLogIdContestsRoute
   '/logs/$logId_/edit': typeof LogsLogIdEditRoute
   '/contests/$id/leaderboard/$': typeof ContestsIdLeaderboardSplatRoute
   '/leaderboard/yearly/$year/$': typeof LeaderboardYearlyYearSplatRoute
@@ -211,6 +220,7 @@ export interface FileRouteTypes {
     | '/contests/user-contests/$'
     | '/leaderboard/all-time/$'
     | '/leaderboard/latest/$'
+    | '/logs/$logId/contests'
     | '/logs/$logId/edit'
     | '/contests/$id/leaderboard/$'
     | '/leaderboard/yearly/$year/$'
@@ -232,6 +242,7 @@ export interface FileRouteTypes {
     | '/contests/user-contests/$'
     | '/leaderboard/all-time/$'
     | '/leaderboard/latest/$'
+    | '/logs/$logId/contests'
     | '/logs/$logId/edit'
     | '/contests/$id/leaderboard/$'
     | '/leaderboard/yearly/$year/$'
@@ -253,6 +264,7 @@ export interface FileRouteTypes {
     | '/contests/user-contests/$'
     | '/leaderboard/all-time/$'
     | '/leaderboard/latest/$'
+    | '/logs/$logId_/contests'
     | '/logs/$logId_/edit'
     | '/contests/$id/leaderboard/$'
     | '/leaderboard/yearly/$year/$'
@@ -275,6 +287,7 @@ export interface RootRouteChildren {
   ContestsUserContestsSplatRoute: typeof ContestsUserContestsSplatRoute
   LeaderboardAllTimeSplatRoute: typeof LeaderboardAllTimeSplatRoute
   LeaderboardLatestSplatRoute: typeof LeaderboardLatestSplatRoute
+  LogsLogIdContestsRoute: typeof LogsLogIdContestsRoute
   LogsLogIdEditRoute: typeof LogsLogIdEditRoute
   ContestsIdLeaderboardSplatRoute: typeof ContestsIdLeaderboardSplatRoute
   LeaderboardYearlyYearSplatRoute: typeof LeaderboardYearlyYearSplatRoute
@@ -382,6 +395,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LeaderboardLatestSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/logs/$logId_/contests': {
+      id: '/logs/$logId_/contests'
+      path: '/logs/$logId/contests'
+      fullPath: '/logs/$logId/contests'
+      preLoaderRoute: typeof LogsLogIdContestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/logs/$logId_/edit': {
       id: '/logs/$logId_/edit'
       path: '/logs/$logId/edit'
@@ -435,6 +455,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContestsUserContestsSplatRoute: ContestsUserContestsSplatRoute,
   LeaderboardAllTimeSplatRoute: LeaderboardAllTimeSplatRoute,
   LeaderboardLatestSplatRoute: LeaderboardLatestSplatRoute,
+  LogsLogIdContestsRoute: LogsLogIdContestsRoute,
   LogsLogIdEditRoute: LogsLogIdEditRoute,
   ContestsIdLeaderboardSplatRoute: ContestsIdLeaderboardSplatRoute,
   LeaderboardYearlyYearSplatRoute: LeaderboardYearlyYearSplatRoute,

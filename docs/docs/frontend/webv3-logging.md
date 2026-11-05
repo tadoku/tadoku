@@ -1,6 +1,6 @@
 ---
 title: Webv3 activity logging
-description: Native Webv3 activity creation, saved detail, edits, deletion and the score estimate, their draft owners, session safety and browser journeys.
+description: Native Webv3 activity creation, saved detail, edits, deletion, contest submissions and the score estimate, their draft owners, session safety and browser journeys.
 sidebar_position: 3
 ---
 
@@ -50,8 +50,7 @@ A successful save navigates to `/logs/$logId` using the returned ID and displays
 the persisted language, measure, tags, score and contests. Reload reads that
 record again. An expired session cookie retries a public detail read
 anonymously. Public detail omits private contest submissions; only the owner
-gets the contest management link to Webv2, which keeps contest submissions and
-history.
+gets the link to manage them.
 
 The detail page offers its owner Edit log and Delete log; visitors see neither.
 `/logs/$logId/edit` shows the edit form only to the log's owner; another account
@@ -63,6 +62,19 @@ contests' scores unchanged. Timed logs saved with their minutes as an amount are
 edited and saved as a duration. A save replaces the edit page with the updated
 detail. Retrying an unconfirmed update is safe. The edit draft starts from the
 log as first read; later reads do not replace it.
+
+`/logs/$logId/contests` lets the log's owner choose which of their ongoing
+contest registrations the saved log counts in; another account sees that the
+record is someone else's, and an anonymous visitor is asked to sign in. Each
+registration is offered unless the contest does not allow the log's activity,
+the registration lacks its language or the contest has ended, in that order,
+and the reason is shown beside it. The owner's current submissions start
+selected. Saving sends the selection to the contest registration update
+operation, which adds and removes submissions to unfinished contests and keeps
+submissions to finished contests and their saved scores; the page lists those
+as finished. A save opens the updated detail, and saving again is safe. Without
+an eligible registration the page links to the contest lists. Removing a
+submission leaves the personal record unchanged.
 
 Delete log asks for confirmation, then deletes the log and opens the owner's
 [profile statistics](webv3-profile.md). A log already gone counts as deleted. The API refuses to
@@ -87,7 +99,8 @@ are held in memory and are lost when the form is reloaded or closed.
 
 `logging.spec.ts` covers the form, saves, detail, ownership and tenant
 isolation; `logging-edit.spec.ts` covers edits, deletion, owner actions and the
-score estimate; `logging-session.spec.ts` covers expiry, CSRF, suspension and
+score estimate; `logging-contests.spec.ts` covers submitting a saved log to a
+contest, removing it and refusing other visitors; `logging-session.spec.ts` covers expiry, CSRF, suspension and
 account switches. Run them with `WEBV3_BASE_URL`, `TADOKU_API_URL`, `E2E_READER_EMAIL`
 and `E2E_READER_PASSWORD` for the documented development fixture. Ownership,
 suspension and account-switch cases also use `E2E_SECOND_EMAIL` and

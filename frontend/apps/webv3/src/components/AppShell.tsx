@@ -1,5 +1,5 @@
-import { Link, useHydrated, useRouterState } from '@tanstack/react-router'
-import { Button, Navbar, buttonClassName, type NavbarItem, type NavigationLinkProps } from 'paper-ui'
+import { useHydrated, useRouterState } from '@tanstack/react-router'
+import { Button, Navbar, buttonClassName, type NavbarItem } from 'paper-ui'
 import mark from 'paper-ui/assets/brand/cut-meter.svg?url'
 import reversedMark from 'paper-ui/assets/brand/cut-meter-reversed.svg?url'
 import wordmark from 'paper-ui/assets/brand/wordmark-accent.svg?url'
@@ -8,6 +8,7 @@ import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useLoginUrl, viewerQueryOptions, type Viewer } from '../lib/session'
 import { useLinks } from '../lib/links'
+import { renderLink } from './router-link'
 
 const themeKey = 'tadoku-theme'
 
@@ -20,16 +21,12 @@ function toggleTheme() {
   try { localStorage.setItem(themeKey, next) } catch { /* Private mode keeps the choice for this page only. */ }
 }
 
-function renderLink({ href, ...props }: NavigationLinkProps) {
-  return href.startsWith('/') ? <Link to={href as '/' | '/plan'} {...props} /> : <a href={href} {...props} />
-}
-
 export function AppShell({ children }: { children: ReactNode }) {
   const currentPath = useRouterState({ select: state => state.location.pathname })
   const hydrated = useHydrated()
   const links = useLinks()
   const navigation: NavbarItem[] = [
-    { type: 'link', id: 'leaderboard', label: 'Leaderboard', href: links.leaderboard },
+    { type: 'link', id: 'leaderboard', label: 'Leaderboard', href: links.leaderboard, current: currentPath.startsWith('/leaderboard/') },
     { type: 'link', id: 'contests', label: 'Contests', href: links.contests },
     { type: 'link', id: 'guide', label: 'Guide', href: links.guide },
     { type: 'link', id: 'goal', label: 'Daily goal', href: '/plan' },

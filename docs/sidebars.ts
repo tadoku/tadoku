@@ -88,6 +88,8 @@ const sidebars: SidebarsConfig = {
         'frontend/conventions',
         'frontend/api-client',
         'frontend/webv2',
+        'frontend/webv3',
+        'frontend/webv3-leaderboards',
         'frontend/authv2',
         'frontend/admin',
         'frontend/paper-styleguide',

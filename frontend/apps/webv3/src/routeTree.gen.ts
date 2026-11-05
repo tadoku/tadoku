@@ -9,24 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PlanRouteImport } from './routes/plan'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as LogsNewRouteImport } from './routes/logs/new'
+import { Route as PlanRouteImport } from './routes/plan'
 import { Route as LogsLogIdRouteImport } from './routes/logs/$logId'
+import { Route as LogsNewRouteImport } from './routes/logs/new'
+import { Route as LeaderboardAllTimeSplatRouteImport } from './routes/leaderboard/all-time/$'
+import { Route as LeaderboardLatestSplatRouteImport } from './routes/leaderboard/latest/$'
+import { Route as LeaderboardYearlyYearSplatRouteImport } from './routes/leaderboard/yearly/$year/$'
 
-const PlanRoute = PlanRouteImport.update({
-  id: '/plan',
-  path: '/plan',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LogsNewRoute = LogsNewRouteImport.update({
-  id: '/logs/new',
-  path: '/logs/new',
+const PlanRoute = PlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LogsLogIdRoute = LogsLogIdRouteImport.update({
@@ -34,18 +32,45 @@ const LogsLogIdRoute = LogsLogIdRouteImport.update({
   path: '/logs/$logId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LogsNewRoute = LogsNewRouteImport.update({
+  id: '/logs/new',
+  path: '/logs/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeaderboardAllTimeSplatRoute = LeaderboardAllTimeSplatRouteImport.update({
+  id: '/leaderboard/all-time/$',
+  path: '/leaderboard/all-time/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeaderboardLatestSplatRoute = LeaderboardLatestSplatRouteImport.update({
+  id: '/leaderboard/latest/$',
+  path: '/leaderboard/latest/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeaderboardYearlyYearSplatRoute =
+  LeaderboardYearlyYearSplatRouteImport.update({
+    id: '/leaderboard/yearly/$year/$',
+    path: '/leaderboard/yearly/$year/$',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/plan': typeof PlanRoute
   '/logs/$logId': typeof LogsLogIdRoute
   '/logs/new': typeof LogsNewRoute
+  '/leaderboard/all-time/$': typeof LeaderboardAllTimeSplatRoute
+  '/leaderboard/latest/$': typeof LeaderboardLatestSplatRoute
+  '/leaderboard/yearly/$year/$': typeof LeaderboardYearlyYearSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/plan': typeof PlanRoute
   '/logs/$logId': typeof LogsLogIdRoute
   '/logs/new': typeof LogsNewRoute
+  '/leaderboard/all-time/$': typeof LeaderboardAllTimeSplatRoute
+  '/leaderboard/latest/$': typeof LeaderboardLatestSplatRoute
+  '/leaderboard/yearly/$year/$': typeof LeaderboardYearlyYearSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +78,38 @@ export interface FileRoutesById {
   '/plan': typeof PlanRoute
   '/logs/$logId': typeof LogsLogIdRoute
   '/logs/new': typeof LogsNewRoute
+  '/leaderboard/all-time/$': typeof LeaderboardAllTimeSplatRoute
+  '/leaderboard/latest/$': typeof LeaderboardLatestSplatRoute
+  '/leaderboard/yearly/$year/$': typeof LeaderboardYearlyYearSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/plan' | '/logs/$logId' | '/logs/new'
+  fullPaths:
+    | '/'
+    | '/plan'
+    | '/logs/$logId'
+    | '/logs/new'
+    | '/leaderboard/all-time/$'
+    | '/leaderboard/latest/$'
+    | '/leaderboard/yearly/$year/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/plan' | '/logs/$logId' | '/logs/new'
-  id: '__root__' | '/' | '/plan' | '/logs/$logId' | '/logs/new'
+  to:
+    | '/'
+    | '/plan'
+    | '/logs/$logId'
+    | '/logs/new'
+    | '/leaderboard/all-time/$'
+    | '/leaderboard/latest/$'
+    | '/leaderboard/yearly/$year/$'
+  id:
+    | '__root__'
+    | '/'
+    | '/plan'
+    | '/logs/$logId'
+    | '/logs/new'
+    | '/leaderboard/all-time/$'
+    | '/leaderboard/latest/$'
+    | '/leaderboard/yearly/$year/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,10 +117,20 @@ export interface RootRouteChildren {
   PlanRoute: typeof PlanRoute
   LogsLogIdRoute: typeof LogsLogIdRoute
   LogsNewRoute: typeof LogsNewRoute
+  LeaderboardAllTimeSplatRoute: typeof LeaderboardAllTimeSplatRoute
+  LeaderboardLatestSplatRoute: typeof LeaderboardLatestSplatRoute
+  LeaderboardYearlyYearSplatRoute: typeof LeaderboardYearlyYearSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/plan': {
       id: '/plan'
       path: '/plan'
@@ -78,11 +138,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlanRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/logs/$logId': {
+      id: '/logs/$logId'
+      path: '/logs/$logId'
+      fullPath: '/logs/$logId'
+      preLoaderRoute: typeof LogsLogIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/logs/new': {
@@ -92,11 +152,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LogsNewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/logs/$logId': {
-      id: '/logs/$logId'
-      path: '/logs/$logId'
-      fullPath: '/logs/$logId'
-      preLoaderRoute: typeof LogsLogIdRouteImport
+    '/leaderboard/all-time/$': {
+      id: '/leaderboard/all-time/$'
+      path: '/leaderboard/all-time/$'
+      fullPath: '/leaderboard/all-time/$'
+      preLoaderRoute: typeof LeaderboardAllTimeSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leaderboard/latest/$': {
+      id: '/leaderboard/latest/$'
+      path: '/leaderboard/latest/$'
+      fullPath: '/leaderboard/latest/$'
+      preLoaderRoute: typeof LeaderboardLatestSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leaderboard/yearly/$year/$': {
+      id: '/leaderboard/yearly/$year/$'
+      path: '/leaderboard/yearly/$year/$'
+      fullPath: '/leaderboard/yearly/$year/$'
+      preLoaderRoute: typeof LeaderboardYearlyYearSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -107,6 +181,9 @@ const rootRouteChildren: RootRouteChildren = {
   PlanRoute: PlanRoute,
   LogsLogIdRoute: LogsLogIdRoute,
   LogsNewRoute: LogsNewRoute,
+  LeaderboardAllTimeSplatRoute: LeaderboardAllTimeSplatRoute,
+  LeaderboardLatestSplatRoute: LeaderboardLatestSplatRoute,
+  LeaderboardYearlyYearSplatRoute: LeaderboardYearlyYearSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

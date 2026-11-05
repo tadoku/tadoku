@@ -359,6 +359,11 @@ func (s *scenario) serveWith(
 		}
 		request.Header.Set("Authorization", "Bearer "+token)
 	}
+	return s.serveRequest(handler, request)
+}
+
+// serveRequest sends request through handler in the scenario's execution context with its credentials as they are.
+func (s *scenario) serveRequest(handler http.Handler, request *http.Request) *httptest.ResponseRecorder {
 	request = request.WithContext(s.executionContext(request.Context()))
 
 	recorder := httptest.NewRecorder()

@@ -93,11 +93,18 @@ and a journey by calling `runScenarioJourney` instead of `runJourney`,
   runners refuse an operation that has any. Each relationship row is seeded
   into the role standing in for its `tenant`. A seed that names its tenant fails
   under row-level security, so let the column defaults supply it.
-- **Requests.** Each fixture token's claims must equal the cast member's claims
-  for the token's tenant exactly; the runner signs the same claims for the
-  stand-in tenant. Session cookies named for a fixture tenant (`tadoku_session`
-  for `tadoku/prod`, otherwise `tadoku_session_` plus the key with `/` replaced
-  by `_`) are renamed for the stand-in. A request that names a fixture tenant
+- **Requests.** The runner rewrites each token in place in every
+  `Authorization` header, keeping the header's scheme, casing and order. A
+  token that verifies against a checked-in fixture key is re-signed with the
+  scenario key for the tenant standing in for its `tenant` claim; every other
+  claim, expired and future times included, stays as signed. A token that
+  does not verify, such as one with a bad signature, an unknown or missing
+  `kid`, another algorithm or no signature, and one whose `tenant` claim is
+  missing or not a tenant key, is sent unchanged, so the API rejects it as the
+  serial runner's would and a bad credential under test is never fixed.
+  Session cookies named for a fixture tenant (`tadoku_session` for
+  `tadoku/prod`, otherwise `tadoku_session_` plus the key with `/` replaced by
+  `_`) are renamed for the stand-in. A request that names a fixture tenant
   anywhere else, in its path, another header or its body, fails.
 - **Comparison.** Before comparing, the runner replaces each scenario tenant's
   generated route, such as `primary-1a2b3c4d` in `e2e/primary-1a2b3c4d`, with
@@ -120,12 +127,12 @@ and a journey by calling `runScenarioJourney` instead of `runJourney`,
   scenarios also calls `t.Parallel` on its top-level test. A table that keeps
   serial cases stays a serial top-level test; its scenario cases start after
   its serial cases have returned. Journeys with an `afterReset` fault and cases
-  with process-wide fixtures stay on the serial runners. So does a case that
-  tests its own credential: the runner signs a fresh token for any token whose
-  claims equal the cast's, which would replace a bad signature or unknown key
-  under test, and refuses every other credential. A journey whose setup
-  touches only its own tenants, such as seeding its tenant's leaderboard cache,
-  passes it to `runScenarioJourneyWithSetup`, which runs it after seeding.
+  with process-wide fixtures stay on the serial runners. A case that tests its
+  own credential may run as a scenario, because the runner sends a token that
+  does not verify unchanged and keeps every claim of one that does. A journey
+  whose setup touches only its own tenants, such as seeding its tenant's
+  leaderboard cache, passes it to `runScenarioJourneyWithSetup`, which runs it
+  after seeding.
 
 `TestFixtureScenarioCasesStayInTheirTenants` in
 `services/tadoku-api/e2e/fixture_scenario_canary_test.go` runs the same golden

@@ -13,12 +13,11 @@ import (
 )
 
 func TestAuthentication(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		description []string
 		want        int
-		// scenario is false for a case that tests its fixture token itself, because the scenario runner re-signs
-		// cast tokens and refuses any other credential.
-		scenario bool
 	}{
 		{
 			description: []string{"missing", "tenant"},
@@ -35,7 +34,6 @@ func TestAuthentication(t *testing.T) {
 		{
 			description: []string{"user"},
 			want:        http.StatusOK,
-			scenario:    true,
 		},
 		{
 			description: []string{"legacy", "type"},
@@ -44,7 +42,6 @@ func TestAuthentication(t *testing.T) {
 		{
 			description: []string{"guest"},
 			want:        http.StatusOK,
-			scenario:    true,
 		},
 		{
 			description: []string{"without", "exp"},
@@ -73,7 +70,6 @@ func TestAuthentication(t *testing.T) {
 		{
 			description: []string{"without", "credentials"},
 			want:        http.StatusBadRequest,
-			scenario:    true,
 		},
 		{
 			description: []string{"wrong", "scheme"},
@@ -144,13 +140,7 @@ func TestAuthentication(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("Authentication", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			impl := implementation{name: "tadoku-api", handler: api.handler}
-			if !test.scenario {
-				runCase(t, api, name, test.want, impl)
-				return
-			}
-
-			runScenarioCase(t, name, test.want, impl)
+			runScenarioCase(t, name, test.want, implementation{name: "tadoku-api", handler: api.handler})
 		})
 	}
 }

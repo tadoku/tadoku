@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"math/big"
 	"os"
-	"reflect"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -38,6 +37,8 @@ var scenarioSigner struct {
 	kid string
 }
 
+var fixtureKeys map[string]*rsa.PublicKey
+
 type castClaims struct {
 	jwt.RegisteredClaims
 	Type    string       `json:"type"`
@@ -66,6 +67,14 @@ func fixtureJWKS() ([]byte, error) {
 	if err := json.Unmarshal(contents, &jwks); err != nil {
 		return nil, fmt.Errorf("decode fixture JWKS: %w", err)
 	}
+	fixtureKeys = make(map[string]*rsa.PublicKey, len(jwks.Keys))
+	for _, jwk := range jwks.Keys {
+		key, err := parseRSAPublicJWK(jwk)
+		if err != nil {
+			return nil, fmt.Errorf("fixture JWK %q: %w", jwk["kid"], err)
+		}
+		fixtureKeys[jwk["kid"]] = key
+	}
 
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
@@ -82,6 +91,18 @@ func fixtureJWKS() ([]byte, error) {
 		"alg": "RS256",
 	})
 	return json.Marshal(jwks)
+}
+
+func parseRSAPublicJWK(jwk map[string]string) (*rsa.PublicKey, error) {
+	n, err := base64.RawURLEncoding.DecodeString(jwk["n"])
+	if err != nil {
+		return nil, err
+	}
+	e, err := base64.RawURLEncoding.DecodeString(jwk["e"])
+	if err != nil {
+		return nil, err
+	}
+	return &rsa.PublicKey{N: new(big.Int).SetBytes(n), E: int(new(big.Int).SetBytes(e).Int64())}, nil
 }
 
 // signCastToken issues the checked-in cast's claims for key, valid one minute either side of the JWT verification
@@ -122,37 +143,36 @@ func castClaimsFor(tenantKey string, as member) (castClaims, error) {
 	return claims, nil
 }
 
-// parseCastToken reads a checked-in fixture token's tenant and cast member without verifying its signature. It fails
-// unless the claims are exactly the cast member's claims for that tenant, so re-signing them for another tenant
-// changes nothing else.
-func parseCastToken(token string) (string, member, error) {
-	got := jwt.MapClaims{}
-	if _, _, err := jwt.NewParser().ParseUnverified(token, got); err != nil {
-		return "", "", fmt.Errorf("parse fixture token: %w", err)
+// resignFixtureToken re-signs a token that verifies against a checked-in fixture key with the scenario signing key,
+// replacing only its tenant claim with stand(claim). Expired, future and other rejected claims stay as they are. A
+// token that does not verify, or whose tenant claim is missing or not a tenant key, is returned unchanged, so a bad
+// credential under test is never fixed.
+func resignFixtureToken(token string, stand func(fixture string) string) (string, error) {
+	claims := jwt.MapClaims{}
+	parser := jwt.NewParser(
+		jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}),
+		jwt.WithJSONNumber(),
+		jwt.WithoutClaimsValidation(),
+	)
+	_, err := parser.ParseWithClaims(token, claims, func(token *jwt.Token) (any, error) {
+		kid, _ := token.Header["kid"].(string)
+		key, ok := fixtureKeys[kid]
+		if !ok {
+			return nil, fmt.Errorf("no checked-in fixture key %q", kid)
+		}
+		return key, nil
+	})
+	if err != nil {
+		return token, nil
 	}
-	subject, _ := got["sub"].(string)
-	tenantKey, _ := got["tenant"].(string)
 
-	for as, identity := range scenarioCast {
-		if identity.subject != subject {
-			continue
-		}
-		claims, err := castClaimsFor(tenantKey, as)
-		if err != nil {
-			return "", "", err
-		}
-		encoded, err := json.Marshal(claims)
-		if err != nil {
-			return "", "", err
-		}
-		want := jwt.MapClaims{}
-		if err := json.Unmarshal(encoded, &want); err != nil {
-			return "", "", err
-		}
-		if !reflect.DeepEqual(got, want) {
-			return "", "", fmt.Errorf("fixture token for %s in %q carries claims other than the cast's", as, tenantKey)
-		}
-		return tenantKey, as, nil
+	fixture, _ := claims["tenant"].(string)
+	if _, err := tenant.Parse(fixture); err != nil {
+		return token, nil
 	}
-	return "", "", fmt.Errorf("fixture token subject %q is not a cast member", subject)
+	claims["tenant"] = stand(fixture)
+
+	resigned := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	resigned.Header["kid"] = scenarioSigner.kid
+	return resigned.SignedString(scenarioSigner.key)
 }

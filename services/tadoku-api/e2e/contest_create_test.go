@@ -6,10 +6,11 @@ import (
 )
 
 func TestCreateContest(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		description []string
 		want        int
-		serial      bool
 	}{
 		{description: []string{"member", "with", "stale", "signed", "name", "keeps", "newer", "stored", "name", "and", "duplicate", "allow", "lists"}, want: http.StatusOK},
 		{description: []string{"admin", "creates", "official", "past", "contest"}, want: http.StatusOK},
@@ -17,7 +18,7 @@ func TestCreateContest(t *testing.T) {
 		{description: []string{"malformed", "json"}, want: http.StatusBadRequest},
 		{description: []string{"empty", "body"}, want: http.StatusBadRequest},
 		{description: []string{"missing", "required", "dates", "and", "activities"}, want: http.StatusBadRequest},
-		{description: []string{"empty", "signed", "display", "name"}, want: http.StatusBadRequest, serial: true},
+		{description: []string{"empty", "signed", "display", "name"}, want: http.StatusBadRequest},
 		{description: []string{"three", "rune", "title"}, want: http.StatusBadRequest},
 		{description: []string{"official", "private"}, want: http.StatusBadRequest},
 		{description: []string{"official", "language", "limit"}, want: http.StatusBadRequest},
@@ -28,20 +29,14 @@ func TestCreateContest(t *testing.T) {
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin", "official"}, want: http.StatusForbidden},
 		{description: []string{"yearly", "quota", "reached"}, want: http.StatusForbidden},
-		{description: []string{"young", "account"}, want: http.StatusForbidden, serial: true},
+		{description: []string{"young", "account"}, want: http.StatusForbidden},
 		{description: []string{"account", "deletion", "in", "progress"}, want: http.StatusConflict},
 	}
 
 	for _, test := range tests {
 		name := APITestName("CreateContest", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			impl := implementation{name: "tadoku-api", handler: api.handler}
-			if test.serial {
-				runCase(t, api, name, test.want, impl)
-				return
-			}
-
-			runScenarioCase(t, name, test.want, impl)
+			runScenarioCase(t, name, test.want, implementation{name: "tadoku-api", handler: api.handler})
 		})
 	}
 }

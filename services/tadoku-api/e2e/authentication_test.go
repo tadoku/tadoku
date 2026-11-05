@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -196,11 +197,13 @@ func TestAuthenticationDoesNotChangeProbesOrUnknownRoutes(t *testing.T) {
 }
 
 func TestAuthenticationBranch(t *testing.T) {
-	deployment, err := tenant.ParseDeployment("e2e/branch-golden")
+	t.Parallel()
+
+	s := &fixtureScenario{scenario: newScenario(t, primaryRole, "other")}
+	deployment, err := tenant.ParseDeployment(s.tenant(t, primaryRole).String())
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	handler, _, err := newTestRouterWithLeaderboardService(
 		t.Context(),
 		api.db.AppPool,
@@ -216,14 +219,21 @@ func TestAuthenticationBranch(t *testing.T) {
 
 	for _, test := range []struct {
 		description []string
+		role        string
+		as          member
 		want        int
 	}{
-		{description: []string{"other", "tenant"}, want: http.StatusMisdirectedRequest},
-		{description: []string{"own", "tenant"}, want: http.StatusOK},
+		{description: []string{"own", "tenant"}, role: primaryRole, as: admin, want: http.StatusOK},
+		{description: []string{"other", "tenant"}, role: "other", as: guest, want: http.StatusMisdirectedRequest},
 	} {
 		name := APITestName("AuthenticationBranch", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			runCase(t, api, name, test.want, implementation{name: "tadoku-api", handler: handler})
+			directory := filepath.Join("testdata", name)
+			request := readHTTPRequest(t, directory)
+			defer request.Body.Close()
+
+			recorder := s.serveWith(t, handler, test.role, test.as, request)
+			checkRecordedHTTPGolden(t, request, recorder, directory, test.want, *updateGoldens, s.normalize)
 		})
 	}
 }

@@ -232,9 +232,10 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
   router with a test-only success handler, and test-only identity headers prove
   downstream identity propagation. `X-Test-Tenant` proves the parsed signed
   tenant also reached the handler. `AuthenticationBranch` goldens construct the
-  same production router with an exact `e2e/branch-golden` deployment and prove
-  the own-tenant success and other-tenant `421` boundary. The successful case
-  seeds no relationships: admission needs no grant on any tenant. Ban-policy
+  same production router for one scenario, deployed for its primary tenant,
+  and prove the own-tenant success and other-tenant `421` boundary. The
+  successful case seeds no relationships: admission needs no grant on any
+  tenant. Ban-policy
   scenarios register `GET /test/banned` the same way and cover guests,
   ungranted users and bans on both canonical and test tenants. Permission-store
   fail-open behavior and deadlines are tested at that boundary. No test endpoint

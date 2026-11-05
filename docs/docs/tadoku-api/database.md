@@ -65,6 +65,19 @@ are independently implemented with `pg_query_go`.
 
 - Do not create application-defined database functions, stored procedures or
   triggers. Keep business behavior in the application and domain layers.
+- A trigger needs the maintainer's explicit approval, recorded in its pull
+  request. It must meet all of these conditions:
+  - It maintains derived data that every writer of its source tables must keep
+    consistent, including writers outside the application, such as operator
+    SQL and cascades.
+  - It cannot fail a valid write, including a cascade from deleting a test
+    tenant.
+  - A test fails when a table the derived data depends on has no trigger.
+  - Integration tests pin what each kind of write changes.
+
+  Write trigger functions in PL/pgSQL. A trigger function that must read or
+  write rows beyond its caller's grants is `security definer`, with
+  `search_path` pinned the same way as the privilege-boundary functions below.
 - Use declarative database features for data integrity and performance:
   `not null`, `check`, unique and foreign-key constraints, and indexes.
 - The existing `data.create_contest_round` function, called by the scheduled

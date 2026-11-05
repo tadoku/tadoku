@@ -11,8 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlanRouteImport } from './routes/plan'
+import { Route as BlogSplatRouteImport } from './routes/blog/$'
 import { Route as LogsLogIdRouteImport } from './routes/logs/$logId'
 import { Route as LogsNewRouteImport } from './routes/logs/new'
+import { Route as PagesSlugRouteImport } from './routes/pages/$slug'
+import { Route as PagesManualRouteImport } from './routes/pages/manual'
+import { Route as BlogPostsSlugRouteImport } from './routes/blog/posts/$slug'
 import { Route as ContestsMyContestsSplatRouteImport } from './routes/contests/my-contests/$'
 import { Route as ContestsOfficialSplatRouteImport } from './routes/contests/official/$'
 import { Route as ContestsUserContestsSplatRouteImport } from './routes/contests/user-contests/$'
@@ -33,6 +37,11 @@ const PlanRoute = PlanRouteImport.update({
   path: '/plan',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogSplatRoute = BlogSplatRouteImport.update({
+  id: '/blog/$',
+  path: '/blog/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LogsLogIdRoute = LogsLogIdRouteImport.update({
   id: '/logs/$logId',
   path: '/logs/$logId',
@@ -41,6 +50,21 @@ const LogsLogIdRoute = LogsLogIdRouteImport.update({
 const LogsNewRoute = LogsNewRouteImport.update({
   id: '/logs/new',
   path: '/logs/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PagesSlugRoute = PagesSlugRouteImport.update({
+  id: '/pages/$slug',
+  path: '/pages/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PagesManualRoute = PagesManualRouteImport.update({
+  id: '/pages/manual',
+  path: '/pages/manual',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogPostsSlugRoute = BlogPostsSlugRouteImport.update({
+  id: '/blog/posts/$slug',
+  path: '/blog/posts/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContestsMyContestsSplatRoute = ContestsMyContestsSplatRouteImport.update({
@@ -96,8 +120,12 @@ const ProfileIdUpdatesChar123PageChar125Route =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/plan': typeof PlanRoute
+  '/blog/$': typeof BlogSplatRoute
   '/logs/$logId': typeof LogsLogIdRoute
   '/logs/new': typeof LogsNewRoute
+  '/pages/$slug': typeof PagesSlugRoute
+  '/pages/manual': typeof PagesManualRoute
+  '/blog/posts/$slug': typeof BlogPostsSlugRoute
   '/contests/my-contests/$': typeof ContestsMyContestsSplatRoute
   '/contests/official/$': typeof ContestsOfficialSplatRoute
   '/contests/user-contests/$': typeof ContestsUserContestsSplatRoute
@@ -111,8 +139,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/plan': typeof PlanRoute
+  '/blog/$': typeof BlogSplatRoute
   '/logs/$logId': typeof LogsLogIdRoute
   '/logs/new': typeof LogsNewRoute
+  '/pages/$slug': typeof PagesSlugRoute
+  '/pages/manual': typeof PagesManualRoute
+  '/blog/posts/$slug': typeof BlogPostsSlugRoute
   '/contests/my-contests/$': typeof ContestsMyContestsSplatRoute
   '/contests/official/$': typeof ContestsOfficialSplatRoute
   '/contests/user-contests/$': typeof ContestsUserContestsSplatRoute
@@ -127,8 +159,12 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/plan': typeof PlanRoute
+  '/blog/$': typeof BlogSplatRoute
   '/logs/$logId': typeof LogsLogIdRoute
   '/logs/new': typeof LogsNewRoute
+  '/pages/$slug': typeof PagesSlugRoute
+  '/pages/manual': typeof PagesManualRoute
+  '/blog/posts/$slug': typeof BlogPostsSlugRoute
   '/contests/my-contests/$': typeof ContestsMyContestsSplatRoute
   '/contests/official/$': typeof ContestsOfficialSplatRoute
   '/contests/user-contests/$': typeof ContestsUserContestsSplatRoute
@@ -144,8 +180,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/plan'
+    | '/blog/$'
     | '/logs/$logId'
     | '/logs/new'
+    | '/pages/$slug'
+    | '/pages/manual'
+    | '/blog/posts/$slug'
     | '/contests/my-contests/$'
     | '/contests/official/$'
     | '/contests/user-contests/$'
@@ -159,8 +199,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/plan'
+    | '/blog/$'
     | '/logs/$logId'
     | '/logs/new'
+    | '/pages/$slug'
+    | '/pages/manual'
+    | '/blog/posts/$slug'
     | '/contests/my-contests/$'
     | '/contests/official/$'
     | '/contests/user-contests/$'
@@ -174,8 +218,12 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/plan'
+    | '/blog/$'
     | '/logs/$logId'
     | '/logs/new'
+    | '/pages/$slug'
+    | '/pages/manual'
+    | '/blog/posts/$slug'
     | '/contests/my-contests/$'
     | '/contests/official/$'
     | '/contests/user-contests/$'
@@ -190,8 +238,12 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   PlanRoute: typeof PlanRoute
+  BlogSplatRoute: typeof BlogSplatRoute
   LogsLogIdRoute: typeof LogsLogIdRoute
   LogsNewRoute: typeof LogsNewRoute
+  PagesSlugRoute: typeof PagesSlugRoute
+  PagesManualRoute: typeof PagesManualRoute
+  BlogPostsSlugRoute: typeof BlogPostsSlugRoute
   ContestsMyContestsSplatRoute: typeof ContestsMyContestsSplatRoute
   ContestsOfficialSplatRoute: typeof ContestsOfficialSplatRoute
   ContestsUserContestsSplatRoute: typeof ContestsUserContestsSplatRoute
@@ -219,6 +271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlanRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/$': {
+      id: '/blog/$'
+      path: '/blog/$'
+      fullPath: '/blog/$'
+      preLoaderRoute: typeof BlogSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/logs/$logId': {
       id: '/logs/$logId'
       path: '/logs/$logId'
@@ -231,6 +290,27 @@ declare module '@tanstack/react-router' {
       path: '/logs/new'
       fullPath: '/logs/new'
       preLoaderRoute: typeof LogsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pages/$slug': {
+      id: '/pages/$slug'
+      path: '/pages/$slug'
+      fullPath: '/pages/$slug'
+      preLoaderRoute: typeof PagesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pages/manual': {
+      id: '/pages/manual'
+      path: '/pages/manual'
+      fullPath: '/pages/manual'
+      preLoaderRoute: typeof PagesManualRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/posts/$slug': {
+      id: '/blog/posts/$slug'
+      path: '/blog/posts/$slug'
+      fullPath: '/blog/posts/$slug'
+      preLoaderRoute: typeof BlogPostsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contests/my-contests/$': {
@@ -302,8 +382,12 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PlanRoute: PlanRoute,
+  BlogSplatRoute: BlogSplatRoute,
   LogsLogIdRoute: LogsLogIdRoute,
   LogsNewRoute: LogsNewRoute,
+  PagesSlugRoute: PagesSlugRoute,
+  PagesManualRoute: PagesManualRoute,
+  BlogPostsSlugRoute: BlogPostsSlugRoute,
   ContestsMyContestsSplatRoute: ContestsMyContestsSplatRoute,
   ContestsOfficialSplatRoute: ContestsOfficialSplatRoute,
   ContestsUserContestsSplatRoute: ContestsUserContestsSplatRoute,

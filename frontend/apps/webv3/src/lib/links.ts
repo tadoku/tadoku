@@ -24,7 +24,10 @@ function createLinks(base: string) {
     contests: '/contests/official/1',
     newContest: legacyUrl('/contests/new'),
     leaderboard: '/leaderboard/latest/1',
-    guide: legacyUrl('/pages/manual'),
+    guide: '/pages/manual',
+    blog: '/blog/1',
+    /** A CMS page, such as `about` or `faq`. */
+    page: (slug: string) => `/pages/${encodeURIComponent(slug)}`,
     logs: '/logs/new',
     contest: (id: string) => legacyUrl(`/contests/${encodeURIComponent(id)}/leaderboard/1`),
     joinContest: (id: string) => legacyUrl(`/contests/${encodeURIComponent(id)}/registration`),

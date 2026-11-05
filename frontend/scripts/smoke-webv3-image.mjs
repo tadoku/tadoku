@@ -39,6 +39,16 @@ const learnerLogs = Array.from({ length: 51 }, (_, index) => ({
   tags: index === 2 ? ['nsfw'] : [], amount: 4, modifier: 1, score: 4,
   created_at: new Date(Date.parse('2024-03-01T08:00:00Z') + (51 - index) * 3_600_000).toISOString(), deleted: false,
 }))
+// Twelve published posts, newest first, so the blog has two pages; the CMS page holds markup DOMPurify must remove.
+const posts = Array.from({ length: 12 }, (_, index) => ({
+  id: `00000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`, slug: `fixture-post-${12 - index}`,
+  title: `Fixture post ${12 - index}`, content: `## Fixture\n\nPost **${12 - index}** from the container fixture.`,
+  published_at: `2026-01-${String(24 - index).padStart(2, '0')}T08:00:00Z`,
+}))
+const cmsPage = {
+  id: '00000000-0000-4000-8000-000000000401', slug: 'dev-welcome', title: 'Fixture welcome',
+  html: '<p>Fixture page body.</p><img src="data:," alt="" onerror="window.__xss=1"><script>window.__xss=2</script>',
+}
 const writes = []
 const fixture = createServer((request, response) => {
   if (request.method !== 'GET') {
@@ -58,6 +68,13 @@ const fixture = createServer((request, response) => {
     total_size: 1, next_page_token: '',
   }
   // The fixture contest is official, so community lists are empty.
+  else if (path === `/content/pages/tadoku/${cmsPage.slug}`) data = cmsPage
+  else if (path === '/content/posts/tadoku') {
+    const size = Number(url.searchParams.get('page_size') ?? 10)
+    const page = Number(url.searchParams.get('page') ?? 0)
+    data = { posts: posts.slice(page * size, (page + 1) * size), total_size: posts.length, next_page_token: '' }
+  }
+  else if (path.startsWith('/content/posts/tadoku/')) data = posts.find(post => path.endsWith(`/${post.slug}`))
   else if (path === '/immersion/contests') data = url.searchParams.get('official') === 'false'
     ? { contests: [], total_size: 0, next_page_token: '' }
     : { contests: [contest], total_size: 1, next_page_token: '' }
@@ -117,7 +134,7 @@ async function checkRuntimeLinks(base, cases) {
     assert(html.includes(`href="${login}"`), `Wrong login return for ${host}`)
     await writeFile(`${artifacts}/links-${host}.html`, html)
     assert(html.includes(`href="/logs/new"`), `Wrong activity link for ${host}`)
-    assert(html.includes(`href="${origin}/pages/manual"`), `Wrong guide link for ${host}`)
+    assert(html.includes(`href="/pages/manual"`), `Wrong guide link for ${host}`)
     for (const [, href] of html.matchAll(/href="(https:\/\/[^" ]+)"/g)) {
       const url = new URL(href)
       if (url.hostname.endsWith('.tadoku.app') || url.hostname === 'tadoku.app' || url.hostname.endsWith('.dev.lab')) {
@@ -218,6 +235,6 @@ try {
   fixture.close()
   await writeFile(`${artifacts}/result.json`, JSON.stringify({ outcome, image, nodeVersion: process.version,
     revision: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
-    fixture: `Synthetic local read-only contest API (${process.env.WEBV3_LANGUAGE_FIXTURE === 'array' ? 'array' : 'null'} language lists); real API/auth/deployment unverified`,
+    fixture: `Synthetic local read-only contest and content API (${process.env.WEBV3_LANGUAGE_FIXTURE === 'array' ? 'array' : 'null'} language lists); real API/auth/deployment unverified`,
     command: `node scripts/smoke-webv3-image.mjs ${image}`, writes, runtimeLinks, mutationProtection }, null, 2))
 }

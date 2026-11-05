@@ -8,6 +8,7 @@ import { viewerQueryOptions } from '../lib/session'
 import 'paper-ui/styles.css'
 import '../styles.css'
 import '../profile.css'
+import '../content.css'
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   loader: async ({ context }) => {

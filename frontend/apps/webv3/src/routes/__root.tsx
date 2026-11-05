@@ -7,6 +7,7 @@ import { getPageUrls } from '../lib/links'
 import { viewerQueryOptions } from '../lib/session'
 import 'paper-ui/styles.css'
 import '../styles.css'
+import '../profile.css'
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   loader: async ({ context }) => {

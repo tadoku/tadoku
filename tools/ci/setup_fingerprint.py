@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -97,7 +98,9 @@ def fingerprint():
         if path.exists():
             if any(line.split()[:1] in (["import"], ["try-import"]) for line in path.read_text().splitlines()):
                 raise RuntimeError(f"RC imports disable setup reuse: {path}")
-            runtime['rc'][str(path)] = digest(path)
+            # Upload policy differs by event and does not change what the checks verify.
+            rc = re.sub(rb'(?m)^(common --remote_upload_local_results=)(?:true|false)$', rb'\1true', path.read_bytes())
+            runtime['rc'][str(path)] = hashlib.sha256(rc).hexdigest()
     runtime['docker_version'] = json.loads(command('docker', 'version', '--format', '{{json .}}'))
     info = json.loads(command('docker', 'info', '--format', '{{json .}}'))
     runtime['docker_info'] = {key: info[key] for key in (

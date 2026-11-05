@@ -50,6 +50,26 @@ Filtered reads use PostgreSQL, and Valkey errors fall back to PostgreSQL.
 Those paths do not make an already warm key fresh while its invalidation
 remains unprocessed.
 
+PostgreSQL also keeps a version per board in `leaderboard_versions`, keyed by
+tenant and `global`, `yearly:<year>` or `contest:<id>`. Deferred row triggers
+on `logs`, `contest_logs`, `contest_registrations`, `users` and `contests`
+raise the version of every unfiltered board a write changes, whatever issued
+the write. They run when the writing transaction commits, after its last
+statement, and a transaction may raise a board more than once; only a change
+in version is meaningful. A write that changes nothing an unfiltered board
+reads, such as a description edit, freezing a log, changing registered
+languages or purging a left registration, raises nothing. At commit a raise takes a transaction-scoped
+advisory lock for the tenant before any version row, so committing writers of
+one tenant raise in turn and cannot deadlock on version rows or with their own
+row locks. A board with no row is at version 0. A write that commits while its
+test tenant's deletion is in progress fails with `lock_not_available` instead
+of waiting on the deletion, so its data and its versions roll back together.
+The read path does not consult these versions yet.
+`TestLeaderboardVersionsCoverEveryLeaderboardInput` in
+`services/tadoku-api/features/leaderboard/` fails when a relation in
+`services/tadoku-api/sql/leaderboard/leaderboard.sql` lacks its triggers;
+add the triggers with the query change.
+
 The worker's private `/livez` answers while the process serves. `/readyz`
 succeeds only when the last claim pass succeeded for every registered name and
 PostgreSQL answers a ping. It does not check Valkey, assert that any

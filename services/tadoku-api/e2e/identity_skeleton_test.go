@@ -29,5 +29,5 @@ func TestIdentitySessionCallbackAuthentication(t *testing.T) {
 
 func TestIdentitySessionCallbackGolden(t *testing.T) {
 	name := APITestName("IdentityProxySessionCheck", http.StatusUnauthorized, "missing", "credential")
-	runCase(t, api, name, http.StatusUnauthorized, implementation{name: "tadoku-api", handler: api.handler})
+	runScenarioCase(t, name, http.StatusUnauthorized, implementation{name: "tadoku-api", handler: api.handler})
 }

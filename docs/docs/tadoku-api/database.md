@@ -29,9 +29,9 @@ free number. sqlc reads the same directory as its schema.
 - After a migration is merged and deployed, base dependent work on the updated
   `main`.
 
-CI checks changed `.up.sql` files for known migration risk patterns and fails
-when one matches. It also rejects SQL that PostgreSQL's parser cannot read. The
-checker flags:
+CI checks changed `.up.sql` files for known migration risk patterns, and the
+**Migration safety** check fails when one matches. It also rejects SQL that
+PostgreSQL's parser cannot read. The checker flags:
 
 - regular index builds;
 - `create index concurrently` in a file with other statements. The migration
@@ -48,8 +48,12 @@ checker flags:
 - `SET NOT NULL`, column drops and renames;
 - `TRUNCATE`, `VACUUM FULL` and `CLUSTER`.
 
-The checker does not query a database or judge table size; a finding needs a
-migration change before CI can pass. Run it with
+The checker does not query a database or judge table size. Change the
+migration to clear a finding. When a finding is intended and safe, for example
+a column drop that no deployed code reads or writes, a required reviewer of the
+`migration-safety-override` environment can approve the run's **Approve
+migration safety findings** job; **Migration safety** then passes for that run
+only. A new push needs a new approval. Run the checker locally with
 `bazel run //tools/ci/migrationsafety/cmd -- services/tadoku-api/migrations/NNNN_name.up.sql`.
 The checker was inspired by
 [Safe / Not Safe](https://github.com/viggy28/safe-not-safe); Tadoku's Go rules

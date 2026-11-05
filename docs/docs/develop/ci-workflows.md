@@ -65,7 +65,7 @@ console output; they include assertion output and fixture cleanup errors.
 
 | Workflow | Runs on | Checks |
 | --- | --- | --- |
-| `build-bazel.yaml` | PRs and `main` pushes touching Bazel or Go inputs | Frozen lockfile, changed forward migration risk check on PRs, Gazelle diff, visibility, provider-dependency, repository, Go comment and `.depolicy.yaml` import checks, OpenAPI bundle and generation diff, build, image target coverage, and tests; scans and publishes backend images from `main` |
+| `build-bazel.yaml` | PRs and `main` pushes touching Bazel or Go inputs | Frozen lockfile, changed forward migration risk check on PRs (the **Migration safety** check, which an approval of the `migration-safety-override` environment can override for one run), Gazelle diff, visibility, provider-dependency, repository, Go comment and `.depolicy.yaml` import checks, OpenAPI bundle and generation diff, build, image target coverage, and tests; scans and publishes backend images from `main` |
 | `race-bazel.yaml` | Daily, manual dispatch and PRs changing it | Race-instrumented Tadoku API tests; alerts through Notify when a scheduled or manual run does not succeed. See [Race tests](./race-tests.md) |
 | `verify-sqlc.yaml` | Every PR | Reruns `./scripts/generate-sqlc.sh` and fails on any change |
 | `verify-frontend-api-client.yaml` | PRs and `main` pushes touching the contract, recorded HTTP golden responses, the client package or the frontend lockfile | Regenerates the [frontend API client](../frontend/api-client.md), fails on any change, then typechecks it and replays the recorded responses through it |

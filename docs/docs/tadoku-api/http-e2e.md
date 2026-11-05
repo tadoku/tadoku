@@ -154,6 +154,7 @@ fail decoding:
 
 The serial harness runs the resolved `setup.sql`, `testdata/accounts.sql` and the
 resolved `finalize.sql`, then replaces every stored relationship with the
+[production baseline](./scenario-fixtures.md#production-baseline) and the
 resolved file's rows. A row's tenant must be registered by then: for a test
 tenant, insert its registry row in the case's `setup.sql` with
 `on conflict (key) do nothing`. A scenario case seeds the same files into its
@@ -231,9 +232,10 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
   router with a test-only success handler, and test-only identity headers prove
   downstream identity propagation. `X-Test-Tenant` proves the parsed signed
   tenant also reached the handler. `AuthenticationBranch` goldens construct the
-  same production router with an exact `e2e/branch-golden` deployment and prove
-  the own-tenant success and other-tenant `421` boundary. The successful case
-  seeds no relationships: admission needs no grant on any tenant. Ban-policy
+  same production router for one scenario, deployed for its primary tenant,
+  and prove the own-tenant success and other-tenant `421` boundary. The
+  successful case seeds no relationships: admission needs no grant on any
+  tenant. Ban-policy
   scenarios register `GET /test/banned` the same way and cover guests,
   ungranted users and bans on both canonical and test tenants. Permission-store
   fail-open behavior and deadlines are tested at that boundary. No test endpoint

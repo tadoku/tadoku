@@ -316,6 +316,18 @@
     "value": null
   },
   {
+    "kind": "relationship",
+    "tenant": "tadoku/prod",
+    "key": "app:root#admins@user:aa000000-0000-4000-8000-000000000001",
+    "value": null
+  },
+  {
+    "kind": "relationship",
+    "tenant": "tadoku/prod",
+    "key": "app:root#banned@user:bb000000-0000-4000-8000-000000000002",
+    "value": null
+  },
+  {
     "kind": "session",
     "tenant": "tadoku/prod",
     "key": "user2-session",

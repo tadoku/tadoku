@@ -40,6 +40,9 @@ func resetIdentity(t *testing.T, seedFiles ...string) {
 	if err := api.db.Reset(t.Context(), seedFiles...); err != nil {
 		t.Fatal(err)
 	}
+	if err := resetRelationships(t.Context(), api.db.Pool); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func identityRequest(

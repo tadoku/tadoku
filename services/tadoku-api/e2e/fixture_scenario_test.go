@@ -110,11 +110,7 @@ func (s *fixtureScenario) checkCase(t *testing.T, directory string, want int, im
 	t.Helper()
 	request := readHTTPRequest(t, directory)
 	defer request.Body.Close()
-	token, found := strings.CutPrefix(request.Header.Get("Authorization"), "Bearer ")
-	if !found && request.Header.Get("Authorization") != "" {
-		t.Fatalf("%s/request.http carries a non-bearer Authorization header", directory)
-	}
-	recorder := s.serveFixture(t, impl.handler, request, token)
+	recorder := s.serveFixture(t, impl.handler, request, "")
 	checkRecordedHTTPGolden(t, request, recorder, directory, want, *updateGoldens, s.normalize)
 }
 
@@ -221,8 +217,10 @@ func (s *fixtureScenario) businessClock() *timex.Clock {
 	return s.clock
 }
 
-// serveFixture re-signs the fixture token's cast claims for the tenant standing in for the token's tenant and renames
-// each fixture session cookie the same way. It refuses a request that names a fixture tenant anywhere else.
+// serveFixture sends the request with token as its bearer credential, or with its own Authorization headers when
+// token is empty. Each fixture token in them that verifies is re-signed for the tenant standing in for its tenant, in
+// place, and each fixture session cookie is renamed the same way. It refuses a request that names a fixture tenant
+// anywhere else.
 func (s *fixtureScenario) serveFixture(
 	t *testing.T,
 	handler http.Handler,
@@ -232,16 +230,36 @@ func (s *fixtureScenario) serveFixture(
 	t.Helper()
 	s.refuseFixtureTenants(t, request)
 	s.renameSessionCookies(t, request)
-
-	role, as := primaryRole, none
 	if token != "" {
-		fixture, member, err := parseCastToken(token)
-		if err != nil {
-			t.Fatal(err)
-		}
-		role, as = s.roleFor(t, fixture), member
+		request.Header.Set("Authorization", "Bearer "+token)
 	}
-	return s.serveWith(t, handler, role, as, request)
+	s.resignFixtureTokens(t, request)
+	return s.serveRequest(handler, request)
+}
+
+func (s *fixtureScenario) resignFixtureTokens(t *testing.T, request *http.Request) {
+	t.Helper()
+	stand := func(fixture string) string {
+		return s.tenant(t, s.roleFor(t, fixture)).String()
+	}
+
+	values := request.Header.Values("Authorization")
+	if len(values) == 0 {
+		return
+	}
+	resigned := make([]string, 0, len(values))
+	for _, value := range values {
+		scheme, token, found := strings.Cut(value, " ")
+		if found {
+			signed, err := resignFixtureToken(token, stand)
+			if err != nil {
+				t.Fatal(err)
+			}
+			value = scheme + " " + signed
+		}
+		resigned = append(resigned, value)
+	}
+	request.Header["Authorization"] = resigned
 }
 
 func (s *fixtureScenario) refuseFixtureTenants(t *testing.T, request *http.Request) {

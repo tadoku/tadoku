@@ -6,10 +6,12 @@ import (
 )
 
 func TestAuthzRoleUpdate(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		description []string
 		want        int
-		canonical   bool
+		production  *fixtureRelationship
 	}{
 		{description: []string{"ban", "user"}, want: http.StatusOK},
 		{description: []string{"unban", "user"}, want: http.StatusOK},
@@ -28,7 +30,7 @@ func TestAuthzRoleUpdate(t *testing.T) {
 		{
 			description: []string{"test", "production", "admin", "not", "inherited"},
 			want:        http.StatusForbidden,
-			canonical:   true,
+			production:  &productionAdmin,
 		},
 	}
 
@@ -36,8 +38,9 @@ func TestAuthzRoleUpdate(t *testing.T) {
 		name := APITestName("AuthzRoleUpdate", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
 			impl := implementation{name: "tadoku-api", handler: api.handler}
-			if test.canonical {
-				runCase(t, api, name, test.want, impl)
+			if test.production != nil {
+				requireProductionBaseline(t, *test.production)
+				runScenarioCase(t, name, test.want, impl, alphaAsOther)
 				return
 			}
 

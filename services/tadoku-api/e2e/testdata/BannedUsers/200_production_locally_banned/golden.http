@@ -6,6 +6,6 @@ X-Test-Identity-Created-At: 2026-09-12T11:59:00Z
 X-Test-Identity-Display-Name: User Two
 X-Test-Identity-Email: user2@example.test
 X-Test-Identity-Subject: 44444444-4444-4444-8444-444444444444
-X-Test-Tenant: tadoku/prod
+X-Test-Tenant: e2e/{primary}
 
 {"status":"success"}

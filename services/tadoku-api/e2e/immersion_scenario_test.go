@@ -17,5 +17,8 @@ func resetAfter(t *testing.T) {
 		if err := api.db.Reset(ctx); err != nil {
 			t.Error(err)
 		}
+		if err := resetRelationships(ctx, api.db.Pool); err != nil {
+			t.Error(err)
+		}
 	})
 }

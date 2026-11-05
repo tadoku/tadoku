@@ -96,8 +96,11 @@ export function logDraftSchema(options: LogOptions) {
   })
 }
 
-/** A new draft: the viewer's first own language, the first activity, its first unit and every eligible contest. */
-export function firstDraft(options: LogOptions): LogDraft {
+/**
+ * A new draft: the viewer's first own language, the first activity, its first unit, every eligible contest and `amount`
+ * if given.
+ */
+export function firstDraft(options: LogOptions, amount = Number.NaN): LogDraft {
   const { languages, activities, user_language_codes: ownLanguages = [] } = options.configuration
   const offered = (code: string) => languages.some(language => language.code === code)
   const languageCode = ownLanguages.find(offered) ?? languages[0].code
@@ -107,7 +110,7 @@ export function firstDraft(options: LogOptions): LogDraft {
     ...dependentFields(options, languageCode, activityId),
     languageCode,
     activityId,
-    amount: Number.NaN,
+    amount,
     minutes: Number.NaN,
     description: '',
     tags: '',

@@ -49,6 +49,11 @@ const cmsPage = {
   id: '00000000-0000-4000-8000-000000000401', slug: 'dev-welcome', title: 'Fixture welcome',
   html: '<p>Fixture page body.</p><img src="data:," alt="" onerror="window.__xss=1"><script>window.__xss=2</script>',
 }
+const announcement = {
+  id: '00000000-0000-4000-8000-000000000501', namespace: 'tadoku', title: 'Fixture notice',
+  content: 'The **container fixture** announcement.', style: 'info', href: '/pages/dev-welcome',
+  starts_at: '2020-01-01T00:00:00Z', ends_at: '2099-12-31T00:00:00Z',
+}
 const writes = []
 const fixture = createServer((request, response) => {
   if (request.method !== 'GET') {
@@ -69,6 +74,7 @@ const fixture = createServer((request, response) => {
   }
   // The fixture contest is official, so community lists are empty.
   else if (path === `/content/pages/tadoku/${cmsPage.slug}`) data = cmsPage
+  else if (path === '/content/announcements/tadoku/active') data = { announcements: [announcement] }
   else if (path === '/content/posts/tadoku') {
     const size = Number(url.searchParams.get('page_size') ?? 10)
     const page = Number(url.searchParams.get('page') ?? 0)
@@ -148,7 +154,8 @@ async function checkRuntimeLinks(base, cases) {
     const html = response.html
     assert(html.includes(`href="${login}"`), `Wrong login return for ${host}`)
     await writeFile(`${artifacts}/links-${host}.html`, html)
-    assert(html.includes(`href="/logs/new"`), `Wrong activity link for ${host}`)
+    const register = `${auth}/register?return_to=${encodeURIComponent(`https://${host}/plan`)}`
+    assert(html.includes(`href="${register}"`), `Wrong sign-up return for ${host}`)
     assert(html.includes(`href="/pages/manual"`), `Wrong guide link for ${host}`)
     for (const [, href] of html.matchAll(/href="(https:\/\/[^" ]+)"/g)) {
       const url = new URL(href)
@@ -216,7 +223,7 @@ try {
   }
   const html = await (await fetch(base, { signal: AbortSignal.timeout(15_000) })).text()
   assert(html.includes(contest.title), 'Runtime API override or SSR failed')
-  assert(html.includes('https://tadoku.app'), 'Production product links missing')
+  assert(html.includes('https://account.tadoku.app/login'), 'Production account links missing')
   const assets = [...html.matchAll(/(?:src|href)="([^" ]+\.(?:js|css)(?:\?[^" ]*)?)"/g)]
   assert(assets.length > 0, 'SSR has no built assets')
   for (const [, asset] of assets) assert((await fetch(new URL(asset, base), { signal: AbortSignal.timeout(5_000) })).ok, `Asset missing: ${asset}`)

@@ -59,6 +59,13 @@ test('owner submits a saved log to a contest, sees it after reload, then removes
   const eligible = page.getByRole('checkbox', { disabled: false })
   expect(await eligible.count()).toBeGreaterThan(0)
   for (const contest of await page.getByRole('checkbox').all()) await expect(contest).not.toBeChecked()
+
+  // Webv2's `?preselect=1` starts a log not yet submitted anywhere with every eligible contest selected.
+  await page.goto(`/logs/${id}/contests?preselect=1`)
+  await expect(saveSubmissions(page)).toBeEnabled({ timeout: 15_000 })
+  for (const contest of await eligible.all()) await expect(contest).toBeChecked()
+  await page.goto(`/logs/${id}/contests`)
+  await expect(saveSubmissions(page)).toBeEnabled({ timeout: 15_000 })
   await page.screenshot({ path: testInfo.outputPath('contests-desktop.png'), fullPage: true })
   await page.setViewportSize({ width: 390, height: 844 })
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)

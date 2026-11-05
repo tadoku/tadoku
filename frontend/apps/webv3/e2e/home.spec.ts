@@ -81,8 +81,10 @@ test('reports unavailable browser storage without claiming the goal was saved', 
   await page.getByRole('spinbutton', { name: /minutes/i }).fill('30')
   await page.getByRole('spinbutton', { name: /days/i }).fill('5')
   await page.getByRole('button', { name: /save.*goal/i }).click()
-  await expect(page.getByRole('status')).toContainText(/allow saving/i)
-  await expect(page.getByRole('status')).not.toContainText('Goal saved')
+  // Scoped to the form: announcements are statuses too.
+  const status = page.locator('main form').getByRole('status')
+  await expect(status).toContainText(/allow saving/i)
+  await expect(status).not.toContainText('Goal saved')
 })
 
 test('returns a useful not-found page for an unknown route', async ({ page }) => {
@@ -94,7 +96,7 @@ test('returns a useful not-found page for an unknown route', async ({ page }) =>
   await expect(page.locator('table')).toBeVisible()
 })
 
-test('preserves the dark theme and opens the local goal through mobile navigation', async ({ page }, testInfo) => {
+test('preserves the dark theme and opens the blog through mobile navigation', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 900 })
   await page.goto('/')
   await page.getByRole('button', { name: 'Use dark theme', exact: true }).click()
@@ -106,11 +108,11 @@ test('preserves the dark theme and opens the local goal through mobile navigatio
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: testInfo.outputPath('homepage-dark-mobile.png'), fullPage: true })
   await page.getByRole('button', { name: 'Open menu', exact: true }).click()
-  await page.getByRole('link', { name: 'Daily goal', exact: true }).click()
-  await expect(page).toHaveURL(/\/plan$/)
-  await expect(page.getByRole('spinbutton', { name: /minutes/i })).toBeEnabled()
+  await page.getByRole('link', { name: 'Blog', exact: true }).first().click()
+  await expect(page).toHaveURL(/\/blog\/1$/)
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-  await page.screenshot({ path: testInfo.outputPath('goal-dark-mobile.png'), fullPage: true })
+  await page.screenshot({ path: testInfo.outputPath('blog-dark-mobile.png'), fullPage: true })
 })
 
 test('keeps client-only mobile controls disabled before hydration', async ({ browser }, testInfo) => {

@@ -1,4 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test'
+import { logOut } from './logging-fixtures'
 
 const base = process.env.WEBV3_BASE_URL
 const email = process.env.E2E_READER_EMAIL
@@ -17,6 +18,11 @@ async function login(page: Page, identity = 'reader') {
 
 const branch = base ? new URL(base).hostname.includes('.next.') : false
 
+/** The account host's URL for `path` that returns to `returnTo`. */
+function accountHref(loginHref: string, path: string, returnTo: string) {
+  return `${new URL(loginHref).origin}${path}?return_to=${encodeURIComponent(returnTo)}`
+}
+
 /** The tenant's session cookie: `tadoku_session` canonically, `tadoku_session_<tenant>` on a branch. */
 async function sessionCookie(context: BrowserContext) {
   return (await context.cookies())
@@ -31,7 +37,10 @@ test('anonymous login return is SSR stable and includes the fragment after hydra
   const response = await ssr.goto(destination)
   expect(response?.headers()['cache-control']).toContain('no-store')
   const link = ssr.getByRole('link', { name: 'Log in', exact: true })
-  expect(new URL((await link.getAttribute('href'))!).searchParams.get('return_to')).toBe(destination.replace(/^http:\/\//, 'https://').split('#')[0])
+  const ssrReturn = destination.replace(/^http:\/\//, 'https://').split('#')[0]
+  expect(new URL((await link.getAttribute('href'))!).searchParams.get('return_to')).toBe(ssrReturn)
+  const loginHref = (await link.getAttribute('href'))!
+  await expect(ssr.getByRole('link', { name: 'Sign up', exact: true })).toHaveAttribute('href', accountHref(loginHref, '/register', ssrReturn))
   await context.close()
   await page.goto(destination)
   await expect.poll(async () => new URL((await page.getByRole('link', { name: 'Log in', exact: true }).getAttribute('href'))!).searchParams.get('return_to')).toBe(destination)
@@ -48,23 +57,44 @@ test('login, exact return, SSR reload, foreign-origin refusal and logout invalid
   await page.getByRole('link', { name: 'Log in', exact: true }).click()
   await login(page)
   await expect(page).toHaveURL(destination)
-  await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByText('Dev Reader', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Dev Reader', exact: true })).toBeVisible()
   await page.reload()
-  await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByText('Dev Reader', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Dev Reader', exact: true })).toBeVisible()
   const rejected = await context.request.post(`${base}/logout`, { headers: { Origin: 'https://evil.tadoku.dev.lab', 'Sec-Fetch-Site': 'same-site' } })
   expect(rejected.status()).toBe(403)
   await page.reload()
-  await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByText('Dev Reader', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Dev Reader', exact: true })).toBeVisible()
   if (branch) {
     // The branch API selects its own tenant's cookie, so a canonical session cookie beside it changes nothing.
     const domain = new URL(base!).hostname.split('.next.')[1]
     await context.addCookies([{ name: 'tadoku_session', value: 'canonical', domain: `.${domain}`, path: '/', secure: true, sameSite: 'Lax' }])
     await page.reload()
-    await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByText('Dev Reader', { exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Dev Reader', exact: true })).toBeVisible()
   }
   await page.screenshot({ path: testInfo.outputPath('signed-in.png'), fullPage: true })
+
+  // Webv2's account menu: profile, account settings returning here, and no admin entry for a learner.
+  await expect(page.getByRole('button', { name: 'Dev Reader', exact: true })).toBeEnabled()
+  await page.getByRole('button', { name: 'Dev Reader', exact: true }).click()
+  const menu = page.getByRole('menu')
+  await expect(menu.getByRole('menuitem')).toHaveText(['Profile', 'Account settings', 'Log out'])
+  await page.screenshot({ path: testInfo.outputPath('account-menu.png') })
+  await menu.getByRole('menuitem', { name: 'Profile', exact: true }).click()
+  await expect(page).toHaveURL(new RegExp(`^${base}/profile/[a-f0-9-]{36}/statistics$`))
+  await expect(page.getByRole('heading', { level: 1, name: 'Dev Reader' })).toBeVisible()
+  await page.goto(destination)
+  await page.setViewportSize({ width: 390, height: 900 })
+  await page.getByRole('button', { name: 'Open menu', exact: true }).click()
+  const mobile = page.getByRole('region', { name: 'Dev Reader account' })
+  const settings = new URL((await mobile.getByRole('link', { name: 'Account settings', exact: true }).getAttribute('href'))!)
+  expect([settings.hostname, settings.pathname, settings.searchParams.get('return_to')])
+    .toEqual([new URL(base!).hostname.replace(/(^|\.)next\./, '$1account.'), '/settings', destination])
+  await expect(mobile.getByRole('link', { name: 'Admin', exact: true })).toHaveCount(0)
+  await page.screenshot({ path: testInfo.outputPath('account-menu-390.png'), fullPage: true })
+  await page.setViewportSize({ width: 1280, height: 720 })
+
   const oldCookie = (await sessionCookie(context))!
-  await page.getByRole('button', { name: 'Log out', exact: true }).click()
+  await logOut(page)
   await expect(page).toHaveURL(`${base}/`)
   await expect(page.getByRole('link', { name: 'Log in', exact: true })).toBeVisible()
   expect(await sessionCookie(context)).toBeUndefined()
@@ -80,7 +110,7 @@ test('an expired session cookie renders anonymous', async ({ context, page }) =>
   await page.goto('/plan')
   await page.getByRole('link', { name: 'Log in', exact: true }).click()
   await login(page)
-  await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByText('Dev Reader', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Dev Reader', exact: true })).toBeVisible()
   const cookie = (await sessionCookie(context))!
   await context.addCookies([{ ...cookie, value: 'expired' }])
   await page.reload()
@@ -110,11 +140,18 @@ test('thirty interleaved requests isolate two identities and anonymous HTML', as
       if (kind === 2) expect(html).toContain('>Log in<')
     }))
     const page = contexts[0].pages()[0]
-    await page.getByRole('button', { name: 'Log out', exact: true }).click()
+    await logOut(page)
     await page.getByRole('link', { name: 'Log in', exact: true }).click()
     await login(page, 'second')
-    await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByText('Dev Admin', { exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Dev Admin', exact: true })).toBeVisible()
     expect(await page.getByRole('navigation', { name: 'Main navigation' }).textContent()).not.toContain('Dev Reader')
+
+    // An administrator's menu adds Webv2's Admin entry, which opens the matching admin host.
+    await expect(page.getByRole('button', { name: 'Dev Admin', exact: true })).toBeEnabled()
+    await page.getByRole('button', { name: 'Dev Admin', exact: true }).click()
+    await expect(page.getByRole('menu').getByRole('menuitem')).toHaveText(['Profile', 'Admin', 'Account settings', 'Log out'])
+    await page.getByRole('menuitem', { name: 'Admin', exact: true }).click()
+    await page.waitForURL(url => url.hostname === new URL(base!).hostname.replace(/(^|\.)next\./, '$1admin.'))
   } finally {
     await Promise.all(contexts.map(context => context.close()))
   }

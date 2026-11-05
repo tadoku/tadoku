@@ -1,6 +1,8 @@
 import { createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/react-router'
 import type { QueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
+import mark from 'paper-ui/assets/brand/cut-meter.svg?url'
+import reversedMark from 'paper-ui/assets/brand/cut-meter-reversed.svg?url'
 import { AppShell, themeBootScript } from '../components/AppShell'
 import { ErrorView, NotFoundView, PendingView } from '../components/StatusViews'
 import { getPageUrls } from '../lib/links'
@@ -17,6 +19,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     return urls
   },
   staleTime: Infinity,
+  head: () => ({
+    links: [
+      { rel: 'icon', type: 'image/svg+xml', href: mark, media: '(prefers-color-scheme: light)' },
+      { rel: 'icon', type: 'image/svg+xml', href: reversedMark, media: '(prefers-color-scheme: dark)' },
+    ],
+  }),
   notFoundComponent: NotFoundView,
   errorComponent: ErrorView,
   pendingComponent: PendingView,

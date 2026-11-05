@@ -28,7 +28,7 @@ import {
 import { useLoginUrl } from '../lib/session'
 
 /** A new activity, or a change to a saved one, whose language, activity and contest submissions stay fixed. */
-export type LogFormTarget = { kind: 'new' } | { kind: 'edit'; log: ImmersionLog }
+export type LogFormTarget = { kind: 'new'; amount?: number } | { kind: 'edit'; log: ImmersionLog }
 
 /** The activity form for the account that started the draft. The server refuses to save it for any other account. */
 export function LogForm({ options, viewerId, target }: { options: LogOptions; viewerId: string; target: LogFormTarget }) {
@@ -38,7 +38,7 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
   const updateLog = useUpdateLog()
   const [failure, setFailure] = useState<LogFailure | null>(null)
   const schema = useMemo(() => logDraftSchema(options), [options])
-  const [defaultValues] = useState(() => target.kind === 'edit' ? draftFromLog(options, target.log) : firstDraft(options))
+  const [defaultValues] = useState(() => target.kind === 'edit' ? draftFromLog(options, target.log) : firstDraft(options, target.amount))
   const form = usePaperForm({
     defaultValues,
     validators: { onChange: schema, onSubmit: schema },
@@ -322,7 +322,7 @@ function FailureAction({ failure, viewerId }: { failure: LogFailure; viewerId: s
       return (
         <a
           className="text-link"
-          href={links.legacyUrl(`/profile/${viewerId}/updates`)}
+          href={links.profileUpdates(viewerId)}
           target="_blank"
           rel="noopener noreferrer"
         >

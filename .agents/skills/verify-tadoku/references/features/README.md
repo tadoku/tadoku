@@ -1,7 +1,9 @@
 # Tadoku feature map
 
 Tadoku lets language learners log activities, track progress and participate in
-contests and leaderboards. The legacy main site is `webv2`; Webv3 provides a public homepage, leaderboards, contest lists, contest pages and registration, contest creation and scoring, local goal, native activity logging and profile statistics; `authv2` handles accounts and
+contests and leaderboards. The legacy main site is `webv2`; Webv3 on the `next.`
+host serves every Webv2 product page natively at the same paths, plus a local goal
+page, and links only the account and admin hosts outside itself; `authv2` handles accounts and
 `admin` manages content and moderation. They use the Tadoku API backend.
 
 Start with [the verification skill](../../SKILL.md) for environment selection and
@@ -20,6 +22,7 @@ Never use production `tadoku.app` for these checks.
 | Record learning, edit logs, inspect a learner's progress | Log activity; Profile → Statistics/Updates | [Activity and profiles](activity.md) |
 | Join/create contests, compare scores and rankings | Contests; Leaderboard | [Contests and leaderboards](contests.md) |
 | Read the homepage, blog, manual and announcements | Home; Blog; footer links | [Public content](content.md) |
+| Walk a member's main path on Webv3 without leaving its host | Webv3 home → contest → participant → Log activity | [Public content](content.md#webv3-preview) |
 | Publish content, manage languages, moderate users | User menu → Admin | [Administration](admin.md) |
 
 ## Fixtures and test boundaries

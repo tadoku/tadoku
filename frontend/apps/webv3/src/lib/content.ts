@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query'
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
+import type { FlashVariant } from 'paper-ui'
 import type { Read } from './leaderboard'
 
 /** One content read: the parsed item, `not-found` when the API has no published item there, or `unavailable`. */
@@ -15,6 +16,9 @@ export interface CmsPage { title: string; html: SanitizedHtml }
 export interface BlogPost { slug: string; title: string; content: string; publishedAt: string }
 
 export interface BlogPage { posts: BlogPost[]; total: number }
+
+/** A site-wide notice from the CMS. `content` is Markdown; `href` is where to learn more, if anywhere. */
+export interface Announcement { id: string; content: string; tone: FlashVariant; href?: string }
 
 export const blogPageSize = 10
 
@@ -65,5 +69,18 @@ export const postsQuery = (page: number) => queryOptions({
   queryKey: ['content-posts', page],
   queryFn: (): Promise<Read<BlogPage>> => getPosts({ data: page }),
   staleTime: 30_000,
+  retry: false,
+})
+
+const getAnnouncements = createServerFn({ method: 'GET' }).handler(async () => {
+  const { readAnnouncements } = await import('./content.server')
+  return readAnnouncements()
+})
+
+/** Read in the browser after hydration, like Webv2, so a slow content API never delays a page. */
+export const announcementsQuery = () => queryOptions({
+  queryKey: ['content-announcements'],
+  queryFn: (): Promise<Announcement[]> => getAnnouncements(),
+  staleTime: 60_000,
   retry: false,
 })

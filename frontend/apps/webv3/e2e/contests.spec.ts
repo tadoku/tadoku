@@ -92,6 +92,15 @@ test.beforeEach(() => {
   test.skip(!webv3 || !api, 'Set WEBV3_BASE_URL and TADOKU_API_URL')
 })
 
+test('`/contests` redirects permanently to the official contests, as in Webv2', async ({ page }) => {
+  const response = await page.request.get('/contests', { maxRedirects: 0 })
+  expect(response.status()).toBe(308)
+  expect(new URL(response.headers().location, 'http://relative.invalid').pathname).toBe('/contests/official')
+  await page.goto('/contests')
+  await expect(page).toHaveURL(/\/contests\/official$/)
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+})
+
 test('server-rendered official and community lists show the API contests and link to their contest pages', async ({ browser, request }, testInfo) => {
   const context = await browser.newContext({ javaScriptEnabled: false })
   // A stale session cookie leaves the visitor a guest, whom the configuration endpoint also answers.

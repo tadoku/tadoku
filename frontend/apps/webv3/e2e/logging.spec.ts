@@ -16,13 +16,14 @@ import {
   webv3,
 } from './logging-fixtures'
 
-test('native activity link opens an anonymous sign-in prompt', async ({ page }) => {
+test('the activity form asks an anonymous visitor to sign in, and guests get no header Log activity', async ({ page }) => {
   test.skip(!webv3, 'Set WEBV3_BASE_URL')
+  // As in Webv2, guests get Log in and Sign up in the header instead.
   await page.goto('/plan')
-  const link = page.getByRole('link', { name: 'Log activity', exact: true }).first()
-  await expect(link).toHaveAttribute('href', '/logs/new')
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Sign up', exact: true })).toBeVisible()
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Log activity', exact: true })).toHaveCount(0)
 
-  await link.click()
+  await page.goto('/logs/new')
   await expect(page.getByRole('heading', { name: 'Sign in to log activity' })).toBeVisible()
 })
 
@@ -121,6 +122,16 @@ test('text limits follow the API: description characters, tag bytes and normaliz
   expect(record.description).toBe(description)
   // The API returns tags in its collation order, which ignores U+FEFF.
   expect([...record.tags].sort()).toEqual(['book', 'fiction', 'i'.repeat(17), 'οσ', '\ufeffbook'].sort())
+})
+
+test('`?amount=` prefills a positive whole amount and ignores anything else, as in Webv2', async ({ readerContext }) => {
+  test.skip(!webv3 || !reader.email, 'Set development fixture credentials')
+  const page = await readerContext.newPage()
+  for (const [query, expected] of [['12', '12'], ['0', ''], ['-3', ''], ['1.5', ''], ['many', '']]) {
+    await page.goto(`/logs/new?amount=${query}`)
+    await expect(saveButton(page)).toBeEnabled({ timeout: 15_000 })
+    await expect(amountInput(page)).toHaveValue(expected)
+  }
 })
 
 test('changing the activity clears the quantity entered for the previous one', async ({ readerContext }) => {

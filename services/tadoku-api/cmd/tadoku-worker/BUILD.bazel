@@ -53,7 +53,6 @@ go_test(
     embed = [":tadoku-worker_lib"],
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
     tags = [
-        "no-cache",
         "no-remote-exec",
         "requires-network",
     ],

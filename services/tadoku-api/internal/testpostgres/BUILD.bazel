@@ -34,7 +34,6 @@ go_test(
     embed = [":testpostgres"],
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
     tags = [
-        "no-cache",
         "no-remote-exec",
         "requires-network",
     ],

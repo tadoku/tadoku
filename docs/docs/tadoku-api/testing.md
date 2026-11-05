@@ -53,9 +53,15 @@ bazel test //services/tadoku-api/e2e:e2e_test --test_filter=TestAuthentication
 ```
 
 The first command runs everything, the second the HTTP E2Es and user journeys,
-and the third one test function. CI runs the database suites in the normal build
-of every change and in the daily race build; see
-[Race tests](../develop/race-tests.md).
+and the third one test function. Database and Valkey suites are cached like any
+other test: a target reruns only when its inputs change. CI adds a digest of its
+service containers and PostgreSQL settings to every test's cache key as
+`TADOKU_TEST_SERVICES`, so changing a service image or setting reruns them all.
+Locally the key includes the service URLs but not the server versions; pass
+`--nocache_test_results` after changing your local services. The daily race
+build reruns its targets uncached; see [Race tests](../develop/race-tests.md).
+Tag a target `no-cache` only when its result depends on something outside its
+inputs, such as property tests' fresh seeds.
 
 ## Test infrastructure
 

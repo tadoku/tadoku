@@ -66,7 +66,6 @@ go_test(
         "TADOKU_TEST_VALKEY_URL",
     ],
     tags = [
-        "no-cache",
         "no-remote-exec",
         "requires-network",
     ],

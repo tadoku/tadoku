@@ -156,7 +156,6 @@ go_test(
         "//conditions:default": 3,
     }),
     tags = [
-        "no-cache",
         "no-remote-exec",
         "requires-network",
     ],

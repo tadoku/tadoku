@@ -18,7 +18,8 @@ up to eight actions, tests included, at once. Development-only images listed in
 `tools/ci/dev_image_targets` are excluded there and built by the parallel
 `dev-images` job, so tests do not wait on their base image pulls. The build job
 turns off PostgreSQL `fsync`, full-page writes and synchronous commit on its
-disposable service before the tests. Release image commands follow the tests so their
+disposable service before the tests. Test results are cached until their inputs or the job's service
+definitions change; see [Running tests](../tadoku-api/testing.md#running-tests). Release image commands follow the tests so their
 distinct configuration does not invalidate normal analysis between the build and
 tests. Main publication runs only after the tests and image scanning succeed.
 Image scanning uses the Trivy that the runner image puts on `PATH`;

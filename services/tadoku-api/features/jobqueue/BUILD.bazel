@@ -35,7 +35,6 @@ go_test(
     embed = [":jobqueue"],
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
     tags = [
-        "no-cache",
         "no-remote-exec",
         "requires-network",
     ],

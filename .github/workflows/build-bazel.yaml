@@ -142,7 +142,10 @@ jobs:
         if: runner.environment == 'self-hosted'
         env:
           UPLOAD_RESULTS: ${{ github.event_name != 'pull_request' }}
+        # Test results stay cached until the service containers or their PostgreSQL settings change.
         run: |
+          services="$(sed -n -e '/^    services:/,/^    steps:/p' -e '/^      - name: Disable PostgreSQL durability$/,/pg_reload_conf/p' \
+            .github/workflows/build-bazel.yaml | sha256sum | cut -d' ' -f1)"
           cat > "$HOME/.bazelrc" <<EOF
           startup --output_user_root=$RUNNER_TEMP/bazel
           startup --experimental_remote_repo_contents_cache
@@ -156,6 +159,7 @@ jobs:
           test --local_test_jobs=8
           test --remote_download_outputs=minimal
           test --remote_download_regex=.*test[.](xml|log)$
+          test --test_env=TADOKU_TEST_SERVICES=$services
           EOF
           if test -r "$HOME/bazelisk/repositories/prewarm.json"; then
             cp "$HOME/bazelisk/repositories/prewarm.json" "$RUNNER_TEMP/bazel-prewarm.json"

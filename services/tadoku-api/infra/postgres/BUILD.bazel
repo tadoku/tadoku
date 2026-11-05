@@ -37,7 +37,6 @@ go_test(
         "TADOKU_TEST_POSTGRES_URL",
     ],
     tags = [
-        "no-cache",
         "no-remote-exec",
         "requires-network",
     ],
@@ -66,7 +65,6 @@ go_test(
     args = ["-test.parallel=4"],
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
     tags = [
-        "no-cache",
         "no-remote-exec",
         "requires-network",
     ],

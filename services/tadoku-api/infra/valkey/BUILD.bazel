@@ -14,7 +14,6 @@ go_test(
     embed = [":valkey"],
     env_inherit = ["TADOKU_TEST_VALKEY_URL"],
     tags = [
-        "no-cache",
         "no-remote-exec",
         "requires-network",
     ],

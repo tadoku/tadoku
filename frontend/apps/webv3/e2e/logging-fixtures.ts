@@ -90,6 +90,11 @@ export const test = base.extend<{ readerContext: BrowserContext; adminContext: B
   readerCookies: Cookie[]
   adminCookies: Cookie[]
 }>({
+  // Set here rather than with a module-level test.use(), which Playwright attributes to whichever spec loads this file
+  // first and which then breaks the fixture digest of the other specs sharing its worker.
+  trace: ['off', { scope: 'worker' }],
+  video: ['off', { scope: 'worker' }],
+  ignoreHTTPSErrors: false,
   readerCookies: [async ({ browser }, provide) => provide(await session(browser, reader)), { scope: 'worker' }],
   adminCookies: [async ({ browser }, provide) => provide(await session(browser, admin)), { scope: 'worker' }],
   readerContext: async ({ context, readerCookies }, provide) => {
@@ -103,7 +108,5 @@ export const test = base.extend<{ readerContext: BrowserContext; adminContext: B
     await context.close()
   },
 })
-
-test.use({ trace: 'off', video: 'off', ignoreHTTPSErrors: false })
 
 export { expect }

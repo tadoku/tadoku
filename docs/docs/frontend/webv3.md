@@ -18,6 +18,8 @@ read their standings from the API, and the official, community and My contests
 [contest lists](webv3-contests.md) list contests as the visitor sees them.
 Each [contest page](webv3-contest.md) shows its standings and the viewer's
 actions, and signed-in learners join contests and change their languages there.
+Permitted accounts [create contests](webv3-contest-admin.md), and administrators
+manage a contest's scoring rules.
 [Profile statistics and activity](webv3-profile.md) read a learner's yearly records
 and logs from the API.
 The manual, CMS pages and blog are [content pages](webv3-content.md) on the same host.
@@ -152,6 +154,9 @@ described under [native activity logging](webv3-logging.md), and signs in once.
 [contest lists](webv3-contests.md) and `frontend/apps/webv3/e2e/contest.spec.ts`
 the [contest page and registration](webv3-contest.md); their signed-in journeys
 use both fixture accounts and create community contests in the selected tenant.
+`frontend/apps/webv3/e2e/contest-admin.spec.ts` covers
+[contest creation and scoring](webv3-contest-admin.md) and writes contests and
+rule sets in the selected tenant.
 These suites require reachable contest and standings data and Chromium installed through
 Playwright. It preserves HTML reports and screenshots outside the source tree.
 Suites expect Webv2 links at a development host's sibling, otherwise at
@@ -205,7 +210,7 @@ image.
 
 The active production GitOps configuration makes `next.tadoku.app` follow
 the `prod` digest automatically through Image Updater and Argo CD. Webv3 uses the same production
-backend as Webv2; the homepage, leaderboards, contest lists and contest pages read contest data, content pages read the CMS and blog, and native logging and contest registration use the existing account, activity and contest API. Unfinished journeys
+backend as Webv2; the homepage, leaderboards, contest lists and contest pages read contest data, content pages read the CMS and blog, native logging and contest registration use the existing account, activity and contest API, and contest creation and scoring use its contest and scoring API. Unfinished journeys
 continue to open production Webv2.
 Merging source that matches the Webv3 workflow's paths, including the shared
 lockfile, therefore republishes `latest` and `prod` and rolls this production

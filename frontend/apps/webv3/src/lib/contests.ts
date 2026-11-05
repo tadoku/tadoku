@@ -1,9 +1,11 @@
-import { queryOptions, type QueryClient } from '@tanstack/react-query'
+import { queryOptions, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { createServerFn } from '@tanstack/react-start'
-import type { ImmersionContest } from 'api-client'
+import type { ImmersionContest, ImmersionContestConfigurationOptions } from 'api-client'
 import { z } from 'zod'
+import { newContestSchema, type NewContest } from './contest-form'
 import type { Identified } from './home'
 import type { Read } from './leaderboard'
+import type { LogResult } from './logs'
 import { viewerKey, viewerQueryOptions, type Viewer } from './session'
 
 /** Which contests a list holds. An organizer's list holds the community contests one account created. */
@@ -84,4 +86,55 @@ export async function loadContests(queryClient: QueryClient, collection: Contest
     scope ? queryClient.ensureQueryData(contestsQuery(scope, page, viewerKey(viewer))) : null,
     viewer.status === 'signed-in' ? queryClient.ensureQueryData(canCreateContestQuery(viewerKey(viewer))) : null,
   ])
+}
+
+/**
+ * Whether the signed-in viewer may create a contest, and the languages and activities to offer when they may. The API
+ * refuses accounts younger than a month and accounts that reached their yearly limit.
+ */
+export type ContestEditor =
+  | { kind: 'allowed'; options: ImmersionContestConfigurationOptions }
+  | { kind: 'forbidden' }
+  | { kind: 'signed-out' }
+  | { kind: 'unavailable' }
+
+const getContestEditor = createServerFn({ method: 'GET' }).handler(async () => {
+  const { readContestEditor } = await import('./contests.server')
+  return readContestEditor()
+})
+
+const createContest = createServerFn({ method: 'POST' })
+  .inputValidator(newContestSchema)
+  .handler(async ({ data }) => {
+    const { saveContest } = await import('./contests.server')
+    return saveContest(data)
+  })
+
+/** The contest form for the account that started the draft; its options don't change while that draft is open. */
+export const contestEditorQuery = (viewerId: string) => queryOptions({
+  queryKey: ['contest-editor', viewerId],
+  queryFn: (): Promise<ContestEditor> => getContestEditor(),
+  retry: false,
+  staleTime: Infinity,
+})
+
+/**
+ * Creates a contest for the account that started the draft and answers its ID. A created contest marks contest lists
+ * and creation permissions stale; a refusal because another account signed in refreshes the viewer. A failed request is `unavailable`, because the contest may or may not exist.
+ */
+export function useCreateContest() {
+  const queryClient = useQueryClient()
+
+  return async (contest: NewContest): Promise<LogResult<string>> => {
+    const result = await createContest({ data: contest })
+      .catch((): LogResult<string> => ({ ok: false, reason: 'unavailable' }))
+    if (result.ok) {
+      // Lists gain the contest and the allowance shrinks; refetch them when next shown, not under the open form.
+      await Promise.all(['contests', 'can-create-contest', 'contest-editor'].map(key =>
+        queryClient.invalidateQueries({ queryKey: [key], refetchType: 'none' })))
+    } else if (result.reason === 'switched') {
+      await queryClient.invalidateQueries({ queryKey: viewerQueryOptions().queryKey })
+    }
+    return result
+  }
 }

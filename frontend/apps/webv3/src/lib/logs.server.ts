@@ -22,7 +22,7 @@ const failures: Partial<Record<number, LogFailure>> = {
 }
 
 /** A generated operation's validated answer, or the failure its status means. Anything unreadable is unavailable. */
-async function answer<T>(request: Promise<{ data?: T; response?: Response }>): Promise<LogResult<T>> {
+export async function answer<T>(request: Promise<{ data?: T; response?: Response }>): Promise<LogResult<T>> {
   const { data, response } = await request
   if (data !== undefined) return { ok: true, data }
 
@@ -64,10 +64,11 @@ export async function readLog(id: string): Promise<LogResult<ImmersionLog>> {
 }
 
 /**
- * The session cookie while it belongs to the account that started a change. Another account, or none, is refused before
- * the API is asked, so a change is never made for an account that did not start it.
+ * The session cookie while it belongs to the account that started a change, and that account is an administrator when
+ * `admin` is set. Another account, or none, is refused before the API is asked, so a change is never made for an
+ * account that did not start it.
  */
-async function draftOwnerCookie(viewerId: string): Promise<LogResult<string>> {
+export async function draftOwnerCookie(viewerId: string, { admin = false } = {}): Promise<LogResult<string>> {
   const cookie = sessionCookie()
   if (!cookie) return { ok: false, reason: 'signed-out' }
 
@@ -78,6 +79,7 @@ async function draftOwnerCookie(viewerId: string): Promise<LogResult<string>> {
     case 'banned': return { ok: false, reason: 'forbidden' }
   }
   if (viewer.userId !== viewerId) return { ok: false, reason: 'switched' }
+  if (admin && viewer.role !== 'admin') return { ok: false, reason: 'forbidden' }
   return { ok: true, data: cookie }
 }
 

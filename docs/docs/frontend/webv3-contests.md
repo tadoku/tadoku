@@ -29,12 +29,13 @@ and cached per viewer; a rejected session cookie falls back to the public list.
 My contests lists the community contests the signed-in account organizes and
 asks anonymous visitors to log in. As in Webv2, community and My contests lists
 name each contest's languages and activities for signed-in visitors only, and
-the create action appears when the API's create-permission check answers 200.
+the create action, which opens Webv3's [contest form](webv3-contest-admin.md),
+appears when the API's create-permission check answers 200.
 
 Each row shows the round's status (upcoming, live or ended) and, until it ends,
 whether registration is open, both decided by the UTC day the list was read.
 Contest dates are UTC calendar days and the page says so. Rows link to the
-native [contest page](webv3-contest.md); Create contest opens Webv2's form. Search, date filters and a list
+native [contest page](webv3-contest.md). Search, date filters and a list
 of joined contests are not available.
 
 `frontend/apps/webv3/e2e/contests.spec.ts` compares the server-rendered lists

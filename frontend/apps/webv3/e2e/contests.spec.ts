@@ -1,5 +1,5 @@
 import type { APIRequestContext, BrowserContext, Page } from '@playwright/test'
-import { accountId, admin, api, expect, reader, test, webv2, webv3 } from './logging-fixtures'
+import { accountId, admin, api, expect, reader, test, webv3 } from './logging-fixtures'
 
 interface Contest {
   id: string
@@ -172,7 +172,7 @@ test('an organizer pages through their own contests, unlisted ones included, and
   await page.goto('/contests/my-contests/1')
   await expect(page.getByRole('heading', { level: 1, name: 'Contests' })).toBeVisible()
   await expectRows(page, mine)
-  await expect(page.getByRole('link', { name: 'Create contest' })).toHaveAttribute('href', `${webv2}/contests/new`)
+  await expect(page.getByRole('link', { name: 'Create contest' })).toHaveAttribute('href', '/contests/new')
   // Signed-in community and organizer lists name the restrictions, as Webv2 does.
   await expect(page.locator('.contest-row').filter({ hasText: 'Webv3 list check' }).first().locator('.contest-row__allows'))
     .toHaveText('Japanese · Reading, Listening')

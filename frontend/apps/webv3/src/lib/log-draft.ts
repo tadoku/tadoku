@@ -28,7 +28,7 @@ const descriptionRule = z.string()
   .refine(description => [...description].length <= 255, 'Use a description of at most 255 characters.')
 
 // The API counts each normalized tag's UTF-8 bytes, then the distinct tags.
-const tagRule = z.string()
+export const tagRule = z.string()
   .min(1)
   .refine(
     tag => new TextEncoder().encode(tag).length <= 50,
@@ -219,14 +219,16 @@ export function contestChoices(log: ImmersionLog, registrations: Registration[],
 }
 
 /**
- * Comma-separated tags as the API stores them. Go's strings.TrimSpace and strings.ToLower trim Unicode white space and
- * lowercase each character on its own, so 'İ' becomes 'i' and 'Σ' always becomes 'σ', unlike String.toLowerCase.
+ * A tag as the API stores it. Go's strings.TrimSpace and strings.ToLower trim Unicode white space and lowercase each
+ * character on its own, so 'İ' becomes 'i' and 'Σ' always becomes 'σ', unlike String.toLowerCase.
  */
-function parseTags(text: string) {
-  const tags = text.split(',').map(tag =>
-    [...tag.replace(/^\p{White_Space}+|\p{White_Space}+$/gu, '')]
-      .map(character => String.fromCodePoint(character.toLowerCase().codePointAt(0)!))
-      .join(''))
+export function normalizeTag(tag: string) {
+  return [...tag.replace(/^\p{White_Space}+|\p{White_Space}+$/gu, '')]
+    .map(character => String.fromCodePoint(character.toLowerCase().codePointAt(0)!))
+    .join('')
+}
 
-  return [...new Set(tags.filter(Boolean))]
+/** Comma-separated tags as the API stores them. */
+function parseTags(text: string) {
+  return [...new Set(text.split(',').map(normalizeTag).filter(Boolean))]
 }

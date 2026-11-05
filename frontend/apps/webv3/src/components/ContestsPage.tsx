@@ -43,7 +43,7 @@ export function ContestsPage({ collection, page }: { collection: ContestCollecti
       <PageHeader
         title="Contests"
         lead={leads[collection]}
-        actions={canCreate ? <a className={buttonClassName()} href={links.newContest}>Create contest</a> : null}
+        actions={canCreate ? <Link className={buttonClassName()} to={links.newContest}>Create contest</Link> : null}
       />
       <Tabbar
         label="Contest collections"

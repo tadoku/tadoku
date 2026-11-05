@@ -9,6 +9,7 @@ import 'paper-ui/styles.css'
 import '../styles.css'
 import '../profile.css'
 import '../content.css'
+import '../contest-admin.css'
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   loader: async ({ context }) => {

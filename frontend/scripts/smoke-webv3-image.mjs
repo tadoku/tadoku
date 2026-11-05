@@ -59,7 +59,7 @@ const fixture = createServer((request, response) => {
   const url = new URL(request.url, 'http://fixture')
   const path = url.pathname
   let data
-  if (path.endsWith('/latest-official')) data = contest
+  if (path.endsWith('/latest-official') || path === `/immersion/contests/${contest.id}`) data = contest
   else if (path.endsWith('/summary')) data = { participant_count: 1, language_count: 1, total_score: 13319.6455 }
   // Imported accounts keep their source IDs without a UUID version check, so standings can hold a version-0 user ID.
   else if (path.endsWith('/leaderboard') || /^\/immersion\/leaderboard\/(global|yearly\/\d+)$/.test(path)) data = {

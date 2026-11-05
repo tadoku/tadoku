@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { LatestLeaderboard } from '../../../components/ContestLeaderboard'
-import { latestBoardQuery, pageNumber, registeredQuery, standingsQuery } from '../../../lib/leaderboard'
+import { latestBoardQuery, pageNumber, standingsQuery } from '../../../lib/leaderboard'
+import { registrationQuery } from '../../../lib/registration'
 import { viewerKey, viewerQueryOptions } from '../../../lib/session'
 
 export const Route = createFileRoute('/leaderboard/latest/$')({
@@ -14,7 +15,7 @@ export const Route = createFileRoute('/leaderboard/latest/$')({
     const contestId = latest.board.contest.id
     await Promise.all([
       queryClient.ensureQueryData(standingsQuery({ kind: 'contest', contestId }, pageNumber(params._splat))),
-      viewer.status === 'signed-in' ? queryClient.ensureQueryData(registeredQuery(contestId, viewerKey(viewer))) : null,
+      viewer.status === 'signed-in' ? queryClient.ensureQueryData(registrationQuery(contestId, viewerKey(viewer))) : null,
     ])
   },
   component: function LatestRoute() {

@@ -1,0 +1,37 @@
+import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
+import { z } from 'zod'
+import { ContestRegistrationPage } from '../../../components/ContestRegistration'
+import { ContestNotFound } from '../../../components/ContestPage'
+import { contestBoardQuery } from '../../../lib/leaderboard'
+import { contestLanguagesQuery, registrationQuery } from '../../../lib/registration'
+import { loginHref, viewerKey, viewerQueryOptions } from '../../../lib/session'
+
+export const Route = createFileRoute('/contests/$id/registration')({
+  loader: async ({ context: { queryClient }, params, location, parentMatchPromise }) => {
+    if (!z.guid().safeParse(params.id).success) throw notFound()
+    const viewer = await queryClient.ensureQueryData(viewerQueryOptions())
+    // As in Webv2, registration needs an account: anonymous visitors log in and return here.
+    if (viewer.status === 'anonymous') {
+      const { accountUrl, pageUrl } = (await parentMatchPromise).loaderData!
+      throw redirect({ href: loginHref(accountUrl, new URL(location.href, pageUrl).href) })
+    }
+    const board = await queryClient.ensureQueryData(contestBoardQuery(params.id, viewerKey(viewer)))
+    if (board.kind === 'none') throw notFound()
+    if (board.kind === 'unavailable' || viewer.status !== 'signed-in') return { title: undefined }
+
+    const { contest } = board.board
+    await Promise.all([
+      queryClient.ensureQueryData(registrationQuery(contest.id, viewer.userId)),
+      contest.allowed_languages?.length ? null : queryClient.ensureQueryData(contestLanguagesQuery()),
+    ])
+    return { title: contest.title }
+  },
+  head: ({ loaderData }) => ({
+    meta: [{ title: loaderData?.title ? `Join ${loaderData.title} · Tadoku` : 'Contest registration · Tadoku' }],
+  }),
+  notFoundComponent: ContestNotFound,
+  component: function RegistrationRoute() {
+    const { id } = Route.useParams()
+    return <ContestRegistrationPage contestId={id} />
+  },
+})

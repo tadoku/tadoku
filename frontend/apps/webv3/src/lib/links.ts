@@ -29,8 +29,10 @@ function createLinks(base: string) {
     /** A CMS page, such as `about` or `faq`. */
     page: (slug: string) => `/pages/${encodeURIComponent(slug)}`,
     logs: '/logs/new',
-    contest: (id: string) => legacyUrl(`/contests/${encodeURIComponent(id)}/leaderboard/1`),
-    joinContest: (id: string) => legacyUrl(`/contests/${encodeURIComponent(id)}/registration`),
+    contest: (id: string, page = 1) => `/contests/${encodeURIComponent(id)}/leaderboard/${page}`,
+    joinContest: (id: string) => `/contests/${encodeURIComponent(id)}/registration`,
+    contestUpdates: (id: string) => legacyUrl(`/contests/${encodeURIComponent(id)}/updates/1`),
+    contestScoring: (id: string) => legacyUrl(`/contests/${encodeURIComponent(id)}/scoring`),
     profile: (id: string) => `/profile/${encodeURIComponent(id)}/statistics`,
     /** A profile's updates, optionally only one UTC day's (`YYYY-MM-DD`). */
     profileUpdates: (id: string, date?: string) =>

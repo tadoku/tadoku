@@ -8,9 +8,11 @@ Create contest opens `/contests/new`. A contest links to its `/contests/<id>/lea
 `/updates`, `/scoring`, `/registration` and participant `/profile/<user-id>` pages.
 Main navigation **Leaderboard** opens `/leaderboard/latest`; also cover
 `/leaderboard/yearly/<year>` and `/leaderboard/all-time` when aggregation changes.
-Webv3's navigation opens the native versions of these three leaderboards and of
-the three contest lists on the `next.` host; `frontend/apps/webv3/e2e/leaderboard.spec.ts`
-and `frontend/apps/webv3/e2e/contests.spec.ts` compare them with the API.
+Webv3's navigation opens the native versions of these three leaderboards, the
+three contest lists and a contest's `/leaderboard` and `/registration` pages on
+the `next.` host; `frontend/apps/webv3/e2e/leaderboard.spec.ts`,
+`frontend/apps/webv3/e2e/contests.spec.ts` and `frontend/apps/webv3/e2e/contest.spec.ts`
+compare them with the API and register a learner in the selected tenant.
 
 ## Verify
 

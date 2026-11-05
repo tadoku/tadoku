@@ -16,6 +16,8 @@ sync the goal to a Tadoku account. [Native activity logging](webv3-logging.md) u
 The latest official, yearly and all-time [leaderboards](webv3-leaderboards.md)
 read their standings from the API, and the official, community and My contests
 [contest lists](webv3-contests.md) list contests as the visitor sees them.
+Each [contest page](webv3-contest.md) shows its standings and the viewer's
+actions, and signed-in learners join contests and change their languages there.
 [Profile statistics and activity](webv3-profile.md) read a learner's yearly records
 and logs from the API.
 The manual, CMS pages and blog are [content pages](webv3-content.md) on the same host.
@@ -147,8 +149,9 @@ checks a signed-in participant's row and contest action, and checks containment
 at 390px and 1280px. It needs `TADOKU_API_URL` and the Dev Reader credentials
 described under [native activity logging](webv3-logging.md), and signs in once.
 `frontend/apps/webv3/e2e/contests.spec.ts` covers the
-[contest lists](webv3-contests.md); its signed-in journeys use both fixture
-accounts and create community contests in the selected tenant.
+[contest lists](webv3-contests.md) and `frontend/apps/webv3/e2e/contest.spec.ts`
+the [contest page and registration](webv3-contest.md); their signed-in journeys
+use both fixture accounts and create community contests in the selected tenant.
 These suites require reachable contest and standings data and Chromium installed through
 Playwright. It preserves HTML reports and screenshots outside the source tree.
 Suites expect Webv2 links at a development host's sibling, otherwise at
@@ -180,7 +183,7 @@ pnpm --filter webv3 exec playwright install chromium
 PLAYWRIGHT_OUTPUT_DIR=/tmp/webv3-evidence node scripts/smoke-webv3-image.mjs webv3:check
 ```
 
-The smoke command starts its own labeled container and synthetic GET-only API, including one standings learner's profile year,
+The smoke command starts its own labeled container and synthetic GET-only API, including one contest and one standings learner's profile year,
 uses nullable language lists by default (`WEBV3_LANGUAGE_FIXTURE=array` selects
 nonempty lists), checks server rendering, built assets, non-root/read-only operation and the
 existing browser journeys, then disconnects the API and checks health again.
@@ -202,7 +205,7 @@ image.
 
 The active production GitOps configuration makes `next.tadoku.app` follow
 the `prod` digest automatically through Image Updater and Argo CD. Webv3 uses the same production
-backend as Webv2; the homepage, leaderboards and contest lists read contest data, content pages read the CMS and blog and native logging uses its existing account and activity API. Unfinished journeys
+backend as Webv2; the homepage, leaderboards, contest lists and contest pages read contest data, content pages read the CMS and blog, and native logging and contest registration use the existing account, activity and contest API. Unfinished journeys
 continue to open production Webv2.
 Merging source that matches the Webv3 workflow's paths, including the shared
 lockfile, therefore republishes `latest` and `prod` and rolls this production

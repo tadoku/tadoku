@@ -29,12 +29,13 @@ current UTC year. Pages hold 50 participants.
   contests only and list the years since 2020.
   `frontend/apps/webv3/src/components/ContestLeaderboard.tsx` composes the latest
   official contest with its join or logging action, conditions, summary and,
-  while it runs, its ten most recent logs.
+  while it runs, its ten most recent logs. The
+  [contest page](webv3-contest.md) shares this board.
 
 Every board names its scope: the contest, the year or all time. The contest's
 phase follows the UTC day the board was read, as on the homepage. Yearly and
 all-time participants link to their Webv3 [profile statistics](webv3-profile.md);
-the latest contest's participants open Webv2's contest statistics, and contest
-details and registration also remain Webv2 journeys. When no official contest
+the latest contest's participants open Webv2's contest statistics. Contest
+details and Join contest open the native [contest page and registration](webv3-contest.md). When no official contest
 exists, the latest board says so; the API's 404 is not an error. Name search,
 "Find my row" and a separate personal position are not available.

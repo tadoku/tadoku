@@ -86,10 +86,13 @@ and a journey by calling `runScenarioJourney` instead of `runJourney`,
   `alphaAsOther` for `e2e/alpha-0000000a`. An unmapped fixture tenant fails the
   case.
 - **Seeds.** The resolved `setup.sql`, the account cast and the resolved
-  `finalize.sql` run in `primary` with the seed rules above; every other role
-  gets the cast alone. Each relationship row is seeded into the role standing
-  in for its `tenant`. A seed that names its tenant fails under row-level
-  security, so let the column defaults supply it.
+  `finalize.sql` run in `primary` with the seed rules above. Every other role
+  gets its operation's `setup.<role>.sql`, such as `setup.other.sql`, when the
+  operation directory has one, then the cast. A case fails when its operation
+  has a `setup.<role>.sql` for a role the case does not map, and the serial
+  runners refuse an operation that has any. Each relationship row is seeded
+  into the role standing in for its `tenant`. A seed that names its tenant fails
+  under row-level security, so let the column defaults supply it.
 - **Requests.** Each fixture token's claims must equal the cast member's claims
   for the token's tenant exactly; the runner signs the same claims for the
   stand-in tenant. Session cookies named for a fixture tenant (`tadoku_session`

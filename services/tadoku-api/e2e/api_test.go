@@ -356,6 +356,11 @@ func newTestRouterWithLeaderboardService(
 func (s *suite) reset(t *testing.T, caseDir string) {
 	t.Helper()
 	requireKnownCaseFiles(t, caseDir)
+	if caseDir != "" {
+		for _, file := range roleSetups(t, caseDir) {
+			t.Fatalf("%s seeds a scenario role; run the case with runScenarioCase", file)
+		}
+	}
 
 	var postgresSeeds, relationshipSeeds []string
 	if caseDir != "" {

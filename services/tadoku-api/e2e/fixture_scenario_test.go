@@ -88,8 +88,15 @@ func (s *fixtureScenario) runCase(
 ) {
 	t.Helper()
 	requireKnownCaseFiles(t, directory)
+	setup := map[string][]string{primaryRole: fixtureSeeds(directory, "setup.sql")}
+	for role, file := range roleSetups(t, directory) {
+		if role == primaryRole || !slices.Contains(slices.Collect(maps.Values(s.roles)), role) {
+			t.Fatalf("%s seeds role %q, which the case does not map with a fixtureTenant", file, role)
+		}
+		setup[role] = []string{file}
+	}
 	s.seedFixtures(t,
-		fixtureSeeds(directory, "setup.sql"),
+		setup,
 		fixtureSeeds(directory, "finalize.sql"),
 		fixtureSeeds(directory, "relationships.json"),
 	)
@@ -143,7 +150,9 @@ func runScenarioJourneyWithSetup(
 	directory, names, tokens := prepareJourney(t, name, steps)
 	s := newFixtureScenario(t, others...)
 	s.seedFixtures(t,
-		[]string{filepath.Join(journeysDir, "setup.sql"), filepath.Join(directory, "setup.sql")},
+		map[string][]string{
+			primaryRole: {filepath.Join(journeysDir, "setup.sql"), filepath.Join(directory, "setup.sql")},
+		},
 		nil,
 		[]string{filepath.Join(journeysDir, "relationships.json"), filepath.Join(directory, "relationships.json")},
 	)
@@ -158,9 +167,9 @@ func runScenarioJourneyWithSetup(
 	runJourneySteps(t, s, handler, directory, names, steps, tokens)
 }
 
-// seedFixtures seeds setup, the account cast and finalize into the primary tenant and the cast alone into every other
-// tenant, then gives each relationship row to the tenant standing in for the row's fixture tenant.
-func (s *fixtureScenario) seedFixtures(t *testing.T, setup, finalize, relationshipFiles []string) {
+// seedFixtures seeds each role's setup, keyed by role, then the account cast into every tenant, and finalize into the
+// primary tenant alone. It gives each relationship row to the tenant standing in for the row's fixture tenant.
+func (s *fixtureScenario) seedFixtures(t *testing.T, setup map[string][]string, finalize, relationshipFiles []string) {
 	t.Helper()
 	relationships := map[string][]fixtureRelationship{}
 	for _, file := range relationshipFiles {
@@ -175,12 +184,28 @@ func (s *fixtureScenario) seedFixtures(t *testing.T, setup, finalize, relationsh
 		}
 	}
 
-	s.seedTenant(t, primaryRole, setup, finalize, relationships[primaryRole])
+	s.seedTenant(t, primaryRole, setup[primaryRole], finalize, relationships[primaryRole])
 	for _, role := range slices.Sorted(maps.Values(s.roles)) {
 		if role != primaryRole {
-			s.seedTenant(t, role, nil, nil, relationships[role])
+			s.seedTenant(t, role, setup[role], nil, relationships[role])
 		}
 	}
+}
+
+// roleSetups finds the setup.<role>.sql files in the case's operation directory. Only scenario cases may seed them.
+func roleSetups(t *testing.T, caseDir string) map[string]string {
+	t.Helper()
+	files, err := filepath.Glob(filepath.Join(filepath.Dir(caseDir), "setup.*.sql"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	setups := map[string]string{}
+	for _, file := range files {
+		role := strings.TrimSuffix(strings.TrimPrefix(filepath.Base(file), "setup."), ".sql")
+		setups[role] = file
+	}
+	return setups
 }
 
 func (s *fixtureScenario) roleFor(t testing.TB, fixture string) string {

@@ -97,7 +97,10 @@ function Contests({ scope, collection, page }: { scope: ContestListScope; collec
   }
   if (!result) return <p className="contests-status" role="status">Loading contests…</p>
 
-  const { contests, total, names } = result.data
+  const { contests, total } = result.data
+  // A session cookie can belong to a guest, whom the configuration endpoint also answers; Webv2 names restrictions
+  // for signed-in viewers only.
+  const names = viewer?.status === 'signed-in' ? result.data.names : null
   const pageHref = contestsHref[collection]
   if (contests.length === 0) {
     return total > 0 ? (

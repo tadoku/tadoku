@@ -24,8 +24,8 @@ export interface ContestList {
   contests: Identified<ImmersionContest>[]
   total: number
   /**
-   * Language names by code and activity names by ID. As in Webv2, community and organizer lists read them for
-   * signed-in visitors; otherwise, or when they can't be read, the list leaves the restrictions out.
+   * Language names by code and activity names by ID, read for community and organizer lists when the visitor sends a
+   * session cookie; null otherwise or when they can't be read. Screens show them to signed-in viewers only, as Webv2.
    */
   names: { languages: Record<string, string>; activities: Record<string, string> } | null
 }

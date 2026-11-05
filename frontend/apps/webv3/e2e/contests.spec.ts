@@ -100,6 +100,8 @@ test.beforeEach(() => {
 
 test('server-rendered official and community lists show the API contests and link to their Webv2 standings', async ({ browser, request }, testInfo) => {
   const context = await browser.newContext({ javaScriptEnabled: false })
+  // A stale session cookie leaves the visitor a guest, whom the configuration endpoint also answers.
+  await context.addCookies([{ name: 'tadoku_session', value: 'expired', url: webv3! }])
   const page = await context.newPage()
 
   for (const [name, collection] of Object.entries(collections)) {
@@ -111,7 +113,7 @@ test('server-rendered official and community lists show the API contests and lin
       .toHaveText(name === 'official' ? 'Official' : 'Community')
     await expect(page.getByRole('link', { name: 'Contests', exact: true }).first()).toHaveAttribute('href', '/contests/official/1')
     await expect(page.getByText('Contest dates are calendar days in UTC.')).toBeVisible()
-    // Anonymous visitors see no create action and no restrictions, as in Webv2.
+    // Guests see no create action and no restrictions, as in Webv2.
     await expect(page.getByRole('link', { name: 'Create contest' })).toHaveCount(0)
     await expect(page.locator('.contest-row__allows')).toHaveCount(0)
     await expectRows(page, data)

@@ -5,13 +5,6 @@ export const api = process.env.TADOKU_API_URL
 export const reader = { email: process.env.E2E_READER_EMAIL, password: process.env.E2E_READER_PASSWORD }
 export const admin = { email: process.env.E2E_SECOND_EMAIL, password: process.env.E2E_SECOND_PASSWORD }
 export const branch = webv3 ? new URL(webv3).hostname.split('.next.')[0] : undefined
-/**
- * The Webv2 origin Webv3 links to: a development host's sibling (`<route>.next.tadoku.dev.lab` links to
- * `<route>.tadoku.dev.lab`), otherwise the server's `TADOKU_WEB_URL`, which defaults to `https://tadoku.app` in the image.
- */
-export const webv2 = webv3 && /(^|\.)next\.tadoku\.dev\.lab$/.test(new URL(webv3).hostname)
-  ? `https://${new URL(webv3).hostname.replace(/next\.tadoku\.dev\.lab$/, 'tadoku.dev.lab')}`
-  : process.env.TADOKU_WEB_URL ?? 'https://tadoku.app'
 
 export async function authenticate(page: Page, account = reader) {
   await page.getByLabel('Email').fill(account.email!)

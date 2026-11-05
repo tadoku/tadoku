@@ -16,6 +16,21 @@ const contest = {
   language_code_allow_list: process.env.WEBV3_LANGUAGE_FIXTURE === 'array' ? ['jpn'] : null,
   allowed_activities: [], activity_type_id_allow_list: [],
 }
+const learner = { id: '01000000-0000-0000-0000-000000000000', display_name: 'Fixture learner', created_at: '2024-03-01T08:00:00Z' }
+// The learner's profile year: one Japanese reading day in whichever year is requested.
+function profileYear(kind, year) {
+  const score = 12.5
+  switch (kind) {
+    case 'activity': return { total_updates: 3, scores: [{ date: `${year}-01-02`, score }] }
+    case 'scores': return { overall_score: score, scores: [{ language_code: 'jpn', language_name: 'Japanese', score }] }
+    case 'activity-split': return { activities: [{ activity_id: 1, activity_name: 'Reading', score }] }
+    case 'contest-registrations': return {
+      registrations: [{ id: '22222222-2222-4222-8222-222222222222', contest_id: contest.id, user_id: learner.id,
+        user_display_name: learner.display_name, languages: [], contest }],
+      total_size: 1, next_page_token: '',
+    }
+  }
+}
 const writes = []
 const fixture = createServer((request, response) => {
   if (request.method !== 'GET') {
@@ -35,6 +50,11 @@ const fixture = createServer((request, response) => {
     total_size: 1, next_page_token: '',
   }
   else if (path === '/immersion/contests') data = { contests: [contest], total_size: 1, next_page_token: '' }
+  else if (path === `/immersion/users/${learner.id}/profile`) data = learner
+  else {
+    const match = path.match(new RegExp(`^/immersion/users/${learner.id}/([a-z-]+)/(\\d{4})$`))
+    if (match) data = profileYear(match[1], match[2])
+  }
   if (!data) { response.writeHead(404).end(); return }
   response.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify(data))
 })

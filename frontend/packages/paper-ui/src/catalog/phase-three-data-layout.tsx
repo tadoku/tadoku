@@ -199,21 +199,21 @@ const tableSections = completeSections({
 
 const heatmapSections = completeSections({
   overview: { heading: "Overview", content: ["HeatmapChart is Tadoku's compact annual activity calendar, with weeks across the horizontal axis and weekdays down the vertical axis."] },
-  whenToUse: { heading: "When to use", content: ["Use HeatmapChart to show the rhythm, gaps, and relative intensity of dated activity across one calendar year."] },
+  whenToUse: { heading: "When to use", content: ["Use HeatmapChart to show the rhythm, gaps, and points-per-day intensity of dated activity across one calendar year."] },
   whenNotToUse: { heading: "When not to use", content: ["Do not use it for exact record comparison, multiple unrelated series, negative-versus-positive direction, or trends that need a continuous axis."] },
   choosingBetween: { heading: "Choosing between", content: ["Use Table for exact multi-field records, a line chart for continuous trends, and HeatmapChart for a familiar contribution-calendar overview of daily activity."] },
-  anatomy: { heading: "Anatomy", content: ["Sparse weekday labels and month labels frame a full year of 10 by 10 pixel cells separated by 3 pixel gaps. An SVG tooltip layer stays above every cell."] },
+  anatomy: { heading: "Anatomy", content: ["Sparse weekday labels and month labels frame a full year of 10 by 10 pixel cells separated by 3 pixel gaps. An SVG tooltip layer stays above every cell, and a legend below the calendar names each intensity band."] },
   recommendedExample: { heading: "Recommended example", content: ["Hover, touch, or Tab to a populated date to inspect its full date and points. At a narrow width, scroll the chart horizontally. Compare with Year without activity to see why empty data also needs explanatory text."] },
-  variants: { heading: "Variants", content: ["The calendar geometry is intentionally fixed. Zero activity uses the neutral cell color, while positive values occupy four theme-aware intensity bands relative to the year's maximum."] },
+  variants: { heading: "Variants", content: ["The calendar geometry is intentionally fixed. Zero activity uses the neutral cell color, while positive values occupy four theme-aware bands with fixed bounds: under 30, 30, 100 and 300 points per day, so a record day never recolours earlier activity."] },
   statesAndAdaptation: { heading: "States and adaptation", content: ["Days without a record count as zero. Cells outside the requested year remain transparent, and an all-zero year stays on the neutral baseline."] },
-  behavior: { heading: "Behavior", content: ["HeatmapChart maps ISO dates into week and weekday positions, uses the last repeated date value, scales positive activity against the annual maximum, and reveals supplied copy on hover, touch, or keyboard focus."] },
+  behavior: { heading: "Behavior", content: ["HeatmapChart maps ISO dates into week and weekday positions, uses the last repeated date value, bins positive activity by its one-decimal value, links days with activity when getHref is supplied, and reveals supplied copy on hover, touch, or keyboard focus."] },
   contentGuidance: { heading: "Content guidance", content: ["Use ISO calendar dates and consistent numeric units. Write tooltips as short standalone descriptions, such as 42 points on January 5, 2023."] },
-  accessibility: { heading: "Accessibility", content: ["The SVG has a year-specific accessible name, dated cells expose their date and value, and cells with tooltip copy can receive keyboard focus. Forced-colors mode outlines the cells."] },
+  accessibility: { heading: "Accessibility", content: ["The SVG has a year-specific accessible name, dated cells expose their date and value, and cells with tooltip copy or a link can receive keyboard focus. Forced-colors mode outlines the cells."] },
   implementation: { heading: "Implementation", content: ["Pass the original id, year, and data contract and load paper-ui/styles.css once. Keep ids unique when more than one heatmap appears on a page."] },
-  apiReference: { heading: "API reference", content: ["HeatmapChartProps accepts id, year, and data. Each HeatmapChartDatum contains an ISO date, numeric value, and optional tooltip string."] },
+  apiReference: { heading: "API reference", content: ["HeatmapChartProps accepts id, year, data and an optional getHref for days with activity. Each HeatmapChartDatum contains an ISO date, numeric value, and optional tooltip string."] },
   relatedPatterns: { heading: "Related patterns", content: ["Related contracts include Table for exact record comparison and the Color foundation for the semantic chart and forced-color tokens used by the calendar."] },
   migration: { heading: "Migration", content: ["Replace the incompatible Paper matrix props with the original ui HeatmapChart contract unchanged: id, year, and dated data records."] },
-  lifecycle: { heading: "Lifecycle", content: ["Stable in Paper 0.1.0; calendar geometry, five-level intensity mapping, and tooltip placement preserve the original ui component contract."] },
+  lifecycle: { heading: "Lifecycle", content: ["Stable in Paper 0.1.0; calendar geometry, the fixed five-level points-per-day mapping, day links and tooltip placement preserve the original ui component contract."] },
 });
 
 function componentDocument(
@@ -369,7 +369,7 @@ export const phaseThreeDataLayoutDocuments = [
     },
     accessibility: {
       requirements: ["Provide tooltip text for meaningful activity so its exact date and value are exposed alongside the visual intensity."],
-      keyboard: ["Tab reaches cells with tooltip content; focus reveals the same tooltip shown by hover and touch."],
+      keyboard: ["Tab reaches cells with tooltip content or a link; focus reveals the same tooltip shown by hover and touch."],
       knownConstraints: ["The compact annual overview supplements rather than replaces an exact activity log."],
     },
     api: {
@@ -402,18 +402,23 @@ export const phaseThreeDataLayoutDocuments = [
   {
     "name": "data[].value",
     "type": "number",
-    "description": "Activity magnitude in a consistent unit. Colors scale to the year’s maximum.",
+    "description": "Points for the day. Colors use fixed bands: under 30, 30+, 100+ and 300+.",
     "required": true
   },
   {
     "name": "data[].tooltip",
     "type": "string",
     "description": "Full date, quantity and unit. Enables keyboard-focusable cell detail."
+  },
+  {
+    "name": "getHref",
+    "type": "(date: string) => string",
+    "description": "Links each day with activity, given its YYYY-MM-DD date."
   }
 ],
       cssClasses: ["paper-heatmap", "paper-heatmap__*"],
       publicTypes: ["HeatmapChartProps", "HeatmapChartDatum"],
-      defaults: ["Missing dates have value zero; positive values use four bands relative to the maximum value in the requested year."],
+      defaults: ["Missing dates have value zero; positive values use four fixed points-per-day bands shown in the legend."],
       invalidCombinations: ["Ids must be unique per page, dates use ISO calendar strings, and consumers should keep records within the requested year."],
     },
     migration: {

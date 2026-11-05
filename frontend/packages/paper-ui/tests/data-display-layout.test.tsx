@@ -45,10 +45,11 @@ const heatmapProps: HeatmapChartProps = {
   year: 2023,
   data: [
     { date: "2023-01-01", value: 0, tooltip: "0 points on January 1, 2023" },
-    { date: "2023-01-02", value: 10, tooltip: "10 points on January 2, 2023" },
-    { date: "2023-01-03", value: 30, tooltip: "30 points on January 3, 2023" },
-    { date: "2023-01-04", value: 60, tooltip: "60 points on January 4, 2023" },
-    { date: "2023-01-05", value: 100, tooltip: "100 points on January 5, 2023" },
+    { date: "2023-01-02", value: 29.9, tooltip: "29.9 points on January 2, 2023" },
+    // Bands follow the one-decimal display, so 29.96 points shows and colours as 30.
+    { date: "2023-01-03", value: 29.96, tooltip: "30 points on January 3, 2023" },
+    { date: "2023-01-04", value: 100, tooltip: "100 points on January 4, 2023" },
+    { date: "2023-01-05", value: 300, tooltip: "300 points on January 5, 2023" },
   ],
 };
 
@@ -180,7 +181,7 @@ describe("HeatmapChart", () => {
     )).toBe(true);
   });
 
-  it("maps dated activity onto five intensity levels without changing cell geometry", () => {
+  it("maps dated activity onto five fixed points-per-day levels without changing cell geometry", () => {
     const { container } = render(<HeatmapChart {...heatmapProps} />);
     const svg = container.querySelector("svg")!;
     const cells = calendarCells(svg);
@@ -198,7 +199,7 @@ describe("HeatmapChart", () => {
     const { container } = render(<HeatmapChart {...heatmapProps} />);
     const svg = container.querySelector("svg")!;
     const januaryFifth = calendarCells(svg)[10];
-    const tooltipText = screen.getByText("100 points on January 5, 2023");
+    const tooltipText = screen.getByText("300 points on January 5, 2023");
     Object.defineProperty(tooltipText, "getBBox", { value: () => new DOMRect(0, 0, 180, 16) });
     const tooltip = tooltipText.closest("g");
 

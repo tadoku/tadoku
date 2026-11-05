@@ -113,3 +113,15 @@ and restores its Reader role. Delay/abort tests intercept only the browser trans
 boundary in evidence. An ambiguous save must offer checking existing activity,
 never claim success or retry automatically. Keep authenticated traces/videos off.
 Do not reload a draft when testing session recovery: it is intentionally in-memory.
+
+## Webv3 profile statistics
+
+Open the printed next-host branch URL at `/profile/<user-id>/statistics/<year>`,
+or follow a participant on the Webv3 homepage standings. Compare the overall
+score, updates, language and activity breakdowns and contest titles with the
+API's `activity`, `scores`, `activity-split` and `contest-registrations` reads
+for that year. Step to another year with the year control. The owner sees the
+export downloads and their private contests; another visitor sees neither. A
+year without updates shows an empty state, an unknown ID is not found, and the
+calendar scrolls inside its region at 390px. Run the Webv3 `profile.spec.ts`
+with the logging fixture environment.

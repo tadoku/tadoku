@@ -38,6 +38,7 @@ async function hydrated(page: Page) {
 
 async function fitsWidth(page: Page, name: string, path: string) {
   await page.setViewportSize({ width: 390, height: 900 })
+  await hydrated(page)
   await page.evaluate(() => document.fonts.ready)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${name} at 390px`).toBe(true)
   await page.screenshot({ path, fullPage: true })
@@ -118,7 +119,7 @@ test('an organizer gets each invalid field focused, then creates a contest and l
   await hydrated(page)
   await page.screenshot({ path: testInfo.outputPath('new-form.png'), fullPage: true })
 
-  const title = page.getByLabel('Title', { exact: true })
+  const title = page.getByRole('textbox', { name: 'Title', exact: true })
   await createButton(page).click()
   await expect(title).toBeFocused()
   await expect(page.getByText('Use a title of at least 4 characters.')).toBeVisible()
@@ -136,7 +137,7 @@ test('an organizer gets each invalid field focused, then creates a contest and l
   await page.getByLabel('End date (UTC)').fill(utcDay(50))
 
   // Without activities the API refuses the contest.
-  const activities = page.getByLabel('Allowed activities')
+  const activities = page.getByRole('combobox', { name: 'Allowed activities' })
   for (let chips = page.getByRole('button', { name: /^Remove / }); await chips.count();) await chips.first().click()
   await createButton(page).click()
   await expect(activities).toBeFocused()
@@ -144,7 +145,7 @@ test('an organizer gets each invalid field focused, then creates a contest and l
   await activities.fill('Reading')
   await page.getByRole('option', { name: 'Reading', exact: true }).click()
   await page.keyboard.press('Escape')
-  const languages = page.getByLabel('Allowed languages')
+  const languages = page.getByRole('combobox', { name: 'Allowed languages' })
   await languages.fill('Japanese')
   await page.getByRole('option', { name: 'Japanese', exact: true }).click()
   await page.keyboard.press('Escape')

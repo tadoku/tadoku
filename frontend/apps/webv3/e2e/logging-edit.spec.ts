@@ -84,6 +84,8 @@ test('owner edits a saved log, sees the estimate and the persisted change after 
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(text)
   await page.reload()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(text)
+  await expect(page.getByText(`12 ${before.unit_name}`, { exact: true })).toBeVisible()
+  await expect(page.getByText('30 min', { exact: true })).toBeVisible()
   expect(saves).toBe(1)
 
   const after = await (await readRecord(readerContext, id)).json()
@@ -94,6 +96,25 @@ test('owner edits a saved log, sees the estimate and the persisted change after 
   expect(after.registrations.map((registration: { contest_id: string }) => registration.contest_id))
     .toEqual(before.registrations.map((registration: { contest_id: string }) => registration.contest_id))
   await testInfo.attach('edited-record', { body: JSON.stringify({ before, after }, null, 2), contentType: 'application/json' })
+})
+
+test('editing only the description keeps a saved tag that holds a comma', async ({ page, readerContext }) => {
+  test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
+  const id = await createLog(page, `edit-comma-${Date.now()}`)
+  const before = await (await readRecord(readerContext, id)).json()
+  const changed = await readerContext.request.put(`${api}/immersion/logs/${id}`, {
+    data: { amount: before.amount, unit_key: before.unit_key, tags: ['reading, fiction'], description: before.description },
+  })
+  expect(changed.status()).toBe(200)
+
+  await page.goto(`/logs/${id}/edit`)
+  await expect(saveChanges(page)).toBeEnabled({ timeout: 15_000 })
+  const text = `edit-comma-after-${Date.now()}`
+  await description(page).fill(text)
+  await saveChanges(page).click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(text)
+
+  expect((await (await readRecord(readerContext, id)).json()).tags).toEqual(['reading, fiction'])
 })
 
 test('an expired session keeps the edit and changes nothing', async ({ page, readerContext }) => {

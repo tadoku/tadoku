@@ -45,7 +45,7 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
     onSubmit: async ({ value }) => {
       setFailure(null)
       const result = target.kind === 'edit'
-        ? await updateLog(toLogUpdate(value, options, viewerId, target.log.id))
+        ? await updateLog(toLogUpdate(value, options, viewerId, target.log))
         : await saveLog(toNewLog(value, options, viewerId))
       if (result.ok) {
         await navigate({ to: '/logs/$logId', params: { logId: result.data.id }, replace: target.kind === 'edit' })

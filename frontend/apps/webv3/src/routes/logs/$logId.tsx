@@ -55,7 +55,7 @@ function LogDetail() {
         lead={`${log.language.name} · ${log.activity.name}`}
         actions={owner ? <OwnerActions log={log} /> : null}
       />
-      <StatGrid stats={[measure(log), { label: 'Score', value: scoreFormat.format(log.score) }]} />
+      <StatGrid stats={[...measure(log), { label: 'Score', value: scoreFormat.format(log.score) }]} />
       <Surface className="log-surface">
         <DescriptionList
           items={[
@@ -180,10 +180,13 @@ function useFocusPageHeading() {
 
 const scoreFormat = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 2 })
 
+/** A timed log's duration; an amount log's amount and any time spent. */
 function measure(log: ImmersionLog) {
-  return log.duration_seconds
-    ? { label: 'Duration', value: `${log.duration_seconds / 60} min` }
-    : { label: 'Amount', value: `${log.amount} ${log.unit_name}` }
+  const amount = { label: 'Amount', value: `${log.amount} ${log.unit_name}` }
+  if (!log.duration_seconds) return [amount]
+
+  const duration = { label: 'Duration', value: `${log.duration_seconds / 60} min` }
+  return log.activity.input_type === 'time_primary' ? [duration] : [amount, duration]
 }
 
 /** For example `2026-10-25 06:19:03.796 UTC`. */

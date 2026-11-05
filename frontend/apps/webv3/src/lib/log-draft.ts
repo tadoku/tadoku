@@ -149,9 +149,11 @@ export function toNewLog(draft: LogDraft, options: LogOptions, viewerId: string)
   }
 }
 
-export function toLogUpdate(draft: LogDraft, options: LogOptions, viewerId: string, logId: string): LogUpdate {
+/** A saved tag may hold a comma, so unchanged tags are sent as saved rather than split again. */
+export function toLogUpdate(draft: LogDraft, options: LogOptions, viewerId: string, log: ImmersionLog): LogUpdate {
   const { measure, tags } = toScorePreview(draft, options)
-  return { viewerId, logId, measure, description: draft.description.trim(), tags }
+  const unchanged = draft.tags === log.tags.join(', ')
+  return { viewerId, logId: log.id, measure, description: draft.description.trim(), tags: unchanged ? log.tags : tags }
 }
 
 /** The estimate request for a draft that passes `logDraftSchema`. */

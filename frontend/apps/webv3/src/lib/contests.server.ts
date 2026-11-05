@@ -1,13 +1,17 @@
 import {
+  immersionContestCreate,
   immersionContestCreatePermissionCheck,
   immersionContestGetConfigurations,
   immersionContestList,
   type ImmersionContest,
 } from 'api-client'
-import type { ContestList, ContestListScope } from './contests'
+import type { NewContest } from './contest-form'
+import type { ContestEditor, ContestList, ContestListScope } from './contests'
 import { contestsPageSize } from './contests'
 import type { Identified } from './home'
 import type { Read } from './leaderboard'
+import type { LogResult } from './logs'
+import { answer, draftOwnerCookie } from './logs.server'
 import { sessionCookie, sessionRequest } from './session.server'
 
 const failed = { data: undefined, response: undefined }
@@ -56,4 +60,45 @@ export async function readCanCreateContest(): Promise<boolean> {
   if (!cookie) return false
   const { response } = await immersionContestCreatePermissionCheck(sessionRequest(cookie)).catch(() => failed)
   return response?.status === 200
+}
+
+export async function readContestEditor(): Promise<ContestEditor> {
+  const cookie = sessionCookie()
+  if (!cookie) return { kind: 'signed-out' }
+
+  const [permission, options] = await Promise.all([
+    immersionContestCreatePermissionCheck(sessionRequest(cookie)).catch(() => failed),
+    immersionContestGetConfigurations(sessionRequest(cookie)).catch(() => failed),
+  ])
+  switch (permission.response?.status) {
+    case 200: return options.data?.activities.length ? { kind: 'allowed', options: options.data } : { kind: 'unavailable' }
+    case 401: return { kind: 'signed-out' }
+    case 403: return { kind: 'forbidden' }
+    default: return { kind: 'unavailable' }
+  }
+}
+
+/** Creates a contest for the account that started the draft, and answers the new contest's ID. */
+export async function saveContest(contest: NewContest): Promise<LogResult<string>> {
+  const session = await draftOwnerCookie(contest.viewerId)
+  if (!session.ok) return session
+
+  const { kind } = contest
+  const result = await answer(immersionContestCreate({
+    ...sessionRequest(session.data),
+    body: {
+      title: contest.title,
+      description: contest.description,
+      contest_start: contest.contestStart,
+      contest_end: contest.contestEnd,
+      registration_end: contest.registrationEnd,
+      official: kind.kind === 'official',
+      private: kind.kind === 'community' && kind.unlisted,
+      language_code_allow_list: kind.kind === 'community' ? kind.languageCodes : [],
+      activity_type_id_allow_list: contest.activityIds,
+    },
+  }))
+  if (!result.ok) return result
+  // The contest page needs the new contest's ID, so an answer without one is malformed.
+  return result.data.id ? { ok: true, data: result.data.id } : { ok: false, reason: 'unavailable' }
 }

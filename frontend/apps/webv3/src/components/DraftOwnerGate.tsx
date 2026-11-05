@@ -8,8 +8,10 @@ import { useLoginUrl, viewerQueryOptions, type Viewer } from '../lib/session'
  * signed out. The owner stays fixed when the session later ends or changes, so the draft stays visible and is never
  * saved for another account. Without an owner it explains why.
  */
-export function DraftOwnerGate({ signIn, children }: {
+export function DraftOwnerGate({ signIn, suspended = 'Activity cannot be saved for this account.', children }: {
   signIn: { title: string; description: string }
+  /** Why a suspended account cannot continue. */
+  suspended?: string
   children: (viewerId: string) => ReactNode
 }) {
   const viewerQuery = useQuery(viewerQueryOptions())
@@ -33,7 +35,7 @@ export function DraftOwnerGate({ signIn, children }: {
         <EmptyState
           headingLevel={1}
           title="Your account is suspended"
-          description="Activity cannot be saved for this account."
+          description={suspended}
         />
       )
     default:

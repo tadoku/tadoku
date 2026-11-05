@@ -12,12 +12,14 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlanRouteImport } from './routes/plan'
 import { Route as BlogSplatRouteImport } from './routes/blog/$'
+import { Route as ContestsNewRouteImport } from './routes/contests/new'
 import { Route as LogsLogIdRouteImport } from './routes/logs/$logId'
 import { Route as LogsNewRouteImport } from './routes/logs/new'
 import { Route as PagesSlugRouteImport } from './routes/pages/$slug'
 import { Route as PagesManualRouteImport } from './routes/pages/manual'
 import { Route as BlogPostsSlugRouteImport } from './routes/blog/posts/$slug'
 import { Route as ContestsIdRegistrationRouteImport } from './routes/contests/$id/registration'
+import { Route as ContestsIdScoringRouteImport } from './routes/contests/$id/scoring'
 import { Route as ContestsMyContestsSplatRouteImport } from './routes/contests/my-contests/$'
 import { Route as ContestsOfficialSplatRouteImport } from './routes/contests/official/$'
 import { Route as ContestsUserContestsSplatRouteImport } from './routes/contests/user-contests/$'
@@ -43,6 +45,11 @@ const PlanRoute = PlanRouteImport.update({
 const BlogSplatRoute = BlogSplatRouteImport.update({
   id: '/blog/$',
   path: '/blog/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContestsNewRoute = ContestsNewRouteImport.update({
+  id: '/contests/new',
+  path: '/contests/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LogsLogIdRoute = LogsLogIdRouteImport.update({
@@ -73,6 +80,11 @@ const BlogPostsSlugRoute = BlogPostsSlugRouteImport.update({
 const ContestsIdRegistrationRoute = ContestsIdRegistrationRouteImport.update({
   id: '/contests/$id/registration',
   path: '/contests/$id/registration',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContestsIdScoringRoute = ContestsIdScoringRouteImport.update({
+  id: '/contests/$id/scoring',
+  path: '/contests/$id/scoring',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContestsMyContestsSplatRoute = ContestsMyContestsSplatRouteImport.update({
@@ -140,12 +152,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/plan': typeof PlanRoute
   '/blog/$': typeof BlogSplatRoute
+  '/contests/new': typeof ContestsNewRoute
   '/logs/$logId': typeof LogsLogIdRoute
   '/logs/new': typeof LogsNewRoute
   '/pages/$slug': typeof PagesSlugRoute
   '/pages/manual': typeof PagesManualRoute
   '/blog/posts/$slug': typeof BlogPostsSlugRoute
   '/contests/$id/registration': typeof ContestsIdRegistrationRoute
+  '/contests/$id/scoring': typeof ContestsIdScoringRoute
   '/contests/my-contests/$': typeof ContestsMyContestsSplatRoute
   '/contests/official/$': typeof ContestsOfficialSplatRoute
   '/contests/user-contests/$': typeof ContestsUserContestsSplatRoute
@@ -162,12 +176,14 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/plan': typeof PlanRoute
   '/blog/$': typeof BlogSplatRoute
+  '/contests/new': typeof ContestsNewRoute
   '/logs/$logId': typeof LogsLogIdRoute
   '/logs/new': typeof LogsNewRoute
   '/pages/$slug': typeof PagesSlugRoute
   '/pages/manual': typeof PagesManualRoute
   '/blog/posts/$slug': typeof BlogPostsSlugRoute
   '/contests/$id/registration': typeof ContestsIdRegistrationRoute
+  '/contests/$id/scoring': typeof ContestsIdScoringRoute
   '/contests/my-contests/$': typeof ContestsMyContestsSplatRoute
   '/contests/official/$': typeof ContestsOfficialSplatRoute
   '/contests/user-contests/$': typeof ContestsUserContestsSplatRoute
@@ -185,12 +201,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/plan': typeof PlanRoute
   '/blog/$': typeof BlogSplatRoute
+  '/contests/new': typeof ContestsNewRoute
   '/logs/$logId': typeof LogsLogIdRoute
   '/logs/new': typeof LogsNewRoute
   '/pages/$slug': typeof PagesSlugRoute
   '/pages/manual': typeof PagesManualRoute
   '/blog/posts/$slug': typeof BlogPostsSlugRoute
   '/contests/$id/registration': typeof ContestsIdRegistrationRoute
+  '/contests/$id/scoring': typeof ContestsIdScoringRoute
   '/contests/my-contests/$': typeof ContestsMyContestsSplatRoute
   '/contests/official/$': typeof ContestsOfficialSplatRoute
   '/contests/user-contests/$': typeof ContestsUserContestsSplatRoute
@@ -209,12 +227,14 @@ export interface FileRouteTypes {
     | '/'
     | '/plan'
     | '/blog/$'
+    | '/contests/new'
     | '/logs/$logId'
     | '/logs/new'
     | '/pages/$slug'
     | '/pages/manual'
     | '/blog/posts/$slug'
     | '/contests/$id/registration'
+    | '/contests/$id/scoring'
     | '/contests/my-contests/$'
     | '/contests/official/$'
     | '/contests/user-contests/$'
@@ -231,12 +251,14 @@ export interface FileRouteTypes {
     | '/'
     | '/plan'
     | '/blog/$'
+    | '/contests/new'
     | '/logs/$logId'
     | '/logs/new'
     | '/pages/$slug'
     | '/pages/manual'
     | '/blog/posts/$slug'
     | '/contests/$id/registration'
+    | '/contests/$id/scoring'
     | '/contests/my-contests/$'
     | '/contests/official/$'
     | '/contests/user-contests/$'
@@ -253,12 +275,14 @@ export interface FileRouteTypes {
     | '/'
     | '/plan'
     | '/blog/$'
+    | '/contests/new'
     | '/logs/$logId'
     | '/logs/new'
     | '/pages/$slug'
     | '/pages/manual'
     | '/blog/posts/$slug'
     | '/contests/$id/registration'
+    | '/contests/$id/scoring'
     | '/contests/my-contests/$'
     | '/contests/official/$'
     | '/contests/user-contests/$'
@@ -276,12 +300,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   PlanRoute: typeof PlanRoute
   BlogSplatRoute: typeof BlogSplatRoute
+  ContestsNewRoute: typeof ContestsNewRoute
   LogsLogIdRoute: typeof LogsLogIdRoute
   LogsNewRoute: typeof LogsNewRoute
   PagesSlugRoute: typeof PagesSlugRoute
   PagesManualRoute: typeof PagesManualRoute
   BlogPostsSlugRoute: typeof BlogPostsSlugRoute
   ContestsIdRegistrationRoute: typeof ContestsIdRegistrationRoute
+  ContestsIdScoringRoute: typeof ContestsIdScoringRoute
   ContestsMyContestsSplatRoute: typeof ContestsMyContestsSplatRoute
   ContestsOfficialSplatRoute: typeof ContestsOfficialSplatRoute
   ContestsUserContestsSplatRoute: typeof ContestsUserContestsSplatRoute
@@ -316,6 +342,13 @@ declare module '@tanstack/react-router' {
       path: '/blog/$'
       fullPath: '/blog/$'
       preLoaderRoute: typeof BlogSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contests/new': {
+      id: '/contests/new'
+      path: '/contests/new'
+      fullPath: '/contests/new'
+      preLoaderRoute: typeof ContestsNewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/logs/$logId': {
@@ -358,6 +391,13 @@ declare module '@tanstack/react-router' {
       path: '/contests/$id/registration'
       fullPath: '/contests/$id/registration'
       preLoaderRoute: typeof ContestsIdRegistrationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contests/$id/scoring': {
+      id: '/contests/$id/scoring'
+      path: '/contests/$id/scoring'
+      fullPath: '/contests/$id/scoring'
+      preLoaderRoute: typeof ContestsIdScoringRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contests/my-contests/$': {
@@ -444,12 +484,14 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PlanRoute: PlanRoute,
   BlogSplatRoute: BlogSplatRoute,
+  ContestsNewRoute: ContestsNewRoute,
   LogsLogIdRoute: LogsLogIdRoute,
   LogsNewRoute: LogsNewRoute,
   PagesSlugRoute: PagesSlugRoute,
   PagesManualRoute: PagesManualRoute,
   BlogPostsSlugRoute: BlogPostsSlugRoute,
   ContestsIdRegistrationRoute: ContestsIdRegistrationRoute,
+  ContestsIdScoringRoute: ContestsIdScoringRoute,
   ContestsMyContestsSplatRoute: ContestsMyContestsSplatRoute,
   ContestsOfficialSplatRoute: ContestsOfficialSplatRoute,
   ContestsUserContestsSplatRoute: ContestsUserContestsSplatRoute,

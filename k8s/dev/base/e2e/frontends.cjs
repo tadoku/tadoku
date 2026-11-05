@@ -99,12 +99,12 @@ function proveFrontends({ evidence, prefix, containers, report, run }, docs) {
               const response = await readHtml('/plan', host);
               if (response.status !== 200) throw new Error('Webv3 SSR failed for ' + host);
               const html = response.html;
-              // Guide and activity stay on Webv3; the account login proves Host still selects the matching lab sibling.
+              // Guide stays on Webv3; the account login proves Host still selects the matching lab sibling.
+              // Guests no longer get a header Log activity link, so /plan SSR has no /logs/new after that parity change.
               const account = product === 'tadoku.dev.lab' ? 'account.tadoku.dev.lab' : product.replace('.tadoku.dev.lab', '.account.tadoku.dev.lab');
               const login = 'https://' + account + '/login?return_to=' + encodeURIComponent('https://' + host + '/plan');
               if (!html.includes('Set a daily goal') || !html.includes('href="' + login + '"') || /href="https:\/\/tadoku\.app/.test(html)) throw new Error('Webv3 SSR development product links are incorrect for ' + host);
               if (!html.includes('href="/pages/manual"') || /href="https?:\/\/[^"]*\/pages\/manual"/.test(html)) throw new Error('Webv3 SSR guide link must stay on the Webv3 host for ' + host);
-              if (!html.includes('href="/logs/new"') || /href="https?:\/\/[^"]*\/logs\/new"/.test(html)) throw new Error('Webv3 SSR activity link must stay on the Webv3 host for ' + host);
               const assets = [...html.matchAll(/(?:src|href)="([^" ]+\.(?:js|css)(?:\?[^" ]*)?)"/g)].map(m => m[1]);
               if (!assets.length) throw new Error('Webv3 SSR has no compiled assets');
               for (const asset of assets) if (!(await fetch(new URL(asset, base), {signal: AbortSignal.timeout(5000)})).ok) throw new Error('Missing compiled Webv3 asset: ' + asset);
@@ -112,6 +112,8 @@ function proveFrontends({ evidence, prefix, containers, report, run }, docs) {
             }
             const outage = await readHtml('/', 'next.tadoku.dev.lab');
             if (!outage.html.includes('Contest updates are delayed') || !outage.html.includes('The board could not be loaded')) throw new Error('API outage must remain visible on the homepage');
+            // Homepage hero still offers same-host Log activity when the contest board is unavailable.
+            if (!outage.html.includes('href="/logs/new"') || /href="https?:\/\/[^"]*\/logs\/new"/.test(outage.html)) throw new Error('Webv3 SSR activity link must stay on the Webv3 host for next.tadoku.dev.lab');
             const after = await fetch(base + '/healthz', {signal: AbortSignal.timeout(2000)});
             if (after.status !== 200) throw new Error('API outage broke Webv3 health');
             console.log(JSON.stringify({api: process.env.TADOKU_API_URL, outage: 'visible', health: after.status}));

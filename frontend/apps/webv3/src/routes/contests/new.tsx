@@ -48,7 +48,7 @@ function Editor({ viewerId }: { viewerId: string }) {
       return (
         <EmptyState
           headingLevel={1}
-          title="You can't create a contest yet"
+          title="You can’t create a contest yet"
           description="Accounts can create contests from one month after joining, up to 12 a year."
           actions={<a className={buttonClassName({ variant: 'outline' })} href={contestsHref.official()}>Browse contests</a>}
         />

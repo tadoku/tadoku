@@ -1,5 +1,5 @@
 import type { APIRequestContext, BrowserContext, Page } from '@playwright/test'
-import { accountId, admin, api, expect, reader, test, webv2, webv3 } from './logging-fixtures'
+import { accountId, admin, api, expect, reader, test, webv3 } from './logging-fixtures'
 
 interface Contest {
   id: string

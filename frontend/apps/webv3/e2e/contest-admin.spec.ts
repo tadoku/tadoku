@@ -27,11 +27,6 @@ const utcDay = (offset = 0) => new Date(Date.now() + offset * 86_400_000).toISOS
 const unique = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
 const createButton = (page: Page) => page.getByRole('button', { name: 'Create contest', exact: true })
 
-/** The Webv2 origin this request resolved, read from the shell's own Webv2 link: a branch's sibling or `TADOKU_WEB_URL`. */
-async function webv2(page: Page) {
-  return new URL((await page.getByRole('link', { name: 'About Tadoku', exact: true }).getAttribute('href'))!).origin
-}
-
 async function hydrated(page: Page) {
   await expect(page.getByRole('button', { name: 'Use dark theme', exact: true })).toBeEnabled()
 }
@@ -104,7 +99,7 @@ test('anonymous visitors are asked to log in to create a contest and sent to log
   expect(returnTo.host).toBe(new URL(webv3!).host)
 })
 
-test('an organizer gets each invalid field focused, then creates a contest and lands on its Webv2 standings', async ({ adminContext }, testInfo) => {
+test('an organizer gets each invalid field focused, then creates a contest and lands on its contest page', async ({ adminContext }, testInfo) => {
   test.skip(!api || !admin.email || !admin.password, 'Set TADOKU_API_URL, E2E_SECOND_EMAIL and E2E_SECOND_PASSWORD')
   const page = await adminContext.newPage()
   const failures: string[] = []
@@ -152,9 +147,9 @@ test('an organizer gets each invalid field focused, then creates a contest and l
   await page.getByLabel('Only those with the link can sign up').check()
   await fitsWidth(page, '/contests/new form', testInfo.outputPath('new-form-390.png'))
 
-  const origin = await webv2(page)
   await createButton(page).click()
-  await page.waitForURL(url => url.origin === origin && /^\/contests\/[0-9a-f-]{36}\/leaderboard\/1$/.test(url.pathname))
+  await page.waitForURL(url => /^\/contests\/[0-9a-f-]{36}\/leaderboard\/1$/.test(url.pathname))
+  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
   const id = new URL(page.url()).pathname.split('/')[2]
   const created = await (await adminContext.request.get(`${api}/immersion/contests/${id}`)).json() as Contest & {
     allowed_languages: { code: string }[] | null
@@ -195,13 +190,16 @@ test('an administrator drafts, publishes and activates a contest rule set', asyn
     .filter(ruleSet => ruleSet.status === 'published')
   const page = await adminContext.newPage()
 
-  await page.goto(`/contests/${contest.id}/scoring`)
+  await page.goto(`/contests/${contest.id}/leaderboard/1`)
+  await hydrated(page)
+  await page.getByRole('link', { name: 'Scoring rules' }).click()
+  await expect(page).toHaveURL(new RegExp(`/contests/${contest.id}/scoring$`))
   await expect(page.getByRole('heading', { level: 1, name: 'Contest scoring' })).toBeVisible()
   await expect(page).toHaveTitle('Contest scoring · Tadoku')
   await expect(page.getByText(contest.title, { exact: true })).toBeVisible()
   await expect(page.getByText('No contest-specific rule sets yet.')).toBeVisible()
   await expect(page.getByRole('link', { name: `Back to ${contest.title}` }))
-    .toHaveAttribute('href', `${await webv2(page)}/contests/${contest.id}/leaderboard/1`)
+    .toHaveAttribute('href', `/contests/${contest.id}/leaderboard/1`)
   await hydrated(page)
 
   const pinned = page.getByLabel('Pinned platform version')
@@ -296,6 +294,9 @@ test('a started contest’s scoring is locked, and only administrators reach sco
     `${api}/immersion/contests?page_size=1&page=0&official=false&include_deleted=false&user_id=${readerId}`,
   )).json() as { contests: Contest[] }
   const visitor = await readerContext.newPage()
+  await visitor.goto(`/contests/${started.id}/leaderboard/1`)
+  await expect(visitor.getByRole('heading', { level: 1, name: started.title })).toBeVisible()
+  await expect(visitor.getByRole('link', { name: 'Scoring rules' })).toHaveCount(0)
   for (const id of [started.id, own.contests[0]?.id].filter(Boolean)) {
     await visitor.goto(`/contests/${id}/scoring`)
     await expect(visitor.getByRole('heading', { level: 1, name: 'This feature is not yet available.' })).toBeVisible()

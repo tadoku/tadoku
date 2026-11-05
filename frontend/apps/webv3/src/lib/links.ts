@@ -32,7 +32,7 @@ function createLinks(base: string) {
     contest: (id: string, page = 1) => `/contests/${encodeURIComponent(id)}/leaderboard/${page}`,
     joinContest: (id: string) => `/contests/${encodeURIComponent(id)}/registration`,
     contestUpdates: (id: string) => legacyUrl(`/contests/${encodeURIComponent(id)}/updates/1`),
-    contestScoring: (id: string) => legacyUrl(`/contests/${encodeURIComponent(id)}/scoring`),
+    contestScoring: (id: string) => `/contests/${encodeURIComponent(id)}/scoring`,
     profile: (id: string) => `/profile/${encodeURIComponent(id)}/statistics`,
     /** A profile's updates, optionally only one UTC day's (`YYYY-MM-DD`). */
     profileUpdates: (id: string, date?: string) =>

@@ -1,5 +1,5 @@
 import { useStore } from '@tanstack/react-form'
-import { Link, useHydrated } from '@tanstack/react-router'
+import { Link, useHydrated, useNavigate } from '@tanstack/react-router'
 import type { ImmersionContestConfigurationOptions } from 'api-client'
 import { Button, PageHeader, Surface, usePaperForm } from 'paper-ui'
 import { useMemo, useState } from 'react'
@@ -15,7 +15,7 @@ const searchable = (name: string, query: string) =>
 
 /**
  * The contest form for the account that started the draft, which the server refuses to create for any other account.
- * A created contest replaces this page with its standings.
+ * A created contest replaces this page with its contest page.
  */
 export function ContestForm({ options, viewerId, admin }: {
   options: ImmersionContestConfigurationOptions
@@ -24,6 +24,7 @@ export function ContestForm({ options, viewerId, admin }: {
 }) {
   const hydrated = useHydrated()
   const links = useLinks()
+  const navigate = useNavigate()
   const createContest = useCreateContest()
   const [failure, setFailure] = useState<LogFailure | null>(null)
   const schema = useMemo(
@@ -37,7 +38,7 @@ export function ContestForm({ options, viewerId, admin }: {
     onSubmit: async ({ value }) => {
       setFailure(null)
       const result = await createContest(toNewContest(value, options, viewerId))
-      if (result.ok) window.location.replace(links.contest(result.data))
+      if (result.ok) await navigate({ to: links.contest(result.data), replace: true })
       else setFailure(result.reason)
     },
   })

@@ -58,7 +58,7 @@ function ContestBoardPage({ board, today, page }: { board: ContestBoard; today: 
         ? <a className={buttonClassName({ variant: 'outline' })} href={links.joinContest(contest.id)}>Update registration</a>
         : null}
       {phase.ongoing && registered ? <a className={buttonClassName()} href={links.logs}>Log activity</a> : null}
-      {admin ? <a className={buttonClassName({ variant: 'ghost' })} href={links.contestScoring(contest.id)}>Scoring rules</a> : null}
+      {admin ? <Link className={buttonClassName({ variant: 'ghost' })} to={links.contestScoring(contest.id)}>Scoring rules</Link> : null}
     </>
   )
 

@@ -43,8 +43,9 @@ registration is open and the viewer hasn't joined, Update registration until the
 contest ends for participants, Log activity while it runs for participants, and
 Scoring rules for administrators. Anonymous visitors see a login prompt; joining
 sends them to log in and back to the registration. Suspended accounts get no join
-action. Participant rows, contest updates and scoring rules open Webv2;
-the organizer opens their Webv3 profile.
+action. Scoring rules opens the native [scoring page](webv3-contest-admin.md);
+participant rows and contest updates open Webv2, and the organizer opens their
+Webv3 profile.
 
 The registration form accepts one to three distinct languages: the contest's
 allowed languages, or every configured language when it has no restriction.

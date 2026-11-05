@@ -28,6 +28,7 @@ go_test(
         "snapshot_refresh_test.go",
     ],
     embed = [":flipt"],
+    shard_count = 3,
     deps = [
         "//services/tadoku-api/internal/featureflags",
         "//services/tadoku-api/internal/tenant",

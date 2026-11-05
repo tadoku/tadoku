@@ -187,6 +187,12 @@ CI latency from a host with more available resources.
   `uuid.SetRand`, `jwt.TimeFunc` or environment variables, and their parents
   stay serial. Bound in-process concurrency with `-test.parallel` as well as
   target concurrency when measuring against CPU, memory and connection limits.
+- Split a slow target whose tests must stay serial with native Bazel
+  `shard_count`; shards are separate processes, so process-wide state and
+  `t.Setenv` stay safe. Tests that create real Flipt SDK clients stay serial
+  within a process: concurrent clients race in the SDK's WebAssembly runtime.
+  Before sharding, compare `-test.v` pass inventories of a sharded and an
+  `--test_sharding_strategy=disabled` run.
 - Keep the pool-closing failure test isolated. It opens a second pool on the
   shared DSN and closes it, without creating another migrated database.
 - The `services/tadoku-api/infra/postgres/` helper tests have their own setup in

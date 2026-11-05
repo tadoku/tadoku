@@ -46,6 +46,7 @@ go_test(
     ],
     embed = [":tadoku-tenant_lib"],
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    shard_count = 3,
     tags = [
         "no-cache",
         "no-remote-exec",

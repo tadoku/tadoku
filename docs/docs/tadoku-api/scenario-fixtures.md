@@ -141,6 +141,28 @@ scenarios. It proves that each tenant's request writes, cache keys and verify
 reads stay its own, and that one scenario's worker, including the job its job
 enqueues, leaves the other's job pending.
 
+### Production baseline
+
+A scenario cannot write `tadoku/prod`, yet some authorization rules evaluate
+it whatever the request's tenant. `resetRelationships` in
+`services/tadoku-api/e2e/relationships_test.go` therefore seeds a fixed
+production baseline on every reset: a `tadoku/prod` administrator and a
+`tadoku/prod` ban for two dedicated subjects outside the cast and every case's
+seeds. A serial test that resets PostgreSQL without a relationship seed still
+calls `resetRelationships`, so the last serial reset leaves the baseline for
+the parallel phase.
+
+- A scenario case that proves a production grant or ban does not reach a test
+  tenant names the baseline relationship in its table row. It first checks
+  read-only that `tadoku/prod` still holds it, so a missing baseline fails the
+  case instead of passing without testing anything, then sends its request as
+  that subject in a scenario test tenant.
+- Scenarios only read the baseline, and no test writes it or reuses its
+  subjects.
+- A case about a test tenant's grant or ban not reaching production needs no
+  baseline: relationships are scoped to the request's tenant, so the `primary`
+  role stands in for `tadoku/prod` as usual.
+
 ## Parallel scenarios
 
 A top-level E2E test may call `t.Parallel` only when all of these hold:

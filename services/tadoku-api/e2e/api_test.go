@@ -103,6 +103,10 @@ func runTests(m *testing.M) (code int) {
 		return 1
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, api.db.Close()) }()
+	if err := resetRelationships(ctx, api.db.Pool); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
 
 	scoringEnabledHandler, _, err = newTestRouterWithLeaderboardService(
 		ctx,

@@ -154,6 +154,7 @@ fail decoding:
 
 The serial harness runs the resolved `setup.sql`, `testdata/accounts.sql` and the
 resolved `finalize.sql`, then replaces every stored relationship with the
+[production baseline](./scenario-fixtures.md#production-baseline) and the
 resolved file's rows. A row's tenant must be registered by then: for a test
 tenant, insert its registry row in the case's `setup.sql` with
 `on conflict (key) do nothing`. A scenario case seeds the same files into its

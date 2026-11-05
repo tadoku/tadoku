@@ -82,6 +82,9 @@ func TestAccountCastSeedComposition(t *testing.T) {
 			if err := api.db.Reset(t.Context(), seeds...); err != nil {
 				t.Fatal(err)
 			}
+			if err := resetRelationships(t.Context(), api.db.Pool); err != nil {
+				t.Fatal(err)
+			}
 
 			query := "update users set deleted_at = $1 where tenant = 'tadoku/prod' and id = $2"
 			if state == "locked" {

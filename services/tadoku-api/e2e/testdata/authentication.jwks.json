@@ -103,6 +103,14 @@
       "kid": "identity-v2-a-fixture",
       "use": "sig",
       "alg": "RS256"
+    },
+    {
+      "kty": "RSA",
+      "n": "lo7Fq16F2dMJHstvaootLV8U8QgIiTys27369qE--44iG0BjoOHdp6EUv3jWeDNlpToNxdy9HigEPBa2A7gzDWgvelQLjgPyQ9bRaVc_Roqk_BeZQglFvbUJnleEm_VjAXDIdgI3F77NrkgJFRwy8_rgQpn0tD04lRGMah2hZgsuFVyyvIjybO2PJ1myhSCmcaRVmrNWCaZ5ui9KQITtuYJl87l-XFClQg9854kuuYOtfLQ7G2gqe8Y9Go1BiDpKHyDdEnxwwbigD7g-kmwIeQq8o5K-V_I1pQkP0vorxEPU1C3QQijCNApoP3U8kJXfYl2GQUDMi38k5ye1fv8Uzw",
+      "e": "AQAB",
+      "kid": "tadoku-production-baseline-6ef5bb55-3efe-485a-b3ef-fb53d6c0167f",
+      "use": "sig",
+      "alg": "RS256"
     }
   ]
 }

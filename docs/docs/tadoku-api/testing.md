@@ -64,8 +64,11 @@ Never point tests at shared development or production services.
 
 - **PostgreSQL:** `TADOKU_TEST_POSTGRES_URL` must point to an explicit loopback
   port, database `postgres`, credentials `postgres:postgres` and exactly
-  `sslmode=disable`. Fixtures create random disposable databases and apply the
-  complete migration history. The admin pool is capped at two connections;
+  `sslmode=disable`. Fixtures clone random disposable databases from a template
+  holding the complete migration history. The first fixture on a server builds
+  the template, named after the up-migration contents, while other test
+  processes wait on an advisory lock; templates are retained and refuse
+  connections. The admin pool is capped at two connections;
   owner and restricted application pools each allow four.
 
   `testpostgres.Database.Pool` is the owner pool for fixture reset and

@@ -53,7 +53,9 @@ migration to clear a finding. When a finding is intended and safe, for example
 a column drop that no deployed code reads or writes, a required reviewer of the
 `migration-safety-override` environment can approve the run's **Approve
 migration safety findings** job; **Migration safety** then passes for that run
-only. A new push needs a new approval. Run the checker locally with
+only. The approval covers any checker failure on that run, including SQL the
+parser rejects, so read the run's findings before approving. A new push needs a
+new approval. Run the checker locally with
 `bazel run //tools/ci/migrationsafety/cmd -- services/tadoku-api/migrations/NNNN_name.up.sql`.
 The checker was inspired by
 [Safe / Not Safe](https://github.com/viggy28/safe-not-safe); Tadoku's Go rules

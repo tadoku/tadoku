@@ -6,6 +6,8 @@ import (
 )
 
 func TestImmersionContestListEvents(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		description []string
 		want        int
@@ -42,14 +44,17 @@ func TestImmersionContestListEvents(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("ImmersionContestListEvents", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			runCase(t, api, name, test.want,
+			runScenarioCase(t, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
+				alphaAsOther,
 			)
 		})
 	}
 }
 
 func TestImmersionContestFindLog(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		description []string
 		want        int
@@ -73,8 +78,9 @@ func TestImmersionContestFindLog(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("ImmersionContestFindLog", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			runCase(t, api, name, test.want,
+			runScenarioCase(t, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
+				alphaAsOther,
 			)
 		})
 	}

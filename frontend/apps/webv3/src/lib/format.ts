@@ -1,7 +1,7 @@
 import type { ImmersionContest } from 'api-client'
 
 // Contest dates are UTC calendar days. Formatting them by hand keeps server (Node ICU) and browser markup identical.
-const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']
+export const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']
 
 export const numberFormat = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 1 })
 export const dayAndMonth = (date: string) => `${Number(date.slice(8, 10))} ${months[Number(date.slice(5, 7)) - 1]}`

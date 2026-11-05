@@ -21,7 +21,8 @@ function createLinks(base: string) {
   return {
     legacyUrl,
     home: legacyUrl('/'),
-    contests: legacyUrl('/contests/official/1'),
+    contests: '/contests/official/1',
+    newContest: legacyUrl('/contests/new'),
     leaderboard: '/leaderboard/latest/1',
     guide: legacyUrl('/pages/manual'),
     logs: '/logs/new',

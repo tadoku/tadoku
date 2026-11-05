@@ -14,8 +14,9 @@ standings and next scheduled round from the configured Tadoku API. `/plan`
 demonstrates a validated immersion goal kept in the current browser. It does not
 sync the goal to a Tadoku account. Native activity logging uses the existing account session and API.
 The latest official, yearly and all-time [leaderboards](webv3-leaderboards.md)
-read their standings from the API.
-[Profile statistics](webv3-profile.md) read a learner's yearly records from it.
+read their standings from the API, and the official, community and My contests
+[contest lists](webv3-contests.md) list contests as the visitor sees them.
+[Profile statistics](webv3-profile.md) read a learner's yearly records from the API.
 
 ## Stack and ownership
 
@@ -143,6 +144,9 @@ rows, scope and profile links with the API, follows page, year and period links,
 checks a signed-in participant's row and contest action, and checks containment
 at 390px and 1280px. It needs `TADOKU_API_URL` and the Dev Reader credentials
 described under native activity logging, and signs in once.
+`frontend/apps/webv3/e2e/contests.spec.ts` covers the
+[contest lists](webv3-contests.md); its signed-in journeys use both fixture
+accounts and create community contests in the selected tenant.
 These suites require reachable contest and standings data and Chromium installed through
 Playwright. It preserves HTML reports and screenshots outside the source tree.
 `WEBV3_BASE_URL` selects the running server; `PLAYWRIGHT_OUTPUT_DIR` selects the
@@ -194,7 +198,7 @@ image.
 
 The active production GitOps configuration makes `next.tadoku.app` follow
 the `prod` digest automatically through Image Updater and Argo CD. Webv3 uses the same production
-backend as Webv2; the homepage and leaderboards read public data and native logging uses its existing account and activity API. Unfinished journeys
+backend as Webv2; the homepage, leaderboards and contest lists read contest data and native logging uses its existing account and activity API. Unfinished journeys
 continue to open production Webv2.
 Merging source that matches the Webv3 workflow's paths, including the shared
 lockfile, therefore republishes `latest` and `prod` and rolls this production

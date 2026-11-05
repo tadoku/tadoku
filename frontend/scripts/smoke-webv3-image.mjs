@@ -49,7 +49,10 @@ const fixture = createServer((request, response) => {
     entries: Number(url.searchParams.get('page') ?? 0) > 0 ? [] : [{ rank: 1, user_id: '01000000-0000-0000-0000-000000000000', user_display_name: 'Fixture learner', score: 13319.6455, is_tie: false }],
     total_size: 1, next_page_token: '',
   }
-  else if (path === '/immersion/contests') data = { contests: [contest], total_size: 1, next_page_token: '' }
+  // The fixture contest is official, so community lists are empty.
+  else if (path === '/immersion/contests') data = url.searchParams.get('official') === 'false'
+    ? { contests: [], total_size: 0, next_page_token: '' }
+    : { contests: [contest], total_size: 1, next_page_token: '' }
   else if (path === `/immersion/users/${learner.id}/profile`) data = learner
   else {
     const match = path.match(new RegExp(`^/immersion/users/${learner.id}/([a-z-]+)/(\\d{4})$`))

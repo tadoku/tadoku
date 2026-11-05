@@ -27,7 +27,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const links = useLinks()
   const navigation: NavbarItem[] = [
     { type: 'link', id: 'leaderboard', label: 'Leaderboard', href: links.leaderboard, current: currentPath.startsWith('/leaderboard/') },
-    { type: 'link', id: 'contests', label: 'Contests', href: links.contests },
+    { type: 'link', id: 'contests', label: 'Contests', href: links.contests, current: currentPath.startsWith('/contests/') },
     { type: 'link', id: 'guide', label: 'Guide', href: links.guide },
     { type: 'link', id: 'goal', label: 'Daily goal', href: '/plan' },
   ]

@@ -34,6 +34,9 @@ still use `<route>.tadoku.dev.lab`. Log activity must reach that same Webv2 bran
 including its account login redirect. Compare two branch hosts in one browser
 profile to detect selection leaks; do not change shared identities or credentials.
 
+Webv3 serves the manual, CMS pages and blog itself at Webv2's paths; see
+[Webv3 content pages](../../../../../docs/docs/frontend/webv3-content.md) for its journey.
+
 Check the unavailable-data state and `/healthz` when its configured API fails.
 The container smoke suite proves runtime URL overrides and concurrent Host isolation
 with synthetic read-only data; live ingress, tenant selection and login require

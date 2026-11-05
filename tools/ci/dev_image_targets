@@ -1,0 +1,8 @@
+//frontend/...
+//.dev/...
+//services/tadoku-api:cli_image
+//services/tadoku-api:cli_push
+//services/tadoku-api:dev
+//services/tadoku-api:worker_dev
+//services/tadoku-api/cmd/tadoku-worker:cli_image
+//services/tadoku-api/cmd/tadoku-worker:cli_push

@@ -11,18 +11,22 @@ are explained in [Toolchain and repository](./toolchain.md).
 
 All workflows live in `.github/workflows/`.
 
-Backend CI uses one job on the repository-scoped `tadoku-ci` Kubernetes runner
-pool. It uses `bazel test --nobuild_tests_only //...` to build the full target
-set and run its tests together against disposable services; Bazel can execute
-test targets in parallel. Release image commands follow the tests so their
+Backend CI runs two jobs on the repository-scoped `tadoku-ci` Kubernetes runner
+pool. The build job uses `bazel test --nobuild_tests_only` to build the full
+target set and run its tests together against disposable services; Bazel runs
+up to eight actions, tests included, at once. Development-only images listed in
+`tools/ci/dev_image_targets` are excluded there and built by the parallel
+`dev-images` job, so tests do not wait on their base image pulls. The build job
+turns off PostgreSQL `fsync`, full-page writes and synchronous commit on its
+disposable service before the tests. Release image commands follow the tests so their
 distinct configuration does not invalidate normal analysis between the build and
 tests. Main publication runs only after the tests and image scanning succeed.
 Image scanning uses the Trivy that the runner image puts on `PATH`;
 GitHub-hosted runs install the same version before scanning. The scan step
 asserts the version in both environments.
 Race tests run separately and never gate publication; see [Race tests](./race-tests.md).
-ARC admits at most five Tadoku build runners; resource reservations may keep
-excess jobs queued.
+ARC admits at most five Tadoku build runners, and each backend run takes two;
+resource reservations may keep excess jobs queued.
 
 The runners use the private Bazel HTTP action cache and Lab CA. Pull requests
 read existing results without uploading; trusted non-PR runs populate the cache.
@@ -65,7 +69,7 @@ console output; they include assertion output and fixture cleanup errors.
 
 | Workflow | Runs on | Checks |
 | --- | --- | --- |
-| `build-bazel.yaml` | PRs and `main` pushes touching Bazel or Go inputs | Frozen lockfile, changed forward migration risk check on PRs (the **Migration safety** check, which an approval of the `migration-safety-override` environment can override for one run), Gazelle diff, visibility, provider-dependency, repository, Go comment and `.depolicy.yaml` import checks, OpenAPI bundle and generation diff, build, image target coverage, and tests; scans and publishes backend images from `main` |
+| `build-bazel.yaml` | PRs and `main` pushes touching Bazel or Go inputs | Frozen lockfile, changed forward migration risk check on PRs (the **Migration safety** check, which an approval of the `migration-safety-override` environment can override for one run), Gazelle diff, visibility, provider-dependency, repository, Go comment and `.depolicy.yaml` import checks, OpenAPI bundle and generation diff, build, image target coverage, tests and, in a parallel job, development images; scans and publishes backend images from `main` |
 | `race-bazel.yaml` | Daily, manual dispatch and PRs changing it | Race-instrumented Tadoku API tests; alerts through Notify when a scheduled or manual run does not succeed. See [Race tests](./race-tests.md) |
 | `verify-sqlc.yaml` | Every PR | Reruns `./scripts/generate-sqlc.sh` and fails on any change |
 | `verify-frontend-api-client.yaml` | PRs and `main` pushes touching the contract, recorded HTTP golden responses, the client package or the frontend lockfile | Regenerates the [frontend API client](../frontend/api-client.md), fails on any change, then typechecks it and replays the recorded responses through it |

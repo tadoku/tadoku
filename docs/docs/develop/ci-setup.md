@@ -75,7 +75,7 @@ uncached: every run checks the real workspace, including changed Go and BUILD
 files. Its workspace anchor is the exported root policy file. This avoids a
 separate Bazel invocation and repeats no analysis solely to run Gazelle.
 
-Normal builds allow four local test jobs within the four-action limit.
+Self-hosted normal builds allow eight local test jobs within the eight-action limit.
 The wrapper supplies `--local_resources=memory=HOST_RAM*0.25` unless the invocation
 explicitly overrides it. This command-line default takes precedence over Bazel RC
 settings; container resource limits are enforced separately. Race execution keeps

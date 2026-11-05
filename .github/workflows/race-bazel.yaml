@@ -99,7 +99,6 @@ jobs:
           build --remote_upload_local_results=$UPLOAD_RESULTS
           build --jobs=3
           test --local_test_jobs=2
-          build --local_resources=memory=2048
           EOF
           if test -r "$HOME/bazelisk/repositories/prewarm.json"; then
             cp "$HOME/bazelisk/repositories/prewarm.json" "$RUNNER_TEMP/bazel-prewarm.json"

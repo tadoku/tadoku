@@ -110,7 +110,8 @@ not depend on API availability. The stable `tadoku-cli-webv3` ConfigMap supplies
 `TADOKU_API_URL=https://tadoku.dev.lab/api/internal`; `tadoku-cli-ca` mounts the
 public Lab CA at `/etc/dev-ca/ca.crt` for server-side HTTPS. Branch pods reuse
 those ConfigMaps and run the source-synced Vite server. Per-request hostname
-resolution keeps Webv3's product links on its matching Webv2 branch host.
+resolution keeps account, admin and log-export links on the matching branch
+sibling hosts; guide and other product pages stay on the Webv3 host.
 
 Canonical Webv3 requests use the shared Envoy Gateway through a Lab CA
 ingress. `/api/internal` uses Oathkeeper before the API, while page and asset
@@ -312,8 +313,9 @@ failure. It needs no cluster credentials.
   connection to the public API, and give the browser only public API URLs.
   Loopback fixtures stand in for Oathkeeper and the API. Webv3 additionally proves non-root, read-only Nitro
   startup, Lab CA loading, SSR and compiled assets on canonical and branch
-  hosts, development product links, a same-host activity link and healthy
-  probes during an API outage.
+  hosts, a host-scoped account login, a same-host guide link on `/plan`, a
+  same-host activity link on the outage homepage and healthy probes during an
+  API outage.
   Authv2, built from the tested revision, proves its non-root image, Lab CA and
   compiled assets, and that during an API outage canonical and branch hosts show
   a retry page with a branch-preserving home link and no account-app choice.

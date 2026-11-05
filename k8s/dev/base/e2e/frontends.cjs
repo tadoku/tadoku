@@ -99,7 +99,11 @@ function proveFrontends({ evidence, prefix, containers, report, run }, docs) {
               const response = await readHtml('/plan', host);
               if (response.status !== 200) throw new Error('Webv3 SSR failed for ' + host);
               const html = response.html;
-              if (!html.includes('Daily goal') || !html.includes('href="https://' + product + '/pages/manual"') || /href="https:\/\/tadoku\.app/.test(html)) throw new Error('Webv3 SSR development product links are incorrect for ' + host);
+              // Guide and activity stay on Webv3; the account login proves Host still selects the matching lab sibling.
+              const account = product === 'tadoku.dev.lab' ? 'account.tadoku.dev.lab' : product.replace('.tadoku.dev.lab', '.account.tadoku.dev.lab');
+              const login = 'https://' + account + '/login?return_to=' + encodeURIComponent('https://' + host + '/plan');
+              if (!html.includes('Set a daily goal') || !html.includes('href="' + login + '"') || /href="https:\/\/tadoku\.app/.test(html)) throw new Error('Webv3 SSR development product links are incorrect for ' + host);
+              if (!html.includes('href="/pages/manual"') || /href="https?:\/\/[^"]*\/pages\/manual"/.test(html)) throw new Error('Webv3 SSR guide link must stay on the Webv3 host for ' + host);
               if (!html.includes('href="/logs/new"') || /href="https?:\/\/[^"]*\/logs\/new"/.test(html)) throw new Error('Webv3 SSR activity link must stay on the Webv3 host for ' + host);
               const assets = [...html.matchAll(/(?:src|href)="([^" ]+\.(?:js|css)(?:\?[^" ]*)?)"/g)].map(m => m[1]);
               if (!assets.length) throw new Error('Webv3 SSR has no compiled assets');

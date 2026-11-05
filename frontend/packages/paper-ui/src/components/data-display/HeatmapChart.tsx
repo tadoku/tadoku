@@ -17,6 +17,8 @@ export interface HeatmapChartProps {
   readonly data: readonly HeatmapChartDatum[];
   readonly year: number;
   readonly id: string;
+  /** Makes each day with activity a link, for example to that day's records. */
+  readonly getHref?: (date: string) => string;
 }
 
 interface CalendarCell {
@@ -40,12 +42,21 @@ const OFFSET = { x: 30, y: 15 } as const;
 
 const WEEKDAYS = ["Mon", undefined, "Wed", undefined, "Fri", undefined, "Sun"] as const;
 
+// Fixed points-per-day bins keep a record day from recolouring earlier activity.
+const LEVELS = [
+  { level: "0", lowerBound: 0, label: "0" },
+  { level: "1", lowerBound: 0, label: "< 30" },
+  { level: "2", lowerBound: 30, label: "30+" },
+  { level: "3", lowerBound: 100, label: "100+" },
+  { level: "4", lowerBound: 300, label: "300+" },
+] as const;
+
 /**
  * Tadoku's compact annual activity calendar. The geometry and interaction
  * follow the original ui HeatmapChart so existing consumers can pass the
  * same dated activity records without reshaping them into a generic matrix.
  */
-export function HeatmapChart({ id, data, year }: HeatmapChartProps) {
+export function HeatmapChart({ id, data, year, getHref }: HeatmapChartProps) {
   const start = DateTime.fromObject({ year, month: 1, day: 1 });
   const end = DateTime.fromObject({ year, month: 12, day: 31 });
   const values = new Map<string, number>();
@@ -79,9 +90,6 @@ export function HeatmapChart({ id, data, year }: HeatmapChartProps) {
     if (date.weekday === 7) columnIndex += 1;
   }
 
-  const maxValue = Math.max(
-    ...columns.flatMap((column) => column.map((cell) => cell?.value ?? 0)),
-  );
   let lastMonth = 0;
   const months = columns.map((column) => {
     const shouldRender = column
@@ -103,69 +111,82 @@ export function HeatmapChart({ id, data, year }: HeatmapChartProps) {
   const height = 7 * CELL_HEIGHT + 6 * CELL_GAP + OFFSET.y;
 
   return (
-    <svg
-      width={width}
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
-      className="paper-heatmap"
-      role="img"
-      aria-labelledby={titleId}
-      data-year={year}
-    >
-      <title id={titleId}>Daily activity for {year}</title>
-      {WEEKDAYS.map((label, row) => label ? (
-        <text
-          key={label}
-          className="paper-heatmap__axis-label"
-          textAnchor="end"
-          x={OFFSET.x - CELL_GAP * 2}
-          y={OFFSET.y + CELL_HEIGHT * row + CELL_GAP * row}
-          dominantBaseline="hanging"
-        >
-          {label}
-        </text>
-      ) : null)}
-      {months.map((label, column) => label ? (
-        <text
-          key={label}
-          className="paper-heatmap__axis-label"
-          textAnchor="start"
-          x={OFFSET.x + CELL_WIDTH * column + CELL_GAP * column}
-          y={0}
-          dominantBaseline="hanging"
-        >
-          {label}
-        </text>
-      ) : null)}
-      {columns.map((column, columnPosition) =>
-        column.map((cell, rowPosition) => (
-          <Cell
-            key={`${columnPosition}-${rowPosition}`}
-            cell={cell}
-            tooltipLayerId={tooltipLayerId}
-            maxValue={maxValue}
-            column={columnPosition}
-            row={rowPosition}
-            parentWidth={width}
-          />
-        )),
-      )}
-      <g id={tooltipLayerId} className="paper-heatmap__tooltip-layer" />
-    </svg>
+    <>
+      <svg
+        width={width}
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        className="paper-heatmap"
+        role="img"
+        aria-labelledby={titleId}
+        data-year={year}
+      >
+        <title id={titleId}>Daily activity for {year}</title>
+        {WEEKDAYS.map((label, row) => label ? (
+          <text
+            key={label}
+            className="paper-heatmap__axis-label"
+            textAnchor="end"
+            x={OFFSET.x - CELL_GAP * 2}
+            y={OFFSET.y + CELL_HEIGHT * row + CELL_GAP * row}
+            dominantBaseline="hanging"
+          >
+            {label}
+          </text>
+        ) : null)}
+        {months.map((label, column) => label ? (
+          <text
+            key={label}
+            className="paper-heatmap__axis-label"
+            textAnchor="start"
+            x={OFFSET.x + CELL_WIDTH * column + CELL_GAP * column}
+            y={0}
+            dominantBaseline="hanging"
+          >
+            {label}
+          </text>
+        ) : null)}
+        {columns.map((column, columnPosition) =>
+          column.map((cell, rowPosition) => (
+            <Cell
+              key={`${columnPosition}-${rowPosition}`}
+              cell={cell}
+              tooltipLayerId={tooltipLayerId}
+              getHref={getHref}
+              column={columnPosition}
+              row={rowPosition}
+              parentWidth={width}
+            />
+          )),
+        )}
+        <g id={tooltipLayerId} className="paper-heatmap__tooltip-layer" />
+      </svg>
+      <p className="paper-heatmap__legend">
+        <span>Points per day</span>
+        {LEVELS.map(({ level, label }) => (
+          <span key={level} className="paper-heatmap__legend-item">
+            <svg width={CELL_WIDTH} height={CELL_HEIGHT} aria-hidden="true">
+              <rect width={CELL_WIDTH} height={CELL_HEIGHT} className="paper-heatmap__cell" data-level={level} />
+            </svg>
+            {label}
+          </span>
+        ))}
+      </p>
+    </>
   );
 }
 
 function Cell({
   cell,
   tooltipLayerId,
-  maxValue,
+  getHref,
   row,
   column,
   parentWidth,
 }: {
   readonly cell: CalendarCell | undefined;
   readonly tooltipLayerId: string;
-  readonly maxValue: number;
+  readonly getHref: ((date: string) => string) | undefined;
   readonly row: number;
   readonly column: number;
   readonly parentWidth: number;
@@ -177,14 +198,24 @@ function Cell({
   const isoDate = cell?.date.toISODate() ?? undefined;
   const tooltip = cell && cell.value !== 0 ? cell.tooltip : undefined;
   const tooltipId = `${tooltipLayerId}-${column}-${row}`;
-  const level = getCellDepth(maxValue, cell?.value);
+  const level = getCellDepth(cell?.value);
+  const href = cell && isoDate && cell.value !== 0 ? getHref?.(isoDate) : undefined;
+  const label = cell ? (cell.tooltip ?? `${isoDate}: ${cell.value}`) : undefined;
+  const showTooltip = tooltip ? () => setTooltipVisible(true) : undefined;
+  const hideTooltip = tooltip ? () => setTooltipVisible(false) : undefined;
+  const focusProps = {
+    "aria-label": label,
+    "aria-describedby": tooltip && tooltipVisible ? tooltipId : undefined,
+    onFocus: showTooltip,
+    onBlur: hideTooltip,
+  };
 
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
   }, []);
 
-  const rect = (
+  const shape = (
     <rect
       width={CELL_WIDTH}
       height={CELL_HEIGHT}
@@ -194,40 +225,38 @@ function Cell({
       data-level={level}
       data-date={isoDate}
       data-value={cell?.value}
-      aria-hidden={cell === undefined ? true : undefined}
-      aria-label={cell ? (cell.tooltip ?? `${isoDate}: ${cell.value}`) : undefined}
-      aria-describedby={tooltip && tooltipVisible ? tooltipId : undefined}
-      role={cell ? "graphics-symbol" : undefined}
-      tabIndex={tooltip ? 0 : undefined}
-      onMouseOver={tooltip ? () => setTooltipVisible(true) : undefined}
-      onMouseOut={tooltip ? () => setTooltipVisible(false) : undefined}
-      onFocus={tooltip ? () => setTooltipVisible(true) : undefined}
-      onBlur={tooltip ? () => setTooltipVisible(false) : undefined}
-      onTouchStart={tooltip ? () => setTooltipVisible(true) : undefined}
-      onTouchMove={tooltip ? () => setTooltipVisible(true) : undefined}
-      onTouchEnd={tooltip ? () => setTooltipVisible(false) : undefined}
-      onTouchCancel={tooltip ? () => setTooltipVisible(false) : undefined}
+      aria-hidden={cell === undefined || href ? true : undefined}
+      role={cell && !href ? "graphics-symbol" : undefined}
+      tabIndex={tooltip && !href ? 0 : undefined}
+      {...(href ? {} : focusProps)}
+      onMouseOver={showTooltip}
+      onMouseOut={hideTooltip}
+      onTouchStart={showTooltip}
+      onTouchMove={showTooltip}
+      onTouchEnd={hideTooltip}
+      onTouchCancel={hideTooltip}
     />
   );
+  const rect = href ? <a href={href} className="paper-heatmap__link" {...focusProps}>{shape}</a> : shape;
 
   if (!mounted || !tooltip) return rect;
   const tooltipLayer = document.getElementById(tooltipLayerId);
 
   return (
     <>
-      {rect}
-      {tooltipLayer ? createPortal(
-        <Tooltip
-          id={tooltipId}
-          row={row}
-          column={column}
-          visible={tooltipVisible}
-          parentWidth={parentWidth}
-        >
-          {tooltip}
-        </Tooltip>,
-        tooltipLayer,
-      ) : null}
+        {rect}
+        {tooltipLayer ? createPortal(
+          <Tooltip
+            id={tooltipId}
+            row={row}
+            column={column}
+            visible={tooltipVisible}
+            parentWidth={parentWidth}
+          >
+            {tooltip}
+          </Tooltip>,
+          tooltipLayer,
+        ) : null}
     </>
   );
 }
@@ -320,16 +349,11 @@ function pointsForRect({
   return `${left},${top} ${right},${top} ${middle},${bottom}`;
 }
 
-function getCellDepth(
-  maxValue: number,
-  value: number | undefined,
-): "empty" | "0" | "1" | "2" | "3" | "4" {
+function getCellDepth(value: number | undefined): "empty" | (typeof LEVELS)[number]["level"] {
   if (value === undefined) return "empty";
-  if (value === 0) return "0";
 
-  const ratio = maxValue === 0 ? 0 : value / maxValue;
-  if (ratio < 0.25) return "1";
-  if (ratio < 0.5) return "2";
-  if (ratio < 0.75) return "3";
-  return "4";
+  // Bins follow the one-decimal precision scores are displayed with.
+  const rounded = Math.round(value * 10) / 10;
+  if (rounded === 0) return "0";
+  return [...LEVELS].reverse().find((bin) => bin.level !== "0" && rounded >= bin.lowerBound)?.level ?? "0";
 }

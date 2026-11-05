@@ -31,6 +31,14 @@ function profileYear(kind, year) {
     }
   }
 }
+// The learner's logs, newest first: 51 fill two pages of 50; the third is tagged NSFW, which hides its description.
+const learnerLogs = Array.from({ length: 51 }, (_, index) => ({
+  id: `33333333-3333-4333-8333-${String(index).padStart(12, '0')}`, user_id: learner.id,
+  user_display_name: learner.display_name, description: `Fixture reading ${51 - index}`,
+  language: { code: 'jpn', name: 'Japanese' }, activity: { id: 1, name: 'Reading' }, unit_name: 'Page',
+  tags: index === 2 ? ['nsfw'] : [], amount: 4, modifier: 1, score: 4,
+  created_at: new Date(Date.parse('2024-03-01T08:00:00Z') + (51 - index) * 3_600_000).toISOString(), deleted: false,
+}))
 const writes = []
 const fixture = createServer((request, response) => {
   if (request.method !== 'GET') {
@@ -54,6 +62,12 @@ const fixture = createServer((request, response) => {
     ? { contests: [], total_size: 0, next_page_token: '' }
     : { contests: [contest], total_size: 1, next_page_token: '' }
   else if (path === `/immersion/users/${learner.id}/profile`) data = learner
+  else if (path === `/immersion/users/${learner.id}/logs`) {
+    const size = Number(url.searchParams.get('page_size') ?? 50)
+    const start = Number(url.searchParams.get('page') ?? 0) * size
+    data = { logs: learnerLogs.slice(start, start + size), total_size: learnerLogs.length, next_page_token: '' }
+  }
+  else if (path.startsWith('/immersion/logs/')) data = learnerLogs.find(log => path === `/immersion/logs/${log.id}`)
   else {
     const match = path.match(new RegExp(`^/immersion/users/${learner.id}/([a-z-]+)/(\\d{4})$`))
     if (match) data = profileYear(match[1], match[2])

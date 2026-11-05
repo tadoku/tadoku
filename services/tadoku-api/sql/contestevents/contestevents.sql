@@ -1,11 +1,27 @@
 -- name: InsertContestEvents :exec
 insert into contest_events (id, contest_id, log_id, event, occurred_at)
 select
-  unnest(sqlc.arg(ids)::uuid[]),
-  unnest(sqlc.arg(contest_ids)::uuid[]),
-  unnest(sqlc.arg(log_ids)::uuid[]),
-  unnest(sqlc.arg(events)::text[]),
-  sqlc.arg(occurred_at);
+  new_events.id,
+  new_events.contest_id,
+  new_events.log_id,
+  new_events.event,
+  greatest(
+    sqlc.arg(occurred_at)::timestamptz,
+    (
+      select max(events.occurred_at) + interval '1 microsecond'
+      from contest_events as events
+      where events.contest_id = new_events.contest_id
+        and events.log_id = new_events.log_id
+        and events.occurred_at >= sqlc.arg(occurred_at)::timestamptz
+    )
+  )
+from (
+  select
+    unnest(sqlc.arg(ids)::uuid[]),
+    unnest(sqlc.arg(contest_ids)::uuid[]),
+    unnest(sqlc.arg(log_ids)::uuid[]),
+    unnest(sqlc.arg(events)::text[])
+) as new_events (id, contest_id, log_id, event);
 
 -- name: ReadContestEvents :many
 with cursor_event as materialized (

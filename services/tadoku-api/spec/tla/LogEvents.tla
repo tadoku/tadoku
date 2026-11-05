@@ -29,16 +29,16 @@
 \* it holds the lock are merged into one commit step: no competing writer can run
 \* between them, and each later statement reads what earlier lock holders
 \* committed. AccountDeletion.tla covers the lock itself and filing in detail.
-\* What the lock does not order is the clock. The events of a transaction carry
-\* the time its request read with timex.Now(), and that read is its own step:
-\* every request reads it after it takes the lock, and only the delete job reads
-\* it before. The same reading judges contest windows for that request, except
+\* What the lock does not order is the clock. Each request reads the clock of
+\* the pod it runs on with timex.Now(), and that read is its own step: every
+\* request reads it after it takes the lock, and only the delete job reads it
+\* before. The same reading judges contest windows for that request, except
 \* that SelectRegistrationsForScoring reads the clock again for itself. A contest
-\* finishes through its own step, so TLC tries every point. The clock is one
-\* counter that every process shares: the model assumes the API and worker
-\* clocks agree and never tie, so within one contest a log's events carry
-\* distinct times and the event ID tie-break never applies. It orders
-\* timestamps; nothing waits for it.
+\* finishes through its own step, so TLC tries every point. Pod clocks need not
+\* agree, so a reading is any value in Readings: a later transaction can read an
+\* earlier or equal time. InsertContestEvents stamps each event with that reading
+\* or one tick after the log's latest event in its contest, whichever is later.
+\* It orders timestamps; nothing waits for it.
 \* The FindLog a request runs before its transaction is its own step: a request
 \* about a log starts only once that log is committed and not soft-deleted.
 \* An update is assumed to change a field every contest sees, so it publishes
@@ -50,7 +50,8 @@ EXTENDS Naturals
 CONSTANTS
     Contests, \* the contests the user is registered for, covering the log's language
     Official, \* the official ones; contests.official never changes
-    Actors    \* the requests and jobs this configuration runs
+    Actors,   \* the requests and jobs this configuration runs
+    Readings  \* the times a pod's clock can show when a process reads it
 
 None == "none"
 Procs == {"create", "update", "delete", "attach", "moderate", "register", "file", "deleter"}
@@ -67,7 +68,6 @@ VARIABLES
     user,       \* active, locked (deletion_locked_at) or deleted (deleted_at)
     registered, \* contests whose registration still covers the log's language
     open,       \* contests that are unfinished at the current time
-    clock,      \* the wall clock in ticks
     feed,       \* committed contest_events rows
     lockU,      \* who holds the users row lock
     pc,         \* each process's next step
@@ -75,14 +75,14 @@ VARIABLES
     seen,       \* the contests unfinished at that reading
     picked      \* the registrations SelectRegistrationsForScoring picked for an attachment change
 
-vars == <<row, deleted, frozen, attached, eligible, wroteFrozen, described, user, registered, open, clock,
-          feed, lockU, pc, now, seen, picked>>
+vars == <<row, deleted, frozen, attached, eligible, wroteFrozen, described, user, registered, open, feed,
+          lockU, pc, now, seen, picked>>
 
 TypeOK ==
     /\ row \in {"absent", "present", "purged"}
     /\ deleted \in BOOLEAN /\ frozen \in BOOLEAN /\ eligible \in BOOLEAN
     /\ attached \subseteq Contests /\ registered \subseteq Contests /\ open \subseteq Contests
-    /\ wroteFrozen \in BOOLEAN /\ described \in BOOLEAN /\ clock \in Nat
+    /\ wroteFrozen \in BOOLEAN /\ described \in BOOLEAN
     /\ user \in {"active", "locked", "deleted"}
     /\ feed \subseteq [c : Contests, ev : Event, t : Nat]
     /\ lockU \in Procs \cup {None}
@@ -92,7 +92,7 @@ Init ==
     /\ row = "absent" /\ deleted = FALSE /\ frozen = FALSE
     /\ attached = {} /\ eligible = FALSE /\ wroteFrozen = FALSE /\ described = FALSE
     /\ user = "active" /\ registered = Contests /\ open = Contests
-    /\ clock = 0 /\ feed = {} /\ lockU = None
+    /\ feed = {} /\ lockU = None
     /\ pc = [p \in Procs |-> IF p \in Actors THEN "start" ELSE "done"]
     /\ now = [p \in Procs |-> 0] /\ seen = [p \in Procs |-> {}] /\ picked = [p \in Procs |-> {}]
 
@@ -111,7 +111,11 @@ Mutable == Visible /\ ~frozen
 \* Any write to the log or its contest rows.
 Write == wroteFrozen' = (wroteFrozen \/ frozen)
 
-Events(cs, ev, t) == {[c |-> c, ev |-> ev, t |-> t] : c \in cs}
+\* InsertContestEvents: an event in contest c read at time r is stamped after
+\* the log's latest event there.
+Latest(c) == LET ts == {e.t : e \in {f \in feed : f.c = c}} \cup {0} IN CHOOSE m \in ts : \A x \in ts : x <= m
+Stamp(c, r) == IF r > Latest(c) THEN r ELSE Latest(c) + 1
+Events(cs, ev, r) == {[c |-> c, ev |-> ev, t |-> Stamp(c, r)] : c \in cs}
 
 \* contestLogChanges diffs the views before and after a transaction's writes.
 Diff(before, after, changed, t) ==
@@ -121,11 +125,10 @@ Diff(before, after, changed, t) ==
 
 Data == <<row, deleted, frozen, attached, eligible, wroteFrozen, described, user, registered, feed>>
 
-\* timex.Now(): the time a request stamps on its events and judges contest windows by.
+\* timex.Now(): the pod's time a request stamps on its events and judges contest windows by.
 Now(p, from, next) ==
     /\ pc[p] = from
-    /\ clock' = clock + 1
-    /\ now' = [now EXCEPT ![p] = clock + 1]
+    /\ \E r \in Readings : now' = [now EXCEPT ![p] = r]
     /\ seen' = [seen EXCEPT ![p] = open]
     /\ Goto(p, next)
     /\ UNCHANGED <<Data, open, lockU, picked>>
@@ -137,18 +140,18 @@ LockUser(p, from, next) ==
     /\ IF user = "active"
        THEN lockU' = p /\ Goto(p, next)
        ELSE Goto(p, "done") /\ UNCHANGED lockU
-    /\ UNCHANGED <<Data, open, clock, now, seen, picked>>
+    /\ UNCHANGED <<Data, open, now, seen, picked>>
 
 \* FindLog before the transaction, which hides a soft-deleted log.
 FindLog(p, next) ==
     /\ pc[p] = "start"
     /\ Goto(p, IF Visible THEN next ELSE "done")
-    /\ UNCHANGED <<Data, open, clock, lockU, now, seen, picked>>
+    /\ UNCHANGED <<Data, open, lockU, now, seen, picked>>
 
 \* A transaction that writes nothing and publishes nothing.
 Abort(p) == Finish(p) /\ UNCHANGED Data
 
-TimeUnchanged == UNCHANGED <<open, clock, now, seen, picked>>
+TimeUnchanged == UNCHANGED <<open, now, seen, picked>>
 
 ----
 \* CreateLog reads the time after LockUser. SelectRegistrationsForScoring
@@ -218,7 +221,7 @@ AttachSelect ==
     /\ pc["attach"] = "select"
     /\ \E requested \in SUBSET (registered \cap open) : picked' = [picked EXCEPT !["attach"] = requested]
     /\ Goto("attach", "now")
-    /\ UNCHANGED <<Data, open, clock, lockU, now, seen>>
+    /\ UNCHANGED <<Data, open, lockU, now, seen>>
 
 AttachCommit ==
     /\ pc["attach"] = "commit"
@@ -296,7 +299,7 @@ FileCommit ==
     /\ user' = IF user = "active" THEN "locked" ELSE user
     /\ Goto("file", "done")
     /\ UNCHANGED <<row, deleted, frozen, attached, eligible, wroteFrozen, described, registered, feed, open,
-                   clock, lockU, now, seen, picked>>
+                   lockU, now, seen, picked>>
 
 \* The delete job exists once filing commits, and reads the time before its
 \* transaction. Tombstone locks the users row; a deleted user is a no-op.
@@ -310,7 +313,7 @@ DeleterLock ==
     /\ IF user = "locked"
        THEN lockU' = "deleter" /\ Goto("deleter", "commit")
        ELSE Goto("deleter", "done") /\ UNCHANGED lockU
-    /\ UNCHANGED <<Data, open, clock, now, seen, picked>>
+    /\ UNCHANGED <<Data, open, now, seen, picked>>
 
 \* RemoveUser, in its statement order: DeleteUserContestLogsOutsideFinishedContests
 \* removes the rows of a soft-deleted log and of contests unfinished at the job's
@@ -343,7 +346,7 @@ Deleter == DeleterNow \/ DeleterLock \/ RemoveUser
 Close(c) ==
     /\ c \in open
     /\ open' = open \ {c}
-    /\ UNCHANGED <<Data, clock, lockU, pc, now, seen, picked>>
+    /\ UNCHANGED <<Data, lockU, pc, now, seen, picked>>
 
 \* Every request and job has finished.
 Done ==
@@ -359,8 +362,8 @@ Spec == Init /\ [][Next]_vars
 
 \* TLC's view of a state: a finished process never reads its clock reading again.
 Live(f, idle) == [p \in Procs |-> IF pc[p] = "done" THEN idle ELSE f[p]]
-View == <<row, deleted, frozen, attached, eligible, wroteFrozen, described, user, registered, open, clock,
-          feed, lockU, pc, Live(now, 0), Live(seen, {}), Live(picked, {})>>
+View == <<row, deleted, frozen, attached, eligible, wroteFrozen, described, user, registered, open, feed,
+          lockU, pc, Live(now, 0), Live(seen, {}), Live(picked, {})>>
 
 ----
 \* Safety
@@ -386,6 +389,10 @@ FeedPresent(c) ==
     \E e \in feed : e.c = c /\ e.ev # "log.withdrawn" /\ ~\E f \in feed : f.c = c /\ f.t > e.t
 
 FeedAgreesWhenQuiet == Quiet => \A c \in Contests : FeedPresent(c) = (c \in Views)
+
+\* Every event a transaction publishes reads after the events committed before it
+\* in the same contest, whatever the pods' clocks read.
+StampsFollowCommits == [][\A e \in feed' \ feed : \A f \in feed : e.c = f.c => f.t < e.t]_vars
 
 \* A frozen log and its contest rows never change again.
 FrozenImmutable == ~wroteFrozen

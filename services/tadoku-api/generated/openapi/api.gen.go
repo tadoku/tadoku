@@ -861,7 +861,7 @@ type ImmersionContestEvent struct {
 	Id    openapi_types.UUID `json:"id"`
 	LogId openapi_types.UUID `json:"log_id"`
 
-	// OccurredAt Source operation time, stored once when the event is created.
+	// OccurredAt Source operation time, or one microsecond after the log's previous event in this contest when that is later. Stored once when the event is created.
 	OccurredAt time.Time `json:"occurred_at"`
 }
 

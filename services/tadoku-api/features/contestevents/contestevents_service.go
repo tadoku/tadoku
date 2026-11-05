@@ -16,7 +16,9 @@ func NewService(repository *Repository) *Service {
 	return &Service{repository: repository}
 }
 
-// Append requires the source mutation's transaction and operation timestamp.
+// Append requires the source mutation's transaction and operation timestamp. The transaction must hold the users
+// row lock of every changed log's owner, through profile.LockUser or Tombstone, until it commits; that lock is what
+// orders a log's events by commit.
 func (s *Service) Append(ctx context.Context, changes []contestevent.Change, occurredAt time.Time) error {
 	if len(changes) == 0 {
 		return nil

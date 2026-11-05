@@ -42,19 +42,20 @@ recalculating a leaderboard are outside this feed.
 
 The response contains `events`, `next_cursor` and `has_more`. Events arrive in
 occurrence order, oldest first, with the event UUID breaking equal-timestamp
-ties. `occurred_at` is stored once using the source operation's timestamp; it
-does not change when the feed is read. The server resolves an event-ID cursor
-to that event's stored `(occurred_at, id)` pair. Use the response order.
+ties. `occurred_at` is stored once using the source operation's timestamp, or
+one microsecond after the log's previous event in the contest when that is
+later; it does not change when the feed is read. The server resolves an
+event-ID cursor to that event's stored `(occurred_at, id)` pair. Use the
+response order.
 
-A single log's events are stamped in the order its changes commit. While server
-clocks agree and give each change a later timestamp, its events read in feed
-order follow its history; events with equal timestamps are ordered by their
-random IDs, not by commit. Across logs, occurrence order is not commit order: if
-a transaction commits after a consumer has advanced past its occurrence time,
-its event can appear before the saved cursor. Forward polling alone does not
-guarantee delivery of those late events. Replaying earlier history and
-deduplicating by event ID can recover them; there is no bounded replay window
-that guarantees recovery of every delayed commit.
+A single log's events in a contest carry strictly increasing timestamps in the
+order its changes commit, whatever the clocks of the servers that handled them,
+so in feed order they follow its history. Across logs, occurrence order is not
+commit order: if a transaction commits after a consumer has advanced past its
+occurrence time, its event can appear before the saved cursor. Forward polling
+alone does not guarantee delivery of those late events. Replaying earlier
+history and deduplicating by event ID can recover them; there is no bounded
+replay window that guarantees recovery of every delayed commit.
 
 - Omit `cursor`, or pass `0`, to start at the earliest recorded event.
 - Pass `now` once to receive an empty page with the latest visible event ID,

@@ -12,7 +12,8 @@ async function webv2(page: Page) {
   return new URL((await page.getByRole('link', { name: 'About Tadoku', exact: true }).getAttribute('href'))!).origin
 }
 
-const statistics = (origin: string) => (userId: string) => `${origin}/profile/${userId}/statistics`
+/** Yearly and all-time rows open the learner's native profile statistics. */
+const statistics = () => (userId: string) => `/profile/${userId}/statistics`
 
 async function apiJson<T>(request: APIRequestContext, path: string): Promise<T> {
   const response = await request.get(`${api}${path}`)
@@ -52,7 +53,7 @@ test.beforeEach(() => {
   test.skip(!webv3 || !api, 'Set WEBV3_BASE_URL and TADOKU_API_URL')
 })
 
-test('server-rendered boards show the API standings, their scopes and Webv2 profile links', async ({ browser, request }, testInfo) => {
+test('server-rendered boards show the API standings, their scopes and profile links', async ({ browser, request }, testInfo) => {
   const latest = await apiJson<{ id: string; title: string }>(request, '/immersion/contests/latest-official')
   const cases = [
     {
@@ -96,14 +97,14 @@ test('optional page segments, pages past the end and page links follow the API',
   const data = await board(request, '/immersion/leaderboard/global')
 
   await page.goto('/leaderboard/all-time')
-  await expectRows(page, data.entries, statistics(await webv2(page)))
+  await expectRows(page, data.entries, statistics())
   await expectTotal(page, data)
 
   if (data.total_size > 50) {
     await page.getByRole('navigation', { name: 'Standings pages' }).getByRole('link', { name: 'Next page' }).click()
     await expect(page).toHaveURL(/\/leaderboard\/all-time\/2$/)
     const second = await board(request, '/immersion/leaderboard/global', 2)
-    await expectRows(page, second.entries, statistics(await webv2(page)))
+    await expectRows(page, second.entries, statistics())
     await expectTotal(page, second, 2)
   }
 
@@ -113,7 +114,7 @@ test('optional page segments, pages past the end and page links follow the API',
     await expect(page.getByRole('heading', { name: 'This page is past the end of the standings' })).toBeVisible()
     await page.getByRole('link', { name: 'Go to the first page' }).click()
     await expect(page).toHaveURL(/\/leaderboard\/all-time\/1$/)
-    await expectRows(page, data.entries, statistics(await webv2(page)))
+    await expectRows(page, data.entries, statistics())
   } else {
     await expect(page.getByRole('heading', { name: 'No official scores for this period' })).toBeVisible()
   }
@@ -136,7 +137,7 @@ test('year and period tabs switch boards in the browser', async ({ page, request
   await expect(page).toHaveURL(new RegExp(`/leaderboard/yearly/${year - 1}/1$`))
   await expect(page).toHaveTitle(`${year - 1} leaderboard · Tadoku`)
   await expect(page.getByRole('heading', { level: 2, name: `${year - 1} official standings` })).toBeVisible()
-  await expectRows(page, previous.entries, statistics(await webv2(page)))
+  await expectRows(page, previous.entries, statistics())
   await expectTotal(page, previous)
 
   const periods = page.getByRole('navigation', { name: 'Leaderboard period' })

@@ -15,6 +15,7 @@ demonstrates a validated immersion goal kept in the current browser. It does not
 sync the goal to a Tadoku account. Native activity logging uses the existing account session and API.
 The latest official, yearly and all-time [leaderboards](webv3-leaderboards.md)
 read their standings from the API.
+[Profile statistics](webv3-profile.md) read a learner's yearly records from it.
 
 ## Stack and ownership
 
@@ -171,7 +172,7 @@ pnpm --filter webv3 exec playwright install chromium
 PLAYWRIGHT_OUTPUT_DIR=/tmp/webv3-evidence node scripts/smoke-webv3-image.mjs webv3:check
 ```
 
-The smoke command starts its own labeled container and synthetic GET-only API,
+The smoke command starts its own labeled container and synthetic GET-only API, including one standings learner's profile year,
 uses nullable language lists by default (`WEBV3_LANGUAGE_FIXTURE=array` selects
 nonempty lists), checks server rendering, built assets, non-root/read-only operation and the
 existing browser journeys, then disconnects the API and checks health again.
@@ -321,4 +322,3 @@ towards the limit too. Set `NODE_EXTRA_CA_CERTS` to the trusted Lab CA
 and `PLAYWRIGHT_OUTPUT_DIR` outside the checkout. Authenticated runs disable
 traces and videos; browser-boundary delay and abort cases cover repeated submits
 and transport errors without mocking the API's successful writes.
-

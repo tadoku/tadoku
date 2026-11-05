@@ -16,6 +16,7 @@ import { Route as LogsNewRouteImport } from './routes/logs/new'
 import { Route as LeaderboardAllTimeSplatRouteImport } from './routes/leaderboard/all-time/$'
 import { Route as LeaderboardLatestSplatRouteImport } from './routes/leaderboard/latest/$'
 import { Route as LeaderboardYearlyYearSplatRouteImport } from './routes/leaderboard/yearly/$year/$'
+import { Route as ProfileIdStatisticsChar123YearChar125RouteImport } from './routes/profile/$id/statistics/{-$year}'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -53,6 +54,12 @@ const LeaderboardYearlyYearSplatRoute =
     path: '/leaderboard/yearly/$year/$',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ProfileIdStatisticsChar123YearChar125Route =
+  ProfileIdStatisticsChar123YearChar125RouteImport.update({
+    id: '/profile/$id/statistics/{-$year}',
+    path: '/profile/$id/statistics/{-$year}',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/leaderboard/all-time/$': typeof LeaderboardAllTimeSplatRoute
   '/leaderboard/latest/$': typeof LeaderboardLatestSplatRoute
   '/leaderboard/yearly/$year/$': typeof LeaderboardYearlyYearSplatRoute
+  '/profile/$id/statistics/{-$year}': typeof ProfileIdStatisticsChar123YearChar125Route
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -71,6 +79,7 @@ export interface FileRoutesByTo {
   '/leaderboard/all-time/$': typeof LeaderboardAllTimeSplatRoute
   '/leaderboard/latest/$': typeof LeaderboardLatestSplatRoute
   '/leaderboard/yearly/$year/$': typeof LeaderboardYearlyYearSplatRoute
+  '/profile/$id/statistics/{-$year}': typeof ProfileIdStatisticsChar123YearChar125Route
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -81,6 +90,7 @@ export interface FileRoutesById {
   '/leaderboard/all-time/$': typeof LeaderboardAllTimeSplatRoute
   '/leaderboard/latest/$': typeof LeaderboardLatestSplatRoute
   '/leaderboard/yearly/$year/$': typeof LeaderboardYearlyYearSplatRoute
+  '/profile/$id/statistics/{-$year}': typeof ProfileIdStatisticsChar123YearChar125Route
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -92,6 +102,7 @@ export interface FileRouteTypes {
     | '/leaderboard/all-time/$'
     | '/leaderboard/latest/$'
     | '/leaderboard/yearly/$year/$'
+    | '/profile/$id/statistics/{-$year}'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -101,6 +112,7 @@ export interface FileRouteTypes {
     | '/leaderboard/all-time/$'
     | '/leaderboard/latest/$'
     | '/leaderboard/yearly/$year/$'
+    | '/profile/$id/statistics/{-$year}'
   id:
     | '__root__'
     | '/'
@@ -110,6 +122,7 @@ export interface FileRouteTypes {
     | '/leaderboard/all-time/$'
     | '/leaderboard/latest/$'
     | '/leaderboard/yearly/$year/$'
+    | '/profile/$id/statistics/{-$year}'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -120,6 +133,7 @@ export interface RootRouteChildren {
   LeaderboardAllTimeSplatRoute: typeof LeaderboardAllTimeSplatRoute
   LeaderboardLatestSplatRoute: typeof LeaderboardLatestSplatRoute
   LeaderboardYearlyYearSplatRoute: typeof LeaderboardYearlyYearSplatRoute
+  ProfileIdStatisticsChar123YearChar125Route: typeof ProfileIdStatisticsChar123YearChar125Route
 }
 
 declare module '@tanstack/react-router' {
@@ -173,6 +187,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LeaderboardYearlyYearSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/$id/statistics/{-$year}': {
+      id: '/profile/$id/statistics/{-$year}'
+      path: '/profile/$id/statistics/{-$year}'
+      fullPath: '/profile/$id/statistics/{-$year}'
+      preLoaderRoute: typeof ProfileIdStatisticsChar123YearChar125RouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -184,6 +205,8 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderboardAllTimeSplatRoute: LeaderboardAllTimeSplatRoute,
   LeaderboardLatestSplatRoute: LeaderboardLatestSplatRoute,
   LeaderboardYearlyYearSplatRoute: LeaderboardYearlyYearSplatRoute,
+  ProfileIdStatisticsChar123YearChar125Route:
+    ProfileIdStatisticsChar123YearChar125Route,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

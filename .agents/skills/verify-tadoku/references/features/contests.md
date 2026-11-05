@@ -8,6 +8,8 @@ Create contest opens `/contests/new`. A contest links to its `/contests/<id>/lea
 `/updates`, `/scoring`, `/registration` and participant `/profile/<user-id>` pages.
 Main navigation **Leaderboard** opens `/leaderboard/latest`; also cover
 `/leaderboard/yearly/<year>` and `/leaderboard/all-time` when aggregation changes.
+Webv3's navigation opens the native versions of these three leaderboards on the
+`next.` host; `frontend/apps/webv3/e2e/leaderboard.spec.ts` compares them with the API.
 
 ## Verify
 

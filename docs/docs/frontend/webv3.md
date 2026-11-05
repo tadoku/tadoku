@@ -13,6 +13,8 @@ Paper playground composition and reads the current official contest, summary,
 standings and next scheduled round from the configured Tadoku API. `/plan`
 demonstrates a validated immersion goal kept in the current browser. It does not
 sync the goal to a Tadoku account. Native activity logging uses the existing account session and API.
+The latest official, yearly and all-time [leaderboards](webv3-leaderboards.md)
+read their standings from the API.
 
 ## Stack and ownership
 
@@ -25,8 +27,8 @@ legacy applications keep their existing compatibility.
 - `frontend/apps/webv3/src/lib/home.ts` owns response schemas and the homepage
   query. `frontend/apps/webv3/src/lib/home.server.ts` makes public GET requests to
   the configured API; it accepts no browser-supplied upstream URL or credentials.
-- `frontend/apps/webv3/src/lib/links.ts` sends unfinished product journeys to the
-  configured existing Webv2 application.
+- `frontend/apps/webv3/src/lib/links.ts` links native pages on the same host and
+  sends unfinished product journeys to the configured existing Webv2 application.
 - `frontend/apps/webv3/src/components/` owns the Paper screen composition,
   navigation, appearance and local goal interactions.
 - The goal form uses `usePaperForm` and bound Paper controls through TanStack
@@ -135,7 +137,12 @@ The browser suite in `frontend/apps/webv3/e2e/home.spec.ts` checks configured re
 data in server-rendered HTML, hydration and mobile containment, local goal
 validation/editing/persistence without network writes, unavailable browser
 storage, theme persistence, mobile navigation and unknown routes.
-It requires reachable contest and standings data and Chromium installed through
+`frontend/apps/webv3/e2e/leaderboard.spec.ts` compares each leaderboard's server-rendered
+rows, scope and profile links with the API, follows page, year and period links,
+checks a signed-in participant's row and contest action, and checks containment
+at 390px and 1280px. It needs `TADOKU_API_URL` and the Dev Reader credentials
+described under native activity logging, and signs in once.
+These suites require reachable contest and standings data and Chromium installed through
 Playwright. It preserves HTML reports and screenshots outside the source tree.
 `WEBV3_BASE_URL` selects the running server; `PLAYWRIGHT_OUTPUT_DIR` selects the
 artifact directory, defaulting to a temporary directory.
@@ -186,7 +193,7 @@ image.
 
 The active production GitOps configuration makes `next.tadoku.app` follow
 the `prod` digest automatically through Image Updater and Argo CD. Webv3 uses the same production
-backend as Webv2; the current homepage reads public data and native logging uses its existing account and activity API. Unfinished journeys
+backend as Webv2; the homepage and leaderboards read public data and native logging uses its existing account and activity API. Unfinished journeys
 continue to open production Webv2.
 Merging source that matches the Webv3 workflow's paths, including the shared
 lockfile, therefore republishes `latest` and `prod` and rolls this production
@@ -314,3 +321,4 @@ towards the limit too. Set `NODE_EXTRA_CA_CERTS` to the trusted Lab CA
 and `PLAYWRIGHT_OUTPUT_DIR` outside the checkout. Authenticated runs disable
 traces and videos; browser-boundary delay and abort cases cover repeated submits
 and transport errors without mocking the API's successful writes.
+

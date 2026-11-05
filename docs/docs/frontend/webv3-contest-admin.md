@@ -41,7 +41,8 @@ Invalid input focuses the first invalid control. As with
 [activity logging](webv3-logging.md), the first signed-in account owns the draft,
 and the server refuses to create the contest when the session now belongs to
 another account. A created contest replaces the form with its
-[contest page](webv3-contest.md). An ambiguous failure asks the user to check My contests before
+[contest page](webv3-contest.md), and contest lists and the create permission are
+read again when next shown. An ambiguous failure asks the user to check My contests before
 trying again, because the API has no idempotency key.
 
 ## Contest scoring
@@ -79,7 +80,8 @@ changes.
 
 `frontend/apps/webv3/e2e/contest-admin.spec.ts` checks the anonymous prompt and
 scoring redirect, then, with both fixture accounts, creates a contest through the
-form after each invalid field is focused and compares it with the API, shows Dev
+form after each invalid field is focused, compares it with the API and finds it
+in My contests on returning there, shows Dev
 Reader the refusal after using up its yearly allowance in the selected tenant,
 drafts, publishes and activates a rule set and compares it with the API, checks a
 started contest's lock, and that Dev Reader cannot reach scoring, even for its

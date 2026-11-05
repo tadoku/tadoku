@@ -105,7 +105,8 @@ test('an organizer gets each invalid field focused, then creates a contest and l
   const failures: string[] = []
   page.on('pageerror', error => failures.push(error.message))
 
-  await page.goto('/contests/official/1')
+  // Starting from My contests keeps that list cached in the browser for the return below.
+  await page.goto('/contests/my-contests/1')
   await hydrated(page)
   await page.getByRole('link', { name: 'Create contest', exact: true }).click()
   await expect(page).toHaveURL(/\/contests\/new$/)
@@ -151,6 +152,9 @@ test('an organizer gets each invalid field focused, then creates a contest and l
   await page.waitForURL(url => /^\/contests\/[0-9a-f-]{36}\/leaderboard\/1$/.test(url.pathname))
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
   const id = new URL(page.url()).pathname.split('/')[2]
+  await page.goBack()
+  await expect(page).toHaveURL(/\/contests\/my-contests\/1$/)
+  await expect(page.locator('.contest-row').first().getByRole('heading', { level: 2 })).toHaveText(name)
   const created = await (await adminContext.request.get(`${api}/immersion/contests/${id}`)).json() as Contest & {
     allowed_languages: { code: string }[] | null
     allowed_activities: { id: number }[]

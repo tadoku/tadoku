@@ -119,8 +119,8 @@ export const contestEditorQuery = (viewerId: string) => queryOptions({
 })
 
 /**
- * Creates a contest for the account that started the draft and answers its ID. A refusal because another account
- * signed in refreshes the viewer. A failed request is `unavailable`, because the contest may or may not exist.
+ * Creates a contest for the account that started the draft and answers its ID. A created contest marks contest lists
+ * and creation permissions stale; a refusal because another account signed in refreshes the viewer. A failed request is `unavailable`, because the contest may or may not exist.
  */
 export function useCreateContest() {
   const queryClient = useQueryClient()
@@ -128,7 +128,11 @@ export function useCreateContest() {
   return async (contest: NewContest): Promise<LogResult<string>> => {
     const result = await createContest({ data: contest })
       .catch((): LogResult<string> => ({ ok: false, reason: 'unavailable' }))
-    if (!result.ok && result.reason === 'switched') {
+    if (result.ok) {
+      // Lists gain the contest and the allowance shrinks; refetch them when next shown, not under the open form.
+      await Promise.all(['contests', 'can-create-contest', 'contest-editor'].map(key =>
+        queryClient.invalidateQueries({ queryKey: [key], refetchType: 'none' })))
+    } else if (result.reason === 'switched') {
       await queryClient.invalidateQueries({ queryKey: viewerQueryOptions().queryKey })
     }
     return result

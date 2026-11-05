@@ -1,5 +1,5 @@
 import type { APIRequestContext, BrowserContext, Page } from '@playwright/test'
-import { accountId, admin, api, expect, reader, test, webv3 } from './logging-fixtures'
+import { accountId, admin, api, expect, reader, test, webv2, webv3 } from './logging-fixtures'
 
 interface Contest {
   id: string
@@ -18,11 +18,6 @@ const pageSize = 25
 const collections = {
   official: { path: '/contests/official', official: true },
   community: { path: '/contests/user-contests', official: false },
-}
-
-/** The Webv2 origin this request resolved, read from the shell's own Webv2 link: a branch's sibling or `TADOKU_WEB_URL`. */
-async function webv2(page: Page) {
-  return new URL((await page.getByRole('link', { name: 'About Tadoku', exact: true }).getAttribute('href'))!).origin
 }
 
 /** One page of a contest list as the request's session, if any, sees it. */
@@ -44,7 +39,7 @@ function statuses(contest: Contest, today = new Date().toISOString().slice(0, 10
 async function expectRows(page: Page, data: Contests, pageNumber = 1) {
   const rows = page.locator('.contest-row')
   await expect(rows).toHaveCount(data.contests.length)
-  const origin = await webv2(page)
+  const origin = webv2
   for (const [index, contest] of data.contests.entries()) {
     const row = rows.nth(index)
     await expect(row.getByRole('heading', { level: 2 })).toHaveText(contest.title)
@@ -178,7 +173,7 @@ test('an organizer pages through their own contests, unlisted ones included, and
   await page.goto('/contests/my-contests/1')
   await expect(page.getByRole('heading', { level: 1, name: 'Contests' })).toBeVisible()
   await expectRows(page, mine)
-  await expect(page.getByRole('link', { name: 'Create contest' })).toHaveAttribute('href', `${await webv2(page)}/contests/new`)
+  await expect(page.getByRole('link', { name: 'Create contest' })).toHaveAttribute('href', `${webv2}/contests/new`)
   // Signed-in community and organizer lists name the restrictions, as Webv2 does.
   await expect(page.locator('.contest-row').filter({ hasText: 'Webv3 list check' }).first().locator('.contest-row__allows'))
     .toHaveText('Japanese · Reading, Listening')

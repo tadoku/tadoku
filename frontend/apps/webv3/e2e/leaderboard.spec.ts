@@ -1,16 +1,11 @@
 import type { APIRequestContext, Page } from '@playwright/test'
-import { api, expect, reader, test, webv3 } from './logging-fixtures'
+import { api, expect, reader, test, webv2, webv3 } from './logging-fixtures'
 
 interface Entry { rank: number; user_id: string; user_display_name: string; score: number; is_tie: boolean }
 interface Board { entries: Entry[]; total_size: number }
 
 const score = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 1 })
 const year = new Date().getUTCFullYear()
-
-/** The Webv2 origin this request resolved, read from the shell's own Webv2 link: a branch's sibling or `TADOKU_WEB_URL`. */
-async function webv2(page: Page) {
-  return new URL((await page.getByRole('link', { name: 'About Tadoku', exact: true }).getAttribute('href'))!).origin
-}
 
 /** Yearly and all-time rows open the learner's native profile statistics. */
 const statistics = () => (userId: string) => `/profile/${userId}/statistics`
@@ -86,7 +81,7 @@ test('server-rendered boards show the API standings, their scopes and profile li
     await expect(page.getByRole('heading', { level: 2, name: item.scope, exact: true })).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Leaderboard period' }).locator('[aria-current="page"]')).toHaveCount(1)
     await expect(page.getByRole('link', { name: 'Leaderboard', exact: true }).first()).toHaveAttribute('href', '/leaderboard/latest/1')
-    await expectRows(page, data.entries, item.profile(await webv2(page)))
+    await expectRows(page, data.entries, item.profile(webv2))
     await expectTotal(page, data)
     await page.screenshot({ path: testInfo.outputPath(`ssr-${item.path.split('/')[2]}.png`), fullPage: true })
   }

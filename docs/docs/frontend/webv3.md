@@ -18,6 +18,7 @@ read their standings from the API, and the official, community and My contests
 [contest lists](webv3-contests.md) list contests as the visitor sees them.
 [Profile statistics and activity](webv3-profile.md) read a learner's yearly records
 and logs from the API.
+The manual, CMS pages and blog are [content pages](webv3-content.md) on the same host.
 
 ## Stack and ownership
 
@@ -150,6 +151,8 @@ described under [native activity logging](webv3-logging.md), and signs in once.
 accounts and create community contests in the selected tenant.
 These suites require reachable contest and standings data and Chromium installed through
 Playwright. It preserves HTML reports and screenshots outside the source tree.
+Suites expect Webv2 links at a development host's sibling, otherwise at
+`TADOKU_WEB_URL`, defaulting to the image's `https://tadoku.app`.
 `WEBV3_BASE_URL` selects the running server; `PLAYWRIGHT_OUTPUT_DIR` selects the
 artifact directory, defaulting to a temporary directory.
 
@@ -182,9 +185,9 @@ uses nullable language lists by default (`WEBV3_LANGUAGE_FIXTURE=array` selects
 nonempty lists), checks server rendering, built assets, non-root/read-only operation and the
 existing browser journeys, then disconnects the API and checks health again.
 It also requests `/plan` concurrently with canonical and branch Host headers
-in production and development runtime modes, checking that product links stay
-with their matching origins and that forwarded-host or branch headers cannot
-override the request Host. A second container verifies development runtime
+in production and development runtime modes, checking that account links stay
+with their matching origins, native links stay on the requested host and
+forwarded-host or branch headers cannot override the request Host. A second container verifies development runtime
 overrides against the same production-built image.
 It retains a browser report, container log and result with source revision and
 fixture boundary. This proves container behavior; it does not verify real API,
@@ -199,7 +202,7 @@ image.
 
 The active production GitOps configuration makes `next.tadoku.app` follow
 the `prod` digest automatically through Image Updater and Argo CD. Webv3 uses the same production
-backend as Webv2; the homepage, leaderboards and contest lists read contest data and native logging uses its existing account and activity API. Unfinished journeys
+backend as Webv2; the homepage, leaderboards and contest lists read contest data, content pages read the CMS and blog and native logging uses its existing account and activity API. Unfinished journeys
 continue to open production Webv2.
 Merging source that matches the Webv3 workflow's paths, including the shared
 lockfile, therefore republishes `latest` and `prod` and rolls this production

@@ -1,4 +1,4 @@
-import { useHydrated, useRouterState } from '@tanstack/react-router'
+import { Link, useHydrated, useRouterState } from '@tanstack/react-router'
 import { Button, Navbar, buttonClassName, type NavbarItem } from 'paper-ui'
 import mark from 'paper-ui/assets/brand/cut-meter.svg?url'
 import reversedMark from 'paper-ui/assets/brand/cut-meter-reversed.svg?url'
@@ -28,7 +28,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigation: NavbarItem[] = [
     { type: 'link', id: 'leaderboard', label: 'Leaderboard', href: links.leaderboard, current: currentPath.startsWith('/leaderboard/') },
     { type: 'link', id: 'contests', label: 'Contests', href: links.contests, current: currentPath.startsWith('/contests/') },
-    { type: 'link', id: 'guide', label: 'Guide', href: links.guide },
+    { type: 'link', id: 'guide', label: 'Guide', href: links.guide, current: currentPath === links.guide },
     { type: 'link', id: 'goal', label: 'Daily goal', href: '/plan' },
   ]
 
@@ -59,8 +59,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       <footer className="app-footer">
         <div className="app-footer__inner">
           <nav aria-label="Footer">
-            <a className="text-link" href={links.legacyUrl('/pages/about')}>About Tadoku</a>
-            <a className="text-link" href={links.guide}>Guide</a>
+            <Link className="text-link" to={links.page('about')}>About Tadoku</Link>
+            <Link className="text-link" to={links.guide}>Guide</Link>
+            <Link className="text-link" to={links.page('faq')}>Questions &amp; help</Link>
+            <Link className="text-link" to={links.blog}>Blog</Link>
+            <Link className="text-link" to={links.page('contact')}>Contact</Link>
+            <Link className="text-link" to={links.page('privacy')}>Privacy</Link>
             <a className="text-link" href="https://github.com/tadoku/tadoku">GitHub</a>
           </nav>
           <Button variant="link" onClick={toggleTheme} disabled={!hydrated}>

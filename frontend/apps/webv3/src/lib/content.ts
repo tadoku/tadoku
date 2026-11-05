@@ -1,0 +1,69 @@
+import { queryOptions } from '@tanstack/react-query'
+import { createServerFn } from '@tanstack/react-start'
+import { z } from 'zod'
+import type { Read } from './leaderboard'
+
+/** One content read: the parsed item, `not-found` when the API has no published item there, or `unavailable`. */
+export type Content<T> = { kind: 'found'; data: T } | { kind: 'not-found' } | { kind: 'unavailable' }
+
+declare const sanitized: unique symbol
+/** CMS HTML after DOMPurify's default sanitization on the server; the only HTML Webv3 renders from the API. */
+export type SanitizedHtml = string & { readonly [sanitized]: true }
+
+export interface CmsPage { title: string; html: SanitizedHtml }
+
+export interface BlogPost { slug: string; title: string; content: string; publishedAt: string }
+
+export interface BlogPage { posts: BlogPost[]; total: number }
+
+export const blogPageSize = 10
+
+export const blogHref = {
+  list: (page = 1) => `/blog/${page}`,
+  post: (slug: string) => `/blog/posts/${encodeURIComponent(slug)}`,
+}
+
+const slug = z.string().min(1)
+
+const getPage = createServerFn({ method: 'GET' })
+  .inputValidator(slug)
+  .handler(async ({ data }) => {
+    const { readPage } = await import('./content.server')
+    return readPage(data)
+  })
+
+const getPost = createServerFn({ method: 'GET' })
+  .inputValidator(slug)
+  .handler(async ({ data }) => {
+    const { readPost } = await import('./content.server')
+    return readPost(data)
+  })
+
+const getPosts = createServerFn({ method: 'GET' })
+  .inputValidator(z.int().min(1))
+  .handler(async ({ data }) => {
+    const { readPosts } = await import('./content.server')
+    return readPosts(data)
+  })
+
+export const pageQuery = (slug: string) => queryOptions({
+  queryKey: ['content-page', slug],
+  queryFn: (): Promise<Content<CmsPage>> => getPage({ data: slug }),
+  staleTime: 30_000,
+  retry: false,
+})
+
+export const postQuery = (slug: string) => queryOptions({
+  queryKey: ['content-post', slug],
+  queryFn: (): Promise<Content<BlogPost>> => getPost({ data: slug }),
+  staleTime: 30_000,
+  retry: false,
+})
+
+/** One page of published posts, newest first, counted from 1. */
+export const postsQuery = (page: number) => queryOptions({
+  queryKey: ['content-posts', page],
+  queryFn: (): Promise<Read<BlogPage>> => getPosts({ data: page }),
+  staleTime: 30_000,
+  retry: false,
+})

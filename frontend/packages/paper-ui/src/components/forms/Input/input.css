@@ -42,16 +42,15 @@
     inline-size: 100%;
     min-block-size: var(--paper-control-height);
     padding: var(--paper-field-padding-block) var(--paper-field-padding-inline);
-    border: var(--paper-border-static-width) solid var(--paper-color-rule-default);
-    border-block-end: var(--paper-border-field-edge-width) solid
-      var(--paper-color-rule-field-edge);
+    border: var(--paper-border-static-width) solid var(--paper-color-rule-field-edge);
+    border-block-end-width: var(--paper-border-field-edge-width);
     border-radius: 0;
     color: var(--paper-color-text-ink);
     background: var(--paper-color-surface-paper);
   }
 
   .paper-input:where(input, textarea):where(:hover:not(:disabled):not([readonly])) {
-    border-color: var(--paper-color-rule-field-edge);
+    border-color: var(--paper-color-rule-strong);
   }
 
   /* Native date/time segments otherwise add padding inside the control padding. */
@@ -60,7 +59,7 @@
   }
 
   .paper-input:where(select):where(:hover:not(:disabled)) {
-    border-color: var(--paper-color-rule-field-edge);
+    border-color: var(--paper-color-rule-strong);
   }
 
   .paper-input:focus-visible {
@@ -69,13 +68,13 @@
     position: relative;
     z-index: 1;
     border-block-end-color: var(--paper-input-focus-color);
-    outline: 3px solid color-mix(in srgb, var(--paper-input-focus-color) 10%, transparent);
-    outline-offset: 0;
+    outline: var(--paper-focus-ring-width) solid var(--paper-input-focus-color);
+    outline-offset: var(--paper-focus-ring-offset);
   }
 
   .paper-input::placeholder {
     color: var(--paper-color-text-muted);
-    opacity: 0.78;
+    opacity: 1;
   }
 
   .paper-input:is(input, textarea)[readonly] {

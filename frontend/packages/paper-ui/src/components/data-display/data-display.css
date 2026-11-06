@@ -87,23 +87,23 @@
   }
 
   .paper-heatmap__cell[data-level="0"] {
-    fill: var(--paper-color-rule-subtle);
+    fill: var(--paper-color-heat-0);
   }
 
   .paper-heatmap__cell[data-level="1"] {
-    fill: color-mix(in srgb, var(--paper-color-chart-7) 38%, var(--paper-color-surface-paper));
+    fill: var(--paper-color-heat-1);
   }
 
   .paper-heatmap__cell[data-level="2"] {
-    fill: color-mix(in srgb, var(--paper-color-chart-7) 60%, var(--paper-color-surface-paper));
+    fill: var(--paper-color-heat-2);
   }
 
   .paper-heatmap__cell[data-level="3"] {
-    fill: color-mix(in srgb, var(--paper-color-chart-7) 80%, var(--paper-color-surface-paper));
+    fill: var(--paper-color-heat-3);
   }
 
   .paper-heatmap__cell[data-level="4"] {
-    fill: var(--paper-color-chart-7);
+    fill: var(--paper-color-heat-4);
   }
 
   .paper-heatmap__link:focus {

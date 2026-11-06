@@ -6,8 +6,8 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--paper-border-static-width);
-    border: var(--paper-border-static-width) solid var(--paper-color-rule-default);
-    border-block-end: var(--paper-border-field-edge-width) solid var(--paper-color-rule-field-edge);
+    border: var(--paper-border-static-width) solid var(--paper-color-rule-field-edge);
+    border-block-end-width: var(--paper-border-field-edge-width);
     background: var(--paper-color-rule-default);
   }
 

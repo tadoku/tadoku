@@ -42,7 +42,7 @@
   }
 
   .paper-tabs__tab[data-active] {
-    border-block-end-color: var(--paper-color-action-default);
+    border-block-end-color: var(--paper-color-text-link);
     color: var(--paper-color-text-ink);
     background: transparent;
   }
@@ -93,7 +93,7 @@
   }
 
   .paper-tabs[data-orientation="vertical"] .paper-tabs__tab[data-active] {
-    border-inline-end-color: var(--paper-color-action-default);
+    border-inline-end-color: var(--paper-color-text-link);
   }
 
   .paper-tabs[data-orientation="vertical"] .paper-tabs__panel {

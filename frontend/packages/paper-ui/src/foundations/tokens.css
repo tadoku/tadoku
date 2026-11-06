@@ -15,7 +15,7 @@
   --paper-private-rule-subtle: #e2ddd4;
   --paper-private-rule-default: #c7c0b5;
   --paper-private-rule-strong: #393235;
-  --paper-private-field-edge: #aba398;
+  --paper-private-field-edge: #857d72;
   --paper-private-accent: #5747b8;
   --paper-private-accent-hover: #49399f;
   --paper-private-accent-active: #40318c;
@@ -74,6 +74,12 @@
   --paper-color-chart-7: #55716d;
   --paper-color-chart-8: #83565d;
 
+  --paper-color-heat-0: #e7e2d9;
+  --paper-color-heat-1: #d6cff5;
+  --paper-color-heat-2: #a99deb;
+  --paper-color-heat-3: #7a6bd3;
+  --paper-color-heat-4: #4a3ba6;
+
   --paper-elevation-flat: none;
   --paper-elevation-floating: 3px 3px 0 var(--paper-private-shadow);
   --paper-elevation-showcase: 5px 5px 0 var(--paper-private-shadow);
@@ -82,24 +88,24 @@
 [data-theme="dark"] {
   color-scheme: dark;
 
-  --paper-private-canvas: #171517;
-  --paper-private-paper: #222022;
-  --paper-private-raised: #2b282b;
-  --paper-private-overlay: #2b282b;
+  --paper-private-canvas: #121012;
+  --paper-private-paper: #232023;
+  --paper-private-raised: #2c292c;
+  --paper-private-overlay: #2c292c;
   --paper-private-scrim: rgb(0 0 0 / 38%);
-  --paper-private-ink: #f2eee8;
-  --paper-private-muted: #b8afb3;
+  --paper-private-ink: #e5e0d9;
+  --paper-private-muted: #aea5a9;
   --paper-private-inverse: #fffefa;
-  --paper-private-rule-subtle: #363235;
-  --paper-private-rule-default: #4e484b;
-  --paper-private-rule-strong: #81777c;
-  --paper-private-field-edge: #5b5458;
-  --paper-private-accent: #9a8bea;
+  --paper-private-rule-subtle: #3a3538;
+  --paper-private-rule-default: #524b4f;
+  --paper-private-rule-strong: #8a8185;
+  --paper-private-field-edge: #8a8185;
+  --paper-private-accent: #a99cf0;
   --paper-private-accent-hover: #6d5cc7;
   --paper-private-accent-active: #5747b8;
   --paper-private-accent-edge: #5242a6;
-  --paper-private-accent-soft: #332d52;
-  --paper-private-neutral-action-hover: #2d292c;
+  --paper-private-accent-soft: #2e2945;
+  --paper-private-neutral-action-hover: #312d31;
   --paper-private-action-default: #6150bc;
   --paper-private-action-hover: #6d5cc7;
   --paper-private-action-active: #49399f;
@@ -111,7 +117,7 @@
   --paper-private-danger: #d77171;
   --paper-private-danger-hover: #b94f4f;
   --paper-private-danger-edge: #883434;
-  --paper-private-shadow: rgb(0 0 0 / 48%);
+  --paper-private-shadow: rgb(0 0 0 / 70%);
 
   --paper-color-surface-canvas: var(--paper-private-canvas);
   --paper-color-surface-paper: var(--paper-private-paper);
@@ -153,12 +159,20 @@
   --paper-color-chart-6: #b69ad0;
   --paper-color-chart-7: #83aaa3;
   --paper-color-chart-8: #c58e9b;
+
+  --paper-color-heat-0: #363236;
+  --paper-color-heat-1: #433b6e;
+  --paper-color-heat-2: #5d51a8;
+  --paper-color-heat-3: #8576dc;
+  --paper-color-heat-4: #b9aef7;
 }
 
 :root {
-  --paper-font-display: "Merriweather", Georgia, "Times New Roman", serif;
+  --paper-font-display: "Merriweather", Georgia, "Hiragino Mincho ProN", "Yu Mincho",
+    "Noto Serif JP", "Noto Serif CJK JP", "Times New Roman", serif;
   --paper-font-body: "Open Sans", Inter, ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", sans-serif;
+    BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", "Noto Sans JP",
+    "Noto Sans CJK JP", sans-serif;
   --paper-font-monospace: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", monospace;
 
@@ -174,11 +188,11 @@
   --paper-type-component-size: 1.125rem;
   --paper-type-component-line-height: 1.5rem;
   --paper-type-component-weight: 700;
-  --paper-type-label-size: 0.75rem;
-  --paper-type-label-line-height: 1rem;
+  --paper-type-label-size: 0.8125rem;
+  --paper-type-label-line-height: 1.125rem;
   --paper-type-label-weight: 700;
-  --paper-type-metadata-size: 0.75rem;
-  --paper-type-metadata-line-height: 1.125rem;
+  --paper-type-metadata-size: 0.8125rem;
+  --paper-type-metadata-line-height: 1.25rem;
   --paper-type-metadata-weight: 400;
 
   /* Fixed composition rhythm; density changes controls, not page hierarchy. */

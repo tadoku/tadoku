@@ -166,9 +166,9 @@ a { text-underline-offset: .2em; }
 .standings-context h2 { font-size: 1.375rem; }
 .standings-empty { margin: 0; padding: 24px 20px; border-block-start: 1px solid var(--paper-color-rule-default); }
 .standings-table { font-variant-numeric: tabular-nums; --paper-field-padding-inline: 20px; }
-.standings-table tr[aria-current="true"] { background: var(--paper-color-action-soft); }
+.standings-table tr[aria-current="true"] > :first-child { box-shadow: inset var(--paper-accent-rail-width) 0 0 var(--paper-color-text-link); }
 .standings-person { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
-.standings-you { font-size: .6875rem; color: var(--paper-color-text-muted); font-weight: 400; }
+.standings-you { font-size: var(--paper-type-metadata-size); color: var(--paper-color-text-ink); font-weight: 400; }
 .standings-rank { color: var(--paper-color-text-muted); }
 .standings-rank abbr, .standings-footnote abbr { text-decoration: none; }
 .standings-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 12px 20px; }

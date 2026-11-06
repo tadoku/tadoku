@@ -74,7 +74,7 @@ export function GlobalLeaderboard({ scope, page }: { scope: Exclude<StandingsSco
           </section>
         </div>
         <aside className="standings-aside">
-          <p>Only official contests count; community contest scores are not included.</p>
+          <p>Official contests only; community contests don’t count here.</p>
         </aside>
       </div>
     </LeaderboardFrame>

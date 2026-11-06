@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { z } from 'zod'
 import { DraftOwnerGate } from '../../components/DraftOwnerGate'
 import { useLinks } from '../../lib/links'
-import { contestChoices } from '../../lib/log-draft'
+import { contestChoices, type ContestChoice } from '../../lib/log-draft'
 import {
   logOptionsQuery,
   logQuery,
@@ -143,17 +143,21 @@ function ContestsForm({ log, registrations, viewerId }: {
             <fieldset className="goal-form__controls" disabled={disabled}>
               <fieldset className="paper-choice-field log-contest-choices">
                 <legend className="paper-visually-hidden">Contests</legend>
-                {choices.map(choice => (
+                {choices.filter(choice => choice.kind !== 'ineligible').map(choice => (
                   <form.AppField key={choice.registration.id} name="registrationIds">
-                    {field => (
-                      <field.Checkbox
-                        label={choice.registration.contest.title}
-                        value={choice.registration.id}
-                        disabled={choice.kind === 'ineligible'}
-                        hint={choice.kind === 'ineligible' ? choice.reason : undefined}
-                      />
-                    )}
+                    {field => <field.Checkbox label={choice.registration.contest.title} value={choice.registration.id} />}
                   </form.AppField>
+                ))}
+                {/* Unavailable contests are grouped under their shared reason instead of repeating it on every row. */}
+                {ineligibleByReason(choices).map(([reason, group]) => (
+                  <div key={reason} className="log-contest-group" role="group" aria-label={reason}>
+                    <p className="log-contest-group__reason">{reason}</p>
+                    {group.map(choice => (
+                      <form.AppField key={choice.registration.id} name="registrationIds">
+                        {field => <field.Checkbox label={choice.registration.contest.title} value={choice.registration.id} disabled />}
+                      </form.AppField>
+                    ))}
+                  </div>
                 ))}
                 {finished.map(submission => (
                   <p key={submission.registration_id}>
@@ -189,6 +193,15 @@ function ContestsForm({ log, registrations, viewerId }: {
       </Surface>
     </div>
   )
+}
+
+/** Ineligible choices grouped by their reason, in first-seen order. */
+function ineligibleByReason(choices: ContestChoice[]) {
+  const groups = new Map<string, Extract<ContestChoice, { kind: 'ineligible' }>[]>()
+  for (const choice of choices) {
+    if (choice.kind === 'ineligible') groups.set(choice.reason, [...(groups.get(choice.reason) ?? []), choice])
+  }
+  return [...groups]
 }
 
 const failureMessages: Record<LogFailure, string> = {

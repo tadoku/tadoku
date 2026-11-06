@@ -138,9 +138,7 @@
   }
 
   .paper-heatmap__cell[data-future] {
-    fill: transparent;
-    stroke: var(--paper-color-rule-default);
-    stroke-width: 1;
+    fill: var(--paper-color-rule-subtle);
   }
 
   .paper-heatmap__link:focus {
@@ -168,6 +166,12 @@
     margin: var(--paper-space-2) 0 0;
     color: var(--paper-color-text-muted);
     font-size: var(--paper-type-metadata-size);
+  }
+
+  @media (max-width: 48rem) {
+    .paper-heatmap__legend > span:first-child {
+      flex-basis: 100%;
+    }
   }
 
   .paper-heatmap__legend-item {

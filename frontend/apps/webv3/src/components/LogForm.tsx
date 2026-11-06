@@ -3,7 +3,6 @@ import { useStore } from '@tanstack/react-form'
 import { Link, useHydrated, useNavigate } from '@tanstack/react-router'
 import {
   Button,
-  DescriptionList,
   PageHeader,
   Surface,
   usePaperForm,
@@ -87,7 +86,11 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
   return (
     <div className="log-form-page">
       {editing ? (
-        <PageHeader title="Edit activity" backLink={{ href: `/logs/${editing.id}`, label: 'Back to log' }} />
+        <PageHeader
+          title="Edit activity"
+          lead={`${editing.language.name} · ${editing.activity.name}`}
+          backLink={{ href: `/logs/${editing.id}`, label: 'Back to log' }}
+        />
       ) : (
         <PageHeader title="Log activity" />
       )}
@@ -96,14 +99,15 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
           <form.Form className="log-form" aria-busy={pending}>
             <Surface className="log-form__card">
               <fieldset className="goal-form__controls log-form__fields" disabled={disabled}>
-                {editing ? <FixedFields form={form} log={editing} /> : <ChoiceFields form={form} options={options} />}
+                {/* An edit can't change language or activity; the header states them. */}
+                {editing ? null : <ChoiceFields form={form} options={options} />}
                 <MeasureField form={form} timed={isTimed(options, activityId)} units={units} />
                 <form.AppField name="description">
                   {field => <field.Input label="Description (optional)" placeholder="e.g. One Piece volume 45" />}
                 </form.AppField>
                 <TagsField form={form} viewerId={viewerId} />
                 <div className="log-form__narrow-tags">
-                  <TagsSidebar form={form} activityId={activityId} disabled={disabled} />
+                  <TagsSidebar form={form} activityId={activityId} disabled={disabled} compact />
                 </div>
               </fieldset>
               <ScoreEstimate form={form} options={options} />
@@ -120,7 +124,7 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
             </div>
           </form.Form>
           <aside className="log-form__aside" aria-label="Suggested tags">
-            <TagsSidebar form={form} activityId={activityId} disabled={disabled} />
+            <TagsSidebar form={form} activityId={activityId} disabled={disabled} compact={false} />
           </aside>
         </div>
       </form.AppForm>
@@ -256,25 +260,6 @@ const ChoiceFields = withPaperForm({
           )}
         </form.AppField>
       </>
-    )
-  },
-})
-
-/** A saved log's language and activity, which an edit cannot change. */
-const FixedFields = withPaperForm({
-  defaultValues: {} as LogDraft,
-  props: { log: {} as ImmersionLog },
-  // The values stay in the draft from its defaults; an edit shows them as facts, not as controls it can't change.
-  render: function FixedFields({ log }) {
-    return (
-      <DescriptionList
-        layout="inline"
-        className="log-form__fixed"
-        items={[
-          { label: 'Language', value: log.language.name },
-          { label: 'Activity', value: log.activity.name },
-        ]}
-      />
     )
   },
 })

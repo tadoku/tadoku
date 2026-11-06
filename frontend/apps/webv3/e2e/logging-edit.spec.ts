@@ -18,7 +18,7 @@ import {
 
 const estimate = (page: Page) => page.locator('.log-form__estimate strong')
 const timeSpent = (page: Page) => page.getByLabel(/^Time spent/)
-const description = (page: Page) => page.getByLabel('Description', { exact: true })
+const description = (page: Page) => page.getByLabel(/^Description/)
 const saveChanges = (page: Page) => page.getByRole('button', { name: 'Save', exact: true })
 const isPreviewRequest = (request: Request) => request.method() === 'GET' && request.url().includes('_serverFn')
 
@@ -52,9 +52,7 @@ test('owner edits a saved log, sees the estimate and the persisted change after 
   await expect(page).toHaveURL(`${webv3}/logs/${id}/edit`)
   await expect(saveChanges(page)).toBeEnabled({ timeout: 15_000 })
   // Language and activity can't change on an edit, so the form states them instead of offering controls.
-  const fixed = page.locator('.log-form__fixed')
-  await expect(fixed).toContainText(before.language.name)
-  await expect(fixed).toContainText(before.activity.name)
+  await expect(page.locator('.paper-page-header__lead')).toHaveText(`${before.language.name} · ${before.activity.name}`)
   await expect(page.getByLabel('Language', { exact: true })).toHaveCount(0)
   await expect(amountInput(page)).toHaveValue('5')
   await expect(page.getByLabel('Unit', { exact: true })).toHaveValue(before.unit_key)

@@ -9,7 +9,7 @@
 .content-prose h2, .content-prose h3, .content-prose h4 { font-family: var(--paper-font-display); line-height: 1.5; scroll-margin-top: 24px; }
 .content-prose h2 { margin: 48px 0 12px; font-size: var(--paper-type-section-size); line-height: var(--paper-type-section-line-height); }
 .content-prose h3 { margin: 32px 0 8px; font-size: var(--paper-type-component-size); }
-.content-prose h4 { margin: 24px 0 8px; font-size: 1rem; font-family: var(--paper-font-body); }
+.content-prose h4 { margin: 24px 0 8px; font-size: 1.0625rem; }
 .content-prose ul, .content-prose ol { padding-left: 22px; }
 .content-prose li + li { margin-top: 8px; }
 .content-prose a { color: var(--paper-color-text-link); }
@@ -18,7 +18,7 @@
 .content-prose pre { overflow-x: auto; padding: 16px; background: var(--paper-color-surface-paper); border: 1px solid var(--paper-color-rule-default); }
 .content-prose img { max-width: 100%; height: auto; }
 .content-prose hr { margin: 32px 0; border: 0; border-top: 1px solid var(--paper-color-rule-default); }
-.content-prose table { border-collapse: collapse; font-size: .875rem; line-height: 1.5; font-variant-numeric: tabular-nums; }
+.content-prose table { inline-size: 100%; border-collapse: collapse; font-size: .875rem; line-height: 1.5; font-variant-numeric: tabular-nums; }
 .content-prose th, .content-prose td { padding: 10px 16px 10px 0; border-bottom: 1px solid var(--paper-color-rule-default); text-align: left; vertical-align: top; }
 .content-prose th { font-weight: 600; color: var(--paper-color-text-ink); border-bottom-color: var(--paper-color-rule-strong); }
 .content-prose sup { color: var(--paper-color-text-link); }

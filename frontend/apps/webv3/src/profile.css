@@ -15,14 +15,12 @@
 /* One section role across the profile: the in-sheet calendar heading matches the sections below it. */
 .profile-rhythm h3, .profile-columns h2 { font-family: var(--paper-font-display); font-size: 1.375rem; line-height: 1.875rem; font-weight: 700; }
 .profile-empty-year { border-block-start: 1px solid var(--paper-color-rule-default); }
-/* Edge shades show which side has more weeks off-screen, as on wide tables. */
+/* A shade at the right edge shows more weeks off-screen; the pinned weekday gutter covers the left. */
 .profile-heatmap-scroll {
   --profile-heatmap-shade: color-mix(in srgb, var(--paper-color-text-ink) 22%, transparent);
   max-inline-size: 100%; overflow-x: auto; padding-block: 24px 12px;
   background:
-    linear-gradient(to right, var(--paper-color-surface-paper) 40%, transparent) left / 2rem 100% no-repeat local,
     linear-gradient(to left, var(--paper-color-surface-paper) 40%, transparent) right / 2rem 100% no-repeat local,
-    radial-gradient(farthest-side at 0 50%, var(--profile-heatmap-shade), transparent) left / .75rem 100% no-repeat scroll,
     radial-gradient(farthest-side at 100% 50%, var(--profile-heatmap-shade), transparent) right / .75rem 100% no-repeat scroll;
 }
 .profile-heatmap-scroll .paper-heatmap__frame { min-inline-size: 44rem; }

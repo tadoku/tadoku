@@ -34,7 +34,7 @@ for (const activity of ['Reading', 'Listening']) {
     test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
     const timed = activity === 'Listening'
     const quantity = timed ? page.getByRole('spinbutton', { name: /^Time spent/ }) : amountInput(page)
-    const description = page.getByLabel('Description', { exact: true })
+    const description = page.getByLabel(/^Description/)
     await openForm(page)
     await expect(description).toHaveAttribute('placeholder', 'e.g. One Piece volume 45')
     await page.getByLabel('Activity', { exact: true }).selectOption({ label: activity })
@@ -114,13 +114,13 @@ test('text limits follow the API: description characters, tag bytes and normaliz
 
   // 128 emoji are 256 UTF-16 units but 128 characters; the API allows 255 characters.
   const description = `${'😀'.repeat(128)}${Date.now()}`
-  await page.getByLabel('Description', { exact: true }).fill(description)
+  await page.getByLabel(/^Description/).fill(description)
   // 18 characters but 54 UTF-8 bytes; the API allows 50 bytes per tag.
   const long = '日本語'.repeat(6)
   await addTags(page, [long])
   await saveButton(page).click()
   await expect(tags).toBeFocused()
-  await expect(page.getByLabel('Description', { exact: true })).not.toHaveAttribute('aria-invalid', 'true')
+  await expect(page.getByLabel(/^Description/)).not.toHaveAttribute('aria-invalid', 'true')
   await page.getByRole('button', { name: `Remove ${long}`, exact: true }).click()
 
   // The chips ignore case when they add a tag. Seven chips normalize to four tags, as Go's strings.TrimSpace and
@@ -166,13 +166,13 @@ test('transport failure keeps values and never navigates or claims success', asy
   const page = await readerContext.newPage()
   await openForm(page)
   await amountInput(page).fill('12')
-  await page.getByLabel('Description', { exact: true }).fill('preserve my draft')
+  await page.getByLabel(/^Description/).fill('preserve my draft')
   await page.route('**/*', route => isSaveRequest(route.request()) ? route.abort() : route.continue())
 
   await saveButton(page).click()
   await expect(page.getByRole('alert')).toContainText(/check your activity/i)
   await expect(amountInput(page)).toHaveValue('12')
-  await expect(page.getByLabel('Description', { exact: true })).toHaveValue('preserve my draft')
+  await expect(page.getByLabel(/^Description/)).toHaveValue('preserve my draft')
   await expect(page).toHaveURL(/\/logs\/new$/)
 })
 
@@ -223,7 +223,7 @@ test('API rejection preserves entered activity instead of showing success', asyn
   const page = await readerContext.newPage()
   await openForm(page)
   await amountInput(page).fill('8')
-  await page.getByLabel('Description', { exact: true }).fill('rejected activity draft')
+  await page.getByLabel(/^Description/).fill('rejected activity draft')
   let changed = false
   await page.route('**/*', async route => {
     if (!isSaveRequest(route.request())) return route.continue()
@@ -235,7 +235,7 @@ test('API rejection preserves entered activity instead of showing success', asyn
   await expect(page.getByRole('alert')).toContainText('could not be saved')
   expect(changed).toBe(true)
   await expect(amountInput(page)).toHaveValue('8')
-  await expect(page.getByLabel('Description', { exact: true })).toHaveValue('rejected activity draft')
+  await expect(page.getByLabel(/^Description/)).toHaveValue('rejected activity draft')
   await expect(page).toHaveURL(/\/logs\/new$/)
 })
 
@@ -244,7 +244,7 @@ test('public detail hides contest management and the canonical tenant cannot rea
   await openForm(page)
   await amountInput(page).fill('6')
   const description = `isolation-${Date.now()}`
-  await page.getByLabel('Description', { exact: true }).fill(description)
+  await page.getByLabel(/^Description/).fill(description)
   const id = await createLog(page)
   await expect(page.getByRole('link', { name: 'Manage contest submissions' })).toBeVisible()
 
@@ -269,7 +269,7 @@ test('a different signed-in learner cannot change another learner\'s activity', 
   await openForm(adminPage)
   await amountInput(adminPage).fill('9')
   const description = `ownership-${Date.now()}`
-  await adminPage.getByLabel('Description', { exact: true }).fill(description)
+  await adminPage.getByLabel(/^Description/).fill(description)
   const id = await createLog(adminPage)
 
   await page.goto(`${webv3}/logs/${id}`)

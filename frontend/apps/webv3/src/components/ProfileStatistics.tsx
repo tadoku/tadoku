@@ -112,7 +112,19 @@ function YearTotals({ statistics, year }: { statistics: Found; year: number }) {
 function HeatmapScroll({ latest, children }: { latest: boolean; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    if (latest && ref.current) ref.current.scrollLeft = ref.current.scrollWidth
+    const scroller = ref.current
+    if (!scroller) return
+    // Month labels that slide under the pinned weekday gutter would show as clipped fragments, so they hide there.
+    const hideCoveredMonths = () => {
+      const edge = scroller.querySelector('.paper-heatmap__weekdays')?.getBoundingClientRect().right ?? 0
+      for (const label of scroller.querySelectorAll<SVGTextElement>('svg.paper-heatmap text')) {
+        label.style.visibility = label.getBoundingClientRect().left < edge ? 'hidden' : ''
+      }
+    }
+    if (latest) scroller.scrollLeft = scroller.scrollWidth
+    hideCoveredMonths()
+    scroller.addEventListener('scroll', hideCoveredMonths, { passive: true })
+    return () => scroller.removeEventListener('scroll', hideCoveredMonths)
   }, [latest])
   return (
     <div ref={ref} className="profile-heatmap-scroll paper-focus-ring" role="region" aria-labelledby="profile-rhythm-heading" tabIndex={0}>

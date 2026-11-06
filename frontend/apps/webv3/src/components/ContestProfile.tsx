@@ -26,7 +26,7 @@ export function ContestProfile({ profile, page }: { profile: Found; page: number
         actions={<Link className={buttonClassName({ variant: 'outline' })} to={links.profile(userId)}>View profile</Link>}
       />
       <StatGrid
-        className="profile-stats"
+        className="profile-stats contest-profile-stats"
         stats={[
           { label: 'Overall score', value: numberFormat.format(total) },
           ...registration.languages.map(language => ({ label: language.name, value: numberFormat.format(byLanguage.get(language.code) ?? 0) })),

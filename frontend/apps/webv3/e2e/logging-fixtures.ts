@@ -71,13 +71,13 @@ export const amountInput = (page: Page) => page.getByRole('spinbutton', { name: 
 /** Enters an amount and a description in the open activity form. */
 export async function fillDraft(page: Page, amount: string, description: string) {
   await amountInput(page).fill(amount)
-  await page.getByLabel('Description', { exact: true }).fill(description)
+  await page.getByLabel(/^Description/).fill(description)
 }
 
 /** The open activity form still holds the draft, unsaved. */
 export async function expectDraftKept(page: Page, amount: string, description: string) {
   await expect(amountInput(page)).toHaveValue(amount)
-  await expect(page.getByLabel('Description', { exact: true })).toHaveValue(description)
+  await expect(page.getByLabel(/^Description/)).toHaveValue(description)
   await expect(page).toHaveURL(/\/logs\/new$/)
 }
 

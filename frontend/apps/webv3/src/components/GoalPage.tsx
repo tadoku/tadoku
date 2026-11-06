@@ -52,7 +52,7 @@ export function GoalPage() {
 
         <aside className="goal-aside" aria-label="Your goal">
           {saved ? <GoalSummary goal={saved} /> : null}
-          <p className="goal-aside__note">Your goal stays in this browser; it doesn’t change your account or count towards contests.</p>
+          <p className="goal-aside__note">Saved in this browser only; it doesn’t count towards contests.</p>
         </aside>
       </div>
     </div>

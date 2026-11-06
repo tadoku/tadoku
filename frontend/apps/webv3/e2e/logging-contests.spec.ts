@@ -24,7 +24,7 @@ async function createPersonalLog(page: Page, text: string) {
   await page.getByLabel('Language', { exact: true }).selectOption('jpn')
   await page.getByLabel('Activity', { exact: true }).selectOption({ label: 'Reading' })
   await amountInput(page).fill('7')
-  await page.getByLabel('Description', { exact: true }).fill(text)
+  await page.getByLabel(/^Description/).fill(text)
   return createLog(page)
 }
 

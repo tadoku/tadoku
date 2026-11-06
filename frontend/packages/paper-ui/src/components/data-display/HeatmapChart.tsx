@@ -48,9 +48,9 @@ const WEEKDAYS = ["Mon", undefined, "Wed", undefined, "Fri", undefined, "Sun"] a
 // Fixed points-per-day bins keep a record day from recolouring earlier activity.
 const LEVELS = [
   { level: "0", lowerBound: 0, label: "0" },
-  { level: "1", lowerBound: 0, label: "< 30" },
-  { level: "2", lowerBound: 30, label: "30+" },
-  { level: "3", lowerBound: 100, label: "100+" },
+  { level: "1", lowerBound: 0, label: "Under 30" },
+  { level: "2", lowerBound: 30, label: "30–99" },
+  { level: "3", lowerBound: 100, label: "100–299" },
   { level: "4", lowerBound: 300, label: "300+" },
 ] as const;
 
@@ -190,7 +190,7 @@ export function HeatmapChart({ id, data, year, getHref, today }: HeatmapChartPro
         {today && today < end.toISODate()! ? (
           <span className="paper-heatmap__legend-item">
             <svg width={CELL_WIDTH} height={CELL_HEIGHT} aria-hidden="true">
-              <rect x={0.5} y={0.5} width={CELL_WIDTH - 1} height={CELL_HEIGHT - 1} className="paper-heatmap__cell" data-future="" />
+              <rect width={CELL_WIDTH} height={CELL_HEIGHT} className="paper-heatmap__cell" data-future="" />
             </svg>
             Not yet
           </span>

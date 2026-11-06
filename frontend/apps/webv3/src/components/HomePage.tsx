@@ -146,10 +146,9 @@ function MemberPromise({ member, data, phase }: {
       {phase === 'unavailable' && <p className="home-status" data-tone="warning">Contest updates are delayed</p>}
       <h1 id="home-title">{headline}</h1>
       <p className="home-lead">{lead}</p>
+      {/* Log activity is already the header's action; the hero adds Join only while the member can still join. */}
       <div className="home-actions">
-        {joinable
-          ? <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a>
-          : <a href={links.logs} className={buttonClassName()}>Log activity</a>}
+        {joinable ? <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a> : null}
         <a href={links.profile(member.userId)} className="text-link">Your profile</a>
       </div>
     </div>

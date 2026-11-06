@@ -29,7 +29,7 @@ a { text-underline-offset: .2em; }
 .app-pending { padding-block: 64px; }
 
 /* Home */
-.home-hero { --home-ledger-inset: 24px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 64px; padding: 8px 5px 8px 0; }
+.home-hero { --home-ledger-inset: 24px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 64px; padding: 8px 5px 8px 0; }
 .home-status { margin: 0 0 16px; font-size: .875rem; font-weight: 600; color: var(--paper-color-status-success); }
 .home-status[data-tone="warning"] { color: var(--paper-color-status-warning); }
 .home-promise h1 { margin: 0; max-width: 17ch; font-family: var(--paper-font-display); font-size: clamp(2rem, 3.5vw, 2.75rem); line-height: 1.2; letter-spacing: -.045em; text-wrap: balance; }
@@ -141,8 +141,8 @@ a { text-underline-offset: .2em; }
 .app-login-link { color: var(--paper-color-text-ink); font-weight: 600; text-decoration: none; }
 .app-login-link:hover, .app-login-link:focus-visible { text-decoration: underline; }
 .contest-daily .paper-table__row-header { font-weight: 400; white-space: nowrap; }
-/* On phones the score column, the sum of the language columns, gives way so the running total stays in view. */
-@media (max-width: 30rem) { .contest-daily :is(th, td):nth-last-child(2) { display: none; } }
+/* On phones the per-language columns give way to the day's score and running total; the language totals sit above. */
+@media (max-width: 30rem) { .contest-daily :is(th, td):not(:first-child):not(:nth-last-child(-n + 2)) { display: none; } }
 .app-account-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-3, .75rem); }
 .app-account-menu--desktop .paper-button > span { max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .app-mobile-account { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--paper-color-rule-subtle); }
@@ -159,6 +159,7 @@ a { text-underline-offset: .2em; }
 .log-record { display: grid; gap: 24px; }
 .log-detail > .paper-page-header { max-width: 48rem; }
 .contest-daily { max-width: 48rem; }
+.contest-profile-stats { max-width: 48rem; }
 .log-contests { max-width: 48rem; margin-top: 32px; }
 .log-contest-list { list-style: none; margin: 0 0 16px; padding: 0; }
 .log-contest-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-block: 12px; border-bottom: 1px solid var(--paper-color-rule-default); }
@@ -193,7 +194,7 @@ a { text-underline-offset: .2em; }
 .standings-pagination > p { margin: 0; font-size: var(--paper-type-metadata-size); color: var(--paper-color-text-muted); }
 .standings-aside { padding-top: 4px; font-size: .875rem; line-height: 1.7; overflow-wrap: anywhere; }
 .standings-aside > section + section { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--paper-color-rule-default); }
-.standings-aside h2 { margin: 0 0 12px; }
+.standings-aside h2 { margin: 0 0 12px; font-family: var(--paper-font-display); font-size: var(--paper-type-component-size); line-height: var(--paper-type-component-line-height); font-weight: 700; }
 .standings-aside p { margin: 0 0 16px; }
 .standings-aside > p { color: var(--paper-color-text-muted); }
 .standings-description { margin-top: 16px !important; white-space: pre-line; }

@@ -15,7 +15,6 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5"
-	pg_query "github.com/pganalyze/pg_query_go/v6"
 )
 
 func attempt(ctx context.Context, root string, args []string) error {
@@ -38,6 +37,10 @@ func attempt(ctx context.Context, root string, args []string) error {
 		return errors.New("attempt requires 1x and 10x templates and cases")
 	}
 	if err := os.Mkdir(*dir, 0755); err != nil {
+		return err
+	}
+	plan, err := planAttemptMigrations(ctx, root, *candidate, templateNames, *dir)
+	if err != nil {
 		return err
 	}
 	if err := sqlcCheck(ctx, *candidate); err != nil {
@@ -171,10 +174,7 @@ func attempt(ctx context.Context, root string, args []string) error {
 				fmt.Fprintln(os.Stderr, "retained candidate clone:", err)
 			}
 		}()
-		if err := applyNewIndexes(ctx, root, baselineDB); err != nil {
-			return err
-		}
-		if err := applyNewIndexes(ctx, *candidate, candidateDB); err != nil {
+		if err := plan.applyToCandidate(ctx, candidateDB); err != nil {
 			return err
 		}
 		specs, err := readCases(cases[scale])
@@ -262,47 +262,6 @@ func inspectCases(ctx context.Context, database string, queries []query, cases [
 		samples = append(samples, sample)
 	}
 	return samples, nil
-}
-
-func applyNewIndexes(ctx context.Context, root, database string) error {
-	paths, err := filepath.Glob(filepath.Join(root, "services/tadoku-api/migrations/*.up.sql"))
-	if err != nil {
-		return err
-	}
-	slices.Sort(paths)
-	owner, err := connect(ctx, localDSN, database, "tadoku_owner")
-	if err != nil {
-		return err
-	}
-	defer owner.Close(ctx)
-	for _, path := range paths {
-		number, err := strconv.Atoi(strings.SplitN(filepath.Base(path), "_", 2)[0])
-		if err != nil {
-			return err
-		}
-		if number <= 58 {
-			continue
-		}
-		text, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		tree, err := pg_query.Parse(string(text))
-		if err != nil {
-			return err
-		}
-		if len(tree.Stmts) != 1 {
-			return errors.New("new index migration must contain exactly one statement")
-		}
-		index := tree.Stmts[0].Stmt.GetIndexStmt()
-		if index == nil || !index.Concurrent {
-			return errors.New("only standalone concurrent index additions are allowed")
-		}
-		if _, err := owner.Exec(ctx, string(text)); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func writeJSON(path string, value any) error {

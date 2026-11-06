@@ -31,11 +31,12 @@
 .profile-breakdown li > div { display: flex; justify-content: space-between; gap: 16px; margin-block-end: 8px; font-size: .9375rem; overflow-wrap: anywhere; }
 .profile-breakdown strong { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .profile-breakdown small { font-weight: 400; color: var(--paper-color-text-muted); }
-/* The track sits between the rule and field-edge greys, so it shows the whole scale without rivalling the fill. */
-.profile-bar { display: block; block-size: 6px; background: color-mix(in srgb, var(--paper-color-rule-field-edge) 50%, var(--paper-color-rule-default)); }
+.profile-bar { display: block; block-size: 6px; background: var(--paper-color-rule-default); }
 .profile-bar > span { display: block; block-size: 100%; min-inline-size: 2px; background: var(--paper-color-text-link); }
 .profile-contests li { display: grid; padding-block: 12px; border-block-end: 1px solid var(--paper-color-rule-default); overflow-wrap: anywhere; }
 .profile-contest-title { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+/* Contest history stays quieter than the charts above it: body-weight titles, still underlined as links. */
+.profile-contest-title .profile-entry-title { font-weight: 400; }
 .profile-contests li:first-child { padding-block-start: 0; }
 .profile-contests li:last-child { padding-block-end: 0; border-block-end: 0; }
 .profile-contests + .paper-pagination { margin-block-start: 20px; }

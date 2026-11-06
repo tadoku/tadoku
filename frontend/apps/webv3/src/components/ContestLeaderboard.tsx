@@ -127,7 +127,7 @@ export function ContestBoardBody({ board, phase, page, pageHref, title, status, 
         </div>
         <aside className="standings-aside">
           <section aria-labelledby="standings-conditions">
-            <h2 id="standings-conditions" className="paper-type-component">Contest conditions</h2>
+            <h2 id="standings-conditions" className="paper-type-component">About this contest</h2>
             {contest.description ? <p className="standings-description">{contest.description}</p> : null}
             <ContestFacts contest={contest} phase={phase} />
             {asideLink}

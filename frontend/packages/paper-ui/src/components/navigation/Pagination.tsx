@@ -86,7 +86,7 @@ export function Pagination({
           ) : (
             <li key={token}>
               {token === currentPage ? (
-                <span className="paper-pagination__page" aria-current="page" aria-label={`Page ${token}`}>
+                <span className="paper-pagination__page" aria-current="page" aria-label={`Page ${token} of ${totalPages}`}>
                   {token}<span className="paper-pagination__of" aria-hidden="true">&nbsp;of {totalPages}</span>
                 </span>
               ) : getHref ? renderNavigationLink(renderLink, {

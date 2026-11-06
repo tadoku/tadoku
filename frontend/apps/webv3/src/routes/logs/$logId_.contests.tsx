@@ -148,6 +148,7 @@ function ContestsForm({ log, registrations, viewerId }: {
                     {field => <field.Checkbox label={choice.registration.contest.title} value={choice.registration.id} />}
                   </form.AppField>
                 ))}
+                {eligible.length ? <p className="log-contests-note">Unchecking removes this log’s score from that contest.</p> : null}
                 {/* Unavailable contests are grouped under their shared reason instead of repeating it on every row. */}
                 {ineligibleByReason(choices).map(([reason, group]) => (
                   <div key={reason} className="log-contest-group" role="group" aria-label={reason}>
@@ -166,9 +167,7 @@ function ContestsForm({ log, registrations, viewerId }: {
                   </p>
                 ))}
               </fieldset>
-              {eligible.length ? (
-                <p className="log-contests-note">Unchecking removes this log’s score from that contest.</p>
-              ) : (
+              {eligible.length ? null : (
                 <EmptyState
                   variant="plain"
                   headingLevel={2}

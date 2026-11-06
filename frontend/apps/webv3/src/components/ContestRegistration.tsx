@@ -84,7 +84,8 @@ function Registration({ contest, viewerId, phase }: { contest: ImmersionContestV
         </div>
         <aside className="standings-aside">
           <section aria-labelledby="registration-round">
-            <h2 id="registration-round" className="paper-type-component">Contest conditions</h2>
+            <h2 id="registration-round" className="paper-type-component">About this contest</h2>
+            {contest.description ? <p className="standings-description">{contest.description}</p> : null}
             <ContestFacts contest={contest} phase={phase} />
           </section>
         </aside>

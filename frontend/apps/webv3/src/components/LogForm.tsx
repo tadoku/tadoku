@@ -87,7 +87,7 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
     <div className="log-form-page">
       {editing ? (
         <PageHeader
-          title="Edit activity"
+          title="Edit log"
           lead={`${editing.language.name} · ${editing.activity.name}`}
           backLink={{ href: `/logs/${editing.id}`, label: editing.description || `${editing.language.name} ${editing.activity.name}` }}
         />

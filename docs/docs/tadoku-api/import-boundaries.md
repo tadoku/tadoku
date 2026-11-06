@@ -83,11 +83,8 @@ graph. Each allowed package covers only its own targets, not subpackages, and
 
 - Only `features/leaderboard`, `features/identity` (login throttling),
   `services/tadoku-api/infra/valkey`, startup, E2E
-  and the `app/worker:worker_test` and
-  `app/tenantlifecycle:tenantlifecycle_test` targets may depend directly on `valkey-go`.
-  The worker test needs a raw client because `leaderboard.NewCache` takes
-  one; it seeds and inspects cache keys and simulates a blocked or unavailable
-  Valkey. The `app/worker` library itself may not.
+  and the `app/tenantlifecycle:tenantlifecycle_test` target may depend directly
+  on `valkey-go`.
 
 ## Repository and store files
 

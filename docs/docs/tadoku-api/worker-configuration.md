@@ -22,8 +22,7 @@ dispatch; [Jobs and worker](./jobs.md) describes publication, execution policies
 replay and consumer-first version migrations.
 
 The worker uses `WORKER_POSTGRES_*` split connection configuration,
-`WORKER_POSTGRES_MAX_CONNECTIONS` (default 4, range 1–32), `WORKER_VALKEY_URL`,
-`WORKER_VALKEY_TIMEOUT` (default 1s),
+`WORKER_POSTGRES_MAX_CONNECTIONS` (default 4, range 1–32),
 `WORKER_DIAL_TIMEOUT` (default 3s), `WORKER_CONCURRENCY` (default 4), and
 `WORKER_SHUTDOWN_TIMEOUT` (default 15s). Concurrency and shutdown timeout must
 be positive; the command loads and validates both before application startup.
@@ -43,17 +42,15 @@ and lease transition still uses the tenant persisted on its claimed job.
 
 Private health and metrics listeners default to `WORKER_PORT=8000` and
 `WORKER_METRICS_PORT=9090`. It has no public route. The API and worker must use
-the same database and tenant-derived cache keys. Development branches use
+the same database. Development branches use
 their route's full tenant key even when a migration profile selects a private
 database.
 
-The worker invalidates leaderboard caches through registered jobs. A cache miss
-rebuilds from PostgreSQL only if its generation has not changed, and cached
-reads recheck that generation before returning; unavailable Valkey falls back
-to PostgreSQL. Worker Pod readiness reports whether the execution loop can
-operate, independently of individual job success. Monitor queued and failed
-jobs because cached results can remain stale while invalidation work is
-outstanding.
+The worker does not connect to Valkey: leaderboard reads check the board's
+version in PostgreSQL, so their freshness does not depend on the worker. Worker
+Pod readiness reports whether the execution loop can operate, independently of
+individual job success. Monitor queued and failed jobs because queued email and
+account deletions wait until they complete.
 
 Global and per-type concurrency are per process. Handler cancellation does not
 release its slot until it returns. On shutdown the application stops claiming,

@@ -268,13 +268,11 @@ and all database work inside its owned pools.
 `services/tadoku-api/e2e/tenant_isolation_test.go` runs signed requests through
 the production router with real JWT verification, PostgreSQL and Valkey. It
 covers two-way log visibility, duplicate page slugs and synchronized identities,
-shared-table write denial, base and branch job claims, actual delegated
-provider tenant contexts, and test-tenant deletion including a replay chain
-without changing canonical rows. Pool tests also prove fresh and reused
+shared-table write denial, base and branch job claims, and test-tenant deletion
+including a replay chain without changing canonical rows. Pool tests also prove fresh and reused
 unscoped connections fail closed. These checks cover database/context
-isolation. The leaderboard Valkey tests also prove that invalidating one tenant
-keeps the other tenant's warm page and that missing-tenant invalidation writes
-no key.
+isolation. The leaderboard Valkey tests also prove that a read without a
+tenant writes no key.
 
 Development seed SQL requires `psql` variables including `tenant`. Exercise
 the files in `scripts/dev/seed/` against a disposable migrated database,

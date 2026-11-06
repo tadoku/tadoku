@@ -58,13 +58,10 @@ Filtered reads use PostgreSQL only. Valkey errors fall back to PostgreSQL. A
 PostgreSQL error on the version read fails the request: no board is served
 without PostgreSQL.
 
-Writes also publish `leaderboard.invalidate_contest.v1` and
-`leaderboard.invalidate_official.v1` jobs for the previous release's reads,
-which do not check versions. Their handlers delete the board's keys and
-advance its `:generation`. They do not decide freshness for version-checking
-reads. While pods of the previous release still serve, a pending or failed
-invalidation can leave the boards those pods read stale, so replay a failed
-one until they are gone.
+Writes publish no leaderboard jobs. The worker still registers
+`leaderboard.invalidate_contest.v1` and `leaderboard.invalidate_official.v1`,
+whose handlers complete leftover rows without doing anything. A pending or
+failed one leaves no board stale and needs no replay.
 
 The worker's private `/livez` answers while the process serves. `/readyz`
 succeeds only when the last claim pass succeeded for every registered name and

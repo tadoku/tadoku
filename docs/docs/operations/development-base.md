@@ -133,7 +133,7 @@ logging, private SSR and activation.
 
 The private `tadoku-worker` Deployment consumes `jobs` in the base
 `tadoku` database across tenants without a matching `tadoku-worker` override.
-It derives leaderboard keys from each persisted job tenant. It has one
+It has one
 replica, Recreate rollout, a separate image digest, and no Service or public
 route. Its resource requests and limits are in
 `k8s/dev/base/services/tadoku-worker.yaml`.
@@ -352,7 +352,7 @@ exact tested revision and any substituted routing boundary.
 | The initial sync waits at the auth-provider wave | Run the bootstrap script once the namespaces and operator Secrets exist. |
 | Consumers fail after operator credentials rotated | Rerun the bootstrap script, then perform an explicitly approved consumer restart. |
 | Resources are healthy but a host serves another workload | Look for competing Ingresses or HTTPRoutes on the canonical hosts. Owner-scoped dev-cli branch Ingresses labelled `dev-cli.io/managed-by=dev-cli` in `tdk-dev-routing` are expected. |
-| Leaderboards are stale | Run the [asynchronous worker checks](#asynchronous-worker-ownership). |
+| Leaderboards are stale | Reads do not depend on the worker; see [Leaderboard freshness](../tadoku-api/jobs-operations.md#leaderboard-freshness-and-worker-health). |
 
 Do not restart shared services or delete databases as a troubleshooting
 shortcut, and do not delete old resources or data without explicit approval.

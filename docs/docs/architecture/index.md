@@ -18,7 +18,7 @@ documented here.
 | Component | Role | Defined in |
 | --- | --- | --- |
 | Tadoku API | Serves every public HTTP operation and publishes typed jobs in the business transaction. | `services/tadoku-api/`, `k8s/dev/base/services/tadoku-api.yaml` |
-| Tadoku worker | Executes registered jobs, composes feature operations and invalidates leaderboard caches. | `services/tadoku-api/cmd/tadoku-worker/`, `k8s/dev/base/services/tadoku-worker.yaml` |
+| Tadoku worker | Executes registered jobs and composes feature operations. | `services/tadoku-api/cmd/tadoku-worker/`, `k8s/dev/base/services/tadoku-worker.yaml` |
 | webv2 | Main site: logging, contests, leaderboards and content | `frontend/apps/webv2/`, `k8s/dev/base/frontend-webv2/` |
 | authv2 | Account app: login, registration, recovery and Settings through the identity API | `frontend/apps/authv2/`, `k8s/dev/base/frontend-authv2/` |
 | admin | Administration, moderation and CMS | `frontend/apps/admin/`, `k8s/dev/base/frontend-admin/` |
@@ -74,8 +74,8 @@ browser → ingress-nginx → Envoy → webv2 / authv2 / admin
 - A log counts on the official boards when its `eligible_official_leaderboard`
   is set. Every request that attaches or detaches a live user's log, including
   a registration that drops a language, recomputes that flag in the same
-  transaction from whether an official contest is still attached, and
-  invalidates the official boards for the log's year. Nothing recomputes stored
+  transaction from whether an official contest is still attached. Nothing
+  recomputes stored
   flags in bulk: a stored flag is corrected only when its log's attachments
   next change.
 - Both paths order a board by score descending, then user ID descending, so

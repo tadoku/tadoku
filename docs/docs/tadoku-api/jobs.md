@@ -70,20 +70,17 @@ types for registered handlers; a name must never depend on payload fields.
 
 ```go
 // domain/jobs: a concrete payload carries its versioned name.
-const LeaderboardInvalidateContestV1 Type = "leaderboard.invalidate_contest.v1"
-
-type InvalidateContestLeaderboardV1 struct {
-    ContestID uuid.UUID `json:"contest_id"`
+type SendEmailV1 struct {
+    EmailID uuid.UUID `json:"email_id"`
 }
 
-func (InvalidateContestLeaderboardV1) Type() Type {
-    return LeaderboardInvalidateContestV1
-}
+const EmailSendV1 Type = "email.send.v1"
+
+func (SendEmailV1) Type() Type { return EmailSendV1 }
 ```
 
 Name exported constants after the full persisted name in PascalCase, including
-the version: `LeaderboardInvalidateContestV1` and
-`LeaderboardInvalidateOfficialV1`. Keep the version in payload type names and
+the version: `EmailSendV1` and `AccountDeleteV1`. Keep the version in payload type names and
 persisted strings too, so multiple contract versions can coexist.
 
 The message contract includes its fields, validation, meaning and side effects.
@@ -133,11 +130,20 @@ cancel path. The worker registers this handler with concurrency 1, a
 60-second bound and five attempts. See
 [Account deletion](./account-deletion.md) for its effects.
 
+### Leaderboard invalidation contracts
+
+Nothing publishes `leaderboard.invalidate_contest.v1` or
+`leaderboard.invalidate_official.v1`. The worker keeps both registered with
+concurrency 2, a 20-second bound and five attempts, and their handlers complete
+without doing anything, so leftover, retried and replayed rows finish.
+Leaderboard reads check the board's version instead; see
+[Leaderboard freshness](./jobs-operations.md#leaderboard-freshness-and-worker-health).
+
 ## Publish atomically
 
 A producing feature returns its ordinary result and `Jobs []jobs.Job`. It
 constructs the required business jobs; the application passes them through
-without reconstructing payloads or deciding the invalidations itself.
+without reconstructing payloads or deciding the follow-up work itself.
 
 ```go
 func (s *Service) Enqueue(ctx context.Context, batch ...jobs.Job) error
@@ -202,12 +208,14 @@ func registrations(
 }
 ```
 
-It has two callers. `NewApplication` passes the application's handler methods,
-which compose feature services:
+It has two callers. `NewApplication` passes `ignoreJob[J]` for the two
+leaderboard invalidation types and the application's handler methods, which
+compose feature services, for the rest:
 
 ```go
-func (a *Application) InvalidateContestLeaderboard(ctx context.Context, job jobs.InvalidateContestLeaderboardV1) error {
-    return a.leaderboard.InvalidateContest(ctx, job.ContestID)
+func (a *Application) SendEmail(ctx context.Context, job jobs.SendEmailV1) error {
+    final, _ := ctx.Value(finalAttemptKey{}).(bool)
+    return a.email.SendAttempt(ctx, job.EmailID, final)
 }
 ```
 

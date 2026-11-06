@@ -85,9 +85,8 @@
     background: transparent;
   }
 
-  /* Destructive fills are dark in both themes, so their label stays the light inverse ink. */
   .paper-button--destructive {
-    color: var(--paper-color-text-inverse);
+    color: var(--paper-color-action-destructive-text);
     background: var(--paper-color-action-destructive);
     border-color: var(--paper-color-action-destructive);
     border-block-end-color: var(--paper-color-rule-destructive-action-edge);

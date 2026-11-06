@@ -4,7 +4,8 @@
 .log-form__card { min-width: 0; padding: 0; overflow: hidden; overflow-wrap: anywhere; }
 .log-form__fields { padding: clamp(1rem, 4vw, 2rem); }
 .log-form__estimate { margin: 0; padding: 10px clamp(1rem, 4vw, 2rem); border-top: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-canvas); text-align: center; font-variant-numeric: tabular-nums; }
-.log-form__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+.log-form__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 16px clamp(1rem, 4vw, 2rem) clamp(1rem, 4vw, 2rem); }
+.log-form__card > .paper-flash, .log-form__card > [role="alert"] { margin: 16px clamp(1rem, 4vw, 2rem) 0; }
 .log-form__aside { display: none; }
 .log-tags-sidebar { display: grid; gap: 16px; }
 .log-tags-sidebar__group h2 { margin: 0 0 8px; font-family: var(--paper-font-body); font-size: .875rem; font-weight: 600; line-height: 1.5; color: var(--paper-color-text-muted); }

@@ -19,7 +19,7 @@
   }
 
   .paper-stat-grid__label {
-    align-self: end;
+    align-self: start;
     color: var(--paper-color-text-muted);
     font-size: 0.875rem;
     line-height: 1.5;

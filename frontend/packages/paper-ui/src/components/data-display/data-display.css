@@ -137,8 +137,11 @@
     fill: var(--paper-color-heat-4);
   }
 
+  /* Future days differ by shape, an outline with no fill, rather than by another shade of grey. */
   .paper-heatmap__cell[data-future] {
-    fill: var(--paper-color-rule-subtle);
+    fill: transparent;
+    stroke: var(--paper-color-rule-default);
+    stroke-width: 1;
   }
 
   .paper-heatmap__link:focus {

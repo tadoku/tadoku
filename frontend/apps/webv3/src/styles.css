@@ -158,8 +158,8 @@ a { text-underline-offset: .2em; }
 /* Log detail: the figures and facts read as one record, with the contests a section below it. */
 .log-record { display: grid; gap: 24px; }
 .log-detail > .paper-page-header { max-width: 48rem; }
-.contest-daily { max-width: 48rem; }
-.contest-profile-stats { max-width: 48rem; }
+/* A participant's contest record reads as one 48rem column. */
+.contest-profile > * { max-width: 48rem; }
 .log-contests { max-width: 48rem; margin-top: 32px; }
 .log-contest-list { list-style: none; margin: 0 0 16px; padding: 0; }
 .log-contest-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-block: 12px; border-bottom: 1px solid var(--paper-color-rule-default); }
@@ -224,7 +224,7 @@ a { text-underline-offset: .2em; }
 .contest-row:first-child { border-top: 0; }
 .contest-row__body { min-width: 0; overflow-wrap: anywhere; }
 .contest-row__title { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
-.contest-row__title h2 { margin: 0; }
+.contest-row__title h2 { margin: 0; font-family: var(--paper-font-body); font-size: 1rem; line-height: 1.5; font-weight: 600; }
 .contest-row__title a { color: inherit; text-decoration: underline; text-decoration-color: var(--paper-color-rule-default); text-decoration-thickness: 1px; text-underline-offset: .2em; }
 .contest-row__title a:hover, .contest-row__title a:focus-visible { color: var(--paper-color-text-link); text-decoration-color: currentColor; }
 .contest-row__body p { margin: 6px 0 0; font-size: .875rem; line-height: 1.6; }

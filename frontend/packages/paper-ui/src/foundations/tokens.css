@@ -17,8 +17,6 @@
   --paper-private-rule-strong: #393235;
   --paper-private-field-edge: #857d72;
   --paper-private-accent: #5747b8;
-  --paper-private-accent-hover: #49399f;
-  --paper-private-accent-active: #40318c;
   --paper-private-accent-edge: #35277f;
   --paper-private-accent-soft: #e8e4fa;
   --paper-private-neutral-action-hover: #e9e5dc;
@@ -58,6 +56,7 @@
   --paper-color-action-text: var(--paper-private-inverse);
   --paper-color-action-destructive: var(--paper-private-action-destructive);
   --paper-color-action-destructive-hover: var(--paper-private-action-destructive-hover);
+  --paper-color-action-destructive-text: var(--paper-private-inverse);
   --paper-color-status-information: var(--paper-private-information);
   --paper-color-status-success: var(--paper-private-success);
   --paper-color-status-warning: var(--paper-private-warning);
@@ -101,16 +100,14 @@
   --paper-private-rule-strong: #b8afb3;
   --paper-private-field-edge: #968d91;
   --paper-private-accent: #a99cf0;
-  --paper-private-accent-hover: #6d5cc7;
-  --paper-private-accent-active: #5747b8;
   --paper-private-accent-edge: #5f52aa;
   --paper-private-accent-soft: #40386a;
   --paper-private-neutral-action-hover: #353134;
   --paper-private-action-default: #9b8cf2;
   --paper-private-action-hover: #aa9ef5;
   --paper-private-action-active: #8b7be6;
-  --paper-private-action-destructive: #9f3d3d;
-  --paper-private-action-destructive-hover: #b14a4a;
+  --paper-private-action-destructive: #d77171;
+  --paper-private-action-destructive-hover: #e09292;
   --paper-private-information: #70acd0;
   --paper-private-success: #7fb488;
   --paper-private-warning: #ddb66f;
@@ -136,6 +133,8 @@
   --paper-color-rule-destructive-action-edge: var(--paper-private-danger-edge);
   --paper-color-action-destructive: var(--paper-private-action-destructive);
   --paper-color-action-destructive-hover: var(--paper-private-action-destructive-hover);
+  /* Dark destructive fills are light enough to clear 3:1 on every surface, so their label is canvas-dark. */
+  --paper-color-action-destructive-text: var(--paper-private-canvas);
   --paper-color-status-information: var(--paper-private-information);
   --paper-color-status-success: var(--paper-private-success);
   --paper-color-status-warning: var(--paper-private-warning);
@@ -161,9 +160,9 @@
   --paper-color-chart-8: #c58e9b;
 
   --paper-color-heat-0: #4a4448;
-  --paper-color-heat-1: #6352b8;
-  --paper-color-heat-2: #8f7de0;
-  --paper-color-heat-3: #bcaff5;
+  --paper-color-heat-1: #7a6ad2;
+  --paper-color-heat-2: #9a8ae6;
+  --paper-color-heat-3: #c0b4f5;
   --paper-color-heat-4: #ece7ff;
 }
 

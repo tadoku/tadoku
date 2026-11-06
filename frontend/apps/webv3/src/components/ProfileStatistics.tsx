@@ -36,7 +36,7 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
             headingLevel={3}
             title={`No activity recorded in ${year}`}
             description={owner
-              ? 'A few pages or minutes are a good place to start. Your personal record grows with every entry.'
+              ? 'A few pages or minutes are a good place to start.'
               : 'Scores and the activity calendar appear after the first update of the year.'}
             actions={owner ? <a className={buttonClassName()} href={links.logs}>Log activity</a> : null}
           />

@@ -34,6 +34,7 @@ export function ContestsPage({ collection, page }: { collection: ContestCollecti
   return (
     <div className="contests-page">
       <PageHeader
+        className="standings-header"
         title="Contests"
         actions={canCreate ? <Link className={buttonClassName({ variant: 'outline' })} to={links.newContest}>Create contest</Link> : null}
       />

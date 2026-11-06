@@ -62,9 +62,7 @@ export function HomePage() {
                   ? <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a>
                   : <a href={links.logs} className={buttonClassName()}>Log activity</a>}
               </div>
-              {joinable
-                ? <p className="home-fineprint">Free to join. Registration closes {formatDate(contest.registration_end)}.</p>
-                : <p className="home-fineprint">You can track your progress without joining a contest.</p>}
+              {joinable && <p className="home-fineprint">Free to join. Registration closes {formatDate(contest.registration_end)}.</p>}
             </div>
           )}
 
@@ -129,7 +127,7 @@ function MemberPromise({ member, data, phase }: {
   let lead: string
   if (running && entry) {
     headline = `${place(entry.rank)} place`
-    lead = `${numberFormat.format(entry.score)} ${pointsUnit(entry.score)} so far in ${contest.title}.`
+    lead = `${numberFormat.format(entry.score)} ${pointsUnit(entry.score)} so far.`
   } else if (running && registered) {
     headline = `You’re in ${contest.title}`
     lead = phase === 'upcoming' ? `The round starts ${formatDate(contest.contest_start)}.` : 'Log what you read and listen to; every entry counts towards the round.'
@@ -209,8 +207,6 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
       <StatGrid className="home-ledger-stats" stats={[{ label: 'Length', value: `${length} days` }, ...(activities ? [{ label: 'Activities', value: activities }] : [])]} />
       <div className="home-ledger-message">
         <p className="home-start-date"><span>Starts</span><strong>{formatDate(contest.contest_start)}</strong></p>
-        <h3>Make space for immersion</h3>
-        <p>Choose your languages when you join. Contest scoring begins when the round starts.</p>
       </div>
     </>
   }

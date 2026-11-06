@@ -38,10 +38,12 @@
 
   .paper-page-header__heading,
   .paper-page-header__status,
+  /* Actions overhang the title line slightly instead of making a header with actions taller than one without. */
   .paper-page-header__actions {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
+    margin-block: calc((var(--paper-type-page-line-height) - var(--paper-control-height)) / 2);
   }
 
   .paper-page-header__heading {

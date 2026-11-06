@@ -64,7 +64,6 @@
   .paper-choice + .paper-field__hint { margin-block-start: -0.25rem; padding-inline-start: calc(1.15rem + var(--paper-inline-gap)); }
   .paper-combobox__chip-input::placeholder { color: var(--paper-color-text-muted); opacity: 1; }
   .paper-combobox__chip button:focus-visible { outline: var(--paper-focus-ring-width) solid var(--paper-color-focus-ring); outline-offset: 0; }
-  .paper-tags-input .paper-combobox__chip { padding: 0.1rem 0.2rem 0.1rem 0.55rem; border-color: transparent; background: var(--paper-color-surface-canvas); }
     .paper-tags-input__option { display: block; overflow-wrap: anywhere; }
   .paper-combobox__chips:has(.paper-combobox__chip-input:focus-visible),
   .paper-combobox__chips:has(> .paper-combobox__trigger:focus-visible) { --paper-control-focus-color: var(--paper-color-focus-ring); position: relative; z-index: 1; border-block-end-color: var(--paper-control-focus-color); outline: var(--paper-focus-ring-width) solid var(--paper-control-focus-color); outline-offset: var(--paper-focus-ring-offset); }

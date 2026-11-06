@@ -111,17 +111,16 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
                 </div>
               </fieldset>
               <ScoreEstimate form={form} options={options} />
+              {failure ? <SaveFailure failure={failure} viewerId={viewerId} editing={editing} /> : null}
+              <div className="log-form__actions">
+                <Button type="submit" disabled={disabled} loading={pending} loadingLabel="Saving">
+                  {editing ? 'Save' : 'Create'}
+                </Button>
+                {editing
+                  ? <Link className="text-link" to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
+                  : <Link className="text-link" to="/">Cancel</Link>}
+              </div>
             </Surface>
-
-            {failure ? <SaveFailure failure={failure} viewerId={viewerId} editing={editing} /> : null}
-            <div className="log-form__actions">
-              <Button type="submit" disabled={disabled} loading={pending} loadingLabel="Saving">
-                {editing ? 'Save' : 'Create'}
-              </Button>
-              {editing
-                ? <Link className="text-link" to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
-                : <Link className="text-link" to="/">Cancel</Link>}
-            </div>
           </form.Form>
           <aside className="log-form__aside" aria-label="Suggested tags">
             <TagsSidebar form={form} activityId={activityId} disabled={disabled} compact={false} />

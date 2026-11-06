@@ -17,6 +17,7 @@ import { formatDate, pointsUnit } from '../../lib/format'
 import { useLinks } from '../../lib/links'
 import { logQuery, useDeleteLog, type ImmersionLog, type LogFailure } from '../../lib/logs'
 import { viewerKey, viewerQueryOptions } from '../../lib/session'
+import { renderLink } from '../../components/router-link'
 
 export const Route = createFileRoute('/logs/$logId')({
   head: () => ({ meta: [{ title: 'Activity · Tadoku' }] }),
@@ -31,6 +32,7 @@ export const Route = createFileRoute('/logs/$logId')({
 
 function LogDetail() {
   const { logId } = Route.useParams()
+  const links = useLinks()
   const { data: viewer } = useQuery(viewerQueryOptions())
   const { data: result } = useQuery(logQuery(logId, viewerKey(viewer)))
   useFocusPageHeading()
@@ -52,6 +54,8 @@ function LogDetail() {
   return (
     <div className="goal-page log-detail">
       <PageHeader
+        backLink={{ href: links.profileUpdates(log.user_id), label: owner ? 'Your activity' : 'Activity' }}
+        renderLink={renderLink}
         title={log.description || subject}
         lead={`${log.language.name} · ${log.activity.name}`}
         actions={owner ? <OwnerActions log={log} /> : null}

@@ -73,7 +73,9 @@ func leaderboardInputs(t *testing.T) []string {
 	}
 	walk(tree)
 
-	relations = slices.DeleteFunc(relations, func(name string) bool { return slices.Contains(commonTables, name) })
+	relations = slices.DeleteFunc(relations, func(name string) bool {
+		return name == "leaderboard_versions" || slices.Contains(commonTables, name)
+	})
 	slices.Sort(relations)
 	return slices.Compact(relations)
 }

@@ -48,8 +48,8 @@ func TestFixtureScenarioCasesStayInTheirTenants(t *testing.T) {
 		{directory: "testdata/ImmersionFetchLeaderboardForYear/200_empty_cache_miss", want: http.StatusOK},
 		{directory: "testdata/ProfileAccountDeletionCreate/202_normalized_email", want: http.StatusAccepted},
 	}
-	filed := tenantFootprint{jobs: 1, audits: 1, lockedUsers: 1, cacheKeys: 2}
-	deleted := tenantFootprint{jobs: 2, completedJobs: 2, audits: 2, lockedUsers: 1, cacheKeys: 2}
+	filed := tenantFootprint{jobs: 1, audits: 1, lockedUsers: 1, cacheKeys: 1}
+	deleted := tenantFootprint{jobs: 2, completedJobs: 2, audits: 2, lockedUsers: 1, cacheKeys: 1}
 
 	var started, ran sync.WaitGroup
 	started.Add(2)

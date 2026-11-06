@@ -69,9 +69,8 @@ from the full tenant key; the fixed IDs in the index belong only to canonical
 `tadoku/prod` and return 404 on a branch. Time windows,
 language restrictions, activity units, contest eligibility and registrations affect
 scores; don't assume every log counts everywhere. A log may need explicit contest
-submission. Cached scores change after the standalone worker completes the
-invalidation job; a warm leaderboard can remain stale while that job is pending
-or failed. See the [freshness contract](../../../../../docs/docs/tadoku-api/jobs-operations.md#leaderboard-freshness-and-worker-health).
+submission. The next leaderboard read shows a committed write without the
+worker; see the [freshness contract](../../../../../docs/docs/tadoku-api/jobs-operations.md#leaderboard-freshness-and-worker-health).
 Avoid comparing exact shared seed totals after another test may have edited them.
 
 ## Source anchors

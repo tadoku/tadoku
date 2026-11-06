@@ -14,43 +14,12 @@ jobs.
 ## Leaderboard freshness and worker health
 
 PostgreSQL is the source of truth, but unfiltered global, yearly and contest
-leaderboards use warm Valkey cache keys derived from the request or persisted
-job tenant, in the form `tenant:<name>/<id>:leaderboard:…`. Invalidation changes
-only that tenant's keys. Private development databases sharing `tadoku/prod`
-retain their route prefix as described in
+leaderboards use warm Valkey cache keys derived from the request tenant, in the
+form `tenant:<name>/<id>:leaderboard:…`. Private development databases sharing
+`tadoku/prod` retain their route prefix as described in
 [Valkey configuration](./configuration.md#valkey-and-leaderboard-caches).
-The API does not check worker readiness
-or the queue before serving a warm key. It can therefore serve an outdated
-leaderboard while the worker is down, while that key's invalidation job is
-pending or running, and after the job has failed terminally. A rebuild sets
-the board's `:last_updated` marker to expire after 28 days, and its
-`:generation` with it; only the sorted set does not expire. A `:generation`
-that a miss creates expires after an hour unless a rebuild publishes under it.
-Once the marker lapses, the next read
-misses and rebuilds from PostgreSQL. A failed invalidation therefore leaves the
-key stale until the first of three events: another write affecting the same
-contest or year publishes a new invalidation, an operator replays the failed
-job, or the marker expires, at most 28 days after the board's rebuild. Replay
-is the faster recovery and the expected response to a failed invalidation.
-There is no startup reconciliation of all leaderboard keys.
 
-On a cache miss, the API rebuilds from PostgreSQL behind a generation check so
-an older rebuild cannot overwrite a completed invalidation. A board has three
-keys: the sorted set, its `:last_updated` marker and its `:generation`. The page
-script reads them together and serves a page only when the marker names the
-current generation and the set's size, so a lost key, a restart without
-persistence, or a rebuild that stops partway is only a miss. A generation is a
-random value created before a miss loads the board and incremented by
-invalidations, so a lost generation never returns to a value a pending rebuild
-read. The development Valkey evicts with `allkeys-lru` and keeps nothing across
-restarts. Production's Valkey is Upstash, configured outside this repository,
-with eviction off.
-
-Filtered reads use PostgreSQL, and Valkey errors fall back to PostgreSQL.
-Those paths do not make an already warm key fresh while its invalidation
-remains unprocessed.
-
-PostgreSQL also keeps a version per board in `leaderboard_versions`, keyed by
+PostgreSQL keeps a version per board in `leaderboard_versions`, keyed by
 tenant and `global`, `yearly:<year>` or `contest:<id>`. Deferred row triggers
 on `logs`, `contest_logs`, `contest_registrations`, `users` and `contests`
 raise the version of every unfiltered board a write changes, whatever issued
@@ -58,32 +27,51 @@ the write. They run when the writing transaction commits, after its last
 statement, and a transaction may raise a board more than once; only a change
 in version is meaningful. A write that changes nothing an unfiltered board
 reads, such as a description edit, freezing a log, changing registered
-languages or purging a left registration, raises nothing. At commit a raise takes a transaction-scoped
-advisory lock for the tenant before any version row, so committing writers of
-one tenant raise in turn and cannot deadlock on version rows or with their own
-row locks. A board with no row is at version 0. A write that commits while its
-test tenant's deletion is in progress fails with `lock_not_available` instead
-of waiting on the deletion, so its data and its versions roll back together.
-The read path does not consult these versions yet.
+languages or purging a left registration, raises nothing. At commit a raise
+takes a transaction-scoped advisory lock for the tenant before any version
+row, so committing writers of one tenant raise in turn and cannot deadlock on
+version rows or with their own row locks. A board with no row is at version 0.
+A write that commits while its test tenant's deletion is in progress fails
+with `lock_not_available` instead of waiting on the deletion, so its data and
+its versions roll back together.
 `TestLeaderboardVersionsCoverEveryLeaderboardInput` in
 `services/tadoku-api/features/leaderboard/` fails when a relation in
 `services/tadoku-api/sql/leaderboard/leaderboard.sql` lacks its triggers;
 add the triggers with the query change.
 
+Every unfiltered read first reads its board's version from PostgreSQL, one
+primary-key lookup. A board has two Valkey keys: the sorted set and its
+`:last_updated` marker, which names the version the set was built from and the
+set's size. The page script serves a page only when the marker names the
+version the read saw and the set's size; otherwise the read loads the board
+from PostgreSQL, serves it and publishes it under that version, unless the
+marker already names a later one. The version is read before the board, so a
+published board is never older than the version its marker names. A served
+board therefore reflects every write committed before the read began, without
+the worker, and neither key expires. A lost key, a restart without persistence
+or a rebuild that stops partway is only a miss. The development Valkey evicts
+with `allkeys-lru` and keeps nothing across restarts. Production's Valkey is
+Upstash, configured outside this repository, with eviction off.
+`services/tadoku-api/spec/tla/LeaderboardCache.tla` models the read path.
+
+Filtered reads use PostgreSQL only. Valkey errors fall back to PostgreSQL. A
+PostgreSQL error on the version read fails the request: no board is served
+without PostgreSQL.
+
+Writes also publish `leaderboard.invalidate_contest.v1` and
+`leaderboard.invalidate_official.v1` jobs for the previous release's reads,
+which do not check versions. Their handlers delete the board's keys and
+advance its `:generation`. They no longer decide freshness: a pending or
+failed invalidation leaves no board stale, and needs no replay.
+
 The worker's private `/livez` answers while the process serves. `/readyz`
 succeeds only when the last claim pass succeeded for every registered name and
-PostgreSQL answers a ping. It does not check Valkey, assert that any
-leaderboard is current, or mean that every job succeeded.
-Watch the [worker metrics](./worker-configuration.md#worker-metrics): pending jobs and
-oldest due age show delayed invalidations, failed jobs show terminal failures,
+PostgreSQL answers a ping. It does not check Valkey or mean that every job
+succeeded.
+Watch the [worker metrics](./worker-configuration.md#worker-metrics): pending
+jobs and oldest due age show delayed work, failed jobs show terminal failures,
 and unsupported-job gauges show work this worker cannot claim. The backlog
-gauges refresh at startup and every fifteen seconds. Investigate any failed
-leaderboard invalidation in `jobs`. Inspect its `last_error` and repair the
-cause before using the
-[replay command](#inspect-and-replay-retained-work). Verify the replayed job
-completes and a subsequent leaderboard read reflects PostgreSQL. A later write
-can also publish another invalidation, but do not depend on users making one to
-recover a stale board.
+gauges refresh at startup and every fifteen seconds.
 
 ## Run jobs on your development branch
 

@@ -1,12 +1,16 @@
 package e2e_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"maps"
 	"net/http"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func TestImmersionFetchLeaderboardGlobal(t *testing.T) {
@@ -142,9 +146,12 @@ func runLeaderboardCase(t *testing.T, name string, want int, cache, cacheKey str
 	})
 }
 
-func seedLeaderboardCache(t *testing.T, tenantKey, key, cache string) {
+// seedLeaderboardCache warms cacheKey with a board built from the tenant's current version of it, so the next read
+// serves the seeded scores.
+func seedLeaderboardCache(t *testing.T, tenantKey, cacheKey, cache string) {
 	t.Helper()
-	key = "tenant:" + tenantKey + ":" + key
+	board := strings.TrimPrefix(cacheKey, "leaderboard:")
+	key := "tenant:" + tenantKey + ":" + cacheKey
 	client := leaderboardValkey.client
 	builder := client.B().Zadd().Key(key).ScoreMember().ScoreMember(77, "11111111-1111-4111-8111-111111111111")
 	if cache == "hit_many" {
@@ -164,10 +171,11 @@ func seedLeaderboardCache(t *testing.T, tenantKey, key, cache string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := client.Do(t.Context(), client.B().Set().Key(key+":generation").Value("1").Build()).Error(); err != nil {
-		t.Fatal(err)
-	}
-	marker := client.B().Set().Key(key + ":last_updated").Value("native:1:" + strconv.FormatInt(size, 10)).Build()
+	version := strconv.FormatInt(leaderboardVersion(t, tenantKey, board), 10)
+	marker := client.B().Set().
+		Key(key + ":last_updated").
+		Value("version:" + version + ":" + strconv.FormatInt(size, 10)).
+		Build()
 	if err := client.Do(t.Context(), marker).Error(); err != nil {
 		t.Fatal(err)
 	}
@@ -242,5 +250,93 @@ func verifyRebuiltLeaderboardCache(t *testing.T, tenantKey, key string) {
 	}
 	if !maps.Equal(got, want) {
 		t.Fatalf("rebuilt leaderboard entries = %v, want %v", got, want)
+	}
+}
+
+func leaderboardVersion(t *testing.T, tenantKey, board string) int64 {
+	t.Helper()
+	var version int64
+	err := pgx.BeginTxFunc(t.Context(), api.db.AppPool, pgx.TxOptions{AccessMode: pgx.ReadOnly}, func(tx pgx.Tx) error {
+		if _, err := tx.Exec(t.Context(), "select set_config('tadoku.tenant', $1, true)", tenantKey); err != nil {
+			return err
+		}
+		return tx.QueryRow(
+			t.Context(),
+			"select coalesce((select version from leaderboard_versions where board = $1), 0)",
+			board,
+		).Scan(&version)
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return version
+}
+
+func TestImmersionLeaderboardsServeAWriteOnTheNextRead(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		cacheKey string
+		write    string
+	}{
+		{
+			name:     "ImmersionFetchLeaderboardGlobal/200_cache_miss",
+			cacheKey: "leaderboard:global",
+			write:    "update logs set computed_score = 110 where id = 'a1111111-1111-4111-8111-000000000001'",
+		},
+		{
+			name:     "ImmersionFetchLeaderboardForYear/200_zero_score_cache_miss",
+			cacheKey: "leaderboard:yearly:2026",
+			write:    "update logs set computed_score = 110 where id = 'a1111111-1111-4111-8111-000000000001'",
+		},
+		{
+			name:     "ImmersionContestFetchLeaderboard/200_cache_miss",
+			cacheKey: "leaderboard:contest:f1111111-1111-4111-8111-111111111111",
+			write:    "update contest_logs set computed_score = 110 where log_id = 'a1111111-1111-4111-8111-000000000001'",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.cacheKey, func(t *testing.T) {
+			t.Parallel()
+
+			dir := filepath.Join("testdata", test.name)
+			impl := implementation{name: "tadoku-api", handler: api.handler}
+			s := newFixtureScenario(t)
+			tenantKey := s.tenant(t, primaryRole).String()
+			s.runCase(t, dir, http.StatusOK, fixtureInstant, impl)
+			verifyRebuiltLeaderboardCache(t, tenantKey, test.cacheKey)
+
+			err := pgx.BeginFunc(t.Context(), api.db.AppPool, func(tx pgx.Tx) error {
+				if _, err := tx.Exec(t.Context(), "select set_config('tadoku.tenant', $1, true)", tenantKey); err != nil {
+					return err
+				}
+				_, err := tx.Exec(t.Context(), test.write)
+				return err
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			request := readHTTPRequest(t, dir)
+			defer request.Body.Close()
+			recorder := s.serveFixture(t, impl.handler, request, "")
+
+			var board struct {
+				Entries []struct {
+					UserID string  `json:"user_id"`
+					Score  float64 `json:"score"`
+				} `json:"entries"`
+			}
+			if err := json.Unmarshal(recorder.Body.Bytes(), &board); err != nil {
+				t.Fatalf("decode %d response %q: %v", recorder.Code, recorder.Body.String(), err)
+			}
+			if len(board.Entries) == 0 || board.Entries[0].UserID != "11111111-1111-4111-8111-111111111111" ||
+				board.Entries[0].Score != 130 {
+				t.Errorf("entries after the write = %+v; want user 11111111-… first with 130", board.Entries)
+			}
+			if got := cachedLeaderboardScore(t, tenantKey, test.cacheKey); got != 130 {
+				t.Errorf("cached score after the next read = %v; want 130", got)
+			}
+		})
 	}
 }

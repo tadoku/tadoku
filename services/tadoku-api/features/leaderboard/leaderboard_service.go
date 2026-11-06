@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
-	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
@@ -26,11 +25,13 @@ func NewService(repository *Repository, cache *Cache) *Service {
 	}
 }
 
+// InvalidateContest and InvalidateOfficial delete cached boards for the previous release, whose reads do not check
+// leaderboard_versions.
 func (s *Service) InvalidateContest(ctx context.Context, id uuid.UUID) error {
 	if id == uuid.Nil {
 		return errx.NewInvalidInputError("contest ID is required")
 	}
-	key, err := s.cache.cacheKey(ctx, contestPrefix+id.String())
+	key, err := s.cache.boardKey(ctx, contestBoard(id))
 	if err != nil {
 		return err
 	}
@@ -42,11 +43,11 @@ func (s *Service) InvalidateOfficial(ctx context.Context, year int16) error {
 	if year < 1 || year > 9999 {
 		return errx.NewInvalidInputError("year must be between 1 and 9999")
 	}
-	yearlyKey, err := s.cache.cacheKey(ctx, yearlyPrefix+strconv.Itoa(int(year)))
+	yearlyKey, err := s.cache.boardKey(ctx, yearlyBoard(year))
 	if err != nil {
 		return err
 	}
-	globalCacheKey, err := s.cache.cacheKey(ctx, globalKey)
+	globalCacheKey, err := s.cache.boardKey(ctx, globalBoard)
 	if err != nil {
 		return err
 	}
@@ -72,7 +73,7 @@ func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Le
 		}
 		return s.repository.contestScores(ctx, request)
 	}
-	return s.fetch(ctx, request.Request, "contest", contestPrefix+request.ContestID.String(), load)
+	return s.fetch(ctx, request.Request, contestBoard(request.ContestID), load)
 }
 
 func (s *Service) FetchYearly(ctx context.Context, request YearlyRequest) (*Leaderboard, error) {
@@ -84,7 +85,7 @@ func (s *Service) FetchYearly(ctx context.Context, request YearlyRequest) (*Lead
 	load := func(ctx context.Context) ([]score, error) {
 		return s.repository.officialScores(ctx, &year, request.Request)
 	}
-	return s.fetch(ctx, request.Request, "yearly", yearlyPrefix+strconv.Itoa(int(year)), load)
+	return s.fetch(ctx, request.Request, yearlyBoard(year), load)
 }
 
 func (s *Service) FetchGlobal(ctx context.Context, request Request) (*Leaderboard, error) {
@@ -95,15 +96,17 @@ func (s *Service) FetchGlobal(ctx context.Context, request Request) (*Leaderboar
 	load := func(ctx context.Context) ([]score, error) {
 		return s.repository.officialScores(ctx, nil, request)
 	}
-	return s.fetch(ctx, request, "global", globalKey, load)
+	return s.fetch(ctx, request, globalBoard, load)
 }
 
-// fetch serves an unfiltered request from the cache, rebuilding it on a miss, and pages the board that load
-// returns otherwise. load must return every score on the board that matches the request's filters.
+// fetch serves an unfiltered request from the cached board built from the board's current version, rebuilding it on
+// a miss, and pages the board that load returns otherwise. load must return every score on the board that matches
+// the request's filters. The version is read before load, so a board is never published under a version newer than
+// its scores.
 func (s *Service) fetch(
 	ctx context.Context,
 	request Request,
-	board, cacheName string,
+	b board,
 	load func(context.Context) ([]score, error),
 ) (*Leaderboard, error) {
 	request = normalize(request)
@@ -111,30 +114,29 @@ func (s *Service) fetch(
 		return fetchFromPostgres(ctx, request, load)
 	}
 
-	key, err := s.cache.cacheKey(ctx, cacheName)
+	key, err := s.cache.boardKey(ctx, b)
 	if err != nil {
 		return nil, err
 	}
-	cached, exists, err := s.cache.fetchPage(ctx, key, int64(request.offset()), request.PageSize)
+	version, err := s.repository.boardVersion(ctx, b)
 	if err != nil {
-		slog.WarnContext(ctx, board+" leaderboard cache unavailable; falling back to Postgres", "error", err)
+		return nil, err
+	}
+	cached, exists, err := s.cache.fetchPage(ctx, key, version, int64(request.offset()), request.PageSize)
+	if err != nil {
+		slog.WarnContext(ctx, "leaderboard cache unavailable; falling back to Postgres", "board", b, "error", err)
 		return fetchFromPostgres(ctx, request, load)
 	}
 	if exists {
 		return result(cached, request), nil
 	}
 
-	generation, err := s.cache.generation(ctx, key)
-	if err != nil {
-		slog.WarnContext(ctx, board+" leaderboard cache unavailable; falling back to Postgres", "error", err)
-		return fetchFromPostgres(ctx, request, load)
-	}
 	scores, err := load(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := s.cache.rebuild(ctx, key, scores, generation); err != nil {
-		slog.WarnContext(ctx, board+" leaderboard cache rebuild failed; falling back to Postgres", "error", err)
+	if _, err := s.cache.rebuild(ctx, key, scores, version); err != nil {
+		slog.WarnContext(ctx, "leaderboard cache rebuild failed; falling back to Postgres", "board", b, "error", err)
 	}
 	return result(pageOf(scores, request), request), nil
 }

@@ -75,46 +75,22 @@ tlc_test(
     tags = ["manual"],
 )
 
-# An official invalidation of two keys, with one failed attempt and a replay.
+# Two readers against two writes, with the previous release's invalidations.
 tlc_test(
     name = "leaderboardcache_test",
     config = "LeaderboardCache.cfg",
     spec = "LeaderboardCache.tla",
 )
 
-# Two writes to one contest board, with overlapping invalidation jobs.
-tlc_test(
-    name = "leaderboardcache_writes_test",
-    config = "LeaderboardCache_writes.cfg",
-    spec = "LeaderboardCache.tla",
-)
-
-# Valkey loses a key, restarts empty, or a rebuild stops partway: the cache
-# only misses.
+# Valkey loses a key, restarts empty, errors, or a rebuild stops partway: the
+# cache only misses.
 tlc_test(
     name = "leaderboardcache_keyloss_test",
     config = "LeaderboardCache_keyloss.cfg",
     spec = "LeaderboardCache.tla",
 )
 
-# A failed invalidation that no operator replays: the marker's expiry still
-# brings the board back to PostgreSQL.
-tlc_test(
-    name = "leaderboardcache_noreplay_test",
-    config = "LeaderboardCache_noreplay.cfg",
-    spec = "LeaderboardCache.tla",
-)
-
-# Without the marker's expiry, a failed invalidation that no operator replays
-# leaves the board stale forever.
-tlc_test(
-    name = "leaderboardcache_noexpiry_test",
-    config = "LeaderboardCache_noexpiry.cfg",
-    spec = "LeaderboardCache.tla",
-    tags = ["manual"],
-)
-
-# Two writes to the official boards, with retries: larger bounds than CI runs.
+# Three readers, three writes and two faults: larger bounds than CI runs.
 tlc_test(
     name = "leaderboardcache_large_test",
     size = "large",

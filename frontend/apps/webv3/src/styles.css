@@ -233,7 +233,7 @@ a { text-underline-offset: .2em; }
 .contest-row__title a { color: inherit; text-decoration: underline; text-decoration-color: var(--paper-color-text-muted); text-decoration-thickness: 1px; text-underline-offset: .2em; }
 .contest-row__title a:hover, .contest-row__title a:focus-visible { color: var(--paper-color-text-link); text-decoration-color: currentColor; }
 .contest-row__body p { margin: 6px 0 0; font-size: .875rem; line-height: 1.6; }
-.contest-row__allows { color: var(--paper-color-text-muted); }
+.contest-row__body p { color: var(--paper-color-text-muted); }
 .contests-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding-top: 12px; border-top: 1px solid var(--paper-color-rule-default); }
 .contests-pagination > p { margin: 0; font-size: var(--paper-type-metadata-size); color: var(--paper-color-text-muted); }
 

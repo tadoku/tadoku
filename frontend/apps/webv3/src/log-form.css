@@ -3,9 +3,11 @@
 .log-form { display: grid; gap: 16px; min-width: 0; max-width: 40rem; }
 .log-form__card { min-width: 0; padding: 0; overflow: hidden; overflow-wrap: anywhere; }
 .log-form__fields { padding: clamp(1rem, 4vw, 2rem); }
-/* The card has no padding of its own, so its Paper form footer carries the card's inset. */
-.log-form__footer { margin-block-start: 0; padding: 24px clamp(1rem, 4vw, 2rem) clamp(1rem, 4vw, 2rem); }
+/* The card has no padding of its own, so its Paper form footer takes the fields' inset, keeping the rule inset too. */
+.log-form__footer { margin: 0 clamp(1rem, 4vw, 2rem); padding-block-end: clamp(1rem, 4vw, 2rem); }
 .log-form__estimate { margin: 0; font-variant-numeric: tabular-nums; }
+/* On a phone the estimate takes its own line above the actions instead of squeezing beside them. */
+@media (max-width: 30rem) { .log-form__estimate { flex-basis: 100%; } }
 .log-form__card > .paper-flash, .log-form__card > [role="alert"] { margin: 16px clamp(1rem, 4vw, 2rem) 0; }
 .log-form__aside { display: none; }
 .log-tags-sidebar { display: grid; gap: 16px; }

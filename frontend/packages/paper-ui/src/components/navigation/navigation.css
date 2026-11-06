@@ -343,7 +343,7 @@
   .paper-pagination__list {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end;
     gap: 0.25rem;
   }
 

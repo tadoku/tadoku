@@ -44,9 +44,9 @@ async function expectRows(page: Page, data: Contests, pageNumber = 1) {
     await expect(row.getByRole('link', { name: contest.title, exact: true }))
       .toHaveAttribute('href', `/contests/${contest.id}/leaderboard/1`)
     await expect(row.locator('.contest-row__title .paper-status-tag')).toHaveText(statuses(contest))
-    const meta = row.locator('.contest-row__allows')
-    if (contest.private) await expect(meta).toContainText('Unlisted')
-    else await expect(meta).not.toContainText('Unlisted')
+    // A contest with nothing to add renders no metadata line at all.
+    if (contest.private) await expect(row.locator('.contest-row__allows')).toContainText('Unlisted')
+    else await expect(row).not.toContainText('Unlisted')
   }
   if (data.total_size === 0) {
     await expect(page.getByRole('heading', { level: 2 })).toHaveText(/No contests found|You don’t organize any contests yet/)

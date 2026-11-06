@@ -25,7 +25,7 @@
 /* Edge shadows appear only while more columns sit off-screen: the canvas-coloured covers scroll with the table. */
 .content-table {
   --content-table-shade: color-mix(in srgb, var(--paper-color-text-ink) 22%, transparent);
-  max-width: 100%; overflow-x: auto; margin: 0 0 16px;
+  max-width: min(100%, 66ch); overflow-x: auto; margin: 0 0 16px;
   background:
     linear-gradient(to right, var(--paper-color-surface-canvas) 40%, transparent) left / 2rem 100% no-repeat local,
     linear-gradient(to left, var(--paper-color-surface-canvas) 40%, transparent) right / 2rem 100% no-repeat local,

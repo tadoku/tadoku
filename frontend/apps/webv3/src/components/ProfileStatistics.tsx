@@ -211,7 +211,7 @@ function ContestHistorySection({ history, userId, year, page }: {
             <li key={contest.id}>
               <span className="profile-contest-title">
                 <a className="profile-entry-title" href={links.contestProfile(contest.id, userId)}>{contest.title}</a>
-                {contest.private ? <StatusTag>Private</StatusTag> : null}
+                {contest.private ? <StatusTag>Unlisted</StatusTag> : null}
               </span>
               <span className="profile-entry-meta">{[formatPeriod(contest), ...contest.languages].join(' · ')}</span>
             </li>

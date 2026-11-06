@@ -60,7 +60,9 @@
     vertical-align: top;
   }
 
+  /* Headers sit on the row's baseline edge, so a wrapped header doesn't leave its neighbours floating. */
   .paper-table__header {
+    vertical-align: bottom;
     color: var(--paper-color-text-muted);
     font-size: var(--paper-type-label-size);
     font-weight: 600;

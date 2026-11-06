@@ -47,12 +47,7 @@ svg {
 
 /* Script-moved focus (headings, main) announces the page without drawing a control ring. */
 main[tabindex="-1"]:focus-visible,
-:is(h1, h2)[tabindex="-1"]/* Component display rules must not override the hidden attribute. */
-[hidden] {
-  display: none !important;
-}
-
-:focus-visible {
+:is(h1, h2)[tabindex="-1"]:focus-visible {
   outline: none;
 }
 

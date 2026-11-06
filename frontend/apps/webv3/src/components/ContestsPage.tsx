@@ -153,9 +153,8 @@ function ContestRow({ contest, names, today }: {
         <div className="contest-row__title">
           <h2 className="paper-type-component"><a href={links.contest(contest.id)}>{contest.title}</a></h2>
           {round}
-          {contest.private ? <StatusTag>Unlisted</StatusTag> : null}
         </div>
-        <p>{formatPeriod(contest)}{registration}</p>
+        <p>{formatPeriod(contest)}{registration}{contest.private ? ' · Unlisted' : ''}</p>
         {names ? <p className="contest-row__allows">{languages} · {activities}</p> : null}
       </div>
     </li>

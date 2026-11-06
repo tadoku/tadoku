@@ -26,6 +26,26 @@ describe("Paper visual foundations", () => {
     expect(tokens).toContain("--paper-elevation-floating");
   });
 
+  it("keeps the global keyboard focus ring and removes it only from script-moved focus", () => {
+    const base = readFoundation("base.css");
+    const rules = [...base.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(([, selector, body]) => ({
+      selector: selector.replace(/\/\*[\s\S]*?\*\//g, "").trim(),
+      body,
+    }));
+    const removesOutline = rules.filter(({ body }) => /outline:\s*none/.test(body));
+
+    expect(rules).toContainEqual(expect.objectContaining({ selector: ":focus-visible" }));
+    expect(rules.find(({ selector }) => selector === ":focus-visible")?.body).toMatch(
+      /outline:\s*var\(--paper-focus-ring-width\) solid var\(--paper-color-focus-ring\)/,
+    );
+    for (const { selector } of removesOutline) {
+      // Compare top-level selectors only: commas inside :is() belong to one selector.
+      for (const part of selector.replace(/\([^)]*\)/g, "()").split(",")) {
+        expect(part.trim()).toMatch(/\[tabindex="-1"\]:focus-visible$/);
+      }
+    }
+  });
+
   it("ships local declarations for every approved real font weight", () => {
     const fonts = readFoundation("fonts.css");
 

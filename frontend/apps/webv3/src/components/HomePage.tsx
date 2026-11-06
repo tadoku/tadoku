@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { Button, EmptyState, Loading, SectionHeading, StatGrid, Surface, Table, buttonClassName } from 'paper-ui'
+import { Button, EmptyState, Loading, SectionHeading, StatGrid, StatusTag, Surface, Table, buttonClassName } from 'paper-ui'
 import type { ReactNode } from 'react'
 import { homeQueryOptions, type HomeData } from '../lib/home'
 import { formatDate, formatPeriod, numberFormat } from '../lib/format'
@@ -159,6 +159,8 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
   retry: () => void
 }) {
   const links = useLinks()
+  const { data: viewer } = useQuery(viewerQueryOptions())
+  const viewerId = viewer?.status === 'signed-in' ? viewer.userId : undefined
   if (phase === 'loading') {
     return <>
       <SectionHeading level={2} id="home-board-title" className="home-ledger-header" title="Current contest" />
@@ -229,11 +231,22 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
         minWidth="0"
         columns={[
           { id: 'rank', header: 'Rank', width: '4.5rem', cell: row => row.rank },
-          { id: 'person', header: 'Participant', rowHeader: true, cell: row => <a className="home-person-link" href={links.profile(row.user_id)}>{row.user_display_name}</a> },
+          {
+            id: 'person',
+            header: 'Participant',
+            rowHeader: true,
+            cell: row => (
+              <span className="standings-person">
+                <a className="home-person-link" href={links.profile(row.user_id)}>{row.user_display_name}</a>
+                {row.user_id === viewerId ? <StatusTag>You</StatusTag> : null}
+              </span>
+            ),
+          },
           { id: 'score', header: 'Score', align: 'end', cell: row => numberFormat.format(row.score) },
         ]}
         rows={standings.entries}
         getRowKey={row => row.user_id}
+        getRowProps={row => (row.user_id === viewerId ? { 'aria-current': 'true' } : {})}
       />
     ) : (
       <EmptyState

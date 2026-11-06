@@ -12,10 +12,12 @@
 .profile-year-control strong { min-inline-size: 4.5rem; text-align: center; font-family: var(--paper-font-display); font-size: var(--paper-type-section-size); line-height: var(--paper-type-section-line-height); font-variant-numeric: tabular-nums; }
 .profile-stats { margin-block: 28px 32px; }
 .profile-rhythm { border-block-start: 1px solid var(--paper-color-rule-default); padding-block-start: 24px; }
+/* One section role across the profile: the in-sheet calendar heading matches the sections below it. */
+.profile-rhythm h3, .profile-columns h2 { font-family: var(--paper-font-display); font-size: 1.375rem; line-height: 1.875rem; font-weight: 700; }
 .profile-empty-year { border-block-start: 1px solid var(--paper-color-rule-default); }
 .profile-heatmap-scroll { max-inline-size: 100%; overflow-x: auto; padding-block: 24px 12px; }
 .profile-heatmap-scroll .paper-heatmap { inline-size: 100%; min-inline-size: 44rem; block-size: auto; }
-.profile-caption, .profile-muted { margin: 8px 0 0; color: var(--paper-color-text-muted); font-size: .8125rem; line-height: 1.6; }
+.profile-caption, .profile-muted { margin: 8px 0 0; color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); line-height: 1.6; }
 .profile-columns { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 0 48px; margin-block-start: 32px; }
 .profile-columns > * { min-width: 0; padding-block: 28px; border-block-start: 1px solid var(--paper-color-rule-default); }
 .profile-breakdown, .profile-contests { list-style: none; padding: 0; margin: 0; }
@@ -35,20 +37,21 @@
 .contest-updates-notice { margin-block-end: 16px; }
 .profile-entries { list-style: none; padding: 0; margin: 0; }
 .profile-entries > li { display: grid; grid-template-columns: 7rem minmax(0, 1fr) auto; gap: 24px; align-items: start; padding-block: 16px; border-block-end: 1px solid var(--paper-color-rule-default); }
-.profile-entry-date { padding-block-start: 3px; color: var(--paper-color-text-muted); font-size: .8125rem; }
+.profile-entry-date { padding-block-start: 3px; color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); }
 .profile-entry-body { min-width: 0; }
 .profile-entry-title { color: var(--paper-color-text-ink); font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; text-decoration: underline; text-decoration-color: var(--paper-color-rule-default); text-decoration-thickness: 1px; text-underline-offset: .2em; }
 .profile-entry-title:hover, .profile-entry-title:focus-visible { color: var(--paper-color-text-link); text-decoration-color: currentColor; }
-.profile-entry-meta { margin: 6px 0 0; color: var(--paper-color-text-muted); font-size: .8125rem; }
+.profile-entry-meta { margin: 6px 0 0; color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); }
 .profile-entry-nsfw { margin-block-start: 10px; font-size: .875rem; }
 .profile-entry-nsfw summary { cursor: pointer; color: var(--paper-color-text-muted); }
 .profile-entry-nsfw p { max-inline-size: 60ch; margin: 8px 0 0; line-height: 1.7; overflow-wrap: anywhere; }
 .profile-entry-score { text-align: end; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .profile-entry-score small { color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); font-weight: 400; }
 .profile-entries-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding-block: 16px; }
-.profile-entries-footer > p { margin: 0; font-size: .8125rem; color: var(--paper-color-text-muted); }
+.profile-entries-footer > p { margin: 0; font-size: var(--paper-type-metadata-size); color: var(--paper-color-text-muted); }
 .profile-entries-footer .paper-pagination__list { flex-wrap: wrap; }
 @media (max-width: 900px) { .profile-columns { grid-auto-flow: row; } }
+@media (max-width: 40rem) { .profile-header { align-items: start; } .profile-export { flex-basis: 100%; } }
 @media (max-width: 520px) {
   .profile-year { padding: 20px; }
   .profile-avatar { display: none; }

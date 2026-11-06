@@ -76,9 +76,9 @@
 
   --paper-color-heat-0: #e4dfd6;
   --paper-color-heat-1: #a597ea;
-  --paper-color-heat-2: #9483e3;
-  --paper-color-heat-3: #6c5bcb;
-  --paper-color-heat-4: #45369e;
+  --paper-color-heat-2: #7f6dd9;
+  --paper-color-heat-3: #5a49bd;
+  --paper-color-heat-4: #3a2c8a;
 
   --paper-elevation-flat: none;
   --paper-elevation-floating: 3px 3px 0 var(--paper-private-shadow);
@@ -162,9 +162,9 @@
 
   --paper-color-heat-0: #3c373b;
   --paper-color-heat-1: #6a5bb0;
-  --paper-color-heat-2: #7565c6;
-  --paper-color-heat-3: #9d8ce3;
-  --paper-color-heat-4: #d0c6fa;
+  --paper-color-heat-2: #8a7bd6;
+  --paper-color-heat-3: #b0a2ef;
+  --paper-color-heat-4: #ddd5fc;
 }
 
 :root {

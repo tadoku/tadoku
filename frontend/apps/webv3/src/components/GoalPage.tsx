@@ -89,8 +89,8 @@ export function GoalPage() {
           <fieldset className="goal-form__controls" disabled={!hydrated}>
             <form.AppField name="activity">{field => <field.RadioSelect label="Activity" variant="segmented" options={activities} />}</form.AppField>
             <div className="goal-form__row">
-              <form.AppField name="minutes">{field => <field.Input id="goal-minutes" label="Minutes each day" hint="Between 5 and 600." type="number" inputMode="numeric" min={5} max={600} step={1} />}</form.AppField>
-              <form.AppField name="days">{field => <field.Input id="goal-days" label="Days each week" hint="Between 1 and 7." type="number" inputMode="numeric" min={1} max={7} step={1} />}</form.AppField>
+              <form.AppField name="minutes">{field => <field.Input id="goal-minutes" label="Minutes each day (5–600)" type="number" inputMode="numeric" min={5} max={600} step={1} />}</form.AppField>
+              <form.AppField name="days">{field => <field.Input id="goal-days" label="Days each week (1–7)" type="number" inputMode="numeric" min={1} max={7} step={1} />}</form.AppField>
             </div>
 
             <div className="goal-actions">

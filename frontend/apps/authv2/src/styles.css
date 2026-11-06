@@ -21,7 +21,12 @@ a:where(:not(.paper-button)) { color: var(--paper-color-text-link); }
 @media (max-width: 30rem) {
   .account-header { flex-wrap: nowrap; }
   .account-brand__label { display: none; }
-  .account-session__name { max-width: 7rem; }
+  .account-wordmark { width: 100px; }
+  .account-mark { width: 28px; }
+  .account-header { gap: 12px; }
+  .account-session { gap: 8px; }
+  .account-session .paper-button { flex-shrink: 0; white-space: nowrap; }
+  .account-session__name { max-width: none; }
 }
 .account-main { flex: 1; width: 100%; padding: clamp(32px, 7vh, 72px) var(--account-gutter) 72px; }
 .account-main:focus { outline: none; }
@@ -75,6 +80,8 @@ a:where(:not(.paper-button)) { color: var(--paper-color-text-link); }
 
 @media (max-width: 480px) {
   .account-brand__label { display: none; }
+  .account-wordmark { width: 100px; }
+  .account-mark { width: 28px; }
   .account-session { gap: 12px; }
   .card-page__card { padding: 24px 20px; }
 }

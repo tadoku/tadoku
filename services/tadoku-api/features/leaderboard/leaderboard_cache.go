@@ -16,7 +16,7 @@ import (
 var rebuildScript = valkeygo.NewLuaScript(`
 local current = redis.call('GET', KEYS[2])
 local built = current and string.match(current, '^version:(%d+):')
-if built and tonumber(built) > tonumber(ARGV[1]) then
+if built and (#built > #ARGV[1] or (#built == #ARGV[1] and built > ARGV[1])) then
   return 0
 end
 redis.call('DEL', KEYS[2], KEYS[1])
@@ -187,7 +187,7 @@ func (c *Cache) invalidate(ctx context.Context, key string) error {
 }
 
 // rebuild publishes scores, with no expiry, as the board built from version, unless the cache holds a board built
-// from a later one.
+// from a later one. The script compares versions as decimal strings, so it stays exact beyond float precision.
 func (c *Cache) rebuild(ctx context.Context, key string, scores []score, version int64) (bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, c.operationTimeout)
 	defer cancel()

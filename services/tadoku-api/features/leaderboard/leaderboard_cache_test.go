@@ -34,25 +34,42 @@ func TestFetchPageServesOnlyTheVersionTheBoardWasBuiltFrom(t *testing.T) {
 }
 
 func TestRebuildKeepsABoardBuiltFromANewerVersion(t *testing.T) {
-	client := newLeaderboardTestClient(t)
-	cache, tenantCtx, key := newCacheFixture(t, client)
-	user := uuid.New()
+	tests := []struct {
+		name         string
+		newer, older int64
+	}{
+		{name: "small", newer: 5, older: 4},
+		{name: "beyond float precision", newer: 1<<53 + 1, older: 1 << 53},
+		{name: "more digits", newer: 10, older: 9},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			client := newLeaderboardTestClient(t)
+			cache, tenantCtx, key := newCacheFixture(t, client)
+			user := uuid.New()
 
-	published, err := cache.rebuild(tenantCtx, key, []score{{userID: user, value: 20}}, 5)
-	if err != nil || !published {
-		t.Fatalf("publish board at version 5: published=%t error=%v", published, err)
-	}
-	published, err = cache.rebuild(tenantCtx, key, []score{{userID: user, value: 10}}, 4)
-	if err != nil || published {
-		t.Errorf("rebuild at version 4 over version 5: published=%t error=%v; want refused", published, err)
-	}
+			published, err := cache.rebuild(tenantCtx, key, []score{{userID: user, value: 20}}, test.newer)
+			if err != nil || !published {
+				t.Fatalf("publish board at version %d: published=%t error=%v", test.newer, published, err)
+			}
+			published, err = cache.rebuild(tenantCtx, key, []score{{userID: user, value: 10}}, test.older)
+			if err != nil || published {
+				t.Errorf("rebuild at version %d over %d: published=%t error=%v; want refused",
+					test.older,
+					test.newer,
+					published,
+					err,
+				)
+			}
 
-	page, exists, err := cache.fetchPage(tenantCtx, key, 5, 0, 25)
-	if err != nil || !exists {
-		t.Fatalf("fetch at version 5: exists=%t error=%v", exists, err)
-	}
-	if len(page.scores) != 1 || page.scores[0].value != 20 {
-		t.Errorf("scores at version 5 = %+v; want the version 5 board", page.scores)
+			page, exists, err := cache.fetchPage(tenantCtx, key, test.newer, 0, 25)
+			if err != nil || !exists {
+				t.Fatalf("fetch at version %d: exists=%t error=%v", test.newer, exists, err)
+			}
+			if len(page.scores) != 1 || page.scores[0].value != 20 {
+				t.Errorf("scores at version %d = %+v; want the newer board", test.newer, page.scores)
+			}
+		})
 	}
 }
 

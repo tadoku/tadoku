@@ -60,7 +60,6 @@ a { text-underline-offset: .2em; }
 .home-how p { margin: 0; max-width: 34ch; font-size: .9375rem; line-height: 1.7; color: var(--paper-color-text-ink); }
 .home-strip { display: grid; grid-template-columns: 230px minmax(0, 1fr) auto; align-items: center; gap: 32px; margin-top: 32px; padding: 24px 0 0; border-top: 1px solid var(--paper-color-rule-default); }
 .home-strip + .home-strip { margin-top: 24px; }
-.home-strip.home-strip--action { display: block; max-width: none; margin-top: 24px; padding-top: 24px; font-size: .875rem; }
 .home-strip > a { grid-column: 3; justify-self: end; }
 .home-strip h2 { margin: 0 0 4px; font-size: .875rem; font-family: var(--paper-font-body); }
 .home-strip p { margin: 0; max-width: 53ch; font-size: .875rem; color: var(--paper-color-text-muted); line-height: 1.7; }
@@ -158,6 +157,8 @@ a { text-underline-offset: .2em; }
 .standings-main > .log-surface { max-width: none; }
 /* Log detail: the figures and facts read as one record, with the contests a section below it. */
 .log-record { display: grid; gap: 24px; }
+.log-detail > .paper-page-header { max-width: 48rem; }
+.contest-daily { max-width: 48rem; }
 .log-contests { max-width: 48rem; margin-top: 32px; }
 .log-contest-list { list-style: none; margin: 0 0 16px; padding: 0; }
 .log-contest-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-block: 12px; border-bottom: 1px solid var(--paper-color-rule-default); }

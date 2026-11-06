@@ -161,9 +161,9 @@ describe("HeatmapChart", () => {
   it("renders the requested year as the original month-by-weekday SVG calendar", () => {
     const { container } = render(<HeatmapChart {...heatmapProps} />);
 
-    const svg = container.querySelector("svg");
+    const svg = container.querySelector<SVGSVGElement>("svg.paper-heatmap");
     expect(svg).toBeInstanceOf(SVGSVGElement);
-    const labels = Array.from(svg!.querySelectorAll("text"), (label) => label.textContent);
+    const labels = Array.from(container.querySelectorAll("text"), (label) => label.textContent);
     expect(labels).toEqual(expect.arrayContaining([
       "Jan", "Feb", "Mar", "Apr", "May", "Jun",
       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
@@ -183,7 +183,7 @@ describe("HeatmapChart", () => {
 
   it("maps dated activity onto five fixed points-per-day levels without changing cell geometry", () => {
     const { container } = render(<HeatmapChart {...heatmapProps} />);
-    const svg = container.querySelector("svg")!;
+    const svg = container.querySelector<SVGSVGElement>("svg.paper-heatmap")!;
     const cells = calendarCells(svg);
 
     // 2023 starts on Sunday. January 1 occupies the final row of the first
@@ -197,7 +197,7 @@ describe("HeatmapChart", () => {
 
   it("reveals the supplied activity copy while its dated cell is hovered", () => {
     const { container } = render(<HeatmapChart {...heatmapProps} />);
-    const svg = container.querySelector("svg")!;
+    const svg = container.querySelector<SVGSVGElement>("svg.paper-heatmap")!;
     const januaryFifth = calendarCells(svg)[10];
     const tooltipText = screen.getByText("300 points on January 5, 2023");
     Object.defineProperty(tooltipText, "getBBox", { value: () => new DOMRect(0, 0, 180, 16) });
@@ -226,7 +226,9 @@ describe("HeatmapChart", () => {
     expect(background).toHaveAttribute("width", "192");
     expect(background).toHaveAttribute("height", "28");
     expect(Number(background.getAttribute("x"))).toBeGreaterThanOrEqual(0);
-    expect(Number(background.getAttribute("x")) + Number(background.getAttribute("width"))).toBeLessThanOrEqual(Number(container.querySelector("svg")!.getAttribute("width")));
+    const [minX, , viewWidth] = container.querySelector<SVGSVGElement>("svg.paper-heatmap")!.getAttribute("viewBox")!.split(" ").map(Number);
+    expect(Number(background.getAttribute("x"))).toBeGreaterThanOrEqual(minX);
+    expect(Number(background.getAttribute("x")) + Number(background.getAttribute("width"))).toBeLessThanOrEqual(minX + viewWidth);
     fireEvent.blur(cell);
     expect(tooltipIsHidden(tooltip)).toBe(true);
   });
@@ -252,10 +254,10 @@ describe("Phase 3 data-display catalogue contracts", () => {
     expect(fixture!.code).not.toContain("rows=");
 
     const { container } = render(fixture!.render());
-    const svg = container.querySelector("svg");
+    const svg = container.querySelector<SVGSVGElement>("svg.paper-heatmap");
     expect(svg).toBeInstanceOf(SVGSVGElement);
     expect(calendarCells(svg!)).toHaveLength(53 * 7);
-    const labels = Array.from(svg!.querySelectorAll("text"), (label) => label.textContent);
+    const labels = Array.from(container.querySelectorAll("text"), (label) => label.textContent);
     expect(labels).toEqual(expect.arrayContaining(["Jan", "Dec"]));
   });
 

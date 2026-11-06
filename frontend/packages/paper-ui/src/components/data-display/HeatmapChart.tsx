@@ -3,6 +3,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
@@ -114,28 +115,39 @@ export function HeatmapChart({ id, data, year, getHref, today }: HeatmapChartPro
 
   return (
     <>
+      {/* The weekday gutter is its own SVG, sized to the same scale, so it can stay pinned while a narrow container
+          scrolls the weeks sideways. */}
+      <div className="paper-heatmap__frame" style={{ "--paper-heatmap-gutter": `${(OFFSET.x / width) * 100}%` } as CSSProperties}>
+        <svg
+          width={OFFSET.x}
+          height={height}
+          viewBox={`0 0 ${OFFSET.x} ${height}`}
+          className="paper-heatmap__weekdays"
+          aria-hidden="true"
+        >
+          {WEEKDAYS.map((label, row) => label ? (
+            <text
+              key={label}
+              className="paper-heatmap__axis-label"
+              textAnchor="end"
+              x={OFFSET.x - CELL_GAP * 2}
+              y={OFFSET.y + CELL_HEIGHT * row + CELL_GAP * row}
+              dominantBaseline="hanging"
+            >
+              {label}
+            </text>
+          ) : null)}
+        </svg>
       <svg
-        width={width}
+        width={width - OFFSET.x}
         height={height}
-        viewBox={`0 0 ${width} ${height}`}
+        viewBox={`${OFFSET.x} 0 ${width - OFFSET.x} ${height}`}
         className="paper-heatmap"
         role="img"
         aria-labelledby={titleId}
         data-year={year}
       >
         <title id={titleId}>Daily activity for {year}</title>
-        {WEEKDAYS.map((label, row) => label ? (
-          <text
-            key={label}
-            className="paper-heatmap__axis-label"
-            textAnchor="end"
-            x={OFFSET.x - CELL_GAP * 2}
-            y={OFFSET.y + CELL_HEIGHT * row + CELL_GAP * row}
-            dominantBaseline="hanging"
-          >
-            {label}
-          </text>
-        ) : null)}
         {months.map((label, column) => label ? (
           <text
             key={label}
@@ -164,6 +176,7 @@ export function HeatmapChart({ id, data, year, getHref, today }: HeatmapChartPro
         )}
         <g id={tooltipLayerId} className="paper-heatmap__tooltip-layer" />
       </svg>
+      </div>
       <p className="paper-heatmap__legend">
         <span>Points per day</span>
         {LEVELS.map(({ level, label }) => (
@@ -310,9 +323,10 @@ function Tooltip({
     const y = OFFSET.y + CELL_HEIGHT * row + CELL_GAP * row - height - 2;
     let x = arrowX;
 
-    if (x < 0) x = 20;
+    // The weekday gutter is a separate, pinned SVG; tooltips stay right of it.
+    if (x < OFFSET.x) x = OFFSET.x;
     if (x + width > parentWidth) x = parentWidth - width;
-    x = Math.max(0, x);
+    x = Math.max(OFFSET.x, x);
 
     setRect({ x, y, width, height, arrowX });
   }, [children, column, parentWidth, row, visible]);

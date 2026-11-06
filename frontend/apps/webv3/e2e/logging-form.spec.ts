@@ -14,7 +14,7 @@ import {
   webv3,
 } from './logging-fixtures'
 
-const tagsInput = (page: Page) => page.getByRole('combobox', { name: /^Tags \(up to/ })
+const tagsInput = (page: Page) => page.getByRole('combobox', { name: /^Tags \(/ })
 const chip = (page: Page, tag: string) => page.getByRole('button', { name: `Remove ${tag}`, exact: true })
 const language = (page: Page) => page.getByLabel('Language', { exact: true })
 const activity = (page: Page) => page.getByLabel('Activity', { exact: true })

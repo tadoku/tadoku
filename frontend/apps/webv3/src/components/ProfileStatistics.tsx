@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import { Button, EmptyState, HeatmapChart, Pagination, SectionHeading, StatGrid, StatusTag, buttonClassName } from 'paper-ui'
 import { ChevronLeftIcon, ChevronRightIcon } from 'paper-ui/icons'
+import { pointsUnit } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { contestPageSize, type ContestHistory, type ProfileStatistics as Statistics, type Section } from '../lib/profile'
 import { ProfileHeader } from './ProfileHeader'
@@ -54,7 +55,7 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
                     data={activity.data.scores.map(day => ({
                       date: day.date,
                       value: day.score,
-                      tooltip: `${scoreFormat.format(day.score)} points on ${formatDay(day.date)}`,
+                      tooltip: `${scoreFormat.format(day.score)} ${pointsUnit(day.score)} on ${formatDay(day.date)}`,
                     }))}
                   />
                 </HeatmapScroll>
@@ -165,7 +166,7 @@ function Breakdown<T>({ id, title, section, items, empty }: {
         <ol className="profile-breakdown">
           {rows.map(row => (
             <li key={row.label}>
-              <div><span>{row.label}</span><strong>{scoreFormat.format(row.score)} <small>points</small></strong></div>
+              <div><span>{row.label}</span><strong>{scoreFormat.format(row.score)} <small>{pointsUnit(row.score)}</small></strong></div>
               <span className="profile-bar" aria-hidden="true">
                 <span style={{ width: `${total ? row.score / total * 100 : 0}%` }} />
               </span>

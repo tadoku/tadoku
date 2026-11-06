@@ -96,7 +96,7 @@ export const TagsSidebar = withPaperForm({
               disabled={disabled || (!selected.has(tag) && atLimit)}
               onClick={() => toggle(tag)}
             >
-              {tag}
+              {tag.replaceAll('_', ' ')}
             </button>
           ))}
         </div>

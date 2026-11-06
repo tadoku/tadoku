@@ -14,7 +14,7 @@
 
   .paper-status-tag--neutral {
     --paper-status-tag-color: var(--paper-color-text-ink);
-    --paper-status-tag-rule: var(--paper-color-rule-default);
+    --paper-status-tag-rule: var(--paper-color-rule-field-edge);
   }
 
   .paper-status-tag--information {

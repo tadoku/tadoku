@@ -100,7 +100,6 @@
   .paper-input:disabled {
     border-style: dashed;
     color: var(--paper-color-text-muted);
-    background: var(--paper-color-surface-canvas);
     cursor: not-allowed;
   }
 

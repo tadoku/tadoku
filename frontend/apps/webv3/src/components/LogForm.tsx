@@ -3,6 +3,7 @@ import { useStore } from '@tanstack/react-form'
 import { Link, useHydrated, useNavigate } from '@tanstack/react-router'
 import {
   Button,
+  DescriptionList,
   PageHeader,
   Surface,
   usePaperForm,
@@ -98,7 +99,7 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
                 {editing ? <FixedFields form={form} log={editing} /> : <ChoiceFields form={form} options={options} />}
                 <MeasureField form={form} timed={isTimed(options, activityId)} units={units} />
                 <form.AppField name="description">
-                  {field => <field.Input label="Description" placeholder="e.g. One Piece volume 45" />}
+                  {field => <field.Input label="Description (optional)" placeholder="e.g. One Piece volume 45" />}
                 </form.AppField>
                 <TagsField form={form} viewerId={viewerId} />
                 <div className="log-form__narrow-tags">
@@ -110,12 +111,12 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
 
             {failure ? <SaveFailure failure={failure} viewerId={viewerId} editing={editing} /> : null}
             <div className="log-form__actions">
-              {editing
-                ? <Link className="text-link" to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
-                : <Link className="text-link" to="/">Cancel</Link>}
               <Button type="submit" disabled={disabled} loading={pending} loadingLabel="Saving">
                 {editing ? 'Save' : 'Create'}
               </Button>
+              {editing
+                ? <Link className="text-link" to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
+                : <Link className="text-link" to="/">Cancel</Link>}
             </div>
           </form.Form>
           <aside className="log-form__aside" aria-label="Suggested tags">
@@ -162,7 +163,7 @@ const TagsField = withPaperForm({
       <form.AppField name="tags">
         {field => (
           <field.TagsInput
-            label={`Tags (up to ${maxTags})`}
+            label={`Tags (optional, up to ${maxTags})`}
             placeholder="Add tags..."
             maxSelections={maxTags}
             options={suggestions.map(suggestion => suggestion.tag)}
@@ -198,6 +199,7 @@ const MeasureField = withPaperForm({
               {field => (
                 <field.AmountWithUnit
                   label="Amount"
+                  required
                   unitsLabel="Unit"
                   units={units.length ? units : [{ value: '', label: 'No units available' }]}
                   unitField={unitField}
@@ -262,24 +264,17 @@ const ChoiceFields = withPaperForm({
 const FixedFields = withPaperForm({
   defaultValues: {} as LogDraft,
   props: { log: {} as ImmersionLog },
-  render: function FixedFields({ form, log }) {
+  // The values stay in the draft from its defaults; an edit shows them as facts, not as controls it can't change.
+  render: function FixedFields({ log }) {
     return (
-      <>
-        <form.AppField name="languageCode">
-          {field => (
-            <field.Select label="Language" disabled options={[{ value: log.language.code, label: log.language.name }]} />
-          )}
-        </form.AppField>
-        <form.AppField name="activityId">
-          {field => (
-            <field.Select
-              label="Activity"
-              disabled
-              options={[{ value: String(log.activity.id), label: log.activity.name }]}
-            />
-          )}
-        </form.AppField>
-      </>
+      <DescriptionList
+        layout="inline"
+        className="log-form__fixed"
+        items={[
+          { label: 'Language', value: log.language.name },
+          { label: 'Activity', value: log.activity.name },
+        ]}
+      />
     )
   },
 })

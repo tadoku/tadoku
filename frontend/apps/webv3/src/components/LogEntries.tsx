@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import { EmptyState, Pagination } from 'paper-ui'
 import type { ImmersionLog } from 'api-client'
-import { formatDate, numberFormat } from '../lib/format'
+import { formatDate, numberFormat, pointsUnit } from '../lib/format'
 import { activityPageSize } from '../lib/profile'
 import { renderLink } from './router-link'
 
@@ -72,7 +72,7 @@ function Entry({ log, showParticipant, actions, firstOfDay }: {
   const meta = [showParticipant ? log.user_display_name ?? 'Unknown user' : null, log.language.name, log.activity.name, tracking(log)]
 
   return (
-    <li>
+    <li className={firstOfDay ? undefined : 'profile-entry--same-day'}>
       <time dateTime={day} className={firstOfDay ? 'profile-entry-date' : 'profile-entry-date paper-visually-hidden'}>{formatDate(day)}</time>
       <div className="profile-entry-body">
         <Link className="profile-entry-title" to="/logs/$logId" params={{ logId: log.id }}>
@@ -87,7 +87,7 @@ function Entry({ log, showParticipant, actions, firstOfDay }: {
         ) : null}
         {actions ? <div className="profile-entry-actions">{actions}</div> : null}
       </div>
-      <span className="profile-entry-score">{numberFormat.format(log.score)} <small>points</small></span>
+      <span className="profile-entry-score">{numberFormat.format(log.score)} <small>{pointsUnit(log.score)}</small></span>
     </li>
   )
 }

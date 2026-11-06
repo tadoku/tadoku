@@ -108,7 +108,7 @@ for (const activity of ['Reading', 'Listening']) {
 
 test('text limits follow the API: description characters, tag bytes and normalized tags', async ({ page, readerContext }) => {
   test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
-  const tags = page.getByLabel(/^Tags \(up to/)
+  const tags = page.getByLabel(/^Tags \(/)
   await openForm(page)
   await amountInput(page).fill('1')
 
@@ -201,7 +201,7 @@ for (const width of [390, 1280]) {
     const description = `keyboard-${width}-${Date.now()}`
     await page.keyboard.type(description)
     await page.keyboard.press('Tab')
-    await expect(page.getByLabel(/^Tags \(up to/)).toBeFocused()
+    await expect(page.getByLabel(/^Tags \(/)).toBeFocused()
     await page.keyboard.type('keyboard')
     await page.keyboard.press('Enter')
     await expect(page.getByRole('button', { name: 'Remove keyboard', exact: true })).toBeVisible()

@@ -87,8 +87,27 @@
     text-align: center;
   }
 
+  .paper-heatmap__frame {
+    display: flex;
+    align-items: flex-start;
+    inline-size: 100%;
+  }
+
+  /* Pinned beside a sideways-scrolling year; the surface fill covers weeks scrolling underneath. */
+  .paper-heatmap__weekdays {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 1;
+    flex: 0 0 var(--paper-heatmap-gutter);
+    block-size: auto;
+    background: var(--paper-heatmap-surface, var(--paper-color-surface-paper));
+  }
+
   .paper-heatmap {
     display: block;
+    flex: 1 1 0;
+    min-inline-size: 0;
+    block-size: auto;
     max-inline-size: none;
     overflow: visible;
   }
@@ -120,7 +139,7 @@
 
   .paper-heatmap__cell[data-future] {
     fill: transparent;
-    stroke: var(--paper-color-rule-field-edge);
+    stroke: var(--paper-color-rule-default);
     stroke-width: 1;
   }
 

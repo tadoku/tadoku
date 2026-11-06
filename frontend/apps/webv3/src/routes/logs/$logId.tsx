@@ -13,7 +13,7 @@ import {
 } from 'paper-ui'
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
-import { formatDate } from '../../lib/format'
+import { formatDate, pointsUnit } from '../../lib/format'
 import { useLinks } from '../../lib/links'
 import { logQuery, useDeleteLog, type ImmersionLog, type LogFailure } from '../../lib/logs'
 import { viewerKey, viewerQueryOptions } from '../../lib/session'
@@ -50,7 +50,7 @@ function LogDetail() {
   const owner = viewer?.status === 'signed-in' && viewer.userId === log.user_id
   const subject = `${log.language.name} ${log.activity.name}`
   return (
-    <div className="goal-page">
+    <div className="goal-page log-detail">
       <PageHeader
         title={log.description || subject}
         lead={`${log.language.name} · ${log.activity.name}`}
@@ -158,7 +158,7 @@ function OwnContests({ log }: { log: ImmersionLog }) {
           {registrations.map(registration => (
             <li key={registration.contest_id}>
               <a className="profile-entry-title" href={links.contest(registration.contest_id)}>{registration.title}</a>
-              {registration.score !== undefined ? <span>{scoreFormat.format(registration.score)} <small>points</small></span> : null}
+              {registration.score !== undefined ? <span>{scoreFormat.format(registration.score)} <small>{pointsUnit(registration.score)}</small></span> : null}
             </li>
           ))}
         </ul>

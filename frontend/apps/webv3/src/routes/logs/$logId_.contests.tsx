@@ -163,7 +163,7 @@ function ContestsForm({ log, registrations, viewerId }: {
                 ))}
               </fieldset>
               {eligible.length ? (
-                <p className="log-contests-note">Removing a selection removes that contest contribution. Your personal record stays the same.</p>
+                <p className="log-contests-note">Unchecking a contest removes this log’s score from it.</p>
               ) : (
                 <EmptyState
                   variant="plain"

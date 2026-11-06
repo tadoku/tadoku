@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { Button, EmptyState, Loading, SectionHeading, StatGrid, StatusTag, Surface, Table, buttonClassName } from 'paper-ui'
 import type { ReactNode } from 'react'
 import { homeQueryOptions, type HomeData } from '../lib/home'
-import { formatDate, formatPeriod, numberFormat } from '../lib/format'
+import { formatDate, formatPeriod, numberFormat, pointsUnit } from '../lib/format'
 import { describeGoal, useStoredGoal } from '../lib/goal'
 import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
@@ -96,17 +96,13 @@ export function HomePage() {
       )}
 
       {member ? (
-        goal ? (
-          <section className="home-strip" aria-labelledby="home-goal-title">
-            <div>
-              <h2 id="home-goal-title">Daily goal</h2>
-              <p>{describeGoal(goal)}</p>
-            </div>
-            <Link className="text-link" to="/plan">Change goal</Link>
-          </section>
-        ) : (
-          <p className="home-strip home-strip--action"><Link className="text-link" to="/plan">Set a daily goal</Link></p>
-        )
+        <section className="home-strip" aria-labelledby="home-goal-title">
+          <div>
+            <h2 id="home-goal-title">Daily goal</h2>
+            <p>{goal ? describeGoal(goal) : 'Not set'}</p>
+          </div>
+          <Link className="text-link" to="/plan">{goal ? 'Change goal' : 'Set a daily goal'}</Link>
+        </section>
       ) : null}
     </div>
   )
@@ -132,8 +128,8 @@ function MemberPromise({ member, data, phase }: {
   let headline: string
   let lead: string
   if (running && entry) {
-    headline = `${place(entry.rank)} in ${contest.title}`
-    lead = `${numberFormat.format(entry.score)} points so far.`
+    headline = `${place(entry.rank)} place`
+    lead = `${numberFormat.format(entry.score)} ${pointsUnit(entry.score)} so far in ${contest.title}.`
   } else if (running && registered) {
     headline = `You’re in ${contest.title}`
     lead = phase === 'upcoming' ? `The round starts ${formatDate(contest.contest_start)}.` : 'Log what you read and listen to; every entry counts towards the round.'

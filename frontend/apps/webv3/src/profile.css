@@ -15,8 +15,17 @@
 /* One section role across the profile: the in-sheet calendar heading matches the sections below it. */
 .profile-rhythm h3, .profile-columns h2 { font-family: var(--paper-font-display); font-size: 1.375rem; line-height: 1.875rem; font-weight: 700; }
 .profile-empty-year { border-block-start: 1px solid var(--paper-color-rule-default); }
-.profile-heatmap-scroll { max-inline-size: 100%; overflow-x: auto; padding-block: 24px 12px; }
-.profile-heatmap-scroll .paper-heatmap { inline-size: 100%; min-inline-size: 44rem; block-size: auto; }
+/* Edge shades show which side has more weeks off-screen, as on wide tables. */
+.profile-heatmap-scroll {
+  --profile-heatmap-shade: color-mix(in srgb, var(--paper-color-text-ink) 22%, transparent);
+  max-inline-size: 100%; overflow-x: auto; padding-block: 24px 12px;
+  background:
+    linear-gradient(to right, var(--paper-color-surface-paper) 40%, transparent) left / 2rem 100% no-repeat local,
+    linear-gradient(to left, var(--paper-color-surface-paper) 40%, transparent) right / 2rem 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, var(--profile-heatmap-shade), transparent) left / .75rem 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, var(--profile-heatmap-shade), transparent) right / .75rem 100% no-repeat scroll;
+}
+.profile-heatmap-scroll .paper-heatmap__frame { min-inline-size: 44rem; }
 .profile-day-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-block-start: 16px; }
 @media (max-width: 40rem) { .profile-day-picker label { flex-basis: 100%; } }
 .profile-day-picker label { color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); }
@@ -29,7 +38,7 @@
 .profile-breakdown li > div { display: flex; justify-content: space-between; gap: 16px; margin-block-end: 8px; font-size: .9375rem; overflow-wrap: anywhere; }
 .profile-breakdown strong { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .profile-breakdown small { font-weight: 400; color: var(--paper-color-text-muted); }
-.profile-bar { display: block; block-size: 6px; background: var(--paper-color-rule-field-edge); }
+.profile-bar { display: block; block-size: 6px; background: var(--paper-color-rule-default); }
 .profile-bar > span { display: block; block-size: 100%; min-inline-size: 2px; background: var(--paper-color-text-link); }
 .profile-contests li { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding-block: 12px; border-block-end: 1px solid var(--paper-color-rule-default); overflow-wrap: anywhere; }
 .profile-contests li:first-child { padding-block-start: 0; }
@@ -40,7 +49,12 @@
 .contest-updates { margin-block-start: 24px; }
 .contest-updates-notice { margin-block-end: 16px; }
 .profile-entries { list-style: none; padding: 0; margin: 0; }
-.profile-entries > li { display: grid; grid-template-columns: 7rem minmax(0, 1fr) auto; gap: 24px; align-items: start; padding-block: 16px; border-block-end: 1px solid var(--paper-color-rule-default); }
+.profile-entries > li { position: relative; display: grid; grid-template-columns: 7rem minmax(0, 1fr) auto; gap: 24px; align-items: start; padding-block: 16px; border-block-start: 1px solid var(--paper-color-rule-default); }
+.profile-entries { border-block-end: 1px solid var(--paper-color-rule-default); }
+.profile-entries > li:first-child { border-block-start-color: transparent; }
+/* Within a day the separator starts after the date gutter, so each day reads as one group. */
+.profile-entries > li.profile-entry--same-day { border-block-start-color: transparent; }
+.profile-entries > li.profile-entry--same-day::before { content: ""; position: absolute; inset-block-start: -1px; inset-inline: calc(7rem + 24px) 0; border-block-start: 1px solid var(--paper-color-rule-subtle); }
 .profile-entry-body { grid-column: 2; }
 .profile-entry-score { grid-column: 3; grid-row: 1; }
 .profile-entry-date { padding-block-start: 3px; color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); }
@@ -65,4 +79,5 @@
   .profile-entry-body { grid-column: 1; }
   .profile-entry-score { grid-column: 2; grid-row: auto; }
   .profile-entry-date { grid-column: 1 / -1; padding: 0; }
+  .profile-entries > li.profile-entry--same-day::before { inset-inline-start: 0; }
 }

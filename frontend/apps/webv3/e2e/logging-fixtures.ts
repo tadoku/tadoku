@@ -58,7 +58,7 @@ export async function createLog(page: Page) {
 
 /** Adds each tag as a chip by typing it and pressing Enter. */
 export async function addTags(page: Page, tags: string[]) {
-  const input = page.getByRole('combobox', { name: /^Tags \(up to/ })
+  const input = page.getByRole('combobox', { name: /^Tags \(/ })
   for (const tag of tags) {
     await input.fill(tag)
     await input.press('Enter')

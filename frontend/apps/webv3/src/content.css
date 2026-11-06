@@ -22,7 +22,16 @@
 .content-prose th, .content-prose td { padding: 10px 16px 10px 0; border-bottom: 1px solid var(--paper-color-rule-default); text-align: left; vertical-align: top; }
 .content-prose th { font-weight: 600; color: var(--paper-color-text-ink); border-bottom-color: var(--paper-color-rule-strong); }
 .content-prose sup { color: var(--paper-color-text-link); }
-.content-table { max-width: 100%; overflow-x: auto; margin: 0 0 16px; }
+/* Edge shadows appear only while more columns sit off-screen: the canvas-coloured covers scroll with the table. */
+.content-table {
+  --content-table-shade: color-mix(in srgb, var(--paper-color-text-ink) 22%, transparent);
+  max-width: 100%; overflow-x: auto; margin: 0 0 16px;
+  background:
+    linear-gradient(to right, var(--paper-color-surface-canvas) 40%, transparent) left / 2rem 100% no-repeat local,
+    linear-gradient(to left, var(--paper-color-surface-canvas) 40%, transparent) right / 2rem 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, var(--content-table-shade), transparent) left / .75rem 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, var(--content-table-shade), transparent) right / .75rem 100% no-repeat scroll;
+}
 .content-table:focus-visible { outline: 2px solid var(--paper-color-text-link); outline-offset: 2px; }
 .content-table td:first-child { font-weight: 600; white-space: nowrap; }
 .content-table table { min-inline-size: 28rem; }

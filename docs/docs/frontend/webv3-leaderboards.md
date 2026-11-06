@@ -18,18 +18,18 @@ current UTC year. Pages hold 50 participants.
   query options: standings for a `StandingsScope` (one contest, one year or all
   time), the latest official contest's board, and whether the signed-in viewer
   has joined a contest. `frontend/apps/webv3/src/lib/leaderboard.server.ts`
-  reads standings, contests, summaries and recent logs anonymously through the
+  reads standings and contests anonymously through the
   generated client; only the registration read forwards the session cookies.
 - `frontend/apps/webv3/src/components/Standings.tsx` renders one page of any
-  scope: tied ranks as `T`, the signed-in viewer's row, the participant count,
-  pagination and the empty, failed and past-the-end states. The screen supplies
+  scope: tied ranks as `T` with a note only when a tie is shown, the signed-in
+  viewer's row, pagination with its participant range when there is more than
+  one page, and the empty, failed and past-the-end states. The screen supplies
   the scope caption and the page and profile links.
 - `frontend/apps/webv3/src/components/LeaderboardPage.tsx` holds the shared title
   and period tabs and the yearly and all-time boards, which count official
-  contests only and list the years since 2020.
+  contests only, say so beside the table and list the years since 2020.
   `frontend/apps/webv3/src/components/ContestLeaderboard.tsx` composes the latest
-  official contest with its join action, conditions and, while it runs, its ten
-  most recent logs. The
+  official contest with its join action and conditions. The
   [contest page](webv3-contest.md) shares this board.
 
 Every board names its scope: the latest board titles its contest, and the

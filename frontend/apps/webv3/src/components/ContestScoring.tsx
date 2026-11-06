@@ -79,9 +79,9 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
           platformRuleSets={platformRuleSets}
         />
       )}
-      <section className="scoring-versions" aria-labelledby="scoring-versions">
+      {contestRuleSets.length === 0 ? <p className="scoring-empty">No contest-specific rule sets yet; this contest scores with the platform defaults.</p> : null}
+      <section className="scoring-versions" aria-labelledby="scoring-versions" hidden={contestRuleSets.length === 0}>
         <SectionHeading level={2} id="scoring-versions" title="Rule-set versions" />
-        {contestRuleSets.length === 0 ? <p className="scoring-empty">No contest-specific rule sets yet; this contest scores with the platform defaults.</p> : null}
         {contestRuleSets.map(ruleSet => (
           <RuleSetVersion
             key={ruleSet.id}

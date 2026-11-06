@@ -92,6 +92,7 @@ export function ContestForm({ options, viewerId, admin }: {
                   {field => (
                     <field.AutocompleteMultiInput
                       label="Allowed languages"
+                      placeholder="All languages"
                       hint="Leave empty to accept all languages."
                       options={options.languages}
                       match={(language, query) => searchable(language.name, query)}

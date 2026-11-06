@@ -49,7 +49,7 @@ export function HomePage() {
     <div className="home-page">
       <section className="home-hero" aria-labelledby="home-title">
         {member
-          ? <MemberPromise member={member} data={data} phase={phase} today={today} />
+          ? <MemberPromise member={member} data={data} phase={phase} />
           : (
             <div className="home-promise">
               {phase === 'unavailable' && <p className="home-status" data-tone="warning">Contest updates are delayed</p>}
@@ -94,10 +94,7 @@ export function HomePage() {
       )}
 
       <section className="home-strip" aria-labelledby="home-goal-title">
-        <div>
-          <h2 id="home-goal-title">Daily goal</h2>
-          <p>Plan your sessions</p>
-        </div>
+        <h2 id="home-goal-title">Daily goal</h2>
         <Link className="text-link" to="/plan">Set a daily goal</Link>
       </section>
     </div>
@@ -109,11 +106,10 @@ const suffix: Record<string, string> = { one: 'st', two: 'nd', few: 'rd', other:
 const place = (rank: number) => `${rank}${suffix[ordinal.select(rank)]}`
 
 /** A signed-in learner's hero: where they stand in the current round and the one action that moves it. */
-function MemberPromise({ member, data, phase, today }: {
+function MemberPromise({ member, data, phase }: {
   member: Extract<Viewer, { status: 'signed-in' }>
   data: HomeData | undefined
   phase: Phase
-  today: string
 }) {
   const links = useLinks()
   const contest = data?.latestContest
@@ -126,7 +122,7 @@ function MemberPromise({ member, data, phase, today }: {
   let lead: string
   if (running && entry) {
     headline = `${place(entry.rank)} in ${contest.title}`
-    lead = `${numberFormat.format(entry.score)} points so far · day ${dayNumber(contest.contest_start, today)} of ${dayNumber(contest.contest_start, contest.contest_end)}.`
+    lead = `${numberFormat.format(entry.score)} points so far.`
   } else if (running && registered) {
     headline = `You’re in ${contest.title}`
     lead = phase === 'upcoming' ? `The round starts ${formatDate(contest.contest_start)}.` : 'Log what you read and listen to; every entry counts towards the round.'

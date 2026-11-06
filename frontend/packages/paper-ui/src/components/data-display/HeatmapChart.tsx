@@ -19,6 +19,8 @@ export interface HeatmapChartProps {
   readonly id: string;
   /** Makes each day with activity a link, for example to that day's records. */
   readonly getHref?: (date: string) => string;
+  /** The current ISO day; later days are drawn as not yet happened rather than as empty. */
+  readonly today?: string;
 }
 
 interface CalendarCell {
@@ -56,7 +58,7 @@ const LEVELS = [
  * follow the original ui HeatmapChart so existing consumers can pass the
  * same dated activity records without reshaping them into a generic matrix.
  */
-export function HeatmapChart({ id, data, year, getHref }: HeatmapChartProps) {
+export function HeatmapChart({ id, data, year, getHref, today }: HeatmapChartProps) {
   const start = DateTime.fromObject({ year, month: 1, day: 1 });
   const end = DateTime.fromObject({ year, month: 12, day: 31 });
   const values = new Map<string, number>();
@@ -153,6 +155,7 @@ export function HeatmapChart({ id, data, year, getHref }: HeatmapChartProps) {
               cell={cell}
               tooltipLayerId={tooltipLayerId}
               getHref={getHref}
+              today={today}
               column={columnPosition}
               row={rowPosition}
               parentWidth={width}
@@ -180,6 +183,7 @@ function Cell({
   cell,
   tooltipLayerId,
   getHref,
+  today,
   row,
   column,
   parentWidth,
@@ -187,6 +191,7 @@ function Cell({
   readonly cell: CalendarCell | undefined;
   readonly tooltipLayerId: string;
   readonly getHref: ((date: string) => string) | undefined;
+  readonly today: string | undefined;
   readonly row: number;
   readonly column: number;
   readonly parentWidth: number;
@@ -223,6 +228,7 @@ function Cell({
       y={y}
       className="paper-heatmap__cell"
       data-level={level}
+      data-future={today && isoDate && isoDate > today ? "" : undefined}
       data-date={isoDate}
       data-value={cell?.value}
       aria-hidden={cell === undefined || href ? true : undefined}

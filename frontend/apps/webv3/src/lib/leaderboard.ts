@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import { createServerFn } from '@tanstack/react-start'
-import type { ImmersionContestSummary, ImmersionContestView, ImmersionLeaderboard, ImmersionLog } from 'api-client'
+import type { ImmersionContestView, ImmersionLeaderboard } from 'api-client'
 import { z } from 'zod'
 import type { Identified } from './home'
 
@@ -24,11 +24,9 @@ export const leaderboardHref = {
 /** A public read: the validated answer, or `unavailable` when the API failed or answered something unreadable. */
 export type Read<T> = { ok: true; data: T } | { ok: false }
 
-/** A contest's board. Its summary and recent logs are extras the page leaves out when they can't be read. */
+/** A contest's board: the contest whose standings and conditions the page shows. */
 export interface ContestBoard {
   contest: Identified<ImmersionContestView>
-  summary: ImmersionContestSummary | null
-  recentLogs: ImmersionLog[]
 }
 
 /** A contest's board, or `none` when the contest doesn't exist: no official contest yet, or an unknown ID. */

@@ -47,6 +47,7 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
               {activity.ok ? (<>
                 <HeatmapScroll latest={year === Number(statistics.today.slice(0, 4))}>
                   <HeatmapChart
+                    today={statistics.today}
                     id={`profile-${profile.id}-${year}`}
                     year={year}
                     getHref={date => links.profileUpdates(profile.id, date)}

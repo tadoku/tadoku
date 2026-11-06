@@ -1,9 +1,7 @@
 import {
   immersionContestFetchLeaderboard,
-  immersionContestFetchSummary,
   immersionContestFindById,
   immersionContestFindLatestOfficial,
-  immersionContestListLogs,
   immersionFetchLeaderboardForYear,
   immersionFetchLeaderboardGlobal,
   type ImmersionContestView,
@@ -49,22 +47,9 @@ export async function readContestBoard(id: string): Promise<BoardRead> {
   return readBoard(found.response?.status === 401 && cookie ? await find() : found)
 }
 
-async function readBoard(found: { data?: ImmersionContestView; response?: Response }): Promise<BoardRead> {
+function readBoard(found: { data?: ImmersionContestView; response?: Response }): BoardRead {
   if (found.response?.status === 404) return { kind: 'none' }
   const contest = found.data
   if (!contest?.id) return { kind: 'unavailable' }
-
-  const path = { id: contest.id }
-  const [summary, logs] = await Promise.all([
-    read(immersionContestFetchSummary({ ...sessionRequest(), path })),
-    read(immersionContestListLogs({ ...sessionRequest(), path, query: { page_size: 10, page: 0, include_deleted: false } })),
-  ])
-  return {
-    kind: 'board',
-    board: {
-      contest: { ...contest, id: contest.id },
-      summary: summary.ok ? summary.data : null,
-      recentLogs: logs.ok ? logs.data.logs : [],
-    },
-  }
+  return { kind: 'board', board: { contest: { ...contest, id: contest.id } } }
 }

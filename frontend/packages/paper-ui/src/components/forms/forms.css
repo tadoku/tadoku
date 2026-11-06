@@ -1,5 +1,5 @@
 @layer paper-recipes {
-  .paper-textarea { line-height: var(--paper-type-body-line-height); min-block-size: 8rem; resize: vertical; }
+  .paper-textarea { line-height: var(--paper-type-body-line-height); min-block-size: 5.5rem; resize: vertical; }
   .paper-select__control { position: relative; display: block; inline-size: 100%; }
   .paper-select { appearance: none; padding-inline-end: calc(var(--paper-field-padding-inline) * 2 + var(--paper-icon-size-compact)); }
   .paper-select__icon { position: absolute; z-index: 2; inset-block-start: 50%; inset-inline-end: var(--paper-field-padding-inline); color: var(--paper-color-text-muted); pointer-events: none; transform: translateY(-50%); }

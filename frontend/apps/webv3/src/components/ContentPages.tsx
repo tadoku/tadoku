@@ -74,7 +74,6 @@ export function BlogList({ blog, page }: { blog: BlogPage; page: number }) {
           <h2 id="blog-lead-title"><Link to={blogHref.post(lead.slug)}>{lead.title}</Link></h2>
           <p className="blog-date"><time dateTime={lead.publishedAt}>{published(lead)}</time></p>
           <p>{excerpt(lead.content, 500)}</p>
-          <Link to={blogHref.post(lead.slug)} className="text-link" aria-label={`Continue reading: ${lead.title}`}>Continue reading</Link>
         </section>
       ) : null}
 

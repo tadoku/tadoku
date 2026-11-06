@@ -105,6 +105,18 @@
     fill: var(--paper-color-heat-4);
   }
 
+  /* Active days carry an edge so even the lightest step separates from an empty day. */
+  .paper-heatmap__cell:is([data-level="1"], [data-level="2"]) {
+    stroke: var(--paper-color-heat-3);
+    stroke-width: 1;
+  }
+
+  .paper-heatmap__cell[data-future] {
+    fill: transparent;
+    stroke: var(--paper-color-rule-subtle);
+    stroke-width: 1;
+  }
+
   .paper-heatmap__link:focus {
     outline: none;
   }

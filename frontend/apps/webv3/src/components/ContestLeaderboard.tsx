@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
 import type { ImmersionContestView } from 'api-client'
 import { Button, DescriptionList, EmptyState, Flash, SectionHeading, StatusTag, buttonClassName } from 'paper-ui'
 import type { ReactNode } from 'react'
-import { formatDate, formatPeriod, numberFormat } from '../lib/format'
+import { formatDate, formatPeriod } from '../lib/format'
 import { latestBoardQuery, leaderboardHref, standingsQuery, contestPhase, readDay, type ContestBoard, type ContestPhase } from '../lib/leaderboard'
 import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
@@ -69,7 +68,7 @@ function LatestBoard({ board, today, page }: { board: ContestBoard; today: strin
   )
 }
 
-/** A contest's notices, standings, conditions and, while it runs, its ten most recent logs. */
+/** A contest's notices, standings and conditions. */
 export function ContestBoardBody({ board, phase, page, pageHref, title, status, asideLink }: {
   board: ContestBoard
   phase: ContestPhase
@@ -83,7 +82,7 @@ export function ContestBoardBody({ board, phase, page, pageHref, title, status, 
 }) {
   const links = useLinks()
   const loginUrl = useLoginUrl()
-  const { contest, recentLogs } = board
+  const { contest } = board
   const { data: viewer } = useQuery(viewerQueryOptions())
   const standings = useQuery(standingsQuery({ kind: 'contest', contestId: contest.id }, page))
 
@@ -134,21 +133,6 @@ export function ContestBoardBody({ board, phase, page, pageHref, title, status, 
             {contest.description ? <p className="standings-description">{contest.description}</p> : null}
             {asideLink}
           </section>
-          {phase.ongoing && recentLogs.length > 0 ? (
-            <section aria-labelledby="standings-recent">
-              <h2 id="standings-recent" className="paper-type-component">Recent updates</h2>
-              <ul className="standings-activity">
-                {recentLogs.map(log => (
-                  <li key={log.id}>
-                    <Link to="/logs/$logId" params={{ logId: log.id }}>
-                      <span>{log.user_display_name ?? 'Unknown user'}</span>
-                      <span>+{numberFormat.format(log.score)}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
         </aside>
       </div>
     </>

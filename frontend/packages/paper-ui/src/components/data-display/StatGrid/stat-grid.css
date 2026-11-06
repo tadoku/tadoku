@@ -7,16 +7,19 @@
     margin: 0;
   }
 
+  /* Each stat spans two shared rows, so values align even when a label wraps. */
   .paper-stat-grid__item {
-    display: flex;
-    flex-direction: column;
-    gap: var(--paper-space-1);
+    display: grid;
+    grid-row: span 2;
+    grid-template-rows: subgrid;
+    row-gap: var(--paper-space-1);
     min-inline-size: 0;
     padding-inline-start: clamp(var(--paper-space-2), 2vw, var(--paper-space-4));
     border-inline-start: var(--paper-border-static-width) solid var(--paper-color-rule-default);
   }
 
   .paper-stat-grid__label {
+    align-self: end;
     color: var(--paper-color-text-muted);
     font-size: 0.875rem;
     line-height: 1.5;

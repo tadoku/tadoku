@@ -4,6 +4,7 @@ import { Button, EmptyState, Loading } from 'paper-ui'
 export function NotFoundView() {
   return (
     <EmptyState
+      variant="plain"
       headingLevel={1}
       title="Page not found"
       description="This address doesn’t match a Tadoku page."

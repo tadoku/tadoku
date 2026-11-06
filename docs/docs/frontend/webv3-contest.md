@@ -26,7 +26,8 @@ An unknown or malformed contest ID answers 404 with a not-found page.
 - `frontend/apps/webv3/src/components/ContestPage.tsx` composes the page header
   and actions around the board that
   `frontend/apps/webv3/src/components/ContestLeaderboard.tsx` shares with the
-  latest official leaderboard: notices, standings, conditions and recent logs.
+  latest official leaderboard: notices, standings and conditions; the Updates
+  tab lists the contest's logs.
   The selected Standings tab names the standings, so the contest page shows no
   separate standings heading. `frontend/apps/webv3/src/components/ContestRegistration.tsx` holds the
   registration states and form.

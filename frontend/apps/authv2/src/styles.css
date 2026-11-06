@@ -17,7 +17,11 @@ a:where(:not(.paper-button)) { color: var(--paper-color-text-link); }
 [data-theme="dark"] .account-mark--dark, [data-theme="dark"] .account-wordmark--dark { display: block; }
 .account-brand__label { padding-left: 14px; border-left: 1px solid var(--paper-color-rule-default); font-size: .875rem; font-weight: 600; line-height: 1.25rem; }
 .account-session { display: flex; align-items: center; gap: 16px; min-width: 0; margin: 0; }
-.account-session__name { min-width: 0; color: var(--paper-color-text-muted); font-size: .875rem; overflow-wrap: anywhere; }
+.account-session__name { min-width: 0; max-width: 12rem; overflow: hidden; color: var(--paper-color-text-muted); font-size: .875rem; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 30rem) {
+  .account-header { flex-wrap: nowrap; }
+  .account-brand__label, .account-session__name { display: none; }
+}
 .account-main { flex: 1; width: 100%; padding: clamp(32px, 7vh, 72px) var(--account-gutter) 72px; }
 .account-main:focus { outline: none; }
 

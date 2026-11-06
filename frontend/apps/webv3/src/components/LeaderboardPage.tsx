@@ -72,15 +72,11 @@ export function GlobalLeaderboard({ scope, page }: { scope: Exclude<StandingsSco
               onRetry={() => void standings.refetch()}
             />
           </section>
-          <StandingsFootnote>Only official contests count; community contest scores are not included.</StandingsFootnote>
         </div>
+        <aside className="standings-aside">
+          <p>Only official contests count; community contest scores are not included.</p>
+        </aside>
       </div>
     </LeaderboardFrame>
-  )
-}
-
-export function StandingsFootnote({ children }: { children: ReactNode }) {
-  return (
-    <p className="standings-footnote">{children}</p>
   )
 }

@@ -5,7 +5,6 @@ import {
   Button,
   PageHeader,
   Surface,
-  buttonClassName,
   usePaperForm,
   withPaperForm,
   type Option,
@@ -89,7 +88,7 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
       {editing ? (
         <PageHeader title="Edit activity" backLink={{ href: `/logs/${editing.id}`, label: 'Back to log' }} />
       ) : (
-        <PageHeader title="Log activity" lead="Keep a record of what you read, listen to or practise." />
+        <PageHeader title="Log activity" />
       )}
       <form.AppForm>
         <div className="log-form-layout">
@@ -112,8 +111,8 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
             {failure ? <SaveFailure failure={failure} viewerId={viewerId} editing={editing} /> : null}
             <div className="log-form__actions">
               {editing
-                ? <Link className={buttonClassName({ variant: 'ghost' })} to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
-                : <Link className={buttonClassName({ variant: 'ghost' })} to="/">Cancel</Link>}
+                ? <Link className="text-link" to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
+                : <Link className="text-link" to="/">Cancel</Link>}
               <Button type="submit" disabled={disabled} loading={pending} loadingLabel="Saving">
                 {editing ? 'Save' : 'Create'}
               </Button>
@@ -163,8 +162,7 @@ const TagsField = withPaperForm({
       <form.AppField name="tags">
         {field => (
           <field.TagsInput
-            label="Tags"
-            hint={`Up to ${maxTags} tags.`}
+            label={`Tags (up to ${maxTags})`}
             placeholder="Add tags..."
             maxSelections={maxTags}
             options={suggestions.map(suggestion => suggestion.tag)}
@@ -185,7 +183,7 @@ const MeasureField = withPaperForm({
     const timeSpent = (
       <form.AppField name="minutes">
         {field => (
-          <field.Input label="Time spent" hint="minutes" required={timed} type="number" inputMode="decimal" step="any" min={0} />
+          <field.Input label={timed ? 'Time spent (minutes)' : 'Time spent (minutes, optional)'} required={timed} type="number" inputMode="decimal" step="any" min={0} />
         )}
       </form.AppField>
     )
@@ -276,7 +274,6 @@ const FixedFields = withPaperForm({
           {field => (
             <field.Select
               label="Activity"
-              hint="Language and activity stay fixed for existing entries."
               disabled
               options={[{ value: String(log.activity.id), label: log.activity.name }]}
             />
@@ -291,7 +288,7 @@ const estimateFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1
 
 /**
  * The API's estimate of the draft's score, requested once the draft is valid and has stopped changing for 300 ms. An
- * incomplete draft, a pending first estimate and a failed one show a dash, and a zero estimate shows N/A.
+ * incomplete draft, a pending first estimate and a failed one show an em dash, and a zero estimate shows N/A.
  */
 const ScoreEstimate = withPaperForm({
   defaultValues: {} as LogDraft,
@@ -310,7 +307,7 @@ const ScoreEstimate = withPaperForm({
     const score = input !== undefined && data?.ok ? data.data.platform.score : undefined
     return (
       <p className="log-form__estimate" aria-live="polite">
-        Estimated score: <strong>{score === undefined ? '-' : score ? estimateFormat.format(score) : 'N/A'}</strong>
+        Estimated score: <strong data-pending={score === undefined ? '' : undefined}>{score === undefined ? '—' : score ? estimateFormat.format(score) : 'N/A'}</strong>
       </p>
     )
   },

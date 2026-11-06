@@ -143,12 +143,13 @@ test('a draft cannot be saved under an account switched in another tab', async (
 test('public activity detail still loads with an expired session cookie and has a title', async ({ page, readerContext }) => {
   test.skip(!webv3 || !api || !reader.email, 'Set development fixture credentials')
   await openForm(page)
-  await fillDraft(page, '2', `public-expired-${Date.now()}`)
-  const id = await createLog(page)
+  const description = `public-expired-${Date.now()}`
+  await fillDraft(page, '2', description)
+  await createLog(page)
 
   await readerContext.addCookies([{ ...await sessionCookie(readerContext), value: 'expired' }])
   await page.reload()
-  await expect(page.getByText(id, { exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: description })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Manage contest submissions' })).toHaveCount(0)
   await expect(page).toHaveTitle('Activity · Tadoku')
 })

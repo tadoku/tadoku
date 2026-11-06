@@ -70,7 +70,7 @@ and persistence; Webv3 never calculates a score itself.
 Both forms show the API's estimated score in the footer of the form card,
 "Estimated score: X", once the draft is valid and has not changed for 300 ms. The request is a GET server function and sends no contest
 registrations, so it estimates the personal score only. An incomplete draft, a
-pending first estimate and a failed one show a dash; a zero estimate shows N/A.
+pending first estimate and a failed one show an em dash; a zero estimate shows N/A.
 A saved amount names its unit by the configuration's `unit_key`; the API resolves
 the language's variant.
 

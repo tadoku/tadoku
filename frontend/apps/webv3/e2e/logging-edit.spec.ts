@@ -17,7 +17,7 @@ import {
 } from './logging-fixtures'
 
 const estimate = (page: Page) => page.locator('.log-form__estimate strong')
-const timeSpent = (page: Page) => page.getByLabel('Time spent', { exact: true })
+const timeSpent = (page: Page) => page.getByLabel(/^Time spent/)
 const description = (page: Page) => page.getByLabel('Description', { exact: true })
 const saveChanges = (page: Page) => page.getByRole('button', { name: 'Save', exact: true })
 const isPreviewRequest = (request: Request) => request.method() === 'GET' && request.url().includes('_serverFn')
@@ -81,7 +81,7 @@ test('owner edits a saved log, sees the estimate and the persisted change after 
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(text)
   await page.reload()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(text)
-  await expect(page.getByText(`12 ${before.unit_name}`, { exact: true })).toBeVisible()
+  await expect(page.getByText(`12 ${before.unit_name.toLowerCase()}s`, { exact: true })).toBeVisible()
   await expect(page.getByText('30 min', { exact: true })).toBeVisible()
   expect(saves).toBe(1)
 
@@ -156,12 +156,13 @@ test('owner deletes a log after confirming, and its detail is gone', async ({ pa
 test('visitors see no owner actions and cannot open the edit page for another learner\'s log', async ({ readerContext, adminContext, browser }) => {
   test.skip(!webv3 || !api || !reader.email || !admin.email, 'Set both development fixture identities')
   const adminPage = await adminContext.newPage()
-  const id = await createReadingLog(adminPage, `visitor-${Date.now()}`)
+  const description = `visitor-${Date.now()}`
+  const id = await createReadingLog(adminPage, description)
   await expect(adminPage.getByRole('link', { name: 'Edit log', exact: true })).toBeVisible()
 
   const readerPage = await readerContext.newPage()
   await readerPage.goto(`/logs/${id}`)
-  await expect(readerPage.getByText(id, { exact: true })).toBeVisible()
+  await expect(readerPage.getByRole('heading', { level: 1, name: description })).toBeVisible()
   await expect(readerPage.getByRole('link', { name: 'Edit log' })).toHaveCount(0)
   await expect(readerPage.getByRole('button', { name: 'Delete log' })).toHaveCount(0)
   await readerPage.goto(`/logs/${id}/edit`)
@@ -172,7 +173,7 @@ test('visitors see no owner actions and cannot open the edit page for another le
   try {
     const anonymousPage = await anonymous.newPage()
     await anonymousPage.goto(`/logs/${id}`)
-    await expect(anonymousPage.getByText(id, { exact: true })).toBeVisible()
+    await expect(anonymousPage.getByRole('heading', { level: 1, name: description })).toBeVisible()
     await expect(anonymousPage.getByRole('link', { name: 'Edit log' })).toHaveCount(0)
     await expect(anonymousPage.getByRole('button', { name: 'Delete log' })).toHaveCount(0)
     await anonymousPage.goto(`/logs/${id}/edit`)
@@ -185,7 +186,7 @@ test('visitors see no owner actions and cannot open the edit page for another le
 test('score preview shows the API estimate, and a dash while incomplete or failed', async ({ page, readerContext }) => {
   test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
   await openForm(page)
-  await expect(estimate(page)).toHaveText('-')
+  await expect(estimate(page)).toHaveText('—')
   const body = async (amount: number) => ({
     language_code: await page.getByLabel('Language', { exact: true }).inputValue(),
     activity_id: Number(await page.getByLabel('Activity', { exact: true }).inputValue()),
@@ -199,11 +200,11 @@ test('score preview shows the API estimate, and a dash while incomplete or faile
 
   await page.route('**/*', route => isPreviewRequest(route.request()) ? route.abort() : route.continue())
   await amountInput(page).fill('8')
-  await expect(estimate(page)).toHaveText('-')
+  await expect(estimate(page)).toHaveText('—')
   await page.unroute('**/*')
 
   await amountInput(page).fill('9')
   await expect(estimate(page)).toHaveText(await apiEstimate(page, readerContext, await body(9)))
   await amountInput(page).fill('')
-  await expect(estimate(page)).toHaveText('-')
+  await expect(estimate(page)).toHaveText('—')
 })

@@ -99,11 +99,12 @@ test('owner submits a saved log to a contest, sees it after reload, then removes
 
 test('another learner cannot manage the log\'s contests', async ({ page, readerContext, adminContext }) => {
   test.skip(!webv3 || !api || !reader.email || !admin.email, 'Set both development fixture identities')
-  const id = await createPersonalLog(page, `contests-visitor-${Date.now()}`)
+  const description = `contests-visitor-${Date.now()}`
+  const id = await createPersonalLog(page, description)
 
   const adminPage = await adminContext.newPage()
   await adminPage.goto(`${webv3}/logs/${id}`)
-  await expect(adminPage.getByText(id, { exact: true })).toBeVisible()
+  await expect(adminPage.getByRole('heading', { level: 1, name: description })).toBeVisible()
   await expect(manageLink(adminPage)).toHaveCount(0)
   await adminPage.goto(`${webv3}/logs/${id}/contests`)
   await expect(adminPage.getByRole('heading', { name: 'This is someone else\'s record' })).toBeVisible()

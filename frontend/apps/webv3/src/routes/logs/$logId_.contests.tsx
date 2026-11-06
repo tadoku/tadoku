@@ -141,8 +141,8 @@ function ContestsForm({ log, registrations, viewerId }: {
         <form.AppForm>
           <form.Form className="goal-form" aria-busy={pending}>
             <fieldset className="goal-form__controls" disabled={disabled}>
-              <fieldset className="paper-choice-field">
-                <legend className="paper-field__label">Contests</legend>
+              <fieldset className="paper-choice-field log-contest-choices">
+                <legend className="paper-visually-hidden">Contests</legend>
                 {choices.map(choice => (
                   <form.AppField key={choice.registration.id} name="registrationIds">
                     {field => (
@@ -150,7 +150,7 @@ function ContestsForm({ log, registrations, viewerId }: {
                         label={choice.registration.contest.title}
                         value={choice.registration.id}
                         disabled={choice.kind === 'ineligible'}
-                        hint={choice.kind === 'ineligible' ? choice.reason : organizer(choice.registration)}
+                        hint={choice.kind === 'ineligible' ? choice.reason : undefined}
                       />
                     )}
                   </form.AppField>
@@ -163,7 +163,7 @@ function ContestsForm({ log, registrations, viewerId }: {
                 ))}
               </fieldset>
               {eligible.length ? (
-                <p>Removing a selection removes that contest contribution. Your personal record stays the same.</p>
+                <p className="log-contests-note">Removing a selection removes that contest contribution. Your personal record stays the same.</p>
               ) : (
                 <EmptyState
                   variant="plain"
@@ -189,10 +189,6 @@ function ContestsForm({ log, registrations, viewerId }: {
       </Surface>
     </div>
   )
-}
-
-function organizer({ contest }: Registration) {
-  return contest.official ? 'Administered by Tadoku' : `Administered by ${contest.owner_user_display_name}`
 }
 
 const failureMessages: Record<LogFailure, string> = {

@@ -65,7 +65,7 @@ test('a visitor follows a standings profile to its activity, pages through it an
   await entry.click()
   await expect(page).toHaveURL(new RegExp(`${href}$`))
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-  await expect(page.getByText('Record ID')).toBeVisible()
+  await expect(page.getByText('Logged', { exact: true })).toBeVisible()
 })
 
 test('an owner pages through their newest-first activity, opens a day from the calendar and an entry', async ({ readerContext }, testInfo) => {

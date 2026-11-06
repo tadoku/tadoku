@@ -22,3 +22,7 @@
   .log-form__estimate { text-align: right; }
 }
 .log-form__narrow-tags:empty { display: none; }
+.log-form__estimate strong[data-pending] { color: var(--paper-color-text-muted); font-weight: 400; }
+.log-contest-choices { gap: 16px; }
+.log-contest-choices .paper-field__hint { margin-block-start: 2px; }
+.log-contests-note { margin: 0; color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); }

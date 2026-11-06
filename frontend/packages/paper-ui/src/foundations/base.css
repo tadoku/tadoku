@@ -41,7 +41,8 @@ svg {
 }
 
 /* Script-moved focus (headings, main) announces the page without drawing a control ring. */
-[tabindex="-1"]:focus-visible {
+main[tabindex="-1"]:focus-visible,
+:is(h1, h2)[tabindex="-1"]:focus-visible {
   outline: none;
 }
 

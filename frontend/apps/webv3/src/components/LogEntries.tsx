@@ -57,7 +57,7 @@ function Entry({ log, showParticipant, actions }: { log: ImmersionLog; showParti
     <li>
       <time dateTime={day} className="profile-entry-date">{formatDate(day)}</time>
       <div className="profile-entry-body">
-        <Link className="profile-entry-title text-link" to="/logs/$logId" params={{ logId: log.id }}>
+        <Link className="profile-entry-title" to="/logs/$logId" params={{ logId: log.id }}>
           {nsfw || !log.description ? subject : log.description}
         </Link>
         <p className="profile-entry-meta">{meta.filter(Boolean).join(' · ')}</p>
@@ -69,7 +69,7 @@ function Entry({ log, showParticipant, actions }: { log: ImmersionLog; showParti
         ) : null}
         {actions ? <div className="profile-entry-actions">{actions}</div> : null}
       </div>
-      <span className="profile-entry-score">{numberFormat.format(log.score)}<small>points</small></span>
+      <span className="profile-entry-score">{numberFormat.format(log.score)} <small>points</small></span>
     </li>
   )
 }

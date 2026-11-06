@@ -69,7 +69,7 @@ function LatestBoard({ board, today, page }: { board: ContestBoard; today: strin
   )
 }
 
-/** A contest's notices, standings, conditions, summary and, while it runs, its ten most recent logs. */
+/** A contest's notices, standings, conditions and, while it runs, its ten most recent logs. */
 export function ContestBoardBody({ board, phase, page, pageHref, title, status, asideLink }: {
   board: ContestBoard
   phase: ContestPhase
@@ -83,7 +83,7 @@ export function ContestBoardBody({ board, phase, page, pageHref, title, status, 
 }) {
   const links = useLinks()
   const loginUrl = useLoginUrl()
-  const { contest, summary, recentLogs } = board
+  const { contest, recentLogs } = board
   const { data: viewer } = useQuery(viewerQueryOptions())
   const standings = useQuery(standingsQuery({ kind: 'contest', contestId: contest.id }, page))
 
@@ -135,23 +135,13 @@ export function ContestBoardBody({ board, phase, page, pageHref, title, status, 
             {contest.description ? <p className="standings-description">{contest.description}</p> : null}
             {asideLink}
           </section>
-          {summary ? (
-            <section aria-labelledby="standings-summary">
-              <h2 id="standings-summary" className="paper-type-component">Summary</h2>
-              <p>
-                <strong>{numberFormat.format(summary.participant_count)}</strong> {summary.participant_count === 1 ? 'participant' : 'participants'} immersing
-                in <strong>{numberFormat.format(summary.language_count)}</strong> {summary.language_count === 1 ? 'language' : 'languages'} for
-                a total score of <strong>{numberFormat.format(summary.total_score)}</strong>.
-              </p>
-            </section>
-          ) : null}
           {phase.ongoing && recentLogs.length > 0 ? (
             <section aria-labelledby="standings-recent">
               <h2 id="standings-recent" className="paper-type-component">Recent updates</h2>
               <ul className="standings-activity">
                 {recentLogs.map(log => (
                   <li key={log.id}>
-                    <Link className="text-link" to="/logs/$logId" params={{ logId: log.id }}>
+                    <Link to="/logs/$logId" params={{ logId: log.id }}>
                       <span>{log.user_display_name ?? 'Unknown user'}</span>
                       <span>+{numberFormat.format(log.score)}</span>
                     </Link>
@@ -177,8 +167,7 @@ export function ContestFacts({ contest, phase }: { contest: ImmersionContestView
   return (
     <DescriptionList
       items={[
-        { label: phase.started ? 'Started' : 'Starts', value: formatDate(contest.contest_start) },
-        { label: phase.ended ? 'Ended' : 'Ends', value: formatDate(contest.contest_end) },
+        { label: 'Dates', value: formatPeriod(contest) },
         { label: 'Registration', value: phase.registrationOpen ? `Open until ${formatDate(contest.registration_end)}` : 'Closed to new participants' },
         { label: 'Languages', value: contest.allowed_languages?.length ? contest.allowed_languages.map(language => language.name).join(', ') : 'No restrictions' },
         { label: 'Activities', value: contest.allowed_activities.map(activity => activity.name).join(', ') || 'No restrictions' },

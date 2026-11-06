@@ -74,11 +74,11 @@
   --paper-color-chart-7: #55716d;
   --paper-color-chart-8: #83565d;
 
-  --paper-color-heat-0: #e7e2d9;
-  --paper-color-heat-1: #d6cff5;
-  --paper-color-heat-2: #a99deb;
-  --paper-color-heat-3: #7a6bd3;
-  --paper-color-heat-4: #4a3ba6;
+  --paper-color-heat-0: #e4dfd6;
+  --paper-color-heat-1: #b9aef0;
+  --paper-color-heat-2: #9483e3;
+  --paper-color-heat-3: #6c5bcb;
+  --paper-color-heat-4: #45369e;
 
   --paper-elevation-flat: none;
   --paper-elevation-floating: 3px 3px 0 var(--paper-private-shadow);
@@ -89,23 +89,23 @@
   color-scheme: dark;
 
   --paper-private-canvas: #121012;
-  --paper-private-paper: #232023;
-  --paper-private-raised: #2c292c;
-  --paper-private-overlay: #2c292c;
+  --paper-private-paper: #272326;
+  --paper-private-raised: #322e31;
+  --paper-private-overlay: #322e31;
   --paper-private-scrim: rgb(0 0 0 / 38%);
-  --paper-private-ink: #e5e0d9;
-  --paper-private-muted: #aea5a9;
+  --paper-private-ink: #ece7e0;
+  --paper-private-muted: #a49ba0;
   --paper-private-inverse: #fffefa;
-  --paper-private-rule-subtle: #3a3538;
-  --paper-private-rule-default: #524b4f;
-  --paper-private-rule-strong: #8a8185;
-  --paper-private-field-edge: #8a8185;
+  --paper-private-rule-subtle: #3c373a;
+  --paper-private-rule-default: #5a5356;
+  --paper-private-rule-strong: #b8afb3;
+  --paper-private-field-edge: #968d91;
   --paper-private-accent: #a99cf0;
   --paper-private-accent-hover: #6d5cc7;
   --paper-private-accent-active: #5747b8;
-  --paper-private-accent-edge: #5242a6;
-  --paper-private-accent-soft: #2e2945;
-  --paper-private-neutral-action-hover: #312d31;
+  --paper-private-accent-edge: #8a7be0;
+  --paper-private-accent-soft: #352f4f;
+  --paper-private-neutral-action-hover: #353134;
   --paper-private-action-default: #6150bc;
   --paper-private-action-hover: #6d5cc7;
   --paper-private-action-active: #49399f;
@@ -117,7 +117,7 @@
   --paper-private-danger: #d77171;
   --paper-private-danger-hover: #b94f4f;
   --paper-private-danger-edge: #883434;
-  --paper-private-shadow: rgb(0 0 0 / 70%);
+  --paper-private-shadow: rgb(236 231 224 / 12%);
 
   --paper-color-surface-canvas: var(--paper-private-canvas);
   --paper-color-surface-paper: var(--paper-private-paper);
@@ -160,11 +160,11 @@
   --paper-color-chart-7: #83aaa3;
   --paper-color-chart-8: #c58e9b;
 
-  --paper-color-heat-0: #363236;
-  --paper-color-heat-1: #433b6e;
-  --paper-color-heat-2: #5d51a8;
-  --paper-color-heat-3: #8576dc;
-  --paper-color-heat-4: #b9aef7;
+  --paper-color-heat-0: #3c373b;
+  --paper-color-heat-1: #5a4d98;
+  --paper-color-heat-2: #7565c6;
+  --paper-color-heat-3: #9d8ce3;
+  --paper-color-heat-4: #d0c6fa;
 }
 
 :root {

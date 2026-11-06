@@ -28,11 +28,13 @@ current UTC year. Pages hold 50 participants.
   and period tabs and the yearly and all-time boards, which count official
   contests only and list the years since 2020.
   `frontend/apps/webv3/src/components/ContestLeaderboard.tsx` composes the latest
-  official contest with its join or logging action, conditions, summary and,
-  while it runs, its ten most recent logs. The
+  official contest with its join action, conditions and, while it runs, its ten
+  most recent logs. The
   [contest page](webv3-contest.md) shares this board.
 
-Every board names its scope: the contest, the year or all time. The contest's
+Every board names its scope: the latest board titles its contest, and the
+selected period and year tabs name the yearly and all-time boards, whose
+standings region carries the scope as its accessible name. The contest's
 phase follows the UTC day the board was read, as on the homepage. Yearly and
 all-time participants link to their Webv3 [profile statistics](webv3-profile.md);
 the latest contest's participants open their native

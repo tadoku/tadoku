@@ -1,6 +1,6 @@
 /* Contest creation and scoring */
-.contest-form-group { display: grid; gap: 20px; min-width: 0; margin: 0; padding: 20px 0 0; border: 0; border-top: 1px solid var(--paper-color-rule-default); }
-.contest-form-group > legend { float: left; width: 100%; padding: 0; }
+.contest-form-group { display: grid; gap: 16px; min-width: 0; margin: 8px 0 0; padding: 24px 0 0; border: 0; border-top: 1px solid var(--paper-color-rule-default); }
+.contest-form-group > legend { float: left; width: 100%; padding: 0; font-family: var(--paper-font-body); font-size: var(--paper-type-component-size); line-height: var(--paper-type-component-line-height); font-weight: 600; color: var(--paper-color-text-ink); }
 .contest-form-group > p { margin: 0; }
 .scoring-page { display: grid; gap: 32px; max-width: 48rem; min-width: 0; }
 .scoring-page > .log-surface, .scoring-version { max-width: none; }

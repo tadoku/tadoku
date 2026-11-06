@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import { Button, EmptyState, HeatmapChart, Pagination, SectionHeading, StatGrid, StatusTag, buttonClassName } from 'paper-ui'
 import { ChevronLeftIcon, ChevronRightIcon } from 'paper-ui/icons'
@@ -45,7 +45,7 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
             <div className="profile-rhythm">
               <SectionHeading level={3} id="profile-rhythm-heading" title="Daily activity" />
               {activity.ok ? (<>
-                <div className="profile-heatmap-scroll paper-focus-ring" role="region" aria-labelledby="profile-rhythm-heading" tabIndex={0}>
+                <HeatmapScroll latest={year === Number(statistics.today.slice(0, 4))}>
                   <HeatmapChart
                     id={`profile-${profile.id}-${year}`}
                     year={year}
@@ -56,7 +56,7 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
                       tooltip: `${scoreFormat.format(day.score)} points on ${formatDay(day.date)}`,
                     }))}
                   />
-                </div>
+                </HeatmapScroll>
                 <p className="profile-caption">Select a day to see its updates.</p>
               </>) : <p className="profile-muted">Could not retrieve updates for {year}.</p>}
             </div>
@@ -91,6 +91,19 @@ function YearTotals({ statistics, year }: { statistics: Found; year: number }) {
         ...(scores.ok ? [{ label: 'Languages', value: scores.data.scores.length }] : []),
       ]}
     />
+  )
+}
+
+/** On narrow screens the year scrolls sideways; the current year opens at its latest weeks. */
+function HeatmapScroll({ latest, children }: { latest: boolean; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (latest && ref.current) ref.current.scrollLeft = ref.current.scrollWidth
+  }, [latest])
+  return (
+    <div ref={ref} className="profile-heatmap-scroll paper-focus-ring" role="region" aria-labelledby="profile-rhythm-heading" tabIndex={0}>
+      {children}
+    </div>
   )
 }
 

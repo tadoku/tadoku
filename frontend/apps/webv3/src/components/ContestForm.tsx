@@ -72,7 +72,7 @@ export function ContestForm({ options, viewerId, admin }: {
               </form.AppField>
 
               <fieldset className="contest-form-group">
-                <legend className="paper-field__label">Schedule</legend>
+                <legend>Schedule</legend>
                 <div className="goal-form__row">
                   <form.AppField name="contestStart">
                     {field => <field.Input label="Start date (UTC)" type="date" required />}
@@ -87,7 +87,7 @@ export function ContestForm({ options, viewerId, admin }: {
               </fieldset>
 
               <fieldset className="contest-form-group">
-                <legend className="paper-field__label">Eligibility</legend>
+                <legend>Eligibility</legend>
                 <form.AppField name="languages">
                   {field => (
                     <field.AutocompleteMultiInput

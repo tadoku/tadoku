@@ -50,10 +50,9 @@
   }
 
   .paper-table__header {
-    background: var(--paper-color-surface-canvas);
+    color: var(--paper-color-text-muted);
     font-size: var(--paper-type-label-size);
-    font-weight: var(--paper-type-label-weight);
-    letter-spacing: 0.04em;
+    font-weight: 600;
     line-height: var(--paper-type-label-line-height);
   }
 
@@ -117,7 +116,12 @@
     stroke-width: var(--paper-focus-ring-width);
   }
 
+  /* Sticky so the legend stays in view when a narrow container scrolls the year sideways. */
   .paper-heatmap__legend {
+    position: sticky;
+    inset-inline-start: 0;
+    inline-size: max-content;
+    max-inline-size: 100%;
     display: flex;
     flex-wrap: wrap;
     align-items: center;

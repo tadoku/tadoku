@@ -51,12 +51,11 @@ func TestDeleteTestTenantRemovesOnlyOwnedKeysAndIsIdempotent(t *testing.T) {
 	for i := range 1100 {
 		owned = append(owned, fmt.Sprintf("%sleaderboard:lifecycle:%d", prefix, i))
 	}
-	owned = append(owned, prefix+globalKey+":last_updated", prefix+globalKey+":generation")
+	owned = append(owned, prefix+"leaderboard:global", prefix+"leaderboard:global:last_updated")
 	untouched := []string{
 		productionPrefix + "leaderboard:lifecycle:" + suffix,
-		otherPrefix + globalKey,
-		otherPrefix + globalKey + ":last_updated",
-		otherPrefix + globalKey + ":generation",
+		otherPrefix + "leaderboard:global",
+		otherPrefix + "leaderboard:global:last_updated",
 		"outside:" + prefix + "marker",
 	}
 	allKeys := append(append([]string{}, owned...), untouched...)

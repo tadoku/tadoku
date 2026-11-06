@@ -30,7 +30,7 @@ func TestStandaloneWorkerLeaderboardJourney(t *testing.T) {
 		seedLeaderboardCache(t, tenantKey, "leaderboard:global", "hit")
 	}, nil, []step{
 		{request: "create_log", as: user, want: http.StatusOK},
-		{request: "before_worker_stale_cache", as: guest, want: http.StatusOK},
+		{request: "before_worker_shows_the_log", as: guest, want: http.StatusOK},
 		{job: "run_worker"},
 		{request: "after_worker_cache_miss", as: guest, want: http.StatusOK},
 	})

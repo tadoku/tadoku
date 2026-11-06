@@ -60,12 +60,10 @@ browser → ingress-nginx → Envoy → webv2 / authv2 / admin
   `services/tadoku-api/migrations/` and run as Argo CD sync hooks before the API
   starts.
 - PostgreSQL is the source of truth for leaderboards. Valkey holds sorted-set
-  caches of the unfiltered leaderboards. The separate Tadoku worker only
-  invalidates those caches, and the next read rebuilds them from PostgreSQL. A
-  cached leaderboard can be stale until its invalidation completes; after a
-  terminal failure it stays stale until the next write to the same contest or
-  year, a replay, or its cache marker's expiry at most 28 days after the
-  rebuild. See
+  caches of the unfiltered leaderboards, each built from a board version that
+  PostgreSQL triggers raise with every write. A read serves a cached board only
+  when it was built from the current version, and rebuilds it otherwise, so a
+  served board reflects every committed write. See
   [Leaderboard freshness and worker health](../tadoku-api/jobs-operations.md#leaderboard-freshness-and-worker-health).
 - Filtered requests, cache misses and cache errors read a leaderboard from
   PostgreSQL; other requests read a page from Valkey. Contest boards and

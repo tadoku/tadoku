@@ -11,6 +11,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const boardVersion = `-- name: BoardVersion :one
+select coalesce((select version from leaderboard_versions where board = $1::text), 0)::bigint as version
+`
+
+func (q *Queries) BoardVersion(ctx context.Context, board string) (int64, error) {
+	row := q.db.QueryRow(ctx, boardVersion, board)
+	var version int64
+	err := row.Scan(&version)
+	return version, err
+}
+
 const contestExists = `-- name: ContestExists :one
 select exists(
   select 1

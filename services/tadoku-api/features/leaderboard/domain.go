@@ -3,10 +3,20 @@ package leaderboard
 import (
 	"fmt"
 	"math"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
+
+// A board names one unfiltered leaderboard: the same name keys its leaderboard_versions row and its cache keys.
+type board string
+
+const globalBoard board = "global"
+
+func yearlyBoard(year int16) board { return board("yearly:" + strconv.Itoa(int(year))) }
+
+func contestBoard(id uuid.UUID) board { return board("contest:" + id.String()) }
 
 type Request struct {
 	LanguageCode *string

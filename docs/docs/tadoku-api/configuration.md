@@ -47,8 +47,10 @@ environment variables. Development values are in
 - `API_VALKEY_TIMEOUT` (default 1s), the positive bound for each connection and
   handshake attempt and the established-connection keepalive and I/O interval.
 Leaderboard keys come from the parsed request or job tenant:
-`tenant:<name>/<id>:leaderboard:…`. The API and worker use the same key format;
-a missing context tenant fails before any cache operation.
+`tenant:<name>/<id>:leaderboard:<board>` and its `:last_updated` marker, where
+`<board>` is the board's `leaderboard_versions` name. The API and worker use
+the same key format; a missing context tenant fails before any cache
+operation.
 
 Development branches receive their own signed tenant and persist it on every
 job. The cache key is identical for a tenant served by the base or a branch

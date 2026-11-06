@@ -14,6 +14,19 @@ type Repository struct{ db *pgxpool.Pool }
 
 func NewRepository(db *pgxpool.Pool) *Repository { return &Repository{db: db} }
 
+// boardVersion is 0 for a board that no write has changed yet.
+func (r *Repository) boardVersion(ctx context.Context, b board) (int64, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return 0, err
+	}
+	version, err := queries.New(executor).BoardVersion(ctx, string(b))
+	if err != nil {
+		return 0, fmt.Errorf("read leaderboard version %s: %w", b, err)
+	}
+	return version, nil
+}
+
 func (r *Repository) contestExists(ctx context.Context, id uuid.UUID) (bool, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {

@@ -13,32 +13,26 @@ import (
 	valkeygo "github.com/valkey-io/valkey-go"
 )
 
-const (
-	contestPrefix = "leaderboard:contest:"
-	yearlyPrefix  = "leaderboard:yearly:"
-	globalKey     = "leaderboard:global"
-)
-
 var rebuildScript = valkeygo.NewLuaScript(`
-if redis.call('GET', KEYS[3]) ~= ARGV[1] then
+local current = redis.call('GET', KEYS[2])
+local built = current and string.match(current, '^version:(%d+):')
+if built and (#built > #ARGV[1] or (#built == #ARGV[1] and built > ARGV[1])) then
   return 0
 end
 redis.call('DEL', KEYS[2], KEYS[1])
 for i = 2, #ARGV, 2000 do
   redis.call('ZADD', KEYS[1], unpack(ARGV, i, math.min(i + 1999, #ARGV)))
 end
-redis.call('SET', KEYS[2], 'native:' .. ARGV[1] .. ':' .. redis.call('ZCARD', KEYS[1]), 'EX', 2419200)
-redis.call('EXPIRE', KEYS[3], 2419200)
+redis.call('SET', KEYS[2], 'version:' .. ARGV[1] .. ':' .. redis.call('ZCARD', KEYS[1]))
 return 1
 `)
 
 var pageScript = valkeygo.NewLuaScript(`
-local generation = redis.call('GET', KEYS[3])
 local size = redis.call('ZCARD', KEYS[1])
-if not generation or redis.call('GET', KEYS[2]) ~= 'native:' .. generation .. ':' .. size then
+if redis.call('GET', KEYS[2]) ~= 'version:' .. ARGV[1] .. ':' .. size then
   return false
 end
-local values = redis.call('ZRANGE', KEYS[1], ARGV[1], ARGV[2], 'REV', 'WITHSCORES')
+local values = redis.call('ZRANGE', KEYS[1], ARGV[2], ARGV[3], 'REV', 'WITHSCORES')
 local reply = {size, 0, 0}
 if #values > 0 then
   reply[2] = redis.call('ZCOUNT', KEYS[1], '(' .. values[2], '+inf')
@@ -48,15 +42,6 @@ for _, value in ipairs(values) do
   table.insert(reply, value)
 end
 return reply
-`)
-
-var generationScript = valkeygo.NewLuaScript(`
-local value = redis.call('GET', KEYS[1])
-if not value or tonumber(value) < 4294967296 then
-  redis.call('SET', KEYS[1], ARGV[1], 'EX', 3600)
-  return ARGV[1]
-end
-return value
 `)
 
 var invalidateScript = valkeygo.NewLuaScript(`
@@ -88,6 +73,10 @@ func (c *Cache) cacheKey(ctx context.Context, key string) (string, error) {
 	}
 
 	return "tenant:" + tenantKey.String() + ":" + key, nil
+}
+
+func (c *Cache) boardKey(ctx context.Context, b board) (string, error) {
+	return c.cacheKey(ctx, "leaderboard:"+string(b))
 }
 
 func (c *Cache) DeleteTestTenant(ctx context.Context, key tenant.TestKey) error {
@@ -122,12 +111,18 @@ func (c *Cache) DeleteTestTenant(ctx context.Context, key tenant.TestKey) error 
 	}
 }
 
-func (c *Cache) fetchPage(ctx context.Context, key string, start int64, pageSize int) (*page, bool, error) {
+// fetchPage reports a miss unless the ":last_updated" marker names version and the sorted set's size, so a lost key is
+// a miss.
+func (c *Cache) fetchPage(ctx context.Context, key string, version, start int64, pageSize int) (*page, bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, c.operationTimeout)
 	defer cancel()
 
-	bounds := []string{strconv.FormatInt(start, 10), strconv.FormatInt(start+int64(pageSize)-1, 10)}
-	reply, err := pageScript.Exec(ctx, c.client, boardKeys(key), bounds).ToArray()
+	args := []string{
+		strconv.FormatInt(version, 10),
+		strconv.FormatInt(start, 10),
+		strconv.FormatInt(start+int64(pageSize)-1, 10),
+	}
+	reply, err := pageScript.Exec(ctx, c.client, []string{key, key + ":last_updated"}, args).ToArray()
 	if valkeygo.IsValkeyNil(err) {
 		return nil, false, nil
 	}
@@ -178,50 +173,31 @@ func parsePage(reply []valkeygo.ValkeyMessage, offset int) (*page, error) {
 	return board, nil
 }
 
-func boardKeys(key string) []string {
-	return []string{key, key + ":last_updated", key + ":generation"}
-}
-
-func newGeneration() string {
-	return strconv.FormatInt(rand.Int64N(1<<62-1)+1, 10)
-}
-
-func (c *Cache) generation(ctx context.Context, key string) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, c.operationTimeout)
-	defer cancel()
-
-	value, err := generationScript.Exec(
-		ctx,
-		c.client,
-		[]string{key + ":generation"},
-		[]string{newGeneration()},
-	).ToString()
-	if err != nil {
-		return "", fmt.Errorf("read leaderboard generation %s: %w", key, err)
-	}
-	return value, nil
-}
-
+// invalidate deletes the board's keys and advances the ":generation" that the previous release's reads check.
 func (c *Cache) invalidate(ctx context.Context, key string) error {
 	ctx, cancel := context.WithTimeout(ctx, c.operationTimeout)
 	defer cancel()
 
-	if err := invalidateScript.Exec(ctx, c.client, boardKeys(key), []string{newGeneration()}).Error(); err != nil {
+	keys := []string{key, key + ":last_updated", key + ":generation"}
+	generation := strconv.FormatInt(rand.Int64N(1<<62-1)+1, 10)
+	if err := invalidateScript.Exec(ctx, c.client, keys, []string{generation}).Error(); err != nil {
 		return fmt.Errorf("invalidate leaderboard %s: %w", key, err)
 	}
 	return nil
 }
 
-func (c *Cache) rebuild(ctx context.Context, key string, scores []score, generation string) (bool, error) {
+// rebuild publishes scores, with no expiry, as the board built from version, unless the cache holds a board built
+// from a later one. The script compares versions as decimal strings, so it stays exact beyond float precision.
+func (c *Cache) rebuild(ctx context.Context, key string, scores []score, version int64) (bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, c.operationTimeout)
 	defer cancel()
 
 	args := make([]string, 0, 1+len(scores)*2)
-	args = append(args, generation)
+	args = append(args, strconv.FormatInt(version, 10))
 	for _, item := range scores {
 		args = append(args, strconv.FormatFloat(item.value, 'f', -1, 64), item.userID.String())
 	}
-	published, err := rebuildScript.Exec(ctx, c.client, boardKeys(key), args).ToInt64()
+	published, err := rebuildScript.Exec(ctx, c.client, []string{key, key + ":last_updated"}, args).ToInt64()
 	if err != nil {
 		return false, fmt.Errorf("rebuild leaderboard %s: %w", key, err)
 	}

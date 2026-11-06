@@ -95,8 +95,6 @@ func raisedBoards(before, after map[string]int64) map[string]bool {
 	return raised
 }
 
-func contestBoard(id uuid.UUID) string { return "contest:" + id.String() }
-
 func seedVersionsBaseline(t *testing.T, db *testpostgres.Database, key string) {
 	t.Helper()
 
@@ -129,8 +127,9 @@ func TestLeaderboardVersionsRaiseExactlyTheBoardsAWriteChanges(t *testing.T) {
 	key := tenant.Production().String()
 	seedVersionsBaseline(t, db, key)
 
-	global, year2024, year2025, year2026 := "global", "yearly:2024", "yearly:2025", "yearly:2026"
-	contestC, contestD := contestBoard(versionsContestC), contestBoard(versionsContestD)
+	global := string(globalBoard)
+	year2024, year2025, year2026 := string(yearlyBoard(2024)), string(yearlyBoard(2025)), string(yearlyBoard(2026))
+	contestC, contestD := string(contestBoard(versionsContestC)), string(contestBoard(versionsContestD))
 	tests := []struct {
 		name string
 		sql  string

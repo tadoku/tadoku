@@ -1,3 +1,6 @@
+-- name: BoardVersion :one
+select coalesce((select version from leaderboard_versions where board = sqlc.arg('board')::text), 0)::bigint as version;
+
 -- name: ContestLeaderboard :many
 with scores as (
   select logs.user_id, sum(coalesce(contest_logs.computed_score, contest_logs.score)) as score

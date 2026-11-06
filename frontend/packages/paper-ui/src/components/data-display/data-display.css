@@ -1,8 +1,19 @@
 @layer paper-recipes {
+  /*
+   * Edge shades appear only while columns sit off-screen: covers in the surface colour scroll with the
+   * table and hide the fixed shades at whichever end is fully visible. Set --paper-table-region-surface
+   * when the table sits on a surface other than paper.
+   */
   .paper-table-region {
+    --paper-table-region-shade: color-mix(in srgb, var(--paper-color-text-ink) 22%, transparent);
     max-inline-size: 100%;
     overflow-x: auto;
     overscroll-behavior-inline: contain;
+    background:
+      linear-gradient(to right, var(--paper-table-region-surface, var(--paper-color-surface-paper)) 40%, transparent) left / 2rem 100% no-repeat local,
+      linear-gradient(to left, var(--paper-table-region-surface, var(--paper-color-surface-paper)) 40%, transparent) right / 2rem 100% no-repeat local,
+      radial-gradient(farthest-side at 0 50%, var(--paper-table-region-shade), transparent) left / 0.75rem 100% no-repeat scroll,
+      radial-gradient(farthest-side at 100% 50%, var(--paper-table-region-shade), transparent) right / 0.75rem 100% no-repeat scroll;
   }
 
   .paper-table-region:focus {
@@ -113,7 +124,7 @@
 
   .paper-heatmap__cell[data-future] {
     fill: transparent;
-    stroke: var(--paper-color-rule-subtle);
+    stroke: var(--paper-color-rule-default);
     stroke-width: 1;
   }
 

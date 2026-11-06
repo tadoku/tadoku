@@ -174,6 +174,14 @@ export function HeatmapChart({ id, data, year, getHref, today }: HeatmapChartPro
             {label}
           </span>
         ))}
+        {today && today < end.toISODate()! ? (
+          <span className="paper-heatmap__legend-item">
+            <svg width={CELL_WIDTH} height={CELL_HEIGHT} aria-hidden="true">
+              <rect x={0.5} y={0.5} width={CELL_WIDTH - 1} height={CELL_HEIGHT - 1} className="paper-heatmap__cell" data-future="" />
+            </svg>
+            Not yet
+          </span>
+        ) : null}
       </p>
     </>
   );
@@ -205,7 +213,8 @@ function Cell({
   const tooltipId = `${tooltipLayerId}-${column}-${row}`;
   const level = getCellDepth(cell?.value);
   const href = cell && isoDate && cell.value !== 0 ? getHref?.(isoDate) : undefined;
-  const label = cell ? (cell.tooltip ?? `${isoDate}: ${cell.value}`) : undefined;
+  const future = Boolean(today && isoDate && isoDate > today);
+  const label = cell ? (future ? `${isoDate}: not yet` : (cell.tooltip ?? `${isoDate}: ${cell.value}`)) : undefined;
   const showTooltip = tooltip ? () => setTooltipVisible(true) : undefined;
   const hideTooltip = tooltip ? () => setTooltipVisible(false) : undefined;
   const focusProps = {
@@ -228,7 +237,7 @@ function Cell({
       y={y}
       className="paper-heatmap__cell"
       data-level={level}
-      data-future={today && isoDate && isoDate > today ? "" : undefined}
+      data-future={future ? "" : undefined}
       data-date={isoDate}
       data-value={cell?.value}
       aria-hidden={cell === undefined || href ? true : undefined}

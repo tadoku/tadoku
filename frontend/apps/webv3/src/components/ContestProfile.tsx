@@ -35,7 +35,7 @@ export function ContestProfile({ profile, page }: { profile: Found; page: number
       <section className="profile-activity" aria-labelledby="contest-daily-heading">
         <SectionHeading level={2} id="contest-daily-heading" title="Daily scores" />
         {daily.ok
-          ? <div className="standings-sheet"><DailyScores rows={daily.data} languages={registration.languages} name={name} /></div>
+          ? <div className="standings-sheet contest-daily"><DailyScores rows={daily.data} languages={registration.languages} name={name} /></div>
           : <p className="profile-muted">Could not load the daily scores. Try reloading this page.</p>}
       </section>
       <section className="profile-activity" aria-labelledby="contest-profile-updates">

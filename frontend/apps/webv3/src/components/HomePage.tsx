@@ -76,8 +76,8 @@ export function HomePage() {
           <h2 id="home-how-title">How Tadoku works</h2>
           <ol>
             <li><h3>Choose your language</h3><p>Join an official round or track immersion at your own pace between contests.</p></li>
-            <li><h3>Read and listen</h3><p>Books, manga, games, podcasts, video. Find something that keeps you engaged.</p></li>
-            <li><h3>Log your progress</h3><p>Record what you did, see where it counts, and let a little company keep you going.</p></li>
+            <li><h3>Read and listen</h3><p>Books, manga, games, podcasts, video: whatever keeps you engaged.</p></li>
+            <li><h3>Log your progress</h3><p>Record what you did and see where it counts.</p></li>
           </ol>
         </section>
       )}
@@ -93,10 +93,12 @@ export function HomePage() {
         </section>
       )}
 
-      <section className="home-strip" aria-labelledby="home-goal-title">
-        <h2 id="home-goal-title">Daily goal</h2>
-        <Link className="text-link" to="/plan">Set a daily goal</Link>
-      </section>
+      {member ? (
+        <section className="home-strip" aria-labelledby="home-goal-title">
+          <h2 id="home-goal-title">Daily goal</h2>
+          <Link className="text-link" to="/plan">Set a daily goal</Link>
+        </section>
+      ) : null}
     </div>
   )
 }

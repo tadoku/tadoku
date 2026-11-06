@@ -136,7 +136,7 @@ function AccountActions({ viewer }: { viewer: Viewer | undefined }) {
       return <span>Account service unavailable</span>
     case 'anonymous':
       return <>
-        <a href={login} className="text-link">Log in</a>
+        <a href={login} className="app-login-link">Log in</a>
         <a href={register} className={buttonClassName({ variant: 'outline' })}>Sign up</a>
       </>
     case 'signed-in':

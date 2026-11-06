@@ -84,7 +84,7 @@ function Registration({ contest, viewerId, phase }: { contest: ImmersionContestV
         </div>
         <aside className="standings-aside">
           <section aria-labelledby="registration-round">
-            <h2 id="registration-round" className="paper-type-component">Contest details</h2>
+            <h2 id="registration-round" className="paper-type-component">Contest conditions</h2>
             <ContestFacts contest={contest} phase={phase} />
           </section>
         </aside>
@@ -206,7 +206,7 @@ function RegistrationForm({ contest, viewerId, previous, options }: {
           {failure ? <SaveFailure failure={failure} registered={previous !== null} /> : null}
           <div className="registration-actions">
             <Button type="submit" disabled={disabled}>{pending ? 'Saving…' : previous ? 'Update registration' : 'Register'}</Button>
-            <a className={buttonClassName({ variant: 'ghost' })} href={links.contest(contest.id)}>Cancel</a>
+            <a className="text-link" href={links.contest(contest.id)}>Cancel</a>
           </div>
         </form.Form>
       </form.AppForm>

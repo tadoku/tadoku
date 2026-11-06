@@ -181,7 +181,7 @@ function ContestHistorySection({ history, userId, year, page }: {
         <ul className="profile-contests">
           {history.data.contests.map(contest => (
             <li key={contest.id}>
-              <a className="text-link" href={links.contestProfile(contest.id, userId)}>{contest.title}</a>
+              <a className="profile-entry-title" href={links.contestProfile(contest.id, userId)}>{contest.title}</a>
               {contest.private ? <StatusTag>Private</StatusTag> : null}
             </li>
           ))}

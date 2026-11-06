@@ -80,7 +80,7 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
         />
       )}
       {contestRuleSets.length === 0 ? <p className="scoring-empty">No contest-specific rule sets yet; this contest scores with the platform defaults.</p> : null}
-      <section className="scoring-versions" aria-labelledby="scoring-versions" hidden={contestRuleSets.length === 0}>
+      {contestRuleSets.length === 0 ? null : <section className="scoring-versions" aria-labelledby="scoring-versions">
         <SectionHeading level={2} id="scoring-versions" title="Rule-set versions" />
         {contestRuleSets.map(ruleSet => (
           <RuleSetVersion
@@ -90,7 +90,7 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
             change={locked ? null : { viewerId, contestId, ruleSetId: ruleSet.id }}
           />
         ))}
-      </section>
+      </section>}
     </div>
   )
 }

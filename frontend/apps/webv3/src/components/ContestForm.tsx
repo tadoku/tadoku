@@ -65,7 +65,7 @@ export function ContestForm({ options, viewerId, admin }: {
                 {field => (
                   <field.TextArea
                     label="Description"
-                    hint="Optional. Explain any extra rules or details; it is shown on the contest's standings."
+                    hint="Optional. Shown on the contest's standings."
                     rows={3}
                   />
                 )}
@@ -93,7 +93,6 @@ export function ContestForm({ options, viewerId, admin }: {
                     <field.AutocompleteMultiInput
                       label="Allowed languages"
                       placeholder="All languages"
-                      hint="Leave empty to accept all languages."
                       options={options.languages}
                       match={(language, query) => searchable(language.name, query)}
                       getId={language => language.code}

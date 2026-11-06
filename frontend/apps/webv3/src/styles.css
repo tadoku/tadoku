@@ -139,6 +139,9 @@ a { text-underline-offset: .2em; }
   .app-shell { --app-brand-width: 72px; }
 }
 
+.app-login-link { color: var(--paper-color-text-ink); font-weight: 600; text-decoration: none; }
+.app-login-link:hover, .app-login-link:focus-visible { text-decoration: underline; }
+.contest-daily .paper-table__row-header { font-weight: 400; white-space: nowrap; }
 .app-account-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-3, .75rem); }
 .app-account-menu--desktop .paper-button > span { max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .app-mobile-account { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--paper-color-rule-subtle); }

@@ -15,14 +15,7 @@
 /* One section role across the profile: the in-sheet calendar heading matches the sections below it. */
 .profile-rhythm h3, .profile-columns h2 { font-family: var(--paper-font-display); font-size: 1.375rem; line-height: 1.875rem; font-weight: 700; }
 .profile-empty-year { border-block-start: 1px solid var(--paper-color-rule-default); }
-/* A shade at the right edge shows more weeks off-screen; the pinned weekday gutter covers the left. */
-.profile-heatmap-scroll {
-  --profile-heatmap-shade: color-mix(in srgb, var(--paper-color-text-ink) 22%, transparent);
-  max-inline-size: 100%; overflow-x: auto; padding-block: 24px 12px;
-  background:
-    linear-gradient(to left, var(--paper-color-surface-paper) 40%, transparent) right / 2rem 100% no-repeat local,
-    radial-gradient(farthest-side at 100% 50%, var(--profile-heatmap-shade), transparent) right / .75rem 100% no-repeat scroll;
-}
+.profile-heatmap-scroll { max-inline-size: 100%; overflow-x: auto; padding-block: 24px 12px; }
 .profile-heatmap-scroll .paper-heatmap__frame { min-inline-size: 44rem; }
 .profile-day-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-block-start: 16px; }
 @media (max-width: 40rem) { .profile-day-picker label { flex-basis: 100%; } }
@@ -79,3 +72,5 @@
   .profile-entry-date { grid-column: 1 / -1; padding: 0; }
   .profile-entries > li.profile-entry--same-day::before { inset-inline-start: 0; }
 }
+/* The legend lives inside the sideways scroller; cap it to the visible width so it wraps on screen. */
+.profile-heatmap-scroll .paper-heatmap__legend { max-inline-size: min(100%, calc(100vw - 5rem)); }

@@ -143,7 +143,8 @@ export function HeatmapChart({ id, data, year, getHref, today }: HeatmapChartPro
         height={height}
         viewBox={`${OFFSET.x} 0 ${width - OFFSET.x} ${height}`}
         className="paper-heatmap"
-        role="img"
+        // A group, not an image: active days are links that assistive technology must reach.
+        role="group"
         aria-labelledby={titleId}
         data-year={year}
       >
@@ -251,6 +252,7 @@ function Cell({
       className="paper-heatmap__cell"
       data-level={level}
       data-future={future ? "" : undefined}
+      data-today={today && isoDate === today ? "" : undefined}
       data-date={isoDate}
       data-value={cell?.value}
       aria-hidden={cell === undefined || href ? true : undefined}

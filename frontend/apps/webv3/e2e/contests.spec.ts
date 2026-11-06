@@ -57,7 +57,7 @@ async function expectRows(page: Page, data: Contests, pageNumber = 1) {
   await expect(page.locator('.contests-pagination > p')).toHaveText(data.total_size > pageSize
     ? [`${count.format(first)}–${count.format(first + data.contests.length - 1)} of ${count.format(data.total_size)} contests`]
     : [])
-  await expect(page.getByRole('navigation', { name: 'Contest pages' })).toHaveCount(data.total_size > pageSize ? 1 : 0)
+  await expect(page.getByRole('navigation', { name: 'Contest pages', exact: true })).toHaveCount(data.total_size > pageSize ? 1 : 0)
 }
 
 async function hydrated(page: Page) {
@@ -145,7 +145,7 @@ test('collection tabs, pages and the signed-out My contests prompt work in the b
   await expectRows(page, community)
 
   if (community.total_size > pageSize) {
-    await page.getByRole('navigation', { name: 'Contest pages' }).getByRole('link', { name: 'Next page' }).click()
+    await page.getByRole('navigation', { name: 'Contest pages', exact: true }).getByRole('link', { name: 'Next page' }).click()
     await expect(page).toHaveURL(/\/contests\/user-contests\/2$/)
     await expectRows(page, await contests(request, false, 2), 2)
   }
@@ -190,7 +190,7 @@ test('an organizer pages through their own contests, unlisted ones included, and
   await page.screenshot({ path: testInfo.outputPath('my-contests-organizer.png'), fullPage: true })
 
   await hydrated(page)
-  await page.getByRole('navigation', { name: 'Contest pages' }).getByRole('link', { name: 'Next page' }).click()
+  await page.getByRole('navigation', { name: 'Contest pages', exact: true }).getByRole('link', { name: 'Next page' }).click()
   await expect(page).toHaveURL(/\/contests\/my-contests\/2$/)
   await expectRows(page, await contests(adminContext.request, false, 2, userId), 2)
 

@@ -165,8 +165,10 @@ test('edit keeps language and activity fixed, uses the same tags and sidebar and
   await page.goto(`/logs/${id}/edit`)
   const save = page.getByRole('button', { name: 'Save', exact: true })
   await expect(save).toBeEnabled({ timeout: 15_000 })
-  await expect(language(page)).toBeDisabled()
-  await expect(activity(page)).toBeDisabled()
+  // An edit can't change language or activity, so the header states them and the form offers no controls for them.
+  await expect(page.locator('.paper-page-header__lead')).toHaveText(/ · /)
+  await expect(language(page)).toHaveCount(0)
+  await expect(activity(page)).toHaveCount(0)
   await expect(chip(page, 'book')).toBeVisible()
   await expect(page.getByRole('link', { name: 'Cancel', exact: true })).toHaveAttribute('href', `/logs/${id}`)
   const aside = page.getByRole('complementary', { name: 'Suggested tags' })

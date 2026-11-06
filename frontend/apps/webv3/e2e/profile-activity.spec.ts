@@ -55,7 +55,7 @@ test('a visitor follows a standings profile to its activity, pages through it an
   await page.screenshot({ path: testInfo.outputPath('visitor-activity.png') })
 
   if (first.total_size > pageSize) {
-    await page.getByRole('navigation', { name: 'Update pages' }).getByRole('link', { name: 'Next page' }).click()
+    await page.getByRole('navigation', { name: 'Update pages', exact: true }).getByRole('link', { name: 'Next page' }).click()
     await expect(page).toHaveURL(new RegExp(`/profile/${userId}/updates/2$`))
     await expectEntries(page, await apiLogs(page.request, userId, 2))
   }
@@ -89,7 +89,7 @@ test('an owner pages through their newest-first activity, opens a day from the c
   const first = await apiLogs(request, userId, 1)
   expect(first.total_size).toBeGreaterThan(pageSize)
   await expectEntries(page, first)
-  const pages = page.getByRole('navigation', { name: 'Update pages' })
+  const pages = page.getByRole('navigation', { name: 'Update pages', exact: true })
   await expect(pages.getByRole('link', { name: 'Page 2' })).toHaveAttribute('href', `/profile/${userId}/updates/2`)
   await page.screenshot({ path: testInfo.outputPath('owner-activity.png') })
 
@@ -124,7 +124,7 @@ test('an owner pages through their newest-first activity, opens a day from the c
   const entry = first.logs[0]
   await page.locator(`a.profile-entry-title[href="/logs/${entry.id}"]`).click()
   await expect(page).toHaveURL(new RegExp(`/logs/${entry.id}$`))
-  await expect(page.getByText(entry.id)).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(entry.description || `${entry.language.name} ${entry.activity.name}`)
 })
 
 test('a new account’s activity shows the empty state to its owner and to visitors', async ({ browser }, testInfo) => {
@@ -146,7 +146,7 @@ test('a new account’s activity shows the empty state to its owner and to visit
   await expect(page.getByRole('heading', { name: 'No activity yet' })).toBeVisible()
   await expect(page.getByRole('main').getByRole('link', { name: 'Log activity' })).toHaveAttribute('href', '/logs/new')
   await expect(page.locator('.profile-entries')).toHaveCount(0)
-  await expect(page.getByRole('navigation', { name: 'Update pages' })).toHaveCount(0)
+  await expect(page.getByRole('navigation', { name: 'Update pages', exact: true })).toHaveCount(0)
   await page.screenshot({ path: testInfo.outputPath('owner-empty.png'), fullPage: true })
   await owner.close()
 

@@ -27,8 +27,8 @@ contests page through `?contests=<page>`.
 
 Paper's `HeatmapChart` colours days by fixed points-per-day bands named in its
 legend, and links each day with activity to the profile's activity for that UTC day. On
-narrow screens the calendar scrolls within its labelled region and opens the
-current year at its latest weeks. A date field below the calendar opens any day's
+narrow screens the calendar scrolls within its labelled region, keeps its
+weekday labels pinned and opens the current year with today in view. A date field below the calendar opens any day's
 activity too, so a day never depends on hitting its small cell. Only the profile's own account sees the CSV
 and JSON export links, which download its logs from the export operation
 through Webv2's API path.
@@ -46,8 +46,8 @@ container smoke's synthetic API serves that learner's profile year.
 ## Activity
 
 `/profile/$id/updates/{-$page}` lists a profile's logs as Webv2's updates page
-does: newest first, 50 per page, without deleted logs, each day's date shown
-once above its logs, each linking to its
+does: newest first, 50 per page with page links above and below the list,
+without deleted logs, each day's date shown once above its logs, each linking to its
 [native detail page](webv3-logging.md). A missing page segment
 reads as the first page, and a malformed one too, as in Webv2. `?date=YYYY-MM-DD`
 lists one UTC day's logs, with a way back to all of them; a malformed date lists

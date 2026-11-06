@@ -236,3 +236,6 @@ a { text-underline-offset: .2em; }
     .contests-pagination .paper-pagination__list { flex-wrap: wrap; }
 }
 
+
+.list-pagination-top { display: flex; justify-content: flex-end; margin-block: 8px 4px; }
+.list-pagination-top .paper-pagination__list { flex-wrap: wrap; }

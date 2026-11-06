@@ -107,7 +107,6 @@ function Contests({ scope, collection, page }: { scope: ContestListScope; collec
       <EmptyState
         headingLevel={2}
         title="You don’t organize any contests yet"
-        description="Contests you create appear here."
         actions={<Link className={buttonClassName({ variant: 'outline' })} to={contestsHref.community()}>Browse community contests</Link>}
       />
     ) : <EmptyState headingLevel={2} title="No contests found" description="Contests appear here once they’re scheduled." />
@@ -117,6 +116,11 @@ function Contests({ scope, collection, page }: { scope: ContestListScope; collec
   const totalPages = Math.max(page, Math.ceil(total / contestsPageSize))
   return (
     <>
+      {totalPages > 1 ? (
+        <div className="list-pagination-top">
+          <Pagination totalPages={totalPages} currentPage={page} getHref={pageHref} renderLink={renderLink} label="Contest pages, top" />
+        </div>
+      ) : null}
       <ul className="contest-list" aria-label={`${tabs.find(tab => tab.id === collection)?.label} contests`}>
         {contests.map(contest => <ContestRow key={contest.id} contest={contest} names={names} today={today} />)}
       </ul>

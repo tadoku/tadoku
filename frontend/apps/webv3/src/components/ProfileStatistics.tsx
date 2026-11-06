@@ -35,9 +35,7 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
             className="profile-empty-year"
             headingLevel={3}
             title={`No activity recorded in ${year}`}
-            description={owner
-              ? 'A few pages or minutes are a good place to start.'
-              : 'Scores and the activity calendar appear after the first update of the year.'}
+            description={owner ? undefined : 'Scores and the activity calendar appear after the first update of the year.'}
             actions={owner ? <a className={buttonClassName()} href={links.logs}>Log activity</a> : null}
           />
         ) : (
@@ -118,10 +116,12 @@ function HeatmapScroll({ latest, children }: { latest: boolean; children: ReactN
     const hideCoveredMonths = () => {
       const edge = scroller.querySelector('.paper-heatmap__weekdays')?.getBoundingClientRect().right ?? 0
       for (const label of scroller.querySelectorAll<SVGTextElement>('svg.paper-heatmap text')) {
-        label.style.visibility = label.getBoundingClientRect().left < edge ? 'hidden' : ''
+        label.style.visibility = label.getBoundingClientRect().left < edge - 1 ? 'hidden' : ''
       }
     }
-    if (latest) scroller.scrollLeft = scroller.scrollWidth
+    // The current year opens with today near the right edge and about a week after it in view.
+    const todayCell = latest ? scroller.querySelector('[data-today]') : null
+    if (todayCell) scroller.scrollLeft += todayCell.getBoundingClientRect().right - (scroller.getBoundingClientRect().right - 48)
     hideCoveredMonths()
     scroller.addEventListener('scroll', hideCoveredMonths, { passive: true })
     return () => scroller.removeEventListener('scroll', hideCoveredMonths)

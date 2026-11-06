@@ -7,7 +7,6 @@ export function NotFoundView() {
       variant="plain"
       headingLevel={1}
       title="Page not found"
-      description="This address doesn’t match a Tadoku page."
       actions={<Link to="/" className="text-link">Return home</Link>}
     />
   )

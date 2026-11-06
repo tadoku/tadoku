@@ -77,7 +77,7 @@ test('the server-rendered updates feed lists the API\'s contest logs, pages thro
   await live.getByRole('link', { name: 'Updates', exact: true }).click()
   await expect(live).toHaveURL(new RegExp(`${updatesPath(contest.id)}$`))
   if (first.total_size > 50) {
-    await live.getByRole('navigation', { name: 'Update pages' }).getByRole('link', { name: 'Next page' }).click()
+    await live.getByRole('navigation', { name: 'Update pages', exact: true }).getByRole('link', { name: 'Next page' }).click()
     await expect(live).toHaveURL(new RegExp(`${updatesPath(contest.id, 2)}$`))
     await expectLogs(live, await contestLogs(request, contest.id, 2), true)
   }
@@ -114,7 +114,7 @@ test('a standings participant opens their contest profile, with the API\'s score
   await page.screenshot({ path: testInfo.outputPath('contest-profile.png'), fullPage: true })
 
   if (logs.total_size > 50) {
-    await page.getByRole('navigation', { name: 'Update pages' }).getByRole('link', { name: 'Next page' }).click()
+    await page.getByRole('navigation', { name: 'Update pages', exact: true }).getByRole('link', { name: 'Next page' }).click()
     await expect(page).toHaveURL(new RegExp(`${profilePath(contest.id, participant.user_id, 2)}$`))
     await expectLogs(page, await contestLogs(request, contest.id, 2, participant.user_id), false)
   }

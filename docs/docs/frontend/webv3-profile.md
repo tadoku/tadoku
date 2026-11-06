@@ -28,7 +28,8 @@ contests page through `?contests=<page>`.
 Paper's `HeatmapChart` colours days by fixed points-per-day bands named in its
 legend, and links each day with activity to the profile's activity for that UTC day. On
 narrow screens the calendar scrolls within its labelled region and opens the
-current year at its latest weeks. Only the profile's own account sees the CSV
+current year at its latest weeks. A date field below the calendar opens any day's
+activity too, so a day never depends on hitting its small cell. Only the profile's own account sees the CSV
 and JSON export links, which download its logs from the export operation
 through Webv2's API path.
 `frontend/apps/webv3/src/components/ProfileHeader.tsx` renders the name and the

@@ -13,6 +13,7 @@ import {
 } from 'paper-ui'
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
+import { formatDate } from '../../lib/format'
 import { useLinks } from '../../lib/links'
 import { logQuery, useDeleteLog, type ImmersionLog, type LogFailure } from '../../lib/logs'
 import { viewerKey, viewerQueryOptions } from '../../lib/session'
@@ -55,14 +56,14 @@ function LogDetail() {
         lead={`${log.language.name} · ${log.activity.name}`}
         actions={owner ? <OwnerActions log={log} /> : null}
       />
-      <StatGrid stats={[...measure(log), { label: 'Score', value: scoreFormat.format(log.score) }]} />
-      <Surface className="log-surface">
+      <Surface className="log-surface log-record">
+        <StatGrid stats={[...measure(log), { label: 'Score', value: scoreFormat.format(log.score) }]} />
         <DescriptionList
+          layout="inline"
           items={[
-            ...(log.user_display_name ? [{ label: 'Learner', value: log.user_display_name }] : []),
-            { label: 'Created', value: utcTimestamp(log.created_at) },
-            { label: 'Tags', value: log.tags.join(', ') || 'No tags' },
-            { label: 'Record ID', value: log.id },
+            ...(!owner && log.user_display_name ? [{ label: 'Learner', value: log.user_display_name }] : []),
+            { label: 'Logged', value: loggedAt(log.created_at) },
+            ...(log.tags.length ? [{ label: 'Tags', value: log.tags.join(', ') }] : []),
           ]}
         />
       </Surface>
@@ -99,7 +100,7 @@ function OwnerActions({ log }: { log: ImmersionLog }) {
         Edit log
       </Link>
       <Modal
-        trigger={<Button variant="ghost" disabled={!hydrated}>Delete log</Button>}
+        trigger={<Button variant="ghost" className="log-delete" disabled={!hydrated}>Delete log</Button>}
         title="Delete this log?"
         initialFocus={keepRef}
         open={open}
@@ -139,7 +140,7 @@ const deleteFailures: Partial<Record<LogFailure, string>> = {
 /** Contest submissions are private: only the log's owner sees them and the way to manage them. */
 function LogContests({ log, owner }: { log: ImmersionLog; owner: boolean }) {
   return (
-    <section aria-labelledby="log-contests">
+    <section className="log-contests" aria-labelledby="log-contests">
       <SectionHeading id="log-contests" level={2} title="Contests" />
       {owner ? <OwnContests log={log} /> : <p>Contest submissions are visible to the log&apos;s owner.</p>}
     </section>
@@ -153,11 +154,11 @@ function OwnContests({ log }: { log: ImmersionLog }) {
   return (
     <>
       {registrations.length > 0 ? (
-        <ul>
+        <ul className="log-contest-list">
           {registrations.map(registration => (
             <li key={registration.contest_id}>
-              <a className="text-link" href={links.contest(registration.contest_id)}>{registration.title}</a>
-              {registration.score !== undefined ? ` · ${registration.score} points` : ''}
+              <a className="profile-entry-title" href={links.contest(registration.contest_id)}>{registration.title}</a>
+              {registration.score !== undefined ? <span>{scoreFormat.format(registration.score)} <small>points</small></span> : null}
             </li>
           ))}
         </ul>
@@ -180,16 +181,18 @@ function useFocusPageHeading() {
 
 const scoreFormat = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 2 })
 
-/** A timed log's duration; an amount log's amount and any time spent. */
+/** A timed log's duration; an amount log's amount and any time spent, for example "18 pages". */
 function measure(log: ImmersionLog) {
-  const amount = { label: 'Amount', value: `${log.amount} ${log.unit_name}` }
+  const unit = log.unit_name ? ` ${log.unit_name.toLowerCase()}${log.amount === 1 ? '' : 's'}` : ''
+  const amount = { label: 'Amount', value: `${scoreFormat.format(log.amount)}${unit}` }
   if (!log.duration_seconds) return [amount]
 
   const duration = { label: 'Duration', value: `${log.duration_seconds / 60} min` }
   return log.activity.input_type === 'time_primary' ? [duration] : [amount, duration]
 }
 
-/** For example `2026-10-25 06:19:03.796 UTC`. */
-function utcTimestamp(iso: string) {
-  return new Date(iso).toISOString().replace('T', ' ').replace('Z', ' UTC')
+/** For example "25 Oct 2026, 06:19 UTC". */
+function loggedAt(iso: string) {
+  const stamp = new Date(iso).toISOString()
+  return `${formatDate(stamp.slice(0, 10))}, ${stamp.slice(11, 16)} UTC`
 }

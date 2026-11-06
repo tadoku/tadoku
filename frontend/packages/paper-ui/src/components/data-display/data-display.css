@@ -119,14 +119,14 @@
   }
 
   /* Active days carry an edge so even the lightest step separates from an empty day. */
-  .paper-heatmap__cell:is([data-level="1"], [data-level="2"]) {
+  .paper-heatmap__cell[data-level="1"] {
     stroke: var(--paper-color-heat-3);
     stroke-width: 1;
   }
 
   .paper-heatmap__cell[data-future] {
     fill: transparent;
-    stroke: var(--paper-color-rule-default);
+    stroke: var(--paper-color-rule-field-edge);
     stroke-width: 1;
   }
 
@@ -165,7 +165,7 @@
   .paper-heatmap__axis-label {
     fill: var(--paper-color-text-ink);
     font-family: var(--paper-font-body);
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .paper-heatmap__tooltip-layer,

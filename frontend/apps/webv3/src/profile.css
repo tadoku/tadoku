@@ -17,6 +17,9 @@
 .profile-empty-year { border-block-start: 1px solid var(--paper-color-rule-default); }
 .profile-heatmap-scroll { max-inline-size: 100%; overflow-x: auto; padding-block: 24px 12px; }
 .profile-heatmap-scroll .paper-heatmap { inline-size: 100%; min-inline-size: 44rem; block-size: auto; }
+.profile-day-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-block-start: 16px; }
+.profile-day-picker label { color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); }
+.profile-day-picker .paper-input { inline-size: auto; }
 .profile-caption, .profile-muted { margin: 8px 0 0; color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); line-height: 1.6; }
 .profile-columns { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 0 48px; margin-block-start: 32px; }
 .profile-columns > * { min-width: 0; padding-block: 28px; border-block-start: 1px solid var(--paper-color-rule-default); }

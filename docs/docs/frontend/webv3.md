@@ -12,9 +12,11 @@ Webv3 is the complete Tadoku product application. It serves every Webv2 product
 page at the same paths, so cutover is a host switch, and its links leave the host
 only for the account and admin applications, the log export download and
 external sites. Its homepage follows the Paper playground composition and reads the current official contest, summary,
-standings and next scheduled round from the configured Tadoku API. `/plan`
-demonstrates a validated immersion goal kept in the current browser. It does not
-sync the goal to a Tadoku account. [Native activity logging](webv3-logging.md), including a saved log's contest submissions, uses the existing account session and API.
+standings and next scheduled round from the configured Tadoku API. Guests see
+the introduction and how Tadoku works; a signed-in learner sees their place and
+points in the current round, or whether they have joined it, and their daily
+goal. `/plan` demonstrates a validated immersion goal kept in the current
+browser. It does not sync the goal to a Tadoku account. [Native activity logging](webv3-logging.md), including a saved log's contest submissions, uses the existing account session and API.
 The latest official, yearly and all-time [leaderboards](webv3-leaderboards.md)
 read their standings from the API, and the official, community and My contests
 [contest lists](webv3-contests.md) list contests as the visitor sees them.

@@ -4,6 +4,7 @@ import { Button, EmptyState, Loading, SectionHeading, StatGrid, StatusTag, Surfa
 import type { ReactNode } from 'react'
 import { homeQueryOptions, type HomeData } from '../lib/home'
 import { formatDate, formatPeriod, numberFormat } from '../lib/format'
+import { describeGoal, useStoredGoal } from '../lib/goal'
 import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
 import { viewerQueryOptions, type Viewer } from '../lib/session'
@@ -44,6 +45,7 @@ export function HomePage() {
   const joinable = contest && (phase === 'open' || phase === 'upcoming')
   const { data: viewer } = useQuery(viewerQueryOptions())
   const member = viewer?.status === 'signed-in' ? viewer : null
+  const goal = useStoredGoal()
 
   return (
     <div className="home-page">
@@ -95,8 +97,11 @@ export function HomePage() {
 
       {member ? (
         <section className="home-strip" aria-labelledby="home-goal-title">
-          <h2 id="home-goal-title">Daily goal</h2>
-          <Link className="text-link" to="/plan">Set a daily goal</Link>
+          <div>
+            <h2 id="home-goal-title">Daily goal</h2>
+            {goal ? <p>{describeGoal(goal)}</p> : null}
+          </div>
+          <Link className="text-link" to="/plan">{goal ? 'Change goal' : 'Set a daily goal'}</Link>
         </section>
       ) : null}
     </div>

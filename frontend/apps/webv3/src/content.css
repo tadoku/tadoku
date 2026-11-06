@@ -35,7 +35,7 @@
 .content-table:focus-visible { outline: 2px solid var(--paper-color-text-link); outline-offset: 2px; }
 .content-table td:first-child { font-weight: 600; white-space: nowrap; }
 .content-table table { min-inline-size: 28rem; }
-@media (max-width: 30rem) { .content-prose .content-table :is(th, td) { padding-inline-end: 10px; } .content-table table { min-inline-size: 0; } }
+@media (max-width: 30rem) { .content-prose .content-table :is(th, td) { padding-inline-end: 12px; } }
 .content-table :is(th, td):not(:first-child) { text-align: end; }
 .content-table :is(th, td):last-child { padding-inline-end: 0; }
 .content-table .content-unavailable { color: var(--paper-color-text-muted); }

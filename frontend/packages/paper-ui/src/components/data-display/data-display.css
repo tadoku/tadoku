@@ -134,10 +134,11 @@
     outline: none;
   }
 
+  /* An ink ring separates a focused day from every step of the ramp in both themes. */
   .paper-heatmap__link:focus .paper-heatmap__cell,
   .paper-heatmap__cell:focus {
     outline: none;
-    stroke: var(--paper-color-focus-ring);
+    stroke: var(--paper-color-text-ink);
     stroke-width: var(--paper-focus-ring-width);
   }
 
@@ -165,7 +166,14 @@
   .paper-heatmap__axis-label {
     fill: var(--paper-color-text-ink);
     font-family: var(--paper-font-body);
-    font-size: 11px;
+    font-size: 9px;
+  }
+
+  /* The chart scales with its column: on wide screens 9-unit labels render at about 13px; phones show it near 1:1. */
+  @media (max-width: 48rem) {
+    .paper-heatmap__axis-label {
+      font-size: 12px;
+    }
   }
 
   .paper-heatmap__tooltip-layer,

@@ -1,24 +1,34 @@
 import { useQuery } from '@tanstack/react-query'
 import { useStore } from '@tanstack/react-form'
 import { Link, useHydrated, useNavigate } from '@tanstack/react-router'
-import { Button, PageHeader, Surface, usePaperForm, withPaperForm, type Option, type OptionGroup } from 'paper-ui'
-import { useEffect, useMemo, useState } from 'react'
 import {
-  dependentFields,
+  Button,
+  PageHeader,
+  Surface,
+  buttonClassName,
+  usePaperForm,
+  withPaperForm,
+  type Option,
+  type OptionGroup,
+} from 'paper-ui'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
   draftFromLog,
-  eligibleRegistrations,
   firstDraft,
   isTimed,
   logDraftSchema,
   toLogUpdate,
   toNewLog,
   toScorePreview,
+  unitFor,
   unitsFor,
   type LogDraft,
 } from '../lib/log-draft'
+import { readLastLogged, rememberLastLogged } from '../lib/log-preferences'
 import { useLinks } from '../lib/links'
 import {
   scorePreviewQuery,
+  tagSuggestionsQuery,
   useSaveLog,
   useUpdateLog,
   type ImmersionLog,
@@ -26,11 +36,16 @@ import {
   type LogOptions,
 } from '../lib/logs'
 import { useLoginUrl } from '../lib/session'
+import { TagsSidebar, maxTags } from './TagsSidebar'
 
 /** A new activity, or a change to a saved one, whose language, activity and contest submissions stay fixed. */
 export type LogFormTarget = { kind: 'new'; amount?: number } | { kind: 'edit'; log: ImmersionLog }
 
-/** The activity form for the account that started the draft. The server refuses to save it for any other account. */
+/**
+ * The activity form for the account that started the draft. The server refuses to save it for any other account. A new
+ * log starts from the browser's last logged language and activity once hydrated, and after saving opens its contest
+ * step when the viewer has ongoing registrations.
+ */
 export function LogForm({ options, viewerId, target }: { options: LogOptions; viewerId: string; target: LogFormTarget }) {
   const hydrated = useHydrated()
   const navigate = useNavigate()
@@ -44,88 +59,138 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
     validators: { onChange: schema, onSubmit: schema },
     onSubmit: async ({ value }) => {
       setFailure(null)
-      const result = target.kind === 'edit'
-        ? await updateLog(toLogUpdate(value, options, viewerId, target.log))
-        : await saveLog(toNewLog(value, options, viewerId))
-      if (result.ok) {
-        await navigate({ to: '/logs/$logId', params: { logId: result.data.id }, replace: target.kind === 'edit' })
-      } else {
-        setFailure(result.reason)
+      if (target.kind === 'edit') {
+        const result = await updateLog(toLogUpdate(value, options, viewerId, target.log))
+        if (!result.ok) return setFailure(result.reason)
+        return navigate({ to: '/logs/$logId', params: { logId: result.data.id }, replace: true })
       }
+
+      const result = await saveLog(toNewLog(value, options, viewerId))
+      if (!result.ok) return setFailure(result.reason)
+      const { id, language, activity } = result.data
+      rememberLastLogged(language.code, activity.id)
+      // As in Webv2, contests are chosen in a separate step after saving.
+      return options.registrations.length
+        ? navigate({ to: '/logs/$logId/contests', params: { logId: id }, search: { preselect: 1 }, replace: true })
+        : navigate({ to: '/logs/$logId', params: { logId: id }, replace: true })
     },
   })
+  useRestoredChoices(form, options, target)
   const pending = useStore(form.store, state => state.isSubmitting)
   const languageCode = useStore(form.store, state => state.values.languageCode)
   const activityId = useStore(form.store, state => state.values.activityId)
 
   const units = unitsFor(options, languageCode, activityId).map(unit => ({ value: unit.unit_key, label: unit.name }))
-  const eligible = eligibleRegistrations(options, languageCode, activityId)
   const disabled = !hydrated || pending
-
   const editing = target.kind === 'edit' ? target.log : null
 
   return (
-    <div className="goal-page">
+    <div className="log-form-page">
       {editing ? (
         <PageHeader title="Edit activity" backLink={{ href: `/logs/${editing.id}`, label: 'Back to log' }} />
       ) : (
         <PageHeader title="Log activity" lead="Keep a record of what you read, listen to or practise." />
       )}
-      <Surface className="log-surface">
-        <form.AppForm>
-          <form.Form className="goal-form" aria-busy={pending}>
-            <fieldset className="goal-form__controls" disabled={disabled}>
-              {editing ? <FixedFields form={form} log={editing} /> : <ChoiceFields form={form} options={options} />}
-
-              <MeasureField form={form} timed={isTimed(options, activityId)} units={units} />
-
-              <form.AppField name="description">
-                {field => <field.TextArea label="Description" rows={3} />}
-              </form.AppField>
-              <form.AppField name="tags">
-                {field => <field.Input label="Tags" hint="Separate tags with commas. Up to 10 tags." />}
-              </form.AppField>
-
-              {editing ? null : (
-                <fieldset className="paper-choice-field">
-                  <legend className="paper-field__label">Contests</legend>
-                  {eligible.map(registration => (
-                    <form.AppField key={registration.id} name="registrationIds">
-                      {field => <field.Checkbox label={registration.contest.title} value={registration.id} />}
-                    </form.AppField>
-                  ))}
-                  {eligible.length === 0 ? <p>Saved to your personal record only.</p> : null}
-                </fieldset>
-              )}
+      <form.AppForm>
+        <div className="log-form-layout">
+          <form.Form className="log-form" aria-busy={pending}>
+            <Surface className="log-form__card">
+              <fieldset className="goal-form__controls log-form__fields" disabled={disabled}>
+                {editing ? <FixedFields form={form} log={editing} /> : <ChoiceFields form={form} options={options} />}
+                <MeasureField form={form} timed={isTimed(options, activityId)} units={units} />
+                <form.AppField name="description">
+                  {field => <field.Input label="Description" placeholder="e.g. One Piece volume 45" />}
+                </form.AppField>
+                <TagsField form={form} viewerId={viewerId} />
+                <div className="log-form__narrow-tags">
+                  <TagsSidebar form={form} activityId={activityId} disabled={disabled} />
+                </div>
+              </fieldset>
               <ScoreEstimate form={form} options={options} />
-            </fieldset>
+            </Surface>
 
             {failure ? <SaveFailure failure={failure} viewerId={viewerId} editing={editing} /> : null}
-            <div className="goal-actions">
-              <Button type="submit" disabled={disabled}>
-                {pending ? 'Saving…' : editing ? 'Save changes' : 'Save activity'}
+            <div className="log-form__actions">
+              {editing
+                ? <Link className={buttonClassName({ variant: 'ghost' })} to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
+                : <Link className={buttonClassName({ variant: 'ghost' })} to="/">Cancel</Link>}
+              <Button type="submit" disabled={disabled} loading={pending} loadingLabel="Saving">
+                {editing ? 'Save' : 'Create'}
               </Button>
-              {editing ? <Link className="text-link" to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link> : null}
             </div>
           </form.Form>
-        </form.AppForm>
-      </Surface>
+          <aside className="log-form__aside" aria-label="Suggested tags">
+            <TagsSidebar form={form} activityId={activityId} disabled={disabled} />
+          </aside>
+        </div>
+      </form.AppForm>
     </div>
   )
 }
 
-/** Minutes for a timed activity; otherwise an amount in one of the activity's units. */
+/**
+ * Replaces a new draft's language and activity with the browser's last logged ones once, after hydration, so the
+ * server and the first client render agree. Controls stay disabled until then, so no entry is overwritten.
+ */
+function useRestoredChoices(form: { reset: (values: LogDraft, options: { keepDefaultValues: true }) => void }, options: LogOptions, target: LogFormTarget) {
+  const restored = useRef(false)
+  useEffect(() => {
+    if (restored.current || target.kind !== 'new') return
+    restored.current = true
+    const last = readLastLogged()
+    if (last.languageCode !== null || last.activityId !== null) {
+      form.reset(firstDraft(options, target.amount, last), { keepDefaultValues: true })
+    }
+  }, [form, options, target])
+}
+
+/** Tag chips with the viewer's tags containing the typed text, fetched once typing settles for 300 ms. */
+const TagsField = withPaperForm({
+  defaultValues: {} as LogDraft,
+  props: { viewerId: '' },
+  render: function TagsField({ form, viewerId }) {
+    const hydrated = useHydrated()
+    const [query, setQuery] = useState('')
+    const [settled, setSettled] = useState(query)
+    useEffect(() => {
+      const timer = setTimeout(() => setSettled(query.trim()), 300)
+      return () => clearTimeout(timer)
+    }, [query])
+    const { data: suggestions = [] } = useQuery({ ...tagSuggestionsQuery(viewerId, settled), enabled: hydrated })
+    const counts = new Map(suggestions.map(suggestion => [suggestion.tag, suggestion.count]))
+
+    return (
+      <form.AppField name="tags">
+        {field => (
+          <field.TagsInput
+            label="Tags"
+            hint={`Up to ${maxTags} tags.`}
+            placeholder="Add tags..."
+            maxSelections={maxTags}
+            options={suggestions.map(suggestion => suggestion.tag)}
+            onQueryChange={setQuery}
+            formatOption={tag => (counts.get(tag) ?? 0) > 0 ? `${tag} (${counts.get(tag)}×)` : tag}
+          />
+        )}
+      </form.AppField>
+    )
+  },
+})
+
+/** An amount in one of the activity's units, unless the activity is timed, and the time spent, which timed ones require. */
 const MeasureField = withPaperForm({
   defaultValues: {} as LogDraft,
   props: { timed: false, units: [] as Option[] },
   render: function MeasureField({ form, timed, units }) {
-    if (timed) {
-      return (
-        <form.AppField name="minutes">
-          {field => <field.Input label="Minutes" type="number" inputMode="decimal" step="any" min={0} />}
-        </form.AppField>
-      )
-    }
+    const timeSpent = (
+      <form.AppField name="minutes">
+        {field => (
+          <field.Input label="Time spent" hint="minutes" required={timed} type="number" inputMode="decimal" step="any" min={0} />
+        )}
+      </form.AppField>
+    )
+    if (timed) return timeSpent
+
     // The amount field must be the innermost, because AmountWithUnit binds the field it is rendered in.
     return (
       <>
@@ -146,25 +211,19 @@ const MeasureField = withPaperForm({
             </form.AppField>
           )}
         </form.AppField>
-        <form.AppField name="minutes">
-          {field => (
-            <field.Input label="Time spent" hint="Optional, in minutes." type="number" inputMode="decimal" step="any" min={0} />
-          )}
-        </form.AppField>
+        {timeSpent}
       </>
     )
   },
 })
 
-/** A new log's language and activity. Changing either selects their unit and eligible contests again. */
+/** A new log's language and activity. Changing either selects their first unit again. */
 const ChoiceFields = withPaperForm({
   defaultValues: {} as LogDraft,
   props: { options: {} as LogOptions },
   render: function ChoiceFields({ form, options }) {
     const selectDependents = (language: string, activity: string) => {
-      const { unitKey, registrationIds } = dependentFields(options, language, activity)
-      form.setFieldValue('unitKey', unitKey)
-      form.setFieldValue('registrationIds', registrationIds)
+      form.setFieldValue('unitKey', unitFor(options, language, activity))
     }
 
     return (
@@ -250,23 +309,20 @@ const ScoreEstimate = withPaperForm({
 
     const score = input !== undefined && data?.ok ? data.data.platform.score : undefined
     return (
-      <p className="log-estimate" aria-live="polite">
-        <span>Estimated score</span>
-        <strong>{score === undefined ? '-' : score ? estimateFormat.format(score) : 'N/A'}</strong>
+      <p className="log-form__estimate" aria-live="polite">
+        Estimated score: <strong>{score === undefined ? '-' : score ? estimateFormat.format(score) : 'N/A'}</strong>
       </p>
     )
   },
 })
 
-/** The viewer's own languages first, when they have chosen any. */
+/** As in Webv2, the languages the viewer used before, then every language. */
 function languageGroups({ configuration }: LogOptions): OptionGroup[] {
   const own = new Set(configuration.user_language_codes ?? [])
-  const options = (mine: boolean) => configuration.languages
-    .filter(language => own.has(language.code) === mine)
-    .map(language => ({ value: language.code, label: language.name }))
+  const all = configuration.languages.map(language => ({ value: language.code, label: language.name }))
+  const used = all.filter(language => own.has(language.value))
 
-  const all = { label: 'All languages', options: options(false) }
-  return own.size ? [{ label: 'Your languages', options: options(true) }, all] : [all]
+  return [...(used.length ? [{ label: 'Previously used', options: used }] : []), { label: 'All languages', options: all }]
 }
 
 const failureMessages: Record<LogFailure, string> = {
@@ -274,13 +330,13 @@ const failureMessages: Record<LogFailure, string> = {
     'Account service unavailable. Nothing was saved. Your entries are kept here; try again when the service recovers.',
   switched:
     'You are now signed in as a different account. Nothing was saved. This draft is kept for the account that started it.',
-  invalid: 'The activity was not saved. Check the amount, unit and contests, then try again.',
+  invalid: 'The activity was not saved. Check the amount, unit and tags, then try again.',
   'signed-out': 'Your session ended. Log in in a new tab, return here and save again. Your entries are kept here.',
   forbidden: 'Your account cannot save activity. Your entries are kept here.',
   deleting: 'Your account is being deleted. Activity cannot be saved.',
   unavailable:
     'We could not confirm whether your activity was saved. Check your activity before saving again to avoid a duplicate.',
-  'not-found': 'The activity could not be saved. Review the contests and try again.',
+  'not-found': 'The activity could not be saved. Review the language and activity, then try again.',
 }
 
 /** Where an edit's outcome differs: retrying an update cannot duplicate it, and its log can disappear. */

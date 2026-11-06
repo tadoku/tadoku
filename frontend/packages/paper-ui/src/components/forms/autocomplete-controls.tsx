@@ -202,10 +202,12 @@ export function AutocompleteMultiInput<Value>({
   );
 }
 
-export type TagsInputProps = Omit<
-  AutocompleteMultiInputProps<string>,
-  "format" | "getId"
->;
+export interface TagsInputProps extends Omit<AutocompleteMultiInputProps<string>, "format" | "getId"> {
+  /** Called with the typed text whenever it changes, including "" after a tag is added, to fetch remote suggestions. */
+  readonly onQueryChange?: (query: string) => void;
+  /** The visible label of a suggested tag, such as its usage count. The selected value stays the tag. */
+  readonly formatOption?: (tag: string) => string;
+}
 
 export function TagsInput({
   label,
@@ -217,11 +219,17 @@ export function TagsInput({
   maxSelections,
   disabled,
   placeholder = "Type to add a tag",
+  onQueryChange,
+  formatOption = tag => tag,
 }: TagsInputProps) {
   const id = `paper-tags-${useId().replace(/:/gu, "")}`;
   const { field, error } = useField<string[]>();
   const values = (field.state.value ?? []) as string[];
-  const [query, setQuery] = useState("");
+  const [query, setQueryState] = useState("");
+  const setQuery = (next: string) => {
+    setQueryState(next);
+    if (next !== query) onQueryChange?.(next);
+  };
   const [open, setOpen] = useState(false);
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const chipsRef = useRef<HTMLDivElement>(null);
@@ -318,7 +326,7 @@ export function TagsInput({
               <Combobox.List>
                 {items.map((value, index) => (
                   <Combobox.Item key={value} value={value} index={index} className="paper-combobox__item paper-tags-input__option">
-                    {canCreate && value === candidate ? `Add “${value}”` : value}
+                    {canCreate && value === candidate ? `Add “${value}”` : formatOption(value)}
                   </Combobox.Item>
                 ))}
               </Combobox.List>

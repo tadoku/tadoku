@@ -1,4 +1,4 @@
-import { api, expect, fillDraft, reader, savedLogUrl, saveButton, test, webv3 } from './logging-fixtures'
+import { api, createLog, expect, fillDraft, reader, saveButton, test, webv3 } from './logging-fixtures'
 
 test('a member walks home, contest, standings, profile, logging and the saved log without leaving Webv3', async ({ readerContext }, testInfo) => {
   test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
@@ -38,8 +38,7 @@ test('a member walks home, contest, standings, profile, logging and the saved lo
   await expect(saveButton(page)).toBeEnabled({ timeout: 15_000 })
   const description = `member-journey-${Date.now()}`
   await fillDraft(page, '3', description)
-  await saveButton(page).click()
-  await expect(page).toHaveURL(savedLogUrl)
+  await createLog(page)
   await expect(page.getByText(description)).toBeVisible()
   await shot('5-log-detail')
 

@@ -1,5 +1,6 @@
 import type { BrowserContext, Page } from '@playwright/test'
 import {
+  createLog,
   admin,
   amountInput,
   api,
@@ -7,9 +8,6 @@ import {
   expect,
   openForm,
   reader,
-  saveButton,
-  savedLogId,
-  savedLogUrl,
   test,
   webv3,
 } from './logging-fixtures'
@@ -22,13 +20,12 @@ const manageLink = (page: Page) => page.getByRole('link', { name: 'Manage contes
 /** Saves a reading log to the personal record only and returns its ID, leaving the page on its detail. */
 async function createPersonalLog(page: Page, text: string) {
   await openForm(page)
+  // Japanese is registered in the seeded contests; the default follows the account's previously used languages.
+  await page.getByLabel('Language', { exact: true }).selectOption('jpn')
+  await page.getByLabel('Activity', { exact: true }).selectOption({ label: 'Reading' })
   await amountInput(page).fill('7')
   await page.getByLabel('Description', { exact: true }).fill(text)
-  const contests = page.getByRole('group', { name: 'Contests' }).getByRole('checkbox')
-  for (const contest of await contests.all()) await contest.uncheck()
-  await saveButton(page).click()
-  await expect(page).toHaveURL(savedLogUrl)
-  return savedLogId(page)
+  return createLog(page)
 }
 
 async function submissions(context: BrowserContext, id: string) {

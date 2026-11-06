@@ -1,0 +1,24 @@
+/* Activity form: the card, then the tag sidebar beside it on wide screens or inside it below the tags. */
+.log-form-layout { display: grid; gap: 24px; align-items: start; min-width: 0; }
+.log-form { display: grid; gap: 16px; min-width: 0; max-width: 40rem; }
+.log-form__card { min-width: 0; padding: 0; overflow: hidden; overflow-wrap: anywhere; }
+.log-form__fields { padding: clamp(1rem, 4vw, 2rem); }
+.log-form__estimate { margin: 0; padding: 10px clamp(1rem, 4vw, 2rem); border-top: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-canvas); text-align: center; font-variant-numeric: tabular-nums; }
+.log-form__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; }
+.log-form__aside { display: none; }
+.log-tags-sidebar { display: grid; gap: 16px; }
+.log-tags-sidebar__group h2 { margin: 0 0 8px; font-family: var(--paper-font-body); font-size: .875rem; font-weight: 600; line-height: 1.5; color: var(--paper-color-text-muted); }
+.log-tags-sidebar__tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.log-tags-sidebar__tag { min-height: 32px; padding: 4px 10px; border: 1px solid var(--paper-color-rule-default); border-bottom-width: 2px; color: var(--paper-color-text-ink); background: var(--paper-color-surface-raised); font: inherit; font-size: .8125rem; cursor: pointer; }
+.log-tags-sidebar__tag:hover:not(:disabled) { background: var(--paper-color-action-soft); }
+.log-tags-sidebar__tag:focus-visible { outline: 2px solid var(--paper-color-focus-ring); outline-offset: 2px; }
+.log-tags-sidebar__tag[aria-pressed="true"] { text-decoration: line-through; opacity: .7; }
+.log-tags-sidebar__tag:disabled { opacity: .5; cursor: not-allowed; }
+
+@media (min-width: 1024px) {
+  .log-form-layout { grid-template-columns: minmax(0, 40rem) minmax(12rem, 16rem); gap: 48px; }
+  .log-form__aside { display: block; position: sticky; top: 24px; min-width: 0; padding-top: 4px; }
+  .log-form__narrow-tags { display: none; }
+  .log-form__estimate { text-align: right; }
+}
+.log-form__narrow-tags:empty { display: none; }

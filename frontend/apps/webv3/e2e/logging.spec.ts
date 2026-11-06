@@ -1,9 +1,12 @@
 import type { Page } from '@playwright/test'
 import {
+  addTags,
   admin,
   amountInput,
   api,
   branch,
+  contestStepUrl,
+  createLog,
   expect,
   isSaveRequest,
   logsDescribed,
@@ -11,7 +14,6 @@ import {
   reader,
   saveButton,
   savedLogId,
-  savedLogUrl,
   test,
   webv3,
 } from './logging-fixtures'
@@ -28,13 +30,13 @@ test('the activity form asks an anonymous visitor to sign in, and guests get no 
 })
 
 for (const activity of ['Reading', 'Listening']) {
-  test(`${activity}: validation, one save, persisted API detail and reload`, async ({ page, readerContext }, testInfo) => {
+  test(`${activity}: validation, one save, the contest step, persisted API detail and reload`, async ({ page, readerContext }, testInfo) => {
     test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
     const timed = activity === 'Listening'
-    const quantity = timed ? page.getByLabel('Minutes', { exact: true }) : amountInput(page)
+    const quantity = timed ? page.getByRole('spinbutton', { name: /^Time spent/ }) : amountInput(page)
     const description = page.getByLabel('Description', { exact: true })
-    const tags = page.getByLabel('Tags', { exact: true })
     await openForm(page)
+    await expect(description).toHaveAttribute('placeholder', 'e.g. One Piece volume 45')
     await page.getByLabel('Activity', { exact: true }).selectOption({ label: activity })
     await page.getByLabel('Language', { exact: true }).selectOption('jpn')
 
@@ -49,12 +51,9 @@ for (const activity of ['Reading', 'Listening']) {
 
     const text = `webv3-e2e-${activity}-${Date.now()}`
     await description.fill(text)
-    await tags.fill(Array.from({ length: 11 }, (_, index) => `tag${index}`).join(','))
-    await saveButton(page).click()
-    await expect(tags).toBeFocused()
+    await addTags(page, ['book', 'fiction'])
 
     // Two submissions in the same tick, each delayed at the browser boundary, must make one save.
-    await tags.fill('book, fiction')
     let saves = 0
     await page.route('**/*', async route => {
       if (isSaveRequest(route.request())) {
@@ -68,10 +67,20 @@ for (const activity of ['Reading', 'Listening']) {
       form.requestSubmit()
       form.requestSubmit()
     })
-    await expect(page).toHaveURL(savedLogUrl)
+    // The Dev Reader has ongoing registrations, so the contest step follows with every eligible one selected.
+    await expect(page).toHaveURL(contestStepUrl)
     expect(saves).toBe(1)
-
+    await page.unrouteAll()
     const id = savedLogId(page)
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Submit to contests')
+    const save = page.getByRole('button', { name: 'Save submissions', exact: true })
+    await expect(save).toBeEnabled({ timeout: 15_000 })
+    const eligible = page.getByRole('checkbox', { disabled: false })
+    expect(await eligible.count()).toBeGreaterThan(0)
+    for (const contest of await eligible.all()) await expect(contest).toBeChecked()
+    await save.click()
+
+    await expect(page).toHaveURL(`${webv3}/logs/${id}`)
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(text)
     await page.reload()
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(text)
@@ -107,21 +116,24 @@ test('text limits follow the API: description characters, tag bytes and normaliz
   const description = `${'😀'.repeat(128)}${Date.now()}`
   await page.getByLabel('Description', { exact: true }).fill(description)
   // 18 characters but 54 UTF-8 bytes; the API allows 50 bytes per tag.
-  await tags.fill('日本語'.repeat(6))
+  const long = '日本語'.repeat(6)
+  await addTags(page, [long])
   await saveButton(page).click()
   await expect(tags).toBeFocused()
   await expect(page.getByLabel('Description', { exact: true })).not.toHaveAttribute('aria-invalid', 'true')
+  await page.getByRole('button', { name: `Remove ${long}`, exact: true }).click()
 
-  // Fourteen entries that normalize to five tags, as Go's strings.TrimSpace and strings.ToLower do: they trim U+0085
-  // but keep U+FEFF, 'İ' becomes the single byte 'i' and 'Σ' becomes 'σ' wherever it stands.
-  await tags.fill(`${'Book, book, BOOK, '.repeat(3)}Fiction, \u0085fiction\u2003, ${'İ'.repeat(17)}, ΟΣ, \ufeffbook`)
-  await saveButton(page).click()
-  await expect(page).toHaveURL(savedLogUrl)
+  // The chips ignore case when they add a tag. Seven chips normalize to four tags, as Go's strings.TrimSpace and
+  // strings.ToLower do: they trim U+0085, 'İ' becomes the single byte 'i' and 'Σ' becomes 'σ' wherever it stands.
+  await addTags(page, ['Book', 'book', 'BOOK', 'Fiction', '\u0085fiction\u2003', 'İ'.repeat(17), 'ΟΣ', 'ος'])
+  // The last entry is a duplicate, so its suggestions stay open until dismissed.
+  await tags.press('Escape')
+  await expect(page.getByRole('button', { name: /^Remove / })).toHaveCount(5)
+  const id = await createLog(page)
 
-  const record = await (await readerContext.request.get(`${api}/immersion/logs/${savedLogId(page)}`)).json()
+  const record = await (await readerContext.request.get(`${api}/immersion/logs/${id}`)).json()
   expect(record.description).toBe(description)
-  // The API returns tags in its collation order, which ignores U+FEFF.
-  expect([...record.tags].sort()).toEqual(['book', 'fiction', 'i'.repeat(17), 'οσ', '\ufeffbook'].sort())
+  expect([...record.tags].sort()).toEqual(['book', 'fiction', 'i'.repeat(17), 'οσ'].sort())
 })
 
 test('`?amount=` prefills a positive whole amount and ignores anything else, as in Webv2', async ({ readerContext }) => {
@@ -191,14 +203,15 @@ for (const width of [390, 1280]) {
     await page.keyboard.press('Tab')
     await expect(page.getByLabel('Tags', { exact: true })).toBeFocused()
     await page.keyboard.type('keyboard')
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('button', { name: 'Remove keyboard', exact: true })).toBeVisible()
     await tabTo(page, saveButton(page))
     expect(await fitsViewport(page)).toBe(true)
     await page.screenshot({ path: testInfo.outputPath(`keyboard-${width}-form.png`), fullPage: true })
 
     await page.keyboard.press('Enter')
-    await expect(page).toHaveURL(savedLogUrl)
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(description)
-    await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
+    await expect(page).toHaveURL(contestStepUrl)
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Submit to contests')
     expect(await fitsViewport(page)).toBe(true)
     expect(errors).toEqual([])
     await page.screenshot({ path: testInfo.outputPath(`keyboard-${width}-saved.png`), fullPage: true })
@@ -215,11 +228,11 @@ test('API rejection preserves entered activity instead of showing success', asyn
   await page.route('**/*', async route => {
     if (!isSaveRequest(route.request())) return route.continue()
     changed = true
-    await route.continue({ postData: withUnknownRegistration(route.request().postData()!) })
+    await route.continue({ postData: withUnknownLanguage(route.request().postData()!) })
   })
 
   await saveButton(page).click()
-  await expect(page.getByRole('alert')).toContainText('not saved')
+  await expect(page.getByRole('alert')).toContainText('could not be saved')
   expect(changed).toBe(true)
   await expect(amountInput(page)).toHaveValue('8')
   await expect(page.getByLabel('Description', { exact: true })).toHaveValue('rejected activity draft')
@@ -231,11 +244,7 @@ test('public detail hides contest management and the canonical tenant cannot rea
   await openForm(page)
   await amountInput(page).fill('6')
   await page.getByLabel('Description', { exact: true }).fill(`isolation-${Date.now()}`)
-  await saveButton(page).click()
-  await expect(page).toHaveURL(savedLogUrl)
-  const id = savedLogId(page)
-  const log = await (await readerContext.request.get(`${api}/immersion/logs/${id}`)).json()
-  expect(log.registrations.length).toBeGreaterThan(0)
+  const id = await createLog(page)
   await expect(page.getByRole('link', { name: 'Manage contest submissions' })).toBeVisible()
 
   const publicContext = await browser.newContext({ baseURL: webv3 })
@@ -259,9 +268,7 @@ test('a different signed-in learner cannot change another learner\'s activity', 
   await openForm(adminPage)
   await amountInput(adminPage).fill('9')
   await adminPage.getByLabel('Description', { exact: true }).fill(`ownership-${Date.now()}`)
-  await saveButton(adminPage).click()
-  await expect(adminPage).toHaveURL(savedLogUrl)
-  const id = savedLogId(adminPage)
+  const id = await createLog(adminPage)
 
   await page.goto(`${webv3}/logs/${id}`)
   await expect(page.getByText(id, { exact: true })).toBeVisible()
@@ -284,18 +291,18 @@ test('a different signed-in learner cannot change another learner\'s activity', 
 })
 
 /**
- * Replaces the save's registration IDs with one the API doesn't know, inside TanStack Start's serialized
- * server-function payload, so that the API itself rejects the save.
+ * Replaces the save's language with a code the API doesn't offer, inside TanStack Start's serialized server-function
+ * payload, so that the API itself rejects the save.
  */
-function withUnknownRegistration(postData: string) {
+function withUnknownLanguage(postData: string) {
   const payload = JSON.parse(postData)
   const log = payload.t.p.v[0]
-  log.p.v[log.p.k.indexOf('registrationIds')].a = [{ t: 1, s: '00000000-0000-4000-8000-000000000000' }]
+  log.p.v[log.p.k.indexOf('languageCode')].s = 'zzz'
   return JSON.stringify(payload)
 }
 
 async function tabTo(page: Page, target: ReturnType<Page['locator']>) {
-  for (let step = 0; step < 8 && !await target.evaluate(element => element === document.activeElement); step++) {
+  for (let step = 0; step < 30 && !await target.evaluate(element => element === document.activeElement); step++) {
     await page.keyboard.press('Tab')
   }
   await expect(target).toBeFocused()

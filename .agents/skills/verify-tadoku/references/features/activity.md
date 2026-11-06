@@ -92,9 +92,15 @@ null for absent amount, unit, duration and description values.
 Open the printed next-host branch URL at `/logs/new`. Anonymous visitors see a
 sign-in prompt; login returns through authv2 on the branch account host. As
 the branch tenant's native Dev Reader,
-choose a language/activity, enter an amount and unit or minutes, optional tags
-and description, and review selected eligible contests. Save once, record the
-returned ID and values, then reload the detail and compare a fresh API read.
+choose a language/activity, enter an amount and unit or time spent, a
+description and tags: type to see the account's own tags with usage counts,
+toggle the sidebar's score modifier and common tags, and confirm adding stops at
+10 tags. Create once; with ongoing registrations the contest step
+`/logs/<id>/contests?preselect=1` opens with eligible contests selected, and Dev
+Admin, without registrations, lands on the log. Record the returned ID and
+values, then reload the detail and compare a fresh API read. Open
+`/logs/new` again: the last saved language and activity are restored, a timed
+one without an amount.
 Confirm `X-Dev-Selected` and that the canonical tenant cannot read the branch ID.
 Public detail is readable; contest submissions and management remain owner-only.
 As the owner, edit the log from its detail page, compare the estimated score
@@ -109,9 +115,9 @@ Webv2's query parameters still apply: `/logs/new?amount=12` prefills the amount,
 and `/logs/<id>/contests?preselect=1` selects every eligible contest for a log not
 yet submitted anywhere.
 
-Run the Webv3 `logging.spec.ts`, `logging-edit.spec.ts`, `logging-contests.spec.ts` and `logging-session.spec.ts` with the
+Run the Webv3 `logging.spec.ts`, `logging-form.spec.ts`, `logging-edit.spec.ts`, `logging-contests.spec.ts` and `logging-session.spec.ts` with the
 documented fixture environment and Lab CA. Native login admits ten logins per
-account in 15 minutes, so wait that long before repeating a complete run. It verifies invalid-field focus, real amount/time writes, contest selection,
+account in 15 minutes, so wait that long before repeating a complete run. It verifies invalid-field focus, real amount/time writes, tag chips, suggestions and the sidebar, remembered choices, the contest step after saving,
 reload, duplicate-submit prevention, keyboard layouts and expired-session draft
 recovery, server-function CSRF refusal, non-owner mutation refusal and cross-tenant
 isolation. Switch accounts in another tab before saving: the old draft must

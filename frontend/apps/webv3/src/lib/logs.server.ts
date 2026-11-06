@@ -5,9 +5,11 @@ import {
   immersionLogDeleteById,
   immersionLogFindById,
   immersionLogGetConfigurations,
+  immersionLogTagSuggestions,
   immersionLogUpdate,
   immersionScorePreview,
   type ImmersionScorePreview,
+  type ImmersionTagSuggestions,
 } from 'api-client'
 import type { LogContestsUpdate, LogUpdate, NewLog, ScorePreviewInput } from './log-draft'
 import type { ImmersionLog, LogFailure, LogOptions, LogResult, Registration } from './logs'
@@ -101,7 +103,6 @@ export async function saveLog(log: NewLog): Promise<LogResult<ImmersionLog>> {
       ...measureBody(log.measure),
       description: log.description,
       tags: log.tags,
-      registration_ids: log.registrationIds,
     },
   }))
 }
@@ -152,4 +153,12 @@ export async function readScorePreview(input: ScorePreviewInput): Promise<LogRes
       tags: input.tags,
     },
   }))
+}
+
+/** The tags the viewer used most that contain `query`, with their usage counts, followed by common tags. */
+export async function readTagSuggestions(query: string): Promise<LogResult<ImmersionTagSuggestions>> {
+  const cookie = sessionCookie()
+  if (!cookie) return { ok: false, reason: 'signed-out' }
+
+  return answer(immersionLogTagSuggestions({ ...sessionRequest(cookie), query: { query } }))
 }

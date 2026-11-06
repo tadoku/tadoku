@@ -2,14 +2,13 @@ import { randomUUID } from 'node:crypto'
 import type { APIRequestContext, Page } from '@playwright/test'
 import {
   accountId,
+  createLog,
   api,
   branch,
   expect,
   fillDraft,
   openForm,
   reader,
-  saveButton,
-  savedLogUrl,
   test,
   webv3,
 } from './logging-fixtures'
@@ -77,8 +76,7 @@ test('an owner sees API totals, switches years and gets the export and day links
   const page = await readerContext.newPage()
   await openForm(page)
   await fillDraft(page, '12', `webv3-profile-${Date.now()}`)
-  await saveButton(page).click()
-  await expect(page).toHaveURL(savedLogUrl)
+  await createLog(page)
   const userId = await accountId(readerContext)
 
   await page.goto(`/profile/${userId}/statistics/${year}`)

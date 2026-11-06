@@ -43,8 +43,7 @@ async function expectRows(page: Page, data: Contests, pageNumber = 1) {
     await expect(row.getByRole('heading', { level: 2 })).toHaveText(contest.title)
     await expect(row.getByRole('link', { name: contest.title, exact: true }))
       .toHaveAttribute('href', `/contests/${contest.id}/leaderboard/1`)
-    await expect(row.locator('.contest-row__title .paper-status-tag')).toHaveText(contest.private ? ['Unlisted'] : [])
-    await expect(row.locator('.contest-row__status .paper-status-tag')).toHaveText(statuses(contest))
+    await expect(row.locator('.contest-row__title .paper-status-tag')).toHaveText([...statuses(contest), ...(contest.private ? ['Unlisted'] : [])])
   }
   if (data.total_size === 0) {
     await expect(page.getByRole('heading', { level: 2 })).toHaveText(/No contests found|You don’t organize any contests yet/)

@@ -34,8 +34,9 @@ export async function expectTotal(page: Page, data: Board, pageNumber = 1) {
     return
   }
   const first = (pageNumber - 1) * 50 + 1
-  await expect(page.locator('.standings-pagination > p')).toHaveText(
-    `${score.format(first)}–${score.format(first + data.entries.length - 1)} of ${score.format(data.total_size)} participants`,
-  )
+  // The range summary appears only beside page links.
+  await expect(page.locator('.standings-pagination > p')).toHaveText(data.total_size > 50 || pageNumber > 1
+    ? [`${score.format(first)}–${score.format(first + data.entries.length - 1)} of ${score.format(data.total_size)} participants`]
+    : [])
   await expect(page.getByRole('navigation', { name: 'Standings pages' })).toHaveCount(data.total_size > 50 ? 1 : 0)
 }

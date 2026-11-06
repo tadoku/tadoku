@@ -5,6 +5,8 @@ import type { ReactNode } from 'react'
 import { homeQueryOptions, type HomeData } from '../lib/home'
 import { formatDate, formatPeriod, numberFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
+import { useParticipation } from '../lib/registration'
+import { viewerQueryOptions, type Viewer } from '../lib/session'
 
 const dayNumber = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000) + 1
 
@@ -40,37 +42,45 @@ export function HomePage() {
   const phase = phaseOf(data, isError, today)
   const contest = data?.latestContest ?? null
   const joinable = contest && (phase === 'open' || phase === 'upcoming')
+  const { data: viewer } = useQuery(viewerQueryOptions())
+  const member = viewer?.status === 'signed-in' ? viewer : null
 
   return (
     <div className="home-page">
       <section className="home-hero" aria-labelledby="home-title">
-        <div className="home-promise">
-          {phase === 'unavailable' && <p className="home-status" data-tone="warning">Contest updates are delayed</p>}
-          <h1 id="home-title">{promise[phase].headline}</h1>
-          <p className="home-lead">{promise[phase].lead}</p>
-          <div className="home-actions">
-            {joinable
-              ? <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a>
-              : <a href={links.logs} className={buttonClassName()}>Log activity</a>}
-          </div>
-          {joinable
-            ? <p className="home-fineprint">Free to join. Registration closes {formatDate(contest.registration_end)}.</p>
-            : <p className="home-fineprint">You can track your progress without joining a contest.</p>}
-        </div>
+        {member
+          ? <MemberPromise member={member} data={data} phase={phase} today={today} />
+          : (
+            <div className="home-promise">
+              {phase === 'unavailable' && <p className="home-status" data-tone="warning">Contest updates are delayed</p>}
+              <h1 id="home-title">{promise[phase].headline}</h1>
+              <p className="home-lead">{promise[phase].lead}</p>
+              <div className="home-actions">
+                {joinable
+                  ? <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a>
+                  : <a href={links.logs} className={buttonClassName()}>Log activity</a>}
+              </div>
+              {joinable
+                ? <p className="home-fineprint">Free to join. Registration closes {formatDate(contest.registration_end)}.</p>
+                : <p className="home-fineprint">You can track your progress without joining a contest.</p>}
+            </div>
+          )}
 
         <Surface as="section" elevation="showcase" accent className="home-ledger" aria-labelledby="home-board-title">
           <ContestBoard data={data} phase={phase} today={today} retrying={isFetching} retry={() => void refetch()} />
         </Surface>
       </section>
 
-      <section className="home-how" aria-labelledby="home-how-title">
-        <h2 id="home-how-title">How Tadoku works</h2>
-        <ol>
-          <li><h3>Choose your language</h3><p>Join an official round or track immersion at your own pace between contests.</p></li>
-          <li><h3>Read and listen</h3><p>Books, manga, games, podcasts, video. Find something that keeps you engaged.</p></li>
-          <li><h3>Log your progress</h3><p>Record what you did, see where it counts, and let a little company keep you going.</p></li>
-        </ol>
-      </section>
+      {member ? null : (
+        <section className="home-how" aria-labelledby="home-how-title">
+          <h2 id="home-how-title">How Tadoku works</h2>
+          <ol>
+            <li><h3>Choose your language</h3><p>Join an official round or track immersion at your own pace between contests.</p></li>
+            <li><h3>Read and listen</h3><p>Books, manga, games, podcasts, video. Find something that keeps you engaged.</p></li>
+            <li><h3>Log your progress</h3><p>Record what you did, see where it counts, and let a little company keep you going.</p></li>
+          </ol>
+        </section>
+      )}
 
       {phase !== 'loading' && phase !== 'unavailable' && (
         <section className="home-strip" aria-labelledby="home-next-title">
@@ -90,6 +100,55 @@ export function HomePage() {
         </div>
         <Link className="text-link" to="/plan">Set a daily goal</Link>
       </section>
+    </div>
+  )
+}
+
+const ordinal = new Intl.PluralRules('en', { type: 'ordinal' })
+const suffix: Record<string, string> = { one: 'st', two: 'nd', few: 'rd', other: 'th' }
+const place = (rank: number) => `${rank}${suffix[ordinal.select(rank)]}`
+
+/** A signed-in learner's hero: where they stand in the current round and the one action that moves it. */
+function MemberPromise({ member, data, phase, today }: {
+  member: Extract<Viewer, { status: 'signed-in' }>
+  data: HomeData | undefined
+  phase: Phase
+  today: string
+}) {
+  const links = useLinks()
+  const contest = data?.latestContest
+  const running = contest && (phase === 'open' || phase === 'live' || phase === 'upcoming')
+  const entry = running ? data?.standings?.entries.find(row => row.user_id === member.userId) : undefined
+  const { registered } = useParticipation(running ? contest.id : '')
+  const joinable = running && !registered && (phase === 'open' || phase === 'upcoming')
+
+  let headline: string
+  let lead: string
+  if (running && entry) {
+    headline = `${place(entry.rank)} in ${contest.title}`
+    lead = `${numberFormat.format(entry.score)} points so far · day ${dayNumber(contest.contest_start, today)} of ${dayNumber(contest.contest_start, contest.contest_end)}.`
+  } else if (running && registered) {
+    headline = `You’re in ${contest.title}`
+    lead = phase === 'upcoming' ? `The round starts ${formatDate(contest.contest_start)}.` : 'Log what you read and listen to; every entry counts towards the round.'
+  } else if (joinable) {
+    headline = `${contest.title} is open`
+    lead = `Registration closes ${formatDate(contest.registration_end)}.`
+  } else {
+    headline = `Welcome back, ${member.displayName}`
+    lead = 'Log what you read and listen to today.'
+  }
+
+  return (
+    <div className="home-promise">
+      {phase === 'unavailable' && <p className="home-status" data-tone="warning">Contest updates are delayed</p>}
+      <h1 id="home-title">{headline}</h1>
+      <p className="home-lead">{lead}</p>
+      <div className="home-actions">
+        {joinable
+          ? <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a>
+          : <a href={links.logs} className={buttonClassName()}>Log activity</a>}
+        <a href={links.profile(member.userId)} className="text-link">Your profile</a>
+      </div>
     </div>
   )
 }

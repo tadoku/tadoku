@@ -112,7 +112,7 @@ test('year and period tabs switch boards in the browser', async ({ page, request
   expect(failures).toEqual([])
 })
 
-test('a signed-in participant sees their own row and the contest action their registration allows', async ({ page, readerContext, request }, testInfo) => {
+test('a signed-in participant sees their own row and the join action while they can join', async ({ page, readerContext, request }, testInfo) => {
   test.skip(!reader.email || !reader.password, 'Set E2E_READER_EMAIL and E2E_READER_PASSWORD')
   const latest = await apiJson<{ id: string; contest_start: string; contest_end: string; registration_end: string }>(
     request, '/immersion/contests/latest-official',
@@ -122,7 +122,6 @@ test('a signed-in participant sees their own row and the contest action their re
   const registered = registration.status() === 200
   const data = await board(request, `/immersion/contests/${latest.id}/leaderboard`)
   const today = new Date().toISOString().slice(0, 10)
-  const ongoing = today >= latest.contest_start && today <= latest.contest_end
 
   await page.goto('/leaderboard/latest/1')
   await expect(page.getByText('You need to log in to participate in this contest.')).toHaveCount(0)
@@ -134,8 +133,8 @@ test('a signed-in participant sees their own row and the contest action their re
     await expect(own).toHaveCount(0)
   }
   const header = page.locator('.standings-header')
-  if (ongoing && registered) await expect(header.getByRole('link', { name: 'Log activity' })).toHaveAttribute('href', '/logs/new')
-  else if (!registered && today <= latest.registration_end) await expect(header.getByRole('link', { name: 'Join contest' })).toBeVisible()
+  // Registered participants log through the site header's Log activity action; the board offers only joining.
+  if (!registered && today <= latest.registration_end) await expect(header.getByRole('link', { name: 'Join contest' })).toBeVisible()
   else await expect(header.getByRole('link')).toHaveCount(0)
   await page.screenshot({ path: testInfo.outputPath('latest-signed-in.png'), fullPage: true })
 })

@@ -140,11 +140,11 @@ test('a signed-in learner joins an open contest, sees it on the contest page and
   await chooseLanguage(page, 'Japanese')
   await page.getByRole('button', { name: 'Register' }).click()
   await expect(page).toHaveURL(new RegExp(`${contestPath(contest.id)}$`))
-  await expect(headerLinks(page)).toHaveText(['Update registration', 'Log activity'])
+  await expect(headerLinks(page)).toHaveText(['Update registration'])
   expect(await registeredLanguages(readerContext, contest.id)).toEqual(['Japanese'])
 
   await page.reload()
-  await expect(headerLinks(page)).toHaveText(['Update registration', 'Log activity'])
+  await expect(headerLinks(page)).toHaveText(['Update registration'])
   await page.screenshot({ path: testInfo.outputPath('contest-registered.png'), fullPage: true })
 
   await headerLinks(page).getByText('Update registration').click()

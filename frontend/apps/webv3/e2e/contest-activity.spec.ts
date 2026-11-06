@@ -32,8 +32,11 @@ async function expectLogs(page: Page, expected: Logs, participants: boolean) {
   if (participants) {
     await expect(page.locator('.profile-entry-meta')).toHaveText(expected.logs.map(log => new RegExp(`^${escape(log.user_display_name ?? 'Unknown user')} · `)))
   }
-  if (expected.total_size > 0) {
+  // The range summary appears only beside page links.
+  if (expected.total_size > 50) {
     await expect(page.locator('.profile-entries-footer > p')).toHaveText(new RegExp(`of ${score.format(expected.total_size)} updates$`))
+  } else {
+    await expect(page.locator('.profile-entries-footer')).toHaveCount(0)
   }
 }
 

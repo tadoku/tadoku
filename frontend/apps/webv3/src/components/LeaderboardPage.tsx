@@ -79,10 +79,8 @@ export function GlobalLeaderboard({ scope, page }: { scope: Exclude<StandingsSco
   )
 }
 
-export function StandingsFootnote({ children }: { children?: ReactNode }) {
+export function StandingsFootnote({ children }: { children: ReactNode }) {
   return (
-    <p className="standings-footnote">
-      {children} Scores may take a few seconds to update. <abbr title="Tied rank">T</abbr> means a tie.
-    </p>
+    <p className="standings-footnote">{children}</p>
   )
 }

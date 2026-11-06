@@ -11,3 +11,4 @@
 .scoring-versions > p { margin: 0; }
 .scoring-version { display: grid; gap: 12px; min-width: 0; padding: clamp(1rem, 4vw, 1.5rem); overflow-wrap: anywhere; }
 .scoring-version__rules { margin: 0; padding-left: 1.25rem; line-height: 1.7; }
+.contest-form-actions { margin-top: 24px; }

@@ -69,7 +69,7 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
       />
       {locked ? (
         <Flash variant="warning">
-          Scoring is locked because this contest has started. Published snapshots and active rules remain visible below.
+          Scoring is locked because this contest has started.{contestRuleSets.length > 0 ? ' Its rule-set versions are listed below.' : ''}
         </Flash>
       ) : (
         <RuleSetForm

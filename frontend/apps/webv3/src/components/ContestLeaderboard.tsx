@@ -8,7 +8,7 @@ import { latestBoardQuery, leaderboardHref, standingsQuery, contestPhase, readDa
 import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
 import { useLoginUrl, viewerQueryOptions } from '../lib/session'
-import { LeaderboardFrame, StandingsFootnote } from './LeaderboardPage'
+import { LeaderboardFrame } from './LeaderboardPage'
 import { Standings } from './Standings'
 
 export function RoundStatus({ phase }: { phase: ContestPhase }) {
@@ -126,7 +126,6 @@ export function ContestBoardBody({ board, phase, page, pageHref, title, status, 
               onRetry={() => void standings.refetch()}
             />
           </section>
-          <StandingsFootnote />
         </div>
         <aside className="standings-aside">
           <section aria-labelledby="standings-conditions">

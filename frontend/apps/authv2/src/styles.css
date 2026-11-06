@@ -6,7 +6,8 @@ a:where(:not(.paper-button)) { color: var(--paper-color-text-link); }
 .account-shell { --account-gutter: clamp(16px, 4vw, 32px); min-height: 100vh; display: flex; flex-direction: column; }
 .account-skip { position: fixed; z-index: 100; left: 12px; top: 12px; transform: translateY(-180%); }
 .account-skip:focus { transform: none; }
-.account-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 14px var(--account-gutter); border-bottom: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
+/* Matches Webv3's header height and content column so moving between the hosts keeps the brand in place. */
+.account-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; min-height: 61px; padding: 8px max(var(--account-gutter), calc((100% - 1160px) / 2)); border-bottom: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
 .account-brand { display: inline-flex; align-items: center; gap: 14px; color: var(--paper-color-text-muted); text-decoration: none; }
 .account-lockup { display: flex; align-items: center; gap: 7px; }
 .account-mark { display: block; width: 35px; height: auto; }

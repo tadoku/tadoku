@@ -88,14 +88,15 @@ export function Standings({ result, page, caption, pageHref, profileHref, empty,
         minWidth="17rem"
         tableClassName="standings-table"
       />
-      <div className="standings-pagination">
-        <p>
-          {numberFormat.format(first)}–{numberFormat.format(first + entries.length - 1)} of {numberFormat.format(total)} participants
-        </p>
-        {totalPages > 1
-          ? <Pagination totalPages={totalPages} currentPage={page} getHref={pageHref} renderLink={renderLink} label="Standings pages" />
-          : null}
-      </div>
+      {totalPages > 1 ? (
+        <div className="standings-pagination">
+          <p>
+            {numberFormat.format(first)}–{numberFormat.format(first + entries.length - 1)} of {numberFormat.format(total)} participants
+          </p>
+          <Pagination totalPages={totalPages} currentPage={page} getHref={pageHref} renderLink={renderLink} label="Standings pages" />
+        </div>
+      ) : null}
+      {entries.some(entry => entry.is_tie) ? <p className="standings-tie-note"><abbr title="Tied rank">T</abbr> marks a tied rank.</p> : null}
     </>
   )
 }

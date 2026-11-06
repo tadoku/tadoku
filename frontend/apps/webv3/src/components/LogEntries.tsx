@@ -38,10 +38,12 @@ export function LogEntries({ logs, total, page, pageHref, empty, showParticipant
       <ol className="profile-entries">
         {logs.map(log => <Entry key={log.id} log={log} showParticipant={showParticipant} actions={actions?.(log)} />)}
       </ol>
-      <div className="profile-entries-footer">
-        <p>{numberFormat.format(first)}–{numberFormat.format(first + logs.length - 1)} of {numberFormat.format(total)} updates</p>
-        {pages > 1 ? <Pagination label="Update pages" totalPages={pages} currentPage={page} getHref={pageHref} renderLink={renderLink} /> : null}
-      </div>
+      {pages > 1 ? (
+        <div className="profile-entries-footer">
+          <p>{numberFormat.format(first)}–{numberFormat.format(first + logs.length - 1)} of {numberFormat.format(total)} updates</p>
+          <Pagination label="Update pages" totalPages={pages} currentPage={page} getHref={pageHref} renderLink={renderLink} />
+        </div>
+      ) : null}
     </>
   )
 }

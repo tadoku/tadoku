@@ -11,7 +11,7 @@ import {
   type ContestList,
   type ContestListScope,
 } from '../lib/contests'
-import { formatDate, formatPeriod, months, numberFormat } from '../lib/format'
+import { formatDate, formatPeriod, numberFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { useLoginUrl, viewerKey, viewerQueryOptions } from '../lib/session'
 import { renderLink } from './router-link'
@@ -136,7 +136,6 @@ function ContestRow({ contest, names, today }: {
   today: string
 }) {
   const links = useLinks()
-  const [year, month, day] = contest.contest_start.split('-')
   const started = today >= contest.contest_start
   const ended = today > contest.contest_end
   const round = ended ? <StatusTag>Ended</StatusTag> : started ? <StatusTag tone="success">Live now</StatusTag> : <StatusTag tone="information">Upcoming</StatusTag>
@@ -150,19 +149,15 @@ function ContestRow({ contest, names, today }: {
 
   return (
     <li className="contest-row">
-      <div className="contest-date" aria-hidden="true">
-        <span>{months[Number(month) - 1]} {year}</span>
-        <strong>{Number(day)}</strong>
-      </div>
       <div className="contest-row__body">
         <div className="contest-row__title">
           <h2 className="paper-type-component"><a href={links.contest(contest.id)}>{contest.title}</a></h2>
+          {round}
           {contest.private ? <StatusTag>Unlisted</StatusTag> : null}
         </div>
         <p>{formatPeriod(contest)}{registration}</p>
         {names ? <p className="contest-row__allows">{languages} · {activities}</p> : null}
       </div>
-      <div className="contest-row__status">{round}</div>
     </li>
   )
 }

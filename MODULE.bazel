@@ -126,7 +126,7 @@ use_repo(oci, "tadoku_dev_alpine", "tadoku_dev_alpine_linux_amd64", "tadoku_dev_
 
 oci.pull(
     name = "tadoku_dev_node22",
-    digest = "sha256:63538dfe497cc29dfafdda25ada09b46db68a3f4cc205abf1f5d6bf0913f3384",
+    digest = "sha256:7702d8aa4d5910871692af4480eb3ba86f23047a6417a44d857d06c95d060d3f",
     image = "index.docker.io/library/node",
     platforms = ["linux/amd64"],
     tag = "22",

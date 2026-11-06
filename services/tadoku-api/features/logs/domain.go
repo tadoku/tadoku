@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestevent"
-	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
@@ -80,6 +79,7 @@ func validateYear(year int) error {
 }
 
 type lockedLog struct {
+	UserID uuid.UUID
 	Frozen bool
 }
 
@@ -95,12 +95,6 @@ type logMutation struct {
 	EligibleOfficialLeaderboard bool
 	Year                        int16
 	Now                         time.Time
-}
-
-type JobContext struct {
-	UserID           uuid.UUID
-	Year             int16
-	EligibleOfficial bool
 }
 
 type Log struct {
@@ -243,17 +237,14 @@ func findActivity(id int32) (activities.Activity, error) {
 
 type CreateResult struct {
 	ID     uuid.UUID
-	Jobs   []jobs.Job
 	Events []contestevent.Change
 }
 
 type MutationResult struct {
-	Jobs   []jobs.Job
 	Events []contestevent.Change
 }
 
 type RemovalResult struct {
-	Jobs        []jobs.Job
 	Events      []contestevent.Change
 	DeletedLogs int
 	KeptLogs    int

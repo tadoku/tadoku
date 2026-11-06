@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestevent"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestwindow"
-	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/uuidx"
@@ -54,8 +53,7 @@ func (s *Service) UpdateContestRegistrations(
 	attachments []logscore.ContestTracking,
 	detachments []uuid.UUID,
 ) (MutationResult, error) {
-	result := MutationResult{}
-	if err := s.lockMutableLog(ctx, logID); err != nil {
+	if _, err := s.lockMutableLog(ctx, logID); err != nil {
 		return MutationResult{}, err
 	}
 	beforeViews, err := s.logs.ContestLogViews(ctx, logID, nil)
@@ -63,10 +61,6 @@ func (s *Service) UpdateContestRegistrations(
 		return MutationResult{}, err
 	}
 
-	before, err := s.logs.JobContext(ctx, logID)
-	if err != nil {
-		return MutationResult{}, err
-	}
 	for _, contestID := range detachments {
 		if err := s.logs.DetachContest(ctx, logID, contestID); err != nil {
 			return MutationResult{}, err
@@ -80,71 +74,33 @@ func (s *Service) UpdateContestRegistrations(
 	if err := s.recomputeOfficialEligibility(ctx, logID, now); err != nil {
 		return MutationResult{}, err
 	}
-	after, err := s.logs.JobContext(ctx, logID)
-	if err != nil {
-		return MutationResult{}, err
-	}
 
-	affected := make(map[uuid.UUID]struct{}, len(detachments)+len(attachments))
-	for _, contestID := range detachments {
-		affected[contestID] = struct{}{}
-	}
-	for _, attachment := range attachments {
-		affected[attachment.ContestID] = struct{}{}
-	}
-	for contestID := range affected {
-		result.Jobs = append(result.Jobs, jobs.InvalidateContestLeaderboardV1{ContestID: contestID})
-	}
-	if before.EligibleOfficial || after.EligibleOfficial {
-		year := before.Year
-		result.Jobs = append(result.Jobs, jobs.InvalidateOfficialLeaderboardV1{Year: year})
-	}
 	afterViews, err := s.logs.ContestLogViews(ctx, logID, nil)
 	if err != nil {
 		return MutationResult{}, err
 	}
-	result.Events = contestLogChanges(logID, beforeViews, afterViews)
-	return result, nil
+	return MutationResult{Events: contestLogChanges(logID, beforeViews, afterViews)}, nil
 }
 
-func (s *Service) lockMutableLog(ctx context.Context, logID uuid.UUID) error {
+func (s *Service) lockMutableLog(ctx context.Context, logID uuid.UUID) (owner uuid.UUID, err error) {
 	locked, err := s.logs.LockLog(ctx, logID)
 	if err != nil {
-		return err
+		return uuid.Nil, err
 	}
 	if locked.Frozen {
-		return ErrLogFrozen
+		return uuid.Nil, ErrLogFrozen
 	}
-	return nil
+	return locked.UserID, nil
 }
 
-// RecomputeOfficialEligibility must run in the transaction that detached the logs from their contests,
-// which must enqueue the returned jobs.
-func (s *Service) RecomputeOfficialEligibility(
-	ctx context.Context,
-	logIDs []uuid.UUID,
-	now time.Time,
-) ([]jobs.Job, error) {
-	followUp := make([]jobs.Job, 0)
+// RecomputeOfficialEligibility must run in the transaction that detached the logs from their contests.
+func (s *Service) RecomputeOfficialEligibility(ctx context.Context, logIDs []uuid.UUID, now time.Time) error {
 	for _, logID := range logIDs {
-		before, err := s.logs.JobContext(ctx, logID)
-		if err != nil {
-			return nil, err
-		}
 		if err := s.recomputeOfficialEligibility(ctx, logID, now); err != nil {
-			return nil, err
-		}
-		after, err := s.logs.JobContext(ctx, logID)
-		if err != nil {
-			return nil, err
-		}
-
-		if before.EligibleOfficial || after.EligibleOfficial {
-			year := before.Year
-			followUp = append(followUp, jobs.InvalidateOfficialLeaderboardV1{Year: year})
+			return err
 		}
 	}
-	return followUp, nil
+	return nil
 }
 
 func (s *Service) recomputeOfficialEligibility(ctx context.Context, logID uuid.UUID, now time.Time) error {
@@ -156,8 +112,7 @@ func (s *Service) recomputeOfficialEligibility(ctx context.Context, logID uuid.U
 }
 
 func (s *Service) Delete(ctx context.Context, logID uuid.UUID, now time.Time) (MutationResult, error) {
-	result := MutationResult{}
-	if err := s.lockMutableLog(ctx, logID); err != nil {
+	if _, err := s.lockMutableLog(ctx, logID); err != nil {
 		return MutationResult{}, err
 	}
 	contests, err := s.logs.AttachedContests(ctx, logID)
@@ -169,24 +124,17 @@ func (s *Service) Delete(ctx context.Context, logID uuid.UUID, now time.Time) (M
 			return MutationResult{}, errx.NewForbiddenError("forbidden")
 		}
 	}
-	jobContext, err := s.logs.JobContext(ctx, logID)
-	if err != nil {
-		return MutationResult{}, err
-	}
 	if err := s.logs.SoftDelete(ctx, logID, now); err != nil {
 		return MutationResult{}, err
 	}
+
+	result := MutationResult{}
 	for _, contest := range contests {
-		result.Jobs = append(result.Jobs, jobs.InvalidateContestLeaderboardV1{ContestID: contest.ID})
 		result.Events = append(result.Events, contestevent.Change{
 			ContestID: contest.ID,
 			LogID:     logID,
 			Type:      contestevent.Withdrawn,
 		})
-	}
-	if jobContext.EligibleOfficial {
-		year := jobContext.Year
-		result.Jobs = append(result.Jobs, jobs.InvalidateOfficialLeaderboardV1{Year: year})
 	}
 	return result, nil
 }
@@ -196,38 +144,23 @@ func (s *Service) ModerateDetach(
 	logID, contestID uuid.UUID,
 	now time.Time,
 ) (MutationResult, error) {
-	result := MutationResult{}
 	beforeViews, err := s.logs.ContestLogViews(ctx, logID, nil)
 	if err != nil {
 		return MutationResult{}, err
 	}
 
-	before, err := s.logs.JobContext(ctx, logID)
-	if err != nil {
-		return MutationResult{}, err
-	}
 	if err := s.logs.DetachContest(ctx, logID, contestID); err != nil {
 		return MutationResult{}, err
 	}
 	if err := s.recomputeOfficialEligibility(ctx, logID, now); err != nil {
 		return MutationResult{}, err
 	}
-	after, err := s.logs.JobContext(ctx, logID)
-	if err != nil {
-		return MutationResult{}, err
-	}
 
-	result.Jobs = append(result.Jobs, jobs.InvalidateContestLeaderboardV1{ContestID: contestID})
-	if before.EligibleOfficial || after.EligibleOfficial {
-		year := before.Year
-		result.Jobs = append(result.Jobs, jobs.InvalidateOfficialLeaderboardV1{Year: year})
-	}
 	afterViews, err := s.logs.ContestLogViews(ctx, logID, nil)
 	if err != nil {
 		return MutationResult{}, err
 	}
-	result.Events = contestLogChanges(logID, beforeViews, afterViews)
-	return result, nil
+	return MutationResult{Events: contestLogChanges(logID, beforeViews, afterViews)}, nil
 }
 
 func (s *Service) Create(
@@ -254,11 +187,11 @@ func (s *Service) Create(
 		Year:                        int16(now.Year()),
 		Now:                         now,
 	}
-	followUp, err := s.create(ctx, mutation)
+	created, err := s.create(ctx, mutation)
 	if err != nil {
 		return CreateResult{}, err
 	}
-	return CreateResult{ID: mutation.ID, Jobs: followUp.Jobs, Events: followUp.Events}, nil
+	return CreateResult{ID: mutation.ID, Events: created.Events}, nil
 }
 
 func (s *Service) create(ctx context.Context, mutation logMutation) (MutationResult, error) {
@@ -283,17 +216,11 @@ func (s *Service) create(ctx context.Context, mutation logMutation) (MutationRes
 			continue
 		}
 		seen[tracking.ContestID] = struct{}{}
-		contestID := tracking.ContestID
-		result.Jobs = append(result.Jobs, jobs.InvalidateContestLeaderboardV1{ContestID: contestID})
 		result.Events = append(result.Events, contestevent.Change{
-			ContestID: contestID,
+			ContestID: tracking.ContestID,
 			LogID:     mutation.ID,
 			Type:      contestevent.Submitted,
 		})
-	}
-	if mutation.EligibleOfficialLeaderboard {
-		year := mutation.Year
-		result.Jobs = append(result.Jobs, jobs.InvalidateOfficialLeaderboardV1{Year: year})
 	}
 	return result, nil
 }
@@ -321,8 +248,8 @@ func (s *Service) Update(
 }
 
 func (s *Service) update(ctx context.Context, mutation logMutation) (MutationResult, error) {
-	result := MutationResult{}
-	if err := s.lockMutableLog(ctx, mutation.ID); err != nil {
+	userID, err := s.lockMutableLog(ctx, mutation.ID)
+	if err != nil {
 		return MutationResult{}, err
 	}
 	beforeViews, err := s.logs.ContestLogViews(ctx, mutation.ID, nil)
@@ -330,10 +257,6 @@ func (s *Service) update(ctx context.Context, mutation logMutation) (MutationRes
 		return MutationResult{}, err
 	}
 
-	jobContext, err := s.logs.JobContext(ctx, mutation.ID)
-	if err != nil {
-		return MutationResult{}, err
-	}
 	if err := s.logs.UpdateLog(ctx, mutation); err != nil {
 		return MutationResult{}, err
 	}
@@ -358,29 +281,16 @@ func (s *Service) update(ctx context.Context, mutation logMutation) (MutationRes
 		return MutationResult{}, err
 	}
 	for _, tag := range mutation.Tags {
-		if err := s.logs.InsertTag(ctx, mutation.ID, jobContext.UserID, tag); err != nil {
+		if err := s.logs.InsertTag(ctx, mutation.ID, userID, tag); err != nil {
 			return MutationResult{}, err
 		}
 	}
-	contests, err := s.logs.AttachedContests(ctx, mutation.ID)
-	if err != nil {
-		return MutationResult{}, err
-	}
-	for _, contest := range contests {
-		if contestwindow.Unfinished(contest.End, mutation.Now) {
-			result.Jobs = append(result.Jobs, jobs.InvalidateContestLeaderboardV1{ContestID: contest.ID})
-		}
-	}
-	if jobContext.EligibleOfficial {
-		year := jobContext.Year
-		result.Jobs = append(result.Jobs, jobs.InvalidateOfficialLeaderboardV1{Year: year})
-	}
+
 	afterViews, err := s.logs.ContestLogViews(ctx, mutation.ID, nil)
 	if err != nil {
 		return MutationResult{}, err
 	}
-	result.Events = contestLogChanges(mutation.ID, beforeViews, afterViews)
-	return result, nil
+	return MutationResult{Events: contestLogChanges(mutation.ID, beforeViews, afterViews)}, nil
 }
 
 func (s *Service) RegistrationsForRescoring(log *Log, now time.Time) []logscore.Target {

@@ -103,14 +103,17 @@ func TestContestEventRollbackJourney(t *testing.T) {
 		t.Cleanup(func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
-			_, err := api.db.Pool.Exec(ctx, `select setval(pg_get_serial_sequence('jobs', 'id'),
-    greatest(coalesce((select max(id) from jobs), 0), 1), exists(select 1 from jobs))`)
+			_, err := api.db.Pool.Exec(ctx, `drop trigger contest_event_rollback_fault on contest_events;
+				drop function contest_event_rollback_fault()`)
 			if err != nil {
 				t.Error(err)
 			}
 		})
-		_, err := api.db.Pool.Exec(t.Context(),
-			`select setval(pg_get_serial_sequence('jobs', 'id'), 9223372036854775807, true)`)
+		// Test safety: a serial journey owns the database, so the fault cannot fail another test's commit.
+		_, err := api.db.Pool.Exec(t.Context(), `create function contest_event_rollback_fault() returns trigger
+				language plpgsql as $$ begin raise exception 'contest event rollback fault'; end; $$;
+			create constraint trigger contest_event_rollback_fault after insert on contest_events
+				deferrable initially deferred for each row execute function contest_event_rollback_fault()`)
 		if err != nil {
 			t.Fatal(err)
 		}

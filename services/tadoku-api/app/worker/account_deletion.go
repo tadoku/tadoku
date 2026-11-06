@@ -3,7 +3,6 @@ package worker
 import (
 	"context"
 	"errors"
-	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -51,13 +50,13 @@ func (a *Application) removeAccountData(ctx context.Context, userID uuid.UUID, n
 		return err
 	}
 
-	followUp := slices.Concat(removedLogs.Jobs, removedRegistrations.Jobs)
+	var followUp []jobs.Job
 	if hasNotice {
 		written, err := a.email.Write(ctx, notice)
 		if err != nil {
 			return err
 		}
-		followUp = append(followUp, written.Jobs...)
+		followUp = written.Jobs
 	}
 
 	err = a.audit.Record(ctx, audit.Event{
@@ -78,5 +77,5 @@ func (a *Application) removeAccountData(ctx context.Context, userID uuid.UUID, n
 	if err := a.contestEvents.Append(ctx, removedLogs.Events, now); err != nil {
 		return err
 	}
-	return a.queue.Enqueue(ctx, jobs.Distinct(followUp)...)
+	return a.queue.Enqueue(ctx, followUp...)
 }

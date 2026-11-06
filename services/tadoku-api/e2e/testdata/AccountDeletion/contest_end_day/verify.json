@@ -13,10 +13,6 @@
         ]
       }
     ],
-    "leaderboard_jobs": [
-      {
-        "contest_id": "f0000000-0000-4000-8000-0000000000c1"
-      }
-    ]
+    "leaderboard_jobs": null
   }
 ]

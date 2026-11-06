@@ -25,14 +25,14 @@ func (r *LogsRepository) LockLog(ctx context.Context, id uuid.UUID) (lockedLog, 
 	if err != nil {
 		return lockedLog{}, err
 	}
-	frozenAt, err := queries.New(executor).LockLogForMutation(ctx, postgres.UUID(id))
+	row, err := queries.New(executor).LockLogForMutation(ctx, postgres.UUID(id))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return lockedLog{}, ErrLogNotFound
 	}
 	if err != nil {
 		return lockedLog{}, fmt.Errorf("lock log: %w", err)
 	}
-	return lockedLog{Frozen: frozenAt.Valid}, nil
+	return lockedLog{UserID: row.UserID.Bytes, Frozen: row.FrozenAt.Valid}, nil
 }
 
 func (r *LogsRepository) CreateLog(ctx context.Context, mutation logMutation) error {
@@ -100,25 +100,6 @@ func (r *LogsRepository) DeleteTags(ctx context.Context, logID uuid.UUID) error 
 		return err
 	}
 	return queries.New(executor).DeleteLogTags(ctx, postgres.UUID(logID))
-}
-
-func (r *LogsRepository) JobContext(ctx context.Context, id uuid.UUID) (JobContext, error) {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return JobContext{}, err
-	}
-	row, err := queries.New(executor).FetchLogJobContext(ctx, postgres.UUID(id))
-	if errors.Is(err, pgx.ErrNoRows) {
-		return JobContext{}, ErrLogNotFound
-	}
-	if err != nil {
-		return JobContext{}, err
-	}
-	return JobContext{
-		UserID:           row.UserID.Bytes,
-		Year:             row.Year,
-		EligibleOfficial: row.EligibleOfficialLeaderboard,
-	}, nil
 }
 
 func (r *LogsRepository) UpdateLog(ctx context.Context, mutation logMutation) error {

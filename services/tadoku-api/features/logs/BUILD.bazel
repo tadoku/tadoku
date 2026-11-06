@@ -21,7 +21,6 @@ go_library(
         "//services/tadoku-api/domain/contestevent",
         "//services/tadoku-api/domain/contestwindow",
         "//services/tadoku-api/domain/deleteduser",
-        "//services/tadoku-api/domain/jobs",
         "//services/tadoku-api/domain/logscore",
         "//services/tadoku-api/generated/sqlc/logs",
         "//services/tadoku-api/infra/postgres",
@@ -49,7 +48,6 @@ go_test(
     ],
     deps = [
         "//services/tadoku-api/domain/activities",
-        "//services/tadoku-api/domain/jobs",
         "//services/tadoku-api/domain/logscore",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/tenant",

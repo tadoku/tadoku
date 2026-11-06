@@ -3,11 +3,9 @@ package api
 import (
 	"context"
 	"errors"
-	"slices"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
-	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
@@ -256,14 +254,10 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 		if err != nil {
 			return err
 		}
-		officialJobs, err := a.logs.RecomputeOfficialEligibility(ctx, result.WithdrawnLogIDs, now)
-		if err != nil {
+		if err := a.logs.RecomputeOfficialEligibility(ctx, result.WithdrawnLogIDs, now); err != nil {
 			return err
 		}
-		if err := a.contestEvents.Append(ctx, result.Events, now); err != nil {
-			return err
-		}
-		return a.jobqueue.Enqueue(ctx, jobs.Distinct(slices.Concat(result.Jobs, officialJobs))...)
+		return a.contestEvents.Append(ctx, result.Events, now)
 	})
 }
 

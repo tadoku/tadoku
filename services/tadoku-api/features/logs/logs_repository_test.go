@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
-	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
@@ -477,16 +476,6 @@ func TestLogsRepositoryTagRoundTrip(t *testing.T) {
 	}
 }
 
-func TestLogsRepositoryJobContextMissingLog(t *testing.T) {
-	t.Parallel()
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
-	repository, _ := newTestLogsRepository(t)
-
-	if _, err := repository.JobContext(tenantCtx, uuid.New()); !errors.Is(err, ErrLogNotFound) {
-		t.Errorf("missing log error=%v, want not found", err)
-	}
-}
-
 func TestLogsRepositoryModerateDetachClearsOfficialEligibility(t *testing.T) {
 	t.Parallel()
 	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
@@ -544,32 +533,26 @@ func TestLogsRepositoryModerateDetachClearsOfficialEligibility(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	before, err := repository.JobContext(tenantCtx, logID)
-	if err != nil {
+	const eligibleSQL = `select eligible_official_leaderboard from logs where id = $1`
+	var before bool
+	if err := db.Pool.QueryRow(tenantCtx, eligibleSQL, logID).Scan(&before); err != nil {
 		t.Fatal(err)
 	}
-	if !before.EligibleOfficial {
-		t.Fatalf("eligible_official_leaderboard=%t, want true before detach", before.EligibleOfficial)
+	if !before {
+		t.Fatalf("eligible_official_leaderboard=%t, want true before detach", before)
 	}
 
 	now := time.Date(2026, 9, 2, 12, 0, 0, 0, time.UTC)
 	service := NewService(repository, false)
-	result, err := service.ModerateDetach(tenantCtx, logID, contestID, now)
-	if err != nil {
+	if _, err := service.ModerateDetach(tenantCtx, logID, contestID, now); err != nil {
 		t.Fatal(err)
 	}
 
-	after, err := repository.JobContext(tenantCtx, logID)
-	if err != nil {
+	var after bool
+	if err := db.Pool.QueryRow(tenantCtx, eligibleSQL, logID).Scan(&after); err != nil {
 		t.Fatal(err)
 	}
-	if after.EligibleOfficial {
-		t.Errorf("eligible_official_leaderboard=%t, want false after official-only moderate detach", after.EligibleOfficial)
-	}
-
-	wantContest := jobs.InvalidateContestLeaderboardV1{ContestID: contestID}
-	wantOfficial := jobs.InvalidateOfficialLeaderboardV1{Year: 2026}
-	if len(result.Jobs) != 2 || result.Jobs[0] != wantContest || result.Jobs[1] != wantOfficial {
-		t.Errorf("followUp=%v, want [%v %v]", result.Jobs, wantContest, wantOfficial)
+	if after {
+		t.Errorf("eligible_official_leaderboard=%t, want false after official-only moderate detach", after)
 	}
 }

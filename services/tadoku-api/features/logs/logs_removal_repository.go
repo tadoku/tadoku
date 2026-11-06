@@ -27,14 +27,6 @@ func (r *LogsRepository) UserContestLogViews(ctx context.Context, userID uuid.UU
 	return views, nil
 }
 
-func (r *LogsRepository) UserOfficialYears(ctx context.Context, userID uuid.UUID) ([]int16, error) {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return nil, err
-	}
-	return queries.New(executor).ListOfficialYearsForUser(ctx, postgres.UUID(userID))
-}
-
 func (r *LogsRepository) DeleteUserContestLogsOutsideFinishedContests(
 	ctx context.Context,
 	userID uuid.UUID,

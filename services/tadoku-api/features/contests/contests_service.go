@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestevent"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestwindow"
-	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	domainlanguages "github.com/tadoku/tadoku/services/tadoku-api/domain/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
@@ -255,18 +254,7 @@ func (s *Service) ApplyRegistration(
 	if err := s.contests.UpsertRegistration(ctx, registration); err != nil {
 		return RegistrationResult{}, err
 	}
-
-	result.Jobs = registrationLeaderboardJobs(registration, contest)
 	return result, nil
-}
-
-func registrationLeaderboardJobs(registration Registration, contest Contest) []jobs.Job {
-	followUp := []jobs.Job{jobs.InvalidateContestLeaderboardV1{ContestID: registration.ContestID}}
-	if contest.Official {
-		year := int16(contest.ContestStart.Year())
-		followUp = append(followUp, jobs.InvalidateOfficialLeaderboardV1{Year: year})
-	}
-	return followUp
 }
 
 func (s *Service) CreateContest(ctx context.Context, contest Contest) (*Contest, error) {

@@ -342,7 +342,7 @@ func TestContestRegistrationDetachJourney(t *testing.T) {
 			as:      guest,
 			want:    http.StatusOK,
 		},
-		{verify: "logs_detached_and_refreshes_enqueued"},
+		{verify: "logs_detached"},
 	})
 }
 

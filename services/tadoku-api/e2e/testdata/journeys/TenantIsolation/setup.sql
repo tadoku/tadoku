@@ -49,3 +49,9 @@ insert into contest_registrations (tenant, id, contest_id, user_id, language_cod
    'f0000000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', '{eng}'),
   ('e2e/alpha-0000000a', 'eeeeeeee-eeee-4eee-8eee-000000000002',
    'f0000000-0000-4000-8000-000000000002', '44444444-4444-4444-8444-444444444444', '{eng}');
+
+insert into jobs (tenant, task_type, payload, created_at, next_attempt_at) values
+  ('tadoku/prod', 'leaderboard.invalidate_official.v1', '{"year": 2026}',
+   '2026-09-12 12:00:00+00', '2026-09-12 12:00:00+00'),
+  ('e2e/alpha-0000000a', 'leaderboard.invalidate_official.v1', '{"year": 2026}',
+   '2026-09-12 12:00:00+00', '2026-09-12 12:00:00+00');

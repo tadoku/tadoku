@@ -1,5 +1,7 @@
 import type { BrowserContext, Page, Request } from '@playwright/test'
 import {
+  addTags,
+  createLog,
   admin,
   amountInput,
   api,
@@ -9,27 +11,22 @@ import {
   isSaveRequest,
   openForm,
   reader,
-  saveButton,
-  savedLogId,
-  savedLogUrl,
   sessionCookie,
   test,
   webv3,
 } from './logging-fixtures'
 
-const estimate = (page: Page) => page.locator('.log-estimate strong')
+const estimate = (page: Page) => page.locator('.log-form__estimate strong')
 const timeSpent = (page: Page) => page.getByLabel('Time spent', { exact: true })
 const description = (page: Page) => page.getByLabel('Description', { exact: true })
-const saveChanges = (page: Page) => page.getByRole('button', { name: 'Save changes', exact: true })
+const saveChanges = (page: Page) => page.getByRole('button', { name: 'Save', exact: true })
 const isPreviewRequest = (request: Request) => request.method() === 'GET' && request.url().includes('_serverFn')
 
 /** Saves a reading log through the activity form and returns its ID, leaving the page on its detail. */
-async function createLog(page: Page, text: string, amount = '5') {
+async function createReadingLog(page: Page, text: string, amount = '5') {
   await openForm(page)
   await fillDraft(page, amount, text)
-  await saveButton(page).click()
-  await expect(page).toHaveURL(savedLogUrl)
-  return savedLogId(page)
+  return createLog(page)
 }
 
 async function readRecord(context: BrowserContext, id: string) {
@@ -48,7 +45,7 @@ async function apiEstimate(page: Page, context: BrowserContext, body: Record<str
 
 test('owner edits a saved log, sees the estimate and the persisted change after reload', async ({ page, readerContext }, testInfo) => {
   test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
-  const id = await createLog(page, `edit-before-${Date.now()}`)
+  const id = await createReadingLog(page, `edit-before-${Date.now()}`)
   const before = await (await readRecord(readerContext, id)).json()
 
   await page.getByRole('link', { name: 'Edit log', exact: true }).click()
@@ -65,7 +62,7 @@ test('owner edits a saved log, sees the estimate and the persisted change after 
   await amountInput(page).fill('12')
   await timeSpent(page).fill('30')
   await description(page).fill(text)
-  await page.getByLabel('Tags', { exact: true }).fill('Edited, e2e')
+  await addTags(page, ['Edited', 'e2e'])
   const expected = await apiEstimate(page, readerContext, {
     language_code: before.language.code,
     activity_id: before.activity.id,
@@ -100,7 +97,7 @@ test('owner edits a saved log, sees the estimate and the persisted change after 
 
 test('editing only the description keeps a saved tag that holds a comma', async ({ page, readerContext }) => {
   test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
-  const id = await createLog(page, `edit-comma-${Date.now()}`)
+  const id = await createReadingLog(page, `edit-comma-${Date.now()}`)
   const before = await (await readRecord(readerContext, id)).json()
   const changed = await readerContext.request.put(`${api}/immersion/logs/${id}`, {
     data: { amount: before.amount, unit_key: before.unit_key, tags: ['reading, fiction'], description: before.description },
@@ -119,7 +116,7 @@ test('editing only the description keeps a saved tag that holds a comma', async 
 
 test('an expired session keeps the edit and changes nothing', async ({ page, readerContext }) => {
   test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
-  const id = await createLog(page, `edit-expired-${Date.now()}`)
+  const id = await createReadingLog(page, `edit-expired-${Date.now()}`)
   const before = await (await readRecord(readerContext, id)).json()
   await page.goto(`/logs/${id}/edit`)
   await expect(saveChanges(page)).toBeEnabled({ timeout: 15_000 })
@@ -135,7 +132,7 @@ test('an expired session keeps the edit and changes nothing', async ({ page, rea
 
 test('owner deletes a log after confirming, and its detail is gone', async ({ page, readerContext }, testInfo) => {
   test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
-  const id = await createLog(page, `delete-${Date.now()}`)
+  const id = await createReadingLog(page, `delete-${Date.now()}`)
   const { user_id: userId } = await (await readRecord(readerContext, id)).json()
   const dialog = page.getByRole('dialog', { name: 'Delete this log?' })
 
@@ -159,7 +156,7 @@ test('owner deletes a log after confirming, and its detail is gone', async ({ pa
 test('visitors see no owner actions and cannot open the edit page for another learner\'s log', async ({ readerContext, adminContext, browser }) => {
   test.skip(!webv3 || !api || !reader.email || !admin.email, 'Set both development fixture identities')
   const adminPage = await adminContext.newPage()
-  const id = await createLog(adminPage, `visitor-${Date.now()}`)
+  const id = await createReadingLog(adminPage, `visitor-${Date.now()}`)
   await expect(adminPage.getByRole('link', { name: 'Edit log', exact: true })).toBeVisible()
 
   const readerPage = await readerContext.newPage()

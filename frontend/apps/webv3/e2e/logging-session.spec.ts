@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test'
 import {
+  createLog,
   accountId,
   admin,
   api,
@@ -14,8 +15,6 @@ import {
   openForm,
   reader,
   saveButton,
-  savedLogId,
-  savedLogUrl,
   sessionCookie,
   signIn,
   test,
@@ -43,8 +42,7 @@ test('expired session keeps draft, rejects save and recovers through authv2 logi
   await login.close()
 
   await page.bringToFront()
-  await saveButton(page).click()
-  await expect(page).toHaveURL(savedLogUrl)
+  await createLog(page)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(description)
 })
 
@@ -124,9 +122,6 @@ test('a draft cannot be saved under an account switched in another tab', async (
   await signIn(page)
   const readerId = await accountId(context)
   await fillDraft(page, '11', description)
-  for (const contest of await page.getByRole('group', { name: 'Contests', exact: true }).getByRole('checkbox').all()) {
-    await contest.uncheck()
-  }
 
   const other = await context.newPage()
   await other.goto(`${webv3}/plan`)
@@ -149,9 +144,7 @@ test('public activity detail still loads with an expired session cookie and has 
   test.skip(!webv3 || !api || !reader.email, 'Set development fixture credentials')
   await openForm(page)
   await fillDraft(page, '2', `public-expired-${Date.now()}`)
-  await saveButton(page).click()
-  await expect(page).toHaveURL(savedLogUrl)
-  const id = savedLogId(page)
+  const id = await createLog(page)
 
   await readerContext.addCookies([{ ...await sessionCookie(readerContext), value: 'expired' }])
   await page.reload()

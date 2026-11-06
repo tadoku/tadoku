@@ -12,6 +12,7 @@ import '../styles.css'
 import '../profile.css'
 import '../content.css'
 import '../contest-admin.css'
+import '../log-form.css'
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   loader: async ({ context }) => {

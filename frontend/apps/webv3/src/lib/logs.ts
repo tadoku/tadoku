@@ -5,6 +5,7 @@ import type {
   ImmersionContestView,
   ImmersionLog,
   ImmersionLogConfigurationOptions,
+  ImmersionTagSuggestion,
 } from 'api-client'
 import { z } from 'zod'
 import {
@@ -86,6 +87,28 @@ const getScorePreview = createServerFn({ method: 'GET' })
     const { readScorePreview } = await import('./logs.server')
     return readScorePreview(data)
   })
+
+const getTagSuggestions = createServerFn({ method: 'GET' })
+  .inputValidator(z.string().max(255))
+  .handler(async ({ data }) => {
+    const { readTagSuggestions } = await import('./logs.server')
+    return readTagSuggestions(data)
+  })
+
+/**
+ * The viewer's suggested tags containing `query`, with how often they used each. A failed read suggests nothing; the
+ * previous suggestions stay visible while the next ones load.
+ */
+export const tagSuggestionsQuery = (viewerId: string, query: string) => queryOptions({
+  queryKey: ['tag-suggestions', viewerId, query],
+  queryFn: async (): Promise<ImmersionTagSuggestion[]> => {
+    const result = await getTagSuggestions({ data: query })
+    return result.ok ? result.data.suggestions : []
+  },
+  placeholderData: keepPreviousData,
+  retry: false,
+  staleTime: 60_000,
+})
 
 /** The form's options for the account that started a draft; they don't change while that draft is open. */
 export const logOptionsQuery = (viewerId: string) => queryOptions({

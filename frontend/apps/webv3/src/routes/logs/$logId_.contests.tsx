@@ -20,7 +20,8 @@ import { useLoginUrl, viewerQueryOptions } from '../../lib/session'
 export const Route = createFileRoute('/logs/$logId_/contests')({
   head: () => ({ meta: [{ title: 'Submit to contests · Tadoku' }] }),
   // Webv2's `?preselect=1` selects every eligible contest for a log not yet submitted to any.
-  validateSearch: z.object({ preselect: z.coerce.string().optional().catch(undefined) }),
+  // The router reads `1` as a number; a string would be written back to the URL as `"1"`.
+  validateSearch: z.object({ preselect: z.coerce.number().optional().catch(undefined) }),
   loader: async ({ context, params }) => {
     if (!z.guid().safeParse(params.logId).success) throw notFound()
     const viewer = await context.queryClient.ensureQueryData(viewerQueryOptions())
@@ -105,7 +106,7 @@ function ContestsForm({ log, registrations, viewerId }: {
   const choices = contestChoices(log, registrations, today)
   const eligible = choices.filter(choice => choice.kind === 'eligible').map(choice => choice.registration.id)
   const submitted = log.registrations ?? []
-  const preselect = Route.useSearch().preselect === '1' && submitted.length === 0
+  const preselect = Route.useSearch().preselect === 1 && submitted.length === 0
   const [defaultValues] = useState(() => ({
     registrationIds: preselect
       ? eligible

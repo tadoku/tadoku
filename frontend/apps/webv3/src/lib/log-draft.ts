@@ -12,8 +12,7 @@ export type LogDraft = {
   unitKey: string
   minutes: number
   description: string
-  tags: string
-  registrationIds: string[]
+  tags: string[]
 }
 
 const amountRule = z.number({ error: 'Enter an amount.' }).positive('Enter an amount greater than zero.')
@@ -48,7 +47,6 @@ export const newLogSchema = z.object({
   ]),
   description: descriptionRule,
   tags: tagsRule,
-  registrationIds: z.array(z.guid()),
 })
 
 export type NewLog = z.infer<typeof newLogSchema>
@@ -61,9 +59,7 @@ export const logUpdateSchema = newLogSchema
 export type LogUpdate = z.infer<typeof logUpdateSchema>
 
 /** The registrations a saved log is submitted to among the viewer's ongoing ones. */
-export const logContestsUpdateSchema = newLogSchema
-  .pick({ viewerId: true, registrationIds: true })
-  .extend({ logId: z.guid() })
+export const logContestsUpdateSchema = z.object({ viewerId: z.guid(), logId: z.guid(), registrationIds: z.array(z.guid()) })
 
 export type LogContestsUpdate = z.infer<typeof logContestsUpdateSchema>
 
@@ -96,33 +92,36 @@ export function logDraftSchema(options: LogOptions) {
   })
 }
 
+/** The language and activity of the viewer's last saved log, as this browser remembers them. */
+export type LastLogged = { languageCode: string | null; activityId: string | null }
+
 /**
- * A new draft: the viewer's first own language, the first activity, its first unit, every eligible contest and `amount`
- * if given.
+ * A new draft: the last logged language and activity when they are still offered, otherwise the viewer's first own
+ * language and the first activity; the activity's first unit and `amount` if given. As in Webv2, a remembered timed
+ * activity starts without an amount.
  */
-export function firstDraft(options: LogOptions, amount = Number.NaN): LogDraft {
+export function firstDraft(options: LogOptions, amount = Number.NaN, last?: LastLogged): LogDraft {
   const { languages, activities, user_language_codes: ownLanguages = [] } = options.configuration
-  const offered = (code: string) => languages.some(language => language.code === code)
-  const languageCode = ownLanguages.find(offered) ?? languages[0].code
-  const activityId = String(activities[0].id)
+  const offered = (code: string | null | undefined) => languages.some(language => language.code === code)
+  const languageCode = (offered(last?.languageCode) ? last?.languageCode : ownLanguages.find(offered)) ?? languages[0].code
+  const remembered = activities.find(activity => String(activity.id) === last?.activityId)
+  const activityId = String((remembered ?? activities[0]).id)
+  const timed = isTimed(options, activityId)
 
   return {
-    ...dependentFields(options, languageCode, activityId),
     languageCode,
     activityId,
-    amount,
+    amount: remembered && timed ? Number.NaN : amount,
+    unitKey: timed ? '' : unitFor(options, languageCode, activityId),
     minutes: Number.NaN,
     description: '',
-    tags: '',
+    tags: [],
   }
 }
 
-/** The unit and contests to select again after the language or activity changes. */
-export function dependentFields(options: LogOptions, languageCode: string, activityId: string) {
-  return {
-    unitKey: unitsFor(options, languageCode, activityId)[0]?.unit_key ?? '',
-    registrationIds: eligibleRegistrations(options, languageCode, activityId).map(registration => registration.id),
-  }
+/** The unit to select again after the language or activity changes. */
+export function unitFor(options: LogOptions, languageCode: string, activityId: string) {
+  return unitsFor(options, languageCode, activityId)[0]?.unit_key ?? ''
 }
 
 /**
@@ -142,28 +141,17 @@ export function draftFromLog(options: LogOptions, log: ImmersionLog): LogDraft {
     unitKey: (timed ? undefined : log.unit_key) ?? unitsFor(options, languageCode, activityId)[0]?.unit_key ?? '',
     minutes: seconds === undefined ? Number.NaN : seconds / 60,
     description: log.description ?? '',
-    tags: log.tags.join(', '),
-    registrationIds: [],
+    tags: log.tags,
   }
 }
 
 export function toNewLog(draft: LogDraft, options: LogOptions, viewerId: string): NewLog {
-  const selected = eligibleRegistrations(options, draft.languageCode, draft.activityId)
-    .filter(registration => draft.registrationIds.includes(registration.id))
-
-  return {
-    ...toScorePreview(draft, options),
-    viewerId,
-    description: draft.description.trim(),
-    registrationIds: selected.map(registration => registration.id),
-  }
+  return { ...toScorePreview(draft, options), viewerId, description: draft.description.trim() }
 }
 
-/** A saved tag may hold a comma, so unchanged tags are sent as saved rather than split again. */
 export function toLogUpdate(draft: LogDraft, options: LogOptions, viewerId: string, log: ImmersionLog): LogUpdate {
   const { measure, tags } = toScorePreview(draft, options)
-  const unchanged = draft.tags === log.tags.join(', ')
-  return { viewerId, logId: log.id, measure, description: draft.description.trim(), tags: unchanged ? log.tags : tags }
+  return { viewerId, logId: log.id, measure, description: draft.description.trim(), tags }
 }
 
 /** The estimate request for a draft that passes `logDraftSchema`. */
@@ -191,13 +179,6 @@ export function unitsFor(options: LogOptions, languageCode: string, activityId: 
   const specific = new Set(units.filter(unit => unit.language_code === languageCode).map(unit => unit.unit_key))
 
   return units.filter(unit => unit.language_code === languageCode || (!unit.language_code && !specific.has(unit.unit_key)))
-}
-
-/** The viewer's ongoing registrations whose contest accepts this language and activity. */
-export function eligibleRegistrations(options: LogOptions, languageCode: string, activityId: string): Registration[] {
-  return options.registrations.filter(registration =>
-    registration.languages.some(language => language.code === languageCode) &&
-    registration.contest.allowed_activities.some(activity => String(activity.id) === activityId))
 }
 
 /** An ongoing registration a saved log can be submitted to, or why it cannot. */
@@ -231,7 +212,7 @@ export function normalizeTag(tag: string) {
     .join('')
 }
 
-/** Comma-separated tags as the API stores them. */
-function parseTags(text: string) {
-  return [...new Set(text.split(',').map(normalizeTag).filter(Boolean))]
+/** Tags as the API stores them. */
+export function parseTags(tags: string[]) {
+  return [...new Set(tags.map(normalizeTag).filter(Boolean))]
 }

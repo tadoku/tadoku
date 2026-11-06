@@ -36,10 +36,34 @@ export async function openForm(page: Page) {
 
 export const savedLogUrl = /\/logs\/[a-f0-9-]{36}$/
 
+/** Where a save of a new log leads an account with ongoing registrations: the contest step, as in Webv2. */
+export const contestStepUrl = /\/logs\/[a-f0-9-]{36}\/contests\?preselect=1$/
+
 /** A save: the only POST the activity form sends, to its server function. */
 export const isSaveRequest = (request: Request) => request.method() === 'POST' && request.url().includes('_serverFn')
 
-export const saveButton = (page: Page) => page.getByRole('button', { name: 'Save activity', exact: true })
+export const saveButton = (page: Page) => page.getByRole('button', { name: 'Create', exact: true })
+
+/**
+ * Creates the open draft and returns its ID, leaving the page on the saved log's detail. An account with ongoing
+ * registrations first reaches the contest step; the log stays personal because that step is not saved.
+ */
+export async function createLog(page: Page) {
+  await saveButton(page).click()
+  await page.waitForURL(url => savedLogUrl.test(url.href) || contestStepUrl.test(url.href))
+  const id = savedLogId(page)
+  if (!savedLogUrl.test(page.url())) await page.goto(`/logs/${id}`)
+  return id
+}
+
+/** Adds each tag as a chip by typing it and pressing Enter. */
+export async function addTags(page: Page, tags: string[]) {
+  const input = page.getByRole('combobox', { name: 'Tags', exact: true })
+  for (const tag of tags) {
+    await input.fill(tag)
+    await input.press('Enter')
+  }
+}
 
 /** Paper's amount field is a group labelled "Amount" that holds the amount input and the unit select. */
 export const amountInput = (page: Page) => page.getByRole('spinbutton', { name: 'Amount', exact: true })
@@ -57,8 +81,9 @@ export async function expectDraftKept(page: Page, amount: string, description: s
   await expect(page).toHaveURL(/\/logs\/new$/)
 }
 
+/** The log ID from its detail page or its contest step. */
 export function savedLogId(page: Page) {
-  return new URL(page.url()).pathname.split('/').pop()!
+  return new URL(page.url()).pathname.split('/')[2]
 }
 
 /** The account's logs with this description, read from the API. */

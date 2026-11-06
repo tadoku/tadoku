@@ -31,8 +31,10 @@
 .profile-breakdown small { font-weight: 400; color: var(--paper-color-text-muted); }
 .profile-bar { display: block; block-size: 6px; background: var(--paper-color-rule-default); }
 .profile-bar > span { display: block; block-size: 100%; min-inline-size: 2px; background: var(--paper-color-text-link); }
-.profile-contests li { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding-block: 12px; border-block-end: 1px solid var(--paper-color-rule-default); overflow-wrap: anywhere; }
+.profile-contests li { display: grid; padding-block: 12px; border-block-end: 1px solid var(--paper-color-rule-default); overflow-wrap: anywhere; }
+.profile-contest-title { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
 .profile-contests li:first-child { padding-block-start: 0; }
+.profile-contests li:last-child { padding-block-end: 0; border-block-end: 0; }
 .profile-contests + .paper-pagination { margin-block-start: 20px; }
 .profile-activity { margin-block-start: 32px; }
 .profile-day { margin-block-end: 16px; }

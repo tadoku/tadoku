@@ -68,8 +68,10 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
         renderLink={renderLink}
       />
       {locked ? (
-        <Flash variant="warning">
-          Scoring is locked because this contest has started.{contestRuleSets.length > 0 ? ' Its rule-set versions are listed below.' : ' It uses the platform defaults.'}
+        <Flash variant="information">
+          Scoring is locked because this contest has started.{contestRuleSets.length > 0
+            ? ' Its rule-set versions are listed below.'
+            : <> It uses the <a className="text-link" href={`${links.guide}#media`}>platform defaults</a>.</>}
         </Flash>
       ) : (
         <RuleSetForm

@@ -45,7 +45,6 @@ export function HomePage() {
   const joinable = contest && (phase === 'open' || phase === 'upcoming')
   const { data: viewer } = useQuery(viewerQueryOptions())
   const member = viewer?.status === 'signed-in' ? viewer : null
-  const goal = useStoredGoal()
 
   return (
     <div className="home-page">
@@ -61,8 +60,10 @@ export function HomePage() {
                 {joinable
                   ? <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a>
                   : <a href={links.logs} className={buttonClassName()}>Log activity</a>}
+                <SetGoalLink />
               </div>
               {joinable && <p className="home-fineprint">Free to join. Registration closes {formatDate(contest.registration_end)}.</p>}
+              <DailyGoal />
             </div>
           )}
 
@@ -94,15 +95,24 @@ export function HomePage() {
         </section>
       )}
 
-      {/* The goal is kept in the browser, so guests can set one too. */}
-      <section className="home-strip" aria-labelledby="home-goal-title">
-        <div>
-          <h2 id="home-goal-title">Daily goal</h2>
-          <p>{goal ? describeGoal(goal) : <Link className="text-link" to="/plan">Set a daily goal</Link>}</p>
-        </div>
-        {goal ? <Link className="text-link" to="/plan">Change goal</Link> : null}
-      </section>
     </div>
+  )
+}
+
+/** The goal is kept in the browser, so guests can set one too. Until one is saved, the hero's actions offer to set it. */
+function SetGoalLink() {
+  return useStoredGoal() ? null : <Link className="text-link" to="/plan">Set a daily goal</Link>
+}
+
+function DailyGoal() {
+  const goal = useStoredGoal()
+  if (!goal) return null
+
+  return (
+    <section className="home-goal" aria-labelledby="home-goal-title">
+      <h2 id="home-goal-title">Daily goal</h2>
+      <p>{describeGoal(goal)} <Link className="text-link" to="/plan">Change goal</Link></p>
+    </section>
   )
 }
 
@@ -148,7 +158,9 @@ function MemberPromise({ member, data, phase }: {
       <div className="home-actions">
         {joinable ? <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a> : null}
         <a href={links.profile(member.userId)} className="text-link">Your profile</a>
+        <SetGoalLink />
       </div>
+      <DailyGoal />
     </div>
   )
 }

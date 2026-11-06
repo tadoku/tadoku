@@ -46,6 +46,11 @@
     padding-block-start: 0;
   }
 
+  .paper-description-list--inline .paper-description-list__item:last-child {
+    padding-block-end: 0;
+    border-block-end: 0;
+  }
+
   /* One label/value treatment across Paper: muted labels, ink values, as in stacked lists and stat grids. */
   .paper-description-list--inline .paper-description-list__label {
     color: var(--paper-color-text-muted);

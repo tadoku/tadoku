@@ -69,6 +69,8 @@ function DailyScores({ rows, languages, name }: {
 
   const columns: TableColumn<Day>[] = [
     { id: 'day', header: 'Day', rowHeader: true, cell: day => formatDate(day.date) },
+    { id: 'score', header: 'Score', align: 'end', cell: day => numberFormat.format(day.total) },
+    { id: 'cumulative', header: 'Running total', align: 'end', cell: day => numberFormat.format(day.cumulative) },
     ...(languages.length > 1
       ? languages.map((language): TableColumn<Day> => ({
         id: language.code,
@@ -77,8 +79,6 @@ function DailyScores({ rows, languages, name }: {
         cell: day => numberFormat.format(day.scores.get(language.code) ?? 0),
       }))
       : []),
-    { id: 'score', header: 'Score', align: 'end', cell: day => numberFormat.format(day.total) },
-    { id: 'cumulative', header: 'Running total', align: 'end', cell: day => numberFormat.format(day.cumulative) },
   ]
   return (
     <Table

@@ -2,7 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import { Button, EmptyState, HeatmapChart, Pagination, SectionHeading, StatGrid, StatusTag, buttonClassName } from 'paper-ui'
 import { ChevronLeftIcon, ChevronRightIcon } from 'paper-ui/icons'
-import { pointsUnit } from '../lib/format'
+import { formatPeriod, pointsUnit } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { contestPageSize, type ContestHistory, type ProfileStatistics as Statistics, type Section } from '../lib/profile'
 import { ProfileHeader } from './ProfileHeader'
@@ -209,8 +209,11 @@ function ContestHistorySection({ history, userId, year, page }: {
         <ul className="profile-contests">
           {history.data.contests.map(contest => (
             <li key={contest.id}>
-              <a className="profile-entry-title" href={links.contestProfile(contest.id, userId)}>{contest.title}</a>
-              {contest.private ? <StatusTag>Private</StatusTag> : null}
+              <span className="profile-contest-title">
+                <a className="profile-entry-title" href={links.contestProfile(contest.id, userId)}>{contest.title}</a>
+                {contest.private ? <StatusTag>Private</StatusTag> : null}
+              </span>
+              <span className="profile-entry-meta">{[formatPeriod(contest), ...contest.languages].join(' · ')}</span>
             </li>
           ))}
         </ul>

@@ -50,7 +50,6 @@
 .blog-date { margin: 4px 0 16px; color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); }
 .content-article .paper-page-header__lead time { font-size: var(--paper-type-metadata-size); }
 .blog-lead > p:not(.blog-date) { max-width: 66ch; margin: 0 0 20px; line-height: 1.8; overflow-wrap: break-word; }
-.blog-older-title { margin: 0 0 8px; font-size: .875rem; font-family: var(--paper-font-body); color: var(--paper-color-text-muted); }
 .blog-posts { list-style: none; margin: 0 0 24px; padding: 0; }
 .blog-posts li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 16px; padding: 14px 0; }
 .blog-posts li + li { border-top: 1px solid var(--paper-color-rule-default); }

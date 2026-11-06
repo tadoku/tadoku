@@ -22,8 +22,9 @@ variants and query key; `frontend/apps/webv3/src/lib/profile.server.ts` reads th
 profile, yearly activity, scores, activity split and contest registrations
 through the generated client. Contest history is read with the visitor's session,
 because the API includes private contests only for their participant and
-administrators; a rejected cookie falls back to the public history. More than 50
-contests page through `?contests=<page>`.
+administrators; a rejected cookie falls back to the public history. Each contest
+lists its dates and the languages the learner registered. More than 50 contests
+page through `?contests=<page>`.
 
 Paper's `HeatmapChart` colours days by fixed points-per-day bands named in its
 legend, and links each day with activity to the profile's activity for that UTC day. On

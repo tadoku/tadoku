@@ -16,7 +16,10 @@ export const activityPageSize = 50
 /** One independently loaded part of a profile year; Webv2 reports each part's failure on its own. */
 export type Section<T> = { ok: true; data: T } | { ok: false }
 
-export type ContestHistory = { contests: { id: string; title: string; private: boolean }[]; total: number }
+export type ContestHistory = {
+  contests: { id: string; title: string; private: boolean; contest_start: string; contest_end: string; languages: string[] }[]
+  total: number
+}
 
 export type ProfileStatistics =
   | {

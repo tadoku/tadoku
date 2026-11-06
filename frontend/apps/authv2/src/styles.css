@@ -58,7 +58,7 @@ a:where(:not(.paper-button)) { color: var(--paper-color-text-link); }
 .settings-group__rows { padding: 0; }
 .settings-row { display: grid; grid-template-columns: 10rem minmax(0, 1fr) auto; align-items: center; gap: 4px 24px; padding: 16px 20px; }
 .settings-row + .settings-row { border-top: 1px solid var(--paper-color-rule-subtle); }
-.settings-row__label { margin: 0; color: var(--paper-color-text-muted); font-family: var(--paper-font-body); font-size: var(--paper-type-metadata-size); font-weight: 600; line-height: var(--paper-type-metadata-line-height); }
+.settings-row__label { margin: 0; color: var(--paper-color-text-muted); font-family: var(--paper-font-body); font-size: var(--paper-type-metadata-size); font-weight: 400; line-height: var(--paper-type-metadata-line-height); }
 .settings-row__summary { min-width: 0; }
 .settings-row__value { margin: 0; color: var(--paper-color-text-ink); font-size: var(--paper-type-body-size); line-height: var(--paper-type-body-line-height); overflow-wrap: anywhere; white-space: break-spaces; }
 .settings-row__hint { margin: 0; color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); line-height: var(--paper-type-metadata-line-height); }
@@ -70,7 +70,7 @@ a:where(:not(.paper-button)) { color: var(--paper-color-text-link); }
 /* Deletion stays off the rows: one quiet link below the groups. */
 .settings-delete { margin: 40px 0 0; }
 .settings-delete a { color: var(--paper-color-status-danger); }
-.settings-saved { margin: 0; color: var(--paper-color-status-success); font-size: var(--paper-type-metadata-size); font-weight: 600; line-height: var(--paper-type-metadata-line-height); }
+.settings-saved { margin: 0; color: var(--paper-color-status-success); font-size: var(--paper-type-metadata-size); font-weight: 400; line-height: var(--paper-type-metadata-line-height); }
 
 @media (max-width: 720px) {
   .settings-row, .settings-row--open { grid-template-columns: minmax(0, 1fr) auto; }

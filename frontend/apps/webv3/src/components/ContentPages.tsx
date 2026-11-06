@@ -78,8 +78,7 @@ export function BlogList({ blog, page }: { blog: BlogPage; page: number }) {
       ) : null}
 
       {older.length > 0 ? (
-        <section aria-labelledby="blog-older">
-          <h2 id="blog-older" className="blog-older-title">Older posts</h2>
+        <section aria-label="Older posts">
           <ul className="blog-posts">
             {older.map(post => (
               <li key={post.slug}>

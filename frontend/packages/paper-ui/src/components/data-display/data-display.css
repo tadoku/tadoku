@@ -161,7 +161,7 @@
   }
 
   .paper-heatmap__axis-label {
-    fill: var(--paper-color-text-muted);
+    fill: var(--paper-color-text-ink);
     font-family: var(--paper-font-body);
     font-size: 10px;
   }

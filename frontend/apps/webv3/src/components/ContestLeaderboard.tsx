@@ -108,7 +108,6 @@ export function ContestBoardBody({ board, phase, page, pageHref, title, status, 
                 className="standings-context"
                 title={title}
                 status={status}
-                description={formatPeriod(contest)}
               />
             ) : null}
             <Standings

@@ -20,7 +20,8 @@ a:where(:not(.paper-button)) { color: var(--paper-color-text-link); }
 .account-session__name { min-width: 0; max-width: 12rem; overflow: hidden; color: var(--paper-color-text-muted); font-size: .875rem; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 30rem) {
   .account-header { flex-wrap: nowrap; }
-  .account-brand__label, .account-session__name { display: none; }
+  .account-brand__label { display: none; }
+  .account-session__name { max-width: 7rem; }
 }
 .account-main { flex: 1; width: 100%; padding: clamp(32px, 7vh, 72px) var(--account-gutter) 72px; }
 .account-main:focus { outline: none; }

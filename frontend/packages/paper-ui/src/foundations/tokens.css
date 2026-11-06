@@ -75,7 +75,7 @@
   --paper-color-chart-8: #83565d;
 
   --paper-color-heat-0: #e4dfd6;
-  --paper-color-heat-1: #b9aef0;
+  --paper-color-heat-1: #a597ea;
   --paper-color-heat-2: #9483e3;
   --paper-color-heat-3: #6c5bcb;
   --paper-color-heat-4: #45369e;
@@ -94,7 +94,7 @@
   --paper-private-overlay: #322e31;
   --paper-private-scrim: rgb(0 0 0 / 38%);
   --paper-private-ink: #ece7e0;
-  --paper-private-muted: #a49ba0;
+  --paper-private-muted: #aaa1a5;
   --paper-private-inverse: #fffefa;
   --paper-private-rule-subtle: #3c373a;
   --paper-private-rule-default: #5a5356;
@@ -161,7 +161,7 @@
   --paper-color-chart-8: #c58e9b;
 
   --paper-color-heat-0: #3c373b;
-  --paper-color-heat-1: #5a4d98;
+  --paper-color-heat-1: #6a5bb0;
   --paper-color-heat-2: #7565c6;
   --paper-color-heat-3: #9d8ce3;
   --paper-color-heat-4: #d0c6fa;
@@ -191,7 +191,7 @@
   --paper-type-label-size: 0.8125rem;
   --paper-type-label-line-height: 1.125rem;
   --paper-type-label-weight: 700;
-  --paper-type-metadata-size: 0.8125rem;
+  --paper-type-metadata-size: 0.875rem;
   --paper-type-metadata-line-height: 1.25rem;
   --paper-type-metadata-weight: 400;
 

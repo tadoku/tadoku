@@ -32,9 +32,10 @@ name each contest's languages and activities for signed-in visitors only, and
 the create action, which opens Webv3's [contest form](webv3-contest-admin.md),
 appears when the API's create-permission check answers 200.
 
-Each row shows the round's status (upcoming, live or ended) and, while
-registration is open, its deadline in the date line, both decided by the UTC day
-the list was read. With more than one page, page links appear above and below
+Each row shows the round's status (upcoming, live or ended) beside its title,
+then its dates, then a muted line with the registration deadline while it is
+open, whether it is unlisted and its languages and activities; status and
+deadline follow the UTC day the list was read. With more than one page, page links appear above and below
 the list, and the range summary appears beside the lower ones.
 Contest dates are UTC calendar days and the page says so. Rows link to the
 native [contest page](webv3-contest.md). Search, date filters and a list

@@ -82,7 +82,8 @@ export function HomePage() {
         </section>
       )}
 
-      {phase !== 'loading' && phase !== 'unavailable' && (
+      {/* While a round is running the card covers it; the next round earns a row once it is scheduled. */}
+      {phase !== 'loading' && phase !== 'unavailable' && (data?.nextContest || (phase !== 'open' && phase !== 'live')) && (
         <section className="home-strip" aria-labelledby="home-next-title">
           <div>
             <h2 id="home-next-title">Next official round</h2>

@@ -144,7 +144,7 @@ function ContestRow({ contest, names, today }: {
   const started = today >= contest.contest_start
   const ended = today > contest.contest_end
   const round = ended ? <StatusTag>Ended</StatusTag> : started ? <StatusTag tone="success">Live now</StatusTag> : <StatusTag tone="information">Upcoming</StatusTag>
-  const registration = !ended && today <= contest.registration_end ? ` · Registration closes ${formatDate(contest.registration_end)}` : ''
+  const registration = !ended && today <= contest.registration_end ? `Registration closes ${formatDate(contest.registration_end)}` : null
   const languages = contest.language_code_allow_list?.length
     ? contest.language_code_allow_list.map(code => names?.languages[code] ?? code).join(', ')
     : 'All languages'
@@ -159,8 +159,10 @@ function ContestRow({ contest, names, today }: {
           <h2 className="paper-type-component"><a href={links.contest(contest.id)}>{contest.title}</a></h2>
           {round}
         </div>
-        <p>{formatPeriod(contest)}{registration}{contest.private ? ' · Unlisted' : ''}</p>
-        {names ? <p className="contest-row__allows">{languages} · {activities}</p> : null}
+        <p>{formatPeriod(contest)}</p>
+        <p className="contest-row__allows">
+          {[registration, contest.private ? 'Unlisted' : null, names ? `${languages} · ${activities}` : null].filter(Boolean).join(' · ')}
+        </p>
       </div>
     </li>
   )

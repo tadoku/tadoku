@@ -135,7 +135,7 @@ function ContestsForm({ log, registrations, viewerId }: {
       <PageHeader
         title="Submit to contests"
         lead={[log.language.name, log.activity.name, log.description].filter(Boolean).join(' · ')}
-        backLink={{ href: `/logs/${log.id}`, label: 'Back to log' }}
+        backLink={{ href: `/logs/${log.id}`, label: log.description || `${log.language.name} ${log.activity.name}` }}
       />
       <Surface className="log-surface">
         <form.AppForm>

@@ -45,7 +45,7 @@
 /* Blog list */
 .blog-lead { padding-bottom: 32px; margin-bottom: 32px; border-bottom: 1px solid var(--paper-color-rule-default); }
 .blog-lead h2 { margin: 0; font-family: var(--paper-font-display); font-size: 1.5rem; line-height: 1.35; overflow-wrap: break-word; }
-.blog-lead h2 a, .blog-posts a { color: var(--paper-color-text-ink); text-decoration-color: var(--paper-color-rule-default); }
+.blog-lead h2 a, .blog-posts a { color: var(--paper-color-text-ink); text-decoration-color: var(--paper-color-text-muted); }
 .blog-lead h2 a:hover, .blog-posts a:hover { color: var(--paper-color-text-link); text-decoration-color: currentColor; }
 .blog-date { margin: 4px 0 16px; color: var(--paper-color-text-muted); font-size: .875rem; }
 .blog-lead > p:not(.blog-date) { max-width: 66ch; margin: 0 0 20px; line-height: 1.8; overflow-wrap: break-word; }

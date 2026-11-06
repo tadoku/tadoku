@@ -89,7 +89,7 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
         <PageHeader
           title="Edit activity"
           lead={`${editing.language.name} · ${editing.activity.name}`}
-          backLink={{ href: `/logs/${editing.id}`, label: 'Back to log' }}
+          backLink={{ href: `/logs/${editing.id}`, label: editing.description || `${editing.language.name} ${editing.activity.name}` }}
         />
       ) : (
         <PageHeader title="Log activity" />
@@ -110,15 +110,17 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
                   <TagsSidebar form={form} activityId={activityId} disabled={disabled} compact />
                 </div>
               </fieldset>
-              <ScoreEstimate form={form} options={options} />
               {failure ? <SaveFailure failure={failure} viewerId={viewerId} editing={editing} /> : null}
-              <div className="log-form__actions">
-                <Button type="submit" disabled={disabled} loading={pending} loadingLabel="Saving">
-                  {editing ? 'Save' : 'Create'}
-                </Button>
-                {editing
-                  ? <Link className="text-link" to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
-                  : <Link className="text-link" to="/">Cancel</Link>}
+              <div className="log-form__footer">
+                <div className="log-form__actions">
+                  <Button type="submit" disabled={disabled} loading={pending} loadingLabel="Saving">
+                    {editing ? 'Save' : 'Create'}
+                  </Button>
+                  {editing
+                    ? <Link className="text-link" to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
+                    : <Link className="text-link" to="/">Cancel</Link>}
+                </div>
+                <ScoreEstimate form={form} options={options} />
               </div>
             </Surface>
           </form.Form>

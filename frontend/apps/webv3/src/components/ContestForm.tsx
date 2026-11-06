@@ -111,6 +111,9 @@ export function ContestForm({ options, viewerId, admin }: {
                     />
                   )}
                 </form.AppField>
+              </fieldset>
+              <fieldset className="contest-form-group">
+                <legend>Visibility</legend>
                 {options.can_create_official_round && !unlisted ? (
                   <form.AppField name="official">
                     {field => <field.Checkbox label="Official round" />}

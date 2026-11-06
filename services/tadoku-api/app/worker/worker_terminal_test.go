@@ -44,7 +44,7 @@ func TestWorkerCountsOnlyTerminalFailures(t *testing.T) {
 		t.Fatal(err)
 	}
 	registry := prometheus.NewRegistry()
-	deps := workerDependencies(t, f.db, nil)
+	deps := workerDependencies(t, f.db)
 	runtime := &runner{
 		scope:           baseWorkerScope(t),
 		queue:           deps.JobQueue,

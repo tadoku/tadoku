@@ -30,12 +30,10 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
-	valkeyinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
@@ -50,8 +48,6 @@ type config struct {
 	MetricsPort            int                   `validate:"gt=0,lte=65535" envconfig:"metrics_port" default:"9090"`
 	Postgres               postgresconfig.Config `ignored:"true"`
 	PostgresMaxConnections int32                 `validate:"gt=0,lte=32" envconfig:"postgres_max_connections" default:"4"`
-	ValkeyURL              string                `validate:"required" envconfig:"valkey_url"`
-	ValkeyTimeout          time.Duration         `validate:"gt=0" envconfig:"valkey_timeout" default:"1s"`
 	DialTimeout            time.Duration         `validate:"gt=0" envconfig:"dial_timeout" default:"3s"`
 	ShutdownTimeout        time.Duration         `validate:"gt=0" envconfig:"shutdown_timeout" default:"15s"`
 }
@@ -106,15 +102,6 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	}
 	defer pool.Close()
 
-	client, valkeyErr := valkeyinfra.Open(ctx, cfg.ValkeyURL, cfg.ValkeyTimeout)
-	if client == nil {
-		return valkeyErr
-	}
-	defer client.Close()
-	if valkeyErr != nil {
-		logger.Warn("valkey unavailable at startup; retrying in worker", "error", valkeyErr)
-	}
-
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(
 		collectors.NewGoCollector(),
@@ -129,12 +116,8 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	}
 	application, err := worker.NewApplication(
 		worker.Dependencies{
-			DB:       pool,
-			JobQueue: jobqueue.NewService(jobqueue.NewRepository(pool)),
-			Leaderboard: leaderboard.NewService(
-				leaderboard.NewRepository(pool),
-				leaderboard.NewCache(client, cfg.ValkeyTimeout),
-			),
+			DB:               pool,
+			JobQueue:         jobqueue.NewService(jobqueue.NewRepository(pool)),
 			Email:            email.NewService(email.NewRepository(pool), sender),
 			IdentityExpiry:   identity.NewExpiry(identity.NewRepository(pool)),
 			IdentityDeletion: identity.NewDeletion(identity.NewRepository(pool)),

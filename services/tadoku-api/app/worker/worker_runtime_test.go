@@ -15,75 +15,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/testvalkey"
-	valkeygo "github.com/valkey-io/valkey-go"
 )
-
-func TestWorkerStartsWithoutValkey(t *testing.T) {
-	t.Parallel()
-
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
-	f, fixtureErr := newWorkerFixture(tenantCtx)
-	if fixtureErr != nil {
-		t.Fatal(fixtureErr)
-	}
-	tenantCtx = tenant.WithKey(t.Context(), f.key)
-	t.Cleanup(func() {
-		if err := f.Close(); err != nil {
-			t.Error(err)
-		}
-	})
-
-	rawURL, err := testvalkey.URL()
-	if err != nil {
-		t.Fatal(err)
-	}
-	option, err := valkeygo.ParseURL(rawURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-	option.SelectDB = 13
-	option.ForceSingleClient = true
-	option.DisableRetry = true
-	unavailable, err := valkeygo.NewClient(option)
-	if err != nil {
-		t.Fatal(err)
-	}
-	unavailable.Close()
-
-	application := f.runner(t, unavailable, time.Second, time.Second)
-	invalidID, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":0}`, false)
-	if err != nil {
-		t.Fatal(err)
-	}
-	validID, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	startWorker(t, application)
-	defer func() {
-		if !t.Failed() {
-			return
-		}
-		var pending, attempts int
-		err := f.db.QueryRow(tenantCtx, `select count(*) filter (where state = 'pending'), sum(attempts)
-			from jobs where id = any($1)`, []int64{invalidID, validID}).Scan(&pending, &attempts)
-		t.Logf("worker with closed Valkey: ready=%t pending=%d attempts=%d query error=%v", application.Ready(), pending, attempts, err)
-	}()
-
-	if err := waitFor(tenantCtx, func() (bool, error) {
-		var invalidFailed, validRetried bool
-		err := f.db.QueryRow(tenantCtx, `select
-			exists(select 1 from jobs where id = $1 and state = 'failed' and last_error = 'invalid_payload'),
-			exists(select 1 from jobs where id = $2 and attempts > 0 and last_error = 'handler_error')`, invalidID, validID).Scan(&invalidFailed, &validRetried)
-		return application.Ready() && invalidFailed && validRetried, err
-	}); err != nil {
-		t.Fatal(err)
-	}
-}
 
 func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
 	t.Parallel()
@@ -104,14 +37,12 @@ func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
 	var released sync.Once
 	releaseAll := func() { released.Do(func() { close(release) }) }
 	t.Cleanup(releaseAll)
-	blocked := &blockingValkey{
-		Client:   f.client,
-		prefix:   f.prefix + "leaderboard:contest:",
+	blocked := &blockingHandler{
 		started:  make(chan struct{}, 2),
 		release:  release,
 		canceled: make(chan struct{}, 1),
 	}
-	runner := f.runner(t, blocked, 8*time.Second, 2*time.Second)
+	runner := f.runner(t, blockingJob[jobs.InvalidateContestLeaderboardV1](blocked), 2*time.Second)
 
 	startWorker(t, runner)
 	if err := waitFor(tenantCtx, func() (bool, error) {
@@ -183,13 +114,11 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 	var released sync.Once
 	releaseAll := func() { released.Do(func() { close(release) }) }
 	t.Cleanup(releaseAll)
-	blocked := &blockingValkey{
-		Client:  f.client,
-		prefix:  f.prefix + "leaderboard:contest:",
+	blocked := &blockingHandler{
 		started: make(chan struct{}, 1),
 		release: release,
 	}
-	runner := f.runner(t, blocked, 8*time.Second, 2*time.Second)
+	runner := f.runner(t, blockingJob[jobs.InvalidateContestLeaderboardV1](blocked), 2*time.Second)
 
 	var id int64
 	err := f.db.QueryRow(tenantCtx, `
@@ -263,13 +192,11 @@ func TestWorkerDoesNotDispatchAfterClaimLeaseExpires(t *testing.T) {
 
 	release := make(chan struct{})
 	close(release)
-	observed := &blockingValkey{
-		Client:  f.client,
-		prefix:  f.prefix + "leaderboard:contest:",
+	observed := &blockingHandler{
 		started: make(chan struct{}, 1),
 		release: release,
 	}
-	runner := f.runner(t, observed, time.Second, time.Second)
+	runner := f.runner(t, blockingJob[jobs.InvalidateContestLeaderboardV1](observed), time.Second)
 
 	id, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
 	if err != nil {
@@ -296,7 +223,7 @@ func TestWorkerDoesNotDispatchAfterClaimLeaseExpires(t *testing.T) {
 
 	select {
 	case <-observed.started:
-		t.Error("Valkey invalidation began after lease expiry")
+		t.Error("handler began after lease expiry")
 	default:
 	}
 
@@ -341,9 +268,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 	var released sync.Once
 	releaseAll := func() { released.Do(func() { close(release) }) }
 	t.Cleanup(releaseAll)
-	blocked := &blockingValkey{
-		Client:  f.client,
-		prefix:  f.prefix + "leaderboard:contest:",
+	blocked := &blockingHandler{
 		started: make(chan struct{}, 1),
 		release: release,
 	}
@@ -351,7 +276,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	repository := jobqueue.NewRepository(limitedPool)
 	runner, err := NewApplication(
-		workerDependencies(t, limitedPool, leaderboard.NewCache(blocked, 8*time.Second)),
+		workerDependencies(t, limitedPool),
 		Config{
 			Scope:           baseWorkerScope(t),
 			Concurrency:     4,
@@ -363,6 +288,12 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	handleLeaderboard(
+		t,
+		runner,
+		blockingJob[jobs.InvalidateContestLeaderboardV1](blocked),
+		ignoreJob[jobs.InvalidateOfficialLeaderboardV1],
+	)
 
 	id, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
 	if err != nil {

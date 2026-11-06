@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testvalkey"
 	valkeygo "github.com/valkey-io/valkey-go"
@@ -236,63 +237,6 @@ func loseKey(t *testing.T, client valkeygo.Client, key string) {
 	}
 }
 
-func TestTenantLeaderboardInvalidationKeepsOtherTenantWarm(t *testing.T) {
-	client := newLeaderboardTestClient(t)
-	cache := NewCache(client, time.Second)
-	service := NewService(nil, cache)
-	contestID := uuid.New()
-	keyA, err := tenant.Parse("e2e/cache-a-" + uuid.NewString())
-	if err != nil {
-		t.Fatal(err)
-	}
-	keyB, err := tenant.Parse("e2e/cache-b-" + uuid.NewString())
-	if err != nil {
-		t.Fatal(err)
-	}
-	ctxA := tenant.WithKey(t.Context(), keyA)
-	ctxB := tenant.WithKey(t.Context(), keyB)
-
-	cacheA, err := cache.boardKey(ctxA, contestBoard(contestID))
-	if err != nil {
-		t.Fatal(err)
-	}
-	cacheB, err := cache.boardKey(ctxB, contestBoard(contestID))
-	if err != nil {
-		t.Fatal(err)
-	}
-	cleanupLeaderboardKeys(t, client, cacheA, cacheB)
-	if cacheA != "tenant:"+keyA.String()+":leaderboard:contest:"+contestID.String() ||
-		cacheB != "tenant:"+keyB.String()+":leaderboard:contest:"+contestID.String() {
-		t.Fatalf("tenant leaderboard keys: A=%q B=%q", cacheA, cacheB)
-	}
-
-	userA, userB := uuid.New(), uuid.New()
-	published, err := cache.rebuild(ctxA, cacheA, []score{{userID: userA, value: 10}}, 1)
-	if err != nil || !published {
-		t.Fatalf("warm tenant A: published=%t error=%v", published, err)
-	}
-	published, err = cache.rebuild(ctxB, cacheB, []score{{userID: userB, value: 20}}, 1)
-	if err != nil || !published {
-		t.Fatalf("warm tenant B: published=%t error=%v", published, err)
-	}
-
-	if err := service.InvalidateContest(ctxA, contestID); err != nil {
-		t.Fatal(err)
-	}
-
-	page, exists, err := cache.fetchPage(ctxB, cacheB, 1, 0, 25)
-	if err != nil || !exists || page == nil {
-		t.Fatalf("tenant B warm cache after A invalidation: page=%+v exists=%t error=%v", page, exists, err)
-	}
-	if len(page.scores) != 1 || page.scores[0].userID != userB || page.scores[0].value != 20 {
-		t.Errorf("tenant B warm scores=%+v; want its own score", page.scores)
-	}
-	page, exists, err = cache.fetchPage(ctxA, cacheA, 1, 0, 25)
-	if err != nil || exists || page != nil {
-		t.Errorf("tenant A cache after invalidation: page=%+v exists=%t error=%v", page, exists, err)
-	}
-}
-
 func TestFetchPageRespectsOperationTimeout(t *testing.T) {
 	timeout := 20 * time.Millisecond
 	cache := NewCache(&hangingValkey{Client: newLeaderboardTestClient(t)}, timeout)
@@ -326,15 +270,12 @@ func TestLeaderboardWithoutTenantDoesNotWriteCache(t *testing.T) {
 	key := "leaderboard:contest:" + contestID.String()
 	cleanupLeaderboardKeys(t, client, key)
 
-	err := service.InvalidateContest(t.Context(), contestID)
-	if err == nil {
-		t.Error("missing tenant allowed leaderboard invalidation")
+	_, err := service.FetchContest(t.Context(), ContestRequest{ContestID: contestID})
+	if errx.KindOf(err) != errx.Unavailable {
+		t.Errorf("FetchContest without tenant = %v, want unavailable", err)
 	}
 
-	count, err := client.Do(
-		t.Context(),
-		client.B().Exists().Key(key, key+":last_updated", key+":generation").Build(),
-	).AsInt64()
+	count, err := client.Do(t.Context(), client.B().Exists().Key(key, key+":last_updated").Build()).AsInt64()
 	if err != nil {
 		t.Fatal(err)
 	}

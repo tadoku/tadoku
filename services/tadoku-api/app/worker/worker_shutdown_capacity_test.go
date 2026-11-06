@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
@@ -35,13 +34,11 @@ func TestWorkerShutdownCancelsActiveJob(t *testing.T) {
 	var released sync.Once
 	releaseAll := func() { released.Do(func() { close(release) }) }
 	t.Cleanup(releaseAll)
-	blocked := &blockingValkey{
-		Client:  f.client,
-		prefix:  f.prefix + "leaderboard:contest:",
+	blocked := &blockingHandler{
 		started: make(chan struct{}, 1),
 		release: release,
 	}
-	runner := f.runner(t, blocked, 8*time.Second, 100*time.Millisecond)
+	runner := f.runner(t, blockingJob[jobs.InvalidateContestLeaderboardV1](blocked), 100*time.Millisecond)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
@@ -109,13 +106,11 @@ func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
 	var released sync.Once
 	releaseAll := func() { released.Do(func() { close(release) }) }
 	t.Cleanup(releaseAll)
-	blocked := &blockingValkey{
-		Client:  f.client,
-		prefix:  f.prefix + "leaderboard:contest:",
+	blocked := &blockingHandler{
 		started: make(chan struct{}, 4),
 		release: release,
 	}
-	runner := f.runner(t, blocked, 8*time.Second, 2*time.Second)
+	runner := f.runner(t, blockingJob[jobs.InvalidateContestLeaderboardV1](blocked), 2*time.Second)
 
 	startWorker(t, runner)
 	if err := waitFor(tenantCtx, func() (bool, error) {
@@ -191,15 +186,13 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 	var released sync.Once
 	releaseAll := func() { released.Do(func() { close(release) }) }
 	t.Cleanup(releaseAll)
-	blocked := &blockingValkey{
-		Client:  f.client,
-		prefix:  f.prefix + "leaderboard:",
+	blocked := &blockingHandler{
 		started: make(chan struct{}, 6),
 		release: release,
 	}
 
 	application, err := NewApplication(
-		workerDependencies(t, f.db, leaderboard.NewCache(blocked, 8*time.Second)),
+		workerDependencies(t, f.db),
 		Config{
 			Scope:           baseWorkerScope(t),
 			Concurrency:     3,
@@ -210,6 +203,12 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	handleLeaderboard(
+		t,
+		application,
+		blockingJob[jobs.InvalidateContestLeaderboardV1](blocked),
+		blockingJob[jobs.InvalidateOfficialLeaderboardV1](blocked),
+	)
 
 	startWorker(t, application)
 	if err := waitFor(tenantCtx, func() (bool, error) {
@@ -290,7 +289,7 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	deps := workerDependencies(t, f.db, nil)
+	deps := workerDependencies(t, f.db)
 	runtime := &runner{
 		scope:           baseWorkerScope(t),
 		queue:           deps.JobQueue,

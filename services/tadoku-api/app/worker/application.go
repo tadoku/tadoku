@@ -15,7 +15,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
@@ -25,7 +24,6 @@ import (
 type Dependencies struct {
 	DB               *pgxpool.Pool
 	JobQueue         *jobqueue.Service
-	Leaderboard      *leaderboard.Service
 	Email            *email.Service
 	IdentityExpiry   *identity.Expiry
 	IdentityDeletion *identity.Deletion
@@ -49,7 +47,6 @@ type Application struct {
 	runner           *runner
 	db               *pgxpool.Pool
 	queue            *jobqueue.Service
-	leaderboard      *leaderboard.Service
 	email            *email.Service
 	identityDeletion *identity.Deletion
 	profile          *profile.Service
@@ -82,7 +79,6 @@ func NewApplication(deps Dependencies, config Config) (*Application, error) {
 	a := &Application{
 		db:               deps.DB,
 		queue:            deps.JobQueue,
-		leaderboard:      deps.Leaderboard,
 		email:            deps.Email,
 		identityDeletion: deps.IdentityDeletion,
 		profile:          deps.Profile,
@@ -93,8 +89,8 @@ func NewApplication(deps Dependencies, config Config) (*Application, error) {
 		contestEvents:    deps.ContestEvents,
 	}
 	handlers, err := registrations(
-		a.InvalidateContestLeaderboard,
-		a.InvalidateOfficialLeaderboard,
+		ignoreJob[jobs.InvalidateContestLeaderboardV1],
+		ignoreJob[jobs.InvalidateOfficialLeaderboardV1],
 		a.SendEmail,
 		a.DeleteAccount,
 	)
@@ -123,8 +119,6 @@ func requireAll(deps Dependencies) error {
 		return errors.New("worker requires DB")
 	case deps.JobQueue == nil:
 		return errors.New("worker requires JobQueue")
-	case deps.Leaderboard == nil:
-		return errors.New("worker requires Leaderboard")
 	case deps.Email == nil:
 		return errors.New("worker requires Email")
 	case deps.IdentityExpiry == nil:
@@ -147,6 +141,8 @@ func requireAll(deps Dependencies) error {
 	return nil
 }
 
+// registrations keeps the leaderboard invalidation types registered so that their leftover, retried and replayed rows
+// complete.
 func registrations(
 	invalidateContest func(context.Context, jobs.InvalidateContestLeaderboardV1) error,
 	invalidateOfficial func(context.Context, jobs.InvalidateOfficialLeaderboardV1) error,
@@ -164,14 +160,6 @@ func registrations(
 		handle(sendEmail, policy{Concurrency: 2, Timeout: 20 * time.Second, MaxAttempts: 5}),
 		handle(deleteAccount, policy{Concurrency: 1, Timeout: 60 * time.Second, MaxAttempts: 5}),
 	)
-}
-
-func (a *Application) InvalidateContestLeaderboard(ctx context.Context, job jobs.InvalidateContestLeaderboardV1) error {
-	return a.leaderboard.InvalidateContest(ctx, job.ContestID)
-}
-
-func (a *Application) InvalidateOfficialLeaderboard(ctx context.Context, job jobs.InvalidateOfficialLeaderboardV1) error {
-	return a.leaderboard.InvalidateOfficial(ctx, job.Year)
 }
 
 func (a *Application) Ready() bool { return a.runner.ready.Load() }

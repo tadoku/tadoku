@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"slices"
 
-	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
@@ -23,39 +22,6 @@ func NewService(repository *Repository, cache *Cache) *Service {
 		repository: repository,
 		cache:      cache,
 	}
-}
-
-// InvalidateContest and InvalidateOfficial delete cached boards for the previous release, whose reads do not check
-// leaderboard_versions.
-func (s *Service) InvalidateContest(ctx context.Context, id uuid.UUID) error {
-	if id == uuid.Nil {
-		return errx.NewInvalidInputError("contest ID is required")
-	}
-	key, err := s.cache.boardKey(ctx, contestBoard(id))
-	if err != nil {
-		return err
-	}
-
-	return s.cache.invalidate(ctx, key)
-}
-
-func (s *Service) InvalidateOfficial(ctx context.Context, year int16) error {
-	if year < 1 || year > 9999 {
-		return errx.NewInvalidInputError("year must be between 1 and 9999")
-	}
-	yearlyKey, err := s.cache.boardKey(ctx, yearlyBoard(year))
-	if err != nil {
-		return err
-	}
-	globalCacheKey, err := s.cache.boardKey(ctx, globalBoard)
-	if err != nil {
-		return err
-	}
-
-	if err := s.cache.invalidate(ctx, yearlyKey); err != nil {
-		return err
-	}
-	return s.cache.invalidate(ctx, globalCacheKey)
 }
 
 func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Leaderboard, error) {

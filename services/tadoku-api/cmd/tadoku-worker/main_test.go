@@ -170,7 +170,6 @@ func TestReplayCommandReplaysOnlyInSelectedTenant(t *testing.T) {
 func TestLoadConfigRejectsInvalidWorkerSettings(t *testing.T) {
 	t.Setenv("WORKER_BRANCH", "")
 	t.Setenv("WORKER_COMPONENT", "tadoku-worker")
-	t.Setenv("WORKER_VALKEY_URL", "redis://127.0.0.1:6379")
 	t.Setenv("WORKER_POSTGRES_HOST", "127.0.0.1")
 	t.Setenv("WORKER_POSTGRES_DATABASE", "postgres")
 	t.Setenv("WORKER_POSTGRES_USER", "postgres")
@@ -208,7 +207,6 @@ func TestLoadConfigRejectsInvalidWorkerSettings(t *testing.T) {
 func TestLoadConfigWorkerSettings(t *testing.T) {
 	t.Setenv("WORKER_BRANCH", "")
 	t.Setenv("WORKER_COMPONENT", "tadoku-worker")
-	t.Setenv("WORKER_VALKEY_URL", "redis://127.0.0.1:6379")
 	t.Setenv("WORKER_POSTGRES_HOST", "127.0.0.1")
 	t.Setenv("WORKER_POSTGRES_DATABASE", "postgres")
 	t.Setenv("WORKER_POSTGRES_USER", "postgres")

@@ -69,7 +69,7 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
       />
       {locked ? (
         <Flash variant="warning">
-          Scoring is locked because this contest has started.{contestRuleSets.length > 0 ? ' Its rule-set versions are listed below.' : ''}
+          Scoring is locked because this contest has started.{contestRuleSets.length > 0 ? ' Its rule-set versions are listed below.' : ' It uses the platform defaults.'}
         </Flash>
       ) : (
         <RuleSetForm
@@ -79,7 +79,7 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
           platformRuleSets={platformRuleSets}
         />
       )}
-      {contestRuleSets.length === 0 ? <p className="scoring-empty">No contest-specific rule sets yet; this contest scores with the platform defaults.</p> : null}
+      {contestRuleSets.length === 0 && !locked ? <p className="scoring-empty">No contest-specific rule sets yet; this contest scores with the platform defaults.</p> : null}
       {contestRuleSets.length === 0 ? null : <section className="scoring-versions" aria-labelledby="scoring-versions">
         <SectionHeading level={2} id="scoring-versions" title="Rule-set versions" />
         {contestRuleSets.map(ruleSet => (

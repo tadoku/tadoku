@@ -145,12 +145,14 @@ function ContestRow({ contest, names, today }: {
   const ended = today > contest.contest_end
   const round = ended ? <StatusTag>Ended</StatusTag> : started ? <StatusTag tone="success">Live now</StatusTag> : <StatusTag tone="information">Upcoming</StatusTag>
   const registration = !ended && today <= contest.registration_end ? `Registration closes ${formatDate(contest.registration_end)}` : null
+  // Only restrictions earn a mention; an unrestricted language or activity list is the default.
   const languages = contest.language_code_allow_list?.length
     ? contest.language_code_allow_list.map(code => names?.languages[code] ?? code).join(', ')
-    : 'All languages'
+    : null
   const activities = contest.activity_type_id_allow_list.length
     ? contest.activity_type_id_allow_list.map(id => names?.activities[id] ?? String(id)).join(', ')
-    : 'All activities'
+    : null
+  const meta = [registration, contest.private ? 'Unlisted' : null, names ? languages : null, names ? activities : null].filter(Boolean).join(' · ')
 
   return (
     <li className="contest-row">
@@ -160,9 +162,7 @@ function ContestRow({ contest, names, today }: {
           {round}
         </div>
         <p>{formatPeriod(contest)}</p>
-        <p className="contest-row__allows">
-          {[registration, contest.private ? 'Unlisted' : null, names ? `${languages} · ${activities}` : null].filter(Boolean).join(' · ')}
-        </p>
+        {meta ? <p className="contest-row__allows">{meta}</p> : null}
       </div>
     </li>
   )

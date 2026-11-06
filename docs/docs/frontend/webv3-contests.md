@@ -34,7 +34,7 @@ appears when the API's create-permission check answers 200.
 
 Each row shows the round's status (upcoming, live or ended) beside its title,
 then its dates, then a muted line with the registration deadline while it is
-open, whether it is unlisted and its languages and activities; status and
+open, whether it is unlisted and any language or activity restriction; status and
 deadline follow the UTC day the list was read. With more than one page, page links appear above and below
 the list, and the range summary appears beside the lower ones.
 Contest dates are UTC calendar days and the page says so. Rows link to the

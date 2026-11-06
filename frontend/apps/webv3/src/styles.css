@@ -143,13 +143,13 @@ a { text-underline-offset: .2em; }
 .app-login-link:hover, .app-login-link:focus-visible { text-decoration: underline; }
 .contest-daily .paper-table__row-header { font-weight: 400; white-space: nowrap; }
 /* Phones keep every daily column and scroll the table sideways, with the edge shade showing more columns. */
-.app-account-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-3, .75rem); }
+.app-account-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-3, .75rem); margin-inline-start: 16px; }
 .app-account-menu--desktop .paper-button > span { max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .app-mobile-account { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--paper-color-rule-subtle); }
 .app-mobile-account__name { margin: 0 0 4px; padding-inline: var(--paper-field-padding-inline); font-size: .875rem; font-weight: 600; color: var(--paper-color-text-muted); overflow-wrap: anywhere; }
 .app-mobile-account .paper-button { justify-content: flex-start; width: 100%; }
 @media (width < 48rem) { .app-account-menu--desktop { display: none; } }
-.app-announcements { display: grid; gap: 8px; margin-bottom: 24px; }
+.app-announcements { display: grid; gap: 8px; margin-bottom: 32px; }
 .app-announcement { display: grid; gap: 4px; overflow-wrap: anywhere; }
 .app-announcement p { margin: 0; }
 .app-footer__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; font-size: .875rem; }
@@ -240,5 +240,4 @@ a { text-underline-offset: .2em; }
 .list-pagination-top .paper-pagination__list { flex-wrap: wrap; }
 
 /* Daily scores share their numeric columns evenly. */
-.contest-daily table { table-layout: fixed; }
-.contest-daily th:first-child { inline-size: 30%; }
+.contest-daily th { white-space: nowrap; }

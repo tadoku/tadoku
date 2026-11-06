@@ -88,7 +88,8 @@ test('the server-rendered updates feed lists the API\'s contest logs, pages thro
     const entry = first.logs[0]
     await live.locator(`a.profile-entry-title[href="/logs/${entry.id}"]`).click()
     await expect(live).toHaveURL(new RegExp(`/logs/${entry.id}$`))
-    await expect(live.getByText(entry.id)).toBeVisible()
+    await expect(live.getByRole('heading', { level: 1 })).toBeVisible()
+    await expect(live.getByRole('link', { name: 'Edit log' })).toHaveCount(0)
   }
   await live.close()
 })

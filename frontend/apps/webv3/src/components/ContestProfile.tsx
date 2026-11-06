@@ -87,7 +87,7 @@ function DailyScores({ rows, languages, name }: {
       columns={columns}
       rows={[...ordered].reverse()}
       getRowKey={day => day.date}
-      minWidth="18rem"
+      minWidth="36rem"
       tableClassName="standings-table"
     />
   )

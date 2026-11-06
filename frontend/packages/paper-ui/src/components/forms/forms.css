@@ -16,7 +16,7 @@
   .paper-radio-select__segment { position: relative; display: inline-grid; grid-template-columns: 1fr auto; align-items: center; flex: 1 1 7rem; min-block-size: var(--paper-control-height); min-inline-size: var(--paper-radio-min-width); margin-block-start: calc(-1 * var(--paper-border-static-width)); margin-inline-start: calc(-1 * var(--paper-border-static-width)); padding: var(--paper-field-padding-block) var(--paper-field-padding-inline); border: var(--paper-border-static-width) solid var(--paper-color-rule-field-edge); border-block-end-width: var(--paper-border-field-edge-width); color: var(--paper-color-text-ink); background: var(--paper-color-surface-paper); font-size: var(--paper-type-body-size); font-weight: var(--paper-type-label-weight); line-height: 1.25; cursor: pointer; }
   .paper-radio-select__segment:first-child { margin-inline-start: 0; }
   .paper-radio-select__segment input { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .paper-radio-select__check { margin-inline-start: var(--paper-inline-gap); color: var(--paper-color-text-link); opacity: 0; }
+  .paper-radio-select__check { inline-size: 1rem; block-size: 1rem; margin-inline-start: var(--paper-inline-gap); color: var(--paper-color-text-link); stroke-width: 2.5; opacity: 0; }
   .paper-radio-select__segment:hover:not(:has(input:disabled)):not(:has(input:checked)) { border-color: var(--paper-color-rule-strong); background: var(--paper-color-action-neutral-hover); }
   .paper-radio-select__segment:has(input:checked) { z-index: 1; border-color: var(--paper-color-text-link); background: var(--paper-color-action-soft); }
   .paper-radio-select__segment:has(input:checked) .paper-radio-select__check { opacity: 1; }
@@ -93,6 +93,6 @@
   }
 
   /* A form's closing row: actions at the start, an optional summary such as an estimate at the end. */
-  .paper-form-footer { display: flex; flex-wrap: wrap-reverse; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem; padding-block-start: var(--paper-space-4); border-block-start: var(--paper-border-static-width) solid var(--paper-color-rule-default); }
+  .paper-form-footer { display: flex; flex-wrap: wrap-reverse; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem; margin-block-start: var(--paper-space-6); padding-block-start: var(--paper-space-4); border-block-start: var(--paper-border-static-width) solid var(--paper-color-rule-default); }
   .paper-form-footer__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; }
 }

@@ -94,15 +94,14 @@ export function HomePage() {
         </section>
       )}
 
-      {member ? (
-        <section className="home-strip" aria-labelledby="home-goal-title">
-          <div>
-            <h2 id="home-goal-title">Daily goal</h2>
-            <p>{goal ? describeGoal(goal) : 'Not set'}</p>
-          </div>
-          <Link className="text-link" to="/plan">{goal ? 'Change goal' : 'Set a daily goal'}</Link>
-        </section>
-      ) : null}
+      {/* The goal is kept in the browser, so guests can set one too. */}
+      <section className="home-strip" aria-labelledby="home-goal-title">
+        <div>
+          <h2 id="home-goal-title">Daily goal</h2>
+          <p>{goal ? describeGoal(goal) : <Link className="text-link" to="/plan">Set a daily goal</Link>}</p>
+        </div>
+        {goal ? <Link className="text-link" to="/plan">Change goal</Link> : null}
+      </section>
     </div>
   )
 }
@@ -128,7 +127,7 @@ function MemberPromise({ member, data, phase }: {
   let lead: string
   if (running && entry) {
     headline = `${place(entry.rank)} place`
-    lead = `${numberFormat.format(entry.score)} ${pointsUnit(entry.score)} so far.`
+    lead = `${numberFormat.format(entry.score)} ${pointsUnit(entry.score)} in ${contest.title}.`
   } else if (running && registered) {
     headline = `You’re in ${contest.title}`
     lead = phase === 'upcoming' ? `The round starts ${formatDate(contest.contest_start)}.` : 'Log what you read and listen to; every entry counts towards the round.'

@@ -118,9 +118,11 @@ test('server-rendered official and community lists show the API contests and lin
       .toHaveText(name === 'official' ? 'Official' : 'Community')
     await expect(page.getByRole('link', { name: 'Contests', exact: true }).first()).toHaveAttribute('href', '/contests/official/1')
     await expect(page.getByText('Contest dates are calendar days in UTC.')).toBeVisible()
-    // Guests see no create action and no restrictions, as in Webv2.
+    // Guests see no create action and no restrictions, as in Webv2; a row may still name its deadline or visibility.
     await expect(page.getByRole('link', { name: 'Create contest' })).toHaveCount(0)
-    await expect(page.locator('.contest-row__allows')).toHaveCount(0)
+    for (const meta of await page.locator('.contest-row__allows').allTextContents()) {
+      expect(meta).toMatch(/^(Registration closes \d+ \w+ \d{4})?( · )?(Unlisted)?$/)
+    }
     await expectRows(page, data)
     await page.screenshot({ path: testInfo.outputPath(`ssr-${name}.png`), fullPage: true })
   }
@@ -186,7 +188,7 @@ test('an organizer pages through their own contests, unlisted ones included, and
   await expect(page.getByRole('link', { name: 'Create contest' })).toHaveAttribute('href', '/contests/new')
   // Signed-in community and organizer lists name the restrictions, as Webv2 does.
   await expect(page.locator('.contest-row').filter({ hasText: 'Webv3 list check' }).first().locator('.contest-row__allows'))
-    .toHaveText('Japanese · Reading, Listening')
+    .toContainText('Japanese · Reading, Listening')
   await page.screenshot({ path: testInfo.outputPath('my-contests-organizer.png'), fullPage: true })
 
   await hydrated(page)

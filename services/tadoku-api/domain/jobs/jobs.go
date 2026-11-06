@@ -2,7 +2,6 @@ package jobs
 
 import (
 	"errors"
-	"slices"
 
 	"github.com/google/uuid"
 )
@@ -20,16 +19,7 @@ type Job interface {
 	job()
 }
 
-func Distinct(batch []Job) []Job {
-	distinct := make([]Job, 0, len(batch))
-	for _, job := range batch {
-		if !slices.Contains(distinct, job) {
-			distinct = append(distinct, job)
-		}
-	}
-	return distinct
-}
-
+// Do not publish InvalidateContestLeaderboardV1: the worker completes its leftover rows without doing anything.
 type InvalidateContestLeaderboardV1 struct {
 	ContestID uuid.UUID `json:"contest_id"`
 }
@@ -43,6 +33,7 @@ func (j InvalidateContestLeaderboardV1) Validate() error {
 	return nil
 }
 
+// Do not publish InvalidateOfficialLeaderboardV1: the worker completes its leftover rows without doing anything.
 type InvalidateOfficialLeaderboardV1 struct {
 	Year int16 `json:"year"`
 }

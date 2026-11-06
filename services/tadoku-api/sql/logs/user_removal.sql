@@ -26,14 +26,6 @@ where logs.user_id = sqlc.arg(user_id)
   and logs.deleted_at is null
 order by logs.id, contest_logs.contest_id;
 
--- name: ListOfficialYearsForUser :many
-select distinct year
-from logs
-where user_id = sqlc.arg(user_id)
-  and deleted_at is null
-  and eligible_official_leaderboard
-order by year;
-
 -- name: DeleteUserContestLogsOutsideFinishedContests :exec
 delete from contest_logs
 using logs, contests

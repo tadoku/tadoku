@@ -136,5 +136,5 @@ This design also seems to lay the foundation for private contests between users 
 
 ## Outcome
 
-This records the original sorted-set decision. For the current invalidation,
-fallback and freshness behavior, see [Operate jobs and the worker](../tadoku-api/jobs-operations.md#leaderboard-freshness-and-worker-health).
+This records the original sorted-set decision. For the current fallback and
+freshness behavior, see [Operate jobs and the worker](../tadoku-api/jobs-operations.md#leaderboard-freshness-and-worker-health).

@@ -3,7 +3,6 @@ package leaderboard
 import (
 	"context"
 	"fmt"
-	"math/rand/v2"
 	"strconv"
 	"time"
 
@@ -42,16 +41,6 @@ for _, value in ipairs(values) do
   table.insert(reply, value)
 end
 return reply
-`)
-
-var invalidateScript = valkeygo.NewLuaScript(`
-if redis.call('EXISTS', KEYS[3]) == 1 then
-  redis.call('INCR', KEYS[3])
-else
-  redis.call('SET', KEYS[3], ARGV[1], 'EX', 3600)
-end
-redis.call('DEL', KEYS[1], KEYS[2])
-return 1
 `)
 
 type Cache struct {
@@ -171,19 +160,6 @@ func parsePage(reply []valkeygo.ValkeyMessage, offset int) (*page, error) {
 		board.scores[i] = score{userID: id, value: value}
 	}
 	return board, nil
-}
-
-// invalidate deletes the board's keys and advances the ":generation" that the previous release's reads check.
-func (c *Cache) invalidate(ctx context.Context, key string) error {
-	ctx, cancel := context.WithTimeout(ctx, c.operationTimeout)
-	defer cancel()
-
-	keys := []string{key, key + ":last_updated", key + ":generation"}
-	generation := strconv.FormatInt(rand.Int64N(1<<62-1)+1, 10)
-	if err := invalidateScript.Exec(ctx, c.client, keys, []string{generation}).Error(); err != nil {
-		return fmt.Errorf("invalidate leaderboard %s: %w", key, err)
-	}
-	return nil
 }
 
 // rebuild publishes scores, with no expiry, as the board built from version, unless the cache holds a board built

@@ -191,24 +191,6 @@ func (q *Queries) DetachContestLog(ctx context.Context, arg DetachContestLogPara
 	return err
 }
 
-const fetchLogJobContext = `-- name: FetchLogJobContext :one
-select user_id, year, eligible_official_leaderboard
-from logs where id = $1
-`
-
-type FetchLogJobContextRow struct {
-	UserID                      pgtype.UUID
-	Year                        int16
-	EligibleOfficialLeaderboard bool
-}
-
-func (q *Queries) FetchLogJobContext(ctx context.Context, logID pgtype.UUID) (FetchLogJobContextRow, error) {
-	row := q.db.QueryRow(ctx, fetchLogJobContext, logID)
-	var i FetchLogJobContextRow
-	err := row.Scan(&i.UserID, &i.Year, &i.EligibleOfficialLeaderboard)
-	return i, err
-}
-
 const fetchScoresForContestProfile = `-- name: FetchScoresForContestProfile :many
 select
   logs.language_code,
@@ -1051,17 +1033,22 @@ func (q *Queries) ListTagSuggestionsForUser(ctx context.Context, arg ListTagSugg
 }
 
 const lockLogForMutation = `-- name: LockLogForMutation :one
-select frozen_at
+select user_id, frozen_at
 from logs
 where id = $1 and deleted_at is null
 for update
 `
 
-func (q *Queries) LockLogForMutation(ctx context.Context, logID pgtype.UUID) (pgtype.Timestamp, error) {
+type LockLogForMutationRow struct {
+	UserID   pgtype.UUID
+	FrozenAt pgtype.Timestamp
+}
+
+func (q *Queries) LockLogForMutation(ctx context.Context, logID pgtype.UUID) (LockLogForMutationRow, error) {
 	row := q.db.QueryRow(ctx, lockLogForMutation, logID)
-	var frozen_at pgtype.Timestamp
-	err := row.Scan(&frozen_at)
-	return frozen_at, err
+	var i LockLogForMutationRow
+	err := row.Scan(&i.UserID, &i.FrozenAt)
+	return i, err
 }
 
 const setLogOfficialEligibility = `-- name: SetLogOfficialEligibility :exec

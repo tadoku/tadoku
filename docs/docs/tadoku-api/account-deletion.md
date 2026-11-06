@@ -98,7 +98,7 @@ time.
 | Registrations | Deleted in unfinished contests, kept in finished ones. |
 | Contests the user owns | Kept. Contest and log reads show the organizer as `Deleted organizer` because the owner is deleted, never from the stored name. The stored copy of the organizer name is overwritten with the same label so it keeps no former name. |
 | `permission_relationships` with the user as subject | Deleted. |
-| Leaderboards | Yearly and global leaderboards leave out deleted users. Contest leaderboards list every registration, so the user stays on finished contests' leaderboards as `Deleted participant` with the scores of the kept logs. Both rules are in `services/tadoku-api/sql/leaderboard/leaderboard.sql`. The worker enqueues one invalidation job per unfinished contest that loses a log or registration and per year with official logs. |
+| Leaderboards | Yearly and global leaderboards leave out deleted users. Contest leaderboards list every registration, so the user stays on finished contests' leaderboards as `Deleted participant` with the scores of the kept logs. Both rules are in `services/tadoku-api/sql/leaderboard/leaderboard.sql`. |
 | Contest event feeds | `log.withdrawn` for each log leaving an unfinished contest and `log.updated` for each kept log whose description or tags were cleared. |
 | `moderation_audit_log` | One `complete_account_deletion` event, with the deleted user as actor and the deleted and kept log and registration counts and the owned contest count. |
 | `emails` | Unchanged; [email retention](./email.md#retention-and-operations) removes earlier messages. The worker adds an `account.deleted` notice to the account's address, unless that address cannot receive mail. |

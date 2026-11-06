@@ -82,8 +82,8 @@ e2e/testdata/journeys/
 - A Valkey snapshot step uses `valkey: "<name>"` and a directory containing only
   `verify.json`. It checks ownership of the suite's leased Valkey database,
   scans leaderboard keys, removes duplicate scan results and compares the
-  sorted names with the golden. Snapshots include tenant prefixes, cache
-  markers and invalidation generations; they exclude the lease key.
+  sorted names with the golden. Snapshots include tenant prefixes and cache
+  markers; they exclude the lease key.
 
 ### Reset and time
 

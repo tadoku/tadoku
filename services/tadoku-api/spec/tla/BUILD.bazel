@@ -75,7 +75,7 @@ tlc_test(
     tags = ["manual"],
 )
 
-# Two readers against two writes, with the previous release's invalidations.
+# Two readers against two writes.
 tlc_test(
     name = "leaderboardcache_test",
     config = "LeaderboardCache.cfg",

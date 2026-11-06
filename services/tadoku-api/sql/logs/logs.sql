@@ -344,7 +344,7 @@ where log_id = sqlc.arg('id')
 order by contest_logs.contest_id;
 
 -- name: LockLogForMutation :one
-select frozen_at
+select user_id, frozen_at
 from logs
 where id = sqlc.arg('log_id') and deleted_at is null
 for update;
@@ -378,10 +378,6 @@ insert into contest_logs (
 -- name: InsertLogTag :exec
 insert into log_tags (log_id, user_id, tag)
 values (sqlc.arg('log_id'), sqlc.arg('user_id'), sqlc.arg('tag'));
-
--- name: FetchLogJobContext :one
-select user_id, year, eligible_official_leaderboard
-from logs where id = sqlc.arg('log_id');
 
 -- name: UpdateLog :exec
 update logs set

@@ -203,7 +203,7 @@ The API persists `tadoku/<route>` on branch jobs, and caches use
   component override.
 - Selecting a branch API or worker starts both. Before the private worker
   starts, `worker-override-set` inserts its tenant's `tadoku-worker` override;
-  the branch worker claims only that tenant and invalidates its caches.
+  the branch worker claims only that tenant's jobs.
 - Teardown waits for the branch worker and its pods to stop, then runs
   `worker-override-clear`. The base can resume remaining branch jobs before
   tenant teardown. Jobs already claimed by the base before an override may

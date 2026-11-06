@@ -73,35 +73,6 @@ func (q *Queries) FreezeUserContestHistory(ctx context.Context, arg FreezeUserCo
 	return result.RowsAffected(), nil
 }
 
-const listOfficialYearsForUser = `-- name: ListOfficialYearsForUser :many
-select distinct year
-from logs
-where user_id = $1
-  and deleted_at is null
-  and eligible_official_leaderboard
-order by year
-`
-
-func (q *Queries) ListOfficialYearsForUser(ctx context.Context, userID pgtype.UUID) ([]int16, error) {
-	rows, err := q.db.Query(ctx, listOfficialYearsForUser, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []int16{}
-	for rows.Next() {
-		var year int16
-		if err := rows.Scan(&year); err != nil {
-			return nil, err
-		}
-		items = append(items, year)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const readUserContestLogViews = `-- name: ReadUserContestLogViews :many
 select
   contest_logs.contest_id,

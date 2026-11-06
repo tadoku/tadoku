@@ -28,7 +28,7 @@ func TestWorkerRetainsTenantAcrossGracefulShutdown(t *testing.T) {
 		}
 	})
 
-	application := f.runner(t, f.client, time.Second, 2*time.Second)
+	application := f.runner(t, ignoreJob[jobs.InvalidateContestLeaderboardV1], 2*time.Second)
 	release := make(chan struct{})
 	observed := make(chan error, 1)
 	type requestKey struct{}

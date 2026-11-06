@@ -18,7 +18,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
 	featureprofile "github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
@@ -146,12 +145,8 @@ func workerDependencies(t testing.TB, pool *pgxpool.Pool) worker.Dependencies {
 	}
 
 	return worker.Dependencies{
-		DB:       pool,
-		JobQueue: jobqueue.NewService(jobqueue.NewRepository(pool)),
-		Leaderboard: leaderboard.NewService(
-			leaderboard.NewRepository(pool),
-			leaderboard.NewCache(leaderboardValkey.client, time.Second),
-		),
+		DB:               pool,
+		JobQueue:         jobqueue.NewService(jobqueue.NewRepository(pool)),
 		Email:            email.NewService(email.NewRepository(pool), nil),
 		IdentityExpiry:   identity.NewExpiry(identity.NewRepository(pool)),
 		IdentityDeletion: identity.NewDeletion(identity.NewRepository(pool)),

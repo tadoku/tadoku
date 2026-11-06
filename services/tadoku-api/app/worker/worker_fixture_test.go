@@ -15,6 +15,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/app/permissionmodel"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contestevents"
@@ -22,24 +23,19 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant/alltenants"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/testvalkey"
-	valkeygo "github.com/valkey-io/valkey-go"
 )
 
 type workerFixture struct {
 	database *testpostgres.Database
 	db       *pgxpool.Pool
 	dsn      string
-	client   valkeygo.Client
 	key      tenant.Key
-	prefix   string
 }
 
 type workerQueryScope struct {
@@ -133,63 +129,27 @@ func newWorkerFixture(ctx context.Context) (_ workerFixture, err error) {
 		return workerFixture{}, err
 	}
 
-	rawURL, err := testvalkey.URL()
-	if err != nil {
-		return workerFixture{}, err
-	}
-	option, err := valkeygo.ParseURL(rawURL)
-	if err != nil {
-		return workerFixture{}, err
-	}
-	option.SelectDB = 13
-	option.ForceSingleClient = true
-	option.DisableRetry = true
-	client, err := valkeygo.NewClient(option)
-	if err != nil {
-		return workerFixture{}, err
-	}
 	return workerFixture{
 		database: database,
 		db:       database.Pool,
 		dsn:      database.DSN,
-		client:   client,
 		key:      key,
-		prefix:   "tenant:" + key.String() + ":",
 	}, nil
 }
 
-func (f workerFixture) Close() error {
-	ctx, stop := context.WithTimeout(tenant.WithKey(context.Background(), tenant.Production()), time.Second)
-	defer stop()
+func (f workerFixture) Close() error { return f.database.Close() }
 
-	var cleanupErr error
-	var cursor uint64
-	for {
-		page, err := f.client.Do(ctx, f.client.B().Scan().Cursor(cursor).Match(f.prefix+"*").Count(100).Build()).AsScanEntry()
-		if err != nil {
-			cleanupErr = err
-			break
-		}
-		if len(page.Elements) > 0 {
-			if err := f.client.Do(ctx, f.client.B().Del().Key(page.Elements...).Build()).Error(); err != nil {
-				cleanupErr = err
-				break
-			}
-		}
-		if page.Cursor == 0 {
-			break
-		}
-		cursor = page.Cursor
-	}
+// runner runs contest for leaderboard.invalidate_contest.v1 under its production policy.
+func (f workerFixture) runner(
+	t *testing.T,
+	contest func(context.Context, jobs.InvalidateContestLeaderboardV1) error,
+	shutdown time.Duration,
+) *Application {
+	t.Helper()
 
-	f.client.Close()
-	return errors.Join(cleanupErr, f.database.Close())
-}
-
-func (f workerFixture) runner(t *testing.T, client valkeygo.Client, providerTimeout, shutdown time.Duration) *Application {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	application, err := NewApplication(
-		workerDependencies(t, f.db, leaderboard.NewCache(client, providerTimeout)),
+		workerDependencies(t, f.db),
 		Config{
 			Scope:           baseWorkerScope(t),
 			Concurrency:     4,
@@ -201,11 +161,31 @@ func (f workerFixture) runner(t *testing.T, client valkeygo.Client, providerTime
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	handleLeaderboard(t, application, contest, ignoreJob[jobs.InvalidateOfficialLeaderboardV1])
 	return application
 }
 
+// handleLeaderboard makes application run contest and official for the leaderboard invalidation types under their
+// production policies.
+func handleLeaderboard(
+	t *testing.T,
+	application *Application,
+	contest func(context.Context, jobs.InvalidateContestLeaderboardV1) error,
+	official func(context.Context, jobs.InvalidateOfficialLeaderboardV1) error,
+) {
+	t.Helper()
+
+	handlers, err := registrations(contest, official, application.SendEmail, application.DeleteAccount)
+	if err != nil {
+		t.Fatal(err)
+	}
+	application.runner.handlers = handlers
+	application.runner.metrics.initialize(handlers)
+}
+
 // workerDependencies gives email no sender, so the worker holds every message.
-func workerDependencies(t *testing.T, pool *pgxpool.Pool, cache *leaderboard.Cache) Dependencies {
+func workerDependencies(t *testing.T, pool *pgxpool.Pool) Dependencies {
 	t.Helper()
 
 	model, err := permissionmodel.New()
@@ -216,7 +196,6 @@ func workerDependencies(t *testing.T, pool *pgxpool.Pool, cache *leaderboard.Cac
 	return Dependencies{
 		DB:               pool,
 		JobQueue:         jobqueue.NewService(jobqueue.NewRepository(pool)),
-		Leaderboard:      leaderboard.NewService(leaderboard.NewRepository(pool), cache),
 		Email:            email.NewService(email.NewRepository(pool), nil),
 		IdentityExpiry:   identity.NewExpiry(identity.NewRepository(pool)),
 		IdentityDeletion: identity.NewDeletion(identity.NewRepository(pool)),
@@ -244,12 +223,34 @@ func startWorker(t *testing.T, runner *Application) {
 	})
 }
 
-type blockingValkey struct {
-	valkeygo.Client
-	prefix   string
+// blockingHandler holds each job it runs until release closes, which completes the job, or until the job's context
+// ends, which signals canceled when it is set.
+type blockingHandler struct {
 	started  chan struct{}
 	release  <-chan struct{}
 	canceled chan struct{}
+}
+
+func blockingJob[J jobs.Job](h *blockingHandler) func(context.Context, J) error {
+	return func(ctx context.Context, _ J) error {
+		select {
+		case h.started <- struct{}{}:
+		default:
+		}
+
+		select {
+		case <-h.release:
+			return nil
+		case <-ctx.Done():
+			if h.canceled != nil {
+				select {
+				case h.canceled <- struct{}{}:
+				default:
+				}
+			}
+			return ctx.Err()
+		}
+	}
 }
 
 type acquireStartTracer struct{ starts chan struct{} }
@@ -266,31 +267,4 @@ func (t *acquireStartTracer) TraceAcquireStart(ctx context.Context, _ *pgxpool.P
 	return ctx
 }
 func (t *acquireStartTracer) TraceAcquireEnd(context.Context, *pgxpool.Pool, pgxpool.TraceAcquireEndData) {
-}
-
-func (c *blockingValkey) Do(ctx context.Context, command valkeygo.Completed) valkeygo.ValkeyResult {
-	args := command.Commands()
-	if len(args) > 3 && (args[0] == "EVALSHA" || args[0] == "EVAL") {
-		for _, key := range args[3:] {
-			if strings.HasPrefix(key, c.prefix) {
-				select {
-				case c.started <- struct{}{}:
-				default:
-				}
-				select {
-				case <-c.release:
-				case <-ctx.Done():
-					if c.canceled != nil {
-						select {
-						case c.canceled <- struct{}{}:
-						default:
-						}
-					}
-					return valkeygo.NewErrorResult(ctx.Err())
-				}
-				break
-			}
-		}
-	}
-	return c.Client.Do(ctx, command)
 }

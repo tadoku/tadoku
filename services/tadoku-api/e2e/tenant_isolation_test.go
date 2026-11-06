@@ -12,7 +12,6 @@ import (
 	"os"
 	"reflect"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -23,11 +22,9 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/app/worker"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
-	valkeygo "github.com/valkey-io/valkey-go"
 )
 
 const isolationTenant = "e2e/isolation-0123abcd"
@@ -287,14 +284,8 @@ func runIsolationWorker(t *testing.T, scope jobqueue.Scope, production, test int
 	}
 	_, branch := tenant.FromContext(queueCtx)
 
-	provider := &isolationValkey{Client: leaderboardValkey.client, tenants: make(map[string]int)}
-	deps := workerDependencies(t, api.db.AppPool)
-	deps.Leaderboard = leaderboard.NewService(
-		leaderboard.NewRepository(api.db.AppPool),
-		leaderboard.NewCache(provider, time.Second),
-	)
 	application, err := worker.NewApplication(
-		deps,
+		workerDependencies(t, api.db.AppPool),
 		worker.Config{
 			Scope:           scope,
 			Concurrency:     4,
@@ -346,19 +337,6 @@ func runIsolationWorker(t *testing.T, scope jobqueue.Scope, production, test int
 		}
 
 		if canonicalCompleted == production && testCompleted == test {
-			provider.mu.Lock()
-			defer provider.mu.Unlock()
-			if provider.tenants[isolationTenant] == 0 || provider.tenants[""] != 0 {
-				t.Fatalf("real Valkey handler scope=%v", provider.tenants)
-			}
-			if branch {
-				if len(provider.tenants) != 1 {
-					t.Fatalf("branch handler leaked scope=%v", provider.tenants)
-				}
-			} else if provider.tenants["tadoku/prod"] == 0 || len(provider.tenants) != 2 {
-				t.Fatalf("base worker did not dispatch both tenant contexts=%v", provider.tenants)
-			}
-			t.Logf("real Valkey delegated provider tenant contexts=%v", provider.tenants)
 			return
 		}
 
@@ -371,18 +349,4 @@ func runIsolationWorker(t *testing.T, scope jobqueue.Scope, production, test int
 		case <-tick.C:
 		}
 	}
-}
-
-type isolationValkey struct {
-	valkeygo.Client
-	mu      sync.Mutex
-	tenants map[string]int
-}
-
-func (client *isolationValkey) Do(ctx context.Context, command valkeygo.Completed) valkeygo.ValkeyResult {
-	key, _ := tenant.FromContext(ctx)
-	client.mu.Lock()
-	client.tenants[key.String()]++
-	client.mu.Unlock()
-	return client.Client.Do(ctx, command)
 }

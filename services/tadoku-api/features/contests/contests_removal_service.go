@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestwindow"
-	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 )
 
 // RemoveUser requires the caller's transaction and a user locked for deletion. It deletes the user's registrations
@@ -29,9 +28,5 @@ func (s *Service) RemoveUser(ctx context.Context, userID uuid.UUID, now time.Tim
 		return RemovalResult{}, err
 	}
 
-	result := RemovalResult{DeletedRegistrations: len(contestIDs), KeptRegistrations: kept, OwnedContests: owned}
-	for _, contestID := range contestIDs {
-		result.Jobs = append(result.Jobs, jobs.InvalidateContestLeaderboardV1{ContestID: contestID})
-	}
-	return result, nil
+	return RemovalResult{DeletedRegistrations: len(contestIDs), KeptRegistrations: kept, OwnedContests: owned}, nil
 }

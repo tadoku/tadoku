@@ -1,9 +1,5 @@
 [
   {
-    "kind": "leaderboard.invalidate_contest.v1",
-    "count": "6"
-  },
-  {
     "kind": "log",
     "count": "1"
   }

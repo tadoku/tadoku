@@ -17,7 +17,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
@@ -145,7 +144,6 @@ func TestNewApplicationRejectsZeroScope(t *testing.T) {
 var allDependencies = Dependencies{
 	DB:               new(pgxpool.Pool),
 	JobQueue:         new(jobqueue.Service),
-	Leaderboard:      new(leaderboard.Service),
 	Email:            new(email.Service),
 	IdentityExpiry:   new(identity.Expiry),
 	IdentityDeletion: new(identity.Deletion),

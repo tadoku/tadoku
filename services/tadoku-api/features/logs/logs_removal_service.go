@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestevent"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestwindow"
-	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 )
 
 // RemoveUser requires the caller's transaction and a user locked for deletion. It deletes the user's logs except
@@ -15,10 +14,6 @@ import (
 // it diffs each log's contest views before and after these writes to find its contest events.
 func (s *Service) RemoveUser(ctx context.Context, userID uuid.UUID, now time.Time) (RemovalResult, error) {
 	before, err := s.logs.UserContestLogViews(ctx, userID)
-	if err != nil {
-		return RemovalResult{}, err
-	}
-	years, err := s.logs.UserOfficialYears(ctx, userID)
 	if err != nil {
 		return RemovalResult{}, err
 	}
@@ -43,20 +38,7 @@ func (s *Service) RemoveUser(ctx context.Context, userID uuid.UUID, now time.Tim
 		return RemovalResult{}, err
 	}
 
-	changes := userContestLogChanges(before, after)
-
-	result := RemovalResult{Events: changes, DeletedLogs: deleted, KeptLogs: kept}
-	invalidated := make(map[uuid.UUID]bool)
-	for _, change := range changes {
-		if change.Type == contestevent.Withdrawn && !invalidated[change.ContestID] {
-			invalidated[change.ContestID] = true
-			result.Jobs = append(result.Jobs, jobs.InvalidateContestLeaderboardV1{ContestID: change.ContestID})
-		}
-	}
-	for _, year := range years {
-		result.Jobs = append(result.Jobs, jobs.InvalidateOfficialLeaderboardV1{Year: year})
-	}
-	return result, nil
+	return RemovalResult{Events: userContestLogChanges(before, after), DeletedLogs: deleted, KeptLogs: kept}, nil
 }
 
 func userContestLogChanges(before, after []contestLogView) []contestevent.Change {

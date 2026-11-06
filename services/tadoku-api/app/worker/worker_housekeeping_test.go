@@ -65,7 +65,7 @@ func TestBaseWorkerHousekeepingUsesAllTenants(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	deps := workerDependencies(t, pool, nil)
+	deps := workerDependencies(t, pool)
 	application := &Application{runner: &runner{
 		scope:           baseWorkerScope(t),
 		queue:           deps.JobQueue,
@@ -145,7 +145,7 @@ func TestWorkerCleansUpExpiredCompletedJobsAtStartup(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	startWorker(t, f.runner(t, f.client, time.Second, time.Second))
+	startWorker(t, f.runner(t, ignoreJob[jobs.InvalidateContestLeaderboardV1], time.Second))
 	if err := waitFor(tenantCtx, func() (bool, error) {
 		var exists bool
 		err := f.db.QueryRow(tenantCtx, `select exists(select 1 from jobs where id = $1)`, id).Scan(&exists)

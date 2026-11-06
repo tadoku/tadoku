@@ -11,8 +11,8 @@ database schema, and need to know which page covers it.
 
 Tadoku API (`services/tadoku-api/`) is the only backend. It serves every public
 HTTP operation, which the gateway exposes under `/api/internal`. A separate
-`tadoku-worker` process executes its typed background jobs, beginning with
-leaderboard cache invalidation.
+`tadoku-worker` process executes its typed background jobs, such as sending
+email and deleting accounts.
 
 ## Public API domains
 

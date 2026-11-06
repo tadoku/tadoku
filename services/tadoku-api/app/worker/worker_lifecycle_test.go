@@ -12,7 +12,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
@@ -29,34 +28,10 @@ func TestWorkerJobLifecycle(t *testing.T) {
 		}
 	})
 
-	db, client, prefix := f.database, f.client, f.prefix
-	keys := []string{
-		prefix + "leaderboard:global",
-		prefix + "leaderboard:global:last_updated",
-		prefix + "leaderboard:global:generation",
-		prefix + "leaderboard:yearly:2025",
-		prefix + "leaderboard:yearly:2025:last_updated",
-		prefix + "leaderboard:yearly:2025:generation",
-		"other:" + prefix + "leaderboard:global:last_updated",
-	}
-
-	t.Cleanup(func() {
-		ctx, stop := context.WithTimeout(tenant.WithKey(context.Background(), tenant.Production()), time.Second)
-		defer stop()
-		if err := client.Do(ctx, client.B().Del().Key(keys[6]).Build()).Error(); err != nil {
-			t.Error(err)
-		}
-	})
-
-	for _, marker := range []string{keys[1], keys[6]} {
-		if err := client.Do(tenantCtx, client.B().Set().Key(marker).Value("native:0").Build()).Error(); err != nil {
-			t.Fatal(err)
-		}
-	}
-
+	db := f.database
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	runner, err := NewApplication(
-		workerDependencies(t, db.Pool, leaderboard.NewCache(client, time.Second)),
+		workerDependencies(t, db.Pool),
 		Config{
 			Scope:           baseWorkerScope(t),
 			Concurrency:     4,
@@ -85,22 +60,6 @@ func TestWorkerJobLifecycle(t *testing.T) {
 		return runner.Ready(), nil
 	}); err != nil {
 		t.Fatal(err)
-	}
-
-	for _, item := range []struct {
-		key  string
-		want int64
-	}{{keys[1], 1}, {keys[6], 1}} {
-		count, err := client.Do(tenantCtx, client.B().Exists().Key(item.key).Build()).AsInt64()
-		if err != nil || count != item.want {
-			t.Fatalf("startup marker %s: count=%d error=%v; want %d", item.key, count, err, item.want)
-		}
-	}
-
-	for _, marker := range []string{keys[1], keys[4]} {
-		if err := client.Do(tenantCtx, client.B().Set().Key(marker).Value("native:0").Build()).Error(); err != nil {
-			t.Fatal(err)
-		}
 	}
 
 	validID, err := insertJob(tenantCtx, db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
@@ -138,16 +97,6 @@ func TestWorkerJobLifecycle(t *testing.T) {
 		return completed == "completed" && failed == "failed" && reclaimed == "completed" && unknown == "pending", err
 	}); err != nil {
 		t.Fatal(err)
-	}
-
-	for _, item := range []struct {
-		key  string
-		want int64
-	}{{keys[1], 0}, {keys[4], 0}, {keys[6], 1}} {
-		count, err := client.Do(tenantCtx, client.B().Exists().Key(item.key).Build()).AsInt64()
-		if err != nil || count != item.want {
-			t.Errorf("marker %s after completed job: count=%d error=%v; want %d", item.key, count, err, item.want)
-		}
 	}
 
 	var code string

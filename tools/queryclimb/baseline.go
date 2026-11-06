@@ -92,6 +92,9 @@ func baseline(ctx context.Context, root string, args []string) error {
 	if *candidateDB == "" {
 		*candidateDB = *database
 	}
+	if err := requireMainBaselineFor(ctx, root, *candidateRoot); err != nil {
+		return err
+	}
 	results, err := collectBaseline(
 		ctx, root, *candidateRoot, *database, *candidateDB, *casesPath, *iterations, *batches, *outputPath, *pageOracles,
 	)

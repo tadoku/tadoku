@@ -89,6 +89,7 @@ func initialize(ctx context.Context, root string, args []string) error {
 	if err != nil {
 		return err
 	}
+	applied := map[string]string{}
 	for _, path := range migrations {
 		sql, err := os.ReadFile(path)
 		if err != nil {
@@ -97,6 +98,10 @@ func initialize(ctx context.Context, root string, args []string) error {
 		if _, err := owner.Exec(ctx, string(sql)); err != nil {
 			return fmt.Errorf("migration %s: %w", path, err)
 		}
+		applied[filepath.Base(path)] = digest(string(sql))
+	}
+	if err := recordTemplateMigrations(ctx, owner, applied); err != nil {
+		return err
 	}
 	_, err = owner.Exec(ctx, `grant usage on schema public to tadoku;
   grant select, insert, update, delete on all tables in schema public to tadoku;

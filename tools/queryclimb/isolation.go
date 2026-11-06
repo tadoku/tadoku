@@ -34,6 +34,9 @@ func isolation(ctx context.Context, root string, args []string) error {
 	if *baselineCase != "" && *calibration == "" {
 		return errors.New("baseline buffer certification requires three calibration observations")
 	}
+	if err := requireMainBaselineFor(ctx, root, *candidateRoot); err != nil {
+		return err
+	}
 	a, err := inventory(root)
 	if err != nil {
 		return err

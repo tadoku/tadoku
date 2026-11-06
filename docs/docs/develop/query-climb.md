@@ -21,6 +21,18 @@ Table fingerprints stream sorted SHA-256 row digests, preserving row order
 independence, duplicate counts and NULLs without sorting or transferring full
 JSON rows.
 
+The baseline is always `origin/main`. `attempt`, and `isolation` or `baseline`
+with a different candidate checkout, fetch `origin/main` and reject a root whose
+migrations, sqlc queries or generated sqlc differ from it or have uncommitted
+changes. `init` records every up migration it applies in the template's
+`queryclimb.template_migrations`; `attempt` rejects a template without that
+manifest or whose manifest differs from the baseline, so rebuild templates with
+`init` after `main` gains a migration. A candidate may add only migrations
+numbered after the baseline's last one, each a single
+`create index concurrently` statement, and may not change or remove an existing
+file. `attempt` writes the plan to `migrations.json` before any build or clone
+and applies the new indexes to the candidate clones only.
+
 All commands share a host lock with `tools/queryclimb/run.sh`. Use that lock for
 external builds, tests and data loads too. Run one timed workload at a time and
 keep heavy work outside timed batches. A failed noise, equivalence, interface or
@@ -88,10 +100,15 @@ python3 tools/queryclimb/aa_page_journey.py <binary> <repo-root> <evidence-dir> 
   <source-db> <candidate-db> <single-case-file> <source-oracle-file>
 python3 tools/queryclimb/isolation_journey.py <binary> <repo-root> <evidence-dir> <template>
 python3 tools/queryclimb/page_journey.py <binary> <repo-root> <evidence-dir> <template> <cases>
+python3 tools/queryclimb/migration_journey.py <binary> <repo-root> <evidence-dir> <template>
 ```
 
 The gate journeys use synthetic measurement artifacts. The identity journey
 clones an owned PostgreSQL template and proves that changes to data,
 schema, statistics or planner settings reject the identity check. The page
 journey collects real rows and an oracle from boundary-cut fixtures, accepts a
-legal tied alternative and rejects an invented row.
+legal tied alternative and rejects an invented row. The migration journey runs
+`attempt` from an `origin/main` root against a seeded template built by the same
+binary. It proves that a new concurrent index reaches only the candidate clone,
+and that changed, removed, misnumbered or non-index candidate migrations, a
+dirty or outdated baseline, and stale or manifest-less templates are rejected.

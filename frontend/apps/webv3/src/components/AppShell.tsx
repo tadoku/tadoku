@@ -82,7 +82,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
           <div className="app-footer__meta">
             <span>Built by <a className="text-link" href="https://antonve.be">antonve</a></span>
-            <Button variant="link" onClick={toggleTheme} disabled={!hydrated}>
+            <Button variant="link" className="app-awaiting-hydration" onClick={toggleTheme} disabled={!hydrated}>
               <span className="app-theme-label--light">Use dark theme</span>
               <span className="app-theme-label--dark">Use light theme</span>
             </Button>
@@ -161,7 +161,7 @@ function AccountMenu({ viewer }: { viewer: SignedIn }) {
         ? <ActionMenu label={viewer.displayName} triggerVariant="ghost" items={[...items, { id: 'logout', label: 'Log out', onSelect: logOut }]} />
         : (
           // The menu's trigger as server HTML renders it, disabled until it can open.
-          <button type="button" className={buttonClassName({ variant: 'ghost' })} disabled>
+          <button type="button" className={buttonClassName({ variant: 'ghost', className: 'app-awaiting-hydration' })} disabled>
             <span>{viewer.displayName}</span>
             <ChevronDownIcon className={iconClassName('compact')} aria-hidden="true" />
           </button>

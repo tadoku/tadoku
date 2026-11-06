@@ -254,3 +254,6 @@ a { text-underline-offset: .2em; }
 
 /* Daily scores share their numeric columns evenly. */
 .contest-daily th { white-space: nowrap; }
+
+/* Header and footer controls wait only for hydration; they keep their colours instead of looking unavailable. */
+.app-awaiting-hydration:disabled { opacity: 1; cursor: progress; }

@@ -12,8 +12,8 @@
   .paper-choice input:focus-visible { --paper-control-focus-color: var(--paper-color-focus-ring); outline: var(--paper-focus-ring-width) solid var(--paper-control-focus-color); outline-offset: var(--paper-focus-ring-offset); box-shadow: inset 0 0 0 1px var(--paper-control-focus-color); }
   .paper-field--invalid .paper-choice input:focus-visible { --paper-control-focus-color: var(--paper-color-status-danger); }
   .paper-choice input:disabled + span { color: var(--paper-color-text-muted); cursor: not-allowed; }
-  /* Browsers fade a disabled box to about 1.3:1; a rule-coloured outline keeps it reading as a control. */
-  .paper-choice input[type="checkbox"]:disabled { outline: var(--paper-border-static-width) solid var(--paper-color-rule-default); outline-offset: -1px; border-radius: 2px; }
+  /* Browsers fade a disabled box to about 1.3:1; a field-edge outline keeps it reading as a control. */
+  .paper-choice input[type="checkbox"]:disabled { outline: var(--paper-border-static-width) solid var(--paper-color-rule-field-edge); outline-offset: -1px; border-radius: 2px; }
   .paper-radio-select--segmented .paper-choice-list { display: inline-flex; flex-wrap: wrap; align-items: stretch; inline-size: fit-content; max-inline-size: 100%; gap: 0; }
   .paper-radio-select__segment { position: relative; display: inline-grid; grid-template-columns: 1fr auto; align-items: center; flex: 1 1 7rem; min-block-size: var(--paper-control-height); min-inline-size: var(--paper-radio-min-width); margin-block-start: calc(-1 * var(--paper-border-static-width)); margin-inline-start: calc(-1 * var(--paper-border-static-width)); padding: var(--paper-field-padding-block) var(--paper-field-padding-inline); border: var(--paper-border-static-width) solid var(--paper-color-rule-field-edge); border-block-end-width: var(--paper-border-field-edge-width); color: var(--paper-color-text-ink); background: var(--paper-color-surface-paper); font-size: var(--paper-type-body-size); font-weight: var(--paper-type-label-weight); line-height: 1.25; cursor: pointer; }
   .paper-radio-select__segment:first-child { margin-inline-start: 0; }

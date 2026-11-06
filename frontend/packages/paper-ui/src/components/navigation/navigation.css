@@ -377,8 +377,12 @@
 
   .paper-pagination__control[aria-disabled="true"] {
     color: var(--paper-color-text-muted);
-    opacity: 0.55;
     cursor: not-allowed;
+  }
+
+  .paper-pagination__of {
+    display: none;
+    font-weight: 400;
   }
 
   .paper-pagination__gap {
@@ -398,8 +402,10 @@
     .paper-navbar__mobile-trigger { display: grid; }
     .paper-navbar__mobile-panel[data-open="true"] { display: block; }
     .paper-breadcrumb__item:not(:nth-last-child(2), :last-child) { display: none; }
-    .paper-pagination__page,
+    /* Phones keep only the current page, as "2 of 5", between Previous and Next. */
+    .paper-pagination__list > li:has(> .paper-pagination__page:not([aria-current="page"])),
     .paper-pagination__gap { display: none; }
+    .paper-pagination__of { display: inline; }
     .paper-pagination__list { justify-content: space-between; }
   }
 

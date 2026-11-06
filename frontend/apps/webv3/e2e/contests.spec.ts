@@ -30,8 +30,8 @@ async function contests(request: APIRequestContext, official: boolean, page = 1,
 
 /** The round tag a contest shows on the UTC day `today`. */
 function statuses(contest: Contest, today = new Date().toISOString().slice(0, 10)) {
-  if (today > contest.contest_end) return ['Ended']
-  return [today >= contest.contest_start ? 'Live now' : 'Upcoming']
+  const round = today > contest.contest_end ? 'Ended' : today >= contest.contest_start ? 'Live now' : 'Upcoming'
+  return contest.private ? [round, 'Unlisted'] : [round]
 }
 
 /** Every API contest is a row in the API's order, linking to its contest page, with its privacy and status tags. */
@@ -44,9 +44,6 @@ async function expectRows(page: Page, data: Contests, pageNumber = 1) {
     await expect(row.getByRole('link', { name: contest.title, exact: true }))
       .toHaveAttribute('href', `/contests/${contest.id}/leaderboard/1`)
     await expect(row.locator('.contest-row__title .paper-status-tag')).toHaveText(statuses(contest))
-    // A contest with nothing to add renders no metadata line at all.
-    if (contest.private) await expect(row.locator('.contest-row__allows')).toContainText('Unlisted')
-    else await expect(row).not.toContainText('Unlisted')
   }
   if (data.total_size === 0) {
     await expect(page.getByRole('heading', { level: 2 })).toHaveText(/No contests found|You don’t organize any contests yet/)
@@ -118,10 +115,10 @@ test('server-rendered official and community lists show the API contests and lin
       .toHaveText(name === 'official' ? 'Official' : 'Community')
     await expect(page.getByRole('link', { name: 'Contests', exact: true }).first()).toHaveAttribute('href', '/contests/official/1')
     await expect(page.getByText('Contest dates are calendar days in UTC.')).toBeVisible()
-    // Guests see no create action and no restrictions, as in Webv2; a row may still name its deadline or visibility.
+    // Guests see no create action and no restrictions, as in Webv2; a row may still name its deadline.
     await expect(page.getByRole('link', { name: 'Create contest' })).toHaveCount(0)
     for (const meta of await page.locator('.contest-row__allows').allTextContents()) {
-      expect(meta).toMatch(/^(Registration closes \d+ \w+ \d{4})?( · )?(Unlisted)?$/)
+      expect(meta).toMatch(/^Registration closes \d+ \w+ \d{4}$/)
     }
     await expectRows(page, data)
     await page.screenshot({ path: testInfo.outputPath(`ssr-${name}.png`), fullPage: true })

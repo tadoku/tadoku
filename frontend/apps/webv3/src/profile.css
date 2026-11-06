@@ -31,7 +31,8 @@
 .profile-breakdown li > div { display: flex; justify-content: space-between; gap: 16px; margin-block-end: 8px; font-size: .9375rem; overflow-wrap: anywhere; }
 .profile-breakdown strong { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .profile-breakdown small { font-weight: 400; color: var(--paper-color-text-muted); }
-.profile-bar { display: block; block-size: 6px; background: var(--paper-color-rule-default); }
+/* The track sits between the rule and field-edge greys, so it shows the whole scale without rivalling the fill. */
+.profile-bar { display: block; block-size: 6px; background: color-mix(in srgb, var(--paper-color-rule-field-edge) 50%, var(--paper-color-rule-default)); }
 .profile-bar > span { display: block; block-size: 100%; min-inline-size: 2px; background: var(--paper-color-text-link); }
 .profile-contests li { display: grid; padding-block: 12px; border-block-end: 1px solid var(--paper-color-rule-default); overflow-wrap: anywhere; }
 .profile-contest-title { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
@@ -55,6 +56,8 @@
 .profile-entry-date { padding-block-start: 3px; color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); }
 .profile-entry-body { min-width: 0; }
 .profile-entry-title { color: var(--paper-color-text-ink); font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; text-decoration: underline; text-decoration-color: var(--paper-color-text-muted); text-decoration-thickness: 1px; text-underline-offset: .2em; }
+/* A log's description can run long; the list previews two lines and the log page shows it whole. */
+.profile-entry-title--log { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 .profile-entry-title:hover, .profile-entry-title:focus-visible { color: var(--paper-color-text-link); text-decoration-color: currentColor; }
 .profile-entry-meta { margin: 6px 0 0; color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); }
 .profile-entry-nsfw { margin-block-start: 10px; font-size: .875rem; }

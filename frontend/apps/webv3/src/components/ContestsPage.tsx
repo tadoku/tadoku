@@ -152,14 +152,14 @@ function ContestRow({ contest, names, today }: {
   const activities = contest.activity_type_id_allow_list.length
     ? contest.activity_type_id_allow_list.map(id => names?.activities[id] ?? String(id)).join(', ')
     : null
-  const meta = [registration, contest.private ? 'Unlisted' : null, names ? languages : null, names ? activities : null].filter(Boolean).join(' · ')
+  const meta = [registration, names ? languages : null, names ? activities : null].filter(Boolean).join(' · ')
 
   return (
     <li className="contest-row">
       <div className="contest-row__body">
         <div className="contest-row__title">
           <h2 className="paper-type-component"><a href={links.contest(contest.id)}>{contest.title}</a></h2>
-          {round}
+          <span className="contest-row__tags">{round}{contest.private ? <StatusTag>Unlisted</StatusTag> : null}</span>
         </div>
         <p>{formatPeriod(contest)}</p>
         {meta ? <p className="contest-row__allows">{meta}</p> : null}

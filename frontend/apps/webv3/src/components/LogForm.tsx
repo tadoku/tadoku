@@ -114,7 +114,7 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
               <div className="paper-form-footer log-form__footer">
                 <div className="paper-form-footer__actions">
                   <Button type="submit" disabled={disabled} loading={pending} loadingLabel="Saving">
-                    {editing ? 'Save' : 'Create'}
+                    {editing ? 'Save' : 'Log activity'}
                   </Button>
                   {editing
                     ? <Link className="text-link" to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>

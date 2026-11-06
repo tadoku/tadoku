@@ -17,7 +17,7 @@ and optional for the others. Changing the activity clears the quantity, because
 activities count in different units. A missing unit is reported on the amount
 field, which shows one error for the amount and its unit. The description is one
 line. As in Webv2, `/logs/new?amount=<n>` prefills a positive whole amount; any
-other value is ignored. Cancel returns home, and Create saves.
+other value is ignored. Cancel returns home, and Log activity saves.
 
 Tags are chips, at most 10. While the viewer types, and once typing pauses for
 300 ms, the tag suggestion operation offers the viewer's own tags containing the

@@ -81,7 +81,7 @@ function Entry({ log, showParticipant, actions, firstOfDay }: {
     <li className={firstOfDay ? undefined : 'profile-entry--same-day'}>
       <time dateTime={day} className={firstOfDay ? 'profile-entry-date' : 'profile-entry-date paper-visually-hidden'}>{formatDate(day)}</time>
       <div className="profile-entry-body">
-        <Link className="profile-entry-title" to="/logs/$logId" params={{ logId: log.id }}>
+        <Link className="profile-entry-title profile-entry-title--log" to="/logs/$logId" params={{ logId: log.id }}>
           {nsfw || !log.description ? subject : log.description}
         </Link>
         <p className="profile-entry-meta">{meta.filter(Boolean).join(' · ')}</p>

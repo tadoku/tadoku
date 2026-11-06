@@ -200,7 +200,7 @@ a { text-underline-offset: .2em; }
 .standings-aside h2 { margin: 0 0 12px; font-family: var(--paper-font-display); font-size: var(--paper-type-component-size); line-height: var(--paper-type-component-line-height); font-weight: 700; }
 .standings-aside p { margin: 0 0 16px; }
 .standings-aside > p { color: var(--paper-color-text-muted); }
-.standings-description { margin-top: 16px !important; white-space: pre-line; }
+.standings-description { white-space: pre-line; }
 
 @media (max-width: 1000px) {
   .standings-workspace { grid-template-columns: minmax(0, 1fr) 224px; gap: 24px; }
@@ -228,7 +228,7 @@ a { text-underline-offset: .2em; }
 .contest-row__body { min-width: 0; overflow-wrap: anywhere; }
 /* The tag stays on the title's first line; a long title wraps beside it rather than around it. */
 .contest-row__title { display: grid; grid-template-columns: minmax(0, max-content) auto; justify-content: start; align-items: start; gap: 4px 8px; }
-.contest-row__title .paper-status-tag { margin-block-start: 2px; }
+.contest-row__tags { display: flex; flex-wrap: wrap; gap: 4px 6px; margin-block-start: 2px; }
 .contest-row__title h2 { margin: 0; font-family: var(--paper-font-body); font-size: 1rem; line-height: 1.5; font-weight: 600; }
 .contest-row__title a { color: inherit; text-decoration: underline; text-decoration-color: var(--paper-color-text-muted); text-decoration-thickness: 1px; text-underline-offset: .2em; }
 .contest-row__title a:hover, .contest-row__title a:focus-visible { color: var(--paper-color-text-link); text-decoration-color: currentColor; }

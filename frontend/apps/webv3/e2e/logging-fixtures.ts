@@ -42,7 +42,7 @@ export const contestStepUrl = /\/logs\/[a-f0-9-]{36}\/contests\?preselect=1$/
 /** A save: the only POST the activity form sends, to its server function. */
 export const isSaveRequest = (request: Request) => request.method() === 'POST' && request.url().includes('_serverFn')
 
-export const saveButton = (page: Page) => page.getByRole('button', { name: 'Create', exact: true })
+export const saveButton = (page: Page) => page.getByRole('button', { name: 'Log activity', exact: true })
 
 /**
  * Creates the open draft and returns its ID, leaving the page on the saved log's detail. An account with ongoing

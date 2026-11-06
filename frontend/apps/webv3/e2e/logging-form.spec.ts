@@ -119,7 +119,7 @@ test('the last logged language and activity are restored for the next log, and `
 
   // A remembered timed activity starts without an amount, even when `?amount=` asks for one.
   await page.goto('/logs/new?amount=12')
-  await expect(page.getByRole('button', { name: 'Create', exact: true })).toBeEnabled({ timeout: 15_000 })
+  await expect(page.getByRole('button', { name: 'Log activity', exact: true })).toBeEnabled({ timeout: 15_000 })
   await expect(language(page)).toHaveValue(listened)
   await expect(activity(page)).toHaveValue(String((await record(readerContext, timed)).activity.id))
   await expect(amountInput(page)).toHaveCount(0)
@@ -131,7 +131,7 @@ test('the last logged language and activity are restored for the next log, and `
   await createLog(page)
 
   await page.goto('/logs/new?amount=12')
-  await expect(page.getByRole('button', { name: 'Create', exact: true })).toBeEnabled({ timeout: 15_000 })
+  await expect(page.getByRole('button', { name: 'Log activity', exact: true })).toBeEnabled({ timeout: 15_000 })
   await expect(language(page)).toHaveValue(read)
   await expect(activity(page).locator('option:checked')).toHaveText('Reading')
   await expect(amountInput(page)).toHaveValue('12')
@@ -199,7 +199,7 @@ test('a learner without ongoing registrations goes from Create straight to the s
 
   await openForm(page)
   await amountInput(page).fill('3')
-  await page.getByRole('button', { name: 'Create', exact: true }).click()
+  await page.getByRole('button', { name: 'Log activity', exact: true }).click()
   await expect(page).toHaveURL(savedLogUrl)
   const saved = await record(page.context(), new URL(page.url()).pathname.split('/')[2])
   expect(saved).toMatchObject({ amount: 3, registrations: [] })

@@ -54,7 +54,9 @@ export const autocompleteDetails: ComponentDetails = {
     variants: "Accepts string[] instead of objects, so format and getId are not needed. Use MultiAutocomplete when tags have separate identifiers and labels.",
     states: "Selected tags are absent from suggestions. New tags are trimmed and duplicates are ignored regardless of case. required means at least one tag. At the limit the input keeps focus but accepts no additions; removal stays available.",
     content: "Offer common tags as suggestions without making them a fixed vocabulary. State any selection limit in the hint. An empty options array still allows free-text tags.", implementation: formSetup,
-    props: [...autocompleteProps.filter((prop) => !["getId", "format", "options"].includes(prop.name)), { name: "options", type: "readonly string[]", required: true, description: "Suggested tags. Users can also create their own strings; selected tags are hidden from this list." }, selectionLimit],
+    props: [...autocompleteProps.filter((prop) => !["getId", "format", "options"].includes(prop.name)), { name: "options", type: "readonly string[]", required: true, description: "Suggested tags. Users can also create their own strings; selected tags are hidden from this list." }, selectionLimit,
+      { name: "onQueryChange", type: "(query: string) => void", description: "Called whenever the typed text changes, including the empty query after a tag is added. Fetch remote suggestions for it in the application and pass them back as options." },
+      { name: "formatOption", type: "(tag: string) => string", defaultValue: "tag => tag", description: "Visible suggestion label, for example a usage count. Selection still stores the plain tag, and chips show it." }],
   },
 };
 

@@ -154,3 +154,27 @@ describe("TagsInput creation and selection", () => {
     expect(screen.getByRole("button", { name: "Show tags options" })).toBeDisabled();
   });
 });
+
+describe("TagsInput remote suggestions", () => {
+  it("reports each query change, including the reset after a tag is added", async () => {
+    const user = userEvent.setup();
+    const queries: string[] = [];
+    render(<TagsForm options={[]} onQueryChange={query => queries.push(query)} />);
+    await user.type(screen.getByRole("combobox", { name: "Tags" }), "ma{Enter}");
+    expect(screen.getByTestId("tags")).toHaveTextContent('["ma"]');
+    expect(queries).toEqual(["m", "ma", ""]);
+  });
+
+  it("labels suggestions with formatOption but stores and shows the plain tag", async () => {
+    const user = userEvent.setup();
+    render(<TagsForm options={["manga", "history"]} formatOption={tag => tag === "manga" ? "manga (3×)" : tag} />);
+    const input = screen.getByRole("combobox", { name: "Tags" });
+    await user.type(input, "man");
+    expect(screen.queryByRole("option", { name: "manga" })).not.toBeInTheDocument();
+    await user.click(await screen.findByRole("option", { name: "manga (3×)" }));
+    expect(screen.getByTestId("tags")).toHaveTextContent('["manga"]');
+    expect(screen.getByRole("button", { name: "Remove manga" })).toBeVisible();
+    await user.type(input, "new tag");
+    expect(await screen.findByRole("option", { name: "Add “new tag”" })).toBeVisible();
+  });
+});

@@ -128,9 +128,11 @@ export function ContestForm({ options, viewerId, admin }: {
             </fieldset>
 
             {failure ? <CreateFailure failure={failure} /> : null}
-            <div className="goal-actions contest-form-actions">
-              <Button type="submit" disabled={disabled}>{pending ? 'Creating…' : 'Create contest'}</Button>
-              <Link className="text-link" to="/contests/official/$" params={{ _splat: '1' }}>Cancel</Link>
+            <div className="paper-form-footer">
+              <div className="paper-form-footer__actions">
+                <Button type="submit" disabled={disabled}>{pending ? 'Creating…' : 'Create contest'}</Button>
+                <Link className="text-link" to="/contests/official/$" params={{ _splat: '1' }}>Cancel</Link>
+              </div>
             </div>
           </form.Form>
         </form.AppForm>

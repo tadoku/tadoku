@@ -134,7 +134,7 @@ function ContestsForm({ log, registrations, viewerId }: {
     <div className="goal-page">
       <PageHeader
         title="Submit to contests"
-        lead={[log.language.name, log.activity.name, log.description].filter(Boolean).join(' · ')}
+        lead={`${log.language.name} · ${log.activity.name}`}
         backLink={{ href: `/logs/${log.id}`, label: log.description || `${log.language.name} ${log.activity.name}` }}
       />
       <Surface className="log-surface">
@@ -182,11 +182,13 @@ function ContestsForm({ log, registrations, viewerId }: {
             </fieldset>
 
             {failure ? <SaveFailure failure={failure} /> : null}
-            <div className="goal-actions">
-              <Button type="submit" disabled={disabled || !eligible.length}>
-                {pending ? 'Saving…' : 'Save submissions'}
-              </Button>
-              <Link className="text-link" to="/logs/$logId" params={{ logId: log.id }}>Cancel</Link>
+            <div className="paper-form-footer">
+              <div className="paper-form-footer__actions">
+                <Button type="submit" disabled={disabled || !eligible.length}>
+                  {pending ? 'Saving…' : 'Save submissions'}
+                </Button>
+                <Link className="text-link" to="/logs/$logId" params={{ logId: log.id }}>Cancel</Link>
+              </div>
             </div>
           </form.Form>
         </form.AppForm>

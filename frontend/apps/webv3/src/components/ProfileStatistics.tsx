@@ -35,7 +35,6 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
             className="profile-empty-year"
             headingLevel={3}
             title={`No activity recorded in ${year}`}
-            description={owner ? undefined : 'Scores and the activity calendar appear after the first update of the year.'}
             actions={owner ? <a className={buttonClassName()} href={links.logs}>Log activity</a> : null}
           />
         ) : (
@@ -112,15 +111,19 @@ function HeatmapScroll({ latest, children }: { latest: boolean; children: ReactN
   useEffect(() => {
     const scroller = ref.current
     if (!scroller) return
-    // Month labels that slide under the pinned weekday gutter would show as clipped fragments, so they hide there.
+    // While the year scrolls, month labels under the pinned weekday gutter or past the visible edge would show as
+    // clipped fragments, so they hide there. Glyph side bearings sit a few pixels outside a label's anchor.
     const hideCoveredMonths = () => {
-      const edge = scroller.querySelector('.paper-heatmap__weekdays')?.getBoundingClientRect().right ?? 0
+      const scrolls = scroller.scrollWidth - scroller.clientWidth > 2
+      const start = (scroller.querySelector('.paper-heatmap__weekdays')?.getBoundingClientRect().right ?? 0) - 4
+      const end = scroller.getBoundingClientRect().right + 1
       for (const label of scroller.querySelectorAll<SVGTextElement>('svg.paper-heatmap text')) {
-        label.style.visibility = label.getBoundingClientRect().left < edge - 1 ? 'hidden' : ''
+        const { left, right } = label.getBoundingClientRect()
+        label.style.visibility = scrolls && (left < start || right > end) ? 'hidden' : ''
       }
     }
     // The current year opens with today near the right edge and about a week after it in view.
-    const todayCell = latest ? scroller.querySelector('[data-today]') : null
+    const todayCell = latest && scroller.scrollWidth - scroller.clientWidth > 2 ? scroller.querySelector('[data-today]') : null
     if (todayCell) scroller.scrollLeft += todayCell.getBoundingClientRect().right - (scroller.getBoundingClientRect().right - 48)
     hideCoveredMonths()
     scroller.addEventListener('scroll', hideCoveredMonths, { passive: true })

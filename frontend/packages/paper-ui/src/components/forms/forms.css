@@ -91,4 +91,8 @@
     .paper-combobox__chips:has(.paper-combobox__chip-input:focus-visible),
     .paper-combobox__chips:has(> .paper-combobox__trigger:focus-visible) { --paper-control-focus-color: Highlight; border-block-end-color: Highlight; outline: 3px solid Highlight; outline-offset: 0; box-shadow: none; }
   }
+
+  /* A form's closing row: actions at the start, an optional summary such as an estimate at the end. */
+  .paper-form-footer { display: flex; flex-wrap: wrap-reverse; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem; padding-block-start: var(--paper-space-4); border-block-start: var(--paper-border-static-width) solid var(--paper-color-rule-default); }
+  .paper-form-footer__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; }
 }

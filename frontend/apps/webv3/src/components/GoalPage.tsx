@@ -41,6 +41,7 @@ export function GoalPage() {
               <form.AppField name="days">{field => <field.Input id="goal-days" label="Days each week (1–7)" type="number" inputMode="numeric" min={1} max={7} step={1} />}</form.AppField>
             </div>
 
+            <p className="goal-form__note">Saved in this browser only; it doesn’t count towards contests.</p>
             <div className="goal-actions">
               <Button type="submit">Save goal</Button>
               <p className="goal-status" role="status" data-result={result ?? undefined}>
@@ -50,10 +51,11 @@ export function GoalPage() {
           </fieldset>
         </form.Form></form.AppForm>
 
-        <aside className="goal-aside" aria-label="Your goal">
-          {saved ? <GoalSummary goal={saved} /> : null}
-          <p className="goal-aside__note">Saved in this browser only; it doesn’t count towards contests.</p>
-        </aside>
+        {saved ? (
+          <aside className="goal-aside" aria-label="Your goal">
+            <GoalSummary goal={saved} />
+          </aside>
+        ) : null}
       </div>
     </div>
   )

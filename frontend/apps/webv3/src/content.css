@@ -47,7 +47,8 @@
 .blog-lead h2 { margin: 0; font-family: var(--paper-font-display); font-size: 1.5rem; line-height: 1.35; overflow-wrap: break-word; }
 .blog-lead h2 a, .blog-posts a { color: var(--paper-color-text-ink); text-decoration-color: var(--paper-color-text-muted); }
 .blog-lead h2 a:hover, .blog-posts a:hover { color: var(--paper-color-text-link); text-decoration-color: currentColor; }
-.blog-date { margin: 4px 0 16px; color: var(--paper-color-text-muted); font-size: .875rem; }
+.blog-date { margin: 4px 0 16px; color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); }
+.content-article .paper-page-header__lead time { font-size: var(--paper-type-metadata-size); }
 .blog-lead > p:not(.blog-date) { max-width: 66ch; margin: 0 0 20px; line-height: 1.8; overflow-wrap: break-word; }
 .blog-older-title { margin: 0 0 8px; font-size: .875rem; font-family: var(--paper-font-body); color: var(--paper-color-text-muted); }
 .blog-posts { list-style: none; margin: 0 0 24px; padding: 0; }

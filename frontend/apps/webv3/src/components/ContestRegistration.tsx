@@ -203,9 +203,11 @@ function RegistrationForm({ contest, viewerId, previous, options }: {
             ) : null}
           </fieldset>
           {failure ? <SaveFailure failure={failure} registered={previous !== null} /> : null}
-          <div className="registration-actions">
-            <Button type="submit" disabled={disabled}>{pending ? 'Saving…' : previous ? 'Update registration' : 'Register'}</Button>
-            <a className="text-link" href={links.contest(contest.id)}>Cancel</a>
+          <div className="paper-form-footer">
+            <div className="paper-form-footer__actions">
+              <Button type="submit" disabled={disabled}>{pending ? 'Saving…' : previous ? 'Update registration' : 'Register'}</Button>
+              <a className="text-link" href={links.contest(contest.id)}>Cancel</a>
+            </div>
           </div>
         </form.Form>
       </form.AppForm>

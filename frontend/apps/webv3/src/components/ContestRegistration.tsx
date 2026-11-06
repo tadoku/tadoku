@@ -184,8 +184,7 @@ function RegistrationForm({ contest, viewerId, previous, options }: {
             <form.AppField name="languages" validators={{ onChange: validateLanguages, onSubmit: validateLanguages }}>
               {field => (
                 <field.AutocompleteMultiInput
-                  label="Languages"
-                  hint="Select up to 3 languages."
+                  label="Languages (up to 3)"
                   required
                   maxSelections={3}
                   options={options}

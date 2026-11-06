@@ -64,8 +64,8 @@ export function ContestForm({ options, viewerId, admin }: {
               <form.AppField name="description">
                 {field => (
                   <field.TextArea
-                    label="Description"
-                    hint="Optional. Shown on the contest's standings."
+                    label="Description (optional)"
+                    hint="Shown on the contest’s standings."
                     rows={3}
                   />
                 )}

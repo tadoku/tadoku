@@ -123,7 +123,7 @@ test('an organizer gets each invalid field focused, then creates a contest and l
 
   const name = `Webv3 creation check ${unique()}`
   await title.fill(name)
-  await page.getByLabel('Description', { exact: true }).fill('  Read anything you like.  ')
+  await page.getByLabel(/^Description/).fill('  Read anything you like.  ')
   await page.getByLabel('Start date (UTC)').fill(utcDay(20))
   await page.getByLabel('End date (UTC)').fill(utcDay(10))
   await page.getByLabel('Sign-up deadline (UTC)').fill(utcDay(15))

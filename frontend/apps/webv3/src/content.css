@@ -33,8 +33,9 @@
     radial-gradient(farthest-side at 100% 50%, var(--content-table-shade), transparent) right / .75rem 100% no-repeat scroll;
 }
 .content-table:focus-visible { outline: 2px solid var(--paper-color-text-link); outline-offset: 2px; }
-.content-table td:first-child { font-weight: 600; white-space: nowrap; }
-.content-table table { min-inline-size: 28rem; }
+.content-table td:first-child { white-space: nowrap; }
+/* Only wide rate tables keep a minimum width and scroll; two- and three-column tables fit the column. */
+.content-table table:has(th:nth-child(4)) { min-inline-size: 28rem; }
 @media (max-width: 30rem) { .content-prose .content-table :is(th, td) { padding-inline-end: 12px; } }
 .content-table :is(th, td):not(:first-child) { text-align: end; }
 .content-table :is(th, td):last-child { padding-inline-end: 0; }

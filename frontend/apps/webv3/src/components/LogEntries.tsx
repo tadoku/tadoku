@@ -36,7 +36,15 @@ export function LogEntries({ logs, total, page, pageHref, empty, showParticipant
   return (
     <>
       <ol className="profile-entries">
-        {logs.map(log => <Entry key={log.id} log={log} showParticipant={showParticipant} actions={actions?.(log)} />)}
+        {logs.map((log, index) => (
+          <Entry
+            key={log.id}
+            log={log}
+            showParticipant={showParticipant}
+            actions={actions?.(log)}
+            firstOfDay={index === 0 || logDay(logs[index - 1]) !== logDay(log)}
+          />
+        ))}
       </ol>
       {pages > 1 ? (
         <div className="profile-entries-footer">
@@ -49,15 +57,23 @@ export function LogEntries({ logs, total, page, pageHref, empty, showParticipant
 }
 
 /** Webv2 hides a description tagged NSFW until the reader chooses to see it. */
-function Entry({ log, showParticipant, actions }: { log: ImmersionLog; showParticipant: boolean; actions: ReactNode }) {
-  const day = new Date(log.created_at).toISOString().slice(0, 10)
+const logDay = (log: ImmersionLog) => new Date(log.created_at).toISOString().slice(0, 10)
+
+/** A day's first entry shows its date; later entries that day keep it for assistive technology only. */
+function Entry({ log, showParticipant, actions, firstOfDay }: {
+  log: ImmersionLog
+  showParticipant: boolean
+  actions: ReactNode
+  firstOfDay: boolean
+}) {
+  const day = logDay(log)
   const subject = `${log.language.name} ${log.activity.name.toLocaleLowerCase()}`
   const nsfw = log.tags.some(tag => tag.toLowerCase() === 'nsfw')
   const meta = [showParticipant ? log.user_display_name ?? 'Unknown user' : null, log.language.name, log.activity.name, tracking(log)]
 
   return (
     <li>
-      <time dateTime={day} className="profile-entry-date">{formatDate(day)}</time>
+      <time dateTime={day} className={firstOfDay ? 'profile-entry-date' : 'profile-entry-date paper-visually-hidden'}>{formatDate(day)}</time>
       <div className="profile-entry-body">
         <Link className="profile-entry-title" to="/logs/$logId" params={{ logId: log.id }}>
           {nsfw || !log.description ? subject : log.description}

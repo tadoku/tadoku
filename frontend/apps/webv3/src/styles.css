@@ -60,6 +60,7 @@ a { text-underline-offset: .2em; }
 .home-how p { margin: 0; max-width: 34ch; font-size: .9375rem; line-height: 1.7; color: var(--paper-color-text-ink); }
 .home-strip { display: grid; grid-template-columns: 230px minmax(0, 1fr) auto; align-items: center; gap: 32px; margin-top: 32px; padding: 24px 0 0; border-top: 1px solid var(--paper-color-rule-default); }
 .home-strip + .home-strip { margin-top: 24px; }
+.home-strip.home-strip--action { display: block; max-width: none; margin-top: 24px; padding-top: 24px; font-size: .875rem; }
 .home-strip > a { grid-column: 3; justify-self: end; }
 .home-strip h2 { margin: 0 0 4px; font-size: .875rem; font-family: var(--paper-font-body); }
 .home-strip p { margin: 0; max-width: 53ch; font-size: .875rem; color: var(--paper-color-text-muted); line-height: 1.7; }
@@ -141,6 +142,8 @@ a { text-underline-offset: .2em; }
 .app-login-link { color: var(--paper-color-text-ink); font-weight: 600; text-decoration: none; }
 .app-login-link:hover, .app-login-link:focus-visible { text-decoration: underline; }
 .contest-daily .paper-table__row-header { font-weight: 400; white-space: nowrap; }
+/* On phones the score column, the sum of the language columns, gives way so the running total stays in view. */
+@media (max-width: 30rem) { .contest-daily :is(th, td):nth-last-child(2) { display: none; } }
 .app-account-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-3, .75rem); }
 .app-account-menu--desktop .paper-button > span { max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .app-mobile-account { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--paper-color-rule-subtle); }
@@ -215,7 +218,7 @@ a { text-underline-offset: .2em; }
 .contests-status, .contests-note { color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); }
 .contests-note { border-top: 1px solid var(--paper-color-rule-default); margin: 24px 0 0; padding-top: 20px; }
 .contest-list { list-style: none; margin: 8px 0 0; padding: 0; }
-.contest-row { padding: 20px 0; border-top: 1px solid var(--paper-color-rule-default); }
+.contest-row { padding: 16px 0; border-top: 1px solid var(--paper-color-rule-default); }
 .contest-row:first-child { border-top: 0; }
 .contest-row__body { min-width: 0; overflow-wrap: anywhere; }
 .contest-row__title { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }

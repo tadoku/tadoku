@@ -68,7 +68,7 @@ export function HomePage() {
             </div>
           )}
 
-        <Surface as="section" elevation="showcase" accent className="home-ledger" aria-labelledby="home-board-title">
+        <Surface as="section" elevation="showcase" className="home-ledger" aria-labelledby="home-board-title">
           <ContestBoard data={data} phase={phase} today={today} retrying={isFetching} retry={() => void refetch()} />
         </Surface>
       </section>
@@ -96,13 +96,17 @@ export function HomePage() {
       )}
 
       {member ? (
-        <section className="home-strip" aria-labelledby="home-goal-title">
-          <div>
-            <h2 id="home-goal-title">Daily goal</h2>
-            {goal ? <p>{describeGoal(goal)}</p> : null}
-          </div>
-          <Link className="text-link" to="/plan">{goal ? 'Change goal' : 'Set a daily goal'}</Link>
-        </section>
+        goal ? (
+          <section className="home-strip" aria-labelledby="home-goal-title">
+            <div>
+              <h2 id="home-goal-title">Daily goal</h2>
+              <p>{describeGoal(goal)}</p>
+            </div>
+            <Link className="text-link" to="/plan">Change goal</Link>
+          </section>
+        ) : (
+          <p className="home-strip home-strip--action"><Link className="text-link" to="/plan">Set a daily goal</Link></p>
+        )
       ) : null}
     </div>
   )

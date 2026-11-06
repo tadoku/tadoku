@@ -10,7 +10,7 @@
   --paper-private-overlay: #fffefa;
   --paper-private-scrim: rgb(33 26 29 / 28%);
   --paper-private-ink: #211a1d;
-  --paper-private-muted: #686064;
+  --paper-private-muted: #5e5659;
   --paper-private-inverse: #fffefa;
   --paper-private-rule-subtle: #e2ddd4;
   --paper-private-rule-default: #bcb4a8;
@@ -75,10 +75,10 @@
   --paper-color-chart-8: #83565d;
 
   --paper-color-heat-0: #d3ccc0;
-  --paper-color-heat-1: #a597ea;
-  --paper-color-heat-2: #7f6dd9;
-  --paper-color-heat-3: #5a49bd;
-  --paper-color-heat-4: #3a2c8a;
+  --paper-color-heat-1: #8a7ae0;
+  --paper-color-heat-2: #6a58cf;
+  --paper-color-heat-3: #4d3daa;
+  --paper-color-heat-4: #33277c;
 
   --paper-elevation-flat: none;
   --paper-elevation-floating: 3px 3px 0 var(--paper-private-shadow);
@@ -161,10 +161,10 @@
   --paper-color-chart-8: #c58e9b;
 
   --paper-color-heat-0: #4a4448;
-  --paper-color-heat-1: #6a5bb0;
-  --paper-color-heat-2: #8a7bd6;
-  --paper-color-heat-3: #b0a2ef;
-  --paper-color-heat-4: #ddd5fc;
+  --paper-color-heat-1: #8f7de0;
+  --paper-color-heat-2: #b3a5f2;
+  --paper-color-heat-3: #d6ccfb;
+  --paper-color-heat-4: #f3efff;
 }
 
 :root {

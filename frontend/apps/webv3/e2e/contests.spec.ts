@@ -28,11 +28,10 @@ async function contests(request: APIRequestContext, official: boolean, page = 1,
   return response.json() as Promise<Contests>
 }
 
-/** The round and registration tags a contest shows on the UTC day `today`. */
+/** The round tag a contest shows on the UTC day `today`. */
 function statuses(contest: Contest, today = new Date().toISOString().slice(0, 10)) {
   if (today > contest.contest_end) return ['Ended']
-  const round = today >= contest.contest_start ? 'Live now' : 'Upcoming'
-  return [round, today <= contest.registration_end ? 'Registration open' : 'Registration closed']
+  return [today >= contest.contest_start ? 'Live now' : 'Upcoming']
 }
 
 /** Every API contest is a row in the API's order, linking to its contest page, with its privacy and status tags. */
@@ -52,9 +51,10 @@ async function expectRows(page: Page, data: Contests, pageNumber = 1) {
     return
   }
   const first = (pageNumber - 1) * pageSize + 1
-  await expect(page.locator('.contests-pagination > p')).toHaveText(
-    `${count.format(first)}–${count.format(first + data.contests.length - 1)} of ${count.format(data.total_size)} contests`,
-  )
+  // The range summary appears only beside page links.
+  await expect(page.locator('.contests-pagination > p')).toHaveText(data.total_size > pageSize
+    ? [`${count.format(first)}–${count.format(first + data.contests.length - 1)} of ${count.format(data.total_size)} contests`]
+    : [])
   await expect(page.getByRole('navigation', { name: 'Contest pages' })).toHaveCount(data.total_size > pageSize ? 1 : 0)
 }
 

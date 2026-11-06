@@ -35,7 +35,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     { type: 'link', id: 'home', label: 'Home', href: links.home, current: currentPath === links.home },
     { type: 'link', id: 'leaderboard', label: 'Leaderboard', href: links.leaderboard, current: currentPath.startsWith('/leaderboard/') },
     { type: 'link', id: 'contests', label: 'Contests', href: links.contests, current: currentPath.startsWith('/contests/') },
-    { type: 'link', id: 'blog', label: 'Blog', href: links.blog, current: currentPath.startsWith('/blog/') },
+    { type: 'link', id: 'blog', label: 'Blog', href: links.blog, current: currentPath === links.blog || currentPath.startsWith('/blog/') },
     { type: 'link', id: 'guide', label: 'Guide', href: links.guide, current: currentPath === links.guide },
   ]
 

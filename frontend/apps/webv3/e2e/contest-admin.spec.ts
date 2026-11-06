@@ -201,8 +201,8 @@ test('an administrator drafts, publishes and activates a contest rule set', asyn
   await expect(page.getByRole('heading', { level: 1, name: 'Contest scoring' })).toBeVisible()
   await expect(page).toHaveTitle('Contest scoring · Tadoku')
   await expect(page.getByText(contest.title, { exact: true })).toBeVisible()
-  await expect(page.getByText('No contest-specific rule sets yet.')).toBeVisible()
-  await expect(page.getByRole('link', { name: `Back to ${contest.title}` }))
+  await expect(page.getByText('No contest-specific rule sets yet; this contest scores with the platform defaults.')).toBeVisible()
+  await expect(page.getByRole('link', { name: contest.title, exact: true }))
     .toHaveAttribute('href', `/contests/${contest.id}/leaderboard/1`)
   await hydrated(page)
 
@@ -286,7 +286,7 @@ test('a started contest’s scoring is locked, and only administrators reach sco
   await page.goto(`/contests/${started.id}/scoring`)
   await expect(page.getByText('Scoring is locked because this contest has started.')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Create draft' })).toHaveCount(0)
-  await expect(page.getByText('No contest-specific rule sets yet.')).toBeVisible()
+  await expect(page.getByText('No contest-specific rule sets yet; this contest scores with the platform defaults.')).toBeVisible()
   await fitsWidth(page, 'locked scoring', testInfo.outputPath('scoring-locked-390.png'))
 
   await page.goto('/contests/not-a-contest/scoring')

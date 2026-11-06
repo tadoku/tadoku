@@ -50,15 +50,15 @@ a:where(:not(.paper-button)) { color: var(--paper-color-text-link); }
 .settings-row__label { margin: 0; color: var(--paper-color-text-muted); font-family: var(--paper-font-body); font-size: var(--paper-type-metadata-size); font-weight: 600; line-height: var(--paper-type-metadata-line-height); }
 .settings-row__summary { min-width: 0; }
 .settings-row__value { margin: 0; color: var(--paper-color-text-ink); font-size: var(--paper-type-body-size); line-height: var(--paper-type-body-line-height); overflow-wrap: anywhere; white-space: break-spaces; }
-.settings-row__description, .settings-row__hint { margin: 0; color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); line-height: var(--paper-type-metadata-line-height); }
+.settings-row__hint { margin: 0; color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); line-height: var(--paper-type-metadata-line-height); }
 .settings-row--open { grid-template-columns: 10rem minmax(0, 1fr); align-items: start; background: var(--paper-color-surface-raised); box-shadow: inset var(--paper-accent-rail-width) 0 0 var(--paper-color-focus-ring); }
 .settings-row__editor { min-width: 0; max-width: 26rem; overflow-wrap: anywhere; }
 /* The email hint holds the stored address, whose raw spaces would otherwise hang past the row. */
 .settings-row__editor .paper-field__hint { white-space: break-spaces; }
 .settings-row__editor .account-form { gap: 16px; }
 /* Deletion stays off the rows: one quiet link below the groups. */
-.settings-delete { margin: 40px 0 0; font-size: var(--paper-type-metadata-size); line-height: var(--paper-type-metadata-line-height); }
-.settings-delete a { color: var(--paper-color-text-muted); }
+.settings-delete { margin: 40px 0 0; }
+.settings-delete a { color: var(--paper-color-status-danger); }
 .settings-saved { margin: 0; color: var(--paper-color-status-success); font-size: var(--paper-type-metadata-size); font-weight: 600; line-height: var(--paper-type-metadata-line-height); }
 
 @media (max-width: 720px) {

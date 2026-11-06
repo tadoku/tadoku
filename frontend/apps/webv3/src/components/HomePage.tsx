@@ -45,18 +45,13 @@ export function HomePage() {
     <div className="home-page">
       <section className="home-hero" aria-labelledby="home-title">
         <div className="home-promise">
-          {contest && phase !== 'unavailable' ? (
-            <p className="home-status" data-tone={phase === 'open' || phase === 'live' ? 'live' : 'quiet'}>
-              {phase === 'upcoming' ? 'Registration is open' : phase === 'ended' ? `${contest.title} has ended` : `${contest.title} is live`}
-            </p>
-          ) : phase === 'unavailable' ? <p className="home-status" data-tone="warning">Contest updates are delayed</p> : null}
+          {phase === 'unavailable' && <p className="home-status" data-tone="warning">Contest updates are delayed</p>}
           <h1 id="home-title">{promise[phase].headline}</h1>
           <p className="home-lead">{promise[phase].lead}</p>
           <div className="home-actions">
             {joinable
               ? <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a>
               : <a href={links.logs} className={buttonClassName()}>Log activity</a>}
-            <a href={links.guide} className="text-link">How Tadoku works</a>
           </div>
           {joinable
             ? <p className="home-fineprint">Free to join. Registration closes {formatDate(contest.registration_end)}.</p>
@@ -83,9 +78,7 @@ export function HomePage() {
             <h2 id="home-next-title">Next official round</h2>
             <p>{data?.nextContest ? formatPeriod(data.nextContest) : 'Not announced yet'}</p>
           </div>
-          <p>{data?.nextContest
-            ? `Registration closes ${formatDate(data.nextContest.registration_end)}.`
-            : 'New official rounds appear on the contests page as soon as they’re scheduled.'}</p>
+          {data?.nextContest && <p>Registration closes {formatDate(data.nextContest.registration_end)}.</p>}
           <a className="text-link" href={links.contests}>See all contests</a>
         </section>
       )}
@@ -95,7 +88,6 @@ export function HomePage() {
           <h2 id="home-goal-title">Daily goal</h2>
           <p>Plan your sessions</p>
         </div>
-        <p>Decide how long you want to read or listen each day, and keep that goal in view.</p>
         <Link className="text-link" to="/plan">Set a daily goal</Link>
       </section>
     </div>
@@ -195,6 +187,5 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
         description="Standings appear here once participants log reading or listening in this round."
       />
     )}
-    <p className="home-ledger-note">{ended ? 'Thanks for reading and listening together.' : 'Reading and listening, across all languages in this round.'}</p>
   </>
 }

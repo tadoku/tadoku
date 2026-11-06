@@ -64,8 +64,7 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
     <div className="scoring-page">
       <PageHeader
         title="Contest scoring"
-        lead={contest.title}
-        backLink={{ href: links.contest(contestId), label: `Back to ${contest.title}` }}
+        backLink={{ href: links.contest(contestId), label: contest.title }}
         renderLink={renderLink}
       />
       {locked ? (
@@ -82,7 +81,7 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
       )}
       <section className="scoring-versions" aria-labelledby="scoring-versions">
         <SectionHeading level={2} id="scoring-versions" title="Rule-set versions" />
-        {contestRuleSets.length === 0 ? <p>No contest-specific rule sets yet.</p> : null}
+        {contestRuleSets.length === 0 ? <p className="scoring-empty">No contest-specific rule sets yet; this contest scores with the platform defaults.</p> : null}
         {contestRuleSets.map(ruleSet => (
           <RuleSetVersion
             key={ruleSet.id}

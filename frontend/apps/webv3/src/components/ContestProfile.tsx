@@ -1,8 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import type { ImmersionContestProfileActivityRow } from 'api-client'
-import { Breadcrumb, SectionHeading, StatGrid, Table, buttonClassName, type TableColumn } from 'paper-ui'
+import { PageHeader, SectionHeading, StatGrid, Table, buttonClassName, type TableColumn } from 'paper-ui'
 import type { ContestProfile as Profile } from '../lib/contest-activity'
-import { contestsHref } from '../lib/contests'
 import { formatDate, numberFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { ContestLogs } from './ContestUpdates'
@@ -20,27 +19,12 @@ export function ContestProfile({ profile, page }: { profile: Found; page: number
 
   return (
     <div className="profile-page">
-      <Breadcrumb
+      <PageHeader
+        backLink={{ href: links.contest(contest.id), label: contest.title }}
         renderLink={renderLink}
-        items={[
-          { id: 'home', label: 'Home', href: '/' },
-          contest.official
-            ? { id: 'contests', label: 'Official contests', href: contestsHref.official() }
-            : { id: 'contests', label: 'Community contests', href: contestsHref.community() },
-          { id: 'contest', label: contest.title, href: links.contest(contest.id) },
-          { id: 'participant', label: name },
-        ]}
+        title={name}
+        actions={<Link className={buttonClassName({ variant: 'outline' })} to={links.profile(userId)}>View profile</Link>}
       />
-      <header className="profile-header">
-        <div className="profile-identity">
-          <span className="profile-avatar" aria-hidden="true">{name.slice(0, 2).toLocaleUpperCase()}</span>
-          <div>
-            <h1 className="paper-type-page">{name}</h1>
-            <p><Link className="text-link" to={links.contest(contest.id)}>{contest.title}</Link></p>
-          </div>
-        </div>
-        <Link className={buttonClassName({ variant: 'outline' })} to={links.profile(userId)}>View profile</Link>
-      </header>
       <StatGrid
         className="profile-stats"
         stats={[

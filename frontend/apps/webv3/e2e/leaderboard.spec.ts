@@ -17,18 +17,21 @@ test('server-rendered boards show the API standings, their scopes and profile li
       path: '/leaderboard/latest/1',
       api: `/immersion/contests/${latest.id}/leaderboard`,
       scope: latest.title,
+      role: 'heading' as const,
       profile: () => (userId: string) => `/contests/${latest.id}/profile/${userId}/1`,
     },
     {
       path: `/leaderboard/yearly/${year}/1`,
       api: `/immersion/leaderboard/yearly/${year}`,
       scope: `${year} official standings`,
+      role: 'region' as const,
       profile: statistics,
     },
     {
       path: '/leaderboard/all-time/1',
       api: '/immersion/leaderboard/global',
       scope: 'All-time official standings',
+      role: 'region' as const,
       profile: statistics,
     },
   ]
@@ -40,7 +43,7 @@ test('server-rendered boards show the API standings, their scopes and profile li
     const response = await page.goto(item.path)
     expect(response?.status()).toBe(200)
     await expect(page.getByRole('heading', { level: 1, name: 'Leaderboard' })).toBeVisible()
-    await expect(page.getByRole('heading', { level: 2, name: item.scope, exact: true })).toBeVisible()
+    await expect(page.getByRole(item.role, { name: item.scope, exact: true })).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Leaderboard period' }).locator('[aria-current="page"]')).toHaveCount(1)
     await expect(page.getByRole('link', { name: 'Leaderboard', exact: true }).first()).toHaveAttribute('href', '/leaderboard/latest/1')
     await expectRows(page, data.entries, item.profile())
@@ -93,14 +96,14 @@ test('year and period tabs switch boards in the browser', async ({ page, request
   await years.getByRole('link', { name: String(year - 1) }).click()
   await expect(page).toHaveURL(new RegExp(`/leaderboard/yearly/${year - 1}/1$`))
   await expect(page).toHaveTitle(`${year - 1} leaderboard · Tadoku`)
-  await expect(page.getByRole('heading', { level: 2, name: `${year - 1} official standings` })).toBeVisible()
+  await expect(page.getByRole('region', { name: `${year - 1} official standings` })).toBeVisible()
   await expectRows(page, previous.entries, statistics())
   await expectTotal(page, previous)
 
   const periods = page.getByRole('navigation', { name: 'Leaderboard period' })
   await periods.getByRole('link', { name: 'All time' }).click()
   await expect(page).toHaveURL(/\/leaderboard\/all-time\/1$/)
-  await expect(page.getByRole('heading', { level: 2, name: 'All-time official standings' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'All-time official standings' })).toBeVisible()
   await periods.getByRole('link', { name: 'Yearly' }).click()
   await expect(page).toHaveURL(new RegExp(`/leaderboard/yearly/${year}/1$`))
   await periods.getByRole('link', { name: 'Latest official' }).click()

@@ -51,8 +51,7 @@ export function ContestForm({ options, viewerId, admin }: {
     <div className="goal-page">
       <PageHeader
         title="Create new contest"
-        lead="Set a shared window for immersion, with clear dates and eligibility."
-        backLink={{ href: contestsHref.official(), label: 'Back to contests' }}
+        backLink={{ href: contestsHref.official(), label: 'Contests' }}
         renderLink={renderLink}
       />
       <Surface className="log-surface">

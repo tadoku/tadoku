@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { Button, EmptyState, PageHeader, Pagination, buttonClassName } from 'paper-ui'
+import { Button, EmptyState, PageHeader, Pagination } from 'paper-ui'
 import ReactMarkdown from 'react-markdown'
 import rehypeSanitize from 'rehype-sanitize'
 import remarkGfm from 'remark-gfm'
@@ -7,7 +7,6 @@ import { blogHref, blogPageSize, type BlogPage, type BlogPost, type CmsPage } fr
 import { formatDate } from '../lib/format'
 import { renderLink } from './router-link'
 
-const home = { href: '/', label: 'Home' }
 
 /** The publish date as a UTC day, so server and browser render the same text. */
 const published = (post: BlogPost) => formatDate(new Date(post.publishedAt).toISOString())
@@ -27,7 +26,7 @@ export function ContentUnavailable({ query }: { query: { isFetching: boolean; re
 export function CmsPageArticle({ page }: { page: CmsPage }) {
   return (
     <article className="content-article">
-      <PageHeader title={page.title} backLink={home} renderLink={renderLink} />
+      <PageHeader title={page.title} />
       <div className="content-prose" dangerouslySetInnerHTML={{ __html: page.html }} />
     </article>
   )
@@ -58,7 +57,7 @@ export function BlogList({ blog, page }: { blog: BlogPage; page: number }) {
 
   return (
     <div className="content-article">
-      <PageHeader title="Blog" backLink={home} renderLink={renderLink} />
+      <PageHeader title="Blog" />
       {blog.total === 0 ? (
         <EmptyState headingLevel={2} title="No blog posts yet" description="Check back soon for updates." />
       ) : blog.posts.length === 0 ? (
@@ -75,7 +74,7 @@ export function BlogList({ blog, page }: { blog: BlogPage; page: number }) {
           <h2 id="blog-lead-title"><Link to={blogHref.post(lead.slug)}>{lead.title}</Link></h2>
           <p className="blog-date"><time dateTime={lead.publishedAt}>{published(lead)}</time></p>
           <p>{excerpt(lead.content, 500)}</p>
-          <Link to={blogHref.post(lead.slug)} className={buttonClassName()} aria-label={`Read more: ${lead.title}`}>Read more</Link>
+          <Link to={blogHref.post(lead.slug)} className="text-link" aria-label={`Continue reading: ${lead.title}`}>Continue reading</Link>
         </section>
       ) : null}
 

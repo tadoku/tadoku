@@ -1,14 +1,15 @@
 /* Profile statistics and activity */
-.profile-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-block: 24px 32px; }
+.profile-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-block: 8px 32px; }
 .profile-identity { display: flex; align-items: center; gap: 20px; min-width: 0; }
 .profile-identity > div { min-width: 0; }
 .profile-identity h1 { margin: 0 0 8px; overflow-wrap: anywhere; }
 .profile-identity p { margin: 0; color: var(--paper-color-text-muted); font-size: .9375rem; }
-.profile-avatar { display: grid; place-items: center; flex: 0 0 4rem; block-size: 4rem; border: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); font: 700 1.4rem var(--paper-font-display); }
-.profile-export { display: flex; flex-wrap: wrap; gap: 8px; }
+.profile-avatar { display: grid; place-items: center; flex: 0 0 4rem; block-size: 4rem; border: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); font: 600 1.25rem var(--paper-font-body); letter-spacing: .02em; }
+.profile-export { margin: 0; color: var(--paper-color-text-muted); font-size: .875rem; }
 .profile-year { margin-block-start: 32px; padding: 32px; border: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
+.profile-year-head { margin: -8px 0 20px -12px; }
 .profile-year-control { display: flex; align-items: center; gap: 4px; }
-.profile-year-control strong { min-inline-size: 4rem; text-align: center; font-variant-numeric: tabular-nums; }
+.profile-year-control strong { min-inline-size: 4.5rem; text-align: center; font-family: var(--paper-font-display); font-size: var(--paper-type-section-size); line-height: var(--paper-type-section-line-height); font-variant-numeric: tabular-nums; }
 .profile-stats { margin-block: 28px 32px; }
 .profile-rhythm { border-block-start: 1px solid var(--paper-color-rule-default); padding-block-start: 24px; }
 .profile-empty-year { border-block-start: 1px solid var(--paper-color-rule-default); }
@@ -23,7 +24,7 @@
 .profile-breakdown strong { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .profile-breakdown small { font-weight: 400; color: var(--paper-color-text-muted); }
 .profile-bar { display: block; block-size: 6px; background: var(--paper-color-rule-subtle); }
-.profile-bar > span { display: block; block-size: 100%; min-inline-size: 2px; }
+.profile-bar > span { display: block; block-size: 100%; min-inline-size: 2px; background: var(--paper-color-text-link); }
 .profile-contests li { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding-block: 12px; border-block-end: 1px solid var(--paper-color-rule-default); overflow-wrap: anywhere; }
 .profile-contests li:first-child { padding-block-start: 0; }
 .profile-contests + .paper-pagination { margin-block-start: 20px; }

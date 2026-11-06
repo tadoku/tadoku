@@ -50,11 +50,9 @@ function LatestBoard({ board, today, page }: { board: ContestBoard; today: strin
   const phase = contestPhase(contest, today)
   const { viewer, registered } = useParticipation(contest.id)
 
-  const actions = phase.ongoing && registered
-    ? <a className={buttonClassName({ variant: 'outline' })} href={links.logs}>Log activity</a>
-    : phase.registrationOpen && !registered && viewer?.status !== 'banned'
-      ? <a className={buttonClassName()} href={links.joinContest(contest.id)}>Join contest</a>
-      : null
+  const actions = phase.registrationOpen && !registered && viewer?.status !== 'banned'
+    ? <a className={buttonClassName()} href={links.joinContest(contest.id)}>Join contest</a>
+    : null
 
   return (
     <LeaderboardFrame period="latest" currentYear={Number(today.slice(0, 4))} actions={actions}>
@@ -77,11 +75,11 @@ export function ContestBoardBody({ board, phase, page, pageHref, title, status, 
   phase: ContestPhase
   page: number
   pageHref: (page: number) => string
-  /** The standings sheet's heading. */
-  title: string
+  /** The standings sheet's visible heading; without one the page's tab names the standings. */
+  title?: string
   status?: ReactNode
   /** The link that closes the conditions section. */
-  asideLink: ReactNode
+  asideLink?: ReactNode
 }) {
   const links = useLinks()
   const loginUrl = useLoginUrl()
@@ -103,15 +101,17 @@ export function ContestBoardBody({ board, phase, page, pageHref, title, status, 
       ) : null}
       <div className="standings-workspace">
         <div className="standings-main">
-          <section className="standings-sheet" aria-labelledby="standings-title">
-            <SectionHeading
-              level={2}
-              id="standings-title"
-              className="standings-context"
-              title={title}
-              status={status}
-              description={`${formatPeriod(contest)} · ${contest.official ? 'Official contest' : 'Community contest'}`}
-            />
+          <section className="standings-sheet" aria-labelledby={title ? 'standings-title' : undefined} aria-label={title ? undefined : 'Standings'}>
+            {title ? (
+              <SectionHeading
+                level={2}
+                id="standings-title"
+                className="standings-context"
+                title={title}
+                status={status}
+                description={formatPeriod(contest)}
+              />
+            ) : null}
             <Standings
               result={standings.data}
               page={page}

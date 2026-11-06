@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
-import { Button, EmptyState, HeatmapChart, Pagination, SectionHeading, StatGrid, StatusTag, buttonClassName, chartPalette } from 'paper-ui'
+import { Button, EmptyState, HeatmapChart, Pagination, SectionHeading, StatGrid, StatusTag, buttonClassName } from 'paper-ui'
 import { ChevronLeftIcon, ChevronRightIcon } from 'paper-ui/icons'
 import { useLinks } from '../lib/links'
 import { contestPageSize, type ContestHistory, type ProfileStatistics as Statistics, type Section } from '../lib/profile'
@@ -24,7 +24,10 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
     <div className="profile-page">
       <ProfileHeader profile={profile} owner={owner} view="overview" overviewHref={`/profile/${profile.id}/statistics/${year}`} />
       <section className="profile-year" aria-labelledby="profile-year-heading">
-        <SectionHeading level={2} id="profile-year-heading" title={`${name}’s activity`} actions={<YearControl statistics={statistics} year={year} />} />
+        <div className="profile-year-head">
+          <h2 id="profile-year-heading" className="paper-visually-hidden">{name}’s activity in {year}</h2>
+          <YearControl statistics={statistics} year={year} />
+        </div>
         {empty ? (
           <EmptyState
             variant="plain"
@@ -54,9 +57,7 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
                     }))}
                   />
                 </div>
-                <p className="profile-caption">
-                  {activeDays(activity.data.scores)} active days and {activity.data.total_updates} updates in {year}. Select a day to see its updates.
-                </p>
+                <p className="profile-caption">Select a day to see its updates.</p>
               </>) : <p className="profile-muted">Could not retrieve updates for {year}.</p>}
             </div>
           </>
@@ -79,9 +80,7 @@ function YearTotals({ statistics, year }: { statistics: Found; year: number }) {
   const { scores, activity } = statistics
   const total = scores.ok ? scores.data.scores.reduce((sum, score) => sum + score.score, 0) : undefined
   const days = daysCounted(year, statistics.today)
-  const average = total && days ? `${scoreFormat.format(total / days)} per day · average over ${
-    year === Number(statistics.today.slice(0, 4)) ? `the ${days} ${days === 1 ? 'day' : 'days'} of ${year} so far` : `all ${days} days of ${year}`
-  }` : undefined
+  const average = total && days ? `${scoreFormat.format(total / days)} per day` : undefined
 
   return (
     <StatGrid
@@ -138,11 +137,11 @@ function Breakdown<T>({ id, title, section, items, empty }: {
       <SectionHeading level={2} id={id} title={title} />
       {!section.ok ? <p className="profile-muted">Could not retrieve this breakdown.</p> : rows.length ? (
         <ol className="profile-breakdown">
-          {rows.map((row, index) => (
+          {rows.map(row => (
             <li key={row.label}>
               <div><span>{row.label}</span><strong>{scoreFormat.format(row.score)} <small>points</small></strong></div>
               <span className="profile-bar" aria-hidden="true">
-                <span style={{ width: `${total ? row.score / total * 100 : 0}%`, backgroundColor: chartPalette[index % chartPalette.length] }} />
+                <span style={{ width: `${total ? row.score / total * 100 : 0}%` }} />
               </span>
             </li>
           ))}

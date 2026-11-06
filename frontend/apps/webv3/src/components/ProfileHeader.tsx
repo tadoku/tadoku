@@ -1,4 +1,4 @@
-import { Breadcrumb, Tabbar, buttonClassName } from 'paper-ui'
+import { Tabbar } from 'paper-ui'
 import type { ImmersionUserProfile } from 'api-client'
 import { renderLink } from './router-link'
 import { useLinks } from '../lib/links'
@@ -14,7 +14,6 @@ export function ProfileHeader({ profile, owner, view, overviewHref }: {
 
   return (
     <>
-      <Breadcrumb items={[{ id: 'home', label: 'Home', href: '/' }, { id: 'profile', label: profile.display_name }]} renderLink={renderLink} />
       <header className="profile-header">
         <div className="profile-identity">
           <span className="profile-avatar" aria-hidden="true">{profile.display_name.slice(0, 2).toLocaleUpperCase()}</span>
@@ -24,10 +23,9 @@ export function ProfileHeader({ profile, owner, view, overviewHref }: {
           </div>
         </div>
         {owner ? (
-          <div className="profile-export" role="group" aria-label="Export your logs">
-            <a className={buttonClassName({ variant: 'outline' })} href={links.logExport('csv')}>Download CSV</a>
-            <a className={buttonClassName({ variant: 'outline' })} href={links.logExport('json')}>Download JSON</a>
-          </div>
+          <p className="profile-export">
+            Export logs: <a className="text-link" href={links.logExport('csv')} aria-label="Download CSV">CSV</a> · <a className="text-link" href={links.logExport('json')} aria-label="Download JSON">JSON</a>
+          </p>
         ) : null}
       </header>
       <Tabbar

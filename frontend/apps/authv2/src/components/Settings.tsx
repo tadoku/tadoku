@@ -53,11 +53,10 @@ function SettingsGroup({ title, children }: { readonly title: string; readonly c
 }
 
 /** One setting: its value and a Change link, or its editor while the URL opens it. */
-function SettingRow({ editor, label, value, description, view, next, children }: {
+function SettingRow({ editor, label, value, view, next, children }: {
   readonly editor: SettingsEditor
   readonly label: string
   readonly value: ReactNode
-  readonly description?: string
   readonly view: SettingsView
   readonly next?: string
   readonly children: ReactNode
@@ -80,7 +79,6 @@ function SettingRow({ editor, label, value, description, view, next, children }:
           <div className="settings-row__summary">
             <p className="settings-row__value">{value}</p>
             {saved ? <p id={`${editor}-saved`} className="settings-saved" role="status">{confirmations[editor]}</p> : null}
-            {description ? <p className="settings-row__description">{description}</p> : null}
           </div>
           <Link
             ref={change}
@@ -254,7 +252,6 @@ export function Settings({ search }: { readonly search: AccountSearch }) {
           editor="display-name"
           label="Display name"
           value={account.display_name}
-          description="Shown on leaderboards, in contests and on your profile"
         >
           <DisplayNameForm {...editor} />
         </SettingRow>
@@ -265,7 +262,6 @@ export function Settings({ search }: { readonly search: AccountSearch }) {
           editor="email"
           label="Email"
           value={account.email}
-          description="You log in and recover your account with this address"
         >
           <EmailForm {...editor} />
         </SettingRow>

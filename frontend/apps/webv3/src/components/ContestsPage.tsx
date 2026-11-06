@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Button, EmptyState, PageHeader, Pagination, StatusTag, Tabbar, buttonClassName } from 'paper-ui'
-import type { ReactNode } from 'react'
 import {
   canCreateContestQuery,
   contestScope,
@@ -12,7 +11,7 @@ import {
   type ContestList,
   type ContestListScope,
 } from '../lib/contests'
-import { formatPeriod, months, numberFormat } from '../lib/format'
+import { formatDate, formatPeriod, months, numberFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { useLoginUrl, viewerKey, viewerQueryOptions } from '../lib/session'
 import { renderLink } from './router-link'
@@ -22,12 +21,6 @@ const tabs: { id: ContestCollection; label: string }[] = [
   { id: 'community', label: 'Community' },
   { id: 'mine', label: 'My contests' },
 ]
-
-const leads: Record<ContestCollection, string> = {
-  official: 'Official rounds bring the Tadoku community together throughout the year.',
-  community: 'Challenges organized by Tadoku members. Check the languages and activities before joining.',
-  mine: 'Community contests you organize, including unlisted ones.',
-}
 
 /** One page of the official, community or viewer's own contests, with the collection tabs and create action. */
 export function ContestsPage({ collection, page }: { collection: ContestCollection; page: number }) {
@@ -42,8 +35,7 @@ export function ContestsPage({ collection, page }: { collection: ContestCollecti
     <div className="contests-page">
       <PageHeader
         title="Contests"
-        lead={leads[collection]}
-        actions={canCreate ? <Link className={buttonClassName()} to={links.newContest}>Create contest</Link> : null}
+        actions={canCreate ? <Link className={buttonClassName({ variant: 'outline' })} to={links.newContest}>Create contest</Link> : null}
       />
       <Tabbar
         label="Contest collections"
@@ -127,12 +119,12 @@ function Contests({ scope, collection, page }: { scope: ContestListScope; collec
       <ul className="contest-list" aria-label={`${tabs.find(tab => tab.id === collection)?.label} contests`}>
         {contests.map(contest => <ContestRow key={contest.id} contest={contest} names={names} today={today} />)}
       </ul>
-      <div className="contests-pagination">
-        <p>{numberFormat.format(first)}–{numberFormat.format(first + contests.length - 1)} of {numberFormat.format(total)} contests</p>
-        {totalPages > 1
-          ? <Pagination totalPages={totalPages} currentPage={page} getHref={pageHref} renderLink={renderLink} label="Contest pages" />
-          : null}
-      </div>
+      {totalPages > 1 ? (
+        <div className="contests-pagination">
+          <p>{numberFormat.format(first)}–{numberFormat.format(first + contests.length - 1)} of {numberFormat.format(total)} contests</p>
+          <Pagination totalPages={totalPages} currentPage={page} getHref={pageHref} renderLink={renderLink} label="Contest pages" />
+        </div>
+      ) : null}
     </>
   )
 }
@@ -148,12 +140,7 @@ function ContestRow({ contest, names, today }: {
   const started = today >= contest.contest_start
   const ended = today > contest.contest_end
   const round = ended ? <StatusTag>Ended</StatusTag> : started ? <StatusTag tone="success">Live now</StatusTag> : <StatusTag tone="information">Upcoming</StatusTag>
-  let registration: ReactNode = null
-  if (!ended) {
-    registration = today <= contest.registration_end
-      ? <StatusTag tone="information">Registration open</StatusTag>
-      : <StatusTag>Registration closed</StatusTag>
-  }
+  const registration = !ended && today <= contest.registration_end ? ` · Registration closes ${formatDate(contest.registration_end)}` : ''
   const languages = contest.language_code_allow_list?.length
     ? contest.language_code_allow_list.map(code => names?.languages[code] ?? code).join(', ')
     : 'All languages'
@@ -172,10 +159,10 @@ function ContestRow({ contest, names, today }: {
           <h2 className="paper-type-component"><a href={links.contest(contest.id)}>{contest.title}</a></h2>
           {contest.private ? <StatusTag>Unlisted</StatusTag> : null}
         </div>
-        <p>{formatPeriod(contest)}</p>
+        <p>{formatPeriod(contest)}{registration}</p>
         {names ? <p className="contest-row__allows">{languages} · {activities}</p> : null}
       </div>
-      <div className="contest-row__status">{round}{registration}</div>
+      <div className="contest-row__status">{round}</div>
     </li>
   )
 }

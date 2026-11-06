@@ -62,7 +62,6 @@ function ContestBoardPage({ board, today, view, page }: { board: ContestBoard; t
       {registered && !phase.ended
         ? <a className={buttonClassName({ variant: 'outline' })} href={links.joinContest(contest.id)}>Update registration</a>
         : null}
-      {phase.ongoing && registered ? <a className={buttonClassName()} href={links.logs}>Log activity</a> : null}
       {admin ? <Link className={buttonClassName({ variant: 'ghost' })} to={links.contestScoring(contest.id)}>Scoring rules</Link> : null}
     </>
   )
@@ -93,8 +92,6 @@ function ContestBoardPage({ board, today, view, page }: { board: ContestBoard; t
           phase={phase}
           page={page}
           pageHref={next => links.contest(contest.id, next)}
-          title="Standings"
-          asideLink={<a className="text-link" href={links.contestUpdates(contest.id)}>Contest updates</a>}
         />
       ) : <ContestUpdates contest={contest} page={page} />}
     </div>

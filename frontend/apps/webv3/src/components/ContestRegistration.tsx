@@ -77,7 +77,6 @@ function Registration({ contest, viewerId, phase }: { contest: ImmersionContestV
         backLink={{ href: links.contest(contest.id), label: contest.title }}
         renderLink={renderLink}
         title={registered ? 'Update registration' : `Join ${contest.title}`}
-        lead="Choose the languages you’ll read or listen in. You can register up to three."
       />
       <div className="standings-workspace">
         <div className="standings-main">
@@ -85,7 +84,7 @@ function Registration({ contest, viewerId, phase }: { contest: ImmersionContestV
         </div>
         <aside className="standings-aside">
           <section aria-labelledby="registration-round">
-            <h2 id="registration-round" className="paper-type-component">Your round</h2>
+            <h2 id="registration-round" className="paper-type-component">Contest details</h2>
             <ContestFacts contest={contest} phase={phase} />
           </section>
         </aside>

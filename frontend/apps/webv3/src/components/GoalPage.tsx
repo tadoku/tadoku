@@ -65,7 +65,6 @@ function formatMinutes(total: number) {
 }
 
 export function GoalPage() {
-  const links = useLinks()
   // Controls stay disabled until hydration, so nothing typed into the server-rendered form is lost.
   const hydrated = useSyncExternalStore(subscribeToNothing, () => true, () => false)
   const storedGoal = useSyncExternalStore(subscribeToStorage, readStoredGoal, () => null)
@@ -84,10 +83,7 @@ export function GoalPage() {
 
   return (
     <div className="goal-page">
-      <PageHeader
-        title="Set a daily goal"
-        lead="Decide how long you want to read or listen each day. Small, steady sessions add up over a round."
-      />
+      <PageHeader title="Set a daily goal" />
       <div className="goal-layout">
         <form.AppForm><form.Form className="goal-form">
           <fieldset className="goal-form__controls" disabled={!hydrated}>
@@ -108,10 +104,7 @@ export function GoalPage() {
 
         <aside className="goal-aside" aria-label="Your goal">
           {saved ? <GoalSummary goal={saved} /> : null}
-          <h2>How goals work</h2>
-          <p>Your goal is kept in this browser. It doesn’t log activity or change your Tadoku account.</p>
-          <p>After each session, log what you actually read or listened to. That is what counts towards contests.</p>
-          <a className="text-link" href={links.guide}>How Tadoku works</a>
+          <p className="goal-aside__note">Your goal stays in this browser and doesn’t change your account. Only logged activity counts towards contests.</p>
         </aside>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { formatDate, formatPeriod } from '../lib/format'
 import { latestBoardQuery, leaderboardHref, standingsQuery, contestPhase, readDay, type ContestBoard, type ContestPhase } from '../lib/leaderboard'
 import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
+import { Avatar } from './Avatar'
 import { LeaderboardFrame } from './LeaderboardPage'
 import { Standings } from './Standings'
 import { description, sheet, standingsAside, standingsContext, standingsContextTitle, standingsNotice, workspace } from './standings-styles'
@@ -138,7 +139,12 @@ export function ContestFacts({ contest, phase }: { contest: ImmersionContestView
   const organizer = contest.official
     ? 'Tadoku'
     : contest.owner_user_id
-      ? <a className="text-link hover:text-link-hover" href={links.profile(contest.owner_user_id)}>{contest.owner_user_display_name ?? 'Unknown user'}</a>
+      ? (
+        <span className="inline-flex items-baseline gap-1.5">
+          <Avatar userId={contest.owner_user_id} name={contest.owner_user_display_name ?? '?'} size="sm" className="self-center" />
+          <a className="text-link hover:text-link-hover" href={links.profile(contest.owner_user_id)}>{contest.owner_user_display_name ?? 'Unknown user'}</a>
+        </span>
+      )
       : contest.owner_user_display_name ?? 'Unknown user'
   return (
     <DescriptionList

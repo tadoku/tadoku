@@ -9,6 +9,7 @@ import { useLinks } from '../../lib/links'
 import { logQuery, useDeleteLog, type ImmersionLog, type LogFailure } from '../../lib/logs'
 import { viewerKey, viewerQueryOptions } from '../../lib/session'
 import { ActivityName } from '../../components/ActivityName'
+import { Avatar } from '../../components/Avatar'
 import { renderLink } from '../../components/router-link'
 
 export const Route = createFileRoute('/logs/$logId')({
@@ -54,7 +55,15 @@ function LogDetail() {
         lead={(
           <>
             {log.language.name} · <ActivityName activity={log.activity} />
-            {learner && !owner ? <> · Logged by <a className="text-link hover:text-link-hover" href={links.profile(log.user_id)}>{learner}</a></> : null}
+            {learner && !owner ? (
+              <>
+                {' · Logged by '}
+                <span className="whitespace-nowrap">
+                  <Avatar userId={log.user_id} name={learner} size="sm" className="me-1.5" />
+                  <a className="text-link hover:text-link-hover" href={links.profile(log.user_id)}>{learner}</a>
+                </span>
+              </>
+            ) : null}
           </>
         )}
         actions={owner ? <OwnerActions log={log} /> : null}

@@ -94,11 +94,11 @@ once its announcement ends. An unavailable announcement list shows nothing.
 ### Avatars
 
 `frontend/apps/webv3/src/components/Avatar.tsx` shows a learner's Gravatar
-beside their name: in the account menu and its phone section, the profile
-header and each entry of a contest's updates. The image comes from the API's
+beside their name wherever webv3 names a learner, except inside headings,
+whose text it would join. The image comes from the API's
 `GET /immersion/users/{userId}/avatar` through the gateway on the public web
 origin, so the learner's email and its hash never reach the browser. The
-avatar is a square tile with the learner's initials, one letter at the
+avatar is a circle with the learner's initials, one letter at the
 smallest size, and the image covers it once it loads. A learner without a
 Gravatar and any other failure leave the initials and no broken image, with or
 without JavaScript. The avatar is decorative and hidden

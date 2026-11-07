@@ -206,7 +206,6 @@ const spacing = {
   'flash-start': 'calc(var(--spacing-4) + var(--spacing-rail))',
   'page-title-trim': 'calc((var(--leading-page) - var(--spacing-control)) / 2)',
   'page-actions-trim': 'calc(var(--leading-page) - var(--spacing-control))',
-  'stat-inset': 'clamp(var(--spacing-2), 2vw, var(--spacing-4))',
   'compound-input': 'calc(var(--spacing-control) - 2px)',
   'compound-unit': 'calc(var(--spacing-control) - 1px)',
   ...layoutSpacing,

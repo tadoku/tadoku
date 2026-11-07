@@ -1,8 +1,11 @@
+import * as stylex from '@stylexjs/stylex'
 import { useQuery } from '@tanstack/react-query'
 import { useStore } from '@tanstack/react-form'
 import { useHydrated } from '@tanstack/react-router'
 import type { ImmersionContestView, ImmersionLog } from 'api-client'
-import { Button, EmptyState, Flash, Modal, usePaperForm } from 'paper-ui'
+import { Button, EmptyState, Flash, linkStyles, Modal, usePaperForm } from 'paper-ui'
+import { pageStyles } from './page-styles'
+import { space } from 'paper-ui/tokens.stylex'
 import { useState } from 'react'
 import { contestLogsQuery, detachSchema, useDetachLog } from '../lib/contest-activity'
 import type { LogFailure } from '../lib/logs'
@@ -10,13 +13,18 @@ import { useLinks } from '../lib/links'
 import { useLoginUrl, viewerQueryOptions } from '../lib/session'
 import { LogEntries } from './LogEntries'
 
+const styles = stylex.create({
+  updates: { marginBlockStart: space[24] },
+  notice: { marginBlockEnd: space[16] },
+})
+
 type Contest = ImmersionContestView & { id: string }
 
 /** A contest's updates tab: every participant's logs, newest first. */
 export function ContestUpdates({ contest, page }: { contest: Contest; page: number }) {
   const links = useLinks()
   return (
-    <section className="contest-updates" aria-label="Updates">
+    <section {...stylex.props(styles.updates)} aria-label="Updates">
       <ContestLogs contest={contest} page={page} pageHref={next => links.contestUpdates(contest.id, next)} showParticipant />
     </section>
   )
@@ -40,7 +48,7 @@ export function ContestLogs({ contest, userId, page, pageHref, showParticipant =
     ? viewer.userId
     : undefined
 
-  if (!logs.data) return <p className="profile-muted" role="status">Loading updates…</p>
+  if (!logs.data) return <p {...stylex.props(pageStyles.muted)} role="status">Loading updates…</p>
   if (!logs.data.ok) {
     return (
       <EmptyState
@@ -55,7 +63,7 @@ export function ContestLogs({ contest, userId, page, pageHref, showParticipant =
 
   return (
     <>
-      {removed ? <Flash variant="success" className="contest-updates-notice" role="status">Log removed from contest.</Flash> : null}
+      {removed ? <Flash variant="success" xstyle={styles.notice} role="status">Log removed from contest.</Flash> : null}
       <LogEntries
         logs={logs.data.data.logs}
         total={logs.data.data.total_size}
@@ -111,13 +119,13 @@ function RemoveFromContest({ log, contestId, viewerId, onRemoved }: {
       footer={null}
     >
       <form.AppForm>
-        <form.Form className="goal-form" aria-busy={pending}>
+        <form.Form xstyle={pageStyles.form} aria-busy={pending}>
           <p>Why are you removing this log from the contest? Please provide a reason.</p>
           <form.AppField name="reason" validators={{ onSubmit: ({ value }) => reasonError(value) }}>
             {field => <field.TextArea label="Reason" placeholder="e.g. Duplicate entry, incorrect data…" rows={4} required disabled={pending} />}
           </form.AppField>
           {failure ? <DetachFailure failure={failure} /> : null}
-          <div className="registration-actions">
+          <div>
             <Button type="submit" variant="destructive" disabled={pending}>{pending ? 'Removing…' : 'Yes, remove it'}</Button>
             <Button type="button" variant="ghost" disabled={pending} onClick={() => setOpen(false)}>Cancel</Button>
           </div>
@@ -136,7 +144,7 @@ function reasonError(value: string) {
 function DetachFailure({ failure }: { failure: LogFailure }) {
   const loginUrl = useLoginUrl()
   return (
-    <Flash variant="danger" action={failure === 'signed-out' ? <a className="text-link" href={loginUrl}>Log in</a> : undefined}>
+    <Flash variant="danger" action={failure === 'signed-out' ? <a {...stylex.props(linkStyles.base)} href={loginUrl}>Log in</a> : undefined}>
       {detachFailures[failure]}
     </Flash>
   )

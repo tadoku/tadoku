@@ -1,12 +1,16 @@
+import * as stylex from '@stylexjs/stylex'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { usePaperForm, ActionMenu, Button, buttonClassName, Drawer, EmptyState, Loading, Navbar, ToastContainer, type NavbarItem } from 'paper-ui'
+import { ActionMenu, Button, buttonStyles, Drawer, EmptyState, linkStyles, Loading, Navbar, navbarMobileLinkStyles, ToastContainer, typography, usePaperForm, type NavbarItem } from 'paper-ui'
 import mark from 'paper-ui/assets/brand/cut-meter.svg?no-inline'
 import reversedMark from 'paper-ui/assets/brand/cut-meter-reversed.svg?no-inline'
 import wordmark from 'paper-ui/assets/brand/wordmark-accent.svg?no-inline'
 import reversedWordmark from 'paper-ui/assets/brand/wordmark-reversed.svg?no-inline'
 import { scenarioGroup, scenarios, usePlayground, useScenario, type GuideIA, type Viewer } from './state'
 import { ContactPage, LogEditorPage, SettingsPage, SignInPage } from './SupportingPages'
+import { utilities } from './utilities.styles'
+import { appStyles } from './app.styles'
+import { descendantStyles } from './descendants.styles'
 
 const HomePage=lazy(()=>import('./pages/HomePage').then(m=>({default:m.HomePage})))
 const GuidePage=lazy(()=>import('./pages/GuidePage').then(m=>({default:m.GuidePage})))
@@ -31,7 +35,7 @@ function ReviewControls() {
       navigate({pathname:location.pathname,search:next.toString()},{replace:true});setOpen(false)
     } })
   return <Drawer trigger={<Button variant="ghost">Playground controls</Button>} title="Paper playground" description="Unpublished application study · sample data only" open={open} onOpenChange={next=>{if(next)methods.reset({theme:app.theme,density:app.density,viewer:app.viewer,ia:app.ia,scenario}, { keepDefaultValues: true });setOpen(next)}}>
-    <methods.AppForm><methods.Form className="grid gap-4">
+    <methods.AppForm><methods.Form xstyle={[utilities.tw_grid, utilities.tw_gap_4]}>
       <methods.AppField name="theme">{field => <field.Select label="Appearance" options={[{value:'light',label:'Light'},{value:'dark',label:'Dark'}]} />}</methods.AppField>
       <methods.AppField name="density">{field => <field.Select label="Density" options={[{value:'comfortable',label:'Comfortable'},{value:'compact',label:'Compact'}]} />}</methods.AppField>
       <methods.AppField name="viewer">{field => <field.Select label="Sample account" options={(['guest','member','participant','organizer','admin'] as const).map(value=>({value,label:{guest:'Guest',member:'Member, not joined',participant:'Participant',organizer:'Organizer',admin:'Administrator'}[value]}))} />}</methods.AppField>
@@ -39,10 +43,10 @@ function ReviewControls() {
       <methods.AppField name="ia">{field => <field.Select label="Help navigation" options={[{value:'guide',label:'B · Guide plus About'},{value:'separate',label:'A · Four familiar pages'},{value:'tasks',label:'C · Task-based help'}]} />}</methods.AppField>
       <Button type="submit">Apply view</Button>
     </methods.Form></methods.AppForm>
-    <p className="review-note">Entries, registrations, settings, and administrative actions stay in this browser. The sample date is 5 September 2026; lifecycle scenarios supply their own dates.</p>
-    <h2 className="paper-type-component mt-8 mb-4">All page designs</h2>
-    <nav aria-label="Playground pages" className="review-pages">{reviewPages.map(([label,to])=><Link className="text-link" key={to} to={to} onClick={()=>setOpen(false)}>{label}</Link>)}</nav>
-    <p className="review-note mt-6"><a className="text-link" href="https://draft.apps.lab/documents/tadoku-redesign-master.html?version=3" target="_blank" rel="noreferrer">Open the pinned design brief</a></p>
+    <p {...stylex.props(appStyles.reviewNote)}>Entries, registrations, settings, and administrative actions stay in this browser. The sample date is 5 September 2026; lifecycle scenarios supply their own dates.</p>
+    <h2 {...stylex.props(typography.component, utilities.tw_mt_8, utilities.tw_mb_4)}>All page designs</h2>
+    <nav aria-label="Playground pages" {...stylex.props(appStyles.reviewPages)}>{reviewPages.map(([label,to])=><Link {...stylex.props(linkStyles.base)} key={to} to={to} onClick={()=>setOpen(false)}>{label}</Link>)}</nav>
+    <p {...stylex.props(appStyles.reviewNote, utilities.tw_mt_6)}><a {...stylex.props(linkStyles.base)} href="https://draft.apps.lab/documents/tadoku-redesign-master.html?version=3" target="_blank" rel="noreferrer">Open the pinned design brief</a></p>
     <Button variant="outline" onClick={()=>{app.reset();navigate('/');setOpen(false)}}>Reset sample changes</Button>
   </Drawer>
 }
@@ -59,31 +63,36 @@ export function App() {
     return()=>observer.disconnect()
   },[location.pathname])
   useEffect(()=>{if(location.hash){const id=decodeURIComponent(location.hash.slice(1));requestAnimationFrame(()=>document.getElementById(id)?.scrollIntoView())}},[location.hash,location.pathname])
-  return <div className="app-shell">
-    <a className={`${buttonClassName()} app-skip`} href="#main-content">Skip to content</a>
-    <header className="app-header">
+  return <div {...stylex.props(appStyles.appShell)}>
+    <a {...stylex.props(...buttonStyles(), appStyles.appSkip)} href="#main-content">Skip to content</a>
+    <header {...stylex.props(appStyles.appHeader)}>
       <Navbar
-        brand={<div className="flex items-center gap-2"><img className="app-mark" src={app.theme==='dark'?reversedMark:mark} width="40" height="40" alt=""/><img className="app-wordmark" src={app.theme==='dark'?reversedWordmark:wordmark} width="158" height="29" alt="Tadoku"/>{admin&&<span className="app-admin-label">Admin</span>}</div>}
+        brand={<div {...stylex.props(utilities.tw_flex, utilities.tw_items_center, utilities.tw_gap_2)}><img {...stylex.props(appStyles.appMark)} src={app.theme==='dark'?reversedMark:mark} width="40" height="40" alt=""/><img {...stylex.props(appStyles.appWordmark)} src={app.theme==='dark'?reversedWordmark:wordmark} width="158" height="29" alt="Tadoku"/>{admin&&<span {...stylex.props(appStyles.appAdminLabel)}>Admin</span>}</div>}
         brandHref="/" navigation={nav} renderLink={({href,...props})=><Link to={href} {...props}/>}
         mobileNavigation={!admin}
-        actions={admin ? <Link to="/" className={buttonClassName({variant:'outline'})}>Back to Tadoku</Link> :
-          <div className="app-header-actions">
-            {app.viewer==='guest' ? <Link to={`/sign-in?next=${encodeURIComponent(location.pathname)}`} className={buttonClassName({variant:'outline'})}>Sign in</Link> : <>
-              <span className="app-account-menu--desktop"><ActionMenu label={app.user?.name||'Account'} triggerVariant="ghost" items={accountItems}/></span>
-              <Link to="/logs/new" className={buttonClassName({className:'whitespace-nowrap shrink-0'})}>Log activity</Link>
+        xstyle={appStyles.navbar}
+        innerXstyle={appStyles.navbarInner}
+        brandXstyle={appStyles.navbarBrand}
+        actionsXstyle={appStyles.navbarActions}
+        mobilePanelXstyle={appStyles.navbarMobilePanel}
+        actions={admin ? <Link to="/" {...stylex.props(...buttonStyles({variant:'outline'}))}>Back to Tadoku</Link> :
+          <div {...stylex.props(appStyles.appHeaderActions)}>
+            {app.viewer==='guest' ? <Link to={`/sign-in?next=${encodeURIComponent(location.pathname)}`} {...stylex.props(...buttonStyles({variant:'outline'}))}>Sign in</Link> : <>
+              <span {...stylex.props(appStyles.accountMenu)}><ActionMenu label={app.user?.name||'Account'} triggerVariant="ghost" triggerLabelXstyle={appStyles.accountName} items={accountItems}/></span>
+              <Link to="/logs/new" {...stylex.props(...buttonStyles(), utilities.tw_whitespace_nowrap, utilities.tw_shrink_0)}>Log activity</Link>
             </>}
           </div>}
         mobileFooter={app.viewer==='guest' ? undefined : closeMenu =>
-          <section className="app-mobile-account" aria-label={`${app.user?.name||'Your'} account`}>
-            <p className="app-mobile-account__name">{app.user?.name||'Account'}</p>
-            <Link className="paper-navbar__mobile-link" to="/users/anton" aria-current={location.pathname==='/users/anton'?'page':undefined} onClick={closeMenu}>My profile</Link>
-            <Link className="paper-navbar__mobile-link" to="/settings" aria-current={location.pathname==='/settings'?'page':undefined} onClick={closeMenu}>Account settings</Link>
-            {app.viewer==='admin'&&<Link className="paper-navbar__mobile-link" to="/admin" onClick={closeMenu}>Admin workspace</Link>}
-            <Button variant="ghost" className="paper-navbar__mobile-link justify-start" onClick={()=>{closeMenu();app.setViewer('guest');navigate('/')}}>Log out</Button>
+          <section {...stylex.props(appStyles.appMobileAccount)} aria-label={`${app.user?.name||'Your'} account`}>
+            <p {...stylex.props(appStyles.appMobileAccount__name)}>{app.user?.name||'Account'}</p>
+            <Link {...stylex.props(...navbarMobileLinkStyles)} to="/users/anton" aria-current={location.pathname==='/users/anton'?'page':undefined} onClick={closeMenu}>My profile</Link>
+            <Link {...stylex.props(...navbarMobileLinkStyles)} to="/settings" aria-current={location.pathname==='/settings'?'page':undefined} onClick={closeMenu}>Account settings</Link>
+            {app.viewer==='admin'&&<Link {...stylex.props(...navbarMobileLinkStyles)} to="/admin" onClick={closeMenu}>Admin workspace</Link>}
+            <Button variant="ghost" xstyle={[...navbarMobileLinkStyles, utilities.tw_justify_start]} onClick={()=>{closeMenu();app.setViewer('guest');navigate('/')}}>Log out</Button>
           </section>}
       />
     </header>
-    <main id="main-content" className="app-content" tabIndex={-1}><Suspense fallback={<Loading label="Loading page"/>}><Routes>
+    <main id="main-content" {...stylex.props(appStyles.appContent)} tabIndex={-1}><Suspense fallback={<Loading label="Loading page"/>}><Routes>
       <Route path="/" element={<HomePage/>}/>
       <Route path="/about" element={<GuidePage page="about"/>}/><Route path="/guide" element={<GuidePage page="manual"/>}/><Route path="/guide/scoring" element={<GuidePage page="rules"/>}/><Route path="/guide/questions" element={<GuidePage page="faq"/>}/>
       <Route path="/leaderboard" element={<Navigate to="/leaderboard/latest" replace/>}/><Route path="/leaderboard/latest" element={<LeaderboardPage/>}/><Route path="/leaderboard/yearly/:year" element={<LeaderboardPage/>}/><Route path="/leaderboard/all-time" element={<LeaderboardPage/>}/><Route path="/contests/:contestId/leaderboard" element={<LeaderboardPage/>}/>
@@ -93,9 +102,9 @@ export function App() {
       <Route path="/admin" element={<AdminPage/>}/><Route path="/admin/:section" element={<AdminPage/>}/>
       <Route path="/sign-in" element={<SignInPage/>}/><Route path="/settings" element={<SettingsPage/>}/><Route path="/account/settings" element={<Navigate to="/settings" replace/>}/><Route path="/contact" element={<ContactPage/>}/>
       {Object.entries({about:'/about',manual:'/guide',rules:'/guide/scoring',faq:'/guide/questions'}).map(([slug,to])=><Route key={slug} path={`/pages/${slug}`} element={<Navigate to={to} replace/>}/>)}
-      <Route path="*" element={<EmptyState headingLevel={1} title="Page not found" description="This address doesn’t match a Tadoku page." actions={<Link to="/" className="text-link">Return home</Link>}/>}/>
+      <Route path="*" element={<EmptyState headingLevel={1} title="Page not found" description="This address doesn’t match a Tadoku page." actions={<Link to="/" {...stylex.props(linkStyles.base)}>Return home</Link>}/>}/>
     </Routes></Suspense></main>
-    <footer className="app-footer"><div className="app-footer__inner"><nav aria-label="Footer"><Link className="text-link" to="/about">About Tadoku</Link><Link className="text-link" to="/guide/questions">Questions &amp; help</Link><a className="text-link" href="https://github.com/tadoku/tadoku" target="_blank" rel="noreferrer">GitHub</a></nav><div className="flex flex-wrap items-center gap-2"><small className="muted">Sample data</small><ReviewControls key={scenarioGroup(location.pathname)}/></div></div></footer>
+    <footer {...stylex.props(appStyles.appFooter)}><div {...stylex.props(appStyles.appFooter__inner)}><nav {...stylex.props(descendantStyles.appFooterU_uNav)} aria-label="Footer"><Link {...stylex.props(linkStyles.base)} to="/about">About Tadoku</Link><Link {...stylex.props(linkStyles.base)} to="/guide/questions">Questions &amp; help</Link><a {...stylex.props(linkStyles.base)} href="https://github.com/tadoku/tadoku" target="_blank" rel="noreferrer">GitHub</a></nav><div {...stylex.props(utilities.tw_flex, utilities.tw_flex_wrap, utilities.tw_items_center, utilities.tw_gap_2)}><small {...stylex.props(appStyles.muted)}>Sample data</small><ReviewControls key={scenarioGroup(location.pathname)}/></div></div></footer>
     <ToastContainer />
   </div>
 }

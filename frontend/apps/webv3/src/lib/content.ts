@@ -1,17 +1,14 @@
 import { queryOptions } from '@tanstack/react-query'
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
-import type { FlashVariant } from 'paper-ui'
+import type { FlashVariant, ProseNode } from 'paper-ui'
 import type { Read } from './leaderboard'
 
 /** One content read: the parsed item, `not-found` when the API has no published item there, or `unavailable`. */
 export type Content<T> = { kind: 'found'; data: T } | { kind: 'not-found' } | { kind: 'unavailable' }
 
-declare const sanitized: unique symbol
-/** CMS HTML after DOMPurify's default sanitization on the server; the only HTML Webv3 renders from the API. */
-export type SanitizedHtml = string & { readonly [sanitized]: true }
-
-export interface CmsPage { title: string; html: SanitizedHtml }
+/** A CMS page's sanitized HTML, parsed on the server into elements the page renders with Paper's prose styles. */
+export interface CmsPage { title: string; body: ProseNode[] }
 
 export interface BlogPost { slug: string; title: string; content: string; publishedAt: string }
 

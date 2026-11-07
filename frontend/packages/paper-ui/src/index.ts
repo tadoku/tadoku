@@ -8,9 +8,35 @@ export type {
   ChartSeries,
 } from './foundations/chart-palette'
 export {
+  a11y,
+  accentRail,
+  control as controlStyles,
+  edge as edges,
+  elevation,
+  icon as iconSizes,
+  layout,
+  link as linkStyles,
+  surface as surfaces,
+  text as typography,
+  transition as motionStyles,
+} from './foundations/recipes'
+export {
+  ThemeVariant,
+  applyDensity,
+  applyTheme,
+  densities,
+  rootProps,
+  themeBootScript,
+  themes,
+  type PaperDensity,
+  type PaperTheme,
+} from './foundations/theme'
+export { sx, type StyleXProp } from './foundations/props'
+export { IconSlot, fillIcon } from './foundations/IconSlot'
+export {
   BUTTON_VARIANTS,
   Button,
-  buttonClassName,
+  buttonStyles,
   type ButtonProps,
   type ButtonRecipeOptions,
   type ButtonVariant,
@@ -28,6 +54,8 @@ export {
   TagsInput,
   TextArea,
   ToggleSelect,
+  FieldSet,
+  FormFooter,
   usePaperForm,
   withPaperForm,
   type AmountWithUnitProps,
@@ -54,7 +82,7 @@ export {
   Surface,
   ToastContainer,
   ToastProvider,
-  surfaceClassName,
+  surfaceStyles,
   useToast,
   type ButtonGroupAction,
   type ButtonGroupProps,
@@ -86,6 +114,12 @@ export {
   type PageHeaderProps,
 } from './components/page-structure/PageHeader'
 export {
+  SiteFooter,
+  siteFooterCreditLink,
+  type SiteFooterLink,
+  type SiteFooterProps,
+} from './components/page-structure/SiteFooter/SiteFooter'
+export {
   SectionHeading,
   type SectionHeadingProps,
 } from './components/page-structure/SectionHeading'
@@ -114,6 +148,7 @@ export {
 export {
   HeatmapChart,
   Table,
+  tableRowLink,
   type HeatmapChartDatum,
   type HeatmapChartProps,
   type TableColumn,
@@ -123,6 +158,7 @@ export {
 export {
   Breadcrumb,
   Navbar,
+  navbarMobileLinkStyles,
   Pagination,
   Sidebar,
   Tabbar,
@@ -153,3 +189,12 @@ export {
   type TabsTabProps,
   type TabsValue,
 } from './components/navigation'
+export { tokenSource as designTokens } from './tokens/source'
+export {
+  Prose,
+  ProseContent,
+  proseElements,
+  proseFromElement,
+  type ProseNode,
+} from './components/content/Prose'
+export { IconTile } from './components/data-display/IconTile'

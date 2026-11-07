@@ -1,11 +1,15 @@
+import * as stylex from '@stylexjs/stylex'
 import { Link, useRouter } from '@tanstack/react-router'
-import { Button, EmptyState, Loading, PageHeader } from 'paper-ui'
+import { Button, EmptyState, Loading, PageHeader, linkStyles } from 'paper-ui'
+import { space } from 'paper-ui/tokens.stylex'
+
+const styles = stylex.create({ pending: { paddingBlock: space[64] } })
 
 export function NotFoundView() {
   return (
     <>
       <PageHeader title="Page not found" />
-      <Link to="/" className="text-link">Return home</Link>
+      <Link to="/" {...stylex.props(linkStyles.base)}>Return home</Link>
     </>
   )
 }
@@ -23,5 +27,5 @@ export function ErrorView() {
 }
 
 export function PendingView() {
-  return <Loading className="app-pending" label="Loading page" />
+  return <Loading xstyle={styles.pending} label="Loading page" />
 }

@@ -1,8 +1,12 @@
+import * as stylex from '@stylexjs/stylex'
 import { useState } from 'react'
 import { Button, Surface, Table, Tabs } from 'paper-ui'
+import { size } from 'paper-ui/tokens.stylex'
 import type { CatalogDocument, CatalogFixture } from 'paper-ui/catalog'
 import { ExampleCanvas } from './ExampleCanvas'
 import { CodeBlock } from './CodeBlock'
+import { shellStyles } from '../styles/shell.styles'
+import { descendantStyles } from '../descendants.styles'
 
 const VIEWS = ['preview', 'code', 'api', 'accessibility'] as const
 type View = (typeof VIEWS)[number]
@@ -75,11 +79,11 @@ export function ComponentWorkbench({
   return (
     <Surface
       as="section"
-      className="component-workbench"
+      xstyle={[shellStyles.componentWorkbench]}
       aria-label={`${document.name} examples`}
     >
       <Tabs.Root defaultValue="preview">
-        <div className="component-workbench__tabs">
+        <div {...stylex.props(shellStyles.componentWorkbench__tabs)}>
           <Tabs.List aria-label="Example views">
             {VIEWS.map(candidate => (
               <Tabs.Tab key={candidate} value={candidate}>
@@ -89,7 +93,7 @@ export function ComponentWorkbench({
           </Tabs.List>
         </div>
 
-        <Tabs.Panel value="preview" className="component-workbench__panel">
+        <Tabs.Panel value="preview" {...stylex.props(shellStyles.componentWorkbench__panel)}>
           <ExampleCanvas
             fixture={fixture}
             fixtures={fixtures}
@@ -97,24 +101,23 @@ export function ComponentWorkbench({
           />
         </Tabs.Panel>
 
-        <Tabs.Panel value="code" className="component-workbench__panel">
-          <div className="code-view">
-            <div className="code-view__heading">
+        <Tabs.Panel value="code" {...stylex.props(shellStyles.componentWorkbench__panel)}>
+          <div {...stylex.props(shellStyles.codeView)}>
+            <div {...stylex.props(shellStyles.codeView__heading)}>
               <div>
-                <h3>{fixture?.name ?? 'Example'}</h3>
+                <h3 {...stylex.props(descendantStyles.codeViewU_uH3)}>{fixture?.name ?? 'Example'}</h3>
                 <p>{fixture?.description}</p>
               </div>
-              <div className="code-copy">
+              <div {...stylex.props(shellStyles.codeCopy)}>
                 <Button
                   variant="outline"
-                  className="code-copy__button"
                   disabled={!fixture?.code}
                   onClick={copyCode}
                 >
                   {copyState === 'copied' ? 'Copied' : 'Copy code'}
                 </Button>
                 <span
-                  className="code-copy__status"
+                  {...stylex.props(shellStyles.codeCopy__status)}
                   role="status"
                   aria-live="polite"
                 >
@@ -132,15 +135,15 @@ export function ComponentWorkbench({
           </div>
         </Tabs.Panel>
 
-        <Tabs.Panel value="api" className="component-workbench__panel">
-          <div className="workbench-api">
+        <Tabs.Panel value="api" {...stylex.props(shellStyles.componentWorkbench__panel)}>
+          <div {...stylex.props(shellStyles.workbenchApi)}>
             {document.api.props?.length ? (
               <Table
                 caption={`${document.name} props`}
-                tableClassName="workbench-props-table"
+                tableXstyle={shellStyles.workbenchPropsTable}
                 rows={document.api.props}
                 getRowKey={prop => prop.name}
-                minWidth="34rem"
+                minWidth={size[544]}
                 columns={[
                   {
                     id: 'name',
@@ -149,9 +152,9 @@ export function ComponentWorkbench({
                     width: '40%',
                     cell: prop => (
                       <>
-                        <code>{prop.name}</code>
-                        <span className="workbench-prop-type">
-                          <code>{prop.type}</code>
+                        <code {...stylex.props(descendantStyles.workbenchApiU_uCode)}>{prop.name}</code>
+                        <span {...stylex.props(shellStyles.workbenchPropType)}>
+                          <code {...stylex.props(descendantStyles.workbenchApiU_uCode)}>{prop.type}</code>
                         </span>
                       </>
                     ),
@@ -161,12 +164,12 @@ export function ComponentWorkbench({
                     header: 'Usage',
                     cell: prop => (
                       <>
-                        <p className="workbench-prop-default">
+                        <p {...stylex.props(shellStyles.workbenchPropDefault)}>
                           {prop.required ? (
                             <strong>Required</strong>
                           ) : (
                             <>
-                              Default: <code>{prop.defaultValue ?? '—'}</code>
+                              Default: <code {...stylex.props(descendantStyles.workbenchApiU_uCode)}>{prop.defaultValue ?? '—'}</code>
                             </>
                           )}
                         </p>
@@ -177,18 +180,18 @@ export function ComponentWorkbench({
                 ]}
               />
             ) : null}
-            {document.api.cssClasses.length ? (
+            {document.api.styleExports.length ? (
               <Table
                 caption="CSS classes and helpers"
-                rows={document.api.cssClasses}
+                rows={document.api.styleExports}
                 getRowKey={name => name}
-                minWidth="25rem"
+                minWidth={size[400]}
                 columns={[
                   {
                     id: 'name',
                     header: 'Name',
                     rowHeader: true,
-                    cell: name => <code>{name}</code>,
+                    cell: name => <code {...stylex.props(descendantStyles.workbenchApiU_uCode)}>{name}</code>,
                   },
                   {
                     id: 'kind',
@@ -201,7 +204,7 @@ export function ComponentWorkbench({
                 ]}
               />
             ) : null}
-            <div className="workbench-reference-grid">
+            <div {...stylex.props(shellStyles.workbenchReferenceGrid, descendantStyles.workbenchApiU_uWorkbenchReferenceGrid)}>
               <ApiList title="React exports" items={document.api.react} code />
               <ApiList
                 title="Public types"
@@ -219,9 +222,9 @@ export function ComponentWorkbench({
 
         <Tabs.Panel
           value="accessibility"
-          className="component-workbench__panel"
+          {...stylex.props(shellStyles.componentWorkbench__panel)}
         >
-          <div className="workbench-reference-grid">
+          <div {...stylex.props(shellStyles.workbenchReferenceGrid)}>
             <ApiList
               title="Requirements"
               items={document.accessibility.requirements}

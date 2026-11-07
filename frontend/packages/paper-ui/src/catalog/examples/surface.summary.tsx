@@ -1,16 +1,23 @@
-import { Surface } from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { size } from 'paper-ui/tokens.stylex'
+import { Surface, layout } from 'paper-ui'
+
+const styles = stylex.create({
+  column: { maxInlineSize: size[512] },
+  flush: { margin: 0 },
+})
 
 export default function Example() {
   return (
-    <div className="paper-stack" style={{ maxWidth: '32rem' }}>
+    <div {...stylex.props(layout.stack, styles.column)}>
       {(['flat', 'floating', 'showcase'] as const).map(elevation => (
         <Surface
           key={elevation}
           as="article"
           elevation={elevation}
-          className="paper-stack"
+          {...stylex.props(layout.stack)}
         >
-          <h3 style={{ margin: 0 }}>
+          <h3 {...stylex.props(styles.flush)}>
             {elevation === 'flat'
               ? 'Flat'
               : elevation === 'floating'
@@ -18,14 +25,14 @@ export default function Example() {
               : 'Showcase'}{' '}
             summary
           </h3>
-          <p style={{ margin: 0 }}>
+          <p {...stylex.props(styles.flush)}>
             August Japanese: 1,240 pages across 18 entries.
           </p>
         </Surface>
       ))}
-      <Surface as="article" accent className="paper-stack">
-        <h3 style={{ margin: 0 }}>Flat with accent rail</h3>
-        <p style={{ margin: 0 }}>
+      <Surface as="article" accent {...stylex.props(layout.stack)}>
+        <h3 {...stylex.props(styles.flush)}>Flat with accent rail</h3>
+        <p {...stylex.props(styles.flush)}>
           The same reading summary with an independent accent.
         </p>
       </Surface>

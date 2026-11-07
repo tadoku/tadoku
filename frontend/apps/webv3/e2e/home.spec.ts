@@ -32,7 +32,7 @@ test('hydrates without errors and keeps the homepage within mobile and desktop v
     await page.goto('/')
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
     await expect(page.locator('table')).toBeVisible()
-    await expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled()
+    await expect(page.locator('[data-navbar-menu]')).toBeEnabled()
     await page.evaluate(() => document.fonts.ready)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await page.screenshot({ path: testInfo.outputPath(`homepage-${width}.png`), fullPage: true })

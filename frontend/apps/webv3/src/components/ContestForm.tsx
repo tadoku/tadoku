@@ -1,7 +1,9 @@
+import * as stylex from '@stylexjs/stylex'
 import { useStore } from '@tanstack/react-form'
 import { Link, useHydrated, useNavigate } from '@tanstack/react-router'
 import type { ImmersionContestConfigurationOptions } from 'api-client'
-import { Button, PageHeader, Surface, usePaperForm } from 'paper-ui'
+import { Button, FieldSet, FormFooter, linkStyles, PageHeader, Surface, usePaperForm } from 'paper-ui'
+import { pageStyles } from './page-styles'
 import { useMemo, useState } from 'react'
 import { contestDraftSchema, firstContestDraft, isOfficial, toNewContest } from '../lib/contest-form'
 import { contestsHref, useCreateContest } from '../lib/contests'
@@ -48,16 +50,16 @@ export function ContestForm({ options, viewerId, admin }: {
   const disabled = !hydrated || pending
 
   return (
-    <div className="goal-page">
+    <div>
       <PageHeader
         title="Create new contest"
         backLink={{ href: contestsHref.official(), label: 'Contests' }}
         renderLink={renderLink}
       />
-      <Surface className="log-surface">
+      <Surface inset="fluid" xstyle={pageStyles.column}>
         <form.AppForm>
-          <form.Form className="goal-form" aria-busy={pending}>
-            <fieldset className="goal-form__controls" disabled={disabled}>
+          <form.Form xstyle={pageStyles.form} aria-busy={pending}>
+            <FieldSet disabled={disabled}>
               <form.AppField name="title">
                 {field => <field.Input label="Title" required />}
               </form.AppField>
@@ -70,9 +72,9 @@ export function ContestForm({ options, viewerId, admin }: {
                 )}
               </form.AppField>
 
-              <fieldset className="contest-form-group">
-                <legend>Schedule</legend>
-                <div className="goal-form__row">
+              <fieldset {...stylex.props(pageStyles.formGroup)}>
+                <legend {...stylex.props(pageStyles.formGroupLegend)}>Schedule</legend>
+                <div {...stylex.props(pageStyles.formRow)}>
                   <form.AppField name="contestStart">
                     {field => <field.Input label="Start date (UTC)" type="date" required />}
                   </form.AppField>
@@ -85,8 +87,8 @@ export function ContestForm({ options, viewerId, admin }: {
                 </form.AppField>
               </fieldset>
 
-              <fieldset className="contest-form-group">
-                <legend>Eligibility</legend>
+              <fieldset {...stylex.props(pageStyles.formGroup)}>
+                <legend {...stylex.props(pageStyles.formGroupLegend)}>Eligibility</legend>
                 <form.AppField name="languages">
                   {field => (
                     <field.AutocompleteMultiInput
@@ -112,8 +114,8 @@ export function ContestForm({ options, viewerId, admin }: {
                   )}
                 </form.AppField>
               </fieldset>
-              <fieldset className="contest-form-group">
-                <legend>Visibility</legend>
+              <fieldset {...stylex.props(pageStyles.formGroup)}>
+                <legend {...stylex.props(pageStyles.formGroupLegend)}>Visibility</legend>
                 {options.can_create_official_round && !unlisted ? (
                   <form.AppField name="official">
                     {field => <field.Checkbox label="Official round" />}
@@ -125,15 +127,13 @@ export function ContestForm({ options, viewerId, admin }: {
                   </form.AppField>
                 )}
               </fieldset>
-            </fieldset>
+            </FieldSet>
 
             {failure ? <CreateFailure failure={failure} /> : null}
-            <div className="paper-form-footer">
-              <div className="paper-form-footer__actions">
+            <FormFooter>
                 <Button type="submit" disabled={disabled}>{pending ? 'Creating…' : 'Create contest'}</Button>
-                <Link className="text-link" to="/contests/official/$" params={{ _splat: '1' }}>Cancel</Link>
-              </div>
-            </div>
+                <Link {...stylex.props(linkStyles.base)} to="/contests/official/$" params={{ _splat: '1' }}>Cancel</Link>
+              </FormFooter>
           </form.Form>
         </form.AppForm>
       </Surface>
@@ -161,11 +161,11 @@ function CreateFailure({ failure }: { failure: LogFailure }) {
           'We could not confirm whether the contest was created. Check the contests you organize before creating it again.'}
       </p>
       {failure === 'signed-out' ? (
-        <a className="text-link" href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
+        <a {...stylex.props(linkStyles.base)} href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
       ) : failure === 'switched' ? (
-        <a className="text-link" href="/contests/new">Start a new contest for this account</a>
+        <a {...stylex.props(linkStyles.base)} href="/contests/new">Start a new contest for this account</a>
       ) : failure === 'unavailable' || failure === 'not-found' ? (
-        <a className="text-link" href={contestsHref.organizing()} target="_blank" rel="noopener noreferrer">Check the contests you organize</a>
+        <a {...stylex.props(linkStyles.base)} href={contestsHref.organizing()} target="_blank" rel="noopener noreferrer">Check the contests you organize</a>
       ) : null}
     </div>
   )

@@ -1,5 +1,6 @@
+import * as stylex from '@stylexjs/stylex'
 import { useId } from 'react'
-import { Button, Table, type TableColumn } from 'paper-ui'
+import { Button, Table, layout, type TableColumn, a11y } from 'paper-ui'
 
 interface ReadingRow {
   readonly id: string
@@ -49,7 +50,7 @@ const readingColumns: readonly TableColumn<ReadingRow>[] = [
 export default function Example() {
   const id = useId().replace(/:/g, '')
   return (
-    <div className="paper-stack">
+    <div {...stylex.props(layout.stack)}>
       <div><Button variant="outline" onClick={event => event.currentTarget.ownerDocument.getElementById(`${id}-reading-2`)?.focus()}>Find current reading</Button></div>
     <Table
       caption="Recent reading"
@@ -60,8 +61,7 @@ export default function Example() {
         id: `${id}-reading-${row.id}`,
         tabIndex: -1,
         'aria-current': row.id === '2' ? 'true' : undefined,
-        className: 'paper-focus-ring',
-        style: row.id === '2' ? { backgroundColor: 'var(--paper-color-action-soft)' } : undefined,
+        ...stylex.props(a11y.focusRing),
       })}
     />
     </div>

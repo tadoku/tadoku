@@ -7,15 +7,14 @@
     "**/*.css"
   ],
   "files": [
-    "dist"
+    "dist",
+    "eslint"
   ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./styles.css": "./dist/styles.css",
-    "./tokens.css": "./dist/tokens.css",
     "./fonts.css": "./dist/fonts.css",
     "./assets/*": "./dist/assets/*",
     "./icons": {
@@ -26,10 +25,11 @@
       "types": "./dist/catalog.d.ts",
       "import": "./dist/catalog.js"
     },
-    "./tailwind-preset": {
-      "require": "./dist/tailwind-preset.cjs",
-      "default": "./dist/tailwind-preset.cjs"
-    }
+    "./tokens.stylex": {
+      "types": "./dist/tokens.stylex.d.ts",
+      "import": "./dist/tokens.stylex.js"
+    },
+    "./eslint": "./eslint/index.mjs"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -39,20 +39,25 @@
     "pack:check": "node scripts/check-package.mjs",
     "lint": "eslint .",
     "examples:check": "node scripts/check-examples.mjs",
-    "consumer:typecheck": "tsc --noEmit -p tests/consumer/tsconfig.json"
+    "consumer:typecheck": "tsc --noEmit -p tests/consumer/tsconfig.json",
+    "tokens": "node --experimental-strip-types scripts/tokens.ts"
   },
   "peerDependencies": {
+    "@tanstack/react-form": "1.33.2",
     "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "@tanstack/react-form": "1.33.2"
+    "react-dom": "18.2.0"
   },
   "dependencies": {
     "@base-ui/react": "1.8.0",
     "@heroicons/react": "2.2.0",
+    "@stylexjs/stylex": "0.19.1",
     "luxon": "^3.7.2"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",
+    "@stylexjs/eslint-plugin": "0.19.1",
+    "@stylexjs/unplugin": "0.19.1",
+    "@tanstack/react-form": "1.33.2",
     "@testing-library/dom": "10.4.2",
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.3",
@@ -70,7 +75,6 @@
     "tsup": "8.5.1",
     "typescript": "npm:@typescript/typescript6@6.0.2",
     "typescript-eslint": "8.66.0",
-    "vitest": "4.1.11",
-    "@tanstack/react-form": "1.33.2"
+    "vitest": "4.1.11"
   }
 }

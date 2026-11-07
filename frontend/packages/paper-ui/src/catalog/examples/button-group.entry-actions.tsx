@@ -1,10 +1,11 @@
-import { ButtonGroup } from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { ButtonGroup, layout } from 'paper-ui'
 import { useState } from 'react'
 
 export default function EntryActionsFixture() {
   const [message, setMessage] = useState('Choose an action to see its result.')
   return (
-    <div className="paper-stack">
+    <div {...stylex.props(layout.stack)}>
       <ButtonGroup
         label="Entry actions"
         actions={[

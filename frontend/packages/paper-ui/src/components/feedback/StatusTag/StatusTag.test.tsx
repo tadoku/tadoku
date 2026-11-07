@@ -14,13 +14,13 @@ describe("StatusTag", () => {
 
     const tag = screen.getByText(label);
     expect(tag).toBeVisible();
-    expect(tag).toHaveClass("paper-status-tag", `paper-status-tag--${tone}`);
+    expect(tag).toHaveAttribute("data-tone", tone);
   });
 
   it("defaults to the neutral tone", () => {
     render(<StatusTag>Unlisted</StatusTag>);
 
-    expect(screen.getByText("Unlisted")).toHaveClass("paper-status-tag--neutral");
+    expect(screen.getByText("Unlisted")).toHaveAttribute("data-tone", "neutral");
   });
 
   it("labels static state without becoming a live region", () => {

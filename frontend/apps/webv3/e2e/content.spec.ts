@@ -32,7 +32,7 @@ const visibleText = (page: Page, html: string) => page.evaluate(source => {
   return (template.content.textContent ?? '').replace(/\s+/g, ' ').trim()
 }, html)
 
-const prose = (page: Page) => page.locator('.content-prose')
+const prose = (page: Page) => page.locator('[data-prose]')
 
 async function expectSanitized(page: Page) {
   await expect(prose(page).locator('script, [onerror], a[href^="javascript:"]')).toHaveCount(0)
@@ -46,14 +46,14 @@ async function expectContained(page: Page) {
 /** One page of the blog: page 1 leads with the newest post, the rest are listed with their titles. */
 async function expectBlogPage(page: Page, data: Posts, number: number) {
   const listed = number === 1 ? data.posts.slice(1) : data.posts
-  if (number === 1) await expect(page.locator('.blog-lead h2')).toHaveText(data.posts[0].title)
-  else await expect(page.locator('.blog-lead')).toHaveCount(0)
-  await expect(page.locator('.blog-posts a')).toHaveText(listed.map(post => post.title))
+  if (number === 1) await expect(page.locator('[data-blog-lead] h2')).toHaveText(data.posts[0].title)
+  else await expect(page.locator('[data-blog-lead]')).toHaveCount(0)
+  await expect(page.locator('[data-blog-posts] a')).toHaveText(listed.map(post => post.title))
   await expect(page.getByRole('navigation', { name: 'Blog pages' })).toHaveCount(data.total_size > pageSize ? 1 : 0)
 }
 
 async function hydrated(page: Page) {
-  await expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled()
+  await expect(page.locator('[data-navbar-menu]')).toBeEnabled()
 }
 
 /** Gives the admin's branch tenant more than one page of published posts, a draft post and page, and the hostile page. */
@@ -192,9 +192,9 @@ test('the blog lists the API posts, pages through them and opens a post', async 
     const second = await posts(request, 2)
     await expectBlogPage(page, second, 2)
     opened = second.posts[0]
-    await page.locator('.blog-posts a', { hasText: opened.title }).first().click()
+    await page.locator('[data-blog-posts] a', { hasText: opened.title }).first().click()
   } else {
-    await page.locator('.blog-lead h2 a').click()
+    await page.locator('[data-blog-lead] h2 a').click()
   }
 
   await expect(page).toHaveURL(new RegExp(`/blog/posts/${opened.slug}$`))
@@ -215,7 +215,7 @@ test('the blog lists the API posts, pages through them and opens a post', async 
   const past = Math.ceil(first.total_size / pageSize) + 1
   await page.goto(`/blog/${past}`)
   await expect(page.getByRole('main').getByRole('heading', { level: 2 })).toHaveText(`There is no page ${past}`)
-  await expect(page.locator('.blog-posts, .blog-lead')).toHaveCount(0)
+  await expect(page.locator('[data-blog-posts], [data-blog-lead]')).toHaveCount(0)
 })
 
 test('published content an administrator adds appears, sanitized and paginated, while drafts stay hidden', async ({ adminContext, browser }, testInfo) => {
@@ -256,7 +256,7 @@ test('active announcements show above pages until this browser dismisses them', 
   test.skip(announcements.length === 0, 'The selected tenant has no active announcement')
 
   await page.goto('/blog/1')
-  const banners = page.locator('main .paper-flash')
+  const banners = page.locator('main [data-variant]:is([role="status"], [role="alert"])')
   await expect(banners).toHaveCount(announcements.length)
   const first = banners.first()
   if (announcements[0].href) await expect(first.getByRole('link', { name: 'Learn more' })).toHaveAttribute('href', announcements[0].href)

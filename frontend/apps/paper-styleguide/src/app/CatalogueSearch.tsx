@@ -1,7 +1,8 @@
+import * as stylex from '@stylexjs/stylex'
 import { useStore } from '@tanstack/react-form'
-import { Button, Modal, usePaperForm } from 'paper-ui'
+import { a11y, Button, iconSizes, Modal, typography, usePaperForm } from 'paper-ui'
 import type { CatalogDocument } from 'paper-ui/catalog'
-import { MagnifyingGlassIcon, iconClassName } from 'paper-ui/icons'
+import { MagnifyingGlassIcon } from 'paper-ui/icons'
 import {
   useEffect,
   useRef,
@@ -10,6 +11,8 @@ import {
 } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { searchCatalog } from './catalogue'
+import { shellStyles } from '../styles/shell.styles'
+import { descendantStyles } from '../descendants.styles'
 
 interface CatalogueSearchProps {
   documents: readonly CatalogDocument[]
@@ -90,26 +93,25 @@ function CatalogueSearchDialog({ documents }: CatalogueSearchProps) {
       footer={null}
       trigger={
         <Button
-          className="shell-search-trigger"
           variant="ghost"
           aria-label="Search Paper"
           leadingIcon={
             <MagnifyingGlassIcon
               aria-hidden="true"
-              className={iconClassName('default')}
+              {...stylex.props(iconSizes.default)}
             />
           }
         >
-          <span className="shell-search-trigger__label">Search</span>
-          <kbd className="shell-search-trigger__shortcut" aria-hidden="true">
+          <span {...stylex.props(shellStyles.shellSearchTrigger__label)}>Search</span>
+          <kbd {...stylex.props(shellStyles.shellSearchTrigger__shortcut)} aria-hidden="true">
             /
           </kbd>
         </Button>
       }
     >
-      <div className="catalogue-search">
+      <div>
         <methods.AppForm>
-          <methods.AppField name="query">{field => <field.Input ref={inputRef} className="search-field" type="search" label="Search documents" placeholder="Try “color” or “foundations”" onKeyDown={(event) => {
+          <methods.AppField name="query">{field => <field.Input ref={inputRef} xstyle={[shellStyles.searchField]} type="search" label="Search documents" placeholder="Try “color” or “foundations”" onKeyDown={(event) => {
               if (event.key === 'ArrowDown' && results.length > 0) {
                 event.preventDefault()
                 resultRefs.current[0]?.focus()
@@ -119,26 +121,26 @@ function CatalogueSearchDialog({ documents }: CatalogueSearchProps) {
               }
             }} />}</methods.AppField>
         </methods.AppForm>
-        <p className="search-count paper-type-metadata" aria-live="polite">
+        <p {...stylex.props(shellStyles.searchCount, typography.metadata)} aria-live="polite">
           {results.length} {results.length === 1 ? 'result' : 'results'}
         </p>
-        <ul className="search-results">
+        <ul {...stylex.props(shellStyles.searchResults)}>
           {results.map((document, index) => (
             <li key={document.id}>
               <Link
                 ref={(node) => {
                   resultRefs.current[index] = node
                 }}
-                className="search-result paper-focus-ring"
+                {...stylex.props(shellStyles.searchResult, a11y.focusRing)}
                 to={document.route}
                 onClick={() => changeOpen(false)}
                 onKeyDown={(event) => moveResult(event, index)}
               >
                 <span>
-                  <strong>{document.name}</strong>
-                  <small>{document.summary}</small>
+                  <strong {...stylex.props(descendantStyles.searchResultU_uStrong)}>{document.name}</strong>
+                  <small {...stylex.props(descendantStyles.searchResultU_uSmall)}>{document.summary}</small>
                 </span>
-                <span className="lifecycle-badge">{document.lifecycle}</span>
+                <span {...stylex.props(shellStyles.lifecycleBadge)}>{document.lifecycle}</span>
               </Link>
             </li>
           ))}

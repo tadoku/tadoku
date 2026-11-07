@@ -1,5 +1,11 @@
+import * as stylex from "@stylexjs/stylex";
 import type { MouseEvent, ReactNode } from "react";
-import { ChevronLeftIcon, ChevronRightIcon, EllipsisHorizontalIcon, iconClassName } from "../../icons";
+import { ChevronLeftIcon, ChevronRightIcon, EllipsisHorizontalIcon } from "../../icons";
+import type { StyleXProp } from "../../foundations/props";
+import { a11y, control as controlStyles, icon } from "../../foundations/recipes";
+import { list, pagination } from "./navigation-styles";
+
+const item = [controlStyles.inherit, pagination.control, a11y.focusRing] as const;
 import { renderNavigationLink, type NavigationLinkRenderer } from "./navigation";
 
 type PaginationToken = number | "start-gap" | "end-gap";
@@ -29,6 +35,8 @@ export interface PaginationProps {
   readonly siblingCount?: number;
   readonly label?: string;
   readonly renderLink?: NavigationLinkRenderer;
+  readonly xstyle?: StyleXProp;
+  readonly listXstyle?: StyleXProp;
 }
 
 export function Pagination({
@@ -39,6 +47,8 @@ export function Pagination({
   siblingCount = 2,
   label = "Pagination",
   renderLink,
+  xstyle,
+  listXstyle,
 }: PaginationProps) {
   if (!Number.isInteger(totalPages) || totalPages < 1) {
     throw new RangeError("Pagination totalPages must be a positive integer.");
@@ -62,46 +72,46 @@ export function Pagination({
 
   const control = (page: number, content: ReactNode, controlLabel: string, disabled: boolean) => {
     if (disabled) {
-      return <span className="paper-pagination__control" aria-disabled="true">{content}</span>;
+      return <span {...stylex.props(...item)} aria-disabled="true">{content}</span>;
     }
     if (getHref) {
       return renderNavigationLink(renderLink, {
         href: getHref(page),
-        className: "paper-pagination__control",
+        ...stylex.props(...item),
         "aria-label": controlLabel,
         onClick: activate(page),
         children: content,
       });
     }
-    return <button type="button" className="paper-pagination__control" aria-label={controlLabel} onClick={() => onPageChange?.(page)}>{content}</button>;
+    return <button type="button" {...stylex.props(...item)} aria-label={controlLabel} onClick={() => onPageChange?.(page)}>{content}</button>;
   };
 
   return (
-    <nav className="paper-pagination" aria-label={label}>
-      <ul className="paper-pagination__list">
-        <li>{control(currentPage - 1, <><ChevronLeftIcon className={iconClassName("compact")} aria-hidden="true" /><span>Previous</span></>, "Previous page", currentPage === 1)}</li>
+    <nav {...stylex.props(xstyle)} aria-label={label}>
+      <ul {...stylex.props(list.reset, pagination.list, listXstyle)}>
+        <li>{control(currentPage - 1, <><ChevronLeftIcon {...stylex.props(icon.compact)} aria-hidden="true" /><span>Previous</span></>, "Previous page", currentPage === 1)}</li>
         {tokens.map((token) =>
           typeof token === "string" ? (
-            <li key={token} className="paper-pagination__gap" aria-hidden="true"><EllipsisHorizontalIcon className={iconClassName("default")} /></li>
+            <li key={token} {...stylex.props(pagination.gap)} aria-hidden="true"><EllipsisHorizontalIcon {...stylex.props(icon.default)} /></li>
           ) : (
-            <li key={token}>
+            <li key={token} {...stylex.props(token !== currentPage && pagination.phoneHidden)}>
               {token === currentPage ? (
-                <span className="paper-pagination__page" aria-current="page" aria-label={`Page ${token} of ${totalPages}`}>
-                  {token}<span className="paper-pagination__of" aria-hidden="true">&nbsp;of {totalPages}</span>
+                <span {...stylex.props(...item, pagination.current)} aria-current="page" aria-label={`Page ${token} of ${totalPages}`}>
+                  {token}<span {...stylex.props(pagination.of)} aria-hidden="true">&nbsp;of {totalPages}</span>
                 </span>
               ) : getHref ? renderNavigationLink(renderLink, {
                 href: getHref(token),
-                className: "paper-pagination__page",
+                ...stylex.props(...item),
                 "aria-label": `Page ${token}`,
                 onClick: activate(token),
                 children: token,
               }) : (
-                <button type="button" className="paper-pagination__page" aria-label={`Page ${token}`} onClick={() => onPageChange?.(token)}>{token}</button>
+                <button type="button" {...stylex.props(...item)} aria-label={`Page ${token}`} onClick={() => onPageChange?.(token)}>{token}</button>
               )}
             </li>
           ),
         )}
-        <li>{control(currentPage + 1, <><span>Next</span><ChevronRightIcon className={iconClassName("compact")} aria-hidden="true" /></>, "Next page", currentPage === totalPages)}</li>
+        <li>{control(currentPage + 1, <><span>Next</span><ChevronRightIcon {...stylex.props(icon.compact)} aria-hidden="true" /></>, "Next page", currentPage === totalPages)}</li>
       </ul>
     </nav>
   );

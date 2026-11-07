@@ -1,13 +1,15 @@
+import * as stylex from '@stylexjs/stylex'
 import { useStore } from '@tanstack/react-form'
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { usePaperForm, Button, EmptyState, Flash, PageHeader, buttonClassName, useToast } from 'paper-ui'
+import { Button, buttonStyles, EmptyState, Flash, iconSizes, linkStyles, PageHeader, usePaperForm, useToast } from 'paper-ui'
 import { ChevronDownIcon } from 'paper-ui/icons'
 import { compatibleModifiers, contestStatus, formatNumber, modifierRates, personalScoreExplanation, sampleToday, scoreLog, scoreSubmission, supportedLanguages, type Activity, type LogModifier, type LogUnit, type SampleLog } from '../data'
 import { renderLink } from '../routerLink'
 import { usePlayground } from '../state'
 import { RecentLogPicker } from './RecentLogPicker'
-import './log-editor.css'
+import { logEditorStyles } from './log-editor.styles'
+import { recordsDescendants as descendantStyles } from './records-descendants.styles'
 
 type LogFields = {
   title: string; language: string; activity: Activity; amount: number | string
@@ -29,8 +31,8 @@ export function LogEditorPage() {
   const app = usePlayground()
   const existing = app.logs.find(log => log.id === logId)
   if (app.viewer === 'guest') return <Navigate replace to={`/sign-in?next=${encodeURIComponent(logId ? `/logs/${logId}/edit` : '/logs/new')}`} />
-  if (logId && !existing) return <EmptyState headingLevel={1} title="Log not found" actions={<Link className="text-link" to="/users/anton/activity">View your activity</Link>} />
-  if (existing && existing.userId !== app.userId) return <EmptyState headingLevel={1} title="This is someone else’s record" actions={<Link className="text-link" to={`/logs/${existing.id}`}>View the log</Link>} />
+  if (logId && !existing) return <EmptyState headingLevel={1} title="Log not found" actions={<Link {...stylex.props(linkStyles.base)} to="/users/anton/activity">View your activity</Link>} />
+  if (existing && existing.userId !== app.userId) return <EmptyState headingLevel={1} title="This is someone else’s record" actions={<Link {...stylex.props(linkStyles.base)} to={`/logs/${existing.id}`}>View the log</Link>} />
   return <LogForm key={logId || 'new'} existing={existing} />
 }
 
@@ -126,30 +128,30 @@ function LogForm({ existing }: { existing?: SampleLog }) {
   const quantityLabel = activity === 'Listening' ? 'Minutes listened' : unit === 'sentences' ? 'Sentences read' : unit === 'characters' ? 'Characters read' : 'Pages read'
   const estimate = Number.isFinite(amount) && amount > 0 ? `${formatNumber(scoreLog({ activity, language, amount, unit, modifiers }))} points` : 'Enter an amount'
 
-  return <section className="log-editor">
+  return <section {...stylex.props(logEditorStyles.logEditor)}>
     <PageHeader backLink={{ href: detailHref, label: existing ? 'Back to log' : 'Your activity log' }} renderLink={renderLink} title={existing ? 'Edit activity' : 'Log activity'}>
-      <p className="log-editor__step" ref={stepHeading} tabIndex={-1}>{step === 1 ? 'Log details' : 'Choose contests'} · {step} of 2</p>
+      <p {...stylex.props(logEditorStyles.logEditor__step)} ref={stepHeading} tabIndex={-1}>{step === 1 ? 'Log details' : 'Choose contests'} · {step} of 2</p>
     </PageHeader>
-    <div className="log-editor__layout">
-    <methods.AppForm><methods.Form className="log-editor__form">
-      <div className="log-editor__step-content" hidden={step !== 1}>
+    <div {...stylex.props(logEditorStyles.logEditor__layout)}>
+    <methods.AppForm><methods.Form xstyle={[logEditorStyles.logEditor__form]}>
+      <div {...stylex.props(logEditorStyles.logEditor__stepContent)} hidden={step !== 1}>
         {!existing && <RecentLogPicker logs={app.logs.filter(log => log.userId === app.userId)} onSelect={applyRecent} />}
-        {origin && <div className="log-editor__reuse-notice" role="status"><div><strong>Using {logTitle(origin)}</strong><p>Details copied. Enter the amount for this new log.</p></div>{beforePrefill && <Button variant="ghost" onClick={undoRecent}>Undo</Button>}</div>}
-        <fieldset className="log-editor__section"><legend>What are you logging?</legend><div className="log-editor__fields">
-          <div className="log-editor__row"><methods.AppField name="language" validators={existing ? {} : { onChange: ({ value }) => { if (!value) return 'Choose an option.'; } }}>{field => <field.Select label="Language" disabled={Boolean(existing)} required={!existing} options={supportedLanguages.map(value => ({ value, label: value }))} />}</methods.AppField><methods.AppField name="activity">{field => <field.Select label="Activity" disabled={Boolean(existing)} options={[{ value: 'Reading', label: 'Reading' }, { value: 'Listening', label: 'Listening' }]} />}</methods.AppField></div>
-          {existing && <p className="log-editor__hint">Language and activity stay fixed for existing entries.</p>}
+        {origin && <div {...stylex.props(logEditorStyles.logEditor__reuseNotice)} role="status"><div {...stylex.props(descendantStyles.logEditorU_uReuseNoticeU_uDiv)}><strong>Using {logTitle(origin)}</strong><p {...stylex.props(descendantStyles.logEditorU_uReuseNoticeU_uP)}>Details copied. Enter the amount for this new log.</p></div>{beforePrefill && <Button variant="ghost" onClick={undoRecent}>Undo</Button>}</div>}
+        <fieldset {...stylex.props(logEditorStyles.logEditor__section)}><legend {...stylex.props(descendantStyles.logEditorU_uSectionU_uLegend)}>What are you logging?</legend><div {...stylex.props(logEditorStyles.logEditor__fields)}>
+          <div {...stylex.props(logEditorStyles.logEditor__row)}><methods.AppField name="language" validators={existing ? {} : { onChange: ({ value }) => { if (!value) return 'Choose an option.'; } }}>{field => <field.Select label="Language" disabled={Boolean(existing)} required={!existing} options={supportedLanguages.map(value => ({ value, label: value }))} />}</methods.AppField><methods.AppField name="activity">{field => <field.Select label="Activity" disabled={Boolean(existing)} options={[{ value: 'Reading', label: 'Reading' }, { value: 'Listening', label: 'Listening' }]} />}</methods.AppField></div>
+          {existing && <p {...stylex.props(logEditorStyles.logEditor__hint, descendantStyles.logEditorU_uFieldsU_uP)}>Language and activity stay fixed for existing entries.</p>}
           <methods.AppField name="title">{field => <field.Input label="What did you read or listen to?" hint="Optional. A book, episode, article, or anything you enjoyed." maxLength={180} />}</methods.AppField>
         </div></fieldset>
-        <fieldset className="log-editor__section"><legend>Scoring</legend><div className="log-editor__fields">
-          <div className="log-editor__amount"><methods.AppField name="amount" validators={{ onChange: ({ value }) => { if (String(value) === '' || !Number.isFinite(Number(value))) return "This field is required."; if (Number(value) < .01) return 'Enter an amount greater than zero.'; if (Number(value) > 1000000) return 'Check this amount.'; } }}>{field => <field.Input label={quantityLabel} type="number" min="0.01" step="any" placeholder="0" required />}</methods.AppField>{activity === 'Reading' && <methods.AppField name="unit">{field => <field.Select label="Unit" options={['pages', 'sentences', 'characters'].map(value => ({ value, label: value }))} />}</methods.AppField>}</div>
-          {origin && <p className="log-editor__hint">Previous entry: {formatNumber(origin.amount)} {origin.unit}.</p>}
-          {activity === 'Reading' && unit !== 'pages' ? <p className="log-editor__hint">No score modifiers for this unit.</p> : <methods.AppField name="modifiers">{field => <field.ToggleSelect label="Score modifiers" options={(activity === 'Reading' ? readingModifiers : ['Passive listening'] as LogModifier[]).map(value => ({ value, label: value, description: `×${modifierRates[value]}` }))} />}</methods.AppField>}
-          <div className="log-editor__score" aria-live="polite"><span>Estimated score</span><strong data-empty={!Number.isFinite(amount) || amount <= 0 || undefined}>{estimate}</strong></div>
-          <Link className="text-link log-editor__scoring-link" to="/guide/scoring">How scoring works</Link>
+        <fieldset {...stylex.props(logEditorStyles.logEditor__section)}><legend {...stylex.props(descendantStyles.logEditorU_uSectionU_uLegend)}>Scoring</legend><div {...stylex.props(logEditorStyles.logEditor__fields)}>
+          <div {...stylex.props(logEditorStyles.logEditor__amount)}><methods.AppField {...stylex.props(descendantStyles.logEditorU_uAmountU_uAny)} name="amount" validators={{ onChange: ({ value }) => { if (String(value) === '' || !Number.isFinite(Number(value))) return "This field is required."; if (Number(value) < .01) return 'Enter an amount greater than zero.'; if (Number(value) > 1000000) return 'Check this amount.'; } }}>{field => <field.Input label={quantityLabel} type="number" min="0.01" step="any" placeholder="0" required />}</methods.AppField>{activity === 'Reading' && <methods.AppField {...stylex.props(descendantStyles.logEditorU_uAmountU_uAny)} name="unit">{field => <field.Select label="Unit" options={['pages', 'sentences', 'characters'].map(value => ({ value, label: value }))} />}</methods.AppField>}</div>
+          {origin && <p {...stylex.props(logEditorStyles.logEditor__hint, descendantStyles.logEditorU_uFieldsU_uP)}>Previous entry: {formatNumber(origin.amount)} {origin.unit}.</p>}
+          {activity === 'Reading' && unit !== 'pages' ? <p {...stylex.props(logEditorStyles.logEditor__hint, descendantStyles.logEditorU_uFieldsU_uP)}>No score modifiers for this unit.</p> : <methods.AppField name="modifiers">{field => <field.ToggleSelect label="Score modifiers" options={(activity === 'Reading' ? readingModifiers : ['Passive listening'] as LogModifier[]).map(value => ({ value, label: value, description: `×${modifierRates[value]}` }))} />}</methods.AppField>}
+          <div {...stylex.props(logEditorStyles.logEditor__score)} aria-live="polite"><span>Estimated score</span><strong {...stylex.props(descendantStyles.logEditorU_uScoreU_uStrong)} data-empty={!Number.isFinite(amount) || amount <= 0 || undefined}>{estimate}</strong></div>
+          <Link {...stylex.props(linkStyles.base, logEditorStyles.logEditor__scoringLink)} to="/guide/scoring">How scoring works</Link>
         </div></fieldset>
-        <details className="log-editor__disclosure log-editor__metadata" open={metadataOpen} onToggle={event => setMetadataOpen(event.currentTarget.open)}>
-          <summary><span>Metadata{values.tags?.length ? <span className="log-editor__metadata-count"> · {values.tags.length} {values.tags.length === 1 ? 'tag' : 'tags'}</span> : null}</span><ChevronDownIcon className="paper-icon-compact" aria-hidden="true" /></summary>
-          <div className="log-editor__fields">
+        <details {...stylex.props(logEditorStyles.logEditor__disclosure, logEditorStyles.logEditor__metadata)} open={metadataOpen} onToggle={event => setMetadataOpen(event.currentTarget.open)}>
+          <summary {...stylex.props(descendantStyles.logEditorU_uDisclosureU_uSummary, descendantStyles.logEditorU_uDisclosureU_uAny)}><span>Metadata{values.tags?.length ? <span {...stylex.props(logEditorStyles.logEditor__metadataCount)}> · {values.tags.length} {values.tags.length === 1 ? 'tag' : 'tags'}</span> : null}</span><ChevronDownIcon {...stylex.props(iconSizes.compact)} aria-hidden="true" /></summary>
+          <div {...stylex.props(logEditorStyles.logEditor__fields, descendantStyles.logEditorU_uDisclosureU_uAny, descendantStyles.logEditorU_uMetadataU_uLogEditorU_uFields)}>
             <methods.AppField name="tags">{field => <field.TagsInput label="Tags" options={[...new Set(['fiction', 'bookclub', 'daily', 'podcast', ...app.logs.filter(log => log.userId === app.userId).flatMap(log => log.tags)])]} placeholder="Type a tag…" hint="Type a tag and press Enter to add it." />}</methods.AppField>
             {activity === 'Reading' && <methods.AppField name="minutes" validators={{ onChange: ({ value }) => { const result = (value => value === '' || Number.isNaN(value) || Number.isFinite(Number(value)) && Number(value) >= 0 || 'Use zero or a positive duration.')(value); return result === true ? undefined : result || undefined; } }}>{field => <field.Input label="Time spent reading" type="number" min="0" step="1" hint="Optional, in minutes." />}</methods.AppField>}
             <methods.AppField name="note">{field => <field.TextArea label="Notes" rows={3} hint="Optional. Keep a thought, a new word, or where you left off." />}</methods.AppField>
@@ -157,21 +159,21 @@ function LogForm({ existing }: { existing?: SampleLog }) {
           </div>
         </details>
       </div>
-      <div className="log-editor__step-content" hidden={step !== 2}>
-        <div className="log-editor__review"><strong>{values.title?.trim() || `${language} ${activity.toLocaleLowerCase()}`}</strong><p>{language} · {activity} · {formatNumber(amount)} {unit}</p><span>{estimate}</span></div>
-        <div className="log-editor__section"><methods.AppField name="date" validators={{ onChange: ({ value }) => { if (!value) return "This field is required."; const result = (value => String(value) <= today || 'Choose today or an earlier date.')(value); return result === true ? undefined : result || undefined; } }}>{field => <field.Input label="Activity date" type="date" max={today} required hint="The day you read or listened." />}</methods.AppField></div>
-        <fieldset className="log-editor__section"><legend>Choose contests</legend><p className="log-editor__hint">Choose where this entry counts. It always stays in your personal record.</p><div className="log-editor__contests">{eligible.length ? eligible.map(contest => <methods.AppField key={contest.id} name="submissions">{field => <field.Checkbox  value={contest.id} label={contest.title} />}</methods.AppField>) : <p className="log-editor__hint">No joined contests accept this language, activity, and date. You can still save your personal record.</p>}</div>
+      <div {...stylex.props(logEditorStyles.logEditor__stepContent)} hidden={step !== 2}>
+        <div {...stylex.props(logEditorStyles.logEditor__review)}><strong {...stylex.props(descendantStyles.logEditorU_uReviewU_uStrong)}>{values.title?.trim() || `${language} ${activity.toLocaleLowerCase()}`}</strong><p {...stylex.props(descendantStyles.logEditorU_uReviewU_uP)}>{language} · {activity} · {formatNumber(amount)} {unit}</p><span {...stylex.props(descendantStyles.logEditorU_uReviewU_uSpan)}>{estimate}</span></div>
+        <div {...stylex.props(logEditorStyles.logEditor__section)}><methods.AppField name="date" validators={{ onChange: ({ value }) => { if (!value) return "This field is required."; const result = (value => String(value) <= today || 'Choose today or an earlier date.')(value); return result === true ? undefined : result || undefined; } }}>{field => <field.Input label="Activity date" type="date" max={today} required hint="The day you read or listened." />}</methods.AppField></div>
+        <fieldset {...stylex.props(logEditorStyles.logEditor__section)}><legend {...stylex.props(descendantStyles.logEditorU_uSectionU_uLegend)}>Choose contests</legend><p {...stylex.props(logEditorStyles.logEditor__hint)}>Choose where this entry counts. It always stays in your personal record.</p><div {...stylex.props(logEditorStyles.logEditor__contests)}>{eligible.length ? eligible.map(contest => <methods.AppField key={contest.id} name="submissions">{field => <field.Checkbox  value={contest.id} label={contest.title} />}</methods.AppField>) : <p {...stylex.props(logEditorStyles.logEditor__hint)}>No joined contests accept this language, activity, and date. You can still save your personal record.</p>}</div>
           {closedSubmissions.length > 0 && <Flash title="Finished contests keep their saved scores">Editing this personal record leaves its finished-contest snapshots unchanged.</Flash>}
         </fieldset>
       </div>
-      <div className="log-editor__actions">{step === 1 ? <><Link to={detailHref} className={buttonClassName({ variant: 'ghost' })}>Cancel</Link><Button type="submit">Next</Button></> : <><Button variant="ghost" onClick={() => setStep(1)}>Back</Button><Button type="submit">{existing ? 'Save changes' : 'Save activity'}</Button></>}</div>
+      <div {...stylex.props(logEditorStyles.logEditor__actions)}>{step === 1 ? <><Link to={detailHref} {...stylex.props(...buttonStyles({ variant: 'ghost' }))}>Cancel</Link><Button type="submit">Next</Button></> : <><Button variant="ghost" onClick={() => setStep(1)}>Back</Button><Button type="submit">{existing ? 'Save changes' : 'Save activity'}</Button></>}</div>
     </methods.Form></methods.AppForm>
-    <aside className="log-editor__aside" aria-labelledby="log-score-heading">
-      <h2 id="log-score-heading">Estimated score</h2>
-      <p className="log-editor__aside-score" data-empty={!Number.isFinite(amount) || amount <= 0 || undefined} aria-live="polite">{estimate}</p>
-      {Number.isFinite(amount) && amount > 0 && <p className="log-editor__aside-basis">{personalScoreExplanation({ activity, language, amount, unit, modifiers })}</p>}
-      <p>Contest scores may use a different rule.</p>
-      <Link className="text-link" to="/guide/scoring">How scoring works</Link>
+    <aside {...stylex.props(logEditorStyles.logEditor__aside)} aria-labelledby="log-score-heading">
+      <h2 {...stylex.props(descendantStyles.logEditorU_uAsideU_uH2)} id="log-score-heading">Estimated score</h2>
+      <p {...stylex.props(logEditorStyles.logEditor__asideScore, descendantStyles.logEditorU_uAsideU_uP, descendantStyles.logEditorU_uAsideU_uLogEditorU_uAsideScore)} data-empty={!Number.isFinite(amount) || amount <= 0 || undefined} aria-live="polite">{estimate}</p>
+      {Number.isFinite(amount) && amount > 0 && <p {...stylex.props(logEditorStyles.logEditor__asideBasis, descendantStyles.logEditorU_uAsideU_uP, descendantStyles.logEditorU_uAsideU_uLogEditorU_uAsideBasis)}>{personalScoreExplanation({ activity, language, amount, unit, modifiers })}</p>}
+      <p {...stylex.props(descendantStyles.logEditorU_uAsideU_uP)}>Contest scores may use a different rule.</p>
+      <Link {...stylex.props(linkStyles.base)} to="/guide/scoring">How scoring works</Link>
     </aside>
     </div>
   </section>

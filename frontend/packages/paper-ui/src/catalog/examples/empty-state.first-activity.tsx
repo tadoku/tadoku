@@ -1,4 +1,5 @@
-import { EmptyState, SectionHeading, Surface, buttonClassName } from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { EmptyState, SectionHeading, Surface, buttonStyles } from 'paper-ui'
 
 export default function Example() {
   return (
@@ -10,7 +11,7 @@ export default function Example() {
         title="No activity recorded in 2026"
         description="A few pages or minutes are a good place to start. Your personal record grows with every entry, whether you join a contest or read on your own."
         actions={
-          <a className={buttonClassName()} href="#log-activity">
+          <a {...stylex.props(...buttonStyles())} href="#log-activity">
             Log activity
           </a>
         }

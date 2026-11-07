@@ -1,19 +1,25 @@
-import { Button } from 'paper-ui'
-import { PlusIcon, XMarkIcon, iconClassName } from 'paper-ui/icons'
+import * as stylex from '@stylexjs/stylex'
+import { Button, iconSizes, layout } from 'paper-ui'
+import { size } from 'paper-ui/tokens.stylex'
+import { PlusIcon, XMarkIcon } from 'paper-ui/icons'
+
+const styles = stylex.create({
+  iconOnly: { minBlockSize: size[44], minInlineSize: size[44] },
+})
 
 export default function Example() {
   return (
-    <div className="paper-stack">
-      <div className="paper-cluster">
-        <Button leadingIcon={<PlusIcon className={iconClassName()} />}>
+    <div {...stylex.props(layout.stack)}>
+      <div {...stylex.props(layout.cluster)}>
+        <Button leadingIcon={<PlusIcon {...stylex.props(iconSizes.default)} />}>
           Add reading
         </Button>
         <Button
           variant="ghost"
           aria-label="Close entry"
-          style={{ minWidth: '2.75rem', minHeight: '2.75rem' }}
+          xstyle={styles.iconOnly}
         >
-          <XMarkIcon className={iconClassName()} aria-hidden="true" />
+          <XMarkIcon {...stylex.props(iconSizes.default)} aria-hidden="true" />
         </Button>
         <Button disabled aria-describedby="archive-reason">
           Submit to contest

@@ -28,7 +28,7 @@ const unique = () => `${Date.now().toString(36)}${Math.random().toString(36).sli
 const createButton = (page: Page) => page.getByRole('button', { name: 'Create contest', exact: true })
 
 async function hydrated(page: Page) {
-  await expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled()
+  await expect(page.locator('[data-navbar-menu]')).toBeEnabled()
 }
 
 async function fitsWidth(page: Page, name: string, path: string) {
@@ -154,7 +154,7 @@ test('an organizer gets each invalid field focused, then creates a contest and l
   const id = new URL(page.url()).pathname.split('/')[2]
   await page.goBack()
   await expect(page).toHaveURL(/\/contests\/my-contests\/1$/)
-  await expect(page.locator('.contest-row').first().getByRole('heading', { level: 2 })).toHaveText(name)
+  await expect(page.locator('[data-contest-row]').first().getByRole('heading', { level: 2 })).toHaveText(name)
   const created = await (await adminContext.request.get(`${api}/immersion/contests/${id}`)).json() as Contest & {
     allowed_languages: { code: string }[] | null
     allowed_activities: { id: number }[]
@@ -211,7 +211,7 @@ test('an administrator drafts, publishes and activates a contest rule set', asyn
   await expect(pinned).toHaveValue(expectedFallback?.id ?? '')
   if (!expectedFallback) await page.getByLabel('Contest behavior').selectOption('replace')
 
-  const rules = page.locator('.scoring-rule')
+  const rules = page.locator('[data-scoring-rule]')
   const rate = rules.nth(0).getByLabel('Rate')
   await rate.fill('')
   await page.getByRole('button', { name: 'Create draft' }).click()
@@ -235,7 +235,7 @@ test('an administrator drafts, publishes and activates a contest rule set', asyn
 
   await page.getByRole('button', { name: 'Create draft' }).click()
   await expect(page.getByRole('status').filter({ hasText: 'Scoring rule-set draft created.' })).toBeVisible()
-  const version = page.locator('.scoring-version')
+  const version = page.locator('[data-scoring-version]')
   await expect(version).toHaveCount(1)
   let [draft] = await ruleSets(adminContext.request, `/immersion/contests/${contest.id}/scoring/rule-sets`)
   expect(draft).toMatchObject({
@@ -250,7 +250,7 @@ test('an administrator drafts, publishes and activates a contest rule set', asyn
     { priority: 10, stackable: true, activity_id: 2, tag: 'webv3 podcast', score_source: 'duration_minutes', rate: 0.5 },
   ])
   await expect(version.getByRole('heading', { level: 3 })).toHaveText(`Version ${draft.version}`)
-  await expect(version.locator('.paper-status-tag')).toHaveText(['Draft'])
+  await expect(version.locator('[data-tone]')).toHaveText(['Draft'])
   await expect(version.locator('li')).toHaveText([
     'Base · Reading · Amount × 2.5',
     'Modifier · Listening · Duration (minutes) × 0.5 · tag webv3 podcast',
@@ -262,16 +262,16 @@ test('an administrator drafts, publishes and activates a contest rule set', asyn
   await expect(dialog).toHaveCount(0)
   await version.getByRole('button', { name: 'Publish' }).click()
   await page.getByRole('dialog', { name: 'Publish this version?' }).getByRole('button', { name: 'Publish' }).click()
-  await expect(version.locator('.paper-status-tag')).toHaveText(['Published'])
+  await expect(version.locator('[data-tone]')).toHaveText(['Published'])
   await version.getByRole('button', { name: 'Activate' }).click()
   await page.getByRole('dialog', { name: 'Activate this version?' }).getByRole('button', { name: 'Activate' }).click()
-  await expect(version.locator('.paper-status-tag')).toHaveText(['Published', 'Active'])
+  await expect(version.locator('[data-tone]')).toHaveText(['Published', 'Active'])
   await expect(version.getByRole('button')).toHaveCount(0)
   ;[draft] = await ruleSets(adminContext.request, `/immersion/contests/${contest.id}/scoring/rule-sets`)
   expect(draft).toMatchObject({ status: 'published', active: true })
 
   await page.reload()
-  await expect(version.locator('.paper-status-tag')).toHaveText(['Published', 'Active'])
+  await expect(version.locator('[data-tone]')).toHaveText(['Published', 'Active'])
   await fitsWidth(page, 'scoring', testInfo.outputPath('scoring-390.png'))
 })
 

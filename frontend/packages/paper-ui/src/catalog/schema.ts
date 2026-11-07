@@ -105,7 +105,8 @@ export interface CatalogApiContract {
     readonly required?: boolean;
   }[];
   readonly react: readonly string[];
-  readonly cssClasses: readonly string[];
+  /** StyleX style exports that give other elements this component's appearance. */
+  readonly styleExports: readonly string[];
   readonly publicTypes: readonly string[];
   readonly defaults: readonly string[];
   readonly invalidCombinations: readonly string[];

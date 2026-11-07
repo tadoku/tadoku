@@ -46,7 +46,7 @@ async function expectYear(page: Page, request: APIRequestContext, userId: string
 
   if (expected.activity.total_updates === 0) {
     await expect(page.getByRole('heading', { name: `No activity recorded in ${target}` })).toBeVisible()
-    await expect(page.locator('.paper-stat-grid')).toHaveCount(0)
+    await expect(page.locator('dl:has([data-stat])')).toHaveCount(0)
   } else {
     const total = expected.scores.scores.reduce((sum, score) => sum + score.score, 0)
     await expect(stat(page, 'Overall score')).toContainText(scoreFormat.format(total))
@@ -69,7 +69,7 @@ async function expectYear(page: Page, request: APIRequestContext, userId: string
   return expected
 }
 
-const stat = (page: Page, label: string) => page.locator('.paper-stat-grid__item', { hasText: label }).locator('dd')
+const stat = (page: Page, label: string) => page.locator('[data-stat]', { hasText: label }).locator('dd')
 
 test('an owner sees API totals, switches years and gets the export and day links', async ({ readerContext }, testInfo) => {
   test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
@@ -94,7 +94,7 @@ test('an owner sees API totals, switches years and gets the export and day links
   expect(csv.headers()['content-disposition']).toMatch(/attachment/)
   await expect(page.getByRole('link', { name: 'Activity', exact: true })).toHaveAttribute('href', new RegExp(`/profile/${userId}/updates/1$`))
   const today = new Date().toISOString().slice(0, 10)
-  const day = page.locator(`a.paper-heatmap__link[href$="/profile/${userId}/updates/1?date=${today}"]`)
+  const day = page.locator(`[data-heatmap] a[href$="/profile/${userId}/updates/1?date=${today}"]`)
   await expect(day).toHaveAttribute('aria-label', / points on /)
   await page.screenshot({ path: testInfo.outputPath('owner-current-year.png'), fullPage: true })
 
@@ -112,7 +112,7 @@ test('a visitor opens a standings profile, server-rendered without owner tools',
   const context = await browser.newContext({ baseURL: webv3, javaScriptEnabled: false })
   const page = await context.newPage()
   await page.goto('/')
-  const participant = page.locator('a.home-person-link').first()
+  const participant = page.locator('a[data-participant]').first()
   const name = (await participant.textContent())!
   await participant.click()
 
@@ -121,7 +121,7 @@ test('a visitor opens a standings profile, server-rendered without owner tools',
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(name)
   const visible = await expectYear(page, context.request, userId, year)
   expect(visible.contests.every(contest => !contest.private)).toBe(true)
-  if (visible.activity.total_updates > 0) await expect(page.locator('.paper-heatmap rect[data-date]')).not.toHaveCount(0)
+  if (visible.activity.total_updates > 0) await expect(page.locator('[data-heatmap] rect[data-date]')).not.toHaveCount(0)
   await expect(page.getByRole('link', { name: /Download/ })).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Activity', exact: true }))
     .toHaveAttribute('href', `/profile/${userId}/updates/1`)

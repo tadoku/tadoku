@@ -1,6 +1,7 @@
+import * as stylex from '@stylexjs/stylex'
 import { Link, useLocation, useRouter } from '@tanstack/react-router'
-import { Button, PageHeader, Surface, buttonClassName } from 'paper-ui'
-import { ArrowLeftIcon, iconClassName } from 'paper-ui/icons'
+import { a11y, Button, buttonStyles, iconSizes, PageHeader, Surface } from 'paper-ui'
+import { ArrowLeftIcon } from 'paper-ui/icons'
 import { useEffect, useRef, type ReactNode } from 'react'
 import {
   continuation, displayNameProblem, emailProblem, passwordProblem, problemFor, withReturnTo, type Code,
@@ -10,6 +11,7 @@ import { settingsView, type AccountSearch, type SettingsEditor, type SettingsVie
 import { useIdentity } from '../lib/session'
 import { FormProblem, ReturnTo } from './AccountForm'
 import { passwordHint } from './Credentials'
+import { formStyles, settingsStyles, textLink } from './styles'
 
 type Account = { readonly email: string; readonly display_name: string }
 
@@ -45,9 +47,9 @@ function useShowSaved(next: string | undefined) {
 
 function SettingsGroup({ title, children }: { readonly title: string; readonly children: ReactNode }) {
   return (
-    <div className="settings-group">
-      <h2 className="settings-group__title">{title}</h2>
-      <Surface className="settings-group__rows">{children}</Surface>
+    <div {...stylex.props(settingsStyles.group)}>
+      <h2 {...stylex.props(settingsStyles.groupTitle)}>{title}</h2>
+      <Surface xstyle={settingsStyles.rows}>{children}</Surface>
     </div>
   )
 }
@@ -72,23 +74,23 @@ function SettingRow({ editor, label, value, view, next, children }: {
   }, [open])
 
   return (
-    <section className={open ? 'settings-row settings-row--open' : 'settings-row'} aria-labelledby={`${editor}-label`}>
-      <h3 id={`${editor}-label`} className="settings-row__label">{label}</h3>
-      {open ? <div className="settings-row__editor">{children}</div> : (
+    <section {...stylex.props(settingsStyles.row, open && settingsStyles.open)} aria-labelledby={`${editor}-label`}>
+      <h3 id={`${editor}-label`} {...stylex.props(settingsStyles.label)}>{label}</h3>
+      {open ? <div {...stylex.props(settingsStyles.editor)}>{children}</div> : (
         <>
-          <div className="settings-row__summary">
-            <p className="settings-row__value">{value}</p>
-            {saved ? <p id={`${editor}-saved`} className="settings-saved" role="status">{confirmations[editor]}</p> : null}
+          <div {...stylex.props(settingsStyles.summary)}>
+            <p {...stylex.props(settingsStyles.value)} data-setting-value="">{value}</p>
+            {saved ? <p id={`${editor}-saved`} {...stylex.props(settingsStyles.saved)} role="status">{confirmations[editor]}</p> : null}
           </div>
           <Link
             ref={change}
             to="."
             search={{ edit: editor, return_to: next }}
             resetScroll={false}
-            className={buttonClassName({ variant: 'outline' })}
+            {...stylex.props(...buttonStyles({ variant: 'outline' }))}
             aria-describedby={saved ? `${editor}-saved` : undefined}
           >
-            Change<span className="paper-visually-hidden"> {label.toLowerCase()}</span>
+            Change<span {...stylex.props(a11y.visuallyHidden)}> {label.toLowerCase()}</span>
           </Link>
         </>
       )}
@@ -104,7 +106,7 @@ function Cancel({ next }: { readonly next?: string }) {
       search={{ return_to: next }}
       resetScroll={false}
       activeOptions={{ exact: true }}
-      className={buttonClassName({ variant: 'ghost' })}
+      {...stylex.props(...buttonStyles({ variant: 'ghost' }))}
     >
       Cancel
     </Link>
@@ -122,14 +124,14 @@ function DisplayNameForm({ account, next, error, reauthenticate }: EditorProps) 
   })
   return (
     <form.AppForm>
-      <form.Form {...formProps} className="account-form">
+      <form.Form {...formProps} xstyle={[formStyles.form, formStyles.compact]}>
         <FormProblem problem={problem} reauthenticate={reauthenticate} />
         <ReturnTo value={next} />
         <form.AppField name="display_name" validators={{ onChange: ({ value }) => displayNameProblem(value) }}>
           {field => <field.Input id={fieldId('display_name')} label="Display name" autoComplete="nickname" required autoFocus />}
         </form.AppField>
-        <div className="account-form__actions">
-          <Button type="submit" loading={pending} loadingLabel="Saving">Save display name</Button>
+        <div {...stylex.props(formStyles.actions)}>
+          <Button xstyle={formStyles.action} type="submit" loading={pending} loadingLabel="Saving">Save display name</Button>
           <Cancel next={next} />
         </div>
       </form.Form>
@@ -148,7 +150,7 @@ function EmailForm({ account, next, error, reauthenticate }: EditorProps) {
   })
   return (
     <form.AppForm>
-      <form.Form {...formProps} className="account-form">
+      <form.Form {...formProps} xstyle={[formStyles.form, formStyles.compact]}>
         <FormProblem problem={problem} reauthenticate={reauthenticate} />
         <ReturnTo value={next} />
         <input type="hidden" name="current_email" value={account.email} />
@@ -163,11 +165,12 @@ function EmailForm({ account, next, error, reauthenticate }: EditorProps) {
               maxLength={320}
               autoFocus
               hint={`Needs a login within the last hour. We’ll send a notice to ${account.email}.`}
+              hintXstyle={settingsStyles.storedHint}
             />
           )}
         </form.AppField>
-        <div className="account-form__actions">
-          <Button type="submit" loading={pending} loadingLabel="Saving">Save email</Button>
+        <div {...stylex.props(formStyles.actions)}>
+          <Button xstyle={formStyles.action} type="submit" loading={pending} loadingLabel="Saving">Save email</Button>
           <Cancel next={next} />
         </div>
       </form.Form>
@@ -186,7 +189,7 @@ function PasswordForm({ account, next, error, reauthenticate }: EditorProps) {
   })
   return (
     <form.AppForm>
-      <form.Form {...formProps} className="account-form">
+      <form.Form {...formProps} xstyle={[formStyles.form, formStyles.compact]}>
         <FormProblem problem={problem} reauthenticate={reauthenticate} />
         <ReturnTo value={next} />
         <input type="email" name="username" autoComplete="username" value={account.email} hidden readOnly />
@@ -200,15 +203,16 @@ function PasswordForm({ account, next, error, reauthenticate }: EditorProps) {
               required
               autoFocus
               hint={passwordHint}
+              hintXstyle={settingsStyles.storedHint}
               aria-describedby="password-policy"
             />
           )}
         </form.AppField>
-        <p id="password-policy" className="settings-row__hint">
+        <p id="password-policy" {...stylex.props(settingsStyles.hint)}>
           Needs a login within the last hour or a recovery link. Signs you out on your other devices.
         </p>
-        <div className="account-form__actions">
-          <Button type="submit" loading={pending} loadingLabel="Saving">
+        <div {...stylex.props(formStyles.actions)}>
+          <Button xstyle={formStyles.action} type="submit" loading={pending} loadingLabel="Saving">
             {next ? 'Save password and continue' : 'Save password'}
           </Button>
           <Cancel next={next} />
@@ -235,17 +239,18 @@ export function Settings({ search }: { readonly search: AccountSearch }) {
   }
   const row = { view, next }
   return (
-    <div className="settings">
+    <div {...stylex.props(settingsStyles.page)}>
       <PageHeader
         title="Account settings"
+        xstyle={settingsStyles.header}
         actions={next ? (
-          <a className={buttonClassName({ variant: 'outline' })} href={next}>
-            <ArrowLeftIcon className={iconClassName('compact')} aria-hidden="true" />
+          <a {...stylex.props(...buttonStyles({ variant: 'outline' }), settingsStyles.backLink)} href={next}>
+            <ArrowLeftIcon {...stylex.props(iconSizes.compact)} aria-hidden="true" />
             Back to Tadoku
           </a>
         ) : null}
       />
-      {search.form === 'logout' && search.error ? <div className="settings-notice"><FormProblem problem={problemFor(search.error, 'logout')} /></div> : null}
+      {search.form === 'logout' && search.error ? <div {...stylex.props(settingsStyles.notice)}><FormProblem problem={problemFor(search.error, 'logout')} /></div> : null}
       <SettingsGroup title="Profile">
         <SettingRow
           {...row}
@@ -269,13 +274,13 @@ export function Settings({ search }: { readonly search: AccountSearch }) {
           {...row}
           editor="password"
           label="Password"
-          value={<><span aria-hidden="true">••••••••••</span><span className="paper-visually-hidden">Hidden</span></>}
+          value={<><span aria-hidden="true">••••••••••</span><span {...stylex.props(a11y.visuallyHidden)}>Hidden</span></>}
         >
           <PasswordForm {...editor} />
         </SettingRow>
       </SettingsGroup>
-      <p className="settings-delete">
-        <Link to="/delete-account" search={{ return_to: next }}>Delete account</Link>
+      <p {...stylex.props(settingsStyles.delete)}>
+        <Link to="/delete-account" search={{ return_to: next }} {...stylex.props(textLink, settingsStyles.deleteLink)}>Delete account</Link>
       </p>
     </div>
   )

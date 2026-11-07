@@ -36,14 +36,14 @@ function statuses(contest: Contest, today = new Date().toISOString().slice(0, 10
 
 /** Every API contest is a row in the API's order, linking to its contest page, with its privacy and status tags. */
 async function expectRows(page: Page, data: Contests, pageNumber = 1) {
-  const rows = page.locator('.contest-row')
+  const rows = page.locator('[data-contest-row]')
   await expect(rows).toHaveCount(data.contests.length)
   for (const [index, contest] of data.contests.entries()) {
     const row = rows.nth(index)
     await expect(row.getByRole('heading', { level: 2 })).toHaveText(contest.title)
     await expect(row.getByRole('link', { name: contest.title, exact: true }))
       .toHaveAttribute('href', `/contests/${contest.id}/leaderboard/1`)
-    await expect(row.locator('.contest-row__title .paper-status-tag')).toHaveText(statuses(contest))
+    await expect(row.locator('[data-tone]')).toHaveText(statuses(contest))
   }
   if (data.total_size === 0) {
     await expect(page.getByRole('main').getByRole('heading', { level: 2 })).toHaveText(/No contests found|You don’t organize any contests yet/)
@@ -51,14 +51,14 @@ async function expectRows(page: Page, data: Contests, pageNumber = 1) {
   }
   const first = (pageNumber - 1) * pageSize + 1
   // The range summary appears only beside page links.
-  await expect(page.locator('.contests-pagination > p')).toHaveText(data.total_size > pageSize
+  await expect(page.locator('[data-contests-pagination] > p')).toHaveText(data.total_size > pageSize
     ? [`${count.format(first)}–${count.format(first + data.contests.length - 1)} of ${count.format(data.total_size)} contests`]
     : [])
   await expect(page.getByRole('navigation', { name: 'Contest pages', exact: true })).toHaveCount(data.total_size > pageSize ? 1 : 0)
 }
 
 async function hydrated(page: Page) {
-  await expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled()
+  await expect(page.locator('[data-navbar-menu]')).toBeEnabled()
 }
 
 /** Gives Dev Admin more than one page of community contests in the selected tenant, one of them unlisted. */
@@ -117,7 +117,7 @@ test('server-rendered official and community lists show the API contests and lin
     await expect(page.getByText('Contest dates are calendar days in UTC.')).toBeVisible()
     // Guests see no create action and no restrictions, as in Webv2; a row may still name its deadline.
     await expect(page.getByRole('link', { name: 'Create contest' })).toHaveCount(0)
-    for (const meta of await page.locator('.contest-row__allows').allTextContents()) {
+    for (const meta of await page.locator('[data-contest-allows]').allTextContents()) {
       expect(meta).toMatch(/^Registration closes \d+ \w+ \d{4}$/)
     }
     await expectRows(page, data)
@@ -172,7 +172,7 @@ test('collection tabs, pages and the signed-out Joined and Organizing prompts wo
   const login = new URL((await page.locator('main').getByRole('link', { name: 'Log in', exact: true }).getAttribute('href'))!)
   expect(login.pathname).toBe('/login')
   expect(login.searchParams.get('return_to')).toBe(page.url())
-  await expect(page.locator('.contest-row')).toHaveCount(0)
+  await expect(page.locator('[data-contest-row]')).toHaveCount(0)
   await page.screenshot({ path: testInfo.outputPath('my-contests-anonymous.png'), fullPage: true })
   expect(failures).toEqual([])
 })
@@ -189,7 +189,7 @@ test('an organizer pages through their own contests, unlisted ones included, and
   await expectRows(page, mine)
   await expect(page.getByRole('link', { name: 'Create contest' })).toHaveAttribute('href', '/contests/new')
   // Signed-in community and organizer lists name the restrictions, as Webv2 does.
-  await expect(page.locator('.contest-row').filter({ hasText: 'Webv3 list check' }).first().locator('.contest-row__allows'))
+  await expect(page.locator('[data-contest-row]').filter({ hasText: 'Webv3 list check' }).first().locator('[data-contest-allows]'))
     .toContainText('Japanese · Reading, Listening')
   await page.screenshot({ path: testInfo.outputPath('my-contests-organizer.png'), fullPage: true })
 
@@ -249,7 +249,7 @@ test('a participant’s Joined list holds their registrations for the chosen yea
 
   await page.goto('/contests/joined/2020/1')
   await expect(page.getByRole('heading', { level: 2, name: 'You didn’t join any contests in 2020' })).toBeVisible()
-  await expect(page.locator('.contest-row')).toHaveCount(0)
+  await expect(page.locator('[data-contest-row]')).toHaveCount(0)
 })
 
 test('contest lists stay within mobile and desktop viewports', async ({ page }, testInfo) => {

@@ -1,4 +1,5 @@
-import { Button, Drawer, usePaperForm } from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { Button, Drawer, layout, usePaperForm } from 'paper-ui'
 import { useId, useState } from 'react'
 
 export default function DrawerExample() {
@@ -13,7 +14,7 @@ export default function DrawerExample() {
     },
   })
   return (
-    <div className="paper-stack">
+    <div {...stylex.props(layout.stack)}>
       <p role="status">Showing: {language}</p>
       <methods.AppForm>
         <Drawer
@@ -37,7 +38,7 @@ export default function DrawerExample() {
             </>
           }
         >
-          <methods.Form className="paper-stack" id={formId}>
+          <methods.Form xstyle={layout.stack} id={formId}>
             <methods.AppField name="language">
               {field => (
                 <field.Select

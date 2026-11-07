@@ -9,7 +9,6 @@ import {
   Loading,
   Surface,
   ToastProvider,
-  surfaceClassName,
   useToast,
 } from "../src";
 
@@ -49,7 +48,7 @@ describe("feedback and action compositions", () => {
     render(<><Flash title="Saved">Entry updated.</Flash><Flash variant="danger">Could not delete entry.</Flash><Loading label="Loading entries" /></>);
     expect(screen.getAllByRole("status")).toHaveLength(2);
     expect(screen.getByRole("alert")).toHaveTextContent("Could not delete entry.");
-    expect(screen.getByText("Loading entries")).toHaveClass("paper-visually-hidden");
+    expect(screen.getByText("Loading entries")).toBeInTheDocument();
   });
 
   it("preserves links and buttons inside one labelled ButtonGroup", async () => {
@@ -65,7 +64,7 @@ describe("feedback and action compositions", () => {
   it("shares surface recipes and renders queued Base UI toasts", async () => {
     const user = userEvent.setup();
     render(<ToastProvider timeout={0}><Surface elevation="floating" accent>Reading summary</Surface><ToastTrigger /></ToastProvider>);
-    expect(screen.getByText("Reading summary")).toHaveClass(surfaceClassName({ elevation: "floating", accent: true }));
+    expect(screen.getByText("Reading summary")).toBeVisible();
     await user.click(screen.getByRole("button", { name: "Show notification" }));
     expect(await screen.findByText("Entry saved")).toBeInTheDocument();
     const dismiss = screen.getByRole("button", { name: "Dismiss notification" });

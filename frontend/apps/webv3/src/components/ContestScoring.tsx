@@ -1,7 +1,10 @@
+import * as stylex from '@stylexjs/stylex'
 import { useQuery } from '@tanstack/react-query'
 import { useHydrated } from '@tanstack/react-router'
 import type { ImmersionLogConfigurationOptions, ImmersionScoringRule, ImmersionScoringRuleSet } from 'api-client'
-import { Button, EmptyState, Flash, Modal, PageHeader, SectionHeading, StatusTag, Surface, buttonClassName } from 'paper-ui'
+import { Button, buttonStyles, EmptyState, Flash, linkStyles, Modal, PageHeader, SectionHeading, StatusTag, Surface } from 'paper-ui'
+import { pageStyles } from './page-styles'
+import { fluid, lineHeight, size, space } from 'paper-ui/tokens.stylex'
 import { useRef, useState } from 'react'
 import { contestsHref } from '../lib/contests'
 import { useLinks } from '../lib/links'
@@ -12,6 +15,20 @@ import { useLoginUrl } from '../lib/session'
 import { renderLink } from './router-link'
 import { RuleSetForm } from './RuleSetForm'
 import { scoringFailures } from './scoring-failures'
+
+const styles = stylex.create({
+  page: { gap: space[24], display: 'grid', maxInlineSize: size[768], minInlineSize: 0, },
+  header: { marginBlockEnd: 0 },
+  versions: { gap: space[16], display: 'grid', minInlineSize: 0, },
+  version: {
+    padding: `clamp(${space[16]}, ${fluid[4]}, ${space[24]})`,
+    gap: space[12],
+    display: 'grid',
+    minInlineSize: 0,
+    overflowWrap: 'anywhere',
+  },
+  rules: { margin: 0, lineHeight: lineHeight.airy, paddingInlineStart: space[20], },
+})
 
 /**
  * A contest's scoring rule-set versions for an administrator, who can draft, publish and activate versions until the
@@ -31,7 +48,7 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
             headingLevel={1}
             title="Contest not found"
             description="This contest does not exist or has been removed."
-            actions={<a className={buttonClassName({ variant: 'outline' })} href={contestsHref.official()}>Browse contests</a>}
+            actions={<a {...stylex.props(...buttonStyles({ variant: 'outline' }))} href={contestsHref.official()}>Browse contests</a>}
           />
         )
       case 'signed-out':
@@ -40,7 +57,7 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
             headingLevel={1}
             title="Your session ended"
             description="Log in again to manage contest scoring."
-            actions={<a className={buttonClassName()} href={loginUrl}>Log in</a>}
+            actions={<a {...stylex.props(...buttonStyles())} href={loginUrl}>Log in</a>}
           />
         )
       default:
@@ -61,8 +78,9 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
   const locked = new Date().toISOString().slice(0, 10) >= contest.contest_start
 
   return (
-    <div className="scoring-page">
+    <div {...stylex.props(styles.page)}>
       <PageHeader
+        xstyle={styles.header}
         title="Contest scoring"
         backLink={{ href: links.contest(contestId), label: contest.title }}
         renderLink={renderLink}
@@ -71,7 +89,7 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
         <Flash variant="information">
           Scoring is locked because this contest has started.{contestRuleSets.length > 0
             ? ' Its rule-set versions are listed below.'
-            : <> It uses the <a className="text-link" href={`${links.guide}#media`}>platform defaults</a>.</>}
+            : <> It uses the <a {...stylex.props(linkStyles.base)} href={`${links.guide}#media`}>platform defaults</a>.</>}
         </Flash>
       ) : (
         <RuleSetForm
@@ -81,8 +99,8 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
           platformRuleSets={platformRuleSets}
         />
       )}
-      {contestRuleSets.length === 0 && !locked ? <p className="scoring-empty">No contest-specific rule sets yet; this contest scores with the platform defaults.</p> : null}
-      {contestRuleSets.length === 0 ? null : <section className="scoring-versions" aria-labelledby="scoring-versions">
+      {contestRuleSets.length === 0 && !locked ? <p {...stylex.props(pageStyles.flush)}>No contest-specific rule sets yet; this contest scores with the platform defaults.</p> : null}
+      {contestRuleSets.length === 0 ? null : <section {...stylex.props(styles.versions)} aria-labelledby="scoring-versions">
         <SectionHeading level={2} id="scoring-versions" title="Rule-set versions" />
         {contestRuleSets.map(ruleSet => (
           <RuleSetVersion
@@ -106,7 +124,7 @@ function RuleSetVersion({ ruleSet, options, change }: {
   const action = change && (ruleSet.status === 'draft' ? 'publish' : ruleSet.active ? null : 'activate')
 
   return (
-    <Surface as="article" className="scoring-version" aria-labelledby={`version-${ruleSet.id}`}>
+    <Surface as="article" inset="none" xstyle={styles.version} aria-labelledby={`version-${ruleSet.id}`} data-scoring-version="">
       <SectionHeading
         level={3}
         id={`version-${ruleSet.id}`}
@@ -125,7 +143,7 @@ function RuleSetVersion({ ruleSet, options, change }: {
         actions={change && action ? <ConfirmChange change={{ ...change, action }} /> : null}
       />
       {ruleSet.rules.length ? (
-        <ol className="scoring-version__rules">
+        <ol {...stylex.props(styles.rules)}>
           {ruleSet.rules.map(rule => <li key={rule.id ?? rule.priority}>{describeRule(rule, options)}</li>)}
         </ol>
       ) : (

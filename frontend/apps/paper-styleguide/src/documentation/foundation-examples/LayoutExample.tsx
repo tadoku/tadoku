@@ -1,21 +1,23 @@
-import { Button, Surface } from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { Button, Surface, typography } from 'paper-ui'
+import { utilities } from '../../utilities.styles'
 
 export default function ReadingSection() {
   return (
-    <section className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-      <Surface className="min-w-0 flex flex-col gap-4 p-4 md:p-6">
-        <h2 className="paper-type-section m-0">September reading</h2>
-        <p className="m-0 max-w-prose">Choose a reading session to continue.</p>
-        <div className="flex flex-wrap items-center gap-inline">
+    <section {...stylex.props(utilities.tw_mx_auto, utilities.tw_grid, utilities.tw_w_full, utilities.tw_max_w_6xl, utilities.tw_grid_cols_1, utilities.tw_gap_6, utilities.tw_lg_grid_cols__minmax_0_2fr__minmax_0_1fr__)}>
+      <Surface xstyle={[utilities.tw_min_w_0, utilities.tw_flex, utilities.tw_flex_col, utilities.tw_gap_4, utilities.tw_p_4, utilities.tw_md_p_6]}>
+        <h2 {...stylex.props(typography.section, utilities.tw_m_0)}>September reading</h2>
+        <p {...stylex.props(utilities.tw_m_0, utilities.tw_max_w_prose)}>Choose a reading session to continue.</p>
+        <div {...stylex.props(utilities.tw_flex, utilities.tw_flex_wrap, utilities.tw_items_center, utilities.tw_gap_inline)}>
           <Button variant="outline">All languages</Button>
           <Button variant="outline">September 2026</Button>
           <Button>Log reading</Button>
         </div>
       </Surface>
-      <aside className="min-w-0 flex flex-col gap-2 py-4">
-        <h2 className="paper-type-component m-0">Your reading goal</h2>
-        <p className="m-0">Read for 20 minutes on four days this week.</p>
-        <p className="m-0 text-muted">Three sessions complete. One more to go.</p>
+      <aside {...stylex.props(utilities.tw_min_w_0, utilities.tw_flex, utilities.tw_flex_col, utilities.tw_gap_2, utilities.tw_py_4)}>
+        <h2 {...stylex.props(typography.component, utilities.tw_m_0)}>Your reading goal</h2>
+        <p {...stylex.props(utilities.tw_m_0)}>Read for 20 minutes on four days this week.</p>
+        <p {...stylex.props(utilities.tw_m_0, utilities.tw_text_muted)}>Three sessions complete. One more to go.</p>
       </aside>
     </section>
   )

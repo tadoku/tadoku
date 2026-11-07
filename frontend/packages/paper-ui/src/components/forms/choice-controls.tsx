@@ -1,6 +1,10 @@
+import * as stylex from "@stylexjs/stylex";
 import { useId } from "react";
-import { CheckIcon, iconClassName } from "../../icons";
-import { describedBy, useField, type FieldContract, type Option } from "./field";
+import { CheckIcon } from "../../icons";
+import { a11y } from "../../foundations/recipes";
+import { FieldMessages, RequiredMark, describedBy, useField, type FieldContract, type Option } from "./field";
+import { field as fieldStyles } from "./field-styles";
+import { choice, radioCard, segment } from "./choice-styles";
 
 export const RADIO_SELECT_VARIANTS = ["default", "segmented"] as const;
 
@@ -23,40 +27,56 @@ export function RadioSelect({
   const id = `paper-radio-${useId().replace(/:/gu, "")}`;
   const { field, error } = useField<string>();
   const segmented = variant === "segmented";
+  const invalid = Boolean(error);
   return (
     <fieldset
-      className={`paper-choice-field paper-radio-select paper-radio-select--${variant}${error ? " paper-field--invalid" : ""}`}
+      {...stylex.props(fieldStyles.choiceGroup)}
       aria-describedby={describedBy(id, hint, error)}
       aria-invalid={error ? true : undefined}
       disabled={disabled}
     >
-      <legend className="paper-field__label">{label}{required ? <span className="paper-field__required" aria-hidden="true">*</span> : null}</legend>
-      <div className="paper-choice-list">
-        {options.map((option) => (
-          <label className={segmented ? "paper-radio-select__segment" : "paper-choice"} key={option.value}>
-            <input
-              name={field.name}
-              checked={field.state.value === option.value}
-              onChange={() => field.handleChange(option.value)}
-              onBlur={field.handleBlur}
-              type="radio"
-              value={option.value}
-              disabled={option.disabled}
-              required={required}
-              aria-invalid={error ? true : undefined}
-            />
-            <span className={segmented ? "paper-radio-select__label" : undefined}>{option.label}</span>
-            {segmented ? (
-              <CheckIcon
-                className={iconClassName("compact", "paper-radio-select__check")}
-                aria-hidden="true"
+      <legend {...stylex.props(fieldStyles.label, fieldStyles.legend)}>{label}<RequiredMark required={required} /></legend>
+      <div {...stylex.props(choice.list, segmented && segment.list)}>
+        {options.map((option) => {
+          const checked = field.state.value === option.value;
+          const optionDisabled = disabled || option.disabled;
+          return (
+            <label
+              {...stylex.props(
+                segmented
+                  ? [
+                      segment.root,
+                      checked && segment.checked,
+                      optionDisabled && segment.disabled,
+                      invalid && (checked ? segment.invalidChecked : segment.invalid),
+                    ]
+                  : choice.option,
+              )}
+              key={option.value}
+            >
+              <input
+                name={field.name}
+                checked={checked}
+                onChange={() => field.handleChange(option.value)}
+                onBlur={field.handleBlur}
+                type="radio"
+                value={option.value}
+                disabled={option.disabled}
+                required={required}
+                aria-invalid={error ? true : undefined}
+                {...stylex.props(
+                  segmented ? [stylex.defaultMarker(), a11y.visuallyHidden] : [choice.box, invalid && choice.boxInvalid],
+                )}
               />
-            ) : null}
-          </label>
-        ))}
+              <span {...stylex.props(!segmented && optionDisabled && choice.textDisabled)}>{option.label}</span>
+              {segmented ? (
+                <CheckIcon {...stylex.props(segment.check, checked && segment.checkVisible)} aria-hidden="true" />
+              ) : null}
+            </label>
+          );
+        })}
       </div>
-      {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
-      {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error}</p> : null}
+      <FieldMessages id={id} hint={hint} error={error} />
     </fieldset>
   );
 }
@@ -80,14 +100,22 @@ export function RadioGroup<Value extends string = string>({
   const { field, error } = useField<string>();
   return (
     <fieldset
-      className={`paper-choice-field${error ? " paper-field--invalid" : ""}`}
+      {...stylex.props(fieldStyles.choiceGroup)}
       aria-describedby={describedBy(id, hint, error)}
       aria-invalid={error ? true : undefined}
     >
-      <legend className="paper-field__label">{label}{required ? <span className="paper-field__required" aria-hidden="true">*</span> : null}</legend>
-      <div className="paper-radio-cards">
+      <legend {...stylex.props(fieldStyles.label, fieldStyles.legend)}>{label}<RequiredMark required={required} /></legend>
+      <div {...stylex.props(radioCard.list)}>
         {options.map((option) => (
-          <label className="paper-radio-card" key={option.value}>
+          <label
+            {...stylex.props(
+              radioCard.root,
+              field.state.value === option.value && radioCard.checked,
+              Boolean(error) && radioCard.invalid,
+              option.disabled && radioCard.disabled,
+            )}
+            key={option.value}
+          >
             <input
               name={field.name}
               checked={field.state.value === option.value}
@@ -98,13 +126,13 @@ export function RadioGroup<Value extends string = string>({
               required={required}
               disabled={option.disabled}
               aria-invalid={error ? true : undefined}
+              {...stylex.props(stylex.defaultMarker(), radioCard.input)}
             />
-            <span><strong>{option.label}</strong><small>{option.description}</small></span>
+            <span {...stylex.props(radioCard.text)}><strong>{option.label}</strong><small {...stylex.props(radioCard.description)}>{option.description}</small></span>
           </label>
         ))}
       </div>
-      {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
-      {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error}</p> : null}
+      <FieldMessages id={id} hint={hint} error={error} />
     </fieldset>
   );
 }

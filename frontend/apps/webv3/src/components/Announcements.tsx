@@ -1,12 +1,26 @@
 import { useQuery } from '@tanstack/react-query'
 import { useHydrated, useRouterState } from '@tanstack/react-router'
-import { Button, Flash } from 'paper-ui'
-import { XMarkIcon, iconClassName } from 'paper-ui/icons'
-import { useEffect, useState } from 'react'
+import * as stylex from '@stylexjs/stylex'
+import { Button, Flash, iconSizes, linkStyles, proseElements } from 'paper-ui'
+import { XMarkIcon } from 'paper-ui/icons'
+import { space } from 'paper-ui/tokens.stylex'
+import { useEffect, useState, type ReactNode } from 'react'
 import ReactMarkdown from 'react-markdown'
 import rehypeSanitize from 'rehype-sanitize'
 import remarkGfm from 'remark-gfm'
 import { announcementsQuery } from '../lib/content'
+
+const styles = stylex.create({
+  list: { gap: space[8], display: 'grid', marginBlockEnd: space[32], },
+  announcement: { gap: space[4], display: 'grid', overflowWrap: 'anywhere', },
+  paragraph: { margin: 0 },
+})
+
+/** Announcement Markdown keeps its links in Paper's link style; paragraphs sit flush in the message. */
+const markdown = {
+  a: proseElements.a,
+  p: ({ children }: { children?: ReactNode }) => <p {...stylex.props(styles.paragraph)}>{children}</p>,
+}
 
 // Webv2's key, so dismissals carry over when the host switches.
 const storageKey = 'dismissed_announcements'
@@ -50,21 +64,21 @@ export function Announcements() {
   const visible = announcements.filter(announcement => !dismissed.includes(announcement.id))
   if (!visible.length) return null
   return (
-    <div className="app-announcements">
+    <div {...stylex.props(styles.list)}>
       {visible.map(announcement => (
         <Flash
           key={announcement.id}
           variant={announcement.tone}
           action={
             <Button variant="ghost" aria-label="Dismiss announcement" title="Dismiss" onClick={() => dismiss(announcement.id)}>
-              <XMarkIcon className={iconClassName()} aria-hidden="true" />
+              <XMarkIcon {...stylex.props(iconSizes.default)} aria-hidden="true" />
             </Button>
           }
         >
-          <div className="app-announcement">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{announcement.content}</ReactMarkdown>
+          <div {...stylex.props(styles.announcement)}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]} components={markdown}>{announcement.content}</ReactMarkdown>
             {announcement.href && pathOf(announcement.href) !== currentPath
-              ? <a className="text-link" href={announcement.href}>Learn more</a>
+              ? <a {...stylex.props(linkStyles.base)} href={announcement.href}>Learn more</a>
               : null}
           </div>
         </Flash>

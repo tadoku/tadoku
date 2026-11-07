@@ -32,7 +32,7 @@ describe("published Tabs and Drawer catalogue contracts", () => {
     const drawer = fixtureById("drawer.filters");
 
     expect(tabs?.code).toMatch(/import\s+\{[^}]*\bTabs\b[^}]*\}\s+from ['"]paper-ui['"]/);
-    expect(renderToString(<>{tabs?.render()}</>)).toContain("paper-tabs__tab");
+    expect(renderToString(<>{tabs?.render()}</>)).toContain('role="tab"');
     expect(drawer?.code).toMatch(/import\s+\{[^}]*\bDrawer\b[^}]*\}\s+from ['"]paper-ui['"]/);
     expect(renderToString(<>{drawer?.render()}</>)).toContain("Review filters");
   });
@@ -55,7 +55,6 @@ describe("segmented RadioSelect catalogue contract", () => {
     expect(document?.sections?.pageSections.length).toBeLessThanOrEqual(6);
     expect(fixture?.code).toContain('variant="segmented"');
     const markup = renderToString(<>{fixture?.render()}</>);
-    expect(markup).toContain("paper-radio-select--segmented");
     expect(markup).toContain('type="radio"');
     expect(markup).not.toContain("aria-pressed");
   });

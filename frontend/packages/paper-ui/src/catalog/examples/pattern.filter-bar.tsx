@@ -1,14 +1,21 @@
+import * as stylex from '@stylexjs/stylex'
 import { useStore } from '@tanstack/react-form'
-import {
-  AppliedFilters,
-  Button,
-  EmptyState,
-  SectionHeading,
-  Table,
-  usePaperForm,
-} from 'paper-ui'
+import { AppliedFilters, Button, EmptyState, SectionHeading, Table, iconSizes, layout, typography, usePaperForm } from 'paper-ui'
 import { ChevronDownIcon } from 'paper-ui/icons'
+import { size, space } from 'paper-ui/tokens.stylex'
 import { useId, useRef, useState } from 'react'
+
+const styles = stylex.create({
+  section: { maxInlineSize: size[704] },
+  open: { transform: 'rotate(180deg)' },
+  filters: {
+    gap: space[12],
+    display: 'grid',
+    gridTemplateColumns: `repeat(auto-fit, minmax(${size[176]}, 1fr))`,
+    paddingBlockEnd: space[16],
+  },
+  summary: { justifyContent: 'space-between' },
+})
 
 interface Standing {
   readonly name: string
@@ -55,7 +62,7 @@ export default function FilterBarExample() {
   }
 
   return (
-    <section aria-labelledby={headingId} style={{ maxWidth: '44rem' }}>
+    <section aria-labelledby={headingId} {...stylex.props(styles.section)}>
       <SectionHeading
         level={2}
         id={headingId}
@@ -69,8 +76,7 @@ export default function FilterBarExample() {
             onClick={() => setOpen(!open)}
             trailingIcon={
               <ChevronDownIcon
-                className="paper-icon-compact"
-                style={open ? { transform: 'rotate(180deg)' } : undefined}
+                {...stylex.props(iconSizes.compact, open && styles.open)}
               />
             }
           >
@@ -82,12 +88,7 @@ export default function FilterBarExample() {
         <methods.AppForm>
           <form
             onSubmit={event => event.preventDefault()}
-            style={{
-              display: 'grid',
-              gap: '0.75rem',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(11rem, 1fr))',
-              paddingBlockEnd: '1rem',
-            }}
+            {...stylex.props(styles.filters)}
           >
             <methods.AppField name="language">
               {field => (
@@ -122,11 +123,10 @@ export default function FilterBarExample() {
         </methods.AppForm>
       </div>
       <div
-        className="paper-cluster"
-        style={{ justifyContent: 'space-between' }}
+        {...stylex.props(layout.cluster, styles.summary)}
       >
         <AppliedFilters filters={applied} onClear={clearFilters} />
-        <p className="paper-type-metadata" role="status">
+        <p {...stylex.props(typography.metadata)} role="status">
           {rows.length} of {standings.length} participants
         </p>
       </div>
@@ -136,7 +136,7 @@ export default function FilterBarExample() {
           captionVisibility="screen-reader"
           rows={rows}
           getRowKey={row => row.name}
-          minWidth="17rem"
+          minWidth={size[272]}
           columns={[
             {
               id: 'participant',

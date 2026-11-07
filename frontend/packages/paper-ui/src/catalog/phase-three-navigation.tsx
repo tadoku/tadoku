@@ -19,7 +19,7 @@ export interface NavigationDocSpec {
   readonly sourcePath: string;
   readonly react: readonly string[];
   readonly types: readonly string[];
-  readonly css: readonly string[];
+  readonly styleExports?: readonly string[];
   readonly when: string;
   readonly avoid: string;
   readonly choose: string;
@@ -48,7 +48,7 @@ function navigationSections(spec: NavigationDocSpec): ComponentDocumentationSect
     behavior: { heading: "Behavior", content: [spec.behavior] },
     contentGuidance: { heading: "Content guidance", content: [spec.content] },
     accessibility: { heading: "Accessibility", content: [spec.accessibility] },
-    implementation: { heading: "Implementation", content: [`Import ${spec.react.join(", ")} from paper-ui and load paper-ui/styles.css once at the application entry. Examples use native fragment links so they run without a router. For an application router, pass renderLink={(props) => <AppLink {...props} />}; forward href, className, children, tabIndex, event handlers and aria attributes to the final anchor. Derive currentPath from your router; current on an item explicitly overrides exact href matching.`] },
+    implementation: { heading: "Implementation", content: [`Import ${spec.react.join(", ")} from paper-ui. Examples use native fragment links so they run without a router. For an application router, pass renderLink={(props) => <AppLink {...props} />}; forward href, className, style, children, tabIndex, event handlers and aria attributes to the final anchor. Derive currentPath from your router; current on an item explicitly overrides exact href matching.`] },
     apiReference: { heading: "API reference", content: [`See API / Props for required data, defaults, and routing contracts. Public types: ${spec.types.join(", ")}.`] },
     relatedPatterns: { heading: "Related patterns", content: ["Combine navigation components with the application shell and real destination data; do not duplicate routing or authorization policy inside Paper."] },
     migration: { heading: "Migration", content: [spec.migration] },
@@ -85,7 +85,7 @@ function navigationDocument(spec: NavigationDocSpec): CatalogDocument {
     api: {
       react: spec.react,
       props: spec.props,
-      cssClasses: spec.css,
+      styleExports: spec.styleExports ?? [],
       publicTypes: spec.types,
       defaults: [
         "Links render as native anchors; renderLink may replace them without changing semantics.",

@@ -1,7 +1,10 @@
+import * as stylex from '@stylexjs/stylex'
 import { useStore } from '@tanstack/react-form'
 import { useHydrated } from '@tanstack/react-router'
 import type { ImmersionLogConfigurationOptions, ImmersionScoringRuleSet } from 'api-client'
-import { Button, SectionHeading, Surface, usePaperForm, withPaperForm } from 'paper-ui'
+import { Button, FieldSet, SectionHeading, Surface, usePaperForm, withPaperForm } from 'paper-ui'
+import { pageStyles } from './page-styles'
+import { border, color, fontWeight, space } from 'paper-ui/tokens.stylex'
 import { useState } from 'react'
 import type { LogFailure } from '../lib/logs'
 import { useChangeScoring } from '../lib/scoring'
@@ -16,6 +19,21 @@ import {
   type ScoringDraft,
 } from '../lib/scoring-draft'
 import { scoringFailures } from './scoring-failures'
+
+const styles = stylex.create({
+  rule: {
+    margin: 0,
+    padding: space[16],
+    borderColor: color.ruleDefault,
+    borderStyle: 'solid',
+    borderWidth: border.static,
+    gap: space[16],
+    display: 'grid',
+    minInlineSize: 0,
+  },
+  ruleTitle: { padding: 0, float: 'left', fontWeight: fontWeight.semibold, width: '100%', },
+  ruleActions: { gap: space[8], display: 'flex', flexWrap: 'wrap', },
+})
 
 /** Creates a contest rule-set draft for the administrator who opened the page. A created draft starts a new form. */
 export function RuleSetForm({ contestId, viewerId, options, platformRuleSets }: {
@@ -43,15 +61,15 @@ export function RuleSetForm({ contestId, viewerId, options, platformRuleSets }: 
   const disabled = !hydrated || pending
 
   return (
-    <Surface className="log-surface scoring-form">
+    <Surface inset="fluid">
       <SectionHeading
         level={2}
         title="New rule-set version"
         description="Uncovered inputs score zero. Override mode falls back to the pinned platform version; replace mode does not."
       />
       <form.AppForm>
-        <form.Form className="goal-form" aria-busy={pending}>
-          <fieldset className="goal-form__controls" disabled={disabled}>
+        <form.Form xstyle={pageStyles.form} aria-busy={pending}>
+          <FieldSet disabled={disabled}>
             <form.AppField name="mode">
               {field => (
                 <field.Select
@@ -79,9 +97,9 @@ export function RuleSetForm({ contestId, viewerId, options, platformRuleSets }: 
             ) : null}
             <form.AppField name="rules" mode="array">
               {rules => (
-                <fieldset className="contest-form-group">
-                  <legend className="paper-field__label">Ordered rules</legend>
-                  {rules.state.value.length === 0 ? <p>This replacing rule set will score every input as zero.</p> : null}
+                <fieldset {...stylex.props(pageStyles.formGroup)}>
+                  <legend {...stylex.props(pageStyles.formGroupLegend)}>Ordered rules</legend>
+                  {rules.state.value.length === 0 ? <p {...stylex.props(pageStyles.flush)}>This replacing rule set will score every input as zero.</p> : null}
                   {rules.state.value.map((_, index) => (
                     <RuleFields
                       key={index}
@@ -101,14 +119,14 @@ export function RuleSetForm({ contestId, viewerId, options, platformRuleSets }: 
                 </fieldset>
               )}
             </form.AppField>
-          </fieldset>
+          </FieldSet>
 
           {outcome ? (
             <p role={outcome.ok ? 'status' : 'alert'}>
               {outcome.ok ? 'Scoring rule-set draft created.' : scoringFailures(outcome.reason, 'The draft was not created.')}
             </p>
           ) : null}
-          <div className="goal-actions">
+          <div {...stylex.props(pageStyles.actions)}>
             <Button type="submit" disabled={disabled}>{pending ? 'Creating…' : 'Create draft'}</Button>
           </div>
         </form.Form>
@@ -132,16 +150,16 @@ const RuleFields = withPaperForm({
     const units = ruleUnits(options, activityId)
 
     return (
-      <fieldset className="scoring-rule">
-        <legend className="scoring-rule__title">Rule {index + 1}</legend>
-        <div className="scoring-rule__actions">
+      <fieldset {...stylex.props(styles.rule)} data-scoring-rule="">
+        <legend {...stylex.props(styles.ruleTitle)}>Rule {index + 1}</legend>
+        <div {...stylex.props(styles.ruleActions)}>
           <Button type="button" variant="ghost" disabled={index === 0} onClick={() => move(index - 1)}>Up</Button>
           <Button type="button" variant="ghost" disabled={index === count - 1} onClick={() => move(index + 1)}>
             Down
           </Button>
           <Button type="button" variant="ghost" onClick={remove}>Remove</Button>
         </div>
-        <div className="goal-form__row">
+        <div {...stylex.props(pageStyles.formRow)}>
           <form.AppField
             name={`rules[${index}].activityId`}
             // A unit belongs to one activity, so another activity's unit can't stay selected.

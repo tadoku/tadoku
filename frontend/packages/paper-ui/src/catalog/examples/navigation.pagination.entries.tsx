@@ -1,10 +1,11 @@
-import { Pagination } from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { Pagination, layout } from 'paper-ui'
 import { useState } from 'react'
 
 export default function PaginationExample() {
   const [page, setPage] = useState(8)
   return (
-    <div className="paper-stack">
+    <div {...stylex.props(layout.stack)}>
       <p role="status">
         Page {page} of 24 · Entries {(page - 1) * 10 + 1}–{page * 10}
       </p>

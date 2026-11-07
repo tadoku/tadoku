@@ -95,13 +95,13 @@ describe("Tabs", () => {
     const { rerender } = render(<Example />);
 
     const historyPanel = document.querySelector<HTMLElement>(
-      '.paper-tabs__panel[data-value="history"]',
+      '[role="tabpanel"][data-value="history"], [data-value="history"]',
     );
     expect(historyPanel).toBeInTheDocument();
     expect(historyPanel).toHaveAttribute("hidden");
 
     await user.click(screen.getByRole("tab", { name: "Settings" }));
-    expect(document.querySelector('.paper-tabs__panel[data-value="overview"]')).toHaveAttribute(
+    expect(document.querySelector('[data-value="overview"]')).toHaveAttribute(
       "hidden",
     );
 
@@ -117,7 +117,7 @@ describe("Tabs", () => {
         </Tabs.Panel>
       </Tabs.Root>,
     );
-    expect(document.querySelector('.paper-tabs__panel[data-value="two"]')).not.toBeInTheDocument();
+    expect(document.querySelector('[data-value="two"]')).not.toBeInTheDocument();
   });
 
   it("forwards custom ids, classes, refs, and vertical orientation", () => {
@@ -136,8 +136,8 @@ describe("Tabs", () => {
     );
 
     expect(screen.getByRole("tablist")).toHaveAttribute("aria-orientation", "vertical");
-    expect(screen.getByRole("tab")).toHaveClass("paper-tabs__tab", "custom-tab");
-    expect(screen.getByRole("tabpanel")).toHaveClass("paper-tabs__panel", "custom-panel");
+    expect(screen.getByRole("tab")).toHaveClass("custom-tab");
+    expect(screen.getByRole("tabpanel")).toHaveClass("custom-panel");
     expect(tabRef.current).toBe(screen.getByRole("tab"));
   });
 

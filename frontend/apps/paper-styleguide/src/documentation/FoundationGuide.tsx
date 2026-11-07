@@ -1,61 +1,64 @@
+import * as stylex from '@stylexjs/stylex'
 import { useState } from 'react'
-import { Button } from 'paper-ui'
+import { Button, layout, typography } from 'paper-ui'
 import type { CatalogDocument } from 'paper-ui/catalog'
 import { CodeBlock } from './CodeBlock'
-import './foundation-guide.css'
+import { foundationStyles } from './foundation-guide.styles'
+import { shellStyles } from '../styles/shell.styles'
+import { descendantStyles } from '../descendants.styles'
 
 export function GuideCode({ code, label = 'Complete example' }: { code: string; label?: string }) {
   const [status, setStatus] = useState('')
-  return <div className="foundation-code">
-    <div className="paper-cluster"><h3>{label}</h3><Button variant="outline" onClick={async () => {
+  return <div {...stylex.props(foundationStyles.foundationCode)}>
+    <div {...stylex.props(layout.cluster, descendantStyles.foundationCodeU_uAny)}><h3 {...stylex.props(descendantStyles.foundationCodeU_uH3, descendantStyles.foundationCodeU_uAny)}>{label}</h3><Button variant="outline" onClick={async () => {
       try { await navigator.clipboard.writeText(code); setStatus('Copied.') }
       catch { setStatus('Select the code below and copy it manually.') }
-    }}>Copy code</Button><span role="status">{status}</span></div>
+    }}>Copy code</Button><span {...stylex.props(descendantStyles.foundationCodeU_uAny)} role="status">{status}</span></div>
     <CodeBlock code={code} label={label} language={label.includes("CSS") ? "css" : label.includes("commands") ? "bash" : "tsx"} />
   </div>
 }
 
 export function GuideTable({ columns, rows, label }: { columns: readonly string[]; rows: readonly (readonly string[])[]; label: string }) {
-  return <div className="foundation-reference" role="region" aria-label={label} tabIndex={0}>
-    <p className="foundation-reference-hint">Scroll horizontally to see all columns.</p><table><caption>{label}</caption><thead><tr>{columns.map(c => <th key={c} scope="col">{c}</th>)}</tr></thead>
-      <tbody>{rows.map((row, index) => <tr key={index}>{row.map((cell, i) => i === 0 ? <th key={i} scope="row">{cell}</th> : <td key={i}>{cell}</td>)}</tr>)}</tbody>
+  return <div {...stylex.props(foundationStyles.foundationReference)} role="region" aria-label={label} tabIndex={0}>
+    <p {...stylex.props(foundationStyles.foundationReferenceHint)}>Scroll horizontally to see all columns.</p><table {...stylex.props(descendantStyles.foundationReferenceU_uTable)}><caption {...stylex.props(descendantStyles.foundationReferenceU_uCaption)}>{label}</caption><thead><tr>{columns.map(c => <th {...stylex.props(descendantStyles.foundationReferenceU_uTh)} key={c} scope="col">{c}</th>)}</tr></thead>
+      <tbody>{rows.map((row, index) => <tr key={index}>{row.map((cell, i) => i === 0 ? <th {...stylex.props(descendantStyles.foundationReferenceU_uTh)} key={i} scope="row">{cell}</th> : <td {...stylex.props(descendantStyles.foundationReferenceU_uTd)} key={i}>{cell}</td>)}</tr>)}</tbody>
     </table>
   </div>
 }
 
 export function GovernanceGuide({ document }: { document: CatalogDocument }) {
-  if (document.id === 'governance.contributing') return <section id="usage" className="document-section foundation-guide">
-    <h2 className="paper-type-section">Make a reviewable change</h2>
+  if (document.id === 'governance.contributing') return <section id="usage" {...stylex.props(shellStyles.documentSection, foundationStyles.foundationGuide, descendantStyles.documentSection)}>
+    <h2 {...stylex.props(typography.section, descendantStyles.documentSectionU_uH2)}>Make a reviewable change</h2>
     <ol>
-      <li><strong>Check the existing contract.</strong> Read the component page, public export, CSS and tests in <code>frontend/packages/paper-ui</code>. Record the concrete user problem and whether an existing component can cover it.</li>
+      <li><strong>Check the existing contract.</strong> Read the component page, public export, CSS and tests in <code {...stylex.props(descendantStyles.foundationGuideU_uCode)}>frontend/packages/paper-ui</code>. Record the concrete user problem and whether an existing component can cover it.</li>
       <li><strong>Reproduce the behavior.</strong> For a bug, add a failing interaction or visual regression before fixing it. For a new API, describe defaults, controlled state, keyboard behavior and invalid combinations.</li>
-      <li><strong>Update the package and catalogue together.</strong> Component sources live in <code>src/components</code>, tokens in <code>src/foundations</code>, recipes in <code>styles</code>, and document/fixture definitions in <code>src/catalog</code>. Export public APIs from <code>src/index.ts</code>.</li>
+      <li><strong>Update the package and catalogue together.</strong> Component sources live in <code {...stylex.props(descendantStyles.foundationGuideU_uCode)}>src/components</code>, tokens in <code {...stylex.props(descendantStyles.foundationGuideU_uCode)}>src/foundations</code>, recipes in <code {...stylex.props(descendantStyles.foundationGuideU_uCode)}>styles</code>, and document/fixture definitions in <code {...stylex.props(descendantStyles.foundationGuideU_uCode)}>src/catalog</code>. Export public APIs from <code {...stylex.props(descendantStyles.foundationGuideU_uCode)}>src/index.ts</code>.</li>
       <li><strong>Make the example runnable.</strong> Include imports, provider setup, initial state, callback behavior and all referenced variables. Cover empty, long, error, disabled and loading states when applicable. Keep fixture data deterministic.</li>
       <li><strong>Review the rendered result.</strong> Test keyboard entry/exit, focus, light/dark, comfortable/compact and narrow layout. Inspect long content and 200% zoom. Check the component in a real composition, not just alone.</li>
       <li><strong>Record evidence and consequences.</strong> Update review date and changelog with behavior/API impact, migration steps and unresolved decisions. Stable promotion requires human review; passing a content-presence test is insufficient.</li>
     </ol>
     <GuideCode label="Validation commands (repository root)" code={'cd frontend\npnpm --filter paper-ui build\npnpm --filter paper-ui typecheck\npnpm --filter paper-ui test\npnpm --filter paper-ui lint\npnpm --filter paper-ui consumer:typecheck\npnpm --filter paper-styleguide typecheck\npnpm --filter paper-styleguide test\npnpm --filter paper-styleguide lint\npnpm --filter paper-styleguide build'} />
-    <p>After editing package source, rebuild <code>paper-ui</code> before reviewing the styleguide: the app consumes the built package. Run <code>pnpm --filter paper-styleguide dev</code> from <code>frontend</code> to review locally.</p>
+    <p {...stylex.props(descendantStyles.documentSectionU_uP, descendantStyles.foundationGuideU_uP)}>After editing package source, rebuild <code {...stylex.props(descendantStyles.foundationGuideU_uCode)}>paper-ui</code> before reviewing the styleguide: the app consumes the built package. Run <code {...stylex.props(descendantStyles.foundationGuideU_uCode)}>pnpm --filter paper-styleguide dev</code> from <code {...stylex.props(descendantStyles.foundationGuideU_uCode)}>frontend</code> to review locally.</p>
     <GuideTable label="Lifecycle is a promise" columns={['Status', 'Required meaning']} rows={[
       ['Experimental', 'Design or behavior still needs validation. Identify the open question; do not silently treat it as approved product behavior.'],
       ['Stable', 'Documented contract and complete examples, behavior evidence and visual review. Compatible changes preserve callers.'],
       ['Deprecated', 'Name the replacement, migration steps and agreed removal timing. Do not remove a used export without an exit path.'],
     ]} />
-    <p><a href="https://github.com/tadoku/tadoku/tree/62536c7988107f6856c83cf443735638230937ed/docs/wip/tadoku-paper">Decision log and design history</a> explain the accepted Bookplate direction. Keep application routing, fetching, persistence and contest rules in applications.</p>
+    <p {...stylex.props(descendantStyles.documentSectionU_uP, descendantStyles.foundationGuideU_uP)}><a {...stylex.props(descendantStyles.foundationGuideU_uA)} href="https://github.com/tadoku/tadoku/tree/62536c7988107f6856c83cf443735638230937ed/docs/wip/tadoku-paper">Decision log and design history</a> explain the accepted Bookplate direction. Keep application routing, fetching, persistence and contest rules in applications.</p>
   </section>
-  if (document.id === 'governance.changelog') return <section id="usage" className="document-section foundation-guide">
-    <h2 className="paper-type-section">Change history</h2>
-    <p>The package version remains <code>0.1.0</code>. A documentation review date is not a release or deployment date. These entries describe repository work; verify the deployed commit before relying on a change in a live app.</p>
+  if (document.id === 'governance.changelog') return <section id="usage" {...stylex.props(shellStyles.documentSection, foundationStyles.foundationGuide, descendantStyles.documentSection)}>
+    <h2 {...stylex.props(typography.section, descendantStyles.documentSectionU_uH2)}>Change history</h2>
+    <p {...stylex.props(descendantStyles.documentSectionU_uP, descendantStyles.foundationGuideU_uP)}>The package version remains <code {...stylex.props(descendantStyles.foundationGuideU_uCode)}>0.1.0</code>. A documentation review date is not a release or deployment date. These entries describe repository work; verify the deployed commit before relying on a change in a live app.</p>
     <GuideTable label="Changes and consumer impact" columns={['When', 'Change', 'Consumer impact']} rows={[
       ['Current review · unreleased', 'Foundation usage examples, spacing scale and layout utilities; corrected accent rail perimeter alignment. Experimental page-composition controls (PageHeader, SectionHeading, StatusTag, EmptyState, StatGrid, DescriptionList, AppliedFilters) and the Filter bar pattern.', 'Existing composition remains valid. New utilities and controls require the rebuilt package; the controls are Experimental and only paper-playground uses them. Application migrations remain separate work.'],
       ['2026-08-09', 'Refined action focus, form borders and Flash rails; restored wordmark and heatmap; styleguide controls use Paper.', 'Visual changes to existing components. Catalogue coverage did not establish complete usage guidance or readiness to migrate every application.'],
       ['2026-08-08 · 0.1.0 baseline', 'Canonical catalogue, framework-neutral exports, semantic light/dark themes and density controls.', 'Private workspace package; React 18.2 and TanStack Form 1.33.2 peers. Built declarations target TypeScript 5.4+ consumers.'],
     ]} />
-    <h3>Before upgrading an application</h3><p>Read the affected component’s contract and migration notes, compare the application’s current commit to the intended version, then review its actual screens in both themes and densities. This page does not assert that Admin, Auth or webv2 has migrated.</p>
-    <p><a href="https://github.com/tadoku/tadoku/commits/main/frontend/packages/paper-ui">Package commit history</a> and <a href="https://github.com/tadoku/tadoku/commits/main/frontend/apps/paper-styleguide">styleguide commit history</a> contain exact changes. Container digests and deployment approvals belong in release records, not inferred from the package version.</p>
+    <h3 {...stylex.props(descendantStyles.documentSectionU_uH3, descendantStyles.foundationGuideU_uH3)}>Before upgrading an application</h3><p {...stylex.props(descendantStyles.documentSectionU_uP, descendantStyles.foundationGuideU_uP)}>Read the affected component’s contract and migration notes, compare the application’s current commit to the intended version, then review its actual screens in both themes and densities. This page does not assert that Admin, Auth or webv2 has migrated.</p>
+    <p {...stylex.props(descendantStyles.documentSectionU_uP, descendantStyles.foundationGuideU_uP)}><a {...stylex.props(descendantStyles.foundationGuideU_uA)} href="https://github.com/tadoku/tadoku/commits/main/frontend/packages/paper-ui">Package commit history</a> and <a {...stylex.props(descendantStyles.foundationGuideU_uA)} href="https://github.com/tadoku/tadoku/commits/main/frontend/apps/paper-styleguide">styleguide commit history</a> contain exact changes. Container digests and deployment approvals belong in release records, not inferred from the package version.</p>
   </section>
-  if (document.id === 'pattern.filter-bar') return <section id="usage" className="document-section foundation-guide">
-    <h2 className="paper-type-section">Compose the filter bar</h2>
+  if (document.id === 'pattern.filter-bar') return <section id="usage" {...stylex.props(shellStyles.documentSection, foundationStyles.foundationGuide, descendantStyles.documentSection)}>
+    <h2 {...stylex.props(typography.section, descendantStyles.documentSectionU_uH2)}>Compose the filter bar</h2>
     <GuideTable label="Parts in reading order" columns={['Part', 'Paper controls', 'Screen responsibility']} rows={[
       ['Filters toggle', 'A ghost Button in SectionHeading actions, with aria-expanded and aria-controls.', 'Open state, any default-open rule and the applied count in its label.'],
       ['Filter panel', 'Select, Input and other form controls inside a form.AppForm.', 'Field layout and filter state. Keep the panel mounted while collapsed.'],
@@ -63,20 +66,20 @@ export function GovernanceGuide({ document }: { document: CatalogDocument }) {
       ['Results', 'Table or the screen’s own list.', 'Sorting, pagination and ranks. Filtering never changes a rank.'],
       ['No matches', 'EmptyState with variant="plain" and a Clear filters action.', 'Explain that the filters exclude everything and reset them.'],
     ]} />
-    <h3>States the screen can reach</h3>
-    <p>Collapsed without filters shows only the toggle. Collapsed with filters keeps the summary visible. Expanded shows the fields, and changes apply immediately. No matches replaces the results with a plain EmptyState. Clearing from the summary or the empty state resets every field and returns focus to the toggle.</p>
-    <p>When a screen has only one or two filters, keep the fields visible beside the list with a Clear filters button instead, as the contest list does; the toggle and summary add nothing there.</p>
+    <h3 {...stylex.props(descendantStyles.documentSectionU_uH3, descendantStyles.foundationGuideU_uH3)}>States the screen can reach</h3>
+    <p {...stylex.props(descendantStyles.documentSectionU_uP, descendantStyles.foundationGuideU_uP)}>Collapsed without filters shows only the toggle. Collapsed with filters keeps the summary visible. Expanded shows the fields, and changes apply immediately. No matches replaces the results with a plain EmptyState. Clearing from the summary or the empty state resets every field and returns focus to the toggle.</p>
+    <p {...stylex.props(descendantStyles.documentSectionU_uP, descendantStyles.foundationGuideU_uP)}>When a screen has only one or two filters, keep the fields visible beside the list with a Clear filters button instead, as the contest list does; the toggle and summary add nothing there.</p>
   </section>
-  if (document.id === 'pattern.logging' || document.id === 'experiment.logging-v2') return <section id="usage" className="document-section foundation-guide">
-    <h2 className="paper-type-section">Compose the reading flow</h2>
+  if (document.id === 'pattern.logging' || document.id === 'experiment.logging-v2') return <section id="usage" {...stylex.props(shellStyles.documentSection, foundationStyles.foundationGuide, descendantStyles.documentSection)}>
+    <h2 {...stylex.props(typography.section, descendantStyles.documentSectionU_uH2)}>Compose the reading flow</h2>
     <GuideTable label="Information the reader must see" columns={['Moment', 'Required content', 'Application responsibility']} rows={[
       ['Entry', 'Work, language, amount/unit and reading date.', 'Validate values and preserve edits after failure.'],
       ['Review (when included)', 'Repeat the exact amount and work before saving.', 'Return to editing without losing values.'],
       ['Saved reading', 'Confirm whether saving succeeded and where to find the entry.', 'Only show success after the persistence request succeeds.'],
       ['Contest contribution', 'Explicit submitted / not submitted status; eligible contest if known.', 'Own eligibility and submission rules. Never infer submission merely from a saved log.'],
     ]} />
-    <p>The preview is local and makes no network requests. Links and actions demonstrate navigation or in-page state; they do not save reading. In an application, replace them with routing and mutation handlers, handle pending/failure states, and keep successful entry data visible.</p>
-    {document.id === 'experiment.logging-v2' ? <><h3>Still a product decision</h3><p>Whether review is mandatory, whether saving and contest submission are separate steps, and which contests are eligible need product validation. This prototype deliberately stops at review. Its confirmation is not proof of persistence or contest submission.</p></> : <><h3>Summary hierarchy</h3><p>Lead with the work and reading amount, then language/date and explicit contribution status. Keep notes privacy separate from contest visibility. Use a real link for “View log” and a button for an in-place action.</p></>}
+    <p {...stylex.props(descendantStyles.documentSectionU_uP, descendantStyles.foundationGuideU_uP)}>The preview is local and makes no network requests. Links and actions demonstrate navigation or in-page state; they do not save reading. In an application, replace them with routing and mutation handlers, handle pending/failure states, and keep successful entry data visible.</p>
+    {document.id === 'experiment.logging-v2' ? <><h3 {...stylex.props(descendantStyles.documentSectionU_uH3, descendantStyles.foundationGuideU_uH3)}>Still a product decision</h3><p {...stylex.props(descendantStyles.documentSectionU_uP, descendantStyles.foundationGuideU_uP)}>Whether review is mandatory, whether saving and contest submission are separate steps, and which contests are eligible need product validation. This prototype deliberately stops at review. Its confirmation is not proof of persistence or contest submission.</p></> : <><h3 {...stylex.props(descendantStyles.documentSectionU_uH3, descendantStyles.foundationGuideU_uH3)}>Summary hierarchy</h3><p {...stylex.props(descendantStyles.documentSectionU_uP, descendantStyles.foundationGuideU_uP)}>Lead with the work and reading amount, then language/date and explicit contribution status. Keep notes privacy separate from contest visibility. Use a real link for “View log” and a button for an in-place action.</p></>}
   </section>
   return null
 }

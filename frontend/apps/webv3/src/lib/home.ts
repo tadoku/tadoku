@@ -32,3 +32,17 @@ export const memberDashboardQueries = (viewer: Extract<Viewer, { status: 'signed
   profileStatisticsQuery({ userId: viewer.userId, year, page: 1 }, viewerKey(viewer)),
   profileActivityQuery({ userId: viewer.userId, page: 1 }),
 ] as const
+
+export const dayNumber = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000) + 1
+
+export type Phase = 'open' | 'live' | 'upcoming' | 'ended' | 'none' | 'unavailable' | 'loading'
+
+export function phaseOf(data: HomeData | undefined, failed: boolean, today: string): Phase {
+  if (failed) return 'unavailable'
+  if (!data) return 'loading'
+  const contest = data.latestContest
+  if (!contest) return 'none'
+  if (today < contest.contest_start) return 'upcoming'
+  if (today > contest.contest_end) return 'ended'
+  return today <= contest.registration_end ? 'open' : 'live'
+}

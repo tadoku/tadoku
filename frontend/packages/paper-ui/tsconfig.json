@@ -8,7 +8,7 @@
     ],
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "allowImportingTsExtensions": false,
+    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
@@ -28,12 +28,16 @@
       ],
       "paper-ui/icons": [
         "./src/icons/index.ts"
+      ],
+      "paper-ui/tokens.stylex": [
+        "./src/tokens/tokens.stylex.ts"
       ]
     }
   },
   "include": [
     "src",
     "tests",
+    "scripts/*.ts",
     "*.ts"
   ],
   "exclude": [

@@ -1,9 +1,13 @@
-import { Button, SectionHeading, StatGrid, Surface, Table, buttonClassName } from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { size } from 'paper-ui/tokens.stylex'
+import { Button, buttonStyles, linkStyles, SectionHeading, StatGrid, Surface, Table } from 'paper-ui'
 import { Link } from 'react-router-dom'
 import { formatNumber, initialContests, initialLogs, leaderboardPeople, users } from '../data'
 import { contestEnd, contestStart, formatDate, formatDateRange, formatDateTime } from '../dates'
 import { usePlayground, useScenario } from '../state'
-import './editorial.css'
+import { editorialStyles } from './editorial.styles'
+import { utilities } from '../utilities.styles'
+import { descendantStyles } from '../descendants.styles'
 
 const homeContent = {
   'guest-live': {
@@ -103,86 +107,86 @@ export function HomePage() {
   const primaryLabel = upcoming && alreadyJoined ? 'Log activity' : content.primary
 
   return (
-    <div className="home-page">
-      <section className="home-hero" aria-labelledby="home-title">
-        <div className="home-promise">
-          <p className="home-status" data-tone={unavailable ? 'warning' : between || upcoming ? 'quiet' : 'live'}>{upcoming && alreadyJoined ? 'You’re registered for Round 6' : content.status}</p>
-          <h1 id="home-title">{scenario === 'guest-live' ? <>Read more.<br />{' '}Listen more.<br />{' '}Keep going together.</> : content.headline}</h1>
-          <p className="home-lead">{participant && myStanding ? `You’re ${myStanding.rank}${myStanding.rank === 1 ? 'st' : myStanding.rank === 2 ? 'nd' : myStanding.rank === 3 ? 'rd' : 'th'} with ${formatNumber(myStanding.score)} points. ` : ''}{content.description}</p>
-          <div className="home-actions">
-            <Link to={primaryHref} className={buttonClassName()}>{primaryLabel}</Link>
-            <Link to={content.secondaryHref} className="text-link">{content.secondary}</Link>
+    <div>
+      <section {...stylex.props(editorialStyles.homeHero)} aria-labelledby="home-title">
+        <div {...stylex.props(editorialStyles.homePromise)}>
+          <p {...stylex.props(editorialStyles.homeStatus)} data-tone={unavailable ? 'warning' : between || upcoming ? 'quiet' : 'live'}>{upcoming && alreadyJoined ? 'You’re registered for Round 6' : content.status}</p>
+          <h1 {...stylex.props(descendantStyles.homePromiseU_uH1)} id="home-title">{scenario === 'guest-live' ? <>Read more.<br />{' '}Listen more.<br />{' '}Keep going together.</> : content.headline}</h1>
+          <p {...stylex.props(editorialStyles.homeLead)}>{participant && myStanding ? `You’re ${myStanding.rank}${myStanding.rank === 1 ? 'st' : myStanding.rank === 2 ? 'nd' : myStanding.rank === 3 ? 'rd' : 'th'} with ${formatNumber(myStanding.score)} points. ` : ''}{content.description}</p>
+          <div {...stylex.props(editorialStyles.homeActions)}>
+            <Link to={primaryHref} {...stylex.props(...buttonStyles())}>{primaryLabel}</Link>
+            <Link to={content.secondaryHref} {...stylex.props(linkStyles.base)}>{content.secondary}</Link>
           </div>
-          <p className="home-fineprint">{upcoming || scenario === 'guest-live' ? `${scenario === 'guest-live' ? 'Free to join. ' : ''}Registration closes ${formatDateTime(contestEnd(contest.registrationDeadline))}.` : content.note}</p>
+          <p {...stylex.props(editorialStyles.homeFineprint)}>{upcoming || scenario === 'guest-live' ? `${scenario === 'guest-live' ? 'Free to join. ' : ''}Registration closes ${formatDateTime(contestEnd(contest.registrationDeadline))}.` : content.note}</p>
         </div>
 
-        <Surface as="section" elevation="showcase" accent className="home-ledger p-0" aria-labelledby="home-board-title">
+        <Surface as="section" elevation="showcase" accent xstyle={[editorialStyles.homeLedger, utilities.tw_p_0]} aria-labelledby="home-board-title">
           <SectionHeading
             level={2}
             id="home-board-title"
-            className="home-ledger-header"
+            xstyle={[editorialStyles.homeLedgerHeader]}
             title={upcoming ? '2026 Round 6' : between ? '2026 Round 5 recap' : unavailable ? 'Current contest' : '2026 Round 5'}
             description={unavailable ? 'Standings temporarily unavailable' : <>{period}{between ? ' · Final results' : upcoming ? '' : ' · Day 5 of 30'}</>}
-            actions={unavailable ? null : <Link to={`/contests/${selectedContest}${upcoming ? '' : '/leaderboard'}${between ? '?scenario=ended' : ''}`} className="text-link">{upcoming ? 'Contest details' : between ? 'See final board' : 'Full leaderboard'}</Link>}
+            actions={unavailable ? null : <Link to={`/contests/${selectedContest}${upcoming ? '' : '/leaderboard'}${between ? '?scenario=ended' : ''}`} {...stylex.props(linkStyles.base)}>{upcoming ? 'Contest details' : between ? 'See final board' : 'Full leaderboard'}</Link>}
           />
           {unavailable ? (
-            <div className="home-ledger-message" role="status">
-              <h3>The board could not be loaded</h3>
-              <p>Try again to see the current standings. You can still open your personal activity log.</p>
+            <div {...stylex.props(editorialStyles.homeLedgerMessage)} role="status">
+              <h3 {...stylex.props(descendantStyles.homeLedgerMessageU_uH3)}>The board could not be loaded</h3>
+              <p {...stylex.props(descendantStyles.homeLedgerMessageU_uP)}>Try again to see the current standings. You can still open your personal activity log.</p>
               <Button variant="outline" onClick={() => setScenario(retryScenario)}>Retry standings</Button>
             </div>
           ) : upcoming ? (
             <>
-              <StatGrid className="home-ledger-stats" stats={[{ label: 'Length', value: '2 weeks' }, { label: 'Activities', value: 'Reading & listening' }]} />
-              <div className="home-ledger-message">
-                <p className="home-start-date"><span>Starts</span><strong>{formatDate(contestStart(contest.start))}</strong></p>
-                <h3>Make space for immersion</h3>
-                <p>Choose up to three languages. Contest scoring begins when the round starts.</p>
-                <p className="home-fineprint">{formatDateTime(contestStart(contest.start))}. Times are local to you.</p>
+              <StatGrid xstyle={[editorialStyles.homeLedgerStats]} stats={[{ label: 'Length', value: '2 weeks' }, { label: 'Activities', value: 'Reading & listening' }]} />
+              <div {...stylex.props(editorialStyles.homeLedgerMessage)}>
+                <p {...stylex.props(editorialStyles.homeStartDate, descendantStyles.homeLedgerMessageU_uP)}><span {...stylex.props(descendantStyles.homeStartDateU_uSpan)}>Starts</span><strong {...stylex.props(descendantStyles.homeStartDateU_uStrong)}>{formatDate(contestStart(contest.start))}</strong></p>
+                <h3 {...stylex.props(descendantStyles.homeLedgerMessageU_uH3)}>Make space for immersion</h3>
+                <p {...stylex.props(descendantStyles.homeLedgerMessageU_uP)}>Choose up to three languages. Contest scoring begins when the round starts.</p>
+                <p {...stylex.props(editorialStyles.homeFineprint, descendantStyles.homeLedgerMessageU_uP)}>{formatDateTime(contestStart(contest.start))}. Times are local to you.</p>
               </div>
             </>
           ) : (
             <>
-              <StatGrid className="home-ledger-stats" stats={[{ label: 'Participants', value: ranked.length }, { label: 'Languages', value: languageCount }, { label: 'Points logged', value: formatNumber(points) }]} />
-              {between && <p className="home-round-leader">Round leader <Link to={`/users/${ranked[0]?.userId}?contest=round5`} className="text-link">{users.find(person => person.id === ranked[0]?.userId)?.name}</Link></p>}
+              <StatGrid xstyle={[editorialStyles.homeLedgerStats]} stats={[{ label: 'Participants', value: ranked.length }, { label: 'Languages', value: languageCount }, { label: 'Points logged', value: formatNumber(points) }]} />
+              {between && <p {...stylex.props(editorialStyles.homeRoundLeader)}>Round leader <Link to={`/users/${ranked[0]?.userId}?contest=round5`} {...stylex.props(linkStyles.base)}>{users.find(person => person.id === ranked[0]?.userId)?.name}</Link></p>}
               <Table
                 caption={`${between ? 'Final' : 'Current'} Round 5 top ${between ? 'three' : 'five'}`}
                 captionVisibility="screen-reader"
                 minWidth="0"
                 columns={[
-                  { id: 'rank', header: 'Rank', width: '4.5rem', cell: row => row.rank },
-                  { id: 'person', header: 'Participant', rowHeader: true, cell: row => <Link className="home-person-link" to={`/users/${row.userId}?contest=round5`}>{row.name}</Link> },
-                  { id: 'score', header: 'Score', align: 'end', cell: row => formatNumber(row.score) },
+                  { id: 'rank', header: 'Rank', width: size[72], xstyle: editorialStyles.homeLedgerFirstCell, cell: row => row.rank },
+                  { id: 'person', header: 'Participant', rowHeader: true, cell: row => <Link {...stylex.props(editorialStyles.homePersonLink)} to={`/users/${row.userId}?contest=round5`}>{row.name}</Link> },
+                  { id: 'score', header: 'Score', align: 'end', xstyle: editorialStyles.homeLedgerLastCell, cell: row => formatNumber(row.score) },
                 ]}
                 rows={rows}
                 getRowKey={row => row.userId}
               />
               {participant && myStanding && (
-                <div className="home-your-standing" aria-label="Your standing in Round 5">
+                <div {...stylex.props(editorialStyles.homeYourStanding)} aria-label="Your standing in Round 5">
                   <span>{myStanding.rank}</span>
-                  <Link className="home-person-link" to={`/users/${userId}?contest=round5`}>{user?.name ?? 'Anton'} <small>You</small></Link>
+                  <Link {...stylex.props(editorialStyles.homePersonLink)} to={`/users/${userId}?contest=round5`}>{user?.name ?? 'Anton'} <small {...stylex.props(descendantStyles.homeYourStandingU_uSmall)}>You</small></Link>
                   <strong>{formatNumber(myStanding.score)}</strong>
                 </div>
               )}
-              <p className="home-ledger-note">{between ? 'Thanks for a month of reading and listening together.' : 'Reading and listening, across all languages in this round.'}</p>
+              <p {...stylex.props(editorialStyles.homeLedgerNote)}>{between ? 'Thanks for a month of reading and listening together.' : 'Reading and listening, across all languages in this round.'}</p>
             </>
           )}
         </Surface>
       </section>
 
-      <section className="home-how" aria-labelledby="home-how-title">
-        <h2 id="home-how-title">How Tadoku works</h2>
-        <ol>
-          <li><h3>Choose your language</h3><p>Join an official round or track immersion at your own pace between contests.</p></li>
-          <li><h3>Read and listen</h3><p>Books, manga, games, podcasts, video. Find something that keeps you engaged.</p></li>
-          <li><h3>Log your progress</h3><p>Record what you did, see where it counts, and let a little company keep you going.</p></li>
+      <section {...stylex.props(editorialStyles.homeHow)} aria-labelledby="home-how-title">
+        <h2 {...stylex.props(descendantStyles.homeHowU_uH2)} id="home-how-title">How Tadoku works</h2>
+        <ol {...stylex.props(descendantStyles.homeHowU_uOl)}>
+          <li {...stylex.props(descendantStyles.homeHowU_uLi)}><h3 {...stylex.props(descendantStyles.homeHowU_uH3)}>Choose your language</h3><p {...stylex.props(descendantStyles.homeHowU_uP)}>Join an official round or track immersion at your own pace between contests.</p></li>
+          <li {...stylex.props(descendantStyles.homeHowU_uLi)}><h3 {...stylex.props(descendantStyles.homeHowU_uH3)}>Read and listen</h3><p {...stylex.props(descendantStyles.homeHowU_uP)}>Books, manga, games, podcasts, video. Find something that keeps you engaged.</p></li>
+          <li {...stylex.props(descendantStyles.homeHowU_uLi)}><h3 {...stylex.props(descendantStyles.homeHowU_uH3)}>Log your progress</h3><p {...stylex.props(descendantStyles.homeHowU_uP)}>Record what you did, see where it counts, and let a little company keep you going.</p></li>
         </ol>
       </section>
 
-      {!upcoming && <section className="home-schedule" aria-labelledby="home-next-title">
-        <div><h2 id="home-next-title">Next official round</h2><p>{formatDateRange(contestStart(nextContest.start), contestEnd(nextContest.end))}</p></div>
-        <p>Registration closes {formatDateTime(contestEnd(nextContest.registrationDeadline))}.</p>
-        <Link className="text-link" to="/contests/round6">See the schedule</Link>
+      {!upcoming && <section {...stylex.props(editorialStyles.homeSchedule)} aria-labelledby="home-next-title">
+        <div><h2 {...stylex.props(descendantStyles.homeScheduleU_uH2)} id="home-next-title">Next official round</h2><p {...stylex.props(descendantStyles.homeScheduleU_uP, descendantStyles.homeScheduleU_uDivU_uP)}>{formatDateRange(contestStart(nextContest.start), contestEnd(nextContest.end))}</p></div>
+        <p {...stylex.props(descendantStyles.homeScheduleU_uP)}>Registration closes {formatDateTime(contestEnd(nextContest.registrationDeadline))}.</p>
+        <Link {...stylex.props(linkStyles.base)} to="/contests/round6">See the schedule</Link>
       </section>}
     </div>
   )

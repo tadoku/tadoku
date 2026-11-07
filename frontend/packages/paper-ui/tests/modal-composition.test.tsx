@@ -58,7 +58,6 @@ describe("Modal composition", () => {
 
     const trigger = screen.getByRole("button", { name: /Search Paper/u });
     expect(trigger).toHaveClass("application-search-trigger");
-    expect(trigger).not.toHaveClass("paper-button");
     expect(trigger).toHaveAttribute("aria-haspopup", "dialog");
     expect(triggerRef.current).toBe(trigger);
 
@@ -79,14 +78,14 @@ describe("Modal composition", () => {
     await waitFor(() => {
       expect(screen.getByRole("searchbox", { name: "Search documents" })).toHaveFocus();
     });
-    expect(document.querySelector(".paper-modal__footer")).toBeNull();
+    expect(screen.getByRole("dialog").querySelector("footer")).toBeNull();
     const closeButton = screen.getByRole("button", { name: "Close" });
     expect(closeButton).toBeInTheDocument();
 
     await user.tab();
     await waitFor(() => expect(closeButton).toHaveFocus());
 
-    const backdrop = document.querySelector<HTMLElement>(".paper-modal__backdrop");
+    const backdrop = document.querySelector<HTMLElement>('[role="presentation"]');
     expect(backdrop).not.toBeNull();
     await user.click(backdrop!);
 

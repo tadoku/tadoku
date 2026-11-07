@@ -87,7 +87,7 @@ test('year and period tabs switch boards in the browser', async ({ page, request
     if (message.type() === 'error') failures.push(message.text())
   })
   await page.goto(`/leaderboard/yearly/${year}/1`)
-  await expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled()
+  await expect(page.locator('[data-navbar-menu]')).toBeEnabled()
   const years = page.getByRole('navigation', { name: 'Year' })
   await expect(years.getByRole('link')).toHaveText(Array.from({ length: year - 2019 }, (_, index) => String(year - index)))
   await expect(years.getByRole('link', { name: String(year) })).toHaveAttribute('aria-current', 'page')
@@ -125,14 +125,14 @@ test('a signed-in participant sees their own row and the join action while they 
 
   await page.goto('/leaderboard/latest/1')
   await expect(page.getByText('You need to log in to participate in this contest.')).toHaveCount(0)
-  const own = page.locator('.standings-table tbody tr[aria-current="true"]')
+  const own = page.locator('[data-standings] tbody tr[aria-current="true"]')
   if (data.entries.some(entry => entry.user_id === session.account.id)) {
     await expect(own).toHaveCount(1)
     await expect(own).toContainText('You')
   } else {
     await expect(own).toHaveCount(0)
   }
-  const header = page.locator('.standings-header')
+  const header = page.locator('main header:has(h1)')
   // Registered participants log through the site header's Log activity action; the board offers only joining.
   if (!registered && today <= latest.registration_end) await expect(header.getByRole('link', { name: 'Join contest' })).toBeVisible()
   else await expect(header.getByRole('link')).toHaveCount(0)
@@ -145,7 +145,7 @@ test('leaderboards stay within mobile and desktop viewports', async ({ page }, t
     for (const path of ['/leaderboard/latest/1', `/leaderboard/yearly/${year}/1`, '/leaderboard/all-time/1']) {
       await page.goto(path)
       await expect(page.getByRole('heading', { level: 1, name: 'Leaderboard' })).toBeVisible()
-      await expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled()
+      await expect(page.locator('[data-navbar-menu]')).toBeEnabled()
       await page.evaluate(() => document.fonts.ready)
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${path} at ${width}px`).toBe(true)
       await page.screenshot({ path: testInfo.outputPath(`${path.split('/')[2]}-${width}.png`), fullPage: true })

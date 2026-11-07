@@ -1,6 +1,7 @@
+import * as stylex from '@stylexjs/stylex'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { Button, EmptyState, PageHeader, StatusTag, Tabbar, buttonClassName } from 'paper-ui'
+import { Button, buttonStyles, EmptyState, PageHeader, StatusTag, Tabbar } from 'paper-ui'
 import { contestsHref } from '../lib/contests'
 import { contestBoardQuery, contestPhase, readDay, type ContestBoard } from '../lib/leaderboard'
 import { useLinks } from '../lib/links'
@@ -9,6 +10,7 @@ import { viewerKey, viewerQueryOptions } from '../lib/session'
 import { ContestBoardBody, RoundStatus } from './ContestLeaderboard'
 import { ContestUpdates } from './ContestUpdates'
 import { renderLink } from './router-link'
+import { standingsLayout } from './page-styles'
 
 export type ContestView = 'standings' | 'updates'
 
@@ -37,7 +39,7 @@ export function ContestNotFound() {
       headingLevel={1}
       title="Contest not found"
       description="This link doesn’t match a contest."
-      actions={<Link className={buttonClassName()} to={contestsHref.official()}>Browse contests</Link>}
+      actions={<Link {...stylex.props(...buttonStyles())} to={contestsHref.official()}>Browse contests</Link>}
     />
   )
 }
@@ -57,19 +59,19 @@ function ContestBoardPage({ board, today, view, page }: { board: ContestBoard; t
   const actions = (
     <>
       {phase.registrationOpen && !registered && !banned
-        ? <a className={buttonClassName()} href={links.joinContest(contest.id)}>Join contest</a>
+        ? <a {...stylex.props(...buttonStyles())} href={links.joinContest(contest.id)}>Join contest</a>
         : null}
       {registered && !phase.ended
-        ? <a className={buttonClassName({ variant: 'outline' })} href={links.joinContest(contest.id)}>Update registration</a>
+        ? <a {...stylex.props(...buttonStyles({ variant: 'outline' }))} href={links.joinContest(contest.id)}>Update registration</a>
         : null}
-      {admin ? <Link className={buttonClassName({ variant: 'ghost' })} to={links.contestScoring(contest.id)}>Scoring rules</Link> : null}
+      {admin ? <Link {...stylex.props(...buttonStyles({ variant: 'ghost' }))} to={links.contestScoring(contest.id)}>Scoring rules</Link> : null}
     </>
   )
 
   return (
-    <div className="standings-page">
+    <div>
       <PageHeader
-        className="standings-header"
+        xstyle={standingsLayout.header}
         backLink={contest.official
           ? { href: contestsHref.official(), label: 'Official contests' }
           : { href: contestsHref.community(), label: 'Community contests' }}

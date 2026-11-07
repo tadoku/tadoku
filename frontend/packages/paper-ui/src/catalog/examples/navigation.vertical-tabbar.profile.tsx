@@ -1,4 +1,6 @@
-import { VerticalTabbar } from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { size } from 'paper-ui/tokens.stylex'
+import { VerticalTabbar, layout } from 'paper-ui'
 import { useState } from 'react'
 
 const profileLinks = [
@@ -7,10 +9,14 @@ const profileLinks = [
   { id: 'contests', label: 'Contests', href: '#profile-contests' },
 ] as const
 
+const styles = stylex.create({
+  column: { maxInlineSize: size[352] },
+})
+
 export default function VerticalTabbarExample() {
   const [path, setPath] = useState('#statistics')
   return (
-    <div className="paper-stack" style={{ maxWidth: '22rem' }}>
+    <div {...stylex.props(layout.stack, styles.column)}>
       <VerticalTabbar
         label="Profile views"
         currentPath={path}

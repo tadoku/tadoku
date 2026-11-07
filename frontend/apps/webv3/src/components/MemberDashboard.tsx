@@ -1,6 +1,8 @@
+import * as stylex from '@stylexjs/stylex'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { EmptyState, StatGrid } from 'paper-ui'
+import { EmptyState, StatGrid, linkStyles } from 'paper-ui'
+import { border, breakpoints, color, font, fontSize, lineHeight, space } from 'paper-ui/tokens.stylex'
 import { contestsHref } from '../lib/contests'
 import { formatPeriod, pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
@@ -9,6 +11,38 @@ import { activeDays } from '../lib/profile'
 import type { Viewer } from '../lib/session'
 import { ActivityCalendar } from './ActivityCalendar'
 import { LogEntries } from './LogEntries'
+import { entryStyles, entryTitle } from './page-styles'
+
+const ruled = {
+  borderBlockStartColor: color.ruleDefault,
+  borderBlockStartStyle: 'solid',
+  borderBlockStartWidth: border.static,
+  minInlineSize: 0,
+  paddingBlockStart: space[28],
+} as const
+
+const styles = stylex.create({
+  dashboard: { gap: space[40], display: 'grid', marginBlockStart: space[48], },
+  year: ruled,
+  columns: {
+    ...ruled,
+    columnGap: space[56],
+    display: 'grid',
+    gridTemplateColumns: { default: 'repeat(2, minmax(0, 1fr))', [breakpoints.lg]: 'minmax(0, 1fr)' },
+    rowGap: space[32],
+  },
+  column: { minInlineSize: 0 },
+  head: {
+    alignItems: 'baseline',
+    columnGap: space[16],
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBlockEnd: space[16],
+    rowGap: space[4],
+  },
+  title: { margin: 0, fontFamily: font.display, fontSize: fontSize[22], lineHeight: lineHeight[30], },
+})
 
 type SignedIn = Extract<Viewer, { status: 'signed-in' }>
 
@@ -34,14 +68,13 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
     : null
 
   return (
-    <div className="home-dashboard">
-      <section className="home-dashboard__year" aria-labelledby="home-year-title">
-        <div className="home-dashboard__head">
-          <h2 id="home-year-title">Your {year}</h2>
-          <a className="text-link" href={links.profile(viewer.userId)}>Your profile</a>
+    <div {...stylex.props(styles.dashboard)}>
+      <section {...stylex.props(styles.year)} aria-labelledby="home-year-title">
+        <div {...stylex.props(styles.head)}>
+          <h2 id="home-year-title" {...stylex.props(styles.title)}>Your {year}</h2>
+          <a {...stylex.props(linkStyles.base)} href={links.profile(viewer.userId)}>Your profile</a>
         </div>
         <StatGrid
-          className="home-dashboard__stats"
           stats={[
             ...(total === undefined ? [] : [{ label: 'Points this year', value: scoreFormat.format(total) }]),
             ...(todayScore === undefined ? [] : [{ label: 'Today', value: scoreFormat.format(todayScore), detail: pointsUnit(todayScore) }]),
@@ -52,16 +85,16 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
           ]}
         />
         {activity.ok ? (
-          <ActivityCalendar userId={viewer.userId} year={year} today={today} activity={activity.data} labelledBy="home-year-title" />
+          <ActivityCalendar userId={viewer.userId} year={year} today={today} activity={activity.data} labelledBy="home-year-title" surface="canvas" />
         ) : null}
       </section>
 
-      <div className="home-dashboard__columns">
+      <div {...stylex.props(styles.columns)}>
         {logs ? (
-          <section aria-labelledby="home-recent-title">
-            <div className="home-dashboard__head">
-              <h2 id="home-recent-title">Recent updates</h2>
-              {logs.length ? <Link className="text-link" to={links.profileUpdates(viewer.userId)}>All updates</Link> : null}
+          <section {...stylex.props(styles.column)} aria-labelledby="home-recent-title">
+            <div {...stylex.props(styles.head)}>
+              <h2 id="home-recent-title" {...stylex.props(styles.title)}>Recent updates</h2>
+              {logs.length ? <Link {...stylex.props(linkStyles.base)} to={links.profileUpdates(viewer.userId)}>All updates</Link> : null}
             </div>
             <LogEntries
               logs={logs}
@@ -73,24 +106,24 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
                   variant="plain"
                   headingLevel={3}
                   title="No updates yet"
-                  actions={<a className="text-link" href={links.logs}>Log your first activity</a>}
+                  actions={<a {...stylex.props(linkStyles.base)} href={links.logs}>Log your first activity</a>}
                 />
               )}
             />
           </section>
         ) : null}
         {ordered ? (
-          <section aria-labelledby="home-contests-title">
-            <div className="home-dashboard__head">
-              <h2 id="home-contests-title">Your contests</h2>
-              {ordered.length ? <Link className="text-link" to={contestsHref.joined(year)}>All joined</Link> : null}
+          <section {...stylex.props(styles.column)} aria-labelledby="home-contests-title">
+            <div {...stylex.props(styles.head)}>
+              <h2 id="home-contests-title" {...stylex.props(styles.title)}>Your contests</h2>
+              {ordered.length ? <Link {...stylex.props(linkStyles.base)} to={contestsHref.joined(year)}>All joined</Link> : null}
             </div>
             {ordered.length ? (
-              <ul className="profile-contests">
+              <ul {...stylex.props(entryStyles.contestList)}>
                 {ordered.map(contest => (
-                  <li key={contest.id}>
-                    <a className="profile-entry-title" href={links.contestProfile(contest.id, viewer.userId)}>{contest.title}</a>
-                    <span className="profile-entry-meta">
+                  <li key={contest.id} {...stylex.props(entryStyles.contestItem)}>
+                    <a {...stylex.props(...entryTitle)} href={links.contestProfile(contest.id, viewer.userId)}>{contest.title}</a>
+                    <span {...stylex.props(entryStyles.meta)}>
                       {[formatPeriod(contest), ...contest.languages, contest.contest_end < today ? 'Ended' : null].filter(Boolean).join(' · ')}
                     </span>
                   </li>
@@ -101,7 +134,7 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
                 variant="plain"
                 headingLevel={3}
                 title={`You haven’t joined a contest in ${year}`}
-                actions={<Link className="text-link" to={contestsHref.official()}>Browse official contests</Link>}
+                actions={<Link {...stylex.props(linkStyles.base)} to={contestsHref.official()}>Browse official contests</Link>}
               />
             )}
           </section>

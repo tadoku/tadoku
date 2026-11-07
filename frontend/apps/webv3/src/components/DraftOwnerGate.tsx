@@ -1,5 +1,6 @@
+import * as stylex from '@stylexjs/stylex'
 import { useQuery } from '@tanstack/react-query'
-import { Button, EmptyState, buttonClassName } from 'paper-ui'
+import { Button, buttonStyles, EmptyState } from 'paper-ui'
 import { Fragment, useState, type ReactNode } from 'react'
 import { useLoginUrl, viewerQueryOptions, type Viewer } from '../lib/session'
 
@@ -27,7 +28,7 @@ export function DraftOwnerGate({ signIn, suspended = 'Activity cannot be saved f
           headingLevel={1}
           title={signIn.title}
           description={signIn.description}
-          actions={<a className={buttonClassName()} href={loginUrl}>Log in</a>}
+          actions={<a {...stylex.props(...buttonStyles())} href={loginUrl}>Log in</a>}
         />
       )
     case 'banned':

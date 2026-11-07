@@ -14,7 +14,7 @@ export interface DocSpec {
   readonly sourcePath: string;
   readonly react: readonly string[];
   readonly types: readonly string[];
-  readonly css?: readonly string[];
+  readonly styleExports?: readonly string[];
   readonly when: string;
   readonly avoid: string;
   readonly choose: string;

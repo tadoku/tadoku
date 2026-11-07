@@ -17,7 +17,7 @@ export const board = (request: APIRequestContext, path: string, page = 1) =>
 
 /** Every API entry is a row with its rank (T for ties), its name linking to `profile` and its score. */
 export async function expectRows(page: Page, entries: Entry[], profile: (userId: string) => string) {
-  const rows = page.locator('.standings-table tbody tr')
+  const rows = page.locator('[data-standings] tbody tr')
   await expect(rows).toHaveCount(entries.length)
   for (const [index, entry] of entries.entries()) {
     const row = rows.nth(index)
@@ -35,7 +35,7 @@ export async function expectTotal(page: Page, data: Board, pageNumber = 1) {
   }
   const first = (pageNumber - 1) * 50 + 1
   // The range summary appears only beside page links.
-  await expect(page.locator('.standings-pagination > p')).toHaveText(data.total_size > 50 || pageNumber > 1
+  await expect(page.locator('[data-standings-pagination] > p')).toHaveText(data.total_size > 50 || pageNumber > 1
     ? [`${score.format(first)}–${score.format(first + data.entries.length - 1)} of ${score.format(data.total_size)} participants`]
     : [])
   await expect(page.getByRole('navigation', { name: 'Standings pages' })).toHaveCount(data.total_size > 50 ? 1 : 0)

@@ -293,7 +293,7 @@ export const phaseTwoDocuments = [
     "defaultValue": "standard action/close footer"
   }
 ],
-      cssClasses: [],
+      styleExports: [],
       publicTypes: ["ModalProps"],
       defaults: ["modal=true", "triggerVariant=default", "closeLabel=Close"],
       invalidCombinations: ["Do not nest Modal instances."],
@@ -389,7 +389,7 @@ export const phaseTwoDocuments = [
     "defaultValue": "false"
   }
 ],
-      cssClasses: [],
+      styleExports: [],
       publicTypes: ["ActionMenuProps", "ActionMenuItem"],
       defaults: ["triggerVariant=outline", "loopFocus=true"],
       invalidCombinations: ["Do not treat disabled items as explanatory text."],

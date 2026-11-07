@@ -1,6 +1,7 @@
+import * as stylex from '@stylexjs/stylex'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { Button, EmptyState, buttonClassName } from 'paper-ui'
+import { Button, buttonStyles, EmptyState } from 'paper-ui'
 import { ContestForm } from '../../components/ContestForm'
 import { DraftOwnerGate } from '../../components/DraftOwnerGate'
 import { contestEditorQuery, contestsHref } from '../../lib/contests'
@@ -50,7 +51,7 @@ function Editor({ viewerId }: { viewerId: string }) {
           headingLevel={1}
           title="You can’t create a contest yet"
           description="Accounts can create contests from one month after joining, up to 12 a year."
-          actions={<a className={buttonClassName({ variant: 'outline' })} href={contestsHref.official()}>Browse contests</a>}
+          actions={<a {...stylex.props(...buttonStyles({ variant: 'outline' }))} href={contestsHref.official()}>Browse contests</a>}
         />
       )
     case 'signed-out':
@@ -59,7 +60,7 @@ function Editor({ viewerId }: { viewerId: string }) {
           headingLevel={1}
           title="Your session ended"
           description="Log in again to create a contest."
-          actions={<a className={buttonClassName()} href={loginUrl}>Log in</a>}
+          actions={<a {...stylex.props(...buttonStyles())} href={loginUrl}>Log in</a>}
         />
       )
     default:

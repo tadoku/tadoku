@@ -1,6 +1,6 @@
 import { createElement } from "react"
 import { renderToString } from "react-dom/server"
-import { Button, DRAWER_PLACEMENTS, Drawer, Tabs, buttonClassName, chartPalette, chartSeries, type AutocompleteInputProps, type ButtonProps, type ChartSeries, type DrawerProps, type RadioSelectProps, type TabsRootProps, type ToastOptions } from "paper-ui"
+import { Button, DRAWER_PLACEMENTS, Drawer, Tabs, buttonStyles, chartPalette, chartSeries, type AutocompleteInputProps, type ButtonProps, type ChartSeries, type DrawerProps, type RadioSelectProps, type TabsRootProps, type ToastOptions } from "paper-ui"
 import { CATALOG_LIFECYCLES, catalogRegistry, defineCatalogFixture, validateCatalogRegistry, type CatalogDocument, type CatalogFixture, type CatalogRegistry } from "paper-ui/catalog"
 
 const registry: CatalogRegistry = catalogRegistry;
@@ -48,7 +48,7 @@ const radioSelectProps: RadioSelectProps = {
     { value: "desktop", label: "Desktop" },
   ],
 };
-void buttonClassName({ variant: "outline" });
+void buttonStyles({ variant: "outline" });
 void renderToString(createElement(Button, buttonProps));
 void autocompleteProps;
 void toast;

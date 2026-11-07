@@ -1,5 +1,6 @@
+import * as stylex from '@stylexjs/stylex'
 import { useState } from 'react'
-import { Navbar } from 'paper-ui'
+import { Navbar, layout, navbarMobileLinkStyles } from 'paper-ui'
 
 const navbarNavigation = [
   { type: 'link', id: 'home', label: 'Home', href: '#home' },
@@ -18,7 +19,7 @@ const navbarNavigation = [
 export default function NavbarExample() {
   const [path, setPath] = useState('#home')
   return (
-    <div className="paper-stack">
+    <div {...stylex.props(layout.stack)}>
       <Navbar
         brand="Tadoku"
         brandHref="#home"
@@ -26,7 +27,7 @@ export default function NavbarExample() {
         navigation={navbarNavigation}
         mobileFooter={closeMenu => (
           <a
-            className="paper-navbar__mobile-link"
+            {...stylex.props(...navbarMobileLinkStyles)}
             href="#profile"
             aria-current={path === '#profile' ? 'page' : undefined}
             onClick={event => {

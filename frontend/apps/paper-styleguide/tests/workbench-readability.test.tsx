@@ -13,7 +13,7 @@ it('highlights source while preserving the exact copyable text', async () => {
   await user.click(screen.getByRole('tab', { name: 'Code' }))
   const code = container.querySelector('pre code')!
   expect(code.textContent).toBe(fixtures[0].code)
-  expect(code.querySelectorAll('.token').length).toBeGreaterThan(0)
+  expect(code.querySelectorAll('[data-token]').length).toBeGreaterThan(0)
 })
 
 it('keeps API prose out of code blocks and provides an explicit class reference', async () => {

@@ -7,7 +7,8 @@ import {
 } from 'api-client'
 import createDOMPurify from 'dompurify'
 import { JSDOM } from 'jsdom'
-import type { Announcement, BlogPage, BlogPost, CmsPage, Content, SanitizedHtml } from './content'
+import { proseFromElement } from 'paper-ui'
+import type { Announcement, BlogPage, BlogPost, CmsPage, Content } from './content'
 import { blogPageSize } from './content'
 import type { Read } from './leaderboard'
 import { sessionRequest } from './session.server'
@@ -37,7 +38,9 @@ function post({ slug, title, content, published_at: publishedAt }: ContentPost):
 export function readPage(slug: string): Promise<Content<CmsPage>> {
   return find(
     contentPageFindBySlug({ ...sessionRequest(), path: { namespace, slug } }),
-    page => page.html === undefined ? undefined : { title: page.title, html: purify.sanitize(page.html) as SanitizedHtml },
+    page => page.html === undefined
+      ? undefined
+      : { title: page.title, body: proseFromElement(purify.sanitize(page.html, { RETURN_DOM_FRAGMENT: true })) },
   )
 }
 

@@ -39,61 +39,61 @@ const foundationSpecimens = [
   {
     id: 'foundation.color',
     markers: [
-      '--paper-color-surface-canvas',
-      '--paper-color-text-ink',
-      '--paper-color-action-default',
-      '--paper-color-status-success',
-      '--paper-color-chart-1',
+      'color.surfaceCanvas',
+      'color.textInk',
+      'color.actionDefault',
+      'color.statusSuccess',
+      'color.chart1',
     ],
   },
   {
     id: 'foundation.typography',
     markers: [
-      'paper-type-display',
-      'paper-type-page',
-      'paper-type-section',
-      'paper-type-component',
-      'paper-type-label',
-      'paper-type-metadata',
+      'typography.display',
+      'typography.page',
+      'typography.section',
+      'typography.component',
+      'typography.label',
+      'typography.metadata',
     ],
   },
   {
     id: 'foundation.spacing-and-density',
-    markers: ['--paper-control-height', '2.75rem', '2.25rem'],
+    markers: ['density.controlHeight', '2.75rem', '2.25rem'],
   },
   {
     id: 'foundation.layout',
-    markers: ['paper-stack', 'paper-cluster', 'paper-measure', 'Responsive page grid'],
+    markers: ['layout.stack', 'layout.cluster', 'layout.measure', 'Responsive page grid'],
   },
   {
     id: 'foundation.shape-and-borders',
     markers: [
-      'paper-accent-rail',
-      '--paper-border-static-width',
-      '--paper-border-field-edge-width',
-      '--paper-border-action-edge-width',
+      'accentRail.base',
+      'border.static',
+      'border.fieldEdge',
+      'border.actionEdge',
     ],
   },
   {
     id: 'foundation.elevation',
     markers: [
-      'paper-elevation-flat',
-      'paper-elevation-floating',
-      'paper-elevation-showcase',
+      'elevation.flat',
+      'elevation.floating',
+      'elevation.showcase',
     ],
   },
   {
     id: 'foundation.iconography',
-    markers: ['PlusIcon', 'CheckCircleIcon', 'iconClassName'],
+    markers: ['PlusIcon', 'CheckCircleIcon', 'iconSizes.default'],
   },
   {
     id: 'foundation.motion',
     markers: [
-      '--paper-motion-quick',
+      'motionStyles.quick',
       '120ms',
-      '--paper-motion-standard',
+      'motionStyles.standard',
       '180ms',
-      '--paper-motion-deliberate',
+      'motionStyles.deliberate',
       '240ms',
     ],
   },
@@ -203,10 +203,9 @@ describe('foundation documents', () => {
       .getByRole('heading', { name: 'Foundations' })
       .closest('section')
     if (!indexSection) throw new Error('Missing Foundations index section')
-    const indexNames = Array.from(
-      indexSection.querySelectorAll<HTMLElement>('.paper-type-component'),
-      (name) => name.textContent,
-    )
+    const indexNames = within(indexSection)
+      .getAllByRole('link')
+      .map((link) => link.firstElementChild?.textContent)
 
     const sidebar = screen.getByRole('navigation', { name: 'Paper catalogue' })
     const sidebarSection = within(sidebar)
@@ -224,7 +223,7 @@ describe('foundation documents', () => {
 
 it('keeps foundation documentation outside the themed visual canvas', () => {
   render(<DocumentPage document={foundation('foundation.layout')} />)
-  const reference = screen.getByRole('table', { name: 'Public composition utilities' })
+  const reference = screen.getByRole('table', { name: 'Public composition recipes' })
   expect(reference.closest('[data-theme]')).toBeNull()
   expect(screen.queryByText('Setup required by these examples')).not.toBeInTheDocument()
 })

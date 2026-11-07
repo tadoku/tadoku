@@ -1,9 +1,25 @@
+import * as stylex from '@stylexjs/stylex'
 import Prism from 'prismjs'
 import 'prismjs/components/prism-jsx'
 import 'prismjs/components/prism-typescript'
 import 'prismjs/components/prism-tsx'
 import 'prismjs/components/prism-bash'
 import type { ReactNode } from 'react'
+import { shellStyles } from '../styles/shell.styles'
+import { color } from 'paper-ui/tokens.stylex'
+
+const tokenStyles = stylex.create({
+  comment: { color: color.textMuted },
+  keyword: { color: color.actionDefault },
+  tag: { color: color.actionDefault },
+  string: { color: color.statusSuccess },
+  'attr-value': { color: color.statusSuccess },
+  function: { color: color.textLink },
+  'class-name': { color: color.textLink },
+  number: { color: color.textLink },
+  'attr-name': { color: color.statusDanger },
+  operator: { color: color.statusDanger },
+})
 
 function tokens(
   content: string | Prism.Token | (string | Prism.Token)[],
@@ -14,7 +30,7 @@ function tokens(
       <span key={index}>{tokens(token)}</span>
     ))
   return (
-    <span className={`token ${content.type}`}>{tokens(content.content)}</span>
+    <span {...stylex.props(tokenStyles[content.type as keyof typeof tokenStyles])} data-token={content.type}>{tokens(content.content)}</span>
   )
 }
 
@@ -28,7 +44,7 @@ export function CodeBlock({
   label?: string
 }) {
   return (
-    <pre className="paper-code-block" tabIndex={0} aria-label={label}>
+    <pre {...stylex.props(shellStyles.paperCodeBlock)} tabIndex={0} aria-label={label}>
       <code>
         {tokens(
           Prism.tokenize(

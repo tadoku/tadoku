@@ -1,12 +1,16 @@
+import * as stylex from '@stylexjs/stylex'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { Breadcrumb, Button, EmptyState, Flash, Modal, PageHeader, Surface, buttonClassName, usePaperForm } from 'paper-ui'
+import { Breadcrumb, Button, buttonStyles, EmptyState, Flash, iconSizes, linkStyles, Modal, PageHeader, Surface, typography, usePaperForm } from 'paper-ui'
 import { PencilSquareIcon, TrashIcon } from 'paper-ui/icons'
 import { contestStatus, formatDate, formatNumber, personalScoreExplanation, sampleToday, scoreLog, scoreSubmission, users, type SampleContest, type SampleLog, type Submission } from '../data'
 import { contestEnd, contestStart, formatDateRange } from '../dates'
 import { renderLink } from '../routerLink'
 import { usePlayground, useScenario } from '../state'
-import './records.css'
+import { recordsStyles } from './records.styles'
+import { appStyles } from '../app.styles'
+import { utilities } from '../utilities.styles'
+import { recordsDescendants as descendantStyles } from './records-descendants.styles'
 
 const scenarioLogs: Record<string, string> = { reading: 'reading-konbini', listening: 'listening-teppei', visitor: 'reading-mei', personal: 'personal-reading', ended: 'ended-reading' }
 
@@ -46,19 +50,19 @@ function SubmissionManager({ log, asOf, onSaved }: { log: SampleLog; asOf: strin
   return <Modal title="Contest submissions" description="Choose where this activity contributes. Each contest keeps its own score." trigger={<Button variant="outline">{log.submissions.length ? 'Manage submissions' : 'Submit to a contest'}</Button>} open={open} onOpenChange={next => { if (next) methods.reset(defaults(), { keepDefaultValues: true }); setOpen(next) }} footer={null}>
     <methods.AppForm>
       <methods.Form >
-        {choices.length ? <div className="records-submission-choices">{choices.map(contest => {
+        {choices.length ? <div {...stylex.props(recordsStyles.recordsSubmissionChoices)}>{choices.map(contest => {
           const reason = submissionEligibility(log, contest, joinedContests, registrations, asOf)
           return <div key={contest.id}><methods.AppField name={`selected.${contest.id}`}>{field => <field.Checkbox label={contest.title} disabled={Boolean(reason)} hint={reason ?? `${formatDateRange(contestStart(contest.start), contestEnd(contest.end))} · Eligible`} />}</methods.AppField></div>
         })}</div> : null}
-        {!available.length ? <EmptyState variant="plain" headingLevel={3} title="No eligible contests" description="Check the activity date, language, and your registrations. This activity already counts in your personal history." actions={<Link className="text-link" to={`/contests/official?asOf=${asOf}`} onClick={() => setOpen(false)}>Find a contest to join</Link>} /> : <p className="muted text-sm">Removing a selection removes that contest contribution. Your personal record stays the same.</p>}
-        <div className="app-form__actions"><Button type="submit" disabled={!available.length}>Save submissions</Button><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button></div>
+        {!available.length ? <EmptyState variant="plain" headingLevel={3} title="No eligible contests" description="Check the activity date, language, and your registrations. This activity already counts in your personal history." actions={<Link {...stylex.props(linkStyles.base)} to={`/contests/official?asOf=${asOf}`} onClick={() => setOpen(false)}>Find a contest to join</Link>} /> : <p {...stylex.props(appStyles.muted, utilities.tw_text_sm)}>Removing a selection removes that contest contribution. Your personal record stays the same.</p>}
+        <div {...stylex.props(appStyles.appForm__actions)}><Button type="submit" disabled={!available.length}>Save submissions</Button><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button></div>
       </methods.Form>
     </methods.AppForm>
   </Modal>
 }
 
 function ScoreExplanation({ basis }: { basis: string }) {
-  return <details className="records-score-explanation"><summary>How this was scored</summary><p>{basis}</p><p className="muted">Illustrative saved scoring rule.</p></details>
+  return <details {...stylex.props(recordsStyles.recordsScoreExplanation)}><summary {...stylex.props(descendantStyles.recordsScoreExplanationU_uSummary)}>How this was scored</summary><p {...stylex.props(descendantStyles.recordsScoreExplanationU_uP)}>{basis}</p><p {...stylex.props(appStyles.muted, descendantStyles.recordsScoreExplanationU_uP)}>Illustrative saved scoring rule.</p></details>
 }
 
 export function LogPage() {
@@ -90,43 +94,43 @@ function LogRecord({ id, scenario, onRetry }: { id?: string; scenario: string; o
     return submission.closed || contest && contestStatus(contest, asOf) === 'ended'
   }) ?? false
 
-  if (deleted) return <EmptyState className="records-log-result" headingLevel={1} headingRef={resultRef} title="Log deleted" description="The sample entry was removed from your local activity and contest submissions." actions={<><Link className={buttonClassName()} to={`/users/${deleted.userId}/activity`}>View your activity</Link><Button variant="outline" onClick={() => { restoreLog(deleted); setDeleted(null) }}>Restore sample</Button></>} />
+  if (deleted) return <EmptyState xstyle={[recordsStyles.recordsLogResult]} headingLevel={1} headingRef={resultRef} title="Log deleted" description="The sample entry was removed from your local activity and contest submissions." actions={<><Link {...stylex.props(...buttonStyles())} to={`/users/${deleted.userId}/activity`}>View your activity</Link><Button variant="outline" onClick={() => { restoreLog(deleted); setDeleted(null) }}>Restore sample</Button></>} />
   if (!log || scenario === 'missing' || scenario === 'unavailable') {
     const unavailable = scenario === 'unavailable'
-    return <><Breadcrumb items={[{ id: 'activity', label: 'Activity', href: `/users/${userId}/activity` }, { id: 'log', label: 'Log details' }]} renderLink={renderLink} /><EmptyState className="records-log-result" headingLevel={1} title={unavailable ? 'This log couldn’t be loaded' : 'Log not found'} description={unavailable ? 'There was a problem loading this record. Try again, or return to your activity.' : 'The link may be incorrect, or the log may have been removed. Return to the activity record to find another entry.'} actions={<>{unavailable ? <Button onClick={onRetry}>Try again</Button> : null}<Link className={buttonClassName({ variant: unavailable ? 'outline' : 'default' })} to={`/users/${userId}/activity`}>View activity</Link></>} /></>
+    return <><Breadcrumb items={[{ id: 'activity', label: 'Activity', href: `/users/${userId}/activity` }, { id: 'log', label: 'Log details' }]} renderLink={renderLink} /><EmptyState xstyle={[recordsStyles.recordsLogResult]} headingLevel={1} title={unavailable ? 'This log couldn’t be loaded' : 'Log not found'} description={unavailable ? 'There was a problem loading this record. Try again, or return to your activity.' : 'The link may be incorrect, or the log may have been removed. Return to the activity record to find another entry.'} actions={<>{unavailable ? <Button onClick={onRetry}>Try again</Button> : null}<Link {...stylex.props(...buttonStyles({ variant: unavailable ? 'outline' : 'default' }))} to={`/users/${userId}/activity`}>View activity</Link></>} /></>
   }
 
   return <>
     <Breadcrumb items={[{ id: 'activity', label: owner ? 'Your activity' : `${name}’s activity`, href: `/users/${log.userId}/activity` }, { id: 'log', label: 'Log details' }]} renderLink={renderLink} />
-    {ended ? <Flash className="records-log-notice" title="The contests are finished">You can still edit your personal record. Their saved points stay unchanged.</Flash> : null}
-    {saved ? <Flash variant="success" className="records-log-notice">Contest submissions saved.</Flash> : null}
-    <article className="records-log-sheet">
-      <div className="meta-row"><strong>{log.language}</strong><span>{log.activity}</span><span>{log.media}</span></div>
+    {ended ? <Flash xstyle={[recordsStyles.recordsLogNotice]} title="The contests are finished">You can still edit your personal record. Their saved points stay unchanged.</Flash> : null}
+    {saved ? <Flash variant="success" xstyle={[recordsStyles.recordsLogNotice]}>Contest submissions saved.</Flash> : null}
+    <article {...stylex.props(recordsStyles.recordsLogSheet)}>
+      <div {...stylex.props(appStyles.metaRow)}><strong>{log.language}</strong><span>{log.activity}</span><span>{log.media}</span></div>
       <PageHeader
-        className="records-log-header"
+        xstyle={[recordsStyles.recordsLogHeader]}
         title={log.title || `${log.language} ${log.activity.toLocaleLowerCase()}`}
-        lead={<>Logged by <Link className="text-link" to={`/users/${log.userId}`}>{name}</Link> on <time dateTime={log.date}>{formatDate(log.date)}</time></>}
-        actions={owner ? <Link className={buttonClassName({ variant: 'outline' })} to={`/logs/${log.id}/edit?asOf=${asOf}`}><PencilSquareIcon className="paper-icon-default" aria-hidden="true" />Edit log</Link> : null}
+        lead={<>Logged by <Link {...stylex.props(linkStyles.base)} to={`/users/${log.userId}`}>{name}</Link> on <time dateTime={log.date}>{formatDate(log.date)}</time></>}
+        actions={owner ? <Link {...stylex.props(...buttonStyles({ variant: 'outline' }))} to={`/logs/${log.id}/edit?asOf=${asOf}`}><PencilSquareIcon {...stylex.props(iconSizes.default)} aria-hidden="true" />Edit log</Link> : null}
       />
-      <div className="records-log-body"><Surface as="section" className="records-log-entry" aria-label="Recorded activity">
-      <div className="records-log-measure"><p><strong>{formatNumber(log.amount)}</strong><span>{log.unit} {log.activity === 'Reading' ? 'read' : 'listened'}</span></p>{log.activity === 'Reading' ? <p className="records-log-time">{log.minutes === undefined ? 'Time not recorded' : <><strong>{formatNumber(log.minutes)} min</strong><span>time spent</span></>}</p> : null}</div>
-      {log.note ? <p className="records-log-note">{log.note}</p> : null}
-      {log.tags.length ? <ul className="records-tags" aria-label="Tags">{log.tags.map(tag => <li key={tag}>#{tag}</li>)}</ul> : null}
-      </Surface><div className="records-log-score-grid">
-        <section className="records-personal-score" aria-labelledby="personal-score-heading"><h2 className="paper-type-section" id="personal-score-heading">Personal score</h2><p className="records-score-number">{formatNumber(scoreLog(log))}<span>points</span></p><p className="muted">Counts toward {owner ? 'your' : `${name}’s`} personal activity totals.</p><ScoreExplanation basis={`${personalScoreExplanation(log)}${ended ? ' The personal record was corrected after the contest finished.' : ''}`} /></section>
-        <section aria-labelledby="contributions-heading"><div className="records-contribution-heading"><h2 className="paper-type-section" id="contributions-heading">Contest contributions</h2></div>
-          {!owner ? <p className="records-visibility-note">Contest submissions are visible to the log’s owner.</p> : <>
-            {log.submissions.length ? <ul className="records-contributions">{log.submissions.map(submission => {
+      <div {...stylex.props(recordsStyles.recordsLogBody)}><Surface as="section" xstyle={[recordsStyles.recordsLogEntry]} aria-label="Recorded activity">
+      <div {...stylex.props(recordsStyles.recordsLogMeasure)}><p {...stylex.props(descendantStyles.recordsLogMeasureU_uP)}><strong {...stylex.props(descendantStyles.recordsLogMeasureU_uPU_uStrong)}>{formatNumber(log.amount)}</strong><span {...stylex.props(descendantStyles.recordsLogMeasureU_uPU_uSpan)}>{log.unit} {log.activity === 'Reading' ? 'read' : 'listened'}</span></p>{log.activity === 'Reading' ? <p {...stylex.props(recordsStyles.recordsLogTime, descendantStyles.recordsLogMeasureU_uP)}>{log.minutes === undefined ? 'Time not recorded' : <><strong {...stylex.props(descendantStyles.recordsLogMeasureU_uPU_uStrong, descendantStyles.recordsLogMeasureU_uRecordsLogTimeU_uStrong)}>{formatNumber(log.minutes)} min</strong><span {...stylex.props(descendantStyles.recordsLogMeasureU_uPU_uSpan)}>time spent</span></>}</p> : null}</div>
+      {log.note ? <p {...stylex.props(recordsStyles.recordsLogNote)}>{log.note}</p> : null}
+      {log.tags.length ? <ul {...stylex.props(recordsStyles.recordsTags)} aria-label="Tags">{log.tags.map(tag => <li key={tag}>#{tag}</li>)}</ul> : null}
+      </Surface><div {...stylex.props(recordsStyles.recordsLogScoreGrid, descendantStyles.recordsLogBodyU_uAny)}>
+        <section {...stylex.props(recordsStyles.recordsPersonalScore, descendantStyles.recordsLogScoreGridU_uSection)} aria-labelledby="personal-score-heading"><h2 {...stylex.props(typography.section, descendantStyles.recordsLogScoreGridU_uH2)} id="personal-score-heading">Personal score</h2><p {...stylex.props(recordsStyles.recordsScoreNumber)}>{formatNumber(scoreLog(log))}<span {...stylex.props(descendantStyles.recordsScoreNumberU_uSpan)}>points</span></p><p {...stylex.props(appStyles.muted, descendantStyles.recordsPersonalScoreU_uMuted)}>Counts toward {owner ? 'your' : `${name}’s`} personal activity totals.</p><ScoreExplanation basis={`${personalScoreExplanation(log)}${ended ? ' The personal record was corrected after the contest finished.' : ''}`} /></section>
+        <section {...stylex.props(descendantStyles.recordsLogScoreGridU_uSection)} aria-labelledby="contributions-heading"><div><h2 {...stylex.props(typography.section, descendantStyles.recordsLogScoreGridU_uH2)} id="contributions-heading">Contest contributions</h2></div>
+          {!owner ? <p {...stylex.props(recordsStyles.recordsVisibilityNote)}>Contest submissions are visible to the log’s owner.</p> : <>
+            {log.submissions.length ? <ul {...stylex.props(recordsStyles.recordsContributions)}>{log.submissions.map(submission => {
               const contest = contests.find(item => item.id === submission.contestId)
               const closed = submission.closed || (contest && contestStatus(contest, asOf) === 'ended')
-              return <li key={submission.contestId}><div className="records-contribution-title"><Link className="text-link" to={`/contests/${submission.contestId}?asOf=${asOf}`}>{contest?.title ?? 'Contest'}</Link><strong>{formatNumber(submission.score)}<small>points</small></strong></div><p className="records-contribution-meta">{contest?.scope === 'official' ? 'Official Tadoku contest' : 'Community contest'} · {closed ? 'Finished · submission closed' : 'In progress'}</p><ScoreExplanation basis={submission.basis + (closed ? ' This saved contribution stays unchanged after later personal-log edits.' : '')} /></li>
-            })}</ul> : <div className="records-visibility-note"><h3 className="paper-type-component">No contest submissions</h3><p>This activity is in your personal history. Submit it to an eligible contest to count there too.</p></div>}
-            <p className="records-scope-note">{ended ? 'These are saved contest scores, so they can differ from the current personal record.' : 'Each contest scores this activity separately. These points are not added to your personal score.'}</p>
+              return <li {...stylex.props(descendantStyles.recordsContributionsU_uLi)} key={submission.contestId}><div {...stylex.props(recordsStyles.recordsContributionTitle)}><Link {...stylex.props(linkStyles.base)} to={`/contests/${submission.contestId}?asOf=${asOf}`}>{contest?.title ?? 'Contest'}</Link><strong {...stylex.props(descendantStyles.recordsContributionTitleU_uStrong)}>{formatNumber(submission.score)}<small {...stylex.props(descendantStyles.recordsContributionTitleU_uSmall)}>points</small></strong></div><p {...stylex.props(recordsStyles.recordsContributionMeta)}>{contest?.scope === 'official' ? 'Official Tadoku contest' : 'Community contest'} · {closed ? 'Finished · submission closed' : 'In progress'}</p><ScoreExplanation basis={submission.basis + (closed ? ' This saved contribution stays unchanged after later personal-log edits.' : '')} /></li>
+            })}</ul> : <div {...stylex.props(recordsStyles.recordsVisibilityNote)}><h3 {...stylex.props(typography.component, descendantStyles.recordsVisibilityNoteU_uH3)}>No contest submissions</h3><p {...stylex.props(descendantStyles.recordsVisibilityNoteU_uP)}>This activity is in your personal history. Submit it to an eligible contest to count there too.</p></div>}
+            <p {...stylex.props(recordsStyles.recordsScopeNote)}>{ended ? 'These are saved contest scores, so they can differ from the current personal record.' : 'Each contest scores this activity separately. These points are not added to your personal score.'}</p>
             {!ended ? <SubmissionManager key={log.id} log={log} asOf={asOf} onSaved={() => setSaved(true)} /> : null}
           </>}
         </section>
       </div></div>
     </article>
-    <footer className="records-log-footer"><div><p className="muted">Viewed as of {formatDate(asOf)}.{ended ? ' Contest submission windows are closed.' : ''}</p><Link className="text-link" to="/guide/scoring">How logging and scoring work</Link></div>{owner ? <details className="records-maintenance"><summary>More actions</summary><Modal trigger={<Button variant="ghost" leadingIcon={<TrashIcon className="paper-icon-default" />}>Delete log</Button>} title="Delete this log?" description="This removes the activity from your personal history and its contest submissions." initialFocus={cancelRef} open={deleteOpen} onOpenChange={setDeleteOpen} footer={<><Button ref={cancelRef} variant="outline" onClick={() => setDeleteOpen(false)}>Keep log</Button><Button variant="destructive" onClick={() => { setDeleteOpen(false); removeLog(log.id); setDeleted(log) }}>Delete log</Button></>}><p>“{log.title || `${log.language} ${log.activity.toLocaleLowerCase()}`}” will be removed from this playground. You can restore the sample afterward.</p></Modal></details> : null}</footer>
+    <footer {...stylex.props(recordsStyles.recordsLogFooter)}><div><p {...stylex.props(appStyles.muted, descendantStyles.recordsLogFooterU_uP)}>Viewed as of {formatDate(asOf)}.{ended ? ' Contest submission windows are closed.' : ''}</p><Link {...stylex.props(linkStyles.base)} to="/guide/scoring">How logging and scoring work</Link></div>{owner ? <details {...stylex.props(recordsStyles.recordsMaintenance)}><summary {...stylex.props(descendantStyles.recordsMaintenanceU_uSummary)}>More actions</summary><Modal trigger={<Button variant="ghost" leadingIcon={<TrashIcon {...stylex.props(iconSizes.default)} />}>Delete log</Button>} title="Delete this log?" description="This removes the activity from your personal history and its contest submissions." initialFocus={cancelRef} open={deleteOpen} onOpenChange={setDeleteOpen} footer={<><Button ref={cancelRef} variant="outline" onClick={() => setDeleteOpen(false)}>Keep log</Button><Button variant="destructive" onClick={() => { setDeleteOpen(false); removeLog(log.id); setDeleted(log) }}>Delete log</Button></>}><p {...stylex.props(descendantStyles.recordsLogFooterU_uP)}>“{log.title || `${log.language} ${log.activity.toLocaleLowerCase()}`}” will be removed from this playground. You can restore the sample afterward.</p></Modal></details> : null}</footer>
   </>
 }

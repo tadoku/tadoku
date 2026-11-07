@@ -1,6 +1,7 @@
+import * as stylex from '@stylexjs/stylex'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
-import { EmptyState } from 'paper-ui'
+import { EmptyState, linkStyles } from 'paper-ui'
 import { z } from 'zod'
 import { ProfileActivity } from '../../../../components/ProfileActivity'
 import { PendingView } from '../../../../components/StatusViews'
@@ -28,7 +29,7 @@ export const Route = createFileRoute('/profile/$id/updates/{-$page}')({
       headingLevel={1}
       title="Profile not found"
       description="No Tadoku account has this address."
-      actions={<Link to="/" className="text-link">Return home</Link>}
+      actions={<Link to="/" {...stylex.props(linkStyles.base)}>Return home</Link>}
     />
   ),
   component: ProfileActivityPage,

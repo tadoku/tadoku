@@ -1,6 +1,7 @@
+import * as stylex from '@stylexjs/stylex'
 import { useStore } from '@tanstack/react-form'
 import { Link } from '@tanstack/react-router'
-import { Button, buttonClassName } from 'paper-ui'
+import { Button, buttonStyles } from 'paper-ui'
 import { useSyncExternalStore } from 'react'
 import { navigate, useAccountForm } from '../lib/account-form'
 import { continuation, deleteAccountLogin } from '../lib/identity'
@@ -8,6 +9,7 @@ import type { AccountSearch } from '../lib/search'
 import { useIdentity } from '../lib/session'
 import { FormProblem, ReturnTo } from './AccountForm'
 import { CardPage } from './CardPage'
+import { formStyles, cardStyles, textLink } from './styles'
 
 const subscribeNever = () => () => {}
 
@@ -42,13 +44,13 @@ export function DeleteAccount({ search }: { readonly search: AccountSearch }) {
 
   return (
     <CardPage title="Delete your account" lead="You can’t undo this.">
-      <div className="account-confirmation account-confirmation--spaced">
-        <p>Deleting your account removes your sign-in, your logs outside finished contests and your registrations in running contests.</p>
-        <p>Finished contests keep your scores as “Deleted participant”. Contests you organize continue under “Deleted organizer”.</p>
-        <p><a href={`${webUrl}/profile/${account.id}/updates`}>Export your logs first</a> if you want to keep a copy.</p>
+      <div {...stylex.props(cardStyles.confirmation, cardStyles.spaced)}>
+        <p {...stylex.props(cardStyles.confirmationText)}>Deleting your account removes your sign-in, your logs outside finished contests and your registrations in running contests.</p>
+        <p {...stylex.props(cardStyles.confirmationText)}>Finished contests keep your scores as “Deleted participant”. Contests you organize continue under “Deleted organizer”.</p>
+        <p {...stylex.props(cardStyles.confirmationText)}><a {...stylex.props(textLink)} href={`${webUrl}/profile/${account.id}/updates`}>Export your logs first</a> if you want to keep a copy.</p>
       </div>
       <form.AppForm>
-        <form.Form {...formProps} className="account-form">
+        <form.Form {...formProps} xstyle={formStyles.form}>
           <FormProblem problem={problem} />
           <ReturnTo value={next} />
           <form.AppField name="email" validators={{ onChange: ({ value }) => value.trim() ? undefined : 'Type your email address.' }}>
@@ -65,8 +67,8 @@ export function DeleteAccount({ search }: { readonly search: AccountSearch }) {
               />
             )}
           </form.AppField>
-          <div className="account-form__actions">
-            <Button
+          <div {...stylex.props(formStyles.actions)}>
+            <Button xstyle={formStyles.action}
               type="submit"
               variant="destructive"
               loading={pending}
@@ -75,7 +77,7 @@ export function DeleteAccount({ search }: { readonly search: AccountSearch }) {
             >
               Delete my account
             </Button>
-            <Link to="/" search={{ return_to: next }} className={buttonClassName({ variant: 'ghost' })}>Cancel</Link>
+            <Link to="/" search={{ return_to: next }} {...stylex.props(...buttonStyles({ variant: 'ghost' }))}>Cancel</Link>
           </div>
         </form.Form>
       </form.AppForm>

@@ -5,6 +5,13 @@ import { catalogRegistry } from 'paper-ui/catalog'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ExampleCanvas } from '../src/documentation/ExampleCanvas'
 
+/** The settings' controls in reading order, named by their visible label or legend. */
+function controlOrder(settings: HTMLElement) {
+  return Array.from(settings.children)
+    .map(child => child.querySelector('label, legend')?.textContent)
+    .filter(Boolean)
+}
+
 afterEach(() => vi.unstubAllGlobals())
 
 describe('ExampleCanvas', () => {
@@ -65,10 +72,8 @@ describe('ExampleCanvas', () => {
     expect(screen.getByRole('radio', { name: 'Fit' })).toBeChecked()
     act(() => resize([{ contentRect: { width: 592 } } as ResizeObserverEntry], {} as ResizeObserver))
     expect(frame).toHaveAttribute('data-preview-width', '592')
-    expect(frame).toHaveStyle({ inlineSize: '100%' })
     expect(screen.getByText('Fit · 592 px · Light · Comfortable')).toBeInTheDocument()
     await user.click(screen.getByRole('radio', { name: 'Desktop' }))
-    expect(frame).toHaveStyle({ inlineSize: '1280px' })
     act(() => resize([{ contentRect: { width: 320 } } as ResizeObserverEntry], {} as ResizeObserver))
     expect(frame).toHaveAttribute('data-preview-width', '1280')
     await user.click(screen.getByRole('radio', { name: 'Fit' }))
@@ -83,15 +88,7 @@ describe('ExampleCanvas', () => {
 
     const settings = screen.getByRole('group', { name: 'Preview settings' })
     expect(within(settings).getByLabelText('Fixture')).toBeInTheDocument()
-    expect(
-      Array.from(settings.children).map((child) => child.className),
-    ).toEqual([
-      'canvas-controls__title paper-type-label',
-      'canvas-controls__fixture',
-      'canvas-controls__theme',
-      'canvas-controls__density',
-      'canvas-controls__viewport',
-    ])
+    expect(controlOrder(settings)).toEqual(['Fixture', 'Theme', 'Density', 'Viewport'])
   })
 
   it('omits the optional fixture control without leaving a placeholder', () => {
@@ -99,14 +96,7 @@ describe('ExampleCanvas', () => {
 
     const settings = screen.getByRole('group', { name: 'Preview settings' })
     expect(within(settings).queryByLabelText('Fixture')).not.toBeInTheDocument()
-    expect(
-      Array.from(settings.children).map((child) => child.className),
-    ).toEqual([
-      'canvas-controls__title paper-type-label',
-      'canvas-controls__theme',
-      'canvas-controls__density',
-      'canvas-controls__viewport',
-    ])
+    expect(controlOrder(settings)).toEqual(['Theme', 'Density', 'Viewport'])
   })
 
   it('uses an iframe with a real selected viewport width', async () => {
@@ -123,13 +113,11 @@ describe('ExampleCanvas', () => {
     const desktopOption = screen.getByRole('radio', {
       name: 'Desktop',
     })
-    expect(phoneOption).not.toHaveClass('paper-button')
     expect(desktopOption).toBeChecked()
     expect(phoneOption).not.toHaveAttribute('aria-pressed')
 
     await user.click(phoneOption)
     expect(frame).toHaveAttribute('data-preview-width', '360')
-    expect(frame).toHaveStyle({ inlineSize: '360px' })
     expect(phoneOption).toBeChecked()
     expect(desktopOption).not.toBeChecked()
   })
@@ -138,14 +126,8 @@ describe('ExampleCanvas', () => {
     render(<ExampleCanvas />)
 
     const settings = screen.getByRole('group', { name: 'Preview settings' })
-    expect(settings).toHaveClass('canvas-controls')
-    expect(within(settings).getByLabelText('Theme')).toHaveClass('paper-select')
-    expect(within(settings).getByLabelText('Density')).toHaveClass('paper-select')
-    expect(within(settings).getByRole('group', { name: 'Viewport' })).toHaveClass(
-      'paper-radio-select--segmented',
-    )
     expect(within(settings).getAllByRole('radio')).toHaveLength(4)
-    expect(settings.querySelector('.paper-button')).toBeNull()
+    expect(within(settings).queryAllByRole('button')).toHaveLength(0)
     expect(settings.querySelector('[aria-pressed]')).toBeNull()
     expect(screen.queryByText('Isolated preview')).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Real viewport canvas' })).not.toBeInTheDocument()
@@ -155,8 +137,6 @@ describe('ExampleCanvas', () => {
     const user = userEvent.setup()
     render(<ExampleCanvas />)
 
-    expect(screen.getByLabelText('Theme')).toHaveClass('paper-select')
-    expect(screen.getByLabelText('Density')).toHaveClass('paper-select')
 
     await user.selectOptions(screen.getByLabelText('Theme'), 'dark')
     await user.selectOptions(screen.getByLabelText('Density'), 'compact')

@@ -1,8 +1,10 @@
+import stylex from '@stylexjs/unplugin'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
-  plugins: [react()],
+  // Under Vitest the plugin's dev-server CSS endpoint would keep the server open; tests need only its transform.
+  plugins: [{ ...stylex.vite({ styleResolution: 'application-order', useCSSLayers: true }), ...(process.env.VITEST ? { configureServer: undefined } : {}) }, react()],
   resolve: {
     dedupe: ['react', 'react-dom', '@tanstack/react-form'],
   },

@@ -1,6 +1,7 @@
+import * as stylex from '@stylexjs/stylex'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { Button, EmptyState, buttonClassName } from 'paper-ui'
+import { Button, buttonStyles, EmptyState } from 'paper-ui'
 import { z } from 'zod'
 import { ContestScoring } from '../../../components/ContestScoring'
 import { getPageUrls } from '../../../lib/links'
@@ -46,7 +47,7 @@ function Scoring() {
         <EmptyState
           headingLevel={1}
           title="Sign in to manage contest scoring"
-          actions={<a className={buttonClassName()} href={loginUrl}>Log in</a>}
+          actions={<a {...stylex.props(...buttonStyles())} href={loginUrl}>Log in</a>}
         />
       )
     default:

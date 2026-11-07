@@ -1,6 +1,7 @@
+import * as stylex from '@stylexjs/stylex'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
-import { EmptyState, buttonClassName } from 'paper-ui'
+import { buttonStyles, EmptyState } from 'paper-ui'
 import { z } from 'zod'
 import { ContestProfile } from '../../../../../components/ContestProfile'
 import { PendingView } from '../../../../../components/StatusViews'
@@ -28,7 +29,7 @@ export const Route = createFileRoute('/contests/$id/profile/$userId/$')({
       headingLevel={1}
       title="Participant not found"
       description="This contest has no participant with this address."
-      actions={<Link className={buttonClassName()} to={contestsHref.official()}>Browse contests</Link>}
+      actions={<Link {...stylex.props(...buttonStyles())} to={contestsHref.official()}>Browse contests</Link>}
     />
   ),
   component: ContestProfileRoute,

@@ -53,7 +53,7 @@ async function expectBlogPage(page: Page, data: Posts, number: number) {
 }
 
 async function hydrated(page: Page) {
-  await expect(page.locator('.app-theme-toggle')).toBeEnabled()
+  await expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled()
 }
 
 /** Gives the admin's branch tenant more than one page of published posts, a draft post and page, and the hostile page. */

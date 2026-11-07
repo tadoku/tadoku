@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { BookOpenIcon, LanguageIcon, TrophyIcon, iconClassName } from 'paper-ui/icons'
 import { Link } from '@tanstack/react-router'
-import { Button, EmptyState, Loading, SectionHeading, StatGrid, StatusTag, Surface, Table, buttonClassName } from 'paper-ui'
+import { Button, EmptyState, Loading, SectionHeading, StatGrid, Surface, Table, buttonClassName } from 'paper-ui'
 import type { ReactNode } from 'react'
 import { homeQueryOptions, type HomeData } from '../lib/home'
 import { formatDate, formatPeriod, numberFormat, pointsUnit } from '../lib/format'
@@ -261,7 +261,7 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
             cell: row => (
               <span className="standings-person">
                 <a className="home-person-link" href={links.profile(row.user_id)}>{row.user_display_name}</a>
-                {row.user_id === viewerId ? <StatusTag>You</StatusTag> : null}
+                {row.user_id === viewerId ? <span className="standings-you">You</span> : null}
               </span>
             ),
           },

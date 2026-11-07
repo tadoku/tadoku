@@ -4,14 +4,13 @@ import mark from 'paper-ui/assets/brand/cut-meter.svg?url'
 import reversedMark from 'paper-ui/assets/brand/cut-meter-reversed.svg?url'
 import wordmark from 'paper-ui/assets/brand/wordmark-accent.svg?url'
 import reversedWordmark from 'paper-ui/assets/brand/wordmark-reversed.svg?url'
-import { Children, Fragment, type ReactNode } from 'react'
+import { Children, Fragment, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowRightStartOnRectangleIcon,
   ChevronDownIcon,
   Cog6ToothIcon,
   MoonIcon,
-  PlusIcon,
   ShieldCheckIcon,
   SunIcon,
   UserIcon,
@@ -28,10 +27,26 @@ const themeKey = 'tadoku-theme'
 /** Render in <head> before the body so Paper's [data-theme] is set before first paint. */
 export const themeBootScript = `try{var t=localStorage.getItem('${themeKey}');document.documentElement.dataset.theme=t==='dark'||t==='light'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){}`
 
-function toggleTheme() {
-  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'
+type Theme = 'light' | 'dark'
+
+const currentTheme = (): Theme => document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
+
+function setTheme(next: Theme) {
   document.documentElement.dataset.theme = next
   try { localStorage.setItem(themeKey, next) } catch { /* Private mode keeps the choice for this page only. */ }
+}
+
+const toggleTheme = () => setTheme(currentTheme() === 'dark' ? 'light' : 'dark')
+
+/** The account menu's appearance item. The menu renders only after hydration, so it reads the theme directly. */
+function useThemeSwitch() {
+  const [theme, setThemeState] = useState<Theme>(currentTheme)
+  const next: Theme = theme === 'dark' ? 'light' : 'dark'
+  return {
+    label: next === 'dark' ? 'Use dark theme' : 'Use light theme',
+    icon: next === 'dark' ? <MoonIcon className={iconClassName('compact')} /> : <SunIcon className={iconClassName('compact')} />,
+    toggle: () => { setTheme(next); setThemeState(next) },
+  }
 }
 
 const discordUrl = 'https://discord.gg/AsC9vZs2Ex'
@@ -64,11 +79,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           navigation={navigation}
           currentPath={currentPath}
           renderLink={renderLink}
-          actions={<div className="app-account-actions"><ThemeToggle /><AccountActions viewer={viewer} /></div>}
-          mobileFooter={closeMenu => <>
-            {viewer?.status === 'signed-in' ? <MobileAccount viewer={viewer} closeMenu={closeMenu} /> : null}
-            <ThemeToggle labelled />
-          </>}
+          actions={<div className="app-account-actions"><AccountActions viewer={viewer} /></div>}
+          mobileFooter={viewer?.status === 'signed-in' ? closeMenu => <MobileAccount viewer={viewer} closeMenu={closeMenu} /> : undefined}
         />
         {viewer && 'userId' in viewer ? <form id={logoutFormId} method="post" action="/logout" hidden /> : null}
       </header>
@@ -123,31 +135,6 @@ function FooterGroup({ title, children }: { title: string; children: ReactNode }
   )
 }
 
-/**
- * The appearance switch, named for the theme it switches to: an icon button in the header on wide screens, a labelled
- * row in the mobile menu, where the header has no room for it.
- */
-function ThemeToggle({ labelled = false }: { labelled?: boolean }) {
-  const hydrated = useHydrated()
-  const label = labelled ? undefined : 'paper-visually-hidden'
-  return (
-    <button
-      type="button"
-      className={buttonClassName({
-        variant: 'ghost',
-        className: `${labelled ? 'paper-navbar__mobile-link app-theme-row' : 'app-theme-toggle'} app-awaiting-hydration`,
-      })}
-      onClick={toggleTheme}
-      disabled={!hydrated}
-    >
-      <MoonIcon className={`${iconClassName()} app-theme-label--light`} aria-hidden="true" />
-      <SunIcon className={`${iconClassName()} app-theme-label--dark`} aria-hidden="true" />
-      <span className={`${label ?? ''} app-theme-label--light`}>Use dark theme</span>
-      <span className={`${label ?? ''} app-theme-label--dark`}>Use light theme</span>
-    </button>
-  )
-}
-
 /** Webv2 replaces every page with this for a suspended account. */
 function Suspended() {
   return (
@@ -199,26 +186,17 @@ function AccountActions({ viewer }: { viewer: Viewer | undefined }) {
     case 'signed-in':
       return <>
         <AccountMenu viewer={viewer} />
-        <a href={links.logs} className={buttonClassName({ className: 'app-header-action' })}>
-          <PlusIcon className={iconClassName('compact')} aria-hidden="true" />Log activity
-        </a>
+        <a href={links.logs} className={buttonClassName({ className: 'app-header-action' })}>Log activity</a>
       </>
   }
 }
 
 function AccountMenu({ viewer }: { viewer: SignedIn }) {
   const hydrated = useHydrated()
-  const navigate = useNavigate()
-  const items = useAccountLinks(viewer).map(link => ({
-    id: link.id,
-    label: link.label,
-    icon: link.icon,
-    onSelect: () => link.href.startsWith('/') ? void navigate({ to: link.href }) : location.assign(link.href),
-  }))
   return (
     <span className="app-account-menu--desktop">
       {hydrated
-        ? <ActionMenu label={viewer.displayName} triggerVariant="ghost" items={[...items, { id: 'logout', label: 'Log out', icon: <ArrowRightStartOnRectangleIcon className={iconClassName('compact')} />, onSelect: logOut }]} />
+        ? <AccountMenuOpen viewer={viewer} />
         : (
           // The menu's trigger as server HTML renders it, disabled until it can open.
           <button type="button" className={buttonClassName({ variant: 'ghost', className: 'app-awaiting-hydration' })} disabled>
@@ -227,6 +205,29 @@ function AccountMenu({ viewer }: { viewer: SignedIn }) {
           </button>
         )}
     </span>
+  )
+}
+
+/** The account menu once it can open: the account's pages, the appearance switch, then Log out. */
+function AccountMenuOpen({ viewer }: { viewer: SignedIn }) {
+  const navigate = useNavigate()
+  const theme = useThemeSwitch()
+  const items = useAccountLinks(viewer).map(link => ({
+    id: link.id,
+    label: link.label,
+    icon: link.icon,
+    onSelect: () => link.href.startsWith('/') ? void navigate({ to: link.href }) : location.assign(link.href),
+  }))
+  return (
+    <ActionMenu
+      label={viewer.displayName}
+      triggerVariant="ghost"
+      items={[
+        ...items,
+        { id: 'theme', label: theme.label, icon: theme.icon, onSelect: theme.toggle },
+        { id: 'logout', label: 'Log out', icon: <ArrowRightStartOnRectangleIcon className={iconClassName('compact')} />, onSelect: logOut },
+      ]}
+    />
   )
 }
 
@@ -240,6 +241,13 @@ function MobileAccount({ viewer, closeMenu }: { viewer: SignedIn; closeMenu: () 
           {renderLink({ href: link.href, className: 'paper-navbar__mobile-link', onClick: closeMenu, children: link.label })}
         </Fragment>
       ))}
+      {/* Server-rendered, so CSS shows the label for the current theme instead of reading it during render. */}
+      <Button variant="ghost" className="paper-navbar__mobile-link app-theme-row" onClick={toggleTheme}>
+        <MoonIcon className={`${iconClassName('compact')} app-theme-label--light`} aria-hidden="true" />
+        <SunIcon className={`${iconClassName('compact')} app-theme-label--dark`} aria-hidden="true" />
+        <span className="app-theme-label--light">Use dark theme</span>
+        <span className="app-theme-label--dark">Use light theme</span>
+      </Button>
       <Button type="submit" form={logoutFormId} variant="ghost" className="paper-navbar__mobile-link">Log out</Button>
     </section>
   )

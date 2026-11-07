@@ -13,10 +13,9 @@ a { text-underline-offset: .2em; }
 .app-header-action { white-space: nowrap; flex-shrink: 0; }
 .app-mark { display: block; width: calc(var(--app-brand-width) * .282); height: auto; }
 .app-wordmark { display: block; width: var(--app-brand-width); height: auto; }
-.app-mark--dark, .app-wordmark--dark, .app-theme-label--dark { display: none; }
-[data-theme="dark"] .app-mark--light, [data-theme="dark"] .app-wordmark--light, [data-theme="dark"] .app-theme-label--light { display: none; }
+.app-mark--dark, .app-wordmark--dark { display: none; }
+[data-theme="dark"] .app-mark--light, [data-theme="dark"] .app-wordmark--light { display: none; }
 [data-theme="dark"] .app-mark--dark, [data-theme="dark"] .app-wordmark--dark { display: block; }
-[data-theme="dark"] .app-theme-label--dark { display: inline; }
 .app-content { width: 100%; max-width: calc(var(--app-content-width) + var(--app-gutter) * 2); padding: 48px var(--app-gutter) 64px; margin-inline: auto; flex: 1; min-width: 0; }
 .app-content:focus { outline: none; }
 .app-skip { position: fixed; z-index: 100; left: 12px; top: 12px; transform: translateY(-180%); }
@@ -182,8 +181,12 @@ a { text-underline-offset: .2em; }
 .standings-context h2 { font-size: 1.375rem; }
 .standings-empty { margin: 0; padding: 24px 20px; border-block-start: 1px solid var(--paper-color-rule-default); }
 .standings-table { font-variant-numeric: tabular-nums; --paper-field-padding-inline: 20px; }
-.home-ledger tr[aria-current="true"] > :first-child,
-.standings-table tr[aria-current="true"] > :first-child { box-shadow: inset var(--paper-accent-rail-width) 0 0 var(--paper-color-text-link); }
+/* Inside a card the card frames the table, so the table's own top and bottom rules would double its edges. */
+.standings-sheet .paper-table, .home-ledger .paper-table { border-block: 0; }
+/* The viewer's row: an accent-soft band and a filled You pill, not a rail and a boxed tag. */
+.home-ledger tr[aria-current="true"], .standings-table tr[aria-current="true"] { background: var(--paper-color-action-soft); }
+.home-ledger tr[aria-current="true"]:hover, .standings-table tr[aria-current="true"]:hover { background: color-mix(in srgb, var(--paper-color-text-ink) 5%, var(--paper-color-action-soft)); }
+.standings-you { display: inline-block; padding: 1px 8px; border-radius: 999px; color: var(--paper-color-action-text); background: var(--paper-color-action-default); font-size: .75rem; font-weight: 700; line-height: 1.5; letter-spacing: .02em; vertical-align: 1px; }
 .standings-person { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
 .standings-rank { color: var(--paper-color-text-muted); }
 /* The podium earns colour: gold, silver and bronze marks behind the top three ranks. */

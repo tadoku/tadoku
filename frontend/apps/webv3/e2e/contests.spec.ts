@@ -58,7 +58,7 @@ async function expectRows(page: Page, data: Contests, pageNumber = 1) {
 }
 
 async function hydrated(page: Page) {
-  await expect(page.locator('.app-theme-toggle')).toBeEnabled()
+  await expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled()
 }
 
 /** Gives Dev Admin more than one page of community contests in the selected tenant, one of them unlisted. */

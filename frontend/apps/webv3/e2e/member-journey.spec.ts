@@ -15,15 +15,29 @@ test('a member walks home, contest, standings, profile, logging and the saved lo
   await expect(page.getByRole('button', { name: 'Dev Reader', exact: true })).toBeVisible()
   await shot('1-home')
 
+  // The appearance switch is the account menu's; the choice survives a reload.
+  const theme = await page.locator('html').getAttribute('data-theme')
+  const other = theme === 'dark' ? 'light' : 'dark'
+  await page.getByRole('button', { name: 'Dev Reader', exact: true }).click()
+  await page.getByRole('menuitem', { name: `Use ${other} theme` }).click()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', other)
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', other)
+  await page.getByRole('button', { name: 'Dev Reader', exact: true }).click()
+  await page.getByRole('menuitem', { name: `Use ${theme} theme` }).click()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', theme!)
+
   await page.getByRole('link', { name: /^(Contest details|Full leaderboard|See final board)$/ }).first().click()
   await expect(page).toHaveURL(/\/contests\/[a-f0-9-]{36}\/leaderboard\/1$/)
   const standings = page.locator('.standings-table tbody tr')
   await expect(standings.first()).toBeVisible()
   await shot('2-contest-standings')
 
+  // A standings row opens its participant from anywhere on the row, here its score.
   const participant = standings.first().getByRole('link')
   const name = (await participant.textContent())!
-  await participant.click()
+  const score = await standings.first().locator('td').last().boundingBox()
+  await page.mouse.click(score!.x + score!.width / 2, score!.y + score!.height / 2)
   await expect(page).toHaveURL(/\/contests\/[a-f0-9-]{36}\/profile\/[a-f0-9-]{36}\/1$/)
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
   await shot('3-participant')

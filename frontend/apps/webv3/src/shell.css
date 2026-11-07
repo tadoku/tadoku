@@ -23,7 +23,9 @@
 .app-footer__group ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; font-size: .875rem; color: var(--footer-muted); }
 @media (max-width: 720px) { .app-footer__inner { grid-template-columns: minmax(0, 1fr); } .app-footer__links { gap: 28px 40px; } }
 
-/* The theme switch sits in the header as an icon button with a 44px target. */
-.app-theme-toggle { inline-size: var(--paper-control-height); padding: 0; justify-content: center; }
+/* The appearance switch is a row in the phone menu's account section, set apart from the account's pages; it shows the
+   label and icon for the theme it switches to. */
+.app-theme-label--dark { display: none; }
+[data-theme="dark"] .app-theme-label--light { display: none; }
+[data-theme="dark"] .app-theme-label--dark { display: inline; }
 .app-theme-row { justify-content: flex-start; inline-size: 100%; margin-top: 12px; border-top: 1px solid var(--paper-color-rule-subtle); }
-@media (width < 48rem) { .app-account-actions .app-theme-toggle { display: none; } }

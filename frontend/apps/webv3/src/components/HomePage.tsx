@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { BookOpenIcon, LanguageIcon, TrophyIcon, iconClassName } from 'paper-ui/icons'
-import { Link } from '@tanstack/react-router'
+import { Link, useLoaderData } from '@tanstack/react-router'
 import { Button, EmptyState, Loading, SectionHeading, StatGrid, Surface, Table, buttonClassName } from 'paper-ui'
 import type { ReactNode } from 'react'
 import { homeQueryOptions, type HomeData } from '../lib/home'
@@ -40,6 +40,8 @@ const promise: Record<Phase, { headline: ReactNode; lead: string }> = {
 export function HomePage() {
   const links = useLinks()
   const { data, dataUpdatedAt, isError, refetch, isFetching } = useQuery(homeQueryOptions())
+  // The loader's year matches the dashboard queries it prefetched, even when the contest board fails.
+  const { year } = useLoaderData({ from: '/' })
   // The fetch time travels with the dehydrated data, so server and client agree on the contest day.
   const today = new Date(dataUpdatedAt).toISOString().slice(0, 10)
   const phase = phaseOf(data, isError, today)
@@ -74,7 +76,7 @@ export function HomePage() {
         </Surface>
       </section>
 
-      {member ? <MemberDashboard viewer={member} year={Number(today.slice(0, 4))} /> : (
+      {member ? <MemberDashboard viewer={member} year={year} /> : (
         <section className="home-how" aria-labelledby="home-how-title">
           <h2 id="home-how-title">How Tadoku works</h2>
           <ol>

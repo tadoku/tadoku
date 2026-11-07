@@ -15,14 +15,16 @@ export const Route = createFileRoute('/')({
   }),
   loader: async ({ context }) => {
     const viewer = await context.queryClient.ensureQueryData(viewerQueryOptions())
+    const year = new Date().getUTCFullYear()
     const [statistics, activity] = viewer.status === 'signed-in'
-      ? memberDashboardQueries(viewer, new Date().getUTCFullYear())
+      ? memberDashboardQueries(viewer, year)
       : [null, null]
     await Promise.all([
       context.queryClient.prefetchQuery(homeQueryOptions()),
       statistics ? context.queryClient.prefetchQuery(statistics) : null,
       activity ? context.queryClient.prefetchQuery(activity) : null,
     ])
+    return { year }
   },
   component: HomePage,
 })

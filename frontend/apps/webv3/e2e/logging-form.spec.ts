@@ -166,7 +166,7 @@ test('edit keeps language and activity fixed, uses the same tags and sidebar and
   const save = page.getByRole('button', { name: 'Save', exact: true })
   await expect(save).toBeEnabled({ timeout: 15_000 })
   // An edit can't change language or activity, so the header states them and the form offers no controls for them.
-  await expect(page.locator('.paper-page-header__lead')).toHaveText(/ · /)
+  await expect(page.locator('[data-page-lead]')).toHaveText(/ · /)
   await expect(language(page)).toHaveCount(0)
   await expect(activity(page)).toHaveCount(0)
   await expect(chip(page, 'book')).toBeVisible()
@@ -174,7 +174,7 @@ test('edit keeps language and activity fixed, uses the same tags and sidebar and
   const aside = page.getByRole('complementary', { name: 'Suggested tags' })
   await aside.getByRole('button', { name: 'manga', exact: true }).click()
   await expect(chip(page, 'manga')).toBeVisible()
-  await expect(page.locator('.log-form__estimate')).toContainText('Estimated score:')
+  await expect(page.locator('[data-estimate]')).toContainText('Estimated score:')
   await page.screenshot({ path: testInfo.outputPath('edit-1280.png'), fullPage: true })
   await page.setViewportSize({ width: 390, height: 844 })
   expect(await fitsViewport(page)).toBe(true)

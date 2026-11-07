@@ -33,7 +33,7 @@ test('a member walks home, contest, standings, profile, logging and the saved lo
 
   await page.getByRole('link', { name: /^(Contest details|Full leaderboard|See final board)$/ }).first().click()
   await expect(page).toHaveURL(/\/contests\/[a-f0-9-]{36}\/leaderboard\/1$/)
-  const standings = page.locator('.standings-table tbody tr')
+  const standings = page.locator('[data-standings] tbody tr')
   await expect(standings.first()).toBeVisible()
   await shot('2-contest-standings')
 

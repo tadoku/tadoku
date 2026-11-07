@@ -20,23 +20,23 @@ function contestLogs(request: APIRequestContext, contestId: string, page = 1, us
   return apiJson<Logs>(request, `/immersion/contests/${contestId}/logs?${query}`)
 }
 
-const entries = (page: Page) => page.locator('.profile-entries > li')
+const entries = (page: Page) => page.locator('[data-entries] > li')
 const removeButtons = (page: Page) => page.getByRole('button', { name: 'Remove from contest' })
 
 /** The page lists exactly the API's logs in order, each linking to its native detail page and naming its learner. */
 async function expectLogs(page: Page, expected: Logs, participants: boolean) {
-  const titles = page.locator('.profile-entries > li a.profile-entry-title')
+  const titles = page.locator('[data-entries] > li a[data-entry-title]')
   await expect(titles).toHaveCount(expected.logs.length)
   expect(await titles.evaluateAll(links => links.map(link => link.getAttribute('href'))))
     .toEqual(expected.logs.map(log => `/logs/${log.id}`))
   if (participants) {
-    await expect(page.locator('.profile-entry-meta')).toHaveText(expected.logs.map(log => new RegExp(`^${escape(log.user_display_name ?? 'Unknown user')} · `)))
+    await expect(page.locator('[data-entry-meta]')).toHaveText(expected.logs.map(log => new RegExp(`^${escape(log.user_display_name ?? 'Unknown user')} · `)))
   }
   // The range summary appears only beside page links.
   if (expected.total_size > 50) {
-    await expect(page.locator('.profile-entries-footer > p')).toHaveText(new RegExp(`of ${score.format(expected.total_size)} updates$`))
+    await expect(page.locator('[data-entries-footer] > p')).toHaveText(new RegExp(`of ${score.format(expected.total_size)} updates$`))
   } else {
-    await expect(page.locator('.profile-entries-footer')).toHaveCount(0)
+    await expect(page.locator('[data-entries-footer]')).toHaveCount(0)
   }
 }
 
@@ -44,11 +44,11 @@ const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 /** The page's overall score and each registered language's score agree with the API's contest profile. */
 async function expectScores(page: Page, profile: Profile) {
-  const stats = page.locator('.profile-stats')
+  const stats = page.locator('dl:has([data-stat])')
   const total = profile.scores.reduce((sum, item) => sum + item.score, 0)
   const values = [score.format(total), ...profile.registration.languages.map(language =>
     score.format(profile.scores.find(item => item.language_code === language.code)?.score ?? 0))]
-  await expect(stats.locator('.paper-stat-grid__value')).toHaveText(values)
+  await expect(stats.locator('[data-stat] dd')).toHaveText(values)
 }
 
 test.beforeEach(() => {
@@ -86,7 +86,7 @@ test('the server-rendered updates feed lists the API\'s contest logs, pages thro
     await expect(live.getByRole('heading', { name: 'This page is past the end of the updates' })).toBeVisible()
     await live.goto(updatesPath(contest.id))
     const entry = first.logs[0]
-    await live.locator(`a.profile-entry-title[href="/logs/${entry.id}"]`).click()
+    await live.locator(`a[data-entry-title][href="/logs/${entry.id}"]`).click()
     await expect(live).toHaveURL(new RegExp(`/logs/${entry.id}$`))
     await expect(live.getByRole('heading', { level: 1 })).toBeVisible()
     await expect(live.getByRole('link', { name: 'Edit log' })).toHaveCount(0)
@@ -104,7 +104,7 @@ test('a standings participant opens their contest profile, with the API\'s score
   const participant = standings.entries[0]
 
   await page.goto(`/contests/${contest.id}/leaderboard/1`)
-  await page.locator('.standings-table').getByRole('link', { name: participant.user_display_name, exact: true }).click()
+  await page.locator('[data-standings]').getByRole('link', { name: participant.user_display_name, exact: true }).click()
   await expect(page).toHaveURL(new RegExp(`${profilePath(contest.id, participant.user_id)}$`))
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(participant.user_display_name)
   await expect(page).toHaveTitle(`${participant.user_display_name} · ${contest.title} · Tadoku`)
@@ -191,7 +191,7 @@ test('an administrator removes a log from a contest with a reason; a participant
   const own = await readerContext.newPage()
   await own.goto(profilePath(contest.id, readerId))
   await expectScores(own, await apiJson<Profile>(readerContext.request, `/immersion/contests/${contest.id}/profile/${readerId}/scores`))
-  await expect(own.locator('.profile-stats')).toContainText(score.format(log.score))
+  await expect(own.locator('dl:has([data-stat])')).toContainText(score.format(log.score))
   await expectLogs(own, await contestLogs(readerContext.request, contest.id, 1, readerId), false)
   await expect(removeButtons(own)).toHaveCount(0)
   await own.goto(updatesPath(contest.id))
@@ -237,7 +237,7 @@ test('a community contest\'s organizer can remove a log without being an adminis
 
   const page = await readerContext.newPage()
   await page.goto(updatesPath(contest.id))
-  await expect(page.locator(`a.profile-entry-title[href="/logs/${log.id}"]`)).toBeVisible()
+  await expect(page.locator(`a[data-entry-title][href="/logs/${log.id}"]`)).toBeVisible()
   await removeButtons(page).click()
   const dialog = page.getByRole('dialog', { name: 'Remove log from contest' })
   await dialog.getByLabel('Reason').fill('Organizer moderation check')

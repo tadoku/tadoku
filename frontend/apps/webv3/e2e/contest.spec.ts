@@ -49,7 +49,7 @@ async function chooseLanguage(page: Page, name: string) {
   await page.getByRole('option', { name, exact: true }).click()
 }
 
-const headerLinks = (page: Page) => page.locator('.standings-header .paper-page-header__actions').getByRole('link')
+const headerLinks = (page: Page) => page.locator('main header:has(h1) [data-page-actions]').getByRole('link')
 
 test.beforeEach(() => {
   test.skip(!webv3 || !api, 'Set WEBV3_BASE_URL and TADOKU_API_URL')
@@ -97,7 +97,7 @@ test('optional and past-the-end page segments follow the API', async ({ page, re
   await expect(page.getByRole('heading', { name: 'This page is past the end of the standings' })).toBeVisible()
   await page.getByRole('link', { name: 'Go to the first page' }).click()
   await expect(page).toHaveURL(new RegExp(`${contestPath(contest.id)}$`))
-  await expect(page.locator('.standings-table tbody tr')).toHaveCount(data.entries.length)
+  await expect(page.locator('[data-standings] tbody tr')).toHaveCount(data.entries.length)
 })
 
 test('unknown and malformed contests are not found', async ({ page }) => {
@@ -169,7 +169,7 @@ test('registration after the deadline is refused as in Webv2', async ({ page, re
 
   await page.goto(contestPath(closed.id))
   await expect(page.getByRole('heading', { level: 1, name: closed.title })).toBeVisible()
-  await expect(page.locator('.standings-header').getByText('Live now')).toBeVisible()
+  await expect(page.locator('main header:has(h1)').getByText('Live now')).toBeVisible()
   await expect(headerLinks(page)).toHaveText([])
   await expect(page.getByText('Closed to new participants')).toBeVisible()
 
@@ -208,7 +208,7 @@ test('contest and registration pages stay within mobile and desktop viewports', 
     for (const [name, path] of pages) {
       await page.goto(path)
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-      await expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled()
+      await expect(page.locator('[data-navbar-menu]')).toBeEnabled()
       await page.evaluate(() => document.fonts.ready)
       expect(await fitsViewport(page), `${path} at ${width}px`).toBe(true)
       await page.screenshot({ path: testInfo.outputPath(`${name}-${width}.png`), fullPage: true })

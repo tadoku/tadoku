@@ -70,7 +70,7 @@ test('owner submits a saved log to a contest, sees it after reload, then removes
   await page.setViewportSize({ width: 1280, height: 800 })
 
   const chosen = (await eligible.first().getAttribute('value'))!
-  const title = (await page.locator(`label:has(input[value="${chosen}"]) .paper-choice__label`).innerText()).trim()
+  const title = (await page.locator(`label:has(input[value="${chosen}"]) [id$="-label"]`).innerText()).trim()
   await eligible.first().check()
   await saveSubmissions(page).click()
   await expect(page).toHaveURL(`${webv3}/logs/${id}`)

@@ -84,6 +84,15 @@ const color = {
   'chart-7': themed(p.teal[600], p.teal[300]),
   'chart-8': themed(p.rose[600], p.rose[300]),
 
+  /** One hue per immersion activity, so lists and breakdowns can be scanned by activity. */
+  /** Violet is left out: it is the link and action colour, and an activity must not read as a link. */
+  'activity-reading': 'var(--color-chart-3)',
+  'activity-listening': 'var(--color-chart-7)',
+  'activity-writing': 'var(--color-chart-8)',
+  'activity-speaking': 'var(--color-chart-2)',
+  'activity-study': 'var(--color-chart-4)',
+  'activity-other': 'var(--color-muted)',
+
   'heat-future': themed(p.sand[150], p.graphite[800]),
   'heat-0': themed(p.sand[300], p.graphite[600]),
   'heat-1': themed(p.violet[425], p.violet[450]),

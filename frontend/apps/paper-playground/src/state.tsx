@@ -1,3 +1,4 @@
+import { applyDensity, applyTheme } from 'paper-ui'
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { initialContests, initialLogs, users, type SampleContest, type SampleLog } from './data'
@@ -61,8 +62,8 @@ function useStore() {
   const userId='anton'
   const user=viewer==='guest'?null:{...users.find(u=>u.id===userId)!,name:state.displayName}
   useEffect(()=>{
-    document.documentElement.dataset.theme=state.theme
-    document.documentElement.dataset.density=state.density
+    applyTheme(state.theme)
+    applyDensity(state.density)
     try {localStorage.setItem(storageKey,JSON.stringify(state))}catch{/* Keep in-memory state when storage is unavailable. */}
   },[state])
   const clearScenario=()=>{if(params.has('scenario')){const next=new URLSearchParams(params);next.delete('scenario');setParams(next,{replace:true})}}

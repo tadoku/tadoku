@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { PlusIcon, iconClassName } from 'paper-ui/icons'
 import { Link } from '@tanstack/react-router'
 import { Button, EmptyState, PageHeader, Pagination, StatusTag, Tabbar, buttonClassName } from 'paper-ui'
 import {
@@ -36,7 +37,7 @@ export function ContestsPage({ collection, page }: { collection: ContestCollecti
       <PageHeader
         className="standings-header"
         title="Contests"
-        actions={canCreate ? <Link className={buttonClassName({ variant: 'outline' })} to={links.newContest}>Create contest</Link> : null}
+        actions={canCreate ? <Link className={buttonClassName({ variant: 'outline' })} to={links.newContest}><PlusIcon className={iconClassName('compact')} aria-hidden="true" />Create contest</Link> : null}
       />
       <Tabbar
         label="Contest collections"

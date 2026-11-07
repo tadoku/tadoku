@@ -33,6 +33,8 @@ export interface TableProps<Row>
   /** The table's minimum inline size before its keyboard-scrollable region overflows. */
   readonly minWidth?: string;
   readonly tableClassName?: string;
+  /** Let the link in each row's header cover its whole row, so a click anywhere on the row opens the record. */
+  readonly linkedRows?: boolean;
 }
 
 type TableStyle = CSSProperties & {
@@ -57,6 +59,7 @@ export function Table<Row>({
   emptyMessage = "No data to display.",
   minWidth = `${Math.max(30, columns.length * 9)}rem`,
   tableClassName,
+  linkedRows = false,
   className,
   style,
   ...regionProps
@@ -80,7 +83,7 @@ export function Table<Row>({
       aria-labelledby={captionId}
       tabIndex={0}
     >
-      <table className={classNames("paper-table", tableClassName)}>
+      <table className={classNames("paper-table", linkedRows && "paper-table--linked-rows", tableClassName)}>
         <caption
           id={captionId}
           className={classNames(

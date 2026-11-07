@@ -1,6 +1,7 @@
 /* Webv3 layout on Paper tokens. Paper recipes sit in cascade layers, so these unlayered rules win. */
 a { text-underline-offset: .2em; }
 .text-link { color: var(--paper-color-text-link); }
+.text-link:hover { color: var(--paper-color-text-link-hover); text-decoration-thickness: 2px; }
 
 /* Shell */
 .app-shell { --app-gutter: 28px; --app-content-width: 1160px; --app-brand-width: 142px; min-height: 100vh; display: flex; flex-direction: column; }
@@ -12,18 +13,11 @@ a { text-underline-offset: .2em; }
 .app-header-action { white-space: nowrap; flex-shrink: 0; }
 .app-mark { display: block; width: calc(var(--app-brand-width) * .282); height: auto; }
 .app-wordmark { display: block; width: var(--app-brand-width); height: auto; }
-.app-mark--dark, .app-wordmark--dark, .app-theme-label--dark { display: none; }
-[data-theme="dark"] .app-mark--light, [data-theme="dark"] .app-wordmark--light, [data-theme="dark"] .app-theme-label--light { display: none; }
+.app-mark--dark, .app-wordmark--dark { display: none; }
+[data-theme="dark"] .app-mark--light, [data-theme="dark"] .app-wordmark--light { display: none; }
 [data-theme="dark"] .app-mark--dark, [data-theme="dark"] .app-wordmark--dark { display: block; }
-[data-theme="dark"] .app-theme-label--dark { display: inline; }
 .app-content { width: 100%; max-width: calc(var(--app-content-width) + var(--app-gutter) * 2); padding: 48px var(--app-gutter) 64px; margin-inline: auto; flex: 1; min-width: 0; }
 .app-content:focus { outline: none; }
-.app-footer { border-top: 1px solid var(--paper-color-rule-default); padding: 20px var(--app-gutter) 28px; }
-.app-footer__inner { max-width: var(--app-content-width); margin: auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; }
-.app-footer nav { display: flex; flex-wrap: wrap; gap: 12px 24px; font-size: .875rem; }
-.app-footer .paper-button { font-size: .875rem; font-weight: 400; }
-.app-footer nav .text-link { color: var(--paper-color-text-muted); text-decoration: none; }
-.app-footer nav .text-link:hover, .app-footer nav .text-link:focus-visible { color: var(--paper-color-text-ink); text-decoration: underline; }
 .app-skip { position: fixed; z-index: 100; left: 12px; top: 12px; transform: translateY(-180%); }
 .app-skip:focus { transform: none; }
 .app-pending { padding-block: 64px; }
@@ -57,9 +51,10 @@ a { text-underline-offset: .2em; }
 .home-start-date strong { font-family: var(--paper-font-display); font-size: 2rem; line-height: 1.3; }
 .home-how { margin-top: 48px; padding-top: 28px; border-top: 1px solid var(--paper-color-rule-default); }
 .home-how h2 { margin: 0 0 24px; font-size: 1.375rem; font-family: var(--paper-font-display); }
-.home-how ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px; list-style: none; counter-reset: home-step; margin: 0; padding: 0; }
-.home-how li { position: relative; padding-left: 28px; counter-increment: home-step; }
-.home-how li::before { content: counter(home-step); position: absolute; left: 0; top: 1px; color: var(--paper-color-text-muted); font-family: var(--paper-font-display); font-weight: 700; }
+.home-how ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px; list-style: none; margin: 0; padding: 0; }
+.home-how li { display: grid; align-content: start; justify-items: start; }
+/* Each step leads with its icon on an accent tile; the order is the list's own. */
+.home-how__icon { display: grid; place-items: center; inline-size: 44px; block-size: 44px; margin-bottom: 14px; color: var(--paper-color-text-link); background: var(--paper-color-action-soft); }
 .home-how h3 { margin: 0 0 8px; font-size: 1rem; line-height: 1.5; }
 .home-how p { margin: 0; max-width: 34ch; font-size: .9375rem; line-height: 1.7; color: var(--paper-color-text-ink); }
 .home-strip { max-width: 48rem; display: grid; grid-template-columns: 230px minmax(0, 1fr) auto; align-items: center; gap: 32px; margin-top: 32px; padding: 24px 0 0; border-top: 1px solid var(--paper-color-rule-default); }
@@ -155,7 +150,6 @@ a { text-underline-offset: .2em; }
 .app-announcements { display: grid; gap: 8px; margin-bottom: 32px; }
 .app-announcement { display: grid; gap: 4px; overflow-wrap: anywhere; }
 .app-announcement p { margin: 0; }
-.app-footer__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; font-size: .875rem; }
 @media (max-width: 600px) { .app-account-actions { font-size: .8rem; gap: .4rem; max-width: 12rem; } }
 .standings-main > .log-surface { max-width: none; }
 /* Log detail: the figures and facts read as one record, with the contests a section below it. */
@@ -187,10 +181,22 @@ a { text-underline-offset: .2em; }
 .standings-context h2 { font-size: 1.375rem; }
 .standings-empty { margin: 0; padding: 24px 20px; border-block-start: 1px solid var(--paper-color-rule-default); }
 .standings-table { font-variant-numeric: tabular-nums; --paper-field-padding-inline: 20px; }
-.home-ledger tr[aria-current="true"] > :first-child,
-.standings-table tr[aria-current="true"] > :first-child { box-shadow: inset var(--paper-accent-rail-width) 0 0 var(--paper-color-text-link); }
+/* Inside a card the card frames the table, so the table's own top and bottom rules would double its edges. */
+.standings-sheet .paper-table, .home-ledger .paper-table { border-block: 0; }
+/* The viewer's row: an accent-soft band and a filled You pill, not a rail and a boxed tag. */
+.home-ledger tr[aria-current="true"], .standings-table tr[aria-current="true"] { background: var(--paper-color-action-soft); }
+.home-ledger tr[aria-current="true"]:hover, .standings-table tr[aria-current="true"]:hover { background: color-mix(in srgb, var(--paper-color-text-ink) 5%, var(--paper-color-action-soft)); }
+.standings-you { display: inline-block; padding: 1px 8px; border-radius: 999px; color: var(--paper-color-action-text); background: var(--paper-color-action-default); font-size: .75rem; font-weight: 700; line-height: 1.5; letter-spacing: .02em; vertical-align: 1px; }
 .standings-person { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
 .standings-rank { color: var(--paper-color-text-muted); }
+/* The podium earns colour: gold, silver and bronze marks behind the top three ranks. */
+.standings-rank[data-podium] { display: inline-grid; place-items: center; min-inline-size: 1.75rem; block-size: 1.75rem; padding-inline: 4px; border-radius: 50%; color: var(--podium-ink); background: var(--podium-fill); font-weight: 700; font-variant-numeric: tabular-nums; }
+.standings-rank[data-podium="1"] { --podium-fill: #f3e2a6; --podium-ink: #5c4300; }
+.standings-rank[data-podium="2"] { --podium-fill: #e3e3ea; --podium-ink: #3d3d4a; }
+.standings-rank[data-podium="3"] { --podium-fill: #f0d3bd; --podium-ink: #6b3412; }
+[data-theme="dark"] .standings-rank[data-podium="1"] { --podium-fill: #4d3f12; --podium-ink: #f2d77c; }
+[data-theme="dark"] .standings-rank[data-podium="2"] { --podium-fill: #3b3b46; --podium-ink: #dcdce6; }
+[data-theme="dark"] .standings-rank[data-podium="3"] { --podium-fill: #4a2c1b; --podium-ink: #eebc98; }
 .standings-rank abbr, .standings-tie-note abbr { text-decoration: none; }
 .standings-tie-note { margin: 0; padding: 12px 20px; border-top: 1px solid var(--paper-color-rule-subtle); color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); }
 .standings-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 12px 20px; }
@@ -254,6 +260,3 @@ a { text-underline-offset: .2em; }
 
 /* Daily scores share their numeric columns evenly. */
 .contest-daily th { white-space: nowrap; }
-
-/* Header and footer controls wait only for hydration; they keep their colours instead of looking unavailable. */
-.app-awaiting-hydration:disabled { opacity: 1; cursor: progress; }

@@ -66,7 +66,7 @@ test('the server-rendered updates feed lists the API\'s contest logs, pages thro
   await expect(page).toHaveTitle(`Updates · ${contest.title} · Tadoku`)
   await expect(page.getByRole('heading', { level: 1, name: contest.title })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Updates', exact: true })).toHaveAttribute('aria-current', 'page')
-  await expect(page.getByRole('link', { name: 'Standings', exact: true })).toHaveAttribute('href', `/contests/${contest.id}/leaderboard/1`)
+  await expect(page.getByRole('navigation', { name: 'Contest views' }).getByRole('link', { name: 'Leaderboard', exact: true })).toHaveAttribute('href', `/contests/${contest.id}/leaderboard/1`)
   await expectLogs(page, first, true)
   await expect(removeButtons(page)).toHaveCount(0)
   await page.screenshot({ path: testInfo.outputPath('updates-ssr.png'), fullPage: true })

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
+import { BookOpenIcon, LanguageIcon, TrophyIcon, iconClassName } from 'paper-ui/icons'
 import { Link } from '@tanstack/react-router'
-import { Button, EmptyState, Loading, SectionHeading, StatGrid, StatusTag, Surface, Table, buttonClassName } from 'paper-ui'
+import { Button, EmptyState, Loading, SectionHeading, StatGrid, Surface, Table, buttonClassName } from 'paper-ui'
 import type { ReactNode } from 'react'
 import { homeQueryOptions, type HomeData } from '../lib/home'
 import { formatDate, formatPeriod, numberFormat, pointsUnit } from '../lib/format'
@@ -76,9 +77,18 @@ export function HomePage() {
         <section className="home-how" aria-labelledby="home-how-title">
           <h2 id="home-how-title">How Tadoku works</h2>
           <ol>
-            <li><h3>Choose your language</h3><p>Join an official round or track immersion at your own pace between contests.</p></li>
-            <li><h3>Read and listen</h3><p>Books, manga, games, podcasts, video: whatever keeps you engaged.</p></li>
-            <li><h3>Log your progress</h3><p>Record what you did and see where it counts.</p></li>
+            <li>
+              <span className="home-how__icon" aria-hidden="true"><LanguageIcon className={iconClassName()} /></span>
+              <h3>Choose your language</h3><p>Join an official round or track immersion at your own pace between contests.</p>
+            </li>
+            <li>
+              <span className="home-how__icon" aria-hidden="true"><BookOpenIcon className={iconClassName()} /></span>
+              <h3>Read and listen</h3><p>Books, manga, games, podcasts, video: whatever keeps you engaged.</p>
+            </li>
+            <li>
+              <span className="home-how__icon" aria-hidden="true"><TrophyIcon className={iconClassName()} /></span>
+              <h3>Log your progress</h3><p>Record what you did and see where it counts.</p>
+            </li>
           </ol>
         </section>
       )}
@@ -241,8 +251,9 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
         caption={`${ended ? 'Final' : 'Current'} top ${standings.entries.length} in ${contest.title}`}
         captionVisibility="screen-reader"
         minWidth="0"
+        linkedRows
         columns={[
-          { id: 'rank', header: 'Rank', width: '4.5rem', cell: row => row.rank },
+          { id: 'rank', header: 'Rank', width: '4.5rem', cell: row => <span className="standings-rank" data-podium={row.rank <= 3 ? row.rank : undefined}>{row.rank}</span> },
           {
             id: 'person',
             header: 'Participant',
@@ -250,7 +261,7 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
             cell: row => (
               <span className="standings-person">
                 <a className="home-person-link" href={links.profile(row.user_id)}>{row.user_display_name}</a>
-                {row.user_id === viewerId ? <StatusTag>You</StatusTag> : null}
+                {row.user_id === viewerId ? <span className="standings-you">You</span> : null}
               </span>
             ),
           },

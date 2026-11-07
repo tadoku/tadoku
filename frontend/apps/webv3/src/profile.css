@@ -5,7 +5,7 @@
 .profile-identity h1 { margin: 0 0 8px; overflow-wrap: anywhere; }
 .profile-identity p { margin: 0; color: var(--paper-color-text-muted); font-size: .9375rem; }
 .profile-avatar { display: grid; place-items: center; flex: 0 0 4rem; block-size: 4rem; border: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); font: 600 1.25rem var(--paper-font-body); letter-spacing: .02em; }
-.profile-export { margin: 0; color: var(--paper-color-text-muted); font-size: .875rem; }
+.profile-export { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--paper-color-text-muted); font-size: .875rem; }
 .profile-year { margin-block-start: 32px; padding: 32px; border: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
 .profile-year-head { margin: -8px 0 20px -12px; }
 .profile-year-control { display: flex; align-items: center; gap: 4px; }

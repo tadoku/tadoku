@@ -4,9 +4,19 @@ import mark from 'paper-ui/assets/brand/cut-meter.svg?url'
 import reversedMark from 'paper-ui/assets/brand/cut-meter-reversed.svg?url'
 import wordmark from 'paper-ui/assets/brand/wordmark-accent.svg?url'
 import reversedWordmark from 'paper-ui/assets/brand/wordmark-reversed.svg?url'
-import { Fragment, type ReactNode } from 'react'
+import { Children, Fragment, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronDownIcon, iconClassName } from 'paper-ui/icons'
+import {
+  ArrowRightStartOnRectangleIcon,
+  ChevronDownIcon,
+  Cog6ToothIcon,
+  MoonIcon,
+  ShieldCheckIcon,
+  SunIcon,
+  UserIcon,
+  iconClassName,
+} from 'paper-ui/icons'
+import { DiscordIcon, GitHubIcon, TwitterIcon } from './BrandIcons'
 import { useAccountUrls, viewerQueryOptions, type Viewer } from '../lib/session'
 import { useLinks } from '../lib/links'
 import { Announcements } from './Announcements'
@@ -17,10 +27,26 @@ const themeKey = 'tadoku-theme'
 /** Render in <head> before the body so Paper's [data-theme] is set before first paint. */
 export const themeBootScript = `try{var t=localStorage.getItem('${themeKey}');document.documentElement.dataset.theme=t==='dark'||t==='light'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){}`
 
-function toggleTheme() {
-  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'
+type Theme = 'light' | 'dark'
+
+const currentTheme = (): Theme => document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
+
+function setTheme(next: Theme) {
   document.documentElement.dataset.theme = next
   try { localStorage.setItem(themeKey, next) } catch { /* Private mode keeps the choice for this page only. */ }
+}
+
+const toggleTheme = () => setTheme(currentTheme() === 'dark' ? 'light' : 'dark')
+
+/** The account menu's appearance item. The menu renders only after hydration, so it reads the theme directly. */
+function useThemeSwitch() {
+  const [theme, setThemeState] = useState<Theme>(currentTheme)
+  const next: Theme = theme === 'dark' ? 'light' : 'dark'
+  return {
+    label: next === 'dark' ? 'Use dark theme' : 'Use light theme',
+    icon: next === 'dark' ? <MoonIcon className={iconClassName('compact')} /> : <SunIcon className={iconClassName('compact')} />,
+    toggle: () => { setTheme(next); setThemeState(next) },
+  }
 }
 
 const discordUrl = 'https://discord.gg/AsC9vZs2Ex'
@@ -28,7 +54,6 @@ const logoutFormId = 'app-logout'
 
 export function AppShell({ children }: { children: ReactNode }) {
   const currentPath = useRouterState({ select: state => state.location.pathname })
-  const hydrated = useHydrated()
   const links = useLinks()
   const { data: viewer } = useQuery(viewerQueryOptions())
   const navigation: NavbarItem[] = [
@@ -65,30 +90,47 @@ export function AppShell({ children }: { children: ReactNode }) {
       </main>
       <footer className="app-footer">
         <div className="app-footer__inner">
-          <nav aria-label="Footer">
-            <Link className="text-link" to={links.home}>Home</Link>
-            <Link className="text-link" to={links.leaderboard}>Leaderboard</Link>
-            <Link className="text-link" to={links.contests}>Contests</Link>
-            <Link className="text-link" to={links.blog}>Blog</Link>
-            <Link className="text-link" to={links.page('about')}>About Tadoku</Link>
-            <Link className="text-link" to={links.guide}>Guide</Link>
-            <Link className="text-link" to={links.page('rules')}>Rules</Link>
-            <Link className="text-link" to={links.page('faq')}>Questions &amp; help</Link>
-            <Link className="text-link" to={links.page('privacy')}>Privacy</Link>
-            <Link className="text-link" to={links.page('contact')}>Contact</Link>
-            <a className="text-link" href="https://github.com/tadoku">GitHub</a>
-            <a className="text-link" href={discordUrl}>Discord</a>
-            <a className="text-link" href="https://twitter.com/tadoku_app">Twitter</a>
-          </nav>
-          <div className="app-footer__meta">
-            <span>Built by <a className="text-link" href="https://antonve.be">antonve</a></span>
-            <Button variant="link" className="app-awaiting-hydration" onClick={toggleTheme} disabled={!hydrated}>
-              <span className="app-theme-label--light">Use dark theme</span>
-              <span className="app-theme-label--dark">Use light theme</span>
-            </Button>
+          <div className="app-footer__brand">
+            <Link to={links.home} className="app-footer__lockup" aria-label="Tadoku home">
+              <img src={reversedMark} width="32" height="32" alt="" />
+              <img src={reversedWordmark} width="126" height="23" alt="" />
+            </Link>
+            <p>Built &amp; designed by <a href="https://antonve.be">antonve</a></p>
+            <ul className="app-footer__social" aria-label="Community">
+              <li><a href={discordUrl} aria-label="Discord"><DiscordIcon /></a></li>
+              <li><a href="https://github.com/tadoku" aria-label="GitHub"><GitHubIcon /></a></li>
+              <li><a href="https://twitter.com/tadoku_app" aria-label="Twitter"><TwitterIcon /></a></li>
+            </ul>
           </div>
+          <nav className="app-footer__links" aria-label="Footer">
+            <FooterGroup title="Get started">
+              <Link to={links.home}>Home</Link>
+              <Link to={links.leaderboard}>Leaderboard</Link>
+              <Link to={links.contests}>Contests</Link>
+              <Link to={links.blog}>Blog</Link>
+            </FooterGroup>
+            <FooterGroup title="Learn">
+              <Link to={links.page('about')}>About Tadoku</Link>
+              <Link to={links.guide}>Guide</Link>
+              <Link to={links.page('rules')}>Rules</Link>
+              <Link to={links.page('faq')}>Questions &amp; help</Link>
+            </FooterGroup>
+            <FooterGroup title="Legal">
+              <Link to={links.page('privacy')}>Privacy</Link>
+              <Link to={links.page('contact')}>Contact</Link>
+            </FooterGroup>
+          </nav>
         </div>
       </footer>
+    </div>
+  )
+}
+
+function FooterGroup({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="app-footer__group">
+      <h2>{title}</h2>
+      <ul>{Children.map(children, child => <li>{child}</li>)}</ul>
     </div>
   )
 }
@@ -116,9 +158,11 @@ function useAccountLinks(viewer: SignedIn) {
   const { adminUrl } = useLoaderData({ from: rootRouteId })
   const { settings } = useAccountUrls()
   return [
-    { id: 'profile', label: 'Profile', href: links.profile(viewer.userId) },
-    ...(viewer.role === 'admin' ? [{ id: 'admin', label: 'Admin', href: adminUrl }] : []),
-    { id: 'settings', label: 'Account settings', href: settings },
+    { id: 'profile', label: 'Profile', href: links.profile(viewer.userId), icon: <UserIcon className={iconClassName('compact')} /> },
+    ...(viewer.role === 'admin'
+      ? [{ id: 'admin', label: 'Admin', href: adminUrl, icon: <ShieldCheckIcon className={iconClassName('compact')} /> }]
+      : []),
+    { id: 'settings', label: 'Account settings', href: settings, icon: <Cog6ToothIcon className={iconClassName('compact')} /> },
   ]
 }
 
@@ -149,16 +193,10 @@ function AccountActions({ viewer }: { viewer: Viewer | undefined }) {
 
 function AccountMenu({ viewer }: { viewer: SignedIn }) {
   const hydrated = useHydrated()
-  const navigate = useNavigate()
-  const items = useAccountLinks(viewer).map(link => ({
-    id: link.id,
-    label: link.label,
-    onSelect: () => link.href.startsWith('/') ? void navigate({ to: link.href }) : location.assign(link.href),
-  }))
   return (
     <span className="app-account-menu--desktop">
       {hydrated
-        ? <ActionMenu label={viewer.displayName} triggerVariant="ghost" items={[...items, { id: 'logout', label: 'Log out', onSelect: logOut }]} />
+        ? <AccountMenuOpen viewer={viewer} />
         : (
           // The menu's trigger as server HTML renders it, disabled until it can open.
           <button type="button" className={buttonClassName({ variant: 'ghost', className: 'app-awaiting-hydration' })} disabled>
@@ -167,6 +205,29 @@ function AccountMenu({ viewer }: { viewer: SignedIn }) {
           </button>
         )}
     </span>
+  )
+}
+
+/** The account menu once it can open: the account's pages, the appearance switch, then Log out. */
+function AccountMenuOpen({ viewer }: { viewer: SignedIn }) {
+  const navigate = useNavigate()
+  const theme = useThemeSwitch()
+  const items = useAccountLinks(viewer).map(link => ({
+    id: link.id,
+    label: link.label,
+    icon: link.icon,
+    onSelect: () => link.href.startsWith('/') ? void navigate({ to: link.href }) : location.assign(link.href),
+  }))
+  return (
+    <ActionMenu
+      label={viewer.displayName}
+      triggerVariant="ghost"
+      items={[
+        ...items,
+        { id: 'theme', label: theme.label, icon: theme.icon, onSelect: theme.toggle },
+        { id: 'logout', label: 'Log out', icon: <ArrowRightStartOnRectangleIcon className={iconClassName('compact')} />, onSelect: logOut },
+      ]}
+    />
   )
 }
 
@@ -180,6 +241,13 @@ function MobileAccount({ viewer, closeMenu }: { viewer: SignedIn; closeMenu: () 
           {renderLink({ href: link.href, className: 'paper-navbar__mobile-link', onClick: closeMenu, children: link.label })}
         </Fragment>
       ))}
+      {/* Server-rendered, so CSS shows the label for the current theme instead of reading it during render. */}
+      <Button variant="ghost" className="paper-navbar__mobile-link app-theme-row" onClick={toggleTheme}>
+        <MoonIcon className={`${iconClassName('compact')} app-theme-label--light`} aria-hidden="true" />
+        <SunIcon className={`${iconClassName('compact')} app-theme-label--dark`} aria-hidden="true" />
+        <span className="app-theme-label--light">Use dark theme</span>
+        <span className="app-theme-label--dark">Use light theme</span>
+      </Button>
       <Button type="submit" form={logoutFormId} variant="ghost" className="paper-navbar__mobile-link">Log out</Button>
     </section>
   )

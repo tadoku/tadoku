@@ -43,9 +43,9 @@ describe("Form control visual contract", () => {
     expect(inputCss).not.toMatch(/\.paper-input:read-only\s*\{/u);
   });
 
-  it("gives Paper inputs a solid, offset focus ring on keyboard focus", () => {
+  it("gives Paper inputs a focus-coloured edge and a soft halo on keyboard focus", () => {
     expect(inputCss).toMatch(
-      /\.paper-input:focus-visible\s*\{[^}]*--paper-input-focus-color: var\(--paper-color-focus-ring\);[^}]*position: relative;[^}]*z-index: 1;[^}]*border-block-end-color: var\(--paper-input-focus-color\);[^}]*outline: var\(--paper-focus-ring-width\) solid var\(--paper-input-focus-color\);[^}]*outline-offset: var\(--paper-focus-ring-offset\);/s,
+      /\.paper-input:focus-visible\s*\{[^}]*--paper-input-focus-color: var\(--paper-color-focus-ring\);[^}]*position: relative;[^}]*z-index: 1;[^}]*border-color: var\(--paper-input-focus-color\);[^}]*outline: var\(--paper-field-focus-halo-width\) solid color-mix\(in srgb, var\(--paper-input-focus-color\) 22%, transparent\);[^}]*outline-offset: 0;/s,
     );
 
     const focusedRule = inputCss.match(

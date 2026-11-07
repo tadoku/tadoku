@@ -23,9 +23,9 @@ describe("AmountWithUnit focus visual contract", () => {
     );
   });
 
-  it("puts one solid focus ring around the whole compound control", () => {
+  it("puts one soft focus halo around the whole compound control", () => {
     expect(formsCss).toMatch(
-      /\.paper-compound-field:has\(> \.paper-input:focus-visible\)\s*\{[^}]*--paper-compound-focus-color: var\(--paper-color-focus-ring\);[^}]*outline: var\(--paper-focus-ring-width\) solid var\(--paper-compound-focus-color\);[^}]*outline-offset: var\(--paper-focus-ring-offset\);/s,
+      /\.paper-compound-field:has\(> \.paper-input:focus-visible\)\s*\{[^}]*--paper-compound-focus-color: var\(--paper-color-focus-ring\);[^}]*outline: var\(--paper-field-focus-halo-width\) solid color-mix\(in srgb, var\(--paper-compound-focus-color\) 22%, transparent\);[^}]*outline-offset: 0;/s,
     );
 
     const compoundFocusRule = formsCss.match(

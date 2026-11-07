@@ -53,7 +53,7 @@ async function expectBlogPage(page: Page, data: Posts, number: number) {
 }
 
 async function hydrated(page: Page) {
-  await expect(page.getByRole('button', { name: 'Use dark theme', exact: true })).toBeEnabled()
+  await expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled()
 }
 
 /** Gives the admin's branch tenant more than one page of published posts, a draft post and page, and the hostile page. */
@@ -115,11 +115,12 @@ test('the manual and its navigation are server-rendered and fit a phone', async 
     await expect(main.getByRole('link', { name, exact: true }).first()).toHaveAttribute('href', href)
   }
   const footer = page.getByRole('navigation', { name: 'Footer' })
-  // Webv2's footer destinations, in its order.
+  const community = page.getByRole('contentinfo').getByRole('list', { name: 'Community' })
+  // Webv2's footer destinations, in its order, with its community links beside them.
   await expect(footer.getByRole('link')).toHaveText([
     'Home', 'Leaderboard', 'Contests', 'Blog', 'About Tadoku', 'Guide', 'Rules', 'Questions & help', 'Privacy', 'Contact',
-    'GitHub', 'Discord', 'Twitter',
   ])
+  await expect(community.getByRole('link')).toHaveCount(3)
   for (const [name, href] of [
     ['Home', '/'],
     ['Leaderboard', '/leaderboard/latest/1'],
@@ -131,11 +132,15 @@ test('the manual and its navigation are server-rendered and fit a phone', async 
     ['Questions & help', '/pages/faq'],
     ['Privacy', '/pages/privacy'],
     ['Contact', '/pages/contact'],
-    ['GitHub', 'https://github.com/tadoku'],
-    ['Discord', 'https://discord.gg/AsC9vZs2Ex'],
-    ['Twitter', 'https://twitter.com/tadoku_app'],
   ]) {
     await expect(footer.getByRole('link', { name, exact: true })).toHaveAttribute('href', href)
+  }
+  for (const [name, href] of [
+    ['Discord', 'https://discord.gg/AsC9vZs2Ex'],
+    ['GitHub', 'https://github.com/tadoku'],
+    ['Twitter', 'https://twitter.com/tadoku_app'],
+  ]) {
+    await expect(community.getByRole('link', { name, exact: true })).toHaveAttribute('href', href)
   }
   await page.screenshot({ path: testInfo.outputPath('manual-1280.png'), fullPage: true })
 
@@ -173,7 +178,7 @@ test('the blog lists the API posts, pages through them and opens a post', async 
   await page.goto('/blog')
   await expect(page).toHaveTitle('Blog · page 1 · Tadoku')
   if (first.total_size === 0) {
-    await expect(page.getByRole('heading', { level: 2 })).toHaveText('No blog posts yet')
+    await expect(page.getByRole('main').getByRole('heading', { level: 2 })).toHaveText('No blog posts yet')
     return
   }
   await expectBlogPage(page, first, 1)
@@ -209,7 +214,7 @@ test('the blog lists the API posts, pages through them and opens a post', async 
 
   const past = Math.ceil(first.total_size / pageSize) + 1
   await page.goto(`/blog/${past}`)
-  await expect(page.getByRole('heading', { level: 2 })).toHaveText(`There is no page ${past}`)
+  await expect(page.getByRole('main').getByRole('heading', { level: 2 })).toHaveText(`There is no page ${past}`)
   await expect(page.locator('.blog-posts, .blog-lead')).toHaveCount(0)
 })
 

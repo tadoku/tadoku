@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { Button, EmptyState, Pagination, StatusTag, Table, type TableColumn } from 'paper-ui'
+import { Button, EmptyState, Pagination, Table, type TableColumn } from 'paper-ui'
 import type { ImmersionLeaderboard, ImmersionLeaderboardEntry } from 'api-client'
 import { numberFormat } from '../lib/format'
 import { standingsPageSize, type Read } from '../lib/leaderboard'
@@ -58,7 +58,11 @@ export function Standings({ result, page, caption, pageHref, profileHref, empty,
       id: 'rank',
       header: 'Rank',
       width: '4.5rem',
-      cell: row => <span className="standings-rank">{row.is_tie ? <abbr title="Tied rank">T</abbr> : null}{row.rank}</span>,
+      cell: row => (
+        <span className="standings-rank" data-podium={row.rank <= 3 ? row.rank : undefined}>
+          {row.is_tie ? <abbr title="Tied rank">T</abbr> : null}{row.rank}
+        </span>
+      ),
     },
     {
       id: 'participant',
@@ -67,7 +71,7 @@ export function Standings({ result, page, caption, pageHref, profileHref, empty,
       cell: row => (
         <span className="standings-person">
           <a href={profileHref(row.user_id)}>{row.user_display_name}</a>
-          {row.user_id === viewerId ? <StatusTag className="standings-you">You</StatusTag> : null}
+          {row.user_id === viewerId ? <span className="standings-you">You</span> : null}
         </span>
       ),
     },
@@ -86,6 +90,7 @@ export function Standings({ result, page, caption, pageHref, profileHref, empty,
         getRowKey={row => row.user_id}
         getRowProps={row => (row.user_id === viewerId ? { 'aria-current': 'true' } : {})}
         minWidth="17rem"
+        linkedRows
         tableClassName="standings-table"
       />
       {totalPages > 1 ? (

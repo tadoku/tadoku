@@ -46,7 +46,7 @@ async function expectRows(page: Page, data: Contests, pageNumber = 1) {
     await expect(row.locator('.contest-row__title .paper-status-tag')).toHaveText(statuses(contest))
   }
   if (data.total_size === 0) {
-    await expect(page.getByRole('heading', { level: 2 })).toHaveText(/No contests found|You don’t organize any contests yet/)
+    await expect(page.getByRole('main').getByRole('heading', { level: 2 })).toHaveText(/No contests found|You don’t organize any contests yet/)
     return
   }
   const first = (pageNumber - 1) * pageSize + 1
@@ -58,7 +58,7 @@ async function expectRows(page: Page, data: Contests, pageNumber = 1) {
 }
 
 async function hydrated(page: Page) {
-  await expect(page.getByRole('button', { name: 'Use dark theme', exact: true })).toBeEnabled()
+  await expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled()
 }
 
 /** Gives Dev Admin more than one page of community contests in the selected tenant, one of them unlisted. */

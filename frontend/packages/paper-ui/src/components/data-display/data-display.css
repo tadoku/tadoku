@@ -24,7 +24,7 @@
     inline-size: 100%;
     min-inline-size: var(--paper-table-min-inline-size);
     border-collapse: collapse;
-    border-block: var(--paper-border-static-width) solid var(--paper-color-rule-strong);
+    border-block: var(--paper-border-static-width) solid var(--paper-color-rule-default);
     color: var(--paper-color-text-ink);
     font-variant-numeric: tabular-nums;
   }
@@ -71,6 +71,21 @@
 
   .paper-table__row-header {
     font-weight: var(--paper-type-label-weight);
+  }
+
+  /* The row header's link stretches over its row; it stays the row's only tab stop and accessible name. */
+  .paper-table--linked-rows tbody tr {
+    position: relative;
+  }
+
+  .paper-table--linked-rows tbody tr:hover {
+    background: var(--paper-color-action-neutral-hover);
+  }
+
+  .paper-table--linked-rows .paper-table__row-header a::after {
+    position: absolute;
+    inset: 0;
+    content: "";
   }
 
   .paper-table__cell--center {

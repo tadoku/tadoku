@@ -19,6 +19,7 @@
   --paper-private-accent: #5747b8;
   --paper-private-accent-edge: #35277f;
   --paper-private-accent-soft: #e8e4fa;
+  --paper-private-link-hover: #3f3196;
   --paper-private-neutral-action-hover: #e9e5dc;
   --paper-private-action-default: #5747b8;
   --paper-private-action-hover: #49399f;
@@ -41,6 +42,7 @@
   --paper-color-text-muted: var(--paper-private-muted);
   --paper-color-text-inverse: var(--paper-private-inverse);
   --paper-color-text-link: var(--paper-private-accent);
+  --paper-color-text-link-hover: var(--paper-private-link-hover);
   --paper-color-rule-subtle: var(--paper-private-rule-subtle);
   --paper-color-rule-default: var(--paper-private-rule-default);
   --paper-color-rule-strong: var(--paper-private-rule-strong);
@@ -96,11 +98,12 @@
   --paper-private-inverse: #fffefa;
   --paper-private-rule-subtle: #3c373a;
   --paper-private-rule-default: #5a5356;
-  --paper-private-rule-strong: #b8afb3;
+  --paper-private-rule-strong: #756d71;
   --paper-private-field-edge: #968d91;
   --paper-private-accent: #a99cf0;
   --paper-private-accent-edge: #5f52aa;
   --paper-private-accent-soft: #3a3448;
+  --paper-private-link-hover: #cbc2f8;
   --paper-private-neutral-action-hover: #353134;
   --paper-private-action-default: #9b8cf2;
   --paper-private-action-hover: #aa9ef5;
@@ -112,7 +115,7 @@
   --paper-private-warning: #ddb66f;
   --paper-private-danger: #d77171;
   --paper-private-danger-edge: #883434;
-  --paper-private-shadow: rgb(236 231 224 / 18%);
+  --paper-private-shadow: rgb(124 104 224 / 34%);
 
   --paper-color-surface-canvas: var(--paper-private-canvas);
   --paper-color-surface-paper: var(--paper-private-paper);
@@ -123,6 +126,7 @@
   --paper-color-text-muted: var(--paper-private-muted);
   --paper-color-text-inverse: var(--paper-private-inverse);
   --paper-color-text-link: var(--paper-private-accent);
+  --paper-color-text-link-hover: var(--paper-private-link-hover);
   --paper-color-rule-subtle: var(--paper-private-rule-subtle);
   --paper-color-rule-default: var(--paper-private-rule-default);
   --paper-color-rule-strong: var(--paper-private-rule-strong);
@@ -203,6 +207,8 @@
 
   --paper-focus-ring-width: 2px;
   --paper-focus-ring-offset: 2px;
+  /* Fields show focus on their own edge plus a soft halo, so the ring never floats away from the field. */
+  --paper-field-focus-halo-width: 3px;
   --paper-border-static-width: 1px;
   --paper-border-field-edge-width: 2px;
   --paper-border-action-edge-width: 2px;

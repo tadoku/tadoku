@@ -1,8 +1,8 @@
-import { useEffect, useRef, type ReactNode } from 'react'
-import { EmptyState, HeatmapChart, Pagination, SectionHeading, StatGrid, StatusTag, buttonClassName } from 'paper-ui'
-import { formatPeriod, pointsUnit } from '../lib/format'
+import { EmptyState, Pagination, SectionHeading, StatGrid, StatusTag, buttonClassName } from 'paper-ui'
+import { formatPeriod, pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
-import { contestPageSize, type ContestHistory, type ProfileStatistics as Statistics, type Section } from '../lib/profile'
+import { activeDays, contestPageSize, type ContestHistory, type ProfileStatistics as Statistics, type Section } from '../lib/profile'
+import { ActivityCalendar } from './ActivityCalendar'
 import { ProfileHeader } from './ProfileHeader'
 import { YearStepper } from './YearStepper'
 
@@ -42,19 +42,13 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
             <div className="profile-rhythm">
               <SectionHeading level={3} id="profile-rhythm-heading" title="Daily activity" />
               {activity.ok ? (<>
-                <HeatmapScroll latest={year === Number(statistics.today.slice(0, 4))}>
-                  <HeatmapChart
-                    today={statistics.today}
-                    id={`profile-${profile.id}-${year}`}
-                    year={year}
-                    getHref={date => links.profileUpdates(profile.id, date)}
-                    data={activity.data.scores.map(day => ({
-                      date: day.date,
-                      value: day.score,
-                      tooltip: `${scoreFormat.format(day.score)} ${pointsUnit(day.score)} on ${formatDay(day.date)}`,
-                    }))}
-                  />
-                </HeatmapScroll>
+                <ActivityCalendar
+                  userId={profile.id}
+                  year={year}
+                  today={statistics.today}
+                  activity={activity.data}
+                  labelledBy="profile-rhythm-heading"
+                />
               </>) : <p className="profile-muted">Could not retrieve updates for {year}.</p>}
             </div>
           </>
@@ -88,37 +82,6 @@ function YearTotals({ statistics, year }: { statistics: Found; year: number }) {
         ...(scores.ok ? [{ label: 'Languages', value: scores.data.scores.length }] : []),
       ]}
     />
-  )
-}
-
-/** On narrow screens the year scrolls sideways; the current year opens at its latest weeks. */
-function HeatmapScroll({ latest, children }: { latest: boolean; children: ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    const scroller = ref.current
-    if (!scroller) return
-    // While the year scrolls, month labels under the pinned weekday gutter or past the visible edge would show as
-    // clipped fragments, so they hide there. Glyph side bearings sit a few pixels outside a label's anchor.
-    const hideCoveredMonths = () => {
-      const scrolls = scroller.scrollWidth - scroller.clientWidth > 2
-      const start = (scroller.querySelector('.paper-heatmap__weekdays')?.getBoundingClientRect().right ?? 0) - 4
-      const end = scroller.getBoundingClientRect().right + 1
-      for (const label of scroller.querySelectorAll<SVGTextElement>('svg.paper-heatmap text')) {
-        const { left, right } = label.getBoundingClientRect()
-        label.style.visibility = scrolls && (left < start || right > end) ? 'hidden' : ''
-      }
-    }
-    // The current year opens with today near the right edge and about a week after it in view.
-    const todayCell = latest && scroller.scrollWidth - scroller.clientWidth > 2 ? scroller.querySelector('[data-today]') : null
-    if (todayCell) scroller.scrollLeft += todayCell.getBoundingClientRect().right - (scroller.getBoundingClientRect().right - 48)
-    hideCoveredMonths()
-    scroller.addEventListener('scroll', hideCoveredMonths, { passive: true })
-    return () => scroller.removeEventListener('scroll', hideCoveredMonths)
-  }, [latest])
-  return (
-    <div ref={ref} className="profile-heatmap-scroll paper-focus-ring" role="region" aria-labelledby="profile-rhythm-heading" tabIndex={0}>
-      {children}
-    </div>
   )
 }
 
@@ -194,18 +157,6 @@ function ContestHistorySection({ history, userId, year, page }: {
       ) : null}
     </section>
   )
-}
-
-const scoreFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 })
-const dayFormat = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' })
-
-/** For example `Nov 4, 2026` for `2026-11-04`. */
-function formatDay(date: string) {
-  return dayFormat.format(new Date(`${date}T00:00:00Z`))
-}
-
-function activeDays(days: { score: number }[]) {
-  return days.filter(day => day.score > 0).length
 }
 
 /** The UTC calendar days the daily average spans: all of a past year, the current year up to today, none ahead. */

@@ -13,6 +13,10 @@ test('a member walks home, contest, standings, profile, logging and the saved lo
 
   await page.goto('/')
   await expect(page.getByRole('button', { name: 'Dev Reader', exact: true })).toBeVisible()
+  // A member's home carries their year, newest updates and contests under the hero.
+  for (const heading of [`Your ${new Date().getUTCFullYear()}`, 'Recent updates', 'Your contests']) {
+    await expect(page.getByRole('heading', { level: 2, name: heading, exact: true })).toBeVisible()
+  }
   await shot('1-home')
 
   // The appearance switch is the account menu's; the choice survives a reload.

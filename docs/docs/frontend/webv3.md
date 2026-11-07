@@ -14,7 +14,11 @@ only for the account and admin applications, the log export download and
 external sites. Its homepage follows the Paper playground composition and reads the current official contest, summary,
 standings and next scheduled round from the configured Tadoku API. Guests see
 the introduction and how Tadoku works; a signed-in learner sees their place and
-points in the current round, or whether they have joined it. Both see their daily
+points in the current round, or whether they have joined it, then their year:
+points this year and today, updates, active days and the activity calendar,
+their five newest updates and this year's contests, unfinished ones first. The
+home route's loader reads those from the profile statistics and activity queries
+for signed-in viewers, so they render on the server. Both see their daily
 goal under the hero, or a link to set one. `/plan` demonstrates a validated immersion goal kept in the current
 browser. It does not sync the goal to a Tadoku account. [Native activity logging](webv3-logging.md), including a saved log's contest submissions, uses the existing account session and API.
 The latest official, yearly and all-time [leaderboards](webv3-leaderboards.md)

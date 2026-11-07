@@ -82,3 +82,6 @@ export const profileActivityQuery = (input: z.infer<typeof activityInput>) => qu
   retry: false,
   staleTime: 30_000,
 })
+
+/** The days in a year's daily scores with any activity. */
+export const activeDays = (days: { score: number }[]) => days.filter(day => day.score > 0).length

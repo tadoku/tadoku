@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { HomePage } from '../components/HomePage'
-import { homeQueryOptions } from '../lib/home'
+import { homeQueryOptions, memberDashboardQueries } from '../lib/home'
+import { viewerQueryOptions } from '../lib/session'
 
 export const Route = createFileRoute('/')({
   head: () => ({
@@ -12,6 +13,16 @@ export const Route = createFileRoute('/')({
       },
     ],
   }),
-  loader: ({ context }) => context.queryClient.prefetchQuery(homeQueryOptions()),
+  loader: async ({ context }) => {
+    const viewer = await context.queryClient.ensureQueryData(viewerQueryOptions())
+    const [statistics, activity] = viewer.status === 'signed-in'
+      ? memberDashboardQueries(viewer, new Date().getUTCFullYear())
+      : [null, null]
+    await Promise.all([
+      context.queryClient.prefetchQuery(homeQueryOptions()),
+      statistics ? context.queryClient.prefetchQuery(statistics) : null,
+      activity ? context.queryClient.prefetchQuery(activity) : null,
+    ])
+  },
   component: HomePage,
 })

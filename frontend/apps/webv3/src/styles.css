@@ -49,6 +49,15 @@ a { text-underline-offset: .2em; }
 .home-start-date { display: grid; gap: 4px; }
 .home-start-date span { color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); }
 .home-start-date strong { font-family: var(--paper-font-display); font-size: 2rem; line-height: 1.3; }
+/* A signed-in learner's year under the hero: totals and calendar, then newest updates beside this year's contests. */
+.home-dashboard { --paper-heatmap-surface: var(--paper-color-surface-canvas); display: grid; gap: 40px; margin-top: 48px; }
+.home-dashboard__year, .home-dashboard__columns { padding-top: 28px; border-top: 1px solid var(--paper-color-rule-default); }
+.home-dashboard__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; margin-bottom: 16px; }
+.home-dashboard__head h2 { margin: 0; font-family: var(--paper-font-display); font-size: 1.375rem; line-height: 1.875rem; }
+.home-dashboard__columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 56px; }
+/* Grid items may shrink below the calendar's minimum width, so the year scrolls inside its region on phones. */
+.home-dashboard > *, .home-dashboard__columns > * { min-width: 0; }
+@media (max-width: 900px) { .home-dashboard__columns { grid-template-columns: minmax(0, 1fr); } }
 .home-how { margin-top: 48px; padding-top: 28px; border-top: 1px solid var(--paper-color-rule-default); }
 .home-how h2 { margin: 0 0 24px; font-size: 1.375rem; font-family: var(--paper-font-display); }
 .home-how ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px; list-style: none; margin: 0; padding: 0; }

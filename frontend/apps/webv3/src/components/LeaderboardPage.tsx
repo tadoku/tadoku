@@ -1,3 +1,4 @@
+import * as stylex from '@stylexjs/stylex'
 import { useQuery } from '@tanstack/react-query'
 import { PageHeader, Tabbar } from 'paper-ui'
 import type { ReactNode } from 'react'
@@ -5,6 +6,7 @@ import { firstYear, leaderboardHref, standingsQuery, type StandingsScope } from 
 import { useLinks } from '../lib/links'
 import { renderLink } from './router-link'
 import { Standings } from './Standings'
+import { standingsLayout } from './page-styles'
 
 /** The page title and period tabs every leaderboard shares, around the board for one period. */
 export function LeaderboardFrame({ period, currentYear, actions, children }: {
@@ -14,8 +16,8 @@ export function LeaderboardFrame({ period, currentYear, actions, children }: {
   children: ReactNode
 }) {
   return (
-    <div className="standings-page">
-      <PageHeader className="standings-header" title="Leaderboard" actions={actions} />
+    <div>
+      <PageHeader xstyle={standingsLayout.header} title="Leaderboard" actions={actions} />
       <Tabbar
         label="Leaderboard period"
         renderLink={renderLink}
@@ -43,13 +45,14 @@ export function GlobalLeaderboard({ scope, page }: { scope: Exclude<StandingsSco
 
   return (
     <LeaderboardFrame period={yearly ? 'yearly' : 'all-time'} currentYear={currentYear}>
-      <div className="standings-workspace">
-        <div className="standings-main">
-          <section className="standings-sheet" aria-label={yearly ? `${scope.year} official standings` : 'All-time official standings'}>
+      <div {...stylex.props(standingsLayout.workspace)}>
+        <div {...stylex.props(standingsLayout.column)}>
+          <section {...stylex.props(standingsLayout.sheet)} aria-label={yearly ? `${scope.year} official standings` : 'All-time official standings'}>
             {yearly ? (
               <Tabbar
                 label="Year"
                 renderLink={renderLink}
+                listXstyle={standingsLayout.sheetTabs}
                 links={years.map(year => ({
                   id: String(year),
                   label: String(year),
@@ -73,8 +76,8 @@ export function GlobalLeaderboard({ scope, page }: { scope: Exclude<StandingsSco
             />
           </section>
         </div>
-        <aside className="standings-aside">
-          <p>Official contests only; community contests don’t count here.</p>
+        <aside {...stylex.props(standingsLayout.column, standingsLayout.aside)}>
+          <p {...stylex.props(standingsLayout.asideParagraph, standingsLayout.asideNote)}>Official contests only; community contests don’t count here.</p>
         </aside>
       </div>
     </LeaderboardFrame>

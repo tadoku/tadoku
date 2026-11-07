@@ -1,11 +1,15 @@
+import * as stylex from '@stylexjs/stylex'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { Button, EmptyState, Pagination, Table, type TableColumn } from 'paper-ui'
+import { Button, EmptyState, Pagination, Table, linkStyles, tableRowLink, type TableColumn } from 'paper-ui'
+import { size } from 'paper-ui/tokens.stylex'
+import { Participant, Rank } from './standings-parts'
 import type { ImmersionLeaderboard, ImmersionLeaderboardEntry } from 'api-client'
 import { numberFormat } from '../lib/format'
 import { standingsPageSize, type Read } from '../lib/leaderboard'
 import { viewerQueryOptions } from '../lib/session'
 import { renderLink } from './router-link'
+import { standingsLayout } from './page-styles'
 
 interface StandingsProps {
   /** One page of standings; undefined while it loads after a client navigation. */
@@ -29,7 +33,7 @@ export function Standings({ result, page, caption, pageHref, profileHref, empty,
     return (
       <EmptyState
         variant="plain"
-        className="standings-empty"
+        xstyle={standingsLayout.empty}
         headingLevel={3}
         title="Standings could not be loaded"
         description="Try loading the standings again in a moment."
@@ -37,51 +41,45 @@ export function Standings({ result, page, caption, pageHref, profileHref, empty,
       />
     )
   }
-  if (!result) return <p className="standings-empty" role="status">Loading standings…</p>
+  if (!result) return <p {...stylex.props(standingsLayout.empty)} role="status">Loading standings…</p>
 
   const { entries, total_size: total } = result.data
   if (entries.length === 0) {
     return total > 0 ? (
       <EmptyState
         variant="plain"
-        className="standings-empty"
+        xstyle={standingsLayout.empty}
         headingLevel={3}
         title="This page is past the end of the standings"
         description={`The standings have ${numberFormat.format(total)} participants.`}
-        actions={<Link className="text-link" to={pageHref(1)}>Go to the first page</Link>}
+        actions={<Link {...stylex.props(linkStyles.base)} to={pageHref(1)}>Go to the first page</Link>}
       />
-    ) : <EmptyState variant="plain" className="standings-empty" headingLevel={3} {...empty} />
+    ) : <EmptyState variant="plain" xstyle={standingsLayout.empty} headingLevel={3} {...empty} />
   }
 
   const columns: TableColumn<ImmersionLeaderboardEntry>[] = [
     {
       id: 'rank',
       header: 'Rank',
-      width: '4.5rem',
-      cell: row => (
-        <span className="standings-rank" data-podium={row.rank <= 3 ? row.rank : undefined}>
-          {row.is_tie ? <abbr title="Tied rank">T</abbr> : null}{row.rank}
-        </span>
-      ),
+      width: size[72],
+      cell: row => <Rank rank={row.rank} tie={row.is_tie} />,
     },
     {
       id: 'participant',
       header: 'Participant',
       rowHeader: true,
       cell: row => (
-        <span className="standings-person">
-          <a href={profileHref(row.user_id)}>{row.user_display_name}</a>
-          {row.user_id === viewerId ? <span className="standings-you">You</span> : null}
-        </span>
+        <Participant name={row.user_display_name} href={profileHref(row.user_id)} you={row.user_id === viewerId} rowLink={tableRowLink} />
       ),
     },
-    { id: 'score', header: 'Score', align: 'end', width: '7rem', cell: row => numberFormat.format(row.score) },
+    { id: 'score', header: 'Score', align: 'end', width: size[112], cell: row => numberFormat.format(row.score) },
   ]
   const first = (page - 1) * standingsPageSize + 1
   const totalPages = Math.max(page, Math.ceil(total / standingsPageSize))
 
   return (
     <>
+      <div data-standings="">
       <Table
         caption={caption}
         captionVisibility="screen-reader"
@@ -89,19 +87,23 @@ export function Standings({ result, page, caption, pageHref, profileHref, empty,
         rows={entries}
         getRowKey={row => row.user_id}
         getRowProps={row => (row.user_id === viewerId ? { 'aria-current': 'true' } : {})}
-        minWidth="17rem"
+        minWidth={size[272]}
         linkedRows
-        tableClassName="standings-table"
+        variant="sheet"
+        cellXstyle={standingsLayout.cell}
       />
+      </div>
       {totalPages > 1 ? (
-        <div className="standings-pagination">
-          <p>
+        <div {...stylex.props(standingsLayout.pagination)} data-standings-pagination="">
+          <p {...stylex.props(standingsLayout.paginationSummary)}>
             {numberFormat.format(first)}–{numberFormat.format(first + entries.length - 1)} of {numberFormat.format(total)} participants
           </p>
-          <Pagination totalPages={totalPages} currentPage={page} getHref={pageHref} renderLink={renderLink} label="Standings pages" />
+          <Pagination totalPages={totalPages} currentPage={page} getHref={pageHref} renderLink={renderLink} label="Standings pages" listXstyle={standingsLayout.paginationList} />
         </div>
       ) : null}
-      {entries.some(entry => entry.is_tie) ? <p className="standings-tie-note"><abbr title="Tied rank">T</abbr> marks a tied rank.</p> : null}
+      {entries.some(entry => entry.is_tie) ? (
+        <p {...stylex.props(standingsLayout.tieNote)}><abbr title="Tied rank" {...stylex.props(standingsLayout.plainAbbr)}>T</abbr> marks a tied rank.</p>
+      ) : null}
     </>
   )
 }

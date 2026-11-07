@@ -1,6 +1,7 @@
+import * as stylex from '@stylexjs/stylex'
 import { useQuery } from '@tanstack/react-query'
 import type { ImmersionContestView } from 'api-client'
-import { Button, DescriptionList, EmptyState, Flash, SectionHeading, StatusTag, buttonClassName } from 'paper-ui'
+import { Button, buttonStyles, DescriptionList, EmptyState, Flash, linkStyles, SectionHeading, StatusTag } from 'paper-ui'
 import type { ReactNode } from 'react'
 import { formatDate, formatPeriod } from '../lib/format'
 import { latestBoardQuery, leaderboardHref, standingsQuery, contestPhase, readDay, type ContestBoard, type ContestPhase } from '../lib/leaderboard'
@@ -9,6 +10,7 @@ import { useParticipation } from '../lib/registration'
 import { useLoginUrl, viewerQueryOptions } from '../lib/session'
 import { LeaderboardFrame } from './LeaderboardPage'
 import { Standings } from './Standings'
+import { standingsLayout } from './page-styles'
 
 export function RoundStatus({ phase }: { phase: ContestPhase }) {
   if (phase.ended) return <StatusTag>Ended</StatusTag>
@@ -50,7 +52,7 @@ function LatestBoard({ board, today, page }: { board: ContestBoard; today: strin
   const { viewer, registered } = useParticipation(contest.id)
 
   const actions = phase.registrationOpen && !registered && viewer?.status !== 'banned'
-    ? <a className={buttonClassName()} href={links.joinContest(contest.id)}>Join contest</a>
+    ? <a {...stylex.props(...buttonStyles())} href={links.joinContest(contest.id)}>Join contest</a>
     : null
 
   return (
@@ -62,7 +64,7 @@ function LatestBoard({ board, today, page }: { board: ContestBoard; today: strin
         pageHref={leaderboardHref.latest}
         title={contest.title}
         status={<RoundStatus phase={phase} />}
-        asideLink={<a className="text-link" href={links.contest(contest.id)}>Contest details</a>}
+        asideLink={<a {...stylex.props(linkStyles.base)} href={links.contest(contest.id)}>Contest details</a>}
       />
     </LeaderboardFrame>
   )
@@ -89,23 +91,24 @@ export function ContestBoardBody({ board, phase, page, pageHref, title, status, 
   return (
     <>
       {viewer?.status === 'anonymous' && !phase.ended ? (
-        <Flash className="standings-notice" action={<a className="text-link" href={loginUrl}>Log in</a>}>
+        <Flash xstyle={standingsLayout.notice} action={<a {...stylex.props(linkStyles.base)} href={loginUrl}>Log in</a>}>
           You need to log in to participate in this contest.
         </Flash>
       ) : null}
       {phase.ended ? (
-        <Flash className="standings-notice" variant="warning">
+        <Flash xstyle={standingsLayout.notice} variant="warning">
           This contest has already ended and does not accept any new participants.
         </Flash>
       ) : null}
-      <div className="standings-workspace">
-        <div className="standings-main">
-          <section className="standings-sheet" aria-labelledby={title ? 'standings-title' : undefined} aria-label={title ? undefined : 'Standings'}>
+      <div {...stylex.props(standingsLayout.workspace)}>
+        <div {...stylex.props(standingsLayout.column)}>
+          <section {...stylex.props(standingsLayout.sheet)} aria-labelledby={title ? 'standings-title' : undefined} aria-label={title ? undefined : 'Standings'}>
             {title ? (
               <SectionHeading
                 level={2}
                 id="standings-title"
-                className="standings-context"
+                xstyle={standingsLayout.context}
+                titleXstyle={standingsLayout.contextTitle}
                 title={title}
                 status={status}
               />
@@ -125,12 +128,12 @@ export function ContestBoardBody({ board, phase, page, pageHref, title, status, 
             />
           </section>
         </div>
-        <aside className="standings-aside">
-          <section aria-labelledby="standings-conditions">
-            <h2 id="standings-conditions" className="paper-type-component">About this contest</h2>
-            {contest.description ? <p className="standings-description">{contest.description}</p> : null}
+        <aside {...stylex.props(standingsLayout.column, standingsLayout.aside)}>
+          <section {...stylex.props(standingsLayout.asideSection)} aria-labelledby="standings-conditions">
+            <h2 id="standings-conditions" {...stylex.props(standingsLayout.asideHeading)}>About this contest</h2>
+            {contest.description ? <p {...stylex.props(standingsLayout.asideParagraph, standingsLayout.description)}>{contest.description}</p> : null}
             <ContestFacts contest={contest} phase={phase} />
-            {asideLink}
+            {asideLink ? <span {...stylex.props(standingsLayout.asideLink)}>{asideLink}</span> : null}
           </section>
         </aside>
       </div>
@@ -144,7 +147,7 @@ export function ContestFacts({ contest, phase }: { contest: ImmersionContestView
   const organizer = contest.official
     ? 'Tadoku'
     : contest.owner_user_id
-      ? <a className="text-link" href={links.profile(contest.owner_user_id)}>{contest.owner_user_display_name ?? 'Unknown user'}</a>
+      ? <a {...stylex.props(linkStyles.base)} href={links.profile(contest.owner_user_id)}>{contest.owner_user_display_name ?? 'Unknown user'}</a>
       : contest.owner_user_display_name ?? 'Unknown user'
   return (
     <DescriptionList

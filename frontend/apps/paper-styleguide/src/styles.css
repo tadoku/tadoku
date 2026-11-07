@@ -1,0 +1,4 @@
+@import "paper-ui/theme.css";
+@tailwind utilities;
+@source "./";
+@source "../node_modules/paper-ui/dist/catalog.js";

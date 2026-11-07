@@ -28,7 +28,7 @@ export function CodeBlock({
   label?: string
 }) {
   return (
-    <pre className="paper-code-block" tabIndex={0} aria-label={label}>
+    <pre className="paper-code-block max-w-full overflow-auto whitespace-pre p-4 font-mono text-fine leading-165 [&&_code]:text-ink [&&_code]:wrap-normal [&_.token.comment]:text-muted [&_.token.keyword]:text-action [&_.token.tag]:text-action [&_.token.string]:text-success [&_.token.attr-value]:text-success [&_.token.function]:text-link [&_.token.class-name]:text-link [&_.token.number]:text-link [&_.token.attr-name]:text-danger [&_.token.operator]:text-danger" tabIndex={0} aria-label={label}>
       <code>
         {tokens(
           Prism.tokenize(

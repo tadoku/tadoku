@@ -8,6 +8,10 @@ import { ComponentWorkbench } from './ComponentWorkbench'
 import { FoundationSpecimen } from './FoundationSpecimen'
 import { GovernanceGuide } from './FoundationGuide'
 import { type OutlineItem, TableOfContents } from './TableOfContents'
+import { accentRail, cn, focusRing, typography } from 'paper-ui'
+
+const documentSection = 'document-section max-w-docs-section scroll-mt-24 [&+&]:mt-12 [&>h2]:mb-5 [&>h2]:mt-0 [&>h3]:mb-2.5 [&>h3]:mt-7 [&>h2+h3]:mt-0 [&>p]:mb-4 [&>p]:mt-0'
+const wideDocumentSection = cn(documentSection, 'max-w-none')
 
 const FOUNDATION_OUTLINE: readonly OutlineItem[] = [
   { id: 'overview', label: 'Overview' },
@@ -41,7 +45,7 @@ function LabeledList({
 }) {
   if (!items.length) return null
   return (
-    <div className="document-list-group">
+    <div className="document-list-group [&+&]:mt-7 [&_h3]:mb-2.5 [&_h3]:mt-0 [&_ul]:my-0 [&_ul]:ps-5 [&_li+li]:mt-1.8">
       <h3>{heading}</h3>
       {items.length > 0 ? (
         <ul>
@@ -63,7 +67,7 @@ function sourceHref(sourcePath: string): string {
 
 function Metadata({ document }: { document: CatalogDocument }) {
   return (
-    <dl className="metadata-list">
+    <dl className="[&>div]:grid [&>div]:grid-cols-metadata-list [&>div]:gap-4 [&>div]:border-b [&>div]:border-rule-subtle [&>div]:py-3 max-tablet:[&>div]:grid-cols-1 max-tablet:[&>div]:gap-0 [&_dt]:text-metadata [&_dt]:text-muted [&_dd]:mb-0 [&_dd]:ms-0 [&_dd]:mt-0.8">
       <div>
         <dt>Canonical route</dt>
         <dd><code>{document.route}</code></dd>
@@ -71,7 +75,7 @@ function Metadata({ document }: { document: CatalogDocument }) {
       <div>
         <dt>Source</dt>
         <dd>
-          <a className="text-link paper-focus-ring" href={sourceHref(document.sourcePath)}>
+          <a className={cn(focusRing(), 'text-link')} href={sourceHref(document.sourcePath)}>
             <code>{document.sourcePath}</code>
           </a>
         </dd>
@@ -86,11 +90,11 @@ function Metadata({ document }: { document: CatalogDocument }) {
 
 function Hero({ document }: { document: CatalogDocument }) {
   return (
-    <header className="document-hero paper-accent-rail">
-      <p className="eyebrow">{document.kind} · {document.category}</p>
-      <h1 className="paper-type-page">{document.name}</h1>
-      <p className="document-summary">{document.summary}</p>
-      <dl className="metadata-strip">
+    <header className={cn(accentRail(), 'mb-16 ps-4 [&_h1]:mb-4 [&_h1]:mt-1.2')}>
+      <p className="m-0 text-metadata font-semibold tracking-caps text-link uppercase">{document.kind} · {document.category}</p>
+      <h1 className={typography({ role: 'page' })}>{document.name}</h1>
+      <p className="text-component leading-165 text-muted">{document.summary}</p>
+      <dl className="mt-8 grid grid-cols-thirds gap-4 border-t border-rule-subtle pt-4 max-tablet:grid-cols-pair [&_dt]:text-metadata [&_dt]:text-muted [&_dd]:mb-0 [&_dd]:ms-0 [&_dd]:mt-0.8">
         <div><dt>Status</dt><dd>{document.lifecycle}</dd></div>
         <div><dt>Version</dt><dd>{document.packageVersion}</dd></div>
         <div><dt>Reviewed</dt><dd>{document.reviewDate}</dd></div>
@@ -107,8 +111,8 @@ function ComponentSection({
   section: CatalogDocumentationSection
 }) {
   return (
-    <section id={id} className="document-section">
-      <h2 className="paper-type-section">{section.heading}</h2>
+    <section id={id} className={documentSection}>
+      <h2 className={typography({ role: 'section' })}>{section.heading}</h2>
       {section.content.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
     </section>
   )
@@ -132,8 +136,8 @@ function SectionParagraphs({ section }: { section?: CatalogDocumentationSection 
 function UsageSection({ document }: { document: CatalogDocument }) {
   const sections = document.sections?.required
   return (
-    <section id="usage" className="document-section">
-      <h2 className="paper-type-section">Usage</h2>
+    <section id="usage" className={documentSection}>
+      <h2 className={typography({ role: 'section' })}>Usage</h2>
       <h3>Use when</h3>
       <SectionParagraphs section={sections?.whenToUse} />
       <h3>Avoid when</h3>
@@ -155,8 +159,8 @@ function ExamplesSection({
   fixtures: Parameters<typeof ComponentWorkbench>[0]['fixtures']
 }) {
   return (
-    <section id="examples" className="document-section document-section--wide">
-      <h2 className="paper-type-section">Examples</h2>
+    <section id="examples" className={wideDocumentSection}>
+      <h2 className={typography({ role: 'section' })}>Examples</h2>
       <SectionParagraphs section={document.sections?.required.recommendedExample} />
       <SectionParagraphs section={document.sections?.required.implementation} />
       <ComponentWorkbench document={document} fixtures={fixtures} />
@@ -167,8 +171,8 @@ function ExamplesSection({
 function VariantsAndStatesSection({ document }: { document: CatalogDocument }) {
   const sections = document.sections?.required
   return (
-    <section id="variantsAndStates" className="document-section">
-      <h2 className="paper-type-section">Variants and states</h2>
+    <section id="variantsAndStates" className={documentSection}>
+      <h2 className={typography({ role: 'section' })}>Variants and states</h2>
       <h3>Variants</h3>
       <SectionParagraphs section={sections?.variants} />
       <h3>States and adaptation</h3>
@@ -212,7 +216,7 @@ function ComponentDocumentPage({ document }: { document: CatalogDocument }) {
   }))
 
   return (
-    <div className="document-layout">
+    <div className="grid grid-cols-document justify-center gap-docs-y max-lg:grid-cols-document-narrow">
       <article className="document-page">
         <Hero document={document} />
         {pageSections.map((key) => (
@@ -231,22 +235,22 @@ function ComponentDocumentPage({ document }: { document: CatalogDocument }) {
 
 function FoundationDocumentPage({ document }: { document: CatalogDocument }) {
   return (
-    <div className="document-layout">
+    <div className="grid grid-cols-document justify-center gap-docs-y max-lg:grid-cols-document-narrow">
       <article className="document-page">
         <div id="overview"><Hero document={document} /></div>
-        <div id="specimen" className="document-section document-section--wide">
-          <h2 className="paper-type-section">Examples and usage</h2>
+        <div id="specimen" className={wideDocumentSection}>
+          <h2 className={typography({ role: 'section' })}>Examples and usage</h2>
           <FoundationSpecimen document={document} />
         </div>
         <section
           id="guidance"
-          className="document-section"
+          className={documentSection}
           aria-labelledby="foundation-guidance-heading"
         >
-          <h2 id="foundation-guidance-heading" className="paper-type-section">
+          <h2 id="foundation-guidance-heading" className={typography({ role: 'section' })}>
             Guidance
           </h2>
-          <div className="document-list-grid">
+          <div className="grid grid-cols-1 gap-7 [&>.document-list-group]:mt-0">
             <LabeledList heading="When to use" items={document.guidance.whenToUse} />
             <LabeledList heading="Avoid when" items={document.guidance.whenNotToUse} />
             <LabeledList heading="Guidance" items={document.guidance.content} />
@@ -254,21 +258,21 @@ function FoundationDocumentPage({ document }: { document: CatalogDocument }) {
           </div>
         </section>
 
-        <section id="accessibility" className="document-section">
-          <h2 className="paper-type-section">Accessibility</h2>
-          <div className="document-list-grid">
+        <section id="accessibility" className={documentSection}>
+          <h2 className={typography({ role: 'section' })}>Accessibility</h2>
+          <div className="grid grid-cols-1 gap-7 [&>.document-list-group]:mt-0">
             <LabeledList heading="Requirements" items={document.accessibility.requirements} />
             <LabeledList heading="Keyboard" items={document.accessibility.keyboard} />
             <LabeledList heading="Known constraints" items={document.accessibility.knownConstraints} />
           </div>
         </section>
-        <section id="contract" className="document-section">
-          <h2 className="paper-type-section">Public contract</h2>
+        <section id="contract" className={documentSection}>
+          <h2 className={typography({ role: 'section' })}>Public contract</h2>
           <LabeledList heading="Defaults" items={document.api.defaults} />
           <LabeledList heading="Not public API" items={document.api.invalidCombinations} />
         </section>
-        <section id="metadata" className="document-section">
-          <h2 className="paper-type-section">Metadata</h2>
+        <section id="metadata" className={documentSection}>
+          <h2 className={typography({ role: 'section' })}>Metadata</h2>
           <Metadata document={document} />
         </section>
       </article>
@@ -294,29 +298,29 @@ function GeneralDocumentPage({ document }: { document: CatalogDocument }) {
   const outlineWithUsage = [...generalOutline, { id: 'usage', label: 'Usage' }]
 
   return (
-    <div className="document-layout">
+    <div className="grid grid-cols-document justify-center gap-docs-y max-lg:grid-cols-document-narrow">
       <article className="document-page">
         <div id="overview"><Hero document={document} /></div>
-        <section id="guidance" className="document-section">
-          <h2 className="paper-type-section">Guidance</h2>
+        <section id="guidance" className={documentSection}>
+          <h2 className={typography({ role: 'section' })}>Guidance</h2>
           <SectionCopy value={document.guidance} fallback="No additional guidance is registered for this document." />
         </section>
-        <section id="accessibility" className="document-section">
-          <h2 className="paper-type-section">Accessibility</h2>
+        <section id="accessibility" className={documentSection}>
+          <h2 className={typography({ role: 'section' })}>Accessibility</h2>
           <SectionCopy value={document.accessibility} fallback="Accessibility requirements are tracked in the catalogue registry." />
         </section>
         {fixture ? (
-          <div id="preview" className="document-section document-section--wide">
+          <div id="preview" className={wideDocumentSection}>
             <ComponentWorkbench document={document} fixtures={[fixture]} />
           </div>
         ) : null}
         <GovernanceGuide document={document} />
-        <section id="contract" className="document-section">
-          <h2 className="paper-type-section">Public contract</h2>
+        <section id="contract" className={documentSection}>
+          <h2 className={typography({ role: 'section' })}>Public contract</h2>
           <SectionCopy value={document.api} fallback="This foundation does not expose a component API." />
         </section>
-        <section id="metadata" className="document-section">
-          <h2 className="paper-type-section">Metadata</h2>
+        <section id="metadata" className={documentSection}>
+          <h2 className={typography({ role: 'section' })}>Metadata</h2>
           <Metadata document={document} />
         </section>
       </article>

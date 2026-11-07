@@ -1,4 +1,4 @@
-import { Tabbar } from 'paper-ui'
+import { Tabbar, typography } from 'paper-ui'
 import { ArrowDownTrayIcon, iconClassName } from 'paper-ui/icons'
 import type { ImmersionUserProfile } from 'api-client'
 import { renderLink } from './router-link'
@@ -21,16 +21,24 @@ export function ProfileHeader({ profile, owner, view, overviewHref }: {
 
   return (
     <>
-      <header className="profile-header">
-        <div className="profile-identity">
-          <span className="profile-avatar" aria-hidden="true">{initials(profile.display_name)}</span>
-          <div>
-            <h1 className="paper-type-page">{profile.display_name}</h1>
-            <p>Tracking since {profile.created_at.slice(0, 4)}</p>
+      <header className="mb-8 mt-2 flex flex-wrap items-center justify-between gap-4 max-md:items-start">
+        <div className="flex min-w-0 items-center gap-5">
+          <span
+            className={[
+              'grid h-16 flex-none basis-16 place-items-center border border-rule bg-paper',
+              'font-body text-xl font-semibold tracking-wide max-sm:hidden',
+            ].join(' ')}
+            aria-hidden="true"
+          >
+            {initials(profile.display_name)}
+          </span>
+          <div className="min-w-0">
+            <h1 className={typography({ role: 'page', className: 'mb-2 mt-0 wrap-anywhere' })}>{profile.display_name}</h1>
+            <p className="m-0 text-ui text-muted">Tracking since {profile.created_at.slice(0, 4)}</p>
           </div>
         </div>
         {owner ? (
-          <p className="profile-export">
+          <p className="m-0 flex items-center gap-1.5 text-sm text-muted max-md:basis-full">
             <ArrowDownTrayIcon className={iconClassName('compact')} aria-hidden="true" />
             Export logs: <a className="text-link" href={links.logExport('csv')} aria-label="Download CSV">CSV</a> · <a className="text-link" href={links.logExport('json')} aria-label="Download JSON">JSON</a>
           </p>

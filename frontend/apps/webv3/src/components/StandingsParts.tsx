@@ -11,9 +11,7 @@ export function Rank({ rank, children }: { rank: number; children?: ReactNode })
   const medal = rank >= 1 && rank <= 3 ? podium[rank as 1 | 2 | 3] : null
   return (
     <span
-      className={medal
-        ? `standings-rank inline-grid h-7 min-w-7 place-items-center rounded-full px-1 font-bold tabular-nums [&_abbr]:no-underline ${medal}`
-        : 'standings-rank text-muted [&_abbr]:no-underline'}
+      className={`standings-rank inline-grid h-7 min-w-7 place-items-center rounded-full px-1 tabular-nums [&_abbr]:no-underline ${medal ? `font-bold ${medal}` : 'text-muted'}`}
       data-podium={medal ? rank : undefined}
     >
       {children ?? rank}

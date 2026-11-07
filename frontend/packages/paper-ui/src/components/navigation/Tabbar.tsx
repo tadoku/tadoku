@@ -1,4 +1,9 @@
+import * as stylex from "@stylexjs/stylex";
 import { useEffect, useRef } from "react";
+import { IconSlot } from "../../foundations/IconSlot";
+import type { StyleXProp } from "../../foundations/props";
+import { a11y, control } from "../../foundations/recipes";
+import { list, tabbar } from "./navigation-styles";
 import {
   disabledLinkClick,
   linkIsCurrent,
@@ -16,6 +21,10 @@ export interface TabbarProps {
   readonly currentPath?: string;
   readonly renderLink?: NavigationLinkRenderer;
   readonly label?: string;
+  readonly xstyle?: StyleXProp;
+  /** Layout for the list of tabs, such as an inline inset matching the content below. */
+  readonly listXstyle?: StyleXProp;
+  readonly linkXstyle?: StyleXProp;
 }
 
 function TabbarList({
@@ -23,6 +32,8 @@ function TabbarList({
   currentPath,
   renderLink,
   orientation,
+  listXstyle,
+  linkXstyle,
 }: TabbarProps & { readonly orientation: "horizontal" | "vertical" }) {
   const listRef = useRef<HTMLUListElement>(null);
   const currentId = links.find((link) => linkIsCurrent(link, currentPath))?.id;
@@ -45,21 +56,27 @@ function TabbarList({
   }, [currentId, orientation]);
 
   return (
-    <ul ref={listRef} className={`paper-tabbar__list paper-tabbar__list--${orientation}`}>
+    <ul ref={listRef} {...stylex.props(list.reset, tabbar[orientation], listXstyle)}>
       {links.map((link) => {
         const current = linkIsCurrent(link, currentPath);
         return (
           <li key={link.id}>
             {renderNavigationLink(renderLink, {
               href: link.href,
-              className: "paper-tabbar__link",
+              ...stylex.props(
+                control.inherit,
+                tabbar.link,
+                orientation === "horizontal" ? tabbar.horizontalLink : tabbar.verticalLink,
+                a11y.focusRing,
+                linkXstyle,
+              ),
               "aria-current": current ? "page" : undefined,
               "aria-disabled": link.disabled || undefined,
               tabIndex: link.disabled ? -1 : undefined,
               onClick: link.disabled ? disabledLinkClick : () => link.onSelect?.(),
               children: (
                 <>
-                  {link.icon ? <span className="paper-navigation__icon" aria-hidden="true">{link.icon}</span> : null}
+                  {link.icon ? <IconSlot>{link.icon}</IconSlot> : null}
                   <span>{link.label}</span>
                 </>
               ),
@@ -71,10 +88,10 @@ function TabbarList({
   );
 }
 
-export function Tabbar({ label = "Page sections", ...props }: TabbarProps) {
-  return <nav className="paper-tabbar" aria-label={label}><TabbarList {...props} label={label} orientation="horizontal" /></nav>;
+export function Tabbar({ label = "Page sections", xstyle, ...props }: TabbarProps) {
+  return <nav {...stylex.props(xstyle)} aria-label={label}><TabbarList {...props} label={label} orientation="horizontal" /></nav>;
 }
 
-export function VerticalTabbar({ label = "Page sections", ...props }: TabbarProps) {
-  return <nav className="paper-tabbar paper-tabbar--vertical" aria-label={label}><TabbarList {...props} label={label} orientation="vertical" /></nav>;
+export function VerticalTabbar({ label = "Page sections", xstyle, ...props }: TabbarProps) {
+  return <nav {...stylex.props(xstyle)} aria-label={label}><TabbarList {...props} label={label} orientation="vertical" /></nav>;
 }

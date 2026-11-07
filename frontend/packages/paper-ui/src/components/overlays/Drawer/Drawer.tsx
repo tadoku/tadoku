@@ -1,11 +1,101 @@
+import * as stylex from "@stylexjs/stylex";
 import { Dialog } from "@base-ui/react/dialog";
 import {
   useState,
   type ReactElement,
   type ReactNode,
 } from "react";
-import { XMarkIcon, iconClassName } from "../../../icons";
-import { buttonClassName } from "../../actions/Button";
+import { XMarkIcon } from "../../../icons";
+import { buttonStyles } from "../../actions/Button";
+import { elevation, icon, surface } from "../../../foundations/recipes";
+import {
+  border,
+  breakpoints,
+  color,
+  density,
+  font,
+  fontWeight,
+  motion,
+  size,
+  space,
+  type,
+  zIndex,
+} from "../../../tokens/tokens.stylex";
+import { backdrop } from "../overlay-styles";
+
+const styles = stylex.create({
+  viewport: { inset: 0, display: "flex", pointerEvents: "none", position: "fixed", zIndex: zIndex.dialog, },
+  start: { justifyContent: "flex-start" },
+  end: { justifyContent: "flex-end" },
+  popup: {
+    borderColor: { default: color.ruleStrong, [breakpoints.forcedColors]: "CanvasText" },
+    borderStyle: "solid",
+    borderWidth: border.static,
+    overflow: "hidden",
+    backgroundColor: color.surfaceOverlay,
+    blockSize: "100%",
+    borderBlockWidth: 0,
+    boxSizing: "border-box",
+    color: color.textInk,
+    display: "flex",
+    flexDirection: "column",
+    fontFamily: font.body,
+    fontSize: density.bodySize,
+    inlineSize: `min(${size[448]}, calc(100vw - ${density.controlHeight}))`,
+    lineHeight: density.bodyLineHeight,
+    pointerEvents: "auto",
+    transitionDuration: motion.standard,
+    transitionProperty: { default: "transform", [breakpoints.reducedMotion]: "none" },
+  },
+  popupStart: {
+    borderInlineStartWidth: 0,
+    transform: { "[data-ending-style]": { default: "translateX(-100%)", ":dir(rtl)": "translateX(100%)" }, "[data-starting-style]": { default: "translateX(-100%)", ":dir(rtl)": "translateX(100%)" }, default: "translateX(0)", },
+  },
+  popupEnd: {
+    borderInlineEndWidth: 0,
+    transform: { "[data-ending-style]": { default: "translateX(100%)", ":dir(rtl)": "translateX(-100%)" }, "[data-starting-style]": { default: "translateX(100%)", ":dir(rtl)": "translateX(-100%)" }, default: "translateX(0)", },
+  },
+  header: {
+    padding: density.fieldPaddingInline,
+    flex: "none",
+    gap: density.inlineGap,
+    alignItems: "flex-start",
+    borderBlockEndColor: color.ruleSubtle,
+    borderBlockEndStyle: "solid",
+    borderBlockEndWidth: border.static,
+    display: "flex",
+    justifyContent: "space-between",
+  },
+  heading: { minInlineSize: 0 },
+  title: {
+    margin: 0,
+    fontFamily: font.display,
+    fontSize: type.sectionSize,
+    fontWeight: fontWeight.bold,
+    lineHeight: type.sectionLineHeight,
+  },
+  description: { marginInline: 0, color: color.textMuted, marginBlockEnd: 0, marginBlockStart: space[6], },
+  close: { flex: "none", paddingInline: 0, inlineSize: density.controlHeight, },
+  body: {
+    padding: density.fieldPaddingInline,
+    overscrollBehavior: "contain",
+    flexBasis: 'auto',
+    flexGrow: '1',
+    flexShrink: '1',
+    minBlockSize: 0,
+    overflowY: "auto",
+  },
+  footer: {
+    padding: density.fieldPaddingInline,
+    flex: "none",
+    gap: density.inlineGap,
+    borderBlockStartColor: color.ruleSubtle,
+    borderBlockStartStyle: "solid",
+    borderBlockStartWidth: border.static,
+    display: "flex",
+    justifyContent: "flex-end",
+  },
+});
 
 export const DRAWER_PLACEMENTS = ["start", "end"] as const;
 
@@ -65,38 +155,40 @@ export function Drawer({
         }}
       />
       <Dialog.Portal container={portalContainer}>
-        <Dialog.Backdrop className="paper-drawer__backdrop" />
+        <Dialog.Backdrop {...stylex.props(backdrop.root)} data-backdrop="" />
         <Dialog.Viewport
-          className="paper-drawer__viewport"
+          {...stylex.props(styles.viewport, styles[placement])}
           data-placement={placement}
         >
           <Dialog.Popup
-            className="paper-drawer paper-surface-raised paper-elevation-showcase"
+            {...stylex.props(
+              surface.raised,
+              elevation.showcase,
+              styles.popup,
+              placement === "start" ? styles.popupStart : styles.popupEnd,
+            )}
             data-placement={placement}
           >
-            <header className="paper-drawer__header">
-              <div className="paper-drawer__heading">
-                <Dialog.Title className="paper-drawer__title">
+            <header {...stylex.props(styles.header)}>
+              <div {...stylex.props(styles.heading)}>
+                <Dialog.Title {...stylex.props(styles.title)}>
                   {title}
                 </Dialog.Title>
                 {description ? (
-                  <Dialog.Description className="paper-drawer__description">
+                  <Dialog.Description {...stylex.props(styles.description)}>
                     {description}
                   </Dialog.Description>
                 ) : null}
               </div>
               <Dialog.Close
-                className={buttonClassName({
-                  variant: "ghost",
-                  className: "paper-drawer__close",
-                })}
+                {...stylex.props(...buttonStyles({ variant: "ghost" }), styles.close)}
                 aria-label={closeLabel}
               >
-                <XMarkIcon className={iconClassName("prominent")} aria-hidden="true" />
+                <XMarkIcon {...stylex.props(icon.prominent)} aria-hidden="true" />
               </Dialog.Close>
             </header>
-            <div className="paper-drawer__body">{children}</div>
-            {footer ? <footer className="paper-drawer__footer">{footer}</footer> : null}
+            <div {...stylex.props(styles.body)}>{children}</div>
+            {footer ? <footer {...stylex.props(styles.footer)}>{footer}</footer> : null}
           </Dialog.Popup>
         </Dialog.Viewport>
       </Dialog.Portal>

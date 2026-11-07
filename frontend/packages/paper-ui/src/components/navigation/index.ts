@@ -5,6 +5,7 @@ export {
 } from "./navigation";
 export {
   Navbar,
+  navbarMobileLinkStyles,
   type NavbarItem,
   type NavbarProps,
   type NavigationDirectLink,

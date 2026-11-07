@@ -59,7 +59,7 @@ describe("Drawer", () => {
       Array.from(document.querySelectorAll("[data-base-ui-inert]")).length,
     ).toBeGreaterThan(0);
 
-    await user.click(document.querySelector<HTMLElement>(".paper-drawer__backdrop")!);
+    await user.click(document.querySelector<HTMLElement>("[data-backdrop]")!);
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 

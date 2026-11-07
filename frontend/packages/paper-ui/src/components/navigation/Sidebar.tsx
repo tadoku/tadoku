@@ -1,4 +1,8 @@
+import * as stylex from "@stylexjs/stylex";
 import { useId } from "react";
+import { IconSlot } from "../../foundations/IconSlot";
+import { a11y } from "../../foundations/recipes";
+import { list, sidebar } from "./navigation-styles";
 import {
   disabledLinkClick,
   linkIsCurrent,
@@ -34,25 +38,25 @@ export function Sidebar({
   const sidebarId = `paper-sidebar-${useId().replace(/:/gu, "")}`;
 
   return (
-    <nav className="paper-sidebar" aria-label={label}>
+    <nav {...stylex.props(sidebar.root)} aria-label={label}>
       {sections.map((section) => (
-        <section key={section.id} className="paper-sidebar__section" aria-labelledby={sidebarSectionHeadingId(sidebarId, section.id)}>
-          <h2 id={sidebarSectionHeadingId(sidebarId, section.id)} className="paper-sidebar__title">{section.title}</h2>
-          <ul className="paper-sidebar__list">
+        <section key={section.id} {...stylex.props(sidebar.section)} aria-labelledby={sidebarSectionHeadingId(sidebarId, section.id)}>
+          <h2 id={sidebarSectionHeadingId(sidebarId, section.id)} {...stylex.props(sidebar.title)}>{section.title}</h2>
+          <ul {...stylex.props(list.reset, sidebar.section)}>
             {section.links.map((link) => {
               const current = linkIsCurrent(link, currentPath);
               return (
                 <li key={link.id}>
                   {renderNavigationLink(renderLink, {
                     href: link.href,
-                    className: "paper-sidebar__link",
+                    ...stylex.props(sidebar.link, a11y.focusRing),
                     "aria-current": current ? "page" : undefined,
                     "aria-disabled": link.disabled || undefined,
                     tabIndex: link.disabled ? -1 : undefined,
                     onClick: link.disabled ? disabledLinkClick : () => link.onSelect?.(),
                     children: (
                       <>
-                        {link.icon ? <span className="paper-navigation__icon" aria-hidden="true">{link.icon}</span> : null}
+                        {link.icon ? <IconSlot>{link.icon}</IconSlot> : null}
                         <span>{link.label}</span>
                       </>
                     ),

@@ -89,23 +89,23 @@
 [data-theme="dark"] {
   color-scheme: dark;
 
-  --paper-private-canvas: #121012;
-  --paper-private-paper: #272326;
-  --paper-private-raised: #322e31;
-  --paper-private-overlay: #322e31;
+  --paper-private-canvas: #141414;
+  --paper-private-paper: #1c1c1c;
+  --paper-private-raised: #252525;
+  --paper-private-overlay: #252525;
   --paper-private-scrim: rgb(0 0 0 / 38%);
-  --paper-private-ink: #ece7e0;
-  --paper-private-muted: #aaa1a5;
+  --paper-private-ink: #e8e8e8;
+  --paper-private-muted: #aeaeae;
   --paper-private-inverse: #fffefa;
-  --paper-private-rule-subtle: #3c373a;
-  --paper-private-rule-default: #5a5356;
-  --paper-private-rule-strong: #756d71;
-  --paper-private-field-edge: #968d91;
+  --paper-private-rule-subtle: #2c2c2c;
+  --paper-private-rule-default: #444444;
+  --paper-private-rule-strong: #5f5f5f;
+  --paper-private-field-edge: #808080;
   --paper-private-accent: #a99cf0;
   --paper-private-accent-edge: #3e3290;
-  --paper-private-accent-soft: #3a3448;
+  --paper-private-accent-soft: #383646;
   --paper-private-link-hover: #cbc2f8;
-  --paper-private-neutral-action-hover: #353134;
+  --paper-private-neutral-action-hover: #232323;
   --paper-private-action-default: #6656d4;
   --paper-private-action-hover: #7262dd;
   --paper-private-action-active: #5b4bc8;
@@ -161,8 +161,8 @@
   --paper-color-chart-7: #83aaa3;
   --paper-color-chart-8: #c58e9b;
 
-  --paper-color-heat-future: #332e31;
-  --paper-color-heat-0: #575054;
+  --paper-color-heat-future: #232323;
+  --paper-color-heat-0: #444444;
   --paper-color-heat-1: #7a6ad2;
   --paper-color-heat-2: #9a8ae6;
   --paper-color-heat-3: #c0b4f5;

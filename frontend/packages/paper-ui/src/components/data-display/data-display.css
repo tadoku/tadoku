@@ -152,11 +152,9 @@
     fill: var(--paper-color-heat-4);
   }
 
-  /* Future days differ by shape, an outline with no fill, rather than by another shade of grey. */
+  /* Days still to come are a faint fill, a step quieter than a day with no activity, so the year ahead recedes. */
   .paper-heatmap__cell[data-future] {
-    fill: transparent;
-    stroke: var(--paper-color-rule-field-edge);
-    stroke-width: 1;
+    fill: var(--paper-color-heat-future);
   }
 
   .paper-heatmap__link:focus {

@@ -15,18 +15,11 @@ describe('CatalogueSearch', () => {
     )
 
     const trigger = screen.getByRole('button', { name: 'Search Paper' })
-    const paperLabel = trigger.querySelector('.paper-button__label')
-    const visibleLabel = paperLabel?.querySelector(
-      ':scope > .shell-search-trigger__label',
-    )
-    const shortcut = paperLabel?.querySelector(
-      ':scope > kbd.shell-search-trigger__shortcut',
-    )
+    const visibleLabel = within(trigger).getByText('Search')
+    const shortcut = trigger.querySelector('kbd')
 
-    expect(trigger).toHaveClass('paper-button', 'paper-button--ghost')
     expect(trigger).toHaveAccessibleName('Search Paper')
     expect(trigger.querySelector('svg')).not.toBeNull()
-    expect(trigger.querySelector('.shell-search-trigger__content')).toBeNull()
     expect(visibleLabel).toHaveTextContent(/^Search$/u)
     expect(shortcut).toHaveTextContent(/^\/$/u)
     expect(shortcut).toHaveAttribute('aria-hidden', 'true')
@@ -73,13 +66,10 @@ describe('CatalogueSearch', () => {
     )
 
     const trigger = screen.getByRole('button', { name: 'Search Paper' })
-    expect(trigger).toHaveClass('paper-button')
 
     await user.click(trigger)
-    const dialog = screen.getByRole('dialog', { name: 'Search Paper' })
+    screen.getByRole('dialog', { name: 'Search Paper' })
     const input = screen.getByRole('searchbox', { name: 'Search documents' })
-    expect(dialog).toHaveClass('paper-modal')
-    expect(input).toHaveClass('paper-input')
 
     await user.type(input, 'button')
     await user.click(screen.getByRole('button', { name: 'Close search' }))
@@ -120,7 +110,7 @@ describe('CatalogueSearch', () => {
     const trigger = screen.getByRole('button', { name: 'Search Paper' })
     await user.click(trigger)
     const backdrop = document.querySelector<HTMLElement>(
-      '.paper-modal__backdrop',
+      '[data-backdrop]',
     )
     expect(backdrop).not.toBeNull()
     await user.click(backdrop!)

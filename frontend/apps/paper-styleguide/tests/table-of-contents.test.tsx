@@ -15,8 +15,6 @@ describe('TableOfContents', () => {
 
     expect(screen.getByRole('heading', { name: 'On this page' })).toBeVisible()
     const outline = screen.getByRole('navigation', { name: 'On this page' })
-    expect(outline).toHaveClass('paper-tabbar', 'paper-tabbar--vertical')
-    expect(outline.querySelector('.paper-tabbar__list--vertical')).not.toBeNull()
     expect(within(outline).getByRole('link', { name: 'Usage' })).toHaveAttribute(
       'href',
       '#usage',

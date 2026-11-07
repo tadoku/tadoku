@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { readdirSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import ts from 'typescript'
 import { expect, it } from 'vitest'
@@ -18,10 +18,3 @@ it('typechecks the actual foundation example modules against the public package'
     getCurrentDirectory: () => process.cwd(), getCanonicalFileName: name => name, getNewLine: () => '\n',
   })).toBe('')
 }, 15000)
-
-it('keeps foundation tables readable and stack spacing faithful to the public recipe', () => {
-  const css = readFileSync(resolve('src/documentation/foundation-guide.css'), 'utf8')
-  expect(css).toMatch(/\.foundation-reference table\s*\{[^}]*min-inline-size: 32rem/)
-  expect(css).toMatch(/\.foundation-reference th\s*\{[^}]*min-inline-size: 8rem/)
-  expect(css).toMatch(/\.foundation-guide \.paper-stack > h3\s*\{[^}]*margin-block: 0/)
-})

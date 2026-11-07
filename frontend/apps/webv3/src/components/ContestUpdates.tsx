@@ -9,6 +9,7 @@ import type { LogFailure } from '../lib/logs'
 import { useLinks } from '../lib/links'
 import { useLoginUrl, viewerQueryOptions } from '../lib/session'
 import { LogEntries } from './LogEntries'
+import { muted } from './standings-styles'
 
 type Contest = ImmersionContestView & { id: string }
 
@@ -16,7 +17,7 @@ type Contest = ImmersionContestView & { id: string }
 export function ContestUpdates({ contest, page }: { contest: Contest; page: number }) {
   const links = useLinks()
   return (
-    <section className="contest-updates" aria-label="Updates">
+    <section className="mt-6" aria-label="Updates">
       <ContestLogs contest={contest} page={page} pageHref={next => links.contestUpdates(contest.id, next)} showParticipant />
     </section>
   )
@@ -40,7 +41,7 @@ export function ContestLogs({ contest, userId, page, pageHref, showParticipant =
     ? viewer.userId
     : undefined
 
-  if (!logs.data) return <p className="profile-muted" role="status">Loading updates…</p>
+  if (!logs.data) return <p className={muted} role="status">Loading updates…</p>
   if (!logs.data.ok) {
     return (
       <EmptyState
@@ -55,7 +56,7 @@ export function ContestLogs({ contest, userId, page, pageHref, showParticipant =
 
   return (
     <>
-      {removed ? <Flash variant="success" className="contest-updates-notice" role="status">Log removed from contest.</Flash> : null}
+      {removed ? <Flash variant="success" className="mb-4" role="status">Log removed from contest.</Flash> : null}
       <LogEntries
         logs={logs.data.data.logs}
         total={logs.data.data.total_size}
@@ -111,7 +112,7 @@ function RemoveFromContest({ log, contestId, viewerId, onRemoved }: {
       footer={null}
     >
       <form.AppForm>
-        <form.Form className="goal-form" aria-busy={pending}>
+        <form.Form className="min-w-0" aria-busy={pending}>
           <p>Why are you removing this log from the contest? Please provide a reason.</p>
           <form.AppField name="reason" validators={{ onSubmit: ({ value }) => reasonError(value) }}>
             {field => <field.TextArea label="Reason" placeholder="e.g. Duplicate entry, incorrect data…" rows={4} required disabled={pending} />}

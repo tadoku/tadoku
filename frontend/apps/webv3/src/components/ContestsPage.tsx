@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { PlusIcon, iconClassName } from 'paper-ui/icons'
 import { Link } from '@tanstack/react-router'
-import { Button, EmptyState, PageHeader, Pagination, StatusTag, Tabbar, buttonClassName } from 'paper-ui'
+import { Button, buttonClassName, EmptyState, listFooter, PageHeader, Pagination, StatusTag, Tabbar, typography } from 'paper-ui'
 import {
   accountSinceQuery,
   canCreateContestQuery,
@@ -20,6 +20,7 @@ import { useLinks } from '../lib/links'
 import { useLoginUrl, viewerKey, viewerQueryOptions } from '../lib/session'
 import { renderLink } from './router-link'
 import { YearStepper } from './YearStepper'
+import { standingsHeader } from './standings-styles'
 
 const tabs: { id: ContestCollection; label: string }[] = [
   { id: 'official', label: 'Official' },
@@ -46,11 +47,12 @@ export function ContestsPage({ view, page }: { view: ContestView; page: number }
   return (
     <div className="contests-page">
       <PageHeader
-        className="standings-header"
+        className={standingsHeader}
         title="Contests"
         actions={canCreate ? <Link className={buttonClassName({ variant: 'outline' })} to={links.newContest}><PlusIcon className={iconClassName('compact')} aria-hidden="true" />Create contest</Link> : null}
       />
       <Tabbar
+        className="mt-2"
         label="Contest collections"
         renderLink={renderLink}
         links={tabs.map(tab => ({
@@ -72,7 +74,7 @@ export function ContestsPage({ view, page }: { view: ContestView; page: number }
           actions={<Button variant="outline" loading={viewerQuery.isFetching} onClick={() => void viewerQuery.refetch()}>Try again</Button>}
         />
       )}
-      <p className="contests-note">Contest dates are calendar days in UTC.</p>
+      <p className="mb-0 mt-6 border-t border-rule pt-5 text-metadata text-muted">Contest dates are calendar days in UTC.</p>
     </div>
   )
 }
@@ -82,7 +84,7 @@ function JoinedYear({ userId, year }: { userId: string; year: number }) {
   const since = useQuery(accountSinceQuery(userId)).data
   const current = thisYear()
   return (
-    <div className="contests-year">
+    <div className="-ms-3 mt-4">
       <YearStepper year={year} first={Math.min(since ?? current, current)} current={current} href={contestsHref.joined} label="Year" />
     </div>
   )
@@ -116,7 +118,7 @@ function Contests({ scope, view, page }: { scope: ContestListScope; view: Contes
       />
     )
   }
-  if (!result) return <p className="contests-status" role="status">Loading contests…</p>
+  if (!result) return <p className="text-metadata text-muted" role="status">Loading contests…</p>
 
   const { contests, total } = result.data
   // A session cookie can belong to a guest, whom the configuration endpoint also answers; Webv2 names restrictions
@@ -151,22 +153,24 @@ function Contests({ scope, view, page }: { scope: ContestListScope; view: Contes
   return (
     <>
       {totalPages > 1 ? (
-        <div className="list-pagination-top">
-          <Pagination totalPages={totalPages} currentPage={page} getHref={pageHref} renderLink={renderLink} label="Contest pages, top" />
+        <div className="mb-1 mt-2 flex justify-end">
+          <Pagination totalPages={totalPages} currentPage={page} getHref={pageHref} renderLink={renderLink} label="Contest pages, top" classNames={{ list: 'flex-wrap' }} />
         </div>
       ) : null}
-      <ul className="contest-list" aria-label={view.collection === 'joined' ? `Contests joined in ${view.year}` : `${tabs.find(tab => tab.id === view.collection)?.label} contests`}>
+      <ul className="mb-0 mt-2 list-none p-0" aria-label={view.collection === 'joined' ? `Contests joined in ${view.year}` : `${tabs.find(tab => tab.id === view.collection)?.label} contests`}>
         {contests.map(contest => <ContestRow key={contest.id} contest={contest} names={names} today={today} />)}
       </ul>
       {totalPages > 1 ? (
-        <div className="contests-pagination">
-          <p>{numberFormat.format(first)}–{numberFormat.format(first + contests.length - 1)} of {numberFormat.format(total)} contests</p>
-          <Pagination totalPages={totalPages} currentPage={page} getHref={pageHref} renderLink={renderLink} label="Contest pages" />
+        <div className={listFooter().root({ className: 'contests-pagination border-t border-rule pt-3' })}>
+          <p className={listFooter().summary()}>{numberFormat.format(first)}–{numberFormat.format(first + contests.length - 1)} of {numberFormat.format(total)} contests</p>
+          <Pagination totalPages={totalPages} currentPage={page} getHref={pageHref} renderLink={renderLink} label="Contest pages" classNames={{ list: 'max-md:flex-wrap' }} />
         </div>
       ) : null}
     </>
   )
 }
+
+const rowText = 'mb-0 mt-1.5 text-sm leading-160 text-muted'
 
 function ContestRow({ contest, names, today }: {
   contest: ContestList['contests'][number]
@@ -191,14 +195,24 @@ function ContestRow({ contest, names, today }: {
   const meta = [registration, restrictions ? languages : null, restrictions ? activities : null].filter(Boolean).join(' · ')
 
   return (
-    <li className="contest-row">
-      <div className="contest-row__body">
-        <div className="contest-row__title">
-          <h2 className="paper-type-component"><a href={links.contest(contest.id)}>{contest.title}</a></h2>
-          <span className="contest-row__tags">{round}{contest.private ? <StatusTag>Unlisted</StatusTag> : null}</span>
+    <li className="contest-row border-t border-rule py-4 first:border-t-0">
+      <div className="contest-row__body min-w-0 wrap-anywhere">
+        <div
+          className={`contest-row__title grid grid-cols-title-tags items-start justify-start gap-x-2 gap-y-1 ${
+            contest.private ? 'max-sm:grid-cols-single' : ''
+          }`}
+        >
+          <h2 className={typography({ role: 'component', className: 'm-0 font-body text-base leading-150 font-semibold' })}>
+            <a className="text-inherit underline decoration-muted decoration-hairline underline-offset-link" href={links.contest(contest.id)}>
+              {contest.title}
+            </a>
+          </h2>
+          <span className={`contest-row__tags mt-0.5 flex flex-wrap gap-x-1.5 gap-y-1 ${contest.private ? 'max-sm:mt-0' : ''}`}>
+            {round}{contest.private ? <StatusTag>Unlisted</StatusTag> : null}
+          </span>
         </div>
-        <p>{formatPeriod(contest)}</p>
-        {meta ? <p className="contest-row__allows">{meta}</p> : null}
+        <p className={rowText}>{formatPeriod(contest)}</p>
+        {meta ? <p className={`contest-row__allows ${rowText}`}>{meta}</p> : null}
       </div>
     </li>
   )

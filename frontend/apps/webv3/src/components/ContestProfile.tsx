@@ -6,6 +6,7 @@ import { formatDate, numberFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { ContestLogs } from './ContestUpdates'
 import { renderLink } from './router-link'
+import { muted, sheet, standingsTable } from './standings-styles'
 
 type Found = Extract<Profile, { status: 'found' }>
 
@@ -18,7 +19,7 @@ export function ContestProfile({ profile, page }: { profile: Found; page: number
   const total = scores.reduce((sum, score) => sum + score.score, 0)
 
   return (
-    <div className="profile-page contest-profile">
+    <div className="*:max-w-record">
       <PageHeader
         backLink={{ href: links.contest(contest.id), label: contest.title }}
         renderLink={renderLink}
@@ -26,19 +27,19 @@ export function ContestProfile({ profile, page }: { profile: Found; page: number
         actions={<Link className={buttonClassName({ variant: 'outline' })} to={links.profile(userId)}>View profile</Link>}
       />
       <StatGrid
-        className="profile-stats"
+        className="profile-stats mb-8 mt-7"
         stats={[
           { label: 'Overall score', value: numberFormat.format(total) },
           ...registration.languages.map(language => ({ label: language.name, value: numberFormat.format(byLanguage.get(language.code) ?? 0) })),
         ]}
       />
-      <section className="profile-activity" aria-labelledby="contest-daily-heading">
+      <section className="mt-8" aria-labelledby="contest-daily-heading">
         <SectionHeading level={2} id="contest-daily-heading" title="Daily scores" />
         {daily.ok
-          ? <div className="standings-sheet contest-daily"><DailyScores rows={daily.data} languages={registration.languages} name={name} /></div>
-          : <p className="profile-muted">Could not load the daily scores. Try reloading this page.</p>}
+          ? <div className={`${sheet} [&_tbody_th]:whitespace-nowrap [&_tbody_th]:font-regular [&_th]:whitespace-nowrap`}><DailyScores rows={daily.data} languages={registration.languages} name={name} /></div>
+          : <p className={muted}>Could not load the daily scores. Try reloading this page.</p>}
       </section>
-      <section className="profile-activity" aria-labelledby="contest-profile-updates">
+      <section className="mt-8" aria-labelledby="contest-profile-updates">
         <SectionHeading level={2} id="contest-profile-updates" title="Updates" />
         <ContestLogs contest={contest} userId={userId} page={page} pageHref={next => links.contestProfile(contest.id, userId, next)} />
       </section>
@@ -54,7 +55,7 @@ function DailyScores({ rows, languages, name }: {
   languages: { code: string; name: string }[]
   name: string
 }) {
-  if (rows.length === 0) return <p className="profile-muted">No scores recorded in this contest yet.</p>
+  if (rows.length === 0) return <p className={muted}>No scores recorded in this contest yet.</p>
 
   const days = new Map<string, Day>()
   for (const row of rows) {
@@ -88,7 +89,7 @@ function DailyScores({ rows, languages, name }: {
       rows={[...ordered].reverse()}
       getRowKey={day => day.date}
       minWidth="36rem"
-      tableClassName="standings-table"
+      tableClassName={standingsTable}
     />
   )
 }

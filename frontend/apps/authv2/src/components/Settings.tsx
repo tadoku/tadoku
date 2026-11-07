@@ -149,8 +149,8 @@ function DisplayNameForm({ account, next, error, reauthenticate }: EditorProps) 
           {field => <field.Input id={fieldId('display_name')} label="Display name" autoComplete="nickname" required autoFocus />}
         </form.AppField>
         <div className={accountFormActions}>
-          <Button type="submit" loading={pending} loadingLabel="Saving">Save display name</Button>
           <Cancel next={next} />
+          <Button type="submit" loading={pending} loadingLabel="Saving">Save display name</Button>
         </div>
       </form.Form>
     </form.AppForm>
@@ -187,8 +187,8 @@ function EmailForm({ account, next, error, reauthenticate }: EditorProps) {
           )}
         </form.AppField>
         <div className={accountFormActions}>
-          <Button type="submit" loading={pending} loadingLabel="Saving">Save email</Button>
           <Cancel next={next} />
+          <Button type="submit" loading={pending} loadingLabel="Saving">Save email</Button>
         </div>
       </form.Form>
     </form.AppForm>
@@ -228,10 +228,10 @@ function PasswordForm({ account, next, error, reauthenticate }: EditorProps) {
           Needs a login within the last hour or a recovery link. Signs you out on your other devices.
         </p>
         <div className={accountFormActions}>
+          <Cancel next={next} />
           <Button type="submit" loading={pending} loadingLabel="Saving">
             {next ? 'Save password and continue' : 'Save password'}
           </Button>
-          <Cancel next={next} />
         </div>
       </form.Form>
     </form.AppForm>

@@ -8,6 +8,7 @@ import { formatDate, pointsUnit } from '../../lib/format'
 import { useLinks } from '../../lib/links'
 import { logQuery, useDeleteLog, type ImmersionLog, type LogFailure } from '../../lib/logs'
 import { viewerKey, viewerQueryOptions } from '../../lib/session'
+import { ActivityName } from '../../components/ActivityName'
 import { renderLink } from '../../components/router-link'
 
 export const Route = createFileRoute('/logs/$logId')({
@@ -51,7 +52,7 @@ function LogDetail() {
         title="Log details"
         lead={(
           <>
-            {log.language.name} · {log.activity.name}
+            {log.language.name} · <ActivityName activity={log.activity} />
             {learner ? <> · Logged by <a className="text-link hover:text-link-hover" href={links.profile(log.user_id)}>{learner}</a></> : null}
           </>
         )}
@@ -62,7 +63,7 @@ function LogDetail() {
           <StatGrid
             stats={[
               ...measure(log),
-              { label: 'Score', value: scoreFormat.format(log.score), detail: pointsUnit(log.score) },
+              { label: 'Score', value: scoreFormat.format(log.score), unit: pointsUnit(log.score) },
               { label: 'Logged', value: formatDate(log.created_at.slice(0, 10)), detail: loggedTime(log.created_at) },
             ]}
           />
@@ -106,9 +107,6 @@ function OwnerActions({ log }: { log: ImmersionLog }) {
 
   return (
     <>
-      <Link className={buttonClassName({ variant: 'outline' })} to="/logs/$logId/edit" params={{ logId: log.id }}>
-        <PencilSquareIcon className={iconClassName('compact')} aria-hidden="true" />Edit log
-      </Link>
       <Modal
         trigger={(
           <Button variant="destructive-ghost" disabled={!hydrated} leadingIcon={<TrashIcon className={iconClassName('compact')} />}>
@@ -138,6 +136,9 @@ function OwnerActions({ log }: { log: ImmersionLog }) {
         </p>
         {failure ? <p role="alert">{deleteFailures[failure] ?? deleteFailures.unavailable}</p> : null}
       </Modal>
+      <Link className={buttonClassName({ variant: 'outline' })} to="/logs/$logId/edit" params={{ logId: log.id }}>
+        <PencilSquareIcon className={iconClassName('compact')} aria-hidden="true" />Edit log
+      </Link>
     </>
   )
 }

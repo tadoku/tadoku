@@ -129,8 +129,8 @@ function RemoveFromContest({ log, contestId, viewerId, onRemoved }: {
           </form.AppField>
           {failure ? <DetachFailure failure={failure} /> : null}
           <div className="registration-actions">
-            <Button type="submit" variant="destructive" disabled={pending}>{pending ? 'Removing…' : 'Yes, remove it'}</Button>
             <Button type="button" variant="ghost" disabled={pending} onClick={() => setOpen(false)}>Cancel</Button>
+            <Button type="submit" variant="destructive" disabled={pending}>{pending ? 'Removing…' : 'Yes, remove it'}</Button>
           </div>
         </form.Form>
       </form.AppForm>

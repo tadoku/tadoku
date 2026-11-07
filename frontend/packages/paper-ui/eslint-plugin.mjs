@@ -48,7 +48,7 @@ export function arbitraryValueProblem(candidate) {
 
 function isClassContext(node) {
   for (let current = node.parent; current; current = current.parent) {
-    if (current.type === 'JSXAttribute') return current.name.name === 'className' || current.name.name === 'class'
+    if (current.type === 'JSXAttribute') return ['class', 'className', 'classNames'].includes(current.name.name)
     if (current.type === 'CallExpression') {
       const callee = current.callee.type === 'Identifier' ? current.callee.name : current.callee.property?.name
       if (classCallees.has(callee) || /ClassName$/.test(callee ?? '')) return true

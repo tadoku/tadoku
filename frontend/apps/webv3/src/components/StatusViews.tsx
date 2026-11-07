@@ -23,5 +23,5 @@ export function ErrorView() {
 }
 
 export function PendingView() {
-  return <Loading className="app-pending" label="Loading page" />
+  return <Loading className="py-16" label="Loading page" />
 }

@@ -7,6 +7,38 @@ import {
 } from "react";
 import { XMarkIcon, iconClassName } from "../../../icons";
 import { buttonClassName, type ButtonVariant } from "../../actions/Button";
+import { surface } from "../../../foundations/recipes";
+import { cn, tv } from "../../../foundations/variants";
+
+const modal = tv({
+  slots: {
+    backdrop: [
+      "paper-modal__backdrop fixed inset-0 z-backdrop bg-scrim opacity-full backdrop-blur-scrim",
+      "transition-opacity duration-standard data-starting-style:opacity-0 data-ending-style:opacity-0",
+      "motion-reduce:transition-none forced-colors:bg-forced-scrim forced-colors:backdrop-blur-none",
+      "forced-colors:forced-color-adjust-none",
+    ],
+    viewport: "paper-modal__viewport fixed inset-0 z-dialog grid place-items-center overflow-y-auto p-4",
+    popup: [
+      "paper-modal max-h-modal w-modal overflow-y-auto transition-enter duration-standard motion-reduce:transition-none",
+      "data-starting-style:translate-y-2 data-starting-style:opacity-0",
+      "data-ending-style:translate-y-2 data-ending-style:opacity-0",
+    ],
+    header: "paper-modal__header flex items-start justify-between gap-4 border-b border-rule-subtle p-5",
+    title: "paper-modal__title m-0 font-display text-section leading-section",
+    description: "paper-modal__description mb-0 mt-1.6 text-muted",
+    close: [
+      "paper-modal__icon-close grid size-control flex-none cursor-pointer place-items-center",
+      "border border-transparent bg-transparent p-0 text-2xl text-muted",
+      "hover:border-rule hover:bg-raised hover:text-ink",
+    ],
+    content: "paper-modal__content p-5",
+    footer: "paper-modal__footer flex justify-end gap-inline border-t border-rule-subtle px-5 py-4",
+  },
+});
+
+const slots = modal();
+const popupClassName = cn(surface({ tone: "overlay", elevation: "showcase" }), slots.popup());
 
 type ModalInteractionType = "mouse" | "touch" | "pen" | "keyboard" | "";
 type ModalInitialFocus =
@@ -88,31 +120,31 @@ export function Modal({
         </Dialog.Trigger>
       )}
       <Dialog.Portal container={portalContainer}>
-        <Dialog.Backdrop className="paper-modal__backdrop" />
-        <Dialog.Viewport className="paper-modal__viewport">
+        <Dialog.Backdrop className={slots.backdrop()} />
+        <Dialog.Viewport className={slots.viewport()}>
           <Dialog.Popup
-            className="paper-modal paper-surface-raised paper-elevation-showcase"
+            className={popupClassName}
             initialFocus={initialFocus}
           >
-            <header className="paper-modal__header">
+            <header className={slots.header()}>
               <div>
-                <Dialog.Title className="paper-modal__title">{title}</Dialog.Title>
+                <Dialog.Title className={slots.title()}>{title}</Dialog.Title>
                 {description ? (
-                  <Dialog.Description className="paper-modal__description">
+                  <Dialog.Description className={slots.description()}>
                     {description}
                   </Dialog.Description>
                 ) : null}
               </div>
               <Dialog.Close
-                className="paper-modal__icon-close"
+                className={slots.close()}
                 aria-label={closeLabel}
               >
                 <XMarkIcon className={iconClassName("prominent")} aria-hidden="true" />
               </Dialog.Close>
             </header>
-            <div className="paper-modal__content">{children}</div>
+            <div className={slots.content()}>{children}</div>
             {footer === undefined ? (
-              <footer className="paper-modal__footer">
+              <footer className={slots.footer()}>
                 {action ? (
                   <Dialog.Close
                     className={buttonClassName({ variant: action.variant })}
@@ -127,7 +159,7 @@ export function Modal({
                 </Dialog.Close>
               </footer>
             ) : footer === null ? null : (
-              <footer className="paper-modal__footer">{footer}</footer>
+              <footer className={slots.footer()}>{footer}</footer>
             )}
           </Dialog.Popup>
         </Dialog.Viewport>

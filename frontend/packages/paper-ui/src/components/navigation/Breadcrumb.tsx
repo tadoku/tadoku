@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
-import { ChevronRightIcon } from "../../icons";
+import { ChevronRightIcon, iconClassName } from "../../icons";
 import { renderNavigationLink, type NavigationLinkRenderer } from "./navigation";
+import { breadcrumb, navigationIcon } from "./styles";
+
+const slots = breadcrumb();
 
 export interface BreadcrumbItem {
   readonly id: string;
@@ -18,27 +21,27 @@ export interface BreadcrumbProps {
 export function Breadcrumb({ items, renderLink, label = "Breadcrumb" }: BreadcrumbProps) {
   return (
     <nav className="paper-breadcrumb" aria-label={label}>
-      <ol className="paper-breadcrumb__list">
+      <ol className={slots.list()}>
         {items.map((item, index) => {
           const current = index === items.length - 1;
           return (
-            <li className="paper-breadcrumb__item" key={item.id}>
+            <li className={slots.item({ className: index < items.length - 2 ? slots.distant() : undefined })} key={item.id}>
               {current || !item.href ? (
-                <span className="paper-breadcrumb__current" aria-current={current ? "page" : undefined}>
-                  {item.icon ? <span className="paper-navigation__icon" aria-hidden="true">{item.icon}</span> : null}
+                <span className={slots.current()} aria-current={current ? "page" : undefined}>
+                  {item.icon ? <span className={navigationIcon} aria-hidden="true">{item.icon}</span> : null}
                   <span>{item.label}</span>
                 </span>
               ) : renderNavigationLink(renderLink, {
                 href: item.href,
-                className: "paper-breadcrumb__link",
+                className: slots.link(),
                 children: (
                   <>
-                    {item.icon ? <span className="paper-navigation__icon" aria-hidden="true">{item.icon}</span> : null}
+                    {item.icon ? <span className={navigationIcon} aria-hidden="true">{item.icon}</span> : null}
                     <span>{item.label}</span>
                   </>
                 ),
               })}
-              {!current ? <ChevronRightIcon className="paper-breadcrumb__separator paper-icon-compact" aria-hidden="true" /> : null}
+              {!current ? <ChevronRightIcon className={iconClassName("compact", slots.separator())} aria-hidden="true" /> : null}
             </li>
           );
         })}

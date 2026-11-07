@@ -6,6 +6,7 @@ import {
   type HTMLAttributes,
   type KeyboardEvent,
 } from "react";
+import { tv } from "../../../foundations/variants";
 
 export type TabsValue = string;
 export type TabsOrientation = "horizontal" | "vertical";
@@ -37,9 +38,47 @@ export interface TabsPanelProps
   readonly keepMounted?: boolean;
 }
 
-function classes(base: string, className?: string): string {
-  return [base, className].filter(Boolean).join(" ");
-}
+const tabs = tv({
+  slots: {
+    root: [
+      "paper-tabs group/tabs text-ink",
+      "data-[orientation=vertical]:grid data-[orientation=vertical]:grid-cols-tabs-vertical",
+    ],
+    list: [
+      "paper-tabs__list flex w-full max-w-full items-end overflow-x-auto overflow-y-hidden border-b border-rule",
+      "group-data-[orientation=vertical]/tabs:w-auto group-data-[orientation=vertical]/tabs:max-w-none",
+      "group-data-[orientation=vertical]/tabs:flex-col group-data-[orientation=vertical]/tabs:items-stretch",
+      "group-data-[orientation=vertical]/tabs:overflow-visible group-data-[orientation=vertical]/tabs:border-b-0",
+      "group-data-[orientation=vertical]/tabs:border-e forced-colors:border-forced-ink",
+    ],
+    tab: [
+      "paper-tabs__tab relative inline-flex min-h-control flex-none cursor-pointer select-none items-center justify-center",
+      "rounded-none border-0 border-b-edge border-b-transparent bg-transparent px-field-x py-field-y",
+      "font-semibold leading-none text-muted transition-colors duration-quick motion-reduce:transition-none",
+      "not-disabled:not-data-active:hover:bg-neutral-hover not-disabled:not-data-active:hover:text-ink",
+      "data-active:border-b-link data-active:bg-transparent data-active:text-ink",
+      "focus-visible:z-lift focus-visible:outline-ring focus-visible:outline-focus focus-visible:-outline-offset-ring",
+      "disabled:cursor-default disabled:text-muted disabled:opacity-disabled",
+      "data-disabled:cursor-default data-disabled:text-muted data-disabled:opacity-disabled",
+      "group-data-[orientation=vertical]/tabs:justify-start group-data-[orientation=vertical]/tabs:text-start",
+      "group-data-[orientation=vertical]/tabs:border-b-0 group-data-[orientation=vertical]/tabs:border-e-edge",
+      "group-data-[orientation=vertical]/tabs:border-e-transparent",
+      "group-data-[orientation=vertical]/tabs:data-active:border-e-link",
+      "compact:min-h-9 compact:px-2.5 compact:py-1.5 compact:text-sm",
+      "forced-colors:text-forced-ink forced-colors:data-active:border-b-forced-highlight",
+      "forced-colors:focus-visible:outline-forced-highlight",
+      "forced-colors:group-data-[orientation=vertical]/tabs:data-active:border-e-forced-highlight",
+      "forced-colors:disabled:text-forced-muted forced-colors:disabled:opacity-full",
+      "forced-colors:data-disabled:text-forced-muted forced-colors:data-disabled:opacity-full",
+    ],
+    panel: [
+      "paper-tabs__panel bg-paper py-field-x text-ink",
+      "group-data-[orientation=vertical]/tabs:px-field-x group-data-[orientation=vertical]/tabs:py-0",
+    ],
+  },
+});
+
+const slots = tabs();
 
 function moveTabFocus(
   event: KeyboardEvent<HTMLDivElement>,
@@ -80,7 +119,7 @@ export const TabsRoot = forwardRef<HTMLDivElement, TabsRootProps>(function TabsR
   return (
     <BaseTabs.Root
       ref={ref}
-      className={classes("paper-tabs", className)}
+      className={slots.root({ className })}
       onValueChange={(nextValue) => {
         if (typeof nextValue === "string") onValueChange?.(nextValue);
       }}
@@ -104,7 +143,7 @@ export const TabsList = forwardRef<HTMLDivElement, TabsListProps>(function TabsL
       ref={ref}
       activateOnFocus={activateOnFocus}
       loopFocus={loopFocus}
-      className={classes("paper-tabs__list", className)}
+      className={slots.list({ className })}
       onKeyDownCapture={(event) => {
         onKeyDownCapture?.(event);
         if (!event.defaultPrevented) moveTabFocus(event, loopFocus);
@@ -122,7 +161,7 @@ export const TabsTab = forwardRef<HTMLButtonElement, TabsTabProps>(function Tabs
     <BaseTabs.Tab
       ref={ref as ForwardedRef<HTMLElement>}
       type={type}
-      className={classes("paper-tabs__tab", className)}
+      className={slots.tab({ className })}
       {...props}
     />
   );
@@ -135,7 +174,7 @@ export const TabsPanel = forwardRef<HTMLDivElement, TabsPanelProps>(function Tab
   return (
     <BaseTabs.Panel
       ref={ref}
-      className={classes("paper-tabs__panel", className)}
+      className={slots.panel({ className })}
       data-value={String(value)}
       keepMounted={keepMounted}
       value={value}

@@ -1,6 +1,7 @@
 import type { MouseEvent, ReactNode } from "react";
 import { ChevronLeftIcon, ChevronRightIcon, EllipsisHorizontalIcon, iconClassName } from "../../icons";
 import { renderNavigationLink, type NavigationLinkRenderer } from "./navigation";
+import { pagination, type PaginationSlot } from "./styles";
 
 type PaginationToken = number | "start-gap" | "end-gap";
 
@@ -29,7 +30,12 @@ export interface PaginationProps {
   readonly siblingCount?: number;
   readonly label?: string;
   readonly renderLink?: NavigationLinkRenderer;
+  readonly className?: string;
+  /** Classes merged over a part's own, for a screen's layout needs. */
+  readonly classNames?: Partial<Record<PaginationSlot, string>>;
 }
+
+const slots = pagination();
 
 export function Pagination({
   totalPages,
@@ -39,6 +45,8 @@ export function Pagination({
   siblingCount = 2,
   label = "Pagination",
   renderLink,
+  className,
+  classNames = {},
 }: PaginationProps) {
   if (!Number.isInteger(totalPages) || totalPages < 1) {
     throw new RangeError("Pagination totalPages must be a positive integer.");
@@ -62,41 +70,41 @@ export function Pagination({
 
   const control = (page: number, content: ReactNode, controlLabel: string, disabled: boolean) => {
     if (disabled) {
-      return <span className="paper-pagination__control" aria-disabled="true">{content}</span>;
+      return <span className={slots.control()} aria-disabled="true">{content}</span>;
     }
     if (getHref) {
       return renderNavigationLink(renderLink, {
         href: getHref(page),
-        className: "paper-pagination__control",
+        className: slots.control(),
         "aria-label": controlLabel,
         onClick: activate(page),
         children: content,
       });
     }
-    return <button type="button" className="paper-pagination__control" aria-label={controlLabel} onClick={() => onPageChange?.(page)}>{content}</button>;
+    return <button type="button" className={slots.control()} aria-label={controlLabel} onClick={() => onPageChange?.(page)}>{content}</button>;
   };
 
   return (
-    <nav className="paper-pagination" aria-label={label}>
-      <ul className="paper-pagination__list">
+    <nav className={slots.root({ className: [classNames.root, className] })} aria-label={label}>
+      <ul className={slots.list({ className: classNames.list })}>
         <li>{control(currentPage - 1, <><ChevronLeftIcon className={iconClassName("compact")} aria-hidden="true" /><span>Previous</span></>, "Previous page", currentPage === 1)}</li>
         {tokens.map((token) =>
           typeof token === "string" ? (
-            <li key={token} className="paper-pagination__gap" aria-hidden="true"><EllipsisHorizontalIcon className={iconClassName("default")} /></li>
+            <li key={token} className={slots.gap()} aria-hidden="true"><EllipsisHorizontalIcon className={iconClassName("default")} /></li>
           ) : (
-            <li key={token}>
+            <li key={token} className={token === currentPage ? undefined : slots.otherPage()}>
               {token === currentPage ? (
-                <span className="paper-pagination__page" aria-current="page" aria-label={`Page ${token} of ${totalPages}`}>
-                  {token}<span className="paper-pagination__of" aria-hidden="true">&nbsp;of {totalPages}</span>
+                <span className={slots.page()} aria-current="page" aria-label={`Page ${token} of ${totalPages}`}>
+                  {token}<span className={slots.of()} aria-hidden="true">&nbsp;of {totalPages}</span>
                 </span>
               ) : getHref ? renderNavigationLink(renderLink, {
                 href: getHref(token),
-                className: "paper-pagination__page",
+                className: slots.page(),
                 "aria-label": `Page ${token}`,
                 onClick: activate(token),
                 children: token,
               }) : (
-                <button type="button" className="paper-pagination__page" aria-label={`Page ${token}`} onClick={() => onPageChange?.(token)}>{token}</button>
+                <button type="button" className={slots.page()} aria-label={`Page ${token}`} onClick={() => onPageChange?.(token)}>{token}</button>
               )}
             </li>
           ),

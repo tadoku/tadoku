@@ -16,6 +16,10 @@ import {
   type NavigationItem,
   type NavigationLinkRenderer,
 } from "./navigation";
+import { surface } from "../../foundations/recipes";
+import { cn } from "../../foundations/variants";
+import { navbar, navigationIcon, type NavbarSlot } from "./styles";
+
 
 function noSubscription() {
   return () => {};
@@ -49,6 +53,11 @@ export interface NavbarProps {
   readonly label?: string;
   readonly menuLabel?: string;
   readonly isLoading?: boolean;
+  readonly className?: string;
+  /** Sits inside an application frame's header band, within the frame width and gutter. */
+  readonly contained?: boolean;
+  /** Classes merged over a part's own, for the application shell's layout. */
+  readonly classNames?: Partial<Record<NavbarSlot, string>>;
 }
 
 function NavbarDropdownMenu({
@@ -61,6 +70,7 @@ function NavbarDropdownMenu({
   readonly renderLink?: NavigationLinkRenderer;
 }) {
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
+  const slots = navbar();
 
   return (
     <Menu.Root>
@@ -70,25 +80,25 @@ function NavbarDropdownMenu({
             setPortalContainer(node.ownerDocument.body);
           }
         }}
-        className="paper-navbar__dropdown-trigger"
+        className={slots.trigger()}
       >
         <span>{item.label}</span>
         <ChevronDownIcon className={iconClassName("compact")} aria-hidden="true" />
       </Menu.Trigger>
       <Menu.Portal container={portalContainer}>
-        <Menu.Positioner className="paper-navbar__positioner" sideOffset={6} align="end">
-          <Menu.Popup className="paper-navbar__dropdown paper-elevation-floating">
+        <Menu.Positioner className={slots.positioner()} sideOffset={6} align="end">
+          <Menu.Popup className={cn(surface({ tone: "overlay", elevation: "floating" }), slots.dropdown())}>
             {item.links.map((link) => {
               const current = linkIsCurrent(link, currentPath);
               if (link.disabled) {
                 return (
                   <Menu.Item
                     key={link.id}
-                    className="paper-navbar__dropdown-item"
+                    className={slots.item()}
                     disabled
                     label={link.label}
                   >
-                    {link.icon ? <span className="paper-navigation__icon" aria-hidden="true">{link.icon}</span> : null}
+                    {link.icon ? <span className={navigationIcon} aria-hidden="true">{link.icon}</span> : null}
                     <span>{link.label}</span>
                   </Menu.Item>
                 );
@@ -96,7 +106,7 @@ function NavbarDropdownMenu({
               return (
                 <Menu.LinkItem
                   key={link.id}
-                  className="paper-navbar__dropdown-item"
+                  className={slots.item()}
                   label={link.label}
                   closeOnClick
                   aria-current={current ? "page" : undefined}
@@ -105,7 +115,7 @@ function NavbarDropdownMenu({
                     href: link.href,
                     children: (
                       <>
-                        {link.icon ? <span className="paper-navigation__icon" aria-hidden="true">{link.icon}</span> : null}
+                        {link.icon ? <span className={navigationIcon} aria-hidden="true">{link.icon}</span> : null}
                         <span>{link.label}</span>
                       </>
                     ),
@@ -132,7 +142,11 @@ export function Navbar({
   label = "Main navigation",
   menuLabel = "Menu",
   isLoading = false,
+  className,
+  contained = false,
+  classNames = {},
 }: NavbarProps) {
+  const slots = navbar({ contained });
   const menuId = `paper-navbar-${useId().replace(/:/gu, "")}`;
   const [mobileOpen, setMobileOpen] = useState(false);
   // False in server HTML and while hydrating it, where React would drop the trigger's clicks; true for client renders.
@@ -151,13 +165,17 @@ export function Navbar({
   };
 
   return (
-    <nav className="paper-navbar" aria-label={label} onKeyDown={mobileNavigation && mobileOpen ? onMobileKeyDown : undefined} onClick={mobileNavigation && mobileOpen ? onMobileClick : undefined}>
-      <div className="paper-navbar__inner">
-        <div className="paper-navbar__brand">
-          {renderNavigationLink(renderLink, { href: brandHref, children: brand })}
+    <nav className={slots.root({ className: [classNames.root, className] })} aria-label={label} onKeyDown={mobileNavigation && mobileOpen ? onMobileKeyDown : undefined} onClick={mobileNavigation && mobileOpen ? onMobileClick : undefined}>
+      <div className={slots.inner({ className: classNames.inner })}>
+        <div className={slots.brand({ className: classNames.brand })}>
+          {renderNavigationLink(renderLink, {
+            href: brandHref,
+            className: slots.brandLink({ className: classNames.brandLink }),
+            children: brand,
+          })}
         </div>
         {navigation.length > 0 ? (
-          <div className="paper-navbar__desktop-links">
+          <div className={slots.links({ className: classNames.links })}>
             {navigation.map((item) => {
               if (item.type === "dropdown") {
                 return <NavbarDropdownMenu key={item.id} item={item} currentPath={currentPath} renderLink={renderLink} />;
@@ -165,7 +183,7 @@ export function Navbar({
               const current = linkIsCurrent(item, currentPath);
               return renderNavigationLink(renderLink, {
                 href: item.href,
-                className: "paper-navbar__link",
+                className: slots.link({ className: classNames.link }),
                 "aria-current": current ? "page" : undefined,
                 "aria-disabled": item.disabled || undefined,
                 tabIndex: item.disabled ? -1 : undefined,
@@ -175,12 +193,14 @@ export function Navbar({
             })}
           </div>
         ) : null}
-        {actions ? <div className="paper-navbar__actions">{actions}</div> : null}
+        {actions ? (
+          <div className={navbar({ contained, alone: navigation.length === 0 }).actions({ className: classNames.actions })}>{actions}</div>
+        ) : null}
         {mobileNavigation ? (
           <button
             ref={mobileTriggerRef}
             type="button"
-            className="paper-navbar__mobile-trigger"
+            className={slots.mobileTrigger({ className: classNames.mobileTrigger })}
             aria-controls={menuId}
             aria-expanded={mobileOpen}
             aria-label={mobileOpen ? `Close ${menuLabel.toLocaleLowerCase()}` : `Open ${menuLabel.toLocaleLowerCase()}`}
@@ -198,7 +218,7 @@ export function Navbar({
       {mobileNavigation ? (
         <div
           id={menuId}
-          className="paper-navbar__mobile-panel"
+          className={navbar({ contained, open: mobileOpen }).panel({ className: classNames.panel })}
           data-open={mobileOpen ? "true" : "false"}
           hidden={!mobileOpen}
         >
@@ -207,7 +227,7 @@ export function Navbar({
             <div key={item.id}>
               {renderNavigationLink(renderLink, {
                 href: item.href,
-                className: "paper-navbar__mobile-link",
+                className: slots.mobileLink({ className: classNames.mobileLink }),
                 "aria-current": linkIsCurrent(item, currentPath) ? "page" : undefined,
                 "aria-disabled": item.disabled || undefined,
                 tabIndex: item.disabled ? -1 : undefined,
@@ -220,11 +240,11 @@ export function Navbar({
             </div>
           ) : (
             <section className="paper-navbar__mobile-group" key={item.id} aria-labelledby={`${menuId}-${item.id}`}>
-              <h2 id={`${menuId}-${item.id}`}>{item.label}</h2>
+              <h2 id={`${menuId}-${item.id}`} className={slots.groupTitle()}>{item.label}</h2>
               {item.links.map((link) =>
                 renderNavigationLink(renderLink, {
                   href: link.href,
-                  className: "paper-navbar__mobile-link",
+                  className: slots.mobileLink({ className: classNames.mobileLink }),
                   "aria-current": linkIsCurrent(link, currentPath) ? "page" : undefined,
                   "aria-disabled": link.disabled || undefined,
                   tabIndex: link.disabled ? -1 : undefined,
@@ -234,7 +254,7 @@ export function Navbar({
                   },
                   children: (
                     <>
-                      {link.icon ? <span className="paper-navigation__icon" aria-hidden="true">{link.icon}</span> : null}
+                      {link.icon ? <span className={navigationIcon} aria-hidden="true">{link.icon}</span> : null}
                       <span>{link.label}</span>
                     </>
                   ),
@@ -246,7 +266,7 @@ export function Navbar({
           {mobileFooter?.(closeMobile)}
         </div>
       ) : null}
-      {isLoading ? <div className="paper-navbar__loading" role="status"><span className="paper-sr-only">Loading navigation</span></div> : null}
+      {isLoading ? <div className={slots.loading()} role="status"><span className="sr-only">Loading navigation</span></div> : null}
     </nav>
   );
 }

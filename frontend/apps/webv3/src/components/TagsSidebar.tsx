@@ -1,6 +1,13 @@
 import { useStore } from '@tanstack/react-form'
 import { withPaperForm } from 'paper-ui'
 import { normalizeTag, parseTags, type LogDraft } from '../lib/log-draft'
+import { CheckIcon, ChevronRightIcon } from 'paper-ui/icons'
+
+const tagButton = [
+  'min-h-8 cursor-pointer border border-b-edge border-field-edge bg-raised px-2.5 py-1 text-fine text-ink',
+  'not-disabled:hover:bg-action-soft focus-visible:outline-ring focus-visible:outline-focus',
+  'focus-visible:outline-offset-ring disabled:cursor-default disabled:opacity-faded',
+].join(' ')
 
 type SuggestedTag = { tag: string; modifier?: true }
 
@@ -84,36 +91,48 @@ export const TagsSidebar = withPaperForm({
         form.setFieldValue('tags', [...current, tag])
       }
     }
-    const group = (title: string, items: SuggestedTag[]) => items.length ? (
-      <section className="log-tags-sidebar__group" aria-label={title}>
-        <h2>{title}</h2>
-        <div className="log-tags-sidebar__tags">
+    const group = (title: string, items: SuggestedTag[], hideTitle = false) => items.length ? (
+      <section aria-label={title}>
+        <h2 className={hideTitle ? 'sr-only' : 'mb-2 mt-0 font-body text-sm leading-150 font-semibold text-muted'}>{title}</h2>
+        <div className="flex flex-wrap gap-2">
           {items.map(({ tag }) => (
             <button
               key={tag}
               type="button"
-              className="log-tags-sidebar__tag"
+              className={tagButton}
               aria-pressed={selected.has(tag)}
               disabled={disabled || (!selected.has(tag) && atLimit)}
               onClick={() => toggle(tag)}
             >
               {tag.replaceAll('_', ' ')}
+              {selected.has(tag) ? <CheckIcon className="ms-1 inline-block size-3 align-middle" aria-hidden="true" /> : null}
             </button>
           ))}
         </div>
       </section>
     ) : null
 
-    const common = group('Common tags', suggested.filter(item => !item.modifier))
+    const common = suggested.filter(item => !item.modifier)
     return (
-      <div className="log-tags-sidebar">
+      <div className="grid gap-4">
         {group('Score modifiers', suggested.filter(item => item.modifier))}
-        {compact && common ? (
-          <details className="log-tags-sidebar__more">
-            <summary>Common tags</summary>
-            {common}
+        {compact && common.length ? (
+          <details className="group/more">
+            <summary
+              className={[
+                'inline-flex cursor-pointer list-none items-center gap-1.5 text-sm font-semibold text-muted',
+                'group-open/more:mb-2 [&::-webkit-details-marker]:hidden',
+              ].join(' ')}
+            >
+              <ChevronRightIcon
+                className="size-2.5 transition-transform duration-quick group-open/more:rotate-quarter"
+                aria-hidden="true"
+              />
+              Common tags
+            </summary>
+            {group('Common tags', common, true)}
           </details>
-        ) : common}
+        ) : group('Common tags', common)}
       </div>
     )
   },

@@ -56,7 +56,7 @@
   .paper-tabs__tab:disabled,
   .paper-tabs__tab[data-disabled] {
     color: var(--paper-color-text-muted);
-    cursor: not-allowed;
+    cursor: default;
     opacity: 0.56;
   }
 

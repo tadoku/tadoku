@@ -39,7 +39,7 @@
   .paper-toggle-select__option[aria-pressed="true"] { background: var(--paper-color-action-soft); }
   .paper-toggle-select__option[aria-pressed="true"] .paper-toggle-select__check { visibility: visible; }
   .paper-toggle-select__option:focus-visible { position: relative; z-index: 1; outline: var(--paper-focus-ring-width) solid var(--paper-color-focus-ring); outline-offset: calc(-1 * var(--paper-focus-ring-width)); }
-  .paper-toggle-select__option:disabled { color: var(--paper-color-text-muted); cursor: not-allowed; }
+  .paper-toggle-select__option:disabled { color: var(--paper-color-text-muted); cursor: default; }
   .paper-toggle-select__option:disabled .paper-toggle-select__text { color: var(--paper-color-text-muted); }
   .paper-field--invalid .paper-toggle-select__options { border-color: var(--paper-color-status-danger); }
 

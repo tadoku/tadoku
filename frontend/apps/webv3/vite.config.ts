@@ -1,10 +1,11 @@
+import stylex from '@stylexjs/unplugin'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import react from '@vitejs/plugin-react'
 import { nitro } from 'nitro/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  plugins: [tanstackStart({ serverFns: { disableCsrfMiddlewareWarning: true } }), nitro({ serverDir: './server', preset: 'node-server', devServer: { runner: 'self' }, traceDeps: ['jsdom'] }), react()],
+  plugins: [stylex.vite({ styleResolution: 'application-order', useCSSLayers: true }), tanstackStart({ serverFns: { disableCsrfMiddlewareWarning: true } }), nitro({ serverDir: './server', preset: 'node-server', devServer: { runner: 'self' }, traceDeps: ['jsdom'] }), react()],
   resolve: {
     dedupe: ['react', 'react-dom', '@tanstack/react-query'],
   },

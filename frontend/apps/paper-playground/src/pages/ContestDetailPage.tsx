@@ -1,11 +1,10 @@
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { DescriptionList, Flash, PageHeader, SectionHeading, StatusTag, buttonClassName } from 'paper-ui'
+import { buttonClassName, DescriptionList, Flash, PageHeader, SectionHeading, StatusTag, typography } from 'paper-ui'
 import { contestStatus } from '../data'
 import { renderLink } from '../routerLink'
 import { usePlayground } from '../state'
 import { ContestFacts, ContestNotFound, ContestPrimaryAction, ContestStatus } from './contestParts'
 import { contestPath, registrationIsOpen, useContestDate } from './contestRound'
-import './contests.css'
 
 export function ContestDetailPage() {
   const { contestId } = useParams()
@@ -27,15 +26,15 @@ export function ContestDetailPage() {
     />
     {params.has('registered') && joined ? <Flash variant="success" title="Registration saved">You’re registered for {contest.title}. Choose a registered language when you log activity.</Flash> : null}
     {params.has('saved') ? <Flash variant="success" title="Contest saved">Your contest details have been updated.</Flash> : null}
-    <div className="page-columns contest-detail-layout"><section className="contest-detail-body">
+    <div className="grid grid-cols-main-aside items-start gap-9 *:min-w-0 max-tablet:grid-cols-single max-tablet:gap-7 mt-8"><section className="[&>p]:max-w-measure-detail">
       <SectionHeading level={2} title="Taking part" /><p>Join this contest, then submit your reading or listening as you go. Choose a registered language and one of the activities below when you log.</p>
-      <DescriptionList className="contest-eligibility" items={[{ label: 'Languages', value: contest.languages.join(', ') }, { label: 'Activities', value: contest.activities.join(' and ') }]} />
+      <DescriptionList className="my-6 grid-cols-pair gap-6 border-y border-rule py-5 max-md:grid-cols-single max-md:gap-4" items={[{ label: 'Languages', value: contest.languages.join(', ') }, { label: 'Activities', value: contest.activities.join(' and ') }]} />
       {contest.unlisted ? <Flash variant="information" title="Accessible with the link">Anyone with this link can view and join while registration is open. This contest is excluded from public discovery; it is not a private space.</Flash> : null}
       {joined ? <p><strong>You are registered.</strong>{registrations[contest.id]?.length ? ` Your languages: ${registrations[contest.id].join(', ')}.` : ''}</p> : null}
       <div className="flex flex-wrap gap-3 my-6"><ContestPrimaryAction contest={contest} asOf={asOf} prominent /><Link className={buttonClassName({ variant: 'outline' })} to={contestPath(contest, asOf, '/leaderboard')}>View standings</Link>{canManage ? <Link className={buttonClassName({ variant: 'ghost' })} to={contestPath(contest, asOf, '/edit')}>Manage contest</Link> : null}</div>
       {joined && registrationIsOpen(contest, asOf) && contestStatus(contest, asOf) === 'live' ? <p><Link className="text-link" to={contestPath(contest, asOf, '/registration')}>Update your registered languages</Link></p> : null}
-      <p className="muted">Personal tracking stays available outside contest rounds. A contest’s eligibility and saved score can differ from your personal total.</p><Link className="text-link" to="/guide/scoring">Understand scores and eligibility</Link>
-    </section><aside className="contest-detail-timeline"><h2 className="paper-type-component">Dates &amp; registration</h2><ContestFacts contest={contest} asOf={asOf} /><p className="muted">Times are shown in your local time zone. Registration can close before a live round ends; registered participants can continue logging until the end.</p></aside></div>
+      <p className="text-muted">Personal tracking stays available outside contest rounds. A contest’s eligibility and saved score can differ from your personal total.</p><Link className="text-link" to="/guide/scoring">Understand scores and eligibility</Link>
+    </section><aside className="border border-rule bg-paper p-6 [&>h2]:mb-5 [&>h2]:mt-0 [&>p]:m-0 [&>p]:text-fine [&>p]:leading-165 [&>:last-child]:mb-0"><h2 className={typography({ role: 'component' })}>Dates &amp; registration</h2><ContestFacts contest={contest} asOf={asOf} /><p className="text-muted">Times are shown in your local time zone. Registration can close before a live round ends; registered participants can continue logging until the end.</p></aside></div>
   </>
 }
 

@@ -21,7 +21,7 @@ export function ContestPrimaryAction({ contest, asOf, prominent = false }: { con
   return <Link className={buttonClassName({ variant: prominent ? 'default' : 'outline' })} to={target}>{label}</Link>
 }
 export function ContestFacts({ contest, asOf }: { contest: SampleContest; asOf: string }) {
-  return <DescriptionList className="contest-facts" items={[
+  return <DescriptionList className="contest-facts mb-5" items={[
     { label: 'Round begins', value: formatDateTime(contestStart(contest.start)) },
     { label: 'Round ends', value: formatDateTime(contestEnd(contest.end)) },
     { label: 'Joining this round', value: registrationIsOpen(contest, asOf) ? `Open until ${formatDateTime(contestEnd(contest.registrationDeadline))}` : 'Registration closed' },

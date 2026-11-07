@@ -2,12 +2,11 @@ import { useStore } from '@tanstack/react-form'
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { usePaperForm, Button, EmptyState, Flash, PageHeader, buttonClassName, useToast } from 'paper-ui'
-import { ChevronDownIcon } from 'paper-ui/icons'
+import { ChevronDownIcon, iconClassName } from 'paper-ui/icons'
 import { compatibleModifiers, contestStatus, formatNumber, modifierRates, personalScoreExplanation, sampleToday, scoreLog, scoreSubmission, supportedLanguages, type Activity, type LogModifier, type LogUnit, type SampleLog } from '../data'
 import { renderLink } from '../routerLink'
 import { usePlayground } from '../state'
 import { RecentLogPicker } from './RecentLogPicker'
-import './log-editor.css'
 
 type LogFields = {
   title: string; language: string; activity: Activity; amount: number | string
@@ -126,30 +125,30 @@ function LogForm({ existing }: { existing?: SampleLog }) {
   const quantityLabel = activity === 'Listening' ? 'Minutes listened' : unit === 'sentences' ? 'Sentences read' : unit === 'characters' ? 'Characters read' : 'Pages read'
   const estimate = Number.isFinite(amount) && amount > 0 ? `${formatNumber(scoreLog({ activity, language, amount, unit, modifiers }))} points` : 'Enter an amount'
 
-  return <section className="log-editor">
+  return <section className="mx-auto w-full max-w-log-editor lg:max-w-log-editor-wide">
     <PageHeader backLink={{ href: detailHref, label: existing ? 'Back to log' : 'Your activity log' }} renderLink={renderLink} title={existing ? 'Edit activity' : 'Log activity'}>
-      <p className="log-editor__step" ref={stepHeading} tabIndex={-1}>{step === 1 ? 'Log details' : 'Choose contests'} · {step} of 2</p>
+      <p className="m-0 text-sm text-muted" ref={stepHeading} tabIndex={-1}>{step === 1 ? 'Log details' : 'Choose contests'} · {step} of 2</p>
     </PageHeader>
-    <div className="log-editor__layout">
-    <methods.AppForm><methods.Form className="log-editor__form">
-      <div className="log-editor__step-content" hidden={step !== 1}>
+    <div className="min-w-0 lg:grid lg:grid-cols-log-editor lg:items-start lg:gap-12">
+    <methods.AppForm><methods.Form className="grid min-w-0 gap-5 max-sm:gap-4">
+      <div className="grid min-w-0 gap-5 max-sm:gap-4" hidden={step !== 1}>
         {!existing && <RecentLogPicker logs={app.logs.filter(log => log.userId === app.userId)} onSelect={applyRecent} />}
-        {origin && <div className="log-editor__reuse-notice" role="status"><div><strong>Using {logTitle(origin)}</strong><p>Details copied. Enter the amount for this new log.</p></div>{beforePrefill && <Button variant="ghost" onClick={undoRecent}>Undo</Button>}</div>}
-        <fieldset className="log-editor__section"><legend>What are you logging?</legend><div className="log-editor__fields">
-          <div className="log-editor__row"><methods.AppField name="language" validators={existing ? {} : { onChange: ({ value }) => { if (!value) return 'Choose an option.'; } }}>{field => <field.Select label="Language" disabled={Boolean(existing)} required={!existing} options={supportedLanguages.map(value => ({ value, label: value }))} />}</methods.AppField><methods.AppField name="activity">{field => <field.Select label="Activity" disabled={Boolean(existing)} options={[{ value: 'Reading', label: 'Reading' }, { value: 'Listening', label: 'Listening' }]} />}</methods.AppField></div>
-          {existing && <p className="log-editor__hint">Language and activity stay fixed for existing entries.</p>}
+        {origin && <div className="flex items-center justify-between gap-4 border-s-rail border-link bg-paper px-4 py-3 text-sm max-sm:items-start max-sm:gap-2 [&>div]:min-w-0 [&>div]:wrap-anywhere [&_p]:mb-0 [&_p]:mt-1 [&>.paper-button]:shrink-0" role="status"><div><strong>Using {logTitle(origin)}</strong><p>Details copied. Enter the amount for this new log.</p></div>{beforePrefill && <Button variant="ghost" onClick={undoRecent}>Undo</Button>}</div>}
+        <fieldset className="m-0 min-w-0 border-0 bg-paper p-6 max-sm:px-4 max-sm:py-5 [&>legend]:float-left [&>legend]:mb-5 [&>legend]:w-full [&>legend]:p-0 [&>legend]:text-lead [&>legend]:leading-150 [&>legend]:font-bold [&>legend+*]:clear-both"><legend>What are you logging?</legend><div className="log-editor__fields grid min-w-0 gap-5 [&>p]:m-0">
+          <div className="grid grid-cols-halves items-start gap-4 max-sm:grid-cols-single"><methods.AppField name="language" validators={existing ? {} : { onChange: ({ value }) => { if (!value) return 'Choose an option.'; } }}>{field => <field.Select label="Language" disabled={Boolean(existing)} required={!existing} options={supportedLanguages.map(value => ({ value, label: value }))} />}</methods.AppField><methods.AppField name="activity">{field => <field.Select label="Activity" disabled={Boolean(existing)} options={[{ value: 'Reading', label: 'Reading' }, { value: 'Listening', label: 'Listening' }]} />}</methods.AppField></div>
+          {existing && <p className="m-0 text-fine leading-160 text-muted">Language and activity stay fixed for existing entries.</p>}
           <methods.AppField name="title">{field => <field.Input label="What did you read or listen to?" hint="Optional. A book, episode, article, or anything you enjoyed." maxLength={180} />}</methods.AppField>
         </div></fieldset>
-        <fieldset className="log-editor__section"><legend>Scoring</legend><div className="log-editor__fields">
-          <div className="log-editor__amount"><methods.AppField name="amount" validators={{ onChange: ({ value }) => { if (String(value) === '' || !Number.isFinite(Number(value))) return "This field is required."; if (Number(value) < .01) return 'Enter an amount greater than zero.'; if (Number(value) > 1000000) return 'Check this amount.'; } }}>{field => <field.Input label={quantityLabel} type="number" min="0.01" step="any" placeholder="0" required />}</methods.AppField>{activity === 'Reading' && <methods.AppField name="unit">{field => <field.Select label="Unit" options={['pages', 'sentences', 'characters'].map(value => ({ value, label: value }))} />}</methods.AppField>}</div>
-          {origin && <p className="log-editor__hint">Previous entry: {formatNumber(origin.amount)} {origin.unit}.</p>}
-          {activity === 'Reading' && unit !== 'pages' ? <p className="log-editor__hint">No score modifiers for this unit.</p> : <methods.AppField name="modifiers">{field => <field.ToggleSelect label="Score modifiers" options={(activity === 'Reading' ? readingModifiers : ['Passive listening'] as LogModifier[]).map(value => ({ value, label: value, description: `×${modifierRates[value]}` }))} />}</methods.AppField>}
-          <div className="log-editor__score" aria-live="polite"><span>Estimated score</span><strong data-empty={!Number.isFinite(amount) || amount <= 0 || undefined}>{estimate}</strong></div>
-          <Link className="text-link log-editor__scoring-link" to="/guide/scoring">How scoring works</Link>
+        <fieldset className="m-0 min-w-0 border-0 bg-paper p-6 max-sm:px-4 max-sm:py-5 [&>legend]:float-left [&>legend]:mb-5 [&>legend]:w-full [&>legend]:p-0 [&>legend]:text-lead [&>legend]:leading-150 [&>legend]:font-bold [&>legend+*]:clear-both"><legend>Scoring</legend><div className="log-editor__fields grid min-w-0 gap-5 [&>p]:m-0">
+          <div className="grid grid-cols-amount items-start gap-3 [&>:only-child]:col-span-full max-sm:grid-cols-amount-narrow max-sm:gap-2"><methods.AppField name="amount" validators={{ onChange: ({ value }) => { if (String(value) === '' || !Number.isFinite(Number(value))) return "This field is required."; if (Number(value) < .01) return 'Enter an amount greater than zero.'; if (Number(value) > 1000000) return 'Check this amount.'; } }}>{field => <field.Input label={quantityLabel} type="number" min="0.01" step="any" placeholder="0" required />}</methods.AppField>{activity === 'Reading' && <methods.AppField name="unit">{field => <field.Select label="Unit" options={['pages', 'sentences', 'characters'].map(value => ({ value, label: value }))} />}</methods.AppField>}</div>
+          {origin && <p className="m-0 text-fine leading-160 text-muted">Previous entry: {formatNumber(origin.amount)} {origin.unit}.</p>}
+          {activity === 'Reading' && unit !== 'pages' ? <p className="m-0 text-fine leading-160 text-muted">No score modifiers for this unit.</p> : <methods.AppField name="modifiers">{field => <field.ToggleSelect label="Score modifiers" options={(activity === 'Reading' ? readingModifiers : ['Passive listening'] as LogModifier[]).map(value => ({ value, label: value, description: `×${modifierRates[value]}` }))} />}</methods.AppField>}
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 border-t border-rule pt-4.5 text-sm lg:hidden [&_strong]:text-lg [&_strong]:tabular-nums [&_strong[data-empty]]:text-em [&_strong[data-empty]]:font-regular [&_strong[data-empty]]:text-muted [&_p]:m-0" aria-live="polite"><span>Estimated score</span><strong data-empty={!Number.isFinite(amount) || amount <= 0 || undefined}>{estimate}</strong></div>
+          <Link className="text-link justify-self-start text-fine lg:hidden" to="/guide/scoring">How scoring works</Link>
         </div></fieldset>
-        <details className="log-editor__disclosure log-editor__metadata" open={metadataOpen} onToggle={event => setMetadataOpen(event.currentTarget.open)}>
-          <summary><span>Metadata{values.tags?.length ? <span className="log-editor__metadata-count"> · {values.tags.length} {values.tags.length === 1 ? 'tag' : 'tags'}</span> : null}</span><ChevronDownIcon className="paper-icon-compact" aria-hidden="true" /></summary>
-          <div className="log-editor__fields">
+        <details className="min-w-0 bg-paper [&>summary]:flex [&>summary]:min-h-14 [&>summary]:cursor-pointer [&>summary]:list-none [&>summary]:items-center [&>summary]:justify-between [&>summary]:gap-4 [&>summary]:px-6 [&>summary]:py-3 [&>summary]:text-ui [&>summary]:font-semibold [&>summary]:text-ink [&>summary::-webkit-details-marker]:hidden [&>summary>svg]:shrink-0 [&>summary>svg]:text-muted [&[open]>summary>svg]:rotate-flip [&>summary:focus-visible]:outline-ring [&>summary:focus-visible]:outline-focus [&>summary:focus-visible]:outline-offset-ring [&>:not(summary)]:px-6 max-sm:[&>summary]:px-4 max-sm:[&>:not(summary)]:px-4 [&>div]:pb-6 [&>div]:pt-1 max-sm:[&>div]:pb-5" open={metadataOpen} onToggle={event => setMetadataOpen(event.currentTarget.open)}>
+          <summary><span>Metadata{values.tags?.length ? <span className="text-fine font-regular text-muted"> · {values.tags.length} {values.tags.length === 1 ? 'tag' : 'tags'}</span> : null}</span><ChevronDownIcon className={iconClassName('compact')} aria-hidden="true" /></summary>
+          <div className="log-editor__fields grid min-w-0 gap-5 [&>p]:m-0">
             <methods.AppField name="tags">{field => <field.TagsInput label="Tags" options={[...new Set(['fiction', 'bookclub', 'daily', 'podcast', ...app.logs.filter(log => log.userId === app.userId).flatMap(log => log.tags)])]} placeholder="Type a tag…" hint="Type a tag and press Enter to add it." />}</methods.AppField>
             {activity === 'Reading' && <methods.AppField name="minutes" validators={{ onChange: ({ value }) => { const result = (value => value === '' || Number.isNaN(value) || Number.isFinite(Number(value)) && Number(value) >= 0 || 'Use zero or a positive duration.')(value); return result === true ? undefined : result || undefined; } }}>{field => <field.Input label="Time spent reading" type="number" min="0" step="1" hint="Optional, in minutes." />}</methods.AppField>}
             <methods.AppField name="note">{field => <field.TextArea label="Notes" rows={3} hint="Optional. Keep a thought, a new word, or where you left off." />}</methods.AppField>
@@ -157,19 +156,19 @@ function LogForm({ existing }: { existing?: SampleLog }) {
           </div>
         </details>
       </div>
-      <div className="log-editor__step-content" hidden={step !== 2}>
-        <div className="log-editor__review"><strong>{values.title?.trim() || `${language} ${activity.toLocaleLowerCase()}`}</strong><p>{language} · {activity} · {formatNumber(amount)} {unit}</p><span>{estimate}</span></div>
-        <div className="log-editor__section"><methods.AppField name="date" validators={{ onChange: ({ value }) => { if (!value) return "This field is required."; const result = (value => String(value) <= today || 'Choose today or an earlier date.')(value); return result === true ? undefined : result || undefined; } }}>{field => <field.Input label="Activity date" type="date" max={today} required hint="The day you read or listened." />}</methods.AppField></div>
-        <fieldset className="log-editor__section"><legend>Choose contests</legend><p className="log-editor__hint">Choose where this entry counts. It always stays in your personal record.</p><div className="log-editor__contests">{eligible.length ? eligible.map(contest => <methods.AppField key={contest.id} name="submissions">{field => <field.Checkbox  value={contest.id} label={contest.title} />}</methods.AppField>) : <p className="log-editor__hint">No joined contests accept this language, activity, and date. You can still save your personal record.</p>}</div>
+      <div className="grid min-w-0 gap-5 max-sm:gap-4" hidden={step !== 2}>
+        <div className="border-b border-rule pb-5 pt-1 [&>strong]:mb-2 [&>strong]:mt-0 [&>strong]:block [&>strong]:text-lg [&>strong]:wrap-anywhere [&>span]:mt-3 [&>span]:block [&>span]:font-semibold [&>span]:tabular-nums lg:[&>span]:hidden [&_p]:mb-0 [&_p]:mt-1 [&_p]:text-sm [&_p]:text-muted"><strong>{values.title?.trim() || `${language} ${activity.toLocaleLowerCase()}`}</strong><p>{language} · {activity} · {formatNumber(amount)} {unit}</p><span>{estimate}</span></div>
+        <div className="m-0 min-w-0 border-0 bg-paper p-6 max-sm:px-4 max-sm:py-5 [&>legend]:float-left [&>legend]:mb-5 [&>legend]:w-full [&>legend]:p-0 [&>legend]:text-lead [&>legend]:leading-150 [&>legend]:font-bold [&>legend+*]:clear-both"><methods.AppField name="date" validators={{ onChange: ({ value }) => { if (!value) return "This field is required."; const result = (value => String(value) <= today || 'Choose today or an earlier date.')(value); return result === true ? undefined : result || undefined; } }}>{field => <field.Input label="Activity date" type="date" max={today} required hint="The day you read or listened." />}</methods.AppField></div>
+        <fieldset className="m-0 min-w-0 border-0 bg-paper p-6 max-sm:px-4 max-sm:py-5 [&>legend]:float-left [&>legend]:mb-5 [&>legend]:w-full [&>legend]:p-0 [&>legend]:text-lead [&>legend]:leading-150 [&>legend]:font-bold [&>legend+*]:clear-both"><legend>Choose contests</legend><p className="m-0 text-fine leading-160 text-muted">Choose where this entry counts. It always stays in your personal record.</p><div className="mt-5 grid gap-5 [&>div]:min-w-0">{eligible.length ? eligible.map(contest => <methods.AppField key={contest.id} name="submissions">{field => <field.Checkbox  value={contest.id} label={contest.title} />}</methods.AppField>) : <p className="m-0 text-fine leading-160 text-muted">No joined contests accept this language, activity, and date. You can still save your personal record.</p>}</div>
           {closedSubmissions.length > 0 && <Flash title="Finished contests keep their saved scores">Editing this personal record leaves its finished-contest snapshots unchanged.</Flash>}
         </fieldset>
       </div>
-      <div className="log-editor__actions">{step === 1 ? <><Link to={detailHref} className={buttonClassName({ variant: 'ghost' })}>Cancel</Link><Button type="submit">Next</Button></> : <><Button variant="ghost" onClick={() => setStep(1)}>Back</Button><Button type="submit">{existing ? 'Save changes' : 'Save activity'}</Button></>}</div>
+      <div className="flex flex-wrap items-center justify-end gap-3 pt-1">{step === 1 ? <><Link to={detailHref} className={buttonClassName({ variant: 'ghost' })}>Cancel</Link><Button type="submit">Next</Button></> : <><Button variant="ghost" onClick={() => setStep(1)}>Back</Button><Button type="submit">{existing ? 'Save changes' : 'Save activity'}</Button></>}</div>
     </methods.Form></methods.AppForm>
-    <aside className="log-editor__aside" aria-labelledby="log-score-heading">
+    <aside className="hidden lg:sticky lg:top-6 lg:block lg:min-w-0 lg:border-s lg:border-rule lg:py-1 lg:pe-0 lg:ps-6 lg:[&_h2]:mb-4 lg:[&_h2]:mt-0 lg:[&_h2]:font-body lg:[&_h2]:text-base lg:[&_h2]:leading-150 lg:[&_p]:mb-4 lg:[&_p]:mt-0 lg:[&_p]:text-sm lg:[&_p]:leading-170 lg:[&_p]:text-muted lg:[&>a]:text-sm" aria-labelledby="log-score-heading">
       <h2 id="log-score-heading">Estimated score</h2>
-      <p className="log-editor__aside-score" data-empty={!Number.isFinite(amount) || amount <= 0 || undefined} aria-live="polite">{estimate}</p>
-      {Number.isFinite(amount) && amount > 0 && <p className="log-editor__aside-basis">{personalScoreExplanation({ activity, language, amount, unit, modifiers })}</p>}
+      <p className="log-editor__aside-score lg:[&&]:font-display lg:[&&]:text-figure lg:[&&]:leading-140 lg:[&&]:font-bold lg:[&&]:tabular-nums lg:[&&]:text-ink lg:[&&[data-empty]]:font-body lg:[&&[data-empty]]:text-base lg:[&&[data-empty]]:font-regular lg:[&&[data-empty]]:text-muted" data-empty={!Number.isFinite(amount) || amount <= 0 || undefined} aria-live="polite">{estimate}</p>
+      {Number.isFinite(amount) && amount > 0 && <p className="log-editor__aside-basis lg:border-b lg:border-rule-subtle lg:pb-4">{personalScoreExplanation({ activity, language, amount, unit, modifiers })}</p>}
       <p>Contest scores may use a different rule.</p>
       <Link className="text-link" to="/guide/scoring">How scoring works</Link>
     </aside>

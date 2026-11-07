@@ -52,6 +52,7 @@ var scoringEnabledHandler http.Handler
 var authenticationJWKS *httptest.Server
 var flipt *testflipt.Fixture
 var leaderboardValkey *leaderboardValkeyFixture
+var gravatar *gravatarFixture
 
 const callbackToken = "test-oathkeeper-callback-token"
 
@@ -90,6 +91,8 @@ func runTests(m *testing.M) (code int) {
 	defer cancel()
 	flipt = testflipt.New()
 	defer flipt.Close()
+	gravatar = newGravatarFixture()
+	defer gravatar.close()
 	leaderboardValkey, err = newLeaderboardValkeyFixture(ctx)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -277,6 +280,11 @@ func newTestRouterWithLeaderboardService(
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	profileService := featureprofile.NewService(profileRepository, identities)
+	avatars := featureprofile.NewAvatars(
+		identities,
+		featureprofile.NewAvatarCache(leaderboardValkey.client, time.Second),
+		featureprofile.NewGravatar(gravatar.server.URL, &http.Client{Timeout: gravatarTimeout}),
+	)
 	featureFlagsService := featureflags.NewEvaluator(flipt, nil)
 
 	registry := prometheus.NewRegistry()
@@ -310,6 +318,7 @@ func newTestRouterWithLeaderboardService(
 		Pages:            pagesService,
 		Posts:            postsService,
 		Profile:          profileService,
+		Avatars:          avatars,
 		Scoring:          scoringService,
 		FeatureFlags:     featureFlagsService,
 		DB:               pool,

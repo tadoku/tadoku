@@ -116,7 +116,7 @@ func (f *leaderboardValkeyFixture) reset(ctx context.Context) error {
 
 func (f *leaderboardValkeyFixture) cacheKeys(ctx context.Context) ([]string, error) {
 	var keys []string
-	for _, pattern := range []string{"leaderboard:*", "tenant:*:leaderboard:*", "tenant:*:identity:*"} {
+	for _, pattern := range []string{"leaderboard:*", "tenant:*:leaderboard:*", "tenant:*:identity:*", "tenant:*:profile:*"} {
 		matched, err := f.keysMatching(ctx, pattern)
 		if err != nil {
 			return nil, err

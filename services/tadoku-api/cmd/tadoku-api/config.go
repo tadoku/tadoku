@@ -27,6 +27,7 @@ type config struct {
 	OathkeeperAuthzToken    string `validate:"required" envconfig:"oathkeeper_authz_token"`
 	OathkeeperURL           string `envconfig:"oathkeeper_url" default:"http://oathkeeper-proxy.default:4455"`
 	ServiceAccountTokenPath string `validate:"required" envconfig:"service_account_token_path" default:"/var/run/secrets/tokens/token"`
+	GravatarURL             string `envconfig:"gravatar_url" default:"https://gravatar.com"`
 
 	FliptEnabled         bool          `envconfig:"flipt_enabled" default:"false"`
 	FliptURL             string        `envconfig:"flipt_url" default:"http://oathkeeper-proxy.default:4455/flipt"`
@@ -103,6 +104,11 @@ func loadConfig() (config, error) {
 	}
 
 	cfg.JWKS, err = providerBaseURL("JWKS", cfg.JWKS)
+	if err != nil {
+		return config{}, err
+	}
+
+	cfg.GravatarURL, err = providerBaseURL("GravatarURL", cfg.GravatarURL)
 	if err != nil {
 		return config{}, err
 	}

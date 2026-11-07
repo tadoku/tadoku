@@ -63,6 +63,8 @@ type application struct {
 	fliptEvaluation *http.Client
 }
 
+const gravatarRequestTimeout = 3 * time.Second
+
 func noRedirect(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }
 
 func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, error) {
@@ -232,6 +234,15 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	profileService := profile.NewService(profileRepository, identityReader)
+	avatars := profile.NewAvatars(
+		identityReader,
+		profile.NewAvatarCache(valkeyClient, cfg.ValkeyTimeout),
+		profile.NewGravatar(cfg.GravatarURL, &http.Client{
+			Transport:     transport,
+			Timeout:       gravatarRequestTimeout,
+			CheckRedirect: noRedirect,
+		}),
+	)
 	featureFlagService := featureflags.NewEvaluator(fliptProvider, featureFlagMetrics)
 
 	scoringObserver := observability.NewScoringObserver(metrics, logger, cfg.ScoringEngineEnabled)
@@ -260,6 +271,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		Pages:            pagesService,
 		Posts:            postsService,
 		Profile:          profileService,
+		Avatars:          avatars,
 		Scoring:          scoringService,
 		FeatureFlags:     featureFlagService,
 		DB:               pool,

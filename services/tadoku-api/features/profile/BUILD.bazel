@@ -4,6 +4,9 @@ go_library(
     name = "profile",
     srcs = [
         "domain.go",
+        "profile_avatar_cache.go",
+        "profile_avatar_service.go",
+        "profile_gravatar.go",
         "profile_repository.go",
         "profile_service.go",
     ],
@@ -16,10 +19,12 @@ go_library(
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",
+        "//services/tadoku-api/internal/tenant",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//:pgx",
         "@com_github_jackc_pgx_v5//pgtype",
         "@com_github_jackc_pgx_v5//pgxpool",
+        "@com_github_valkey_io_valkey_go//:valkey-go",
     ],
 )
 

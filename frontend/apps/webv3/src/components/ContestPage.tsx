@@ -9,6 +9,7 @@ import { viewerKey, viewerQueryOptions } from '../lib/session'
 import { ContestBoardBody, RoundStatus } from './ContestLeaderboard'
 import { ContestUpdates } from './ContestUpdates'
 import { renderLink } from './router-link'
+import { standingsHeader } from './standings-styles'
 
 export type ContestView = 'standings' | 'updates'
 
@@ -69,7 +70,7 @@ function ContestBoardPage({ board, today, view, page }: { board: ContestBoard; t
   return (
     <div className="standings-page">
       <PageHeader
-        className="standings-header"
+        className={standingsHeader}
         backLink={contest.official
           ? { href: contestsHref.official(), label: 'Official contests' }
           : { href: contestsHref.community(), label: 'Community contests' }}

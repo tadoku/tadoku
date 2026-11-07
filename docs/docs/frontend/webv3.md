@@ -142,10 +142,10 @@ The development base is `https://next.tadoku.dev.lab`; a dev-cli branch uses
 `https://<route>.next.tadoku.dev.lab`. Run `dev up --owner <owner>` from the
 repository root, then `dev url --owner <owner> --host next.tadoku.dev.lab '/'`.
 The overlay uses Node22 and Vite on port 3000, builds `paper-ui` initially and
-watches its source, styles and assets while Vite provides HMR. Generated
+watches its source, token generator and assets while Vite provides HMR. Generated
 `.output`, `.tanstack` and `dist` files do not enter source synchronization.
 The overlay sets `NODE_OPTIONS=--max-old-space-size=768` for the initial Paper declaration
-build, within its 1536 MiB pod limit. Its watcher rebuilds JavaScript, styles and
+build, within its 1536 MiB pod limit. Its watcher rebuilds JavaScript, the generated theme and
 assets without declaration generation or output cleaning, preserving the initial
 declaration files and avoiding a declaration worker alongside Vite. Run
 `pnpm --filter paper-ui build` after changing a Paper component's public types.

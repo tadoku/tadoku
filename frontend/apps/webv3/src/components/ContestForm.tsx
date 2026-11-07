@@ -1,7 +1,7 @@
 import { useStore } from '@tanstack/react-form'
 import { Link, useHydrated, useNavigate } from '@tanstack/react-router'
 import type { ImmersionContestConfigurationOptions } from 'api-client'
-import { Button, PageHeader, Surface, usePaperForm } from 'paper-ui'
+import { Button, formFooter, PageHeader, Surface, usePaperForm } from 'paper-ui'
 import { useMemo, useState } from 'react'
 import { contestDraftSchema, firstContestDraft, isOfficial, toNewContest } from '../lib/contest-form'
 import { contestsHref, useCreateContest } from '../lib/contests'
@@ -9,6 +9,8 @@ import { useLinks } from '../lib/links'
 import type { LogFailure } from '../lib/logs'
 import { useLoginUrl } from '../lib/session'
 import { renderLink } from './router-link'
+import { formControls, formGroup, formRow } from './form-styles'
+import { recordSurface } from './standings-styles'
 
 const searchable = (name: string, query: string) =>
   name.toLowerCase().replace(/[^a-z0-9]/g, '').includes(query.toLowerCase())
@@ -48,16 +50,16 @@ export function ContestForm({ options, viewerId, admin }: {
   const disabled = !hydrated || pending
 
   return (
-    <div className="goal-page">
+    <div>
       <PageHeader
         title="Create new contest"
         backLink={{ href: contestsHref.official(), label: 'Contests' }}
         renderLink={renderLink}
       />
-      <Surface className="log-surface">
+      <Surface className={recordSurface}>
         <form.AppForm>
-          <form.Form className="goal-form" aria-busy={pending}>
-            <fieldset className="goal-form__controls" disabled={disabled}>
+          <form.Form className="min-w-0" aria-busy={pending}>
+            <fieldset className={formControls} disabled={disabled}>
               <form.AppField name="title">
                 {field => <field.Input label="Title" required />}
               </form.AppField>
@@ -70,9 +72,9 @@ export function ContestForm({ options, viewerId, admin }: {
                 )}
               </form.AppField>
 
-              <fieldset className="contest-form-group">
+              <fieldset className={formGroup}>
                 <legend>Schedule</legend>
-                <div className="goal-form__row">
+                <div className={formRow}>
                   <form.AppField name="contestStart">
                     {field => <field.Input label="Start date (UTC)" type="date" required />}
                   </form.AppField>
@@ -85,7 +87,7 @@ export function ContestForm({ options, viewerId, admin }: {
                 </form.AppField>
               </fieldset>
 
-              <fieldset className="contest-form-group">
+              <fieldset className={formGroup}>
                 <legend>Eligibility</legend>
                 <form.AppField name="languages">
                   {field => (
@@ -112,7 +114,7 @@ export function ContestForm({ options, viewerId, admin }: {
                   )}
                 </form.AppField>
               </fieldset>
-              <fieldset className="contest-form-group">
+              <fieldset className={formGroup}>
                 <legend>Visibility</legend>
                 {options.can_create_official_round && !unlisted ? (
                   <form.AppField name="official">
@@ -128,8 +130,8 @@ export function ContestForm({ options, viewerId, admin }: {
             </fieldset>
 
             {failure ? <CreateFailure failure={failure} /> : null}
-            <div className="paper-form-footer">
-              <div className="paper-form-footer__actions">
+            <div className={formFooter().root()}>
+              <div className={formFooter().actions()}>
                 <Button type="submit" disabled={disabled}>{pending ? 'Creating…' : 'Create contest'}</Button>
                 <Link className="text-link" to="/contests/official/$" params={{ _splat: '1' }}>Cancel</Link>
               </div>

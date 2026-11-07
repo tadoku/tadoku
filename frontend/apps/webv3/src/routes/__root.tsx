@@ -7,14 +7,8 @@ import { AppShell, themeBootScript } from '../components/AppShell'
 import { ErrorView, NotFoundView, PendingView } from '../components/StatusViews'
 import { getPageUrls } from '../lib/links'
 import { viewerQueryOptions } from '../lib/session'
-import 'paper-ui/styles.css'
+import { bodyClassName, documentClassName } from 'paper-ui'
 import '../styles.css'
-import '../shell.css'
-import '../contests.css'
-import '../profile.css'
-import '../content.css'
-import '../contest-admin.css'
-import '../log-form.css'
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   loader: async ({ context }) => {
@@ -36,14 +30,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootDocument({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={documentClassName} suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
         <HeadContent />
       </head>
-      <body>
+      <body className={bodyClassName}>
         <AppShell>{children}</AppShell>
         <Scripts />
       </body>

@@ -1,12 +1,13 @@
+import { cn, measure, stack, typography } from 'paper-ui'
 export default function ReadingPage() {
   return (
-    <article className="paper-stack paper-measure">
-      <h2 className="paper-type-page">Your reading</h2>
-      <p className="paper-type-body">Small sessions add up.</p>
-      <section className="paper-stack">
-        <h3 className="paper-type-section">Recent activity</h3>
-        <p className="paper-type-body">You read 48 pages of コンビニ人間.</p>
-        <p className="paper-type-metadata">Japanese · September 5</p>
+    <article className={cn(stack(), measure())}>
+      <h2 className={typography({ role: 'page' })}>Your reading</h2>
+      <p className={typography({ role: 'body' })}>Small sessions add up.</p>
+      <section className={stack()}>
+        <h3 className={typography({ role: 'section' })}>Recent activity</h3>
+        <p className={typography({ role: 'body' })}>You read 48 pages of コンビニ人間.</p>
+        <p className={typography({ role: 'metadata' })}>Japanese · September 5</p>
       </section>
     </article>
   )

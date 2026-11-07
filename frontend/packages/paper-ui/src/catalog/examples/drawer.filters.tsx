@@ -1,4 +1,4 @@
-import { Button, Drawer, usePaperForm } from 'paper-ui'
+import { Button, Drawer, stack, usePaperForm } from 'paper-ui'
 import { useId, useState } from 'react'
 
 export default function DrawerExample() {
@@ -13,7 +13,7 @@ export default function DrawerExample() {
     },
   })
   return (
-    <div className="paper-stack">
+    <div className={stack()}>
       <p role="status">Showing: {language}</p>
       <methods.AppForm>
         <Drawer
@@ -37,7 +37,7 @@ export default function DrawerExample() {
             </>
           }
         >
-          <methods.Form className="paper-stack" id={formId}>
+          <methods.Form className={stack()} id={formId}>
             <methods.AppField name="language">
               {field => (
                 <field.Select

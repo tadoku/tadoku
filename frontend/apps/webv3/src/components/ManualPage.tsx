@@ -1,11 +1,18 @@
-import { PageHeader } from 'paper-ui'
+import { PageHeader, prose } from 'paper-ui'
+
+const contentTable = [
+  'content-table mb-4 mt-0 max-w-content-table overflow-x-auto [background:var(--effect-canvas-table-scroll)]',
+  'focus-visible:outline-ring focus-visible:outline-link focus-visible:outline-offset-ring',
+  '[&_td:first-child]:whitespace-nowrap [&_table:has(th:nth-child(4))]:min-w-wide-table',
+  '[&_:is(th,td):not(:first-child)]:text-end [&_:is(th,td):last-child]:pe-0 max-sm:[&_:is(th,td)]:pe-3',
+].join(' ')
 
 /** Webv2's code-owned manual, ported as written. CMS pages render through `CmsPage` instead. */
 export function ManualPage() {
   return (
-    <article className="content-article">
+    <article className="min-w-0 max-w-article">
       <PageHeader title="Manual" />
-      <div className="content-prose">
+      <div className={prose({ className: 'content-prose' })}>
         <h2 id="signing-up-for-a-contest">Signing up for a contest</h2>
         <p>
           A contest is open for registration before it starts. A contest also has
@@ -59,7 +66,7 @@ export function ManualPage() {
 
         <h4 id="units-reading">Reading</h4>
         <div
-          className="content-table"
+          className={contentTable}
           role="region"
           tabIndex={0}
           aria-labelledby="units-reading"
@@ -103,7 +110,7 @@ export function ManualPage() {
               <tr>
                 <td>Chinese</td>
                 <td>1</td>
-                <td className="content-unavailable">N/A</td>
+                <td className="text-muted">N/A</td>
                 <td>0.2</td>
                 <td>0.05</td>
                 <td>0.0025</td>
@@ -111,7 +118,7 @@ export function ManualPage() {
               <tr>
                 <td>Korean</td>
                 <td>1</td>
-                <td className="content-unavailable">N/A</td>
+                <td className="text-muted">N/A</td>
                 <td>0.2</td>
                 <td>0.05</td>
                 <td>0.0025</td>
@@ -119,7 +126,7 @@ export function ManualPage() {
               <tr>
                 <td>All other languages</td>
                 <td>1</td>
-                <td className="content-unavailable">N/A</td>
+                <td className="text-muted">N/A</td>
                 <td>0.2</td>
                 <td>0.05</td>
                 <td>0.0008333</td>
@@ -127,7 +134,7 @@ export function ManualPage() {
             </tbody>
           </table>
         </div>
-        <ol className="content-footnotes">
+        <ol className="mb-6! mt-0! text-metadata leading-metadata text-muted">
           <li>Only available for Japanese</li>
           <li>
             400 characters per page for Japanese, Chinese, and Korean. <br />
@@ -137,7 +144,7 @@ export function ManualPage() {
 
         <h4 id="units-writing">Writing</h4>
         <div
-          className="content-table"
+          className={contentTable}
           role="region"
           tabIndex={0}
           aria-labelledby="units-writing"
@@ -191,7 +198,7 @@ export function ManualPage() {
         </p>
 
         <div
-          className="content-table"
+          className={contentTable}
           role="region"
           tabIndex={0}
           aria-labelledby="units-listening"
@@ -221,13 +228,13 @@ export function ManualPage() {
             </tbody>
           </table>
         </div>
-        <ol className="content-footnotes">
+        <ol className="mb-6! mt-0! text-metadata leading-metadata text-muted">
           <li>Media such as audiobooks which have few breaks</li>
         </ol>
 
         <h4 id="units-speaking">Speaking</h4>
         <div
-          className="content-table"
+          className={contentTable}
           role="region"
           tabIndex={0}
           aria-labelledby="units-speaking"
@@ -257,7 +264,7 @@ export function ManualPage() {
             </tbody>
           </table>
         </div>
-        <ol className="content-footnotes">
+        <ol className="mb-6! mt-0! text-metadata leading-metadata text-muted">
           <li>
             When you&apos;re the only one speaking; such as in speeches or
             presentations
@@ -266,7 +273,7 @@ export function ManualPage() {
 
         <h4 id="units-study">Study</h4>
         <div
-          className="content-table"
+          className={contentTable}
           role="region"
           tabIndex={0}
           aria-labelledby="units-study"
@@ -294,7 +301,7 @@ export function ManualPage() {
             </tbody>
           </table>
         </div>
-        <ol className="content-footnotes">
+        <ol className="mb-6! mt-0! text-metadata leading-metadata text-muted">
           <li>
             Can be used for any kind of generic studying such as flashcards,
             textbooks, tutoring sessions, etc...

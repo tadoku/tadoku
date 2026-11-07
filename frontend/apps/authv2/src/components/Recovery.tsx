@@ -5,6 +5,7 @@ import type { AccountSearch } from '../lib/search'
 import { useIdentity } from '../lib/session'
 import { FormProblem, ReturnTo } from './AccountForm'
 import { CardPage } from './CardPage'
+import { accountConfirmation, accountForm } from '../styles'
 
 export function Recovery({ search }: { readonly search: AccountSearch }) {
   const { origin, webUrl } = useIdentity()
@@ -22,7 +23,7 @@ export function Recovery({ search }: { readonly search: AccountSearch }) {
   if (succeeded || (search.sent && !submitted)) {
     return (
       <CardPage title="Check your email" footer={<a href={login}>Back to log in</a>}>
-        <div className="account-confirmation" role="status">
+        <div className={accountConfirmation} role="status">
           <p>If an account uses that address, we’ve sent it a link to choose a new password. The link works once and expires after an hour.</p>
           <p>Nothing arrived? Check your spam folder, or <a href={withReturnTo('/recovery', next)}>send another link</a>.</p>
         </div>
@@ -37,7 +38,7 @@ export function Recovery({ search }: { readonly search: AccountSearch }) {
       footer={<>Remembered it? <a href={login}>Log in</a></>}
     >
       <form.AppForm>
-        <form.Form {...formProps} className="account-form">
+        <form.Form {...formProps} className={accountForm}>
           <FormProblem problem={problem} />
           <ReturnTo value={next} />
           <form.AppField name="email" validators={{ onChange: ({ value }) => emailProblem(value) }}>

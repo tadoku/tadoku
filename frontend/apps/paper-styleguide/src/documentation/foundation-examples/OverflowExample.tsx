@@ -4,9 +4,9 @@ export default function ReadingTotals() {
       role="region"
       aria-label="Reading totals"
       tabIndex={0}
-      style={{ maxWidth: '100%', overflowX: 'auto' }}
+      className="max-w-full overflow-x-auto"
     >
-      <table style={{ minWidth: '34rem' }}>
+      <table className="min-w-overflow-demo">
         <caption>Reading totals</caption>
         <thead>
           <tr>

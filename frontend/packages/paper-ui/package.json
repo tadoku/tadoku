@@ -3,20 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "sideEffects": [
-    "**/*.css"
-  ],
+  "sideEffects": false,
   "files": [
-    "dist"
+    "dist",
+    "eslint-plugin.mjs"
   ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./styles.css": "./dist/styles.css",
-    "./tokens.css": "./dist/tokens.css",
-    "./fonts.css": "./dist/fonts.css",
     "./assets/*": "./dist/assets/*",
     "./icons": {
       "types": "./dist/icons.d.ts",
@@ -26,10 +22,12 @@
       "types": "./dist/catalog.d.ts",
       "import": "./dist/catalog.js"
     },
-    "./tailwind-preset": {
-      "require": "./dist/tailwind-preset.cjs",
-      "default": "./dist/tailwind-preset.cjs"
-    }
+    "./theme.css": "./dist/theme.css",
+    "./tokens": {
+      "types": "./dist/tokens.d.ts",
+      "import": "./dist/tokens.js"
+    },
+    "./eslint-plugin": "./eslint-plugin.mjs"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -42,17 +40,19 @@
     "consumer:typecheck": "tsc --noEmit -p tests/consumer/tsconfig.json"
   },
   "peerDependencies": {
+    "@tanstack/react-form": "1.33.2",
     "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "@tanstack/react-form": "1.33.2"
+    "react-dom": "18.2.0"
   },
   "dependencies": {
     "@base-ui/react": "1.8.0",
     "@heroicons/react": "2.2.0",
-    "luxon": "^3.7.2"
+    "luxon": "^3.7.2",
+    "tailwind-variants": "4.0.1"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",
+    "@tanstack/react-form": "1.33.2",
     "@testing-library/dom": "10.4.2",
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.3",
@@ -67,10 +67,10 @@
     "jsdom": "27.0.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "tailwindcss": "4.3.5",
     "tsup": "8.5.1",
     "typescript": "npm:@typescript/typescript6@6.0.2",
     "typescript-eslint": "8.66.0",
-    "vitest": "4.1.11",
-    "@tanstack/react-form": "1.33.2"
+    "vitest": "4.1.11"
   }
 }

@@ -1,5 +1,5 @@
 import { useStore } from '@tanstack/react-form'
-import { Button, Modal, usePaperForm } from 'paper-ui'
+import { Button, cn, focusRing, Modal, typography, usePaperForm } from 'paper-ui'
 import type { CatalogDocument } from 'paper-ui/catalog'
 import { MagnifyingGlassIcon, iconClassName } from 'paper-ui/icons'
 import {
@@ -100,8 +100,8 @@ function CatalogueSearchDialog({ documents }: CatalogueSearchProps) {
             />
           }
         >
-          <span className="shell-search-trigger__label">Search</span>
-          <kbd className="shell-search-trigger__shortcut" aria-hidden="true">
+          <span className="shell-search-trigger__label max-tablet:hidden">Search</span>
+          <kbd className="shell-search-trigger__shortcut max-tablet:hidden" aria-hidden="true">
             /
           </kbd>
         </Button>
@@ -109,7 +109,7 @@ function CatalogueSearchDialog({ documents }: CatalogueSearchProps) {
     >
       <div className="catalogue-search">
         <methods.AppForm>
-          <methods.AppField name="query">{field => <field.Input ref={inputRef} className="search-field" type="search" label="Search documents" placeholder="Try “color” or “foundations”" onKeyDown={(event) => {
+          <methods.AppField name="query">{field => <field.Input ref={inputRef} className="m-0" type="search" label="Search documents" placeholder="Try “color” or “foundations”" onKeyDown={(event) => {
               if (event.key === 'ArrowDown' && results.length > 0) {
                 event.preventDefault()
                 resultRefs.current[0]?.focus()
@@ -119,17 +119,17 @@ function CatalogueSearchDialog({ documents }: CatalogueSearchProps) {
               }
             }} />}</methods.AppField>
         </methods.AppForm>
-        <p className="search-count paper-type-metadata" aria-live="polite">
+        <p className={typography({ role: 'metadata' , className: 'm-0 py-3 text-muted' })} aria-live="polite">
           {results.length} {results.length === 1 ? 'result' : 'results'}
         </p>
-        <ul className="search-results">
+        <ul className="search-results m-0 list-none p-0">
           {results.map((document, index) => (
             <li key={document.id}>
               <Link
                 ref={(node) => {
                   resultRefs.current[index] = node
                 }}
-                className="search-result paper-focus-ring"
+                className={cn(focusRing(), 'search-result flex justify-between gap-4 border-t border-rule-subtle px-0 py-3.4 text-ink no-underline hover:bg-raised motion-safe:transition-colors motion-safe:duration-quick [&_strong]:block [&_small]:mt-0.8 [&_small]:block [&_small]:text-muted')}
                 to={document.route}
                 onClick={() => changeOpen(false)}
                 onKeyDown={(event) => moveResult(event, index)}
@@ -138,7 +138,7 @@ function CatalogueSearchDialog({ documents }: CatalogueSearchProps) {
                   <strong>{document.name}</strong>
                   <small>{document.summary}</small>
                 </span>
-                <span className="lifecycle-badge">{document.lifecycle}</span>
+                <span className="lifecycle-badge self-start text-metadata text-information">{document.lifecycle}</span>
               </Link>
             </li>
           ))}

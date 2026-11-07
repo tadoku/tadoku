@@ -5,6 +5,7 @@ import { firstYear, leaderboardHref, standingsQuery, type StandingsScope } from 
 import { useLinks } from '../lib/links'
 import { renderLink } from './router-link'
 import { Standings } from './Standings'
+import { sheet, sheetTabs, standingsAside, standingsHeader, workspace } from './standings-styles'
 
 /** The page title and period tabs every leaderboard shares, around the board for one period. */
 export function LeaderboardFrame({ period, currentYear, actions, children }: {
@@ -15,7 +16,7 @@ export function LeaderboardFrame({ period, currentYear, actions, children }: {
 }) {
   return (
     <div className="standings-page">
-      <PageHeader className="standings-header" title="Leaderboard" actions={actions} />
+      <PageHeader className={standingsHeader} title="Leaderboard" actions={actions} />
       <Tabbar
         label="Leaderboard period"
         renderLink={renderLink}
@@ -43,11 +44,12 @@ export function GlobalLeaderboard({ scope, page }: { scope: Exclude<StandingsSco
 
   return (
     <LeaderboardFrame period={yearly ? 'yearly' : 'all-time'} currentYear={currentYear}>
-      <div className="standings-workspace">
-        <div className="standings-main">
-          <section className="standings-sheet" aria-label={yearly ? `${scope.year} official standings` : 'All-time official standings'}>
+      <div className={workspace}>
+        <div>
+          <section className={sheet} aria-label={yearly ? `${scope.year} official standings` : 'All-time official standings'}>
             {yearly ? (
               <Tabbar
+                classNames={sheetTabs}
                 label="Year"
                 renderLink={renderLink}
                 links={years.map(year => ({
@@ -73,7 +75,7 @@ export function GlobalLeaderboard({ scope, page }: { scope: Exclude<StandingsSco
             />
           </section>
         </div>
-        <aside className="standings-aside">
+        <aside className={standingsAside}>
           <p>Official contests only; community contests don’t count here.</p>
         </aside>
       </div>

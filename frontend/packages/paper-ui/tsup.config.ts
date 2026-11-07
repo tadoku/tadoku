@@ -7,6 +7,7 @@ export default defineConfig({
     index: 'src/index.ts',
     icons: 'src/icons/index.ts',
     catalog: 'src/catalog/index.ts',
+    tokens: 'src/tokens/index.ts',
   },
   format: ['esm'],
   esbuildPlugins: [
@@ -30,7 +31,10 @@ export default defineConfig({
   dts: true,
   clean: true,
   sourcemap: true,
-  splitting: false,
+  splitting: true,
+  esbuildOptions(options) {
+    options.chunkNames = 'chunks/[name]-[hash]'
+  },
   target: 'es2020',
   external: [
     'react',

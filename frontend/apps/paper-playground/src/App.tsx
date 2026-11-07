@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { usePaperForm, ActionMenu, Button, buttonClassName, Drawer, EmptyState, Loading, Navbar, ToastContainer, type NavbarItem } from 'paper-ui'
+import { ActionMenu, appFrame, Button, buttonClassName, cn, Drawer, EmptyState, Loading, Navbar, type NavbarItem, navbarStyles, SkipLink, ToastContainer, typography, usePaperForm } from 'paper-ui'
 import mark from 'paper-ui/assets/brand/cut-meter.svg?no-inline'
 import reversedMark from 'paper-ui/assets/brand/cut-meter-reversed.svg?no-inline'
 import wordmark from 'paper-ui/assets/brand/wordmark-accent.svg?no-inline'
@@ -39,13 +39,16 @@ function ReviewControls() {
       <methods.AppField name="ia">{field => <field.Select label="Help navigation" options={[{value:'guide',label:'B · Guide plus About'},{value:'separate',label:'A · Four familiar pages'},{value:'tasks',label:'C · Task-based help'}]} />}</methods.AppField>
       <Button type="submit">Apply view</Button>
     </methods.Form></methods.AppForm>
-    <p className="review-note">Entries, registrations, settings, and administrative actions stay in this browser. The sample date is 5 September 2026; lifecycle scenarios supply their own dates.</p>
-    <h2 className="paper-type-component mt-8 mb-4">All page designs</h2>
-    <nav aria-label="Playground pages" className="review-pages">{reviewPages.map(([label,to])=><Link className="text-link" key={to} to={to} onClick={()=>setOpen(false)}>{label}</Link>)}</nav>
-    <p className="review-note mt-6"><a className="text-link" href="https://draft.apps.lab/documents/tadoku-redesign-master.html?version=3" target="_blank" rel="noreferrer">Open the pinned design brief</a></p>
+    <p className="text-sm leading-160 text-muted">Entries, registrations, settings, and administrative actions stay in this browser. The sample date is 5 September 2026; lifecycle scenarios supply their own dates.</p>
+    <h2 className={typography({ role: 'component' , className: 'mt-8 mb-4' })}>All page designs</h2>
+    <nav aria-label="Playground pages" className="grid gap-2">{reviewPages.map(([label,to])=><Link className="text-link" key={to} to={to} onClick={()=>setOpen(false)}>{label}</Link>)}</nav>
+    <p className="text-sm leading-160 text-muted mt-6"><a className="text-link" href="https://draft.apps.lab/documents/tadoku-redesign-master.html?version=3" target="_blank" rel="noreferrer">Open the pinned design brief</a></p>
     <Button variant="outline" onClick={()=>{app.reset();navigate('/');setOpen(false)}}>Reset sample changes</Button>
   </Drawer>
 }
+
+const frame = appFrame()
+const mobileLink = navbarStyles({ contained: true }).mobileLink()
 
 export function App() {
   const app=usePlayground();const location=useLocation();const navigate=useNavigate();const admin=location.pathname.startsWith('/admin')
@@ -59,31 +62,33 @@ export function App() {
     return()=>observer.disconnect()
   },[location.pathname])
   useEffect(()=>{if(location.hash){const id=decodeURIComponent(location.hash.slice(1));requestAnimationFrame(()=>document.getElementById(id)?.scrollIntoView())}},[location.hash,location.pathname])
-  return <div className="app-shell">
-    <a className={`${buttonClassName()} app-skip`} href="#main-content">Skip to content</a>
-    <header className="app-header">
+  return <div className={frame.root()}>
+    <SkipLink href="#main-content">Skip to content</SkipLink>
+    <header className={frame.header()}>
       <Navbar
-        brand={<div className="flex items-center gap-2"><img className="app-mark" src={app.theme==='dark'?reversedMark:mark} width="40" height="40" alt=""/><img className="app-wordmark" src={app.theme==='dark'?reversedWordmark:wordmark} width="158" height="29" alt="Tadoku"/>{admin&&<span className="app-admin-label">Admin</span>}</div>}
+        contained
+        classNames={{ brandLink: 'gap-0' }}
+        brand={<div className="flex items-center gap-2"><img className="block h-auto w-brand-sample-mark" src={app.theme==='dark'?reversedMark:mark} width="40" height="40" alt=""/><img className="block h-auto w-brand-sample" src={app.theme==='dark'?reversedWordmark:wordmark} width="158" height="29" alt="Tadoku"/>{admin&&<span className="border-s border-rule ps-4 font-semibold max-sm:ps-2 max-sm:text-sm-tight">Admin</span>}</div>}
         brandHref="/" navigation={nav} renderLink={({href,...props})=><Link to={href} {...props}/>}
         mobileNavigation={!admin}
         actions={admin ? <Link to="/" className={buttonClassName({variant:'outline'})}>Back to Tadoku</Link> :
-          <div className="app-header-actions">
+          <div className="flex shrink-0 items-center gap-2">
             {app.viewer==='guest' ? <Link to={`/sign-in?next=${encodeURIComponent(location.pathname)}`} className={buttonClassName({variant:'outline'})}>Sign in</Link> : <>
-              <span className="app-account-menu--desktop"><ActionMenu label={app.user?.name||'Account'} triggerVariant="ghost" items={accountItems}/></span>
+              <span className="max-tablet:hidden [&_.paper-button>span]:max-w-measure-label [&_.paper-button>span]:truncate tablet:max-lg:[&_.paper-button>span]:max-w-measure-label-sm"><ActionMenu label={app.user?.name||'Account'} triggerVariant="ghost" items={accountItems}/></span>
               <Link to="/logs/new" className={buttonClassName({className:'whitespace-nowrap shrink-0'})}>Log activity</Link>
             </>}
           </div>}
         mobileFooter={app.viewer==='guest' ? undefined : closeMenu =>
-          <section className="app-mobile-account" aria-label={`${app.user?.name||'Your'} account`}>
-            <p className="app-mobile-account__name">{app.user?.name||'Account'}</p>
-            <Link className="paper-navbar__mobile-link" to="/users/anton" aria-current={location.pathname==='/users/anton'?'page':undefined} onClick={closeMenu}>My profile</Link>
-            <Link className="paper-navbar__mobile-link" to="/settings" aria-current={location.pathname==='/settings'?'page':undefined} onClick={closeMenu}>Account settings</Link>
-            {app.viewer==='admin'&&<Link className="paper-navbar__mobile-link" to="/admin" onClick={closeMenu}>Admin workspace</Link>}
-            <Button variant="ghost" className="paper-navbar__mobile-link justify-start" onClick={()=>{closeMenu();app.setViewer('guest');navigate('/')}}>Log out</Button>
+          <section className="mt-3 border-t border-rule-subtle pt-3" aria-label={`${app.user?.name||'Your'} account`}>
+            <p className="mb-1 mt-0 px-field-x text-sm font-semibold text-muted wrap-anywhere">{app.user?.name||'Account'}</p>
+            <Link className={mobileLink} to="/users/anton" aria-current={location.pathname==='/users/anton'?'page':undefined} onClick={closeMenu}>My profile</Link>
+            <Link className={mobileLink} to="/settings" aria-current={location.pathname==='/settings'?'page':undefined} onClick={closeMenu}>Account settings</Link>
+            {app.viewer==='admin'&&<Link className={mobileLink} to="/admin" onClick={closeMenu}>Admin workspace</Link>}
+            <Button variant="ghost" className={cn(mobileLink, "justify-start")} onClick={()=>{closeMenu();app.setViewer('guest');navigate('/')}}>Log out</Button>
           </section>}
       />
     </header>
-    <main id="main-content" className="app-content" tabIndex={-1}><Suspense fallback={<Loading label="Loading page"/>}><Routes>
+    <main id="main-content" className={frame.content()} tabIndex={-1}><Suspense fallback={<Loading label="Loading page"/>}><Routes>
       <Route path="/" element={<HomePage/>}/>
       <Route path="/about" element={<GuidePage page="about"/>}/><Route path="/guide" element={<GuidePage page="manual"/>}/><Route path="/guide/scoring" element={<GuidePage page="rules"/>}/><Route path="/guide/questions" element={<GuidePage page="faq"/>}/>
       <Route path="/leaderboard" element={<Navigate to="/leaderboard/latest" replace/>}/><Route path="/leaderboard/latest" element={<LeaderboardPage/>}/><Route path="/leaderboard/yearly/:year" element={<LeaderboardPage/>}/><Route path="/leaderboard/all-time" element={<LeaderboardPage/>}/><Route path="/contests/:contestId/leaderboard" element={<LeaderboardPage/>}/>
@@ -95,7 +100,7 @@ export function App() {
       {Object.entries({about:'/about',manual:'/guide',rules:'/guide/scoring',faq:'/guide/questions'}).map(([slug,to])=><Route key={slug} path={`/pages/${slug}`} element={<Navigate to={to} replace/>}/>)}
       <Route path="*" element={<EmptyState headingLevel={1} title="Page not found" description="This address doesn’t match a Tadoku page." actions={<Link to="/" className="text-link">Return home</Link>}/>}/>
     </Routes></Suspense></main>
-    <footer className="app-footer"><div className="app-footer__inner"><nav aria-label="Footer"><Link className="text-link" to="/about">About Tadoku</Link><Link className="text-link" to="/guide/questions">Questions &amp; help</Link><a className="text-link" href="https://github.com/tadoku/tadoku" target="_blank" rel="noreferrer">GitHub</a></nav><div className="flex flex-wrap items-center gap-2"><small className="muted">Sample data</small><ReviewControls key={scenarioGroup(location.pathname)}/></div></div></footer>
+    <footer className="border-t border-rule px-gutter pb-8 pt-6"><div className={frame.container({ className: 'flex flex-wrap items-center justify-between gap-4' })}><nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-3 text-sm"><Link className="text-link" to="/about">About Tadoku</Link><Link className="text-link" to="/guide/questions">Questions &amp; help</Link><a className="text-link" href="https://github.com/tadoku/tadoku" target="_blank" rel="noreferrer">GitHub</a></nav><div className="flex flex-wrap items-center gap-2"><small className="text-muted">Sample data</small><ReviewControls key={scenarioGroup(location.pathname)}/></div></div></footer>
     <ToastContainer />
   </div>
 }

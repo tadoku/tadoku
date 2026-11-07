@@ -6,6 +6,7 @@ import type { AccountSearch } from '../lib/search'
 import { useIdentity } from '../lib/session'
 import { FormProblem, ReturnTo } from './AccountForm'
 import { CardPage } from './CardPage'
+import { accountForm } from '../styles'
 
 export const passwordHint = '8 or more characters. Avoid words from your email.'
 
@@ -38,7 +39,7 @@ export function Login({ search }: { readonly search: AccountSearch }) {
       footer={<>New to Tadoku? <a href={withReturnTo('/register', next)}>Create an account</a></>}
     >
       <form.AppForm>
-        <form.Form {...formProps} className="account-form">
+        <form.Form {...formProps} className={accountForm}>
           {reauth ? (
             <Flash variant="information" icon={<InformationCircleIcon className={iconClassName()} />}>
               Privileged actions require a fresh login. Log in again to continue.
@@ -54,7 +55,7 @@ export function Login({ search }: { readonly search: AccountSearch }) {
             {field => <field.Input id={fieldId('password')} label="Password" type="password" autoComplete="current-password" required />}
           </form.AppField>
           <Button type="submit" fullWidth loading={pending} loadingLabel="Logging in">Log in</Button>
-          <a className="account-form__aside" href={withReturnTo('/recovery', next)}>Forgot your password?</a>
+          <a className="justify-self-center text-sm" href={withReturnTo('/recovery', next)}>Forgot your password?</a>
         </form.Form>
       </form.AppForm>
     </CardPage>
@@ -78,7 +79,7 @@ export function Register({ search }: { readonly search: AccountSearch }) {
       footer={<>Already have an account? <a href={withReturnTo('/login', next)}>Log in</a></>}
     >
       <form.AppForm>
-        <form.Form {...formProps} className="account-form">
+        <form.Form {...formProps} className={accountForm}>
           <SignedInNotice />
           <FormProblem problem={problem} />
           <ReturnTo value={next} />

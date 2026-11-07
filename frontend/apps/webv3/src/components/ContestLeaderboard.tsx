@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import type { ImmersionContestView } from 'api-client'
-import { Button, DescriptionList, EmptyState, Flash, SectionHeading, StatusTag, buttonClassName } from 'paper-ui'
+import { Button, buttonClassName, DescriptionList, EmptyState, Flash, SectionHeading, StatusTag, typography } from 'paper-ui'
 import type { ReactNode } from 'react'
 import { formatDate, formatPeriod } from '../lib/format'
 import { latestBoardQuery, leaderboardHref, standingsQuery, contestPhase, readDay, type ContestBoard, type ContestPhase } from '../lib/leaderboard'
@@ -9,6 +9,7 @@ import { useParticipation } from '../lib/registration'
 import { useLoginUrl, viewerQueryOptions } from '../lib/session'
 import { LeaderboardFrame } from './LeaderboardPage'
 import { Standings } from './Standings'
+import { description, sheet, standingsAside, standingsContext, standingsContextTitle, standingsNotice, workspace } from './standings-styles'
 
 export function RoundStatus({ phase }: { phase: ContestPhase }) {
   if (phase.ended) return <StatusTag>Ended</StatusTag>
@@ -89,23 +90,24 @@ export function ContestBoardBody({ board, phase, page, pageHref, title, status, 
   return (
     <>
       {viewer?.status === 'anonymous' && !phase.ended ? (
-        <Flash className="standings-notice" action={<a className="text-link" href={loginUrl}>Log in</a>}>
+        <Flash className={standingsNotice} action={<a className="text-link" href={loginUrl}>Log in</a>}>
           You need to log in to participate in this contest.
         </Flash>
       ) : null}
       {phase.ended ? (
-        <Flash className="standings-notice" variant="warning">
+        <Flash className={standingsNotice} variant="warning">
           This contest has already ended and does not accept any new participants.
         </Flash>
       ) : null}
-      <div className="standings-workspace">
-        <div className="standings-main">
-          <section className="standings-sheet" aria-labelledby={title ? 'standings-title' : undefined} aria-label={title ? undefined : 'Standings'}>
+      <div className={workspace}>
+        <div>
+          <section className={sheet} aria-labelledby={title ? 'standings-title' : undefined} aria-label={title ? undefined : 'Standings'}>
             {title ? (
               <SectionHeading
                 level={2}
                 id="standings-title"
-                className="standings-context"
+                className={standingsContext}
+                classNames={{ title: standingsContextTitle }}
                 title={title}
                 status={status}
               />
@@ -125,10 +127,10 @@ export function ContestBoardBody({ board, phase, page, pageHref, title, status, 
             />
           </section>
         </div>
-        <aside className="standings-aside">
+        <aside className={standingsAside}>
           <section aria-labelledby="standings-conditions">
-            <h2 id="standings-conditions" className="paper-type-component">About this contest</h2>
-            {contest.description ? <p className="standings-description">{contest.description}</p> : null}
+            <h2 id="standings-conditions" className={typography({ role: 'component' })}>About this contest</h2>
+            {contest.description ? <p className={description}>{contest.description}</p> : null}
             <ContestFacts contest={contest} phase={phase} />
             {asideLink}
           </section>

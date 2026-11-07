@@ -1,6 +1,8 @@
 import { useId, type InputHTMLAttributes } from "react";
 import { ChevronDownIcon, iconClassName } from "../../icons";
+import { cn } from "../../foundations/variants";
 import { FieldFrame, describedBy, useField, type Option } from "./field";
+import { compoundField, control, selectFrame } from "./styles";
 
 export interface AmountWithUnitProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'name' | 'type' | 'value' | 'onChange' | 'onBlur'> {
@@ -19,9 +21,11 @@ export interface AmountWithUnitProps
 export function AmountWithUnit({ label, units, unitsLabel, unitField, hint, required, disabled, ...props }: AmountWithUnitProps) {
   const id = `paper-amount-${useId().replace(/:/gu, '')}`;
   const { field, error } = useField<number | string>();
+  const slots = compoundField({ invalid: Boolean(error) });
+  const frame = selectFrame();
   return (
     <FieldFrame id={id} label={label} hint={hint} required={required} error={error}>
-      <div className="paper-compound-field" role="group" aria-labelledby={`${id}-label`}>
+      <div className={slots.root()} role="group" aria-labelledby={`${id}-label`}>
         <input
           {...props}
           name={field.name}
@@ -32,11 +36,11 @@ export function AmountWithUnit({ label, units, unitsLabel, unitField, hint, requ
           disabled={disabled}
           id={id}
           type="number"
-          className="paper-input"
+          className={cn(control(), slots.input())}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy(id, hint, error, props['aria-describedby'])}
         />
-        <span className="paper-select__control paper-compound-field__unit">
+        <span className={cn(frame.root(), slots.unit())}>
           <select
             name={unitField.name}
             value={unitField.state.value}
@@ -44,12 +48,12 @@ export function AmountWithUnit({ label, units, unitsLabel, unitField, hint, requ
             onBlur={unitField.handleBlur}
             disabled={disabled}
             aria-label={unitsLabel ?? `Unit for ${label.toLocaleLowerCase()}`}
-            className="paper-input paper-select"
+            className={cn(control({ kind: "select" }), slots.select())}
             aria-describedby={describedBy(id, hint, error, props['aria-describedby'])}
           >
             {units.map(unit => <option key={unit.value} value={unit.value} disabled={unit.disabled}>{unit.label}</option>)}
           </select>
-          <ChevronDownIcon className={iconClassName("compact", "paper-select__icon")} aria-hidden="true" />
+          <ChevronDownIcon className={iconClassName("compact", frame.icon())} aria-hidden="true" />
         </span>
       </div>
     </FieldFrame>

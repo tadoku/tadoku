@@ -23,7 +23,7 @@ def frontend_dev(name, host, readiness_path = "/", paper = False, namespace = No
     command = " ".join(_DEV_INSTALL) + " && exec pnpm --filter " + name + " dev"
     if paper:
         # ponytail: watcher retains initial declarations; rebuild paper-ui after public type changes.
-        command = " ".join(_DEV_INSTALL) + " && pnpm --filter paper-ui build && { pnpm --filter paper-ui exec tsup --no-dts --no-clean --watch src --watch styles --watch scripts --onSuccess 'node scripts/build-assets.mjs' & exec pnpm --filter %s exec vite; }" % name
+        command = " ".join(_DEV_INSTALL) + " && pnpm --filter paper-ui build && { pnpm --filter paper-ui exec tsup --no-dts --no-clean --watch src --watch scripts --onSuccess 'node scripts/build-assets.mjs' & exec pnpm --filter %s exec vite; }" % name
 
     native.filegroup(
         name = "%s_sources" % name,

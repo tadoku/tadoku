@@ -1,5 +1,6 @@
 import { useField } from "../field"
 import { forwardRef, useId, type InputHTMLAttributes } from "react"
+import { control, field as fieldStyles } from "../styles"
 
 export interface InputProps
   extends Omit<
@@ -31,21 +32,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   const errorId = error ? `${id}-error` : undefined;
   const describedBy = [hintId, errorId, props["aria-describedby"]].filter(Boolean).join(" ") || undefined;
 
+  const slots = fieldStyles({ invalid: Boolean(error), disabled: Boolean(disabled) });
   return (
-    <div
-      className={[
-        "paper-field",
-        error ? "paper-field--invalid" : "",
-        disabled ? "paper-field--disabled" : "",
-        className ?? "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
-      <label className="paper-field__label" htmlFor={id}>
+    <div className={slots.root({ className })}>
+      <label className={slots.label()} htmlFor={id}>
         {label}
         {required ? (
-          <span className="paper-field__required" aria-hidden="true">
+          <span className={slots.required()} aria-hidden="true">
             *
           </span>
         ) : null}
@@ -62,16 +55,16 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         disabled={disabled}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
-        className="paper-input"
+        className={control({ interactive: !readOnly && !error, readOnly: Boolean(readOnly), invalid: Boolean(error) })}
         ref={forwardedRef}
       />
       {hint ? (
-        <p className="paper-field__hint" id={hintId}>
+        <p className={slots.hint()} id={hintId}>
           {hint}
         </p>
       ) : null}
       {error ? (
-        <p className="paper-field__error" id={errorId} role="alert">
+        <p className={slots.error()} id={errorId} role="alert">
           {error || "Check this field."}
         </p>
       ) : null}

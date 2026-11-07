@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { CheckIcon, iconClassName } from "../../icons";
 import { describedBy, useField, type FieldContract, type Option } from "./field";
+import { choice, choiceField, field as fieldStyles, radioCard, segment } from "./styles";
 
 export const RADIO_SELECT_VARIANTS = ["default", "segmented"] as const;
 
@@ -23,17 +24,22 @@ export function RadioSelect({
   const id = `paper-radio-${useId().replace(/:/gu, "")}`;
   const { field, error } = useField<string>();
   const segmented = variant === "segmented";
+  const invalid = Boolean(error);
+  const group = choiceField({ invalid });
+  const fieldSlots = fieldStyles();
+  const choiceSlots = choice({ invalid });
+  const segmentSlots = segment({ invalid });
   return (
     <fieldset
-      className={`paper-choice-field paper-radio-select paper-radio-select--${variant}${error ? " paper-field--invalid" : ""}`}
+      className={group.root({ className: ["paper-radio-select", `paper-radio-select--${variant}`] })}
       aria-describedby={describedBy(id, hint, error)}
       aria-invalid={error ? true : undefined}
       disabled={disabled}
     >
-      <legend className="paper-field__label">{label}{required ? <span className="paper-field__required" aria-hidden="true">*</span> : null}</legend>
-      <div className="paper-choice-list">
+      <legend className={fieldSlots.label({ className: group.legend() })}>{label}{required ? <span className={fieldSlots.required()} aria-hidden="true">*</span> : null}</legend>
+      <div className={group.list({ className: segmented ? segmentSlots.list() : undefined })}>
         {options.map((option) => (
-          <label className={segmented ? "paper-radio-select__segment" : "paper-choice"} key={option.value}>
+          <label className={segmented ? segmentSlots.root() : choiceSlots.root()} key={option.value}>
             <input
               name={field.name}
               checked={field.state.value === option.value}
@@ -44,19 +50,20 @@ export function RadioSelect({
               disabled={option.disabled}
               required={required}
               aria-invalid={error ? true : undefined}
+              className={segmented ? segmentSlots.input() : choiceSlots.input()}
             />
-            <span className={segmented ? "paper-radio-select__label" : undefined}>{option.label}</span>
+            <span className={segmented ? "paper-radio-select__label" : choiceSlots.text()}>{option.label}</span>
             {segmented ? (
               <CheckIcon
-                className={iconClassName("compact", "paper-radio-select__check")}
+                className={iconClassName("compact", segmentSlots.check())}
                 aria-hidden="true"
               />
             ) : null}
           </label>
         ))}
       </div>
-      {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
-      {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error}</p> : null}
+      {hint ? <p className={fieldSlots.hint()} id={`${id}-hint`}>{hint}</p> : null}
+      {error ? <p className={fieldSlots.error()} id={`${id}-error`} role="alert">{error}</p> : null}
     </fieldset>
   );
 }
@@ -78,16 +85,19 @@ export function RadioGroup<Value extends string = string>({
 }: RadioGroupProps<Value>) {
   const id = `paper-radio-group-${useId().replace(/:/gu, "")}`;
   const { field, error } = useField<string>();
+  const group = choiceField({ invalid: Boolean(error) });
+  const fieldSlots = fieldStyles();
+  const card = radioCard({ invalid: Boolean(error) });
   return (
     <fieldset
-      className={`paper-choice-field${error ? " paper-field--invalid" : ""}`}
+      className={group.root()}
       aria-describedby={describedBy(id, hint, error)}
       aria-invalid={error ? true : undefined}
     >
-      <legend className="paper-field__label">{label}{required ? <span className="paper-field__required" aria-hidden="true">*</span> : null}</legend>
-      <div className="paper-radio-cards">
+      <legend className={fieldSlots.label({ className: group.legend() })}>{label}{required ? <span className={fieldSlots.required()} aria-hidden="true">*</span> : null}</legend>
+      <div className={card.list()}>
         {options.map((option) => (
-          <label className="paper-radio-card" key={option.value}>
+          <label className={card.root()} key={option.value}>
             <input
               name={field.name}
               checked={field.state.value === option.value}
@@ -98,13 +108,14 @@ export function RadioGroup<Value extends string = string>({
               required={required}
               disabled={option.disabled}
               aria-invalid={error ? true : undefined}
+              className={card.input()}
             />
-            <span><strong>{option.label}</strong><small>{option.description}</small></span>
+            <span className={card.text()}><strong>{option.label}</strong><small className={card.description()}>{option.description}</small></span>
           </label>
         ))}
       </div>
-      {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
-      {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error}</p> : null}
+      {hint ? <p className={fieldSlots.hint()} id={`${id}-hint`}>{hint}</p> : null}
+      {error ? <p className={fieldSlots.error()} id={`${id}-error`} role="alert">{error}</p> : null}
     </fieldset>
   );
 }

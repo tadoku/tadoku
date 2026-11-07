@@ -1,4 +1,4 @@
-import { Button, usePaperForm } from 'paper-ui'
+import { Button, cluster, stack, usePaperForm } from 'paper-ui'
 import { useState } from 'react'
 
 export default function InputRecommendedFixture() {
@@ -14,7 +14,7 @@ export default function InputRecommendedFixture() {
   })
   return (
     <methods.AppForm>
-      <methods.Form className="paper-stack w-full max-w-2xl">
+      <methods.Form className={stack({ className: "w-full max-w-form-wide" })}>
         <methods.AppField
           name="title"
           validators={{
@@ -57,7 +57,7 @@ export default function InputRecommendedFixture() {
             )}
           </methods.AppField>
         </div>
-        <div className="paper-cluster">
+        <div className={cluster()}>
           <Button type="submit">Save log</Button>
         </div>
         {saved && <p role="status">{saved}</p>}

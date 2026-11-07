@@ -16,6 +16,8 @@ import {
   type ScoringDraft,
 } from '../lib/scoring-draft'
 import { scoringFailures } from './scoring-failures'
+import { formActions, formControls, formGroup, formRow } from './form-styles'
+import { recordSurface } from './standings-styles'
 
 /** Creates a contest rule-set draft for the administrator who opened the page. A created draft starts a new form. */
 export function RuleSetForm({ contestId, viewerId, options, platformRuleSets }: {
@@ -43,15 +45,15 @@ export function RuleSetForm({ contestId, viewerId, options, platformRuleSets }: 
   const disabled = !hydrated || pending
 
   return (
-    <Surface className="log-surface scoring-form">
+    <Surface className={`${recordSurface} max-w-none`}>
       <SectionHeading
         level={2}
         title="New rule-set version"
         description="Uncovered inputs score zero. Override mode falls back to the pinned platform version; replace mode does not."
       />
       <form.AppForm>
-        <form.Form className="goal-form" aria-busy={pending}>
-          <fieldset className="goal-form__controls" disabled={disabled}>
+        <form.Form className="min-w-0" aria-busy={pending}>
+          <fieldset className={formControls} disabled={disabled}>
             <form.AppField name="mode">
               {field => (
                 <field.Select
@@ -79,8 +81,8 @@ export function RuleSetForm({ contestId, viewerId, options, platformRuleSets }: 
             ) : null}
             <form.AppField name="rules" mode="array">
               {rules => (
-                <fieldset className="contest-form-group">
-                  <legend className="paper-field__label">Ordered rules</legend>
+                <fieldset className={formGroup}>
+                  <legend>Ordered rules</legend>
                   {rules.state.value.length === 0 ? <p>This replacing rule set will score every input as zero.</p> : null}
                   {rules.state.value.map((_, index) => (
                     <RuleFields
@@ -108,7 +110,7 @@ export function RuleSetForm({ contestId, viewerId, options, platformRuleSets }: 
               {outcome.ok ? 'Scoring rule-set draft created.' : scoringFailures(outcome.reason, 'The draft was not created.')}
             </p>
           ) : null}
-          <div className="goal-actions">
+          <div className={formActions}>
             <Button type="submit" disabled={disabled}>{pending ? 'Creating…' : 'Create draft'}</Button>
           </div>
         </form.Form>
@@ -132,16 +134,16 @@ const RuleFields = withPaperForm({
     const units = ruleUnits(options, activityId)
 
     return (
-      <fieldset className="scoring-rule">
-        <legend className="scoring-rule__title">Rule {index + 1}</legend>
-        <div className="scoring-rule__actions">
+      <fieldset className="scoring-rule m-0 grid min-w-0 gap-4 border border-rule p-4">
+        <legend className="float-start w-full p-0 font-semibold">Rule {index + 1}</legend>
+        <div className="flex flex-wrap gap-2">
           <Button type="button" variant="ghost" disabled={index === 0} onClick={() => move(index - 1)}>Up</Button>
           <Button type="button" variant="ghost" disabled={index === count - 1} onClick={() => move(index + 1)}>
             Down
           </Button>
           <Button type="button" variant="ghost" onClick={remove}>Remove</Button>
         </div>
-        <div className="goal-form__row">
+        <div className={formRow}>
           <form.AppField
             name={`rules[${index}].activityId`}
             // A unit belongs to one activity, so another activity's unit can't stay selected.

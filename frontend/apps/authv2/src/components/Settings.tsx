@@ -10,6 +10,7 @@ import { settingsView, type AccountSearch, type SettingsEditor, type SettingsVie
 import { useIdentity } from '../lib/session'
 import { FormProblem, ReturnTo } from './AccountForm'
 import { passwordHint } from './Credentials'
+import { accountForm, accountFormActions } from '../styles'
 
 type Account = { readonly email: string; readonly display_name: string }
 
@@ -43,11 +44,23 @@ function useShowSaved(next: string | undefined) {
   })
 }
 
+const settingRow = [
+  'grid grid-cols-settings-row items-center gap-x-6 gap-y-1 px-5 py-4 [&+&]:border-t [&+&]:border-rule-subtle',
+  'max-tablet:grid-cols-content-end',
+].join(' ')
+const settingRowOpen = 'grid-cols-settings-row-open items-start bg-raised shadow-rail-focus max-tablet:grid-cols-content-end'
+// The email hint holds the stored address, whose raw spaces would otherwise hang past the row.
+const settingEditor = [
+  'min-w-0 max-w-settings-editor wrap-anywhere max-tablet:col-span-full max-tablet:max-w-none',
+  '[&_[id$=-hint]]:whitespace-break-spaces [&_form]:gap-4',
+].join(' ')
+const settingNote = 'm-0 text-metadata leading-metadata font-regular text-success'
+
 function SettingsGroup({ title, children }: { readonly title: string; readonly children: ReactNode }) {
   return (
-    <div className="settings-group">
-      <h2 className="settings-group__title">{title}</h2>
-      <Surface className="settings-group__rows">{children}</Surface>
+    <div className="[&+&]:mt-8">
+      <h2 className="mb-3 mt-0 font-display text-component leading-component">{title}</h2>
+      <Surface className="p-0">{children}</Surface>
     </div>
   )
 }
@@ -72,13 +85,20 @@ function SettingRow({ editor, label, value, view, next, children }: {
   }, [open])
 
   return (
-    <section className={open ? 'settings-row settings-row--open' : 'settings-row'} aria-labelledby={`${editor}-label`}>
-      <h3 id={`${editor}-label`} className="settings-row__label">{label}</h3>
-      {open ? <div className="settings-row__editor">{children}</div> : (
+    <section className={open ? `${settingRow} ${settingRowOpen}` : settingRow} aria-labelledby={`${editor}-label`}>
+      <h3
+        id={`${editor}-label`}
+        className="m-0 font-body text-metadata leading-metadata font-regular text-muted max-tablet:col-span-full"
+      >
+        {label}
+      </h3>
+      {open ? <div className={settingEditor}>{children}</div> : (
         <>
-          <div className="settings-row__summary">
-            <p className="settings-row__value">{value}</p>
-            {saved ? <p id={`${editor}-saved`} className="settings-saved" role="status">{confirmations[editor]}</p> : null}
+          <div className="min-w-0">
+            <p className="settings-row__value m-0 text-body leading-body text-ink wrap-anywhere whitespace-break-spaces">
+              {value}
+            </p>
+            {saved ? <p id={`${editor}-saved`} className={settingNote} role="status">{confirmations[editor]}</p> : null}
           </div>
           <Link
             ref={change}
@@ -88,7 +108,7 @@ function SettingRow({ editor, label, value, view, next, children }: {
             className={buttonClassName({ variant: 'outline' })}
             aria-describedby={saved ? `${editor}-saved` : undefined}
           >
-            Change<span className="paper-visually-hidden"> {label.toLowerCase()}</span>
+            Change<span className="sr-only"> {label.toLowerCase()}</span>
           </Link>
         </>
       )}
@@ -122,13 +142,13 @@ function DisplayNameForm({ account, next, error, reauthenticate }: EditorProps) 
   })
   return (
     <form.AppForm>
-      <form.Form {...formProps} className="account-form">
+      <form.Form {...formProps} className={accountForm}>
         <FormProblem problem={problem} reauthenticate={reauthenticate} />
         <ReturnTo value={next} />
         <form.AppField name="display_name" validators={{ onChange: ({ value }) => displayNameProblem(value) }}>
           {field => <field.Input id={fieldId('display_name')} label="Display name" autoComplete="nickname" required autoFocus />}
         </form.AppField>
-        <div className="account-form__actions">
+        <div className={accountFormActions}>
           <Button type="submit" loading={pending} loadingLabel="Saving">Save display name</Button>
           <Cancel next={next} />
         </div>
@@ -148,7 +168,7 @@ function EmailForm({ account, next, error, reauthenticate }: EditorProps) {
   })
   return (
     <form.AppForm>
-      <form.Form {...formProps} className="account-form">
+      <form.Form {...formProps} className={accountForm}>
         <FormProblem problem={problem} reauthenticate={reauthenticate} />
         <ReturnTo value={next} />
         <input type="hidden" name="current_email" value={account.email} />
@@ -166,7 +186,7 @@ function EmailForm({ account, next, error, reauthenticate }: EditorProps) {
             />
           )}
         </form.AppField>
-        <div className="account-form__actions">
+        <div className={accountFormActions}>
           <Button type="submit" loading={pending} loadingLabel="Saving">Save email</Button>
           <Cancel next={next} />
         </div>
@@ -186,7 +206,7 @@ function PasswordForm({ account, next, error, reauthenticate }: EditorProps) {
   })
   return (
     <form.AppForm>
-      <form.Form {...formProps} className="account-form">
+      <form.Form {...formProps} className={accountForm}>
         <FormProblem problem={problem} reauthenticate={reauthenticate} />
         <ReturnTo value={next} />
         <input type="email" name="username" autoComplete="username" value={account.email} hidden readOnly />
@@ -204,10 +224,10 @@ function PasswordForm({ account, next, error, reauthenticate }: EditorProps) {
             />
           )}
         </form.AppField>
-        <p id="password-policy" className="settings-row__hint">
+        <p id="password-policy" className="m-0 text-metadata leading-metadata text-muted">
           Needs a login within the last hour or a recovery link. Signs you out on your other devices.
         </p>
-        <div className="account-form__actions">
+        <div className={accountFormActions}>
           <Button type="submit" loading={pending} loadingLabel="Saving">
             {next ? 'Save password and continue' : 'Save password'}
           </Button>
@@ -235,9 +255,10 @@ export function Settings({ search }: { readonly search: AccountSearch }) {
   }
   const row = { view, next }
   return (
-    <div className="settings">
+    <div className="mx-auto w-settings">
       <PageHeader
         title="Account settings"
+        className="mb-8"
         actions={next ? (
           <a className={buttonClassName({ variant: 'outline' })} href={next}>
             <ArrowLeftIcon className={iconClassName('compact')} aria-hidden="true" />
@@ -245,7 +266,7 @@ export function Settings({ search }: { readonly search: AccountSearch }) {
           </a>
         ) : null}
       />
-      {search.form === 'logout' && search.error ? <div className="settings-notice"><FormProblem problem={problemFor(search.error, 'logout')} /></div> : null}
+      {search.form === 'logout' && search.error ? <div className="mb-5"><FormProblem problem={problemFor(search.error, 'logout')} /></div> : null}
       <SettingsGroup title="Profile">
         <SettingRow
           {...row}
@@ -269,13 +290,13 @@ export function Settings({ search }: { readonly search: AccountSearch }) {
           {...row}
           editor="password"
           label="Password"
-          value={<><span aria-hidden="true">••••••••••</span><span className="paper-visually-hidden">Hidden</span></>}
+          value={<><span aria-hidden="true">••••••••••</span><span className="sr-only">Hidden</span></>}
         >
           <PasswordForm {...editor} />
         </SettingRow>
       </SettingsGroup>
-      <p className="settings-delete">
-        <Link to="/delete-account" search={{ return_to: next }}>Delete account</Link>
+      <p className="mb-0 mt-10">
+        <Link to="/delete-account" search={{ return_to: next }} className="text-danger">Delete account</Link>
       </p>
     </div>
   )

@@ -2,6 +2,34 @@ import { Menu } from "@base-ui/react/menu";
 import { useState, type ReactNode } from "react";
 import { buttonClassName, type ButtonVariant } from "../../actions/Button";
 import { ChevronDownIcon, EllipsisHorizontalIcon, iconClassName } from "../../../icons";
+import { surface } from "../../../foundations/recipes";
+import { cn, tv } from "../../../foundations/variants";
+
+const actionMenu = tv({
+  slots: {
+    iconOnly: "paper-action-menu__trigger--icon-only w-target min-h-target min-w-target shrink-0 p-0",
+    positioner: "paper-action-menu__positioner z-menu outline-none",
+    popup: [
+      "paper-action-menu min-w-menu origin-(--transform-origin) py-1.4",
+      "transition-enter duration-quick motion-reduce:transition-none",
+      "data-starting-style:scale-enter data-starting-style:opacity-0",
+      "data-ending-style:scale-enter data-ending-style:opacity-0",
+    ],
+    item: [
+      "paper-action-menu__item flex min-h-control cursor-default select-none items-center gap-inline",
+      "px-field-x py-field-y outline-none data-highlighted:bg-action data-highlighted:text-on-action",
+      "data-disabled:opacity-faded",
+    ],
+    destructive: [
+      "paper-action-menu__item--destructive text-danger data-highlighted:bg-destructive",
+      "data-highlighted:text-inverse",
+    ],
+    icon: "paper-action-menu__icon grid size-icon place-items-center *:size-full",
+  },
+});
+
+const slots = actionMenu();
+const popupClassName = cn(surface({ tone: "overlay", elevation: "floating" }), slots.popup());
 
 export interface ActionMenuItem {
   readonly id: string;
@@ -41,34 +69,32 @@ export function ActionMenu({
             setPortalContainer(node.ownerDocument.body);
           }
         }}
-        className={buttonClassName({ variant: triggerVariant, className: iconOnly ? "paper-action-menu__trigger--icon-only" : undefined })}
+        className={buttonClassName({ variant: triggerVariant, className: iconOnly ? slots.iconOnly() : undefined })}
         aria-label={iconOnly ? label : undefined}
         title={iconOnly ? label : undefined}
       >
         {!iconOnly && <span>{label}</span>}
-        {triggerIcon ? <span className="paper-action-menu__icon" aria-hidden="true">{triggerIcon}</span> : iconOnly
+        {triggerIcon ? <span className={slots.icon()} aria-hidden="true">{triggerIcon}</span> : iconOnly
           ? <EllipsisHorizontalIcon className={iconClassName()} aria-hidden="true" />
           : <ChevronDownIcon className={iconClassName("compact")} aria-hidden="true" />}
       </Menu.Trigger>
       <Menu.Portal container={portalContainer}>
         <Menu.Positioner
-          className="paper-action-menu__positioner"
+          className={slots.positioner()}
           sideOffset={6}
           align="end"
         >
-          <Menu.Popup className="paper-action-menu paper-elevation-floating">
+          <Menu.Popup className={popupClassName}>
             {items.map((item) => (
               <Menu.Item
                 key={item.id}
-                className={`paper-action-menu__item${
-                  item.destructive ? " paper-action-menu__item--destructive" : ""
-                }`}
+                className={slots.item({ className: item.destructive ? slots.destructive() : undefined })}
                 disabled={item.disabled}
                 label={item.label}
                 onClick={item.onSelect}
               >
                 {item.icon ? (
-                  <span className="paper-action-menu__icon" aria-hidden="true">
+                  <span className={slots.icon()} aria-hidden="true">
                     {item.icon}
                   </span>
                 ) : null}

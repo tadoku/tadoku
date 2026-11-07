@@ -1,10 +1,10 @@
-import { ButtonGroup } from 'paper-ui'
+import { ButtonGroup, stack } from 'paper-ui'
 import { useState } from 'react'
 
 export default function EntryActionsFixture() {
   const [message, setMessage] = useState('Choose an action to see its result.')
   return (
-    <div className="paper-stack">
+    <div className={stack()}>
       <ButtonGroup
         label="Entry actions"
         actions={[

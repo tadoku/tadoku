@@ -1,7 +1,7 @@
 import { useStore } from '@tanstack/react-form'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { usePaperForm } from 'paper-ui'
+import { bodyClassName, cn, documentClassName, typography, usePaperForm } from 'paper-ui'
 import type {
   CatalogFixture,
   CatalogFixtureViewport,
@@ -48,16 +48,16 @@ function titleCase(value: string): string {
 
 function PreviewSpecimen() {
   return (
-    <article className="preview-specimen">
-      <p className="paper-type-metadata">Responsive Paper specimen</p>
-      <h3 className="paper-type-section">Read more, one page at a time.</h3>
+    <article className="preview-specimen m-8 p-8 [&_h3]:my-1.6">
+      <p className={typography({ role: 'metadata' })}>Responsive Paper specimen</p>
+      <h3 className={typography({ role: 'section' })}>Read more, one page at a time.</h3>
       <p>
         The canvas is a separate document. Change its width to exercise real
         media queries without shrinking the catalogue itself.
       </p>
-      <div className="preview-breakpoint" aria-live="polite">
-        <span className="preview-breakpoint__narrow">Narrow layout active</span>
-        <span className="preview-breakpoint__wide">Wide layout active</span>
+      <div className="mt-6 border-t border-rule-subtle pt-4 font-semibold text-information" aria-live="polite">
+        <span className="preview-breakpoint__narrow tablet:hidden">Narrow layout active</span>
+        <span className="hidden tablet:inline">Wide layout active</span>
       </div>
     </article>
   )
@@ -75,6 +75,8 @@ function applyPreferences(
   theme: PaperTheme,
   density: PaperDensity,
 ) {
+  target.documentElement.className = documentClassName
+  target.body.className = bodyClassName
   target.documentElement.dataset.theme = theme
   target.documentElement.dataset.density = density
 }
@@ -183,9 +185,9 @@ export function ExampleCanvas({
   if (!viewport) return null
 
   return (
-    <methods.AppForm><section className="example-canvas" aria-label="Isolated component preview">
+    <methods.AppForm><section className="example-canvas @container min-w-0 [&_iframe]:block [&_iframe]:max-w-none [&_iframe]:border-0" aria-label="Isolated component preview">
       <div
-        className="canvas-controls"
+        className={`canvas-controls grid grid-cols-halves items-end gap-3 p-4 [&_.paper-field]:min-w-0 ${availableFixtures.length > 1 ? '@panel:grid-cols-thirds' : ''}`}
         role="group"
         aria-labelledby={settingsTitleId}
         onChange={(event) => {
@@ -194,47 +196,47 @@ export function ExampleCanvas({
       >
         <h3
           id={settingsTitleId}
-          className="canvas-controls__title paper-type-label"
+          className={cn('canvas-controls__title', typography({ role: 'label' }), 'sr-only')}
         >
           Preview settings
         </h3>
         {availableFixtures.length > 1 ? (
-          <div className="canvas-controls__fixture">
+          <div className="canvas-controls__fixture col-span-full min-w-0 @panel:col-auto">
             <methods.AppField name="fixtureId">{field => <field.Select label="Fixture" options={availableFixtures.map((candidate) => ({
                 value: candidate.id,
                 label: candidate.name,
               }))} />}</methods.AppField>
           </div>
         ) : null}
-        <div className="canvas-controls__theme">
+        <div className="canvas-controls__theme min-w-0 @panel:col-auto">
           <methods.AppField name="theme">{field => <field.Select label="Theme" options={themes.map((candidate) => ({
               value: candidate,
               label: titleCase(candidate),
             }))} />}</methods.AppField>
         </div>
-        <div className="canvas-controls__density">
+        <div className="canvas-controls__density min-w-0 @panel:col-auto">
           <methods.AppField name="density">{field => <field.Select label="Density" options={densities.map((candidate) => ({
               value: candidate,
               label: titleCase(candidate),
             }))} />}</methods.AppField>
         </div>
-        <div className="canvas-controls__viewport">
+        <div className="canvas-controls__viewport col-span-full min-w-0">
           <methods.AppField name="viewportId">{field => <field.RadioSelect label="Viewport" variant="segmented" options={[{ value: 'fit', label: 'Fit' }, ...viewports.map((option) => ({
               value: option.id,
               label: option.label,
             }))]} />}</methods.AppField>
         </div>
       </div>
-      <p className="canvas-status paper-type-metadata" aria-live="polite">
+      <p className={typography({ role: 'metadata' , className: 'm-0 px-4 pb-3 pt-0 text-muted' })} aria-live="polite">
         {viewport.label} · {viewport.width} px · {titleCase(theme)} ·{' '}
         {titleCase(density)}
       </p>
       {previewDestination && previewDestination.fixtureId === fixture?.id && (
-        <p className="canvas-status paper-type-metadata" role="status">
+        <p className={typography({ role: 'metadata' , className: 'm-0 px-4 pb-3 pt-0 text-muted' })} role="status">
           Preview destination: {previewDestination.href}. Navigation stays in this example.
         </p>
       )}
-      <div className="example-canvas__stage" ref={stageRef}>
+      <div className="example-canvas__stage max-w-full overflow-auto p-2 max-tablet:p-1" ref={stageRef}>
         <iframe
           title="Paper responsive component preview"
           width={isFit ? '100%' : viewport.width}
@@ -246,9 +248,8 @@ export function ExampleCanvas({
           style={{
             inlineSize: isFit ? '100%' : `${viewport.width}px`,
             blockSize: `min(${viewport.height}px, 22rem)`,
-            boxSizing: 'content-box',
-            border: 0,
           }}
+          className="box-content border-0"
           onLoad={(event) => {
             const targetDocument = event.currentTarget.contentDocument
             if (!targetDocument) return
@@ -262,7 +263,7 @@ export function ExampleCanvas({
       {previewRoot
         ? createPortal(
             fixture ? (
-              <div key={fixture.id} className="paper-fixture-stage" onClick={(event) => {
+              <div key={fixture.id} className="paper-fixture-stage min-h-full p-2 text-ink [&_form]:grid [&_form]:gap-4" onClick={(event) => {
                 const link = (event.target as Element).closest?.('a[href]')
                 if (!link || event.defaultPrevented) return
                 event.preventDefault()

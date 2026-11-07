@@ -172,6 +172,15 @@ describe("ActionMenu", () => {
     expect(trigger).toHaveFocus();
   });
 
+  it("shows leading content before the label without adding to the trigger's name", () => {
+    const items = [{ id: "profile", label: "Profile", onSelect: vi.fn() }];
+    const { rerender } = render(<ActionMenu label="Anton" triggerLeading={<span data-testid="avatar">AV</span>} items={items} />);
+    const trigger = screen.getByRole("button", { name: "Anton" });
+    expect(trigger.textContent).toBe("AVAnton");
+    rerender(<ActionMenu label="Anton" triggerLeading={<span data-testid="avatar">AV</span>} items={items} iconOnly />);
+    expect(screen.queryByTestId("avatar")).toBeNull();
+  });
+
   it("uses the curated chevron and offers a named icon-only trigger", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();

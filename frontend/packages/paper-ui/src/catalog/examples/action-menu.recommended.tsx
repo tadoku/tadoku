@@ -49,6 +49,15 @@ export default function ActionMenuFixture() {
         <ActionMenu label="Anton account menu" iconOnly triggerIcon={<UserCircleIcon />} triggerVariant="ghost"
           items={[{ id: 'profile', label: 'My profile', onSelect: () => setResult('My profile selected') }]} />
       </div>
+      <p>
+        A labelled trigger can lead with the account&apos;s picture or initials.
+        It is decorative: the label stays the trigger&apos;s name.
+      </p>
+      <div className={cluster()}>
+        <ActionMenu label="Anton" triggerVariant="ghost"
+          triggerLeading={<span className="grid size-6 place-items-center border border-rule text-2xs font-semibold text-muted">AV</span>}
+          items={[{ id: 'profile', label: 'My profile', onSelect: () => setResult('My profile selected') }]} />
+      </div>
       <p role="status">{result}</p>
       <p>Duplication is unavailable for this archived example.</p>
     </div>

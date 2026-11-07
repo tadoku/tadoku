@@ -25,6 +25,7 @@ const actionMenu = tv({
       "data-highlighted:text-inverse",
     ],
     icon: "paper-action-menu__icon grid size-icon place-items-center *:size-full",
+    leading: "paper-action-menu__leading flex shrink-0",
   },
 });
 
@@ -49,6 +50,8 @@ export interface ActionMenuProps {
   readonly iconOnly?: boolean;
   /** Replace the default trigger icon; the menu label remains its accessible name. */
   readonly triggerIcon?: ReactNode;
+  /** Decorative content before the label in a labelled trigger, such as an account's avatar; label stays the accessible name. */
+  readonly triggerLeading?: ReactNode;
 }
 
 export function ActionMenu({
@@ -58,6 +61,7 @@ export function ActionMenu({
   defaultOpen,
   iconOnly = false,
   triggerIcon,
+  triggerLeading,
 }: ActionMenuProps) {
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
 
@@ -73,6 +77,7 @@ export function ActionMenu({
         aria-label={iconOnly ? label : undefined}
         title={iconOnly ? label : undefined}
       >
+        {!iconOnly && triggerLeading ? <span className={slots.leading()} aria-hidden="true">{triggerLeading}</span> : null}
         {!iconOnly && <span>{label}</span>}
         {triggerIcon ? <span className={slots.icon()} aria-hidden="true">{triggerIcon}</span> : iconOnly
           ? <EllipsisHorizontalIcon className={iconClassName()} aria-hidden="true" />

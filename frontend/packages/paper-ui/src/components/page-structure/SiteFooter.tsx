@@ -37,7 +37,7 @@ const siteFooter = tv({
       "[&_p_a:hover]:text-footer-ink",
     ],
     inner: [
-      "mx-auto grid max-w-content grid-cols-content-end gap-x-16 gap-y-10 max-tablet:grid-cols-single",
+      "mx-auto grid max-w-content grid-cols-content-end gap-x-16 gap-y-10 max-lg:grid-cols-single",
     ],
     brand: "grid content-start justify-items-start gap-4",
     lockup: "inline-flex items-center gap-2.5 [&:hover]:no-underline",

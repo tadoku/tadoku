@@ -14,13 +14,13 @@ export const navbar = tv({
     inner: "paper-navbar__inner flex min-h-control items-center justify-between gap-inline px-field-x",
     brand: "paper-navbar__brand flex items-center",
     brandLink: "inline-flex items-center font-bold text-ink no-underline",
-    links: "paper-navbar__desktop-links ms-auto flex items-stretch gap-1 max-tablet:hidden",
+    links: "paper-navbar__desktop-links ms-auto flex items-stretch gap-1 max-lg:hidden",
     link: ["paper-navbar__link", ...barLink, "not-aria-disabled:hover:bg-neutral-hover"],
     trigger: ["paper-navbar__dropdown-trigger", ...barLink, "hover:bg-neutral-hover"],
     actions: "paper-navbar__actions flex items-center gap-inline",
     mobileTrigger: [
       "paper-navbar__mobile-trigger hidden size-target min-h-target min-w-target flex-none cursor-pointer",
-      "place-items-center border-0 bg-transparent p-0 text-ink disabled:cursor-progress max-tablet:grid",
+      "place-items-center border-0 bg-transparent p-0 text-ink disabled:cursor-progress max-lg:grid",
     ],
     positioner: "paper-navbar__positioner z-popover outline-none",
     dropdown: [
@@ -44,18 +44,18 @@ export const navbar = tv({
     ],
   },
   variants: {
-    open: { true: { panel: "max-tablet:block" } },
+    open: { true: { panel: "max-lg:block" } },
     alone: { true: { actions: "ms-auto" } },
     /** Inside an application frame's header band: the bar keeps to the frame width and its gutter. */
     contained: {
       true: {
         root: "mx-auto max-w-frame border-0 px-gutter",
-        inner: "px-0 py-2 max-tablet:gap-2",
-        brand: "max-tablet:shrink-0",
+        inner: "px-0 py-2 max-lg:gap-2",
+        brand: "max-lg:shrink-0",
         brandLink: "gap-brand-gap",
-        actions: "max-tablet:ms-auto max-tablet:[&_.paper-button]:min-h-target",
+        actions: "max-lg:ms-auto max-lg:[&_.paper-button]:min-h-target",
         panel: "px-0",
-        mobileLink: "max-tablet:min-h-target",
+        mobileLink: "max-lg:min-h-target",
       },
     },
   },

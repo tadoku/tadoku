@@ -69,8 +69,9 @@ in the server-rendered HTML.
 destinations in Paper's layout. The main navigation links Home, Leaderboard,
 Contests, Blog and the Guide. Anonymous visitors see Log in and Sign up, which
 open authv2's `/login` and `/register` and return to the current page. A
-signed-in account sees Log activity and a menu named after it, led by its
-[avatar](#avatars), with Profile,
+signed-in account sees Log activity and a menu whose trigger is its
+[avatar](#avatars) and whose accessible name is the account's name. The menu
+opens under a heading with that name, then Profile,
 Admin for administrators, Account settings and Log out; at narrow widths the
 menu's entries join the mobile navigation. Admin opens the sibling admin host
 and Account settings opens authv2's `/settings` with the current page as
@@ -94,8 +95,8 @@ once its announcement ends. An unavailable announcement list shows nothing.
 ### Avatars
 
 `frontend/apps/webv3/src/components/Avatar.tsx` shows a learner's Gravatar
-beside their name wherever webv3 names a learner, except inside headings,
-whose text it would join. The image comes from the API's
+beside their name wherever webv3 names a learner, except in standings and
+inside headings, whose text it would join; the account menu shows it alone. The image comes from the API's
 `GET /immersion/users/{userId}/avatar` through the gateway on the public web
 origin, so the learner's email and its hash never reach the browser. The
 avatar is a circle with the learner's initials, one letter at the

@@ -4,7 +4,6 @@ import { Button, EmptyState, Loading, SectionHeading, StatGrid, Surface, Table, 
 import type { ReactNode } from 'react'
 import { homeQueryOptions, memberDashboardQueries, type HomeData } from '../lib/home'
 import { standingsQuery } from '../lib/leaderboard'
-import { Avatar } from './Avatar'
 import { Person, Rank, currentRow, personLink } from './StandingsParts'
 import { formatDate, formatPeriod, numberFormat, place, pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
@@ -299,7 +298,6 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
             rowHeader: true,
             cell: row => (
               <Person you={row.user_id === viewerId}>
-                <Avatar userId={row.user_id} name={row.user_display_name} size="md" className="self-center" />
                 <a className={`home-person-link ${personLink}`} href={links.profile(row.user_id)}>{row.user_display_name}</a>
               </Person>
             ),

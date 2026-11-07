@@ -140,8 +140,8 @@ export function ContestFacts({ contest, phase }: { contest: ImmersionContestView
     ? 'Tadoku'
     : contest.owner_user_id
       ? (
-        <span className="inline-flex items-baseline gap-1.5">
-          <Avatar userId={contest.owner_user_id} name={contest.owner_user_display_name ?? '?'} size="sm" className="self-center" />
+        <span>
+          <Avatar userId={contest.owner_user_id} name={contest.owner_user_display_name ?? '?'} size="sm" className="me-1.5" />
           <a className="text-link hover:text-link-hover" href={links.profile(contest.owner_user_id)}>{contest.owner_user_display_name ?? 'Unknown user'}</a>
         </span>
       )

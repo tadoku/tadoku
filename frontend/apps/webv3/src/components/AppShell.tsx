@@ -8,7 +8,6 @@ import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowRightStartOnRectangleIcon,
-  ChevronDownIcon,
   Cog6ToothIcon,
   MoonIcon,
   ShieldCheckIcon,
@@ -187,20 +186,25 @@ function AccountActions({ viewer }: { viewer: Viewer | undefined }) {
 function AccountMenu({ viewer }: { viewer: SignedIn }) {
   const hydrated = useHydrated()
   return (
+    // The avatar is the trigger: no button fill behind the circle; its edge darkens on hover and while the menu is open.
     <span
       className={cn(
-        'flex min-w-0 max-lg:hidden [&_.paper-button]:min-w-0',
-        '[&_.paper-button>span:last-of-type]:max-w-measure-label [&_.paper-button>span:last-of-type]:truncate',
+        'flex max-lg:hidden [&_[aria-haspopup=menu]]:no-underline [&_[aria-haspopup=menu]>span]:size-8',
+        '[&_[aria-haspopup=menu]:hover>span>span]:border-rule-strong [&_[data-popup-open]>span>span]:border-rule-strong',
       )}
     >
       {hydrated
         ? <AccountMenuOpen viewer={viewer} />
         : (
           // The menu's trigger as server HTML renders it, disabled until it can open.
-          <button type="button" className={buttonClassName({ variant: 'ghost', className: 'disabled:cursor-progress disabled:opacity-full' })} disabled>
-            <Avatar userId={viewer.userId} name={viewer.displayName} size="md" />
-            <span>{viewer.displayName}</span>
-            <ChevronDownIcon className={iconClassName('compact')} aria-hidden="true" />
+          <button
+            type="button"
+            className={buttonClassName({ variant: 'link', className: 'w-target min-h-target min-w-target shrink-0 p-0 no-underline disabled:cursor-progress disabled:opacity-full' })}
+            aria-label={viewer.displayName}
+            title={viewer.displayName}
+            disabled
+          >
+            <span className="grid size-8 place-items-center" aria-hidden="true"><Avatar userId={viewer.userId} name={viewer.displayName} size="nav" /></span>
           </button>
         )}
     </span>
@@ -220,8 +224,10 @@ function AccountMenuOpen({ viewer }: { viewer: SignedIn }) {
   return (
     <ActionMenu
       label={viewer.displayName}
-      triggerLeading={<Avatar userId={viewer.userId} name={viewer.displayName} size="md" />}
-      triggerVariant="ghost"
+      heading={viewer.displayName}
+      iconOnly
+      triggerIcon={<Avatar userId={viewer.userId} name={viewer.displayName} size="nav" />}
+      triggerVariant="link"
       items={[
         ...items,
         { id: 'theme', label: theme.label, icon: theme.icon, onSelect: theme.toggle },

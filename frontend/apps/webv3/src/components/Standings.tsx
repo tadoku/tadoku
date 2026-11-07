@@ -6,7 +6,6 @@ import { numberFormat, scoreFormat } from '../lib/format'
 import { standingsPageSize, type Read } from '../lib/leaderboard'
 import { viewerQueryOptions } from '../lib/session'
 import { renderLink } from './router-link'
-import { Avatar } from './Avatar'
 import { Person, Rank, currentRow, personLink } from './StandingsParts'
 import { paginationSummary, sheetEmpty, standingsPagination, standingsTable } from './standings-styles'
 
@@ -71,7 +70,6 @@ export function Standings({ result, page, caption, pageHref, profileHref, empty,
       rowHeader: true,
       cell: row => (
         <Person you={row.user_id === viewerId}>
-          <Avatar userId={row.user_id} name={row.user_display_name} size="md" className="self-center" />
           <a className={personLink} href={profileHref(row.user_id)}>{row.user_display_name}</a>
         </Person>
       ),

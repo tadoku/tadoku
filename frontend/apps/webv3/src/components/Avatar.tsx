@@ -8,8 +8,10 @@ const initials = (name: string) => {
 }
 
 const sizes = {
-  sm: 'size-5 text-2xs text-muted',
+  /** Inline in a line of text: centred between its lowercase and capital letters. */
+  sm: '-top-px size-5 align-middle text-2xs text-muted',
   md: 'size-6 text-2xs text-muted',
+  nav: 'size-8 text-xs text-muted',
   lg: 'size-16 text-xl tracking-wide',
 } as const
 

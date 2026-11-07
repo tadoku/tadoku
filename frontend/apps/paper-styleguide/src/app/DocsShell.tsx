@@ -1,21 +1,16 @@
-import {
-  Button,
-  Drawer,
-  Navbar,
-  Sidebar,
-  type NavigationLinkRenderer,
-  type SidebarSection,
-} from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { a11y, Button, Drawer, iconSizes, Navbar, Sidebar, type NavigationLinkRenderer, type SidebarSection } from 'paper-ui'
 import type { CatalogDocument } from 'paper-ui/catalog'
 import cutMeterUrl from 'paper-ui/assets/brand/cut-meter.svg?no-inline'
 import cutMeterReversedUrl from 'paper-ui/assets/brand/cut-meter-reversed.svg?no-inline'
 import wordmarkAccentUrl from 'paper-ui/assets/brand/wordmark-accent.svg?no-inline'
 import wordmarkReversedUrl from 'paper-ui/assets/brand/wordmark-reversed.svg?no-inline'
-import { Bars3Icon, iconClassName } from 'paper-ui/icons'
+import { Bars3Icon } from 'paper-ui/icons'
 import { type PropsWithChildren, useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { buildNavigationGroups } from './catalogue'
 import { CatalogueSearch } from './CatalogueSearch'
+import { shellStyles } from '../styles/shell.styles'
 
 interface DocsShellProps extends PropsWithChildren {
   documents: readonly CatalogDocument[]
@@ -75,17 +70,17 @@ function MobileCatalogueNavigation({
       onOpenChange={setOpen}
       trigger={
         <Button
-          className="mobile-nav-trigger"
+          xstyle={[shellStyles.mobileNavTrigger]}
           variant="ghost"
           aria-label="Browse"
           leadingIcon={
             <Bars3Icon
               aria-hidden="true"
-              className={iconClassName('default')}
+              {...stylex.props(iconSizes.default)}
             />
           }
         >
-          <span className="mobile-nav-trigger__label">Browse</span>
+          <span {...stylex.props(shellStyles.mobileNavTrigger__label)}>Browse</span>
         </Button>
       }
     >
@@ -104,20 +99,20 @@ export function DocsShell({ documents, children }: DocsShellProps) {
   const sections = navigationSections(documents)
 
   return (
-    <div className="docs-shell">
-      <a className="skip-link paper-focus-ring" href="#main-content">
+    <div {...stylex.props(shellStyles.docsShell)}>
+      <a {...stylex.props(shellStyles.skipLink, a11y.focusRing)} href="#main-content">
         Skip to content
       </a>
-      <header className="docs-navbar">
+      <header {...stylex.props(shellStyles.docsNavbar)}>
         <Navbar
           brandHref="/"
           navigation={[]}
           renderLink={renderRouterLink}
           mobileNavigation={false}
           brand={
-            <span className="docs-wordmark" role="img" aria-label="Tadoku">
+            <span {...stylex.props(shellStyles.docsWordmark)} role="img" aria-label="Tadoku">
               <img
-                className="docs-wordmark__mark docs-wordmark__mark--ink"
+                {...stylex.props(shellStyles.docsWordmark__mark, shellStyles.docsWordmark__mark_ink)}
                 src={cutMeterUrl}
                 alt=""
                 aria-hidden="true"
@@ -125,7 +120,7 @@ export function DocsShell({ documents, children }: DocsShellProps) {
                 height={36}
               />
               <img
-                className="docs-wordmark__mark docs-wordmark__mark--reversed"
+                {...stylex.props(shellStyles.docsWordmark__mark, shellStyles.docsWordmark__mark_reversed)}
                 src={cutMeterReversedUrl}
                 alt=""
                 aria-hidden="true"
@@ -133,7 +128,7 @@ export function DocsShell({ documents, children }: DocsShellProps) {
                 height={36}
               />
               <img
-                className="docs-wordmark__image docs-wordmark__image--accent"
+                {...stylex.props(shellStyles.docsWordmark__image, shellStyles.docsWordmark__image_accent)}
                 src={wordmarkAccentUrl}
                 alt=""
                 aria-hidden="true"
@@ -141,7 +136,7 @@ export function DocsShell({ documents, children }: DocsShellProps) {
                 height={23.2}
               />
               <img
-                className="docs-wordmark__image docs-wordmark__image--reversed"
+                {...stylex.props(shellStyles.docsWordmark__image, shellStyles.docsWordmark__image_reversed)}
                 src={wordmarkReversedUrl}
                 alt=""
                 aria-hidden="true"
@@ -163,7 +158,7 @@ export function DocsShell({ documents, children }: DocsShellProps) {
         />
       </header>
 
-      <aside className="docs-sidebar" data-density="compact">
+      <aside {...stylex.props(shellStyles.docsSidebar)} data-density="compact">
         <Sidebar
           sections={sections}
           currentPath={location.pathname}
@@ -172,7 +167,7 @@ export function DocsShell({ documents, children }: DocsShellProps) {
         />
       </aside>
 
-      <main id="main-content" className="docs-main" tabIndex={-1}>
+      <main id="main-content" {...stylex.props(shellStyles.docsMain)} tabIndex={-1}>
         {children}
       </main>
     </div>

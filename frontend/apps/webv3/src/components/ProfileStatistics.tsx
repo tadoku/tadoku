@@ -55,19 +55,6 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
                     }))}
                   />
                 </HeatmapScroll>
-                <form className="profile-day-picker" method="get" action={links.profileUpdates(profile.id)}>
-                  <label htmlFor="profile-day">Show a day’s updates</label>
-                  <input
-                    id="profile-day"
-                    className="paper-input"
-                    type="date"
-                    name="date"
-                    required
-                    min={`${year}-01-01`}
-                    max={year === Number(statistics.today.slice(0, 4)) ? statistics.today : `${year}-12-31`}
-                  />
-                  <button type="submit" className={buttonClassName({ variant: 'outline' })}>Show</button>
-                </form>
               </>) : <p className="profile-muted">Could not retrieve updates for {year}.</p>}
             </div>
           </>

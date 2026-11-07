@@ -1,6 +1,8 @@
-@layer paper-tokens, paper-base, paper-recipes, paper-utilities;
-
-@layer paper-base {
+/*
+ * Paper's only stylesheet. StyleX cannot declare font faces, so they live here; every other style is
+ * StyleX. Applications import it once from their root (`import 'paper-ui/fonts.css'`), which also gives the bundler
+ * the CSS asset that StyleX appends the compiled styles to.
+ */
 @font-face {
   font-family: "Merriweather";
   font-style: normal;
@@ -31,5 +33,4 @@
   font-weight: 700;
   font-display: swap;
   src: url("./assets/fonts/open-sans-700.woff2") format("woff2");
-}
 }

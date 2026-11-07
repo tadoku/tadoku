@@ -21,6 +21,8 @@ export const twMergeConfig = {
       blur: keys('blur'),
       animate: keys('animate'),
     },
+    // Paper's text sizes carry no line height, so a size override must keep the recipe's leading.
+    conflictingClassGroups: { 'font-size': [] },
   },
   extend: {
     classGroups: {

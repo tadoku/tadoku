@@ -6,6 +6,7 @@ import {
   api,
   branch,
   expect,
+  logDescription,
   openForm,
   reader,
   test,
@@ -104,7 +105,7 @@ test('another learner cannot manage the log\'s contests', async ({ page, readerC
 
   const adminPage = await adminContext.newPage()
   await adminPage.goto(`${webv3}/logs/${id}`)
-  await expect(adminPage.getByRole('heading', { level: 1, name: description })).toBeVisible()
+  await expect(logDescription(adminPage)).toHaveText(description)
   await expect(manageLink(adminPage)).toHaveCount(0)
   await adminPage.goto(`${webv3}/logs/${id}/contests`)
   await expect(adminPage.getByRole('heading', { name: 'This is someone else\'s record' })).toBeVisible()

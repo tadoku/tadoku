@@ -9,6 +9,7 @@ import {
   createLog,
   expect,
   isSaveRequest,
+  logDescription,
   logsDescribed,
   openForm,
   reader,
@@ -81,9 +82,9 @@ for (const activity of ['Reading', 'Listening']) {
     await save.click()
 
     await expect(page).toHaveURL(`${webv3}/logs/${id}`)
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(text)
+    await expect(logDescription(page)).toHaveText(text)
     await page.reload()
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(text)
+    await expect(logDescription(page)).toHaveText(text)
 
     const response = await readerContext.request.get(`${api}/immersion/logs/${id}`)
     expect(response.status()).toBe(200)
@@ -95,7 +96,7 @@ for (const activity of ['Reading', 'Listening']) {
     if (timed) expect(record.duration_seconds).toBe(150)
     else expect(record.amount).toBe(17)
     expect(record.registrations.length).toBeGreaterThan(0)
-    await expect(page.getByRole('heading', { level: 1, name: text })).toBeVisible()
+    await expect(logDescription(page)).toHaveText(text)
     for (const registration of record.registrations) {
       await expect(page.getByRole('link', { name: registration.title, exact: true })).toBeVisible()
     }
@@ -252,7 +253,7 @@ test('public detail hides contest management and the canonical tenant cannot rea
   try {
     const publicPage = await publicContext.newPage()
     await publicPage.goto(`${webv3}/logs/${id}`)
-    await expect(publicPage.getByRole('heading', { level: 1, name: description })).toBeVisible()
+    await expect(logDescription(publicPage)).toHaveText(description)
     await expect(publicPage.getByRole('link', { name: 'Manage contest submissions' })).toHaveCount(0)
     const publicRecord = await publicContext.request.get(`${api}/immersion/logs/${id}`)
     expect((await publicRecord.json()).registrations).toEqual([])
@@ -273,7 +274,7 @@ test('a different signed-in learner cannot change another learner\'s activity', 
   const id = await createLog(adminPage)
 
   await page.goto(`${webv3}/logs/${id}`)
-  await expect(page.getByRole('heading', { level: 1, name: description })).toBeVisible()
+  await expect(logDescription(page)).toHaveText(description)
   await expect(page.getByRole('link', { name: 'Manage contest submissions' })).toHaveCount(0)
 
   const path = `${api}/immersion/logs/${id}`

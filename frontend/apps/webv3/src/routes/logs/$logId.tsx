@@ -41,15 +41,20 @@ function LogDetail() {
 
   const log = result.data
   const owner = viewer?.status === 'signed-in' && viewer.userId === log.user_id
-  const subject = `${log.language.name} ${log.activity.name}`
+  const learner = log.user_display_name ?? (owner && viewer?.status === 'signed-in' ? viewer.displayName : undefined)
   return (
     <div>
       <PageHeader
         backLink={{ href: links.profileUpdates(log.user_id), label: owner ? 'Your activity' : 'Activity' }}
         renderLink={renderLink}
         className="max-w-record"
-        title={log.description || subject}
-        lead={`${log.language.name} · ${log.activity.name}`}
+        title="Log details"
+        lead={(
+          <>
+            {log.language.name} · {log.activity.name}
+            {learner ? <> · Logged by <a className="text-link hover:text-link-hover" href={links.profile(log.user_id)}>{learner}</a></> : null}
+          </>
+        )}
         actions={owner ? <OwnerActions log={log} /> : null}
       />
       <Surface className="max-w-record p-0 wrap-anywhere">
@@ -61,11 +66,11 @@ function LogDetail() {
               { label: 'Logged', value: formatDate(log.created_at.slice(0, 10)), detail: loggedTime(log.created_at) },
             ]}
           />
-          {!owner && log.user_display_name || log.tags.length ? (
+          {log.description || log.tags.length ? (
             <DescriptionList
-              layout="inline"
+              className="border-t border-rule pt-6"
               items={[
-                ...(!owner && log.user_display_name ? [{ label: 'Learner', value: log.user_display_name }] : []),
+                ...(log.description ? [{ label: 'Description', value: log.description }] : []),
                 ...(log.tags.length ? [{ label: 'Tags', value: log.tags.join(', ') }] : []),
               ]}
             />

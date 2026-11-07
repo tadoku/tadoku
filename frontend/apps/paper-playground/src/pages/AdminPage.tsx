@@ -1,12 +1,16 @@
+import * as stylex from '@stylexjs/stylex'
 import { useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
-import { usePaperForm, Breadcrumb, Button, DescriptionList, Drawer, EmptyState, Flash, Modal, PageHeader, SectionHeading, Sidebar, StatGrid, StatusTag, Table, buttonClassName, type SidebarSection, type StatusTagTone } from 'paper-ui'
+import { Breadcrumb, Button, buttonStyles, DescriptionList, Drawer, EmptyState, Flash, iconSizes, linkStyles, Modal, PageHeader, SectionHeading, Sidebar, StatGrid, StatusTag, Table, usePaperForm, type SidebarSection, type StatusTagTone } from 'paper-ui'
+import { size } from 'paper-ui/tokens.stylex'
 import { Bars3Icon, PlusIcon } from 'paper-ui/icons'
 import { formatDate, users } from '../data'
 import { contestEnd, contestStart, formatDateRange, formatDateTime } from '../dates'
 import { renderLink } from '../routerLink'
 import { usePlayground } from '../state'
-import './records.css'
+import { appStyles } from '../app.styles'
+import { recordsStyles } from './records.styles'
+import { recordsDescendants as descendantStyles } from './records-descendants.styles'
 
 type AdminSection = 'posts' | 'pages' | 'announcements' | 'languages' | 'reports'
 type AdminRecord = { id: string; section: AdminSection; title: string; detail: string; status: string }
@@ -41,14 +45,14 @@ function RecordEditor({ record, section, onSave, variant }: { record?: AdminReco
   const methods = usePaperForm({ defaultValues: defaults, onSubmit: ({ value: values }) => { onSave({ ...values, id: record?.id ?? `${section}-${crypto.randomUUID()}`, section }); setOpen(false) } })
   const singular: Record<AdminSection, string> = { posts: 'post', pages: 'page', announcements: 'announcement', languages: 'language', reports: 'report' }
   const title = record ? `${review ? 'Review' : 'Edit'} ${singular[section]}` : `New ${singular[section]}`
-  return <Modal title={title} trigger={<Button variant={variant ?? (record ? 'outline' : 'default')} leadingIcon={record ? undefined : <PlusIcon className="paper-icon-default" />}>{record ? review ? 'Review' : 'Edit' : title}</Button>} open={open} onOpenChange={next => { if (next) methods.reset(defaults, { keepDefaultValues: true }); setOpen(next) }} footer={null}>
+  return <Modal title={title} trigger={<Button variant={variant ?? (record ? 'outline' : 'default')} leadingIcon={record ? undefined : <PlusIcon {...stylex.props(iconSizes.default)} />}>{record ? review ? 'Review' : 'Edit' : title}</Button>} open={open} onOpenChange={next => { if (next) methods.reset(defaults, { keepDefaultValues: true }); setOpen(next) }} footer={null}>
     <methods.AppForm><methods.Form >
-      <div className="app-form__fields">
+      <div {...stylex.props(appStyles.appForm__fields)}>
       <methods.AppField name="title" validators={{ onChange: ({ value }) => { if (!value) return "This field is required."; const result = (value => Boolean(String(value).trim()) || 'Enter a title.')(value); return result === true ? undefined : result || undefined; } }}>{field => <field.Input label={section === 'languages' ? 'Language or request' : 'Title'} required maxLength={120} />}</methods.AppField>
       <methods.AppField name="detail" validators={{ onChange: ({ value }) => { if (!value) return "This field is required."; const result = (value => Boolean(String(value).trim()) || 'Add the content or review notes.')(value); return result === true ? undefined : result || undefined; } }}>{field => <field.TextArea label={review ? 'Review notes' : 'Content'} required rows={6} />}</methods.AppField>
       <methods.AppField name="status">{field => <field.Select label="Status" options={(review ? ['Open', section === 'languages' ? 'Approved' : 'Resolved'] : ['Draft', 'Published']).map(value => ({ value, label: value }))} />}</methods.AppField>
       </div>
-      <div className="app-form__actions"><Button type="submit">Save {review ? 'review' : 'changes'}</Button><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button></div>
+      <div {...stylex.props(appStyles.appForm__actions)}><Button type="submit">Save {review ? 'review' : 'changes'}</Button><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button></div>
     </methods.Form></methods.AppForm>
   </Modal>
 }
@@ -68,47 +72,47 @@ export function AdminPage() {
     setRecords(items => items.some(item => item.id === record.id) ? items.map(item => item.id === record.id ? record : item) : [record, ...items])
     setNotice(`${record.title}: ${record.status.toLocaleLowerCase()} saved in this workspace.`)
   }
-  const sidebar = <Sidebar sections={sections} currentPath={location.pathname} label="Admin sections" renderLink={({ href, ...props }) => <Link className="text-link" to={href} {...props} onClick={() => setMobileOpen(false)} />} />
+  const sidebar = <Sidebar sections={sections} currentPath={location.pathname} label="Admin sections" renderLink={({ href, ...props }) => <Link {...stylex.props(linkStyles.base)} to={href} {...props} onClick={() => setMobileOpen(false)} />} />
 
   if (viewer !== 'admin') return <EmptyState headingLevel={1} title="Admin workspace" description="This workspace is available to administrators." actions={<Button onClick={() => setViewer('admin')}>Enter the demo admin workspace</Button>} />
 
-  return <div className="records-admin-layout">
-    <aside className="records-admin-sidebar">{sidebar}<Link className="records-admin-return text-link" to="/">Back to Tadoku</Link></aside>
-    <div className="records-admin-main">
-      <div className="records-admin-mobile"><Drawer trigger={<Button variant="outline" leadingIcon={<Bars3Icon className="paper-icon-default" />}>Admin sections</Button>} title="Admin workspace" placement="start" open={mobileOpen} onOpenChange={setMobileOpen}>{sidebar}<Link className="text-link" to="/" onClick={() => setMobileOpen(false)}>Back to Tadoku</Link></Drawer></div>
+  return <div {...stylex.props(recordsStyles.recordsAdminLayout)}>
+    <aside {...stylex.props(recordsStyles.recordsAdminSidebar)}>{sidebar}<Link {...stylex.props(recordsStyles.recordsAdminReturn, linkStyles.base)} to="/">Back to Tadoku</Link></aside>
+    <div {...stylex.props(recordsStyles.recordsAdminMain)}>
+      <div {...stylex.props(recordsStyles.recordsAdminMobile)}><Drawer trigger={<Button variant="outline" leadingIcon={<Bars3Icon {...stylex.props(iconSizes.default)} />}>Admin sections</Button>} title="Admin workspace" placement="start" open={mobileOpen} onOpenChange={setMobileOpen}>{sidebar}<Link {...stylex.props(linkStyles.base)} to="/" onClick={() => setMobileOpen(false)}>Back to Tadoku</Link></Drawer></div>
       <Breadcrumb items={[{ id: 'home', label: 'Tadoku', href: '/' }, { id: 'admin', label: 'Admin', href: '/admin' }, { id: section, label: names[section] ?? 'Page not found' }]} renderLink={renderLink} />
-      <PageHeader className="records-admin-heading" title={names[section] ?? 'Page not found'} actions={section === 'dashboard' ? <RecordEditor section="announcements" onSave={saveRecord} /> : ['posts', 'pages', 'announcements', 'languages'].includes(section) ? <RecordEditor section={section as AdminSection} onSave={saveRecord} /> : null} />
-      {notice ? <Flash variant="success" className="records-admin-notice">{notice}</Flash> : null}
+      <PageHeader xstyle={[recordsStyles.recordsAdminHeading]} title={names[section] ?? 'Page not found'} actions={section === 'dashboard' ? <RecordEditor section="announcements" onSave={saveRecord} /> : ['posts', 'pages', 'announcements', 'languages'].includes(section) ? <RecordEditor section={section as AdminSection} onSave={saveRecord} /> : null} />
+      {notice ? <Flash variant="success" xstyle={[recordsStyles.recordsAdminNotice]}>{notice}</Flash> : null}
       {section === 'dashboard' ? <>
-        <StatGrid className="records-admin-stats" stats={[
+        <StatGrid xstyle={[recordsStyles.recordsAdminStats]} stats={[
           { label: 'Community members', value: users.length },
           { label: 'Active official round', value: 'Round 5', detail: currentContest ? formatDateRange(contestStart(currentContest.start), contestEnd(currentContest.end)) : 'Schedule unavailable' },
           { label: 'Open reports', value: openReports.length },
         ]} />
-        <section className="page-section records-admin-attention"><SectionHeading level={2} title="Needs attention" actions={<Link className="text-link" to="/admin/reports">View reports</Link>} /><ul className="records-admin-queue">
-          {openReports.map(record => <li key={record.id}><div><strong>{record.title}</strong><p>{record.detail}</p></div><RecordEditor record={record} section="reports" onSave={saveRecord} /></li>)}
-          {records.filter(record => record.section === 'announcements' && record.status === 'Draft').slice(0, 1).map(record => <li key={record.id}><div><strong>{record.title}</strong><p>Draft announcement ready for an editorial check.</p></div><RecordEditor record={record} section="announcements" onSave={saveRecord} /></li>)}
-          {requestedLanguages.length ? <li><div><strong>{requestedLanguages.length} language requests</strong><p>Check names and supported-language entries before approval.</p></div><Link className={buttonClassName({ variant: 'outline' })} to="/admin/languages">Review requests</Link></li> : null}
-          {!openReports.length && !requestedLanguages.length ? <li><p>All reports and language requests have been reviewed.</p></li> : null}
+        <section {...stylex.props(appStyles.pageSection, recordsStyles.recordsAdminAttention)}><SectionHeading level={2} title="Needs attention" actions={<Link {...stylex.props(linkStyles.base)} to="/admin/reports">View reports</Link>} /><ul {...stylex.props(recordsStyles.recordsAdminQueue)}>
+          {openReports.map(record => <li {...stylex.props(descendantStyles.recordsAdminQueueU_uLi)} key={record.id}><div><strong {...stylex.props(descendantStyles.recordsAdminQueueU_uStrong)}>{record.title}</strong><p {...stylex.props(descendantStyles.recordsAdminQueueU_uP)}>{record.detail}</p></div><RecordEditor record={record} section="reports" onSave={saveRecord} /></li>)}
+          {records.filter(record => record.section === 'announcements' && record.status === 'Draft').slice(0, 1).map(record => <li {...stylex.props(descendantStyles.recordsAdminQueueU_uLi)} key={record.id}><div><strong {...stylex.props(descendantStyles.recordsAdminQueueU_uStrong)}>{record.title}</strong><p {...stylex.props(descendantStyles.recordsAdminQueueU_uP)}>Draft announcement ready for an editorial check.</p></div><RecordEditor record={record} section="announcements" onSave={saveRecord} /></li>)}
+          {requestedLanguages.length ? <li {...stylex.props(descendantStyles.recordsAdminQueueU_uLi)}><div><strong {...stylex.props(descendantStyles.recordsAdminQueueU_uStrong)}>{requestedLanguages.length} language requests</strong><p {...stylex.props(descendantStyles.recordsAdminQueueU_uP)}>Check names and supported-language entries before approval.</p></div><Link {...stylex.props(...buttonStyles({ variant: 'outline' }))} to="/admin/languages">Review requests</Link></li> : null}
+          {!openReports.length && !requestedLanguages.length ? <li {...stylex.props(descendantStyles.recordsAdminQueueU_uLi)}><p {...stylex.props(descendantStyles.recordsAdminQueueU_uP)}>All reports and language requests have been reviewed.</p></li> : null}
         </ul></section>
-        <div className="records-admin-bottom">
-          <section className="page-section"><SectionHeading level={2} title="Current contest" description={currentContest?.title ?? '2026 Round 5'} actions={<Link className="text-link" to="/contests/round5">Open contest</Link>} /><DescriptionList layout="inline" items={[
+        <div {...stylex.props(recordsStyles.recordsAdminBottom)}>
+          <section {...stylex.props(appStyles.pageSection)}><SectionHeading level={2} title="Current contest" description={currentContest?.title ?? '2026 Round 5'} actions={<Link {...stylex.props(linkStyles.base)} to="/contests/round5">Open contest</Link>} /><DescriptionList layout="inline" items={[
             { label: 'Period', value: currentContest ? formatDateRange(contestStart(currentContest.start), contestEnd(currentContest.end)) : 'Schedule unavailable' },
             { label: 'Registration deadline', value: currentContest ? formatDateTime(contestEnd(currentContest.registrationDeadline)) : 'Schedule unavailable' },
             { label: 'Submitted sample entries', value: logs.filter(log => log.submissions.some(item => item.contestId === 'round5')).length },
           ]} /></section>
-          <section className="page-section"><SectionHeading level={2} title="Quick actions" /><div className="records-admin-quick"><RecordEditor section="posts" variant="outline" onSave={saveRecord} /><RecordEditor section="pages" variant="outline" onSave={saveRecord} /><Link className={buttonClassName({ variant: 'outline' })} to="/admin/languages">Languages</Link><Link className={buttonClassName({ variant: 'outline' })} to="/admin/users">Users</Link></div></section>
+          <section {...stylex.props(appStyles.pageSection)}><SectionHeading level={2} title="Quick actions" /><div {...stylex.props(recordsStyles.recordsAdminQuick)}><RecordEditor section="posts" variant="outline" onSave={saveRecord} /><RecordEditor section="pages" variant="outline" onSave={saveRecord} /><Link {...stylex.props(...buttonStyles({ variant: 'outline' }))} to="/admin/languages">Languages</Link><Link {...stylex.props(...buttonStyles({ variant: 'outline' }))} to="/admin/users">Users</Link></div></section>
         </div>
-        <section className="page-section records-admin-status"><SectionHeading level={2} title="Service status" description="Illustrative service states for this unpublished preview." /><DescriptionList layout="inline" items={['Immersion API', 'Content API', 'Background jobs'].map(service => ({ label: service, value: <StatusTag tone="success">Healthy sample</StatusTag> }))} /></section>
-      </> : section === 'users' ? <Table className="records-admin-table" caption="Community members" captionVisibility="screen-reader" minWidth="32rem" columns={[{ id: 'name', header: 'Member', rowHeader: true, cell: item => <Link className="text-link" to={`/users/${item.id}`}>{item.name}</Link> }, { id: 'joined', header: 'Tracking since', cell: item => formatDate(item.joined) }, { id: 'action', header: 'Activity', cell: item => <Link className="text-link" to={`/users/${item.id}/activity`}>View activity</Link> }]} rows={users} getRowKey={item => item.id} /> : section === 'contests' ? <Table className="records-admin-table" caption="Contests" captionVisibility="screen-reader" minWidth="38rem" columns={[{ id: 'title', header: 'Contest', rowHeader: true, cell: item => <Link className="text-link" to={`/contests/${item.id}`}>{item.title}</Link> }, { id: 'type', header: 'Collection', cell: item => item.unlisted ? 'Unlisted' : item.scope === 'official' ? 'Official' : 'Community' }, { id: 'dates', header: 'Begins', cell: item => formatDate(contestStart(item.start)) }, { id: 'action', header: 'Details', cell: item => <Link className="text-link" to={`/contests/${item.id}`}>Open contest</Link> }]} rows={contests} getRowKey={item => item.id} /> : ['posts', 'pages', 'announcements', 'languages', 'reports'].includes(section) ? <section className="records-admin-collection" aria-label={names[section]}>
-        <p className="records-admin-count">{records.filter(record => record.section === section).length} {names[section].toLocaleLowerCase()}</p>
-        <ul className="records-admin-records">{records.filter(record => record.section === section).map(item => <li key={item.id}>
-          <div className="records-admin-record"><h2>{item.title}</h2><p>{item.detail}</p></div>
+        <section {...stylex.props(appStyles.pageSection, recordsStyles.recordsAdminStatus)}><SectionHeading level={2} title="Service status" description="Illustrative service states for this unpublished preview." /><DescriptionList layout="inline" items={['Immersion API', 'Content API', 'Background jobs'].map(service => ({ label: service, value: <StatusTag tone="success">Healthy sample</StatusTag> }))} /></section>
+      </> : section === 'users' ? <Table xstyle={[recordsStyles.recordsAdminTable]} caption="Community members" captionVisibility="screen-reader" minWidth={size[512]} columns={[{ id: 'name', header: 'Member', rowHeader: true, cell: item => <Link {...stylex.props(linkStyles.base)} to={`/users/${item.id}`}>{item.name}</Link> }, { id: 'joined', header: 'Tracking since', cell: item => formatDate(item.joined) }, { id: 'action', header: 'Activity', cell: item => <Link {...stylex.props(linkStyles.base)} to={`/users/${item.id}/activity`}>View activity</Link> }]} rows={users} getRowKey={item => item.id} /> : section === 'contests' ? <Table xstyle={[recordsStyles.recordsAdminTable]} caption="Contests" captionVisibility="screen-reader" minWidth={size[608]} columns={[{ id: 'title', header: 'Contest', rowHeader: true, cell: item => <Link {...stylex.props(linkStyles.base)} to={`/contests/${item.id}`}>{item.title}</Link> }, { id: 'type', header: 'Collection', cell: item => item.unlisted ? 'Unlisted' : item.scope === 'official' ? 'Official' : 'Community' }, { id: 'dates', header: 'Begins', cell: item => formatDate(contestStart(item.start)) }, { id: 'action', header: 'Details', cell: item => <Link {...stylex.props(linkStyles.base)} to={`/contests/${item.id}`}>Open contest</Link> }]} rows={contests} getRowKey={item => item.id} /> : ['posts', 'pages', 'announcements', 'languages', 'reports'].includes(section) ? <section aria-label={names[section]}>
+        <p {...stylex.props(recordsStyles.recordsAdminCount)}>{records.filter(record => record.section === section).length} {names[section].toLocaleLowerCase()}</p>
+        <ul {...stylex.props(recordsStyles.recordsAdminRecords)}>{records.filter(record => record.section === section).map(item => <li {...stylex.props(descendantStyles.recordsAdminRecordsU_uLi)} key={item.id}>
+          <div {...stylex.props(recordsStyles.recordsAdminRecord)}><h2 {...stylex.props(descendantStyles.recordsAdminRecordU_uH2)}>{item.title}</h2><p {...stylex.props(descendantStyles.recordsAdminRecordU_uP)}>{item.detail}</p></div>
           <StatusTag tone={statusTones[item.status] ?? 'neutral'}>{item.status}</StatusTag>
           <RecordEditor record={item} section={item.section} onSave={saveRecord} />
         </li>)}</ul>
         {!records.some(record => record.section === section) ? <EmptyState headingLevel={2} title={`No ${names[section].toLocaleLowerCase()} yet.`} /> : null}
-      </section> : <EmptyState headingLevel={2} title="This admin page isn’t available" actions={<Link className={buttonClassName()} to="/admin">Return to dashboard</Link>} />}
+      </section> : <EmptyState headingLevel={2} title="This admin page isn’t available" actions={<Link {...stylex.props(...buttonStyles())} to="/admin">Return to dashboard</Link>} />}
     </div>
   </div>
 }

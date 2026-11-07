@@ -1,8 +1,11 @@
+import * as stylex from '@stylexjs/stylex'
 import { useStore } from '@tanstack/react-form'
-import { Button, EmptyState, PageHeader, Table, buttonClassName, usePaperForm } from 'paper-ui'
+import { accentRail, Button, buttonStyles, EmptyState, linkStyles, PageHeader, Table, usePaperForm } from 'paper-ui'
 import { Link } from 'react-router-dom'
 import { usePlayground } from '../state'
-import './editorial.css'
+import { editorialStyles } from './editorial.styles'
+import { utilities } from '../utilities.styles'
+import { descendantStyles } from '../descendants.styles'
 
 type GuideSection = 'about' | 'manual' | 'rules' | 'faq'
 
@@ -80,29 +83,29 @@ const questions = [
 function About() {
   return (
     <>
-      <section className="guide-section" id="community">
-        <h2>A book you want to finish. A voice you want to understand.</h2>
-        <p>Tadoku gives you a reason to come back tomorrow. Keep a personal record of your reading and listening, or join a friendly contest and follow the progress of other learners.</p>
-        <p>Immersion can be a few pages on the train, an episode over lunch, or the book you finally feel ready to read. There is room for all of it here.</p>
-        <Link className={buttonClassName()} to="/contests">Explore contests</Link>
+      <section {...stylex.props(editorialStyles.guideSection)} id="community">
+        <h2 {...stylex.props(descendantStyles.guideSectionU_uH2)}>A book you want to finish. A voice you want to understand.</h2>
+        <p {...stylex.props(descendantStyles.guideSectionU_uP)}>Tadoku gives you a reason to come back tomorrow. Keep a personal record of your reading and listening, or join a friendly contest and follow the progress of other learners.</p>
+        <p {...stylex.props(descendantStyles.guideSectionU_uP)}>Immersion can be a few pages on the train, an episode over lunch, or the book you finally feel ready to read. There is room for all of it here.</p>
+        <Link {...stylex.props(...buttonStyles())} to="/contests">Explore contests</Link>
       </section>
 
-      <section className="guide-section" id="history">
-        <h2>From a reading contest to an immersion habit</h2>
-        <dl className="guide-timeline">
-          <div><dt>2010</dt><dd>LordSilent founded Tadoku as a reading contest on Twitter, with an online leaderboard.</dd></div>
-          <div><dt>2018</dt><dd>Changes to the Twitter API disrupted the original experience. The project later changed hands, and work began on a new website.</dd></div>
-          <div><dt>2023</dt><dd>Tadoku expanded into year-round tracking, activities beyond reading, and community-run contests.</dd></div>
+      <section {...stylex.props(editorialStyles.guideSection)} id="history">
+        <h2 {...stylex.props(descendantStyles.guideSectionU_uH2)}>From a reading contest to an immersion habit</h2>
+        <dl {...stylex.props(editorialStyles.guideTimeline)}>
+          <div {...stylex.props(descendantStyles.guideTimelineU_uDiv)}><dt {...stylex.props(descendantStyles.guideTimelineU_uDt)}>2010</dt><dd {...stylex.props(descendantStyles.guideTimelineU_uDd)}>LordSilent founded Tadoku as a reading contest on Twitter, with an online leaderboard.</dd></div>
+          <div {...stylex.props(descendantStyles.guideTimelineU_uDiv)}><dt {...stylex.props(descendantStyles.guideTimelineU_uDt)}>2018</dt><dd {...stylex.props(descendantStyles.guideTimelineU_uDd)}>Changes to the Twitter API disrupted the original experience. The project later changed hands, and work began on a new website.</dd></div>
+          <div {...stylex.props(descendantStyles.guideTimelineU_uDiv)}><dt {...stylex.props(descendantStyles.guideTimelineU_uDt)}>2023</dt><dd {...stylex.props(descendantStyles.guideTimelineU_uDd)}>Tadoku expanded into year-round tracking, activities beyond reading, and community-run contests.</dd></div>
         </dl>
       </section>
 
-      <section className="guide-section" id="contribute">
-        <h2>Made by people who use it</h2>
-        <p>antonve took over Tadoku after the contest became an important part of his own Japanese learning journey. The project continues as an open-source effort.</p>
-        <p>Development, contest moderation and thoughtful feedback all help. Discuss a contribution with the team before starting a substantial change.</p>
-        <div className="flex flex-wrap gap-4">
-          <a className="text-link" href="https://github.com/tadoku/tadoku">View the project on GitHub</a>
-          <Link className="text-link" to="/contact">Contact the team</Link>
+      <section {...stylex.props(editorialStyles.guideSection)} id="contribute">
+        <h2 {...stylex.props(descendantStyles.guideSectionU_uH2)}>Made by people who use it</h2>
+        <p {...stylex.props(descendantStyles.guideSectionU_uP)}>antonve took over Tadoku after the contest became an important part of his own Japanese learning journey. The project continues as an open-source effort.</p>
+        <p {...stylex.props(descendantStyles.guideSectionU_uP)}>Development, contest moderation and thoughtful feedback all help. Discuss a contribution with the team before starting a substantial change.</p>
+        <div {...stylex.props(utilities.tw_flex, utilities.tw_flex_wrap, utilities.tw_gap_4)}>
+          <a {...stylex.props(linkStyles.base)} href="https://github.com/tadoku/tadoku">View the project on GitHub</a>
+          <Link {...stylex.props(linkStyles.base)} to="/contact">Contact the team</Link>
         </div>
       </section>
     </>
@@ -112,35 +115,35 @@ function About() {
 function Manual() {
   return (
     <>
-      <p className="guide-introduction">You can log immersion anytime. Join a contest when you’d like a little company and a shared goal.</p>
-      <ol className="guide-steps">
-        <li id="participate">
-          <h2>Choose how you want to participate</h2>
-          <p>Track on your own, or choose an official or community contest. Check its dates and permitted activities. If registration is open, choose up to three languages and join.</p>
-          <Link className="text-link" to="/contests">Find a contest</Link>
+      <p {...stylex.props(editorialStyles.guideIntroduction)}>You can log immersion anytime. Join a contest when you’d like a little company and a shared goal.</p>
+      <ol {...stylex.props(editorialStyles.guideSteps)}>
+        <li {...stylex.props(descendantStyles.guideStepsU_uLi)} id="participate">
+          <h2 {...stylex.props(descendantStyles.guideStepsU_uH2)}>Choose how you want to participate</h2>
+          <p {...stylex.props(descendantStyles.guideStepsU_uP)}>Track on your own, or choose an official or community contest. Check its dates and permitted activities. If registration is open, choose up to three languages and join.</p>
+          <Link {...stylex.props(linkStyles.base)} to="/contests">Find a contest</Link>
         </li>
-        <li id="first-log">
-          <h2>Read, listen, then log activity</h2>
-          <p>Choose the language and activity, enter the amount or time requested by the form, and add a description or tags if useful. Check the score preview and contest submissions before saving.</p>
-          <Link className={buttonClassName()} to="/logs/new">Log activity</Link>
+        <li {...stylex.props(descendantStyles.guideStepsU_uLi)} id="first-log">
+          <h2 {...stylex.props(descendantStyles.guideStepsU_uH2)}>Read, listen, then log activity</h2>
+          <p {...stylex.props(descendantStyles.guideStepsU_uP)}>Choose the language and activity, enter the amount or time requested by the form, and add a description or tags if useful. Check the score preview and contest submissions before saving.</p>
+          <Link {...stylex.props(...buttonStyles())} to="/logs/new">Log activity</Link>
         </li>
-        <li id="score-context">
-          <h2>Check where your activity counts</h2>
-          <p>Your log details show its personal score. When you can view its contest submissions, each contribution is listed separately. Different scoring rules can produce different scores from the same activity.</p>
-          <Link className="text-link" to="/logs/reading-konbini">Explore a sample log</Link>
+        <li {...stylex.props(descendantStyles.guideStepsU_uLi)} id="score-context">
+          <h2 {...stylex.props(descendantStyles.guideStepsU_uH2)}>Check where your activity counts</h2>
+          <p {...stylex.props(descendantStyles.guideStepsU_uP)}>Your log details show its personal score. When you can view its contest submissions, each contribution is listed separately. Different scoring rules can produce different scores from the same activity.</p>
+          <Link {...stylex.props(linkStyles.base)} to="/logs/reading-konbini">Explore a sample log</Link>
         </li>
       </ol>
-      <aside className="guide-note paper-accent-rail">
-        <h2>Already tracking and want to join a round?</h2>
-        <p>Joining a contest and submitting a log are separate actions. Check the contest’s start, end and registration dates before assuming an activity can count.</p>
-        <Link className="text-link" to="/contests/round5">Check Round 5’s dates</Link>
+      <aside {...stylex.props(editorialStyles.guideNote, accentRail.base)}>
+        <h2 {...stylex.props(descendantStyles.guideNoteU_uH2)}>Already tracking and want to join a round?</h2>
+        <p {...stylex.props(descendantStyles.guideNoteU_uP)}>Joining a contest and submitting a log are separate actions. Check the contest’s start, end and registration dates before assuming an activity can count.</p>
+        <Link {...stylex.props(linkStyles.base)} to="/contests/round5">Check Round 5’s dates</Link>
       </aside>
-      <section className="guide-section" aria-labelledby="guide-next">
-        <h2 id="guide-next">Find the detail you need</h2>
-        <ul className="guide-related">
-          <li><Link className="text-link" to="/guide/scoring">Units and contest rules</Link></li>
-          <li><Link className="text-link" to="/guide/questions">Help with registration and languages</Link></li>
-          <li><Link className="text-link" to="/users/anton">Explore your profile</Link></li>
+      <section {...stylex.props(editorialStyles.guideSection)} aria-labelledby="guide-next">
+        <h2 {...stylex.props(descendantStyles.guideSectionU_uH2)} id="guide-next">Find the detail you need</h2>
+        <ul {...stylex.props(editorialStyles.guideRelated)}>
+          <li><Link {...stylex.props(linkStyles.base)} to="/guide/scoring">Units and contest rules</Link></li>
+          <li><Link {...stylex.props(linkStyles.base)} to="/guide/questions">Help with registration and languages</Link></li>
+          <li><Link {...stylex.props(linkStyles.base)} to="/users/anton">Explore your profile</Link></li>
         </ul>
       </section>
     </>
@@ -150,24 +153,24 @@ function Manual() {
 function Rules() {
   return (
     <>
-      <p className="guide-introduction">The competition is friendly. The record should be honest. Every contest has its own dates, permitted activities and scoring rules; check that context before submitting.</p>
-      <section className="guide-section" id="dates">
-        <h2>Contest times are local to you</h2>
-        <p>Contest start times and deadlines are shown in your device’s time zone. Activity dates stay on the day you recorded. The registration deadline and contest end date are different. A round may still be running after it stops accepting new participants. Activity must fall within the contest’s eligible period.</p>
-        <Link className="text-link" to="/contests/round5">See a contest’s dates and rules</Link>
+      <p {...stylex.props(editorialStyles.guideIntroduction)}>The competition is friendly. The record should be honest. Every contest has its own dates, permitted activities and scoring rules; check that context before submitting.</p>
+      <section {...stylex.props(editorialStyles.guideSection)} id="dates">
+        <h2 {...stylex.props(descendantStyles.guideSectionU_uH2)}>Contest times are local to you</h2>
+        <p {...stylex.props(descendantStyles.guideSectionU_uP)}>Contest start times and deadlines are shown in your device’s time zone. Activity dates stay on the day you recorded. The registration deadline and contest end date are different. A round may still be running after it stops accepting new participants. Activity must fall within the contest’s eligible period.</p>
+        <Link {...stylex.props(linkStyles.base)} to="/contests/round5">See a contest’s dates and rules</Link>
       </section>
-      <section className="guide-section" id="fair-participation">
-        <h2>Fair participation</h2>
-        <ul className="guide-prose-list">
+      <section {...stylex.props(editorialStyles.guideSection)} id="fair-participation">
+        <h2 {...stylex.props(descendantStyles.guideSectionU_uH2)}>Fair participation</h2>
+        <ul {...stylex.props(editorialStyles.guideProseList)}>
           <li>Submit reading or listening you actually completed, as accurately as reasonably possible.</li>
           <li>Log regularly. Recording a little each day makes your progress easier to follow.</li>
           <li>Check repeat eligibility before submitting material you have read or listened to before.</li>
           <li>Use an appropriate display name and respect the other people taking part.</li>
         </ul>
       </section>
-      <section className="guide-section" id="scores">
-        <h2>Understand the score you see</h2>
-        <p>Record reading in pages, sentences or characters, and listening in minutes. A log’s personal score and its contest scores are separate records. Never add them together to describe that log.</p>
+      <section {...stylex.props(editorialStyles.guideSection)} id="scores">
+        <h2 {...stylex.props(descendantStyles.guideSectionU_uH2)}>Understand the score you see</h2>
+        <p {...stylex.props(descendantStyles.guideSectionU_uP)}>Record reading in pages, sentences or characters, and listening in minutes. A log’s personal score and its contest scores are separate records. Never add them together to describe that log.</p>
         <Table
           caption="Personal score units in this playground"
           minWidth="0"
@@ -183,13 +186,13 @@ function Rules() {
             { unit: 'Listening minutes', rate: '0.5 points per minute' },
           ]}
         />
-        <p>For pages, choose at most one modifier: Manga or Comic multiplies the score by 0.2; Two column by 1.6. Passive listening multiplies the listening score by 0.5. The reading and listening circle contests use their own fixed minute rates without these personal modifiers.</p>
+        <p {...stylex.props(descendantStyles.guideSectionU_uP)}>For pages, choose at most one modifier: Manga or Comic multiplies the score by 0.2; Two column by 1.6. Passive listening multiplies the listening score by 0.5. The reading and listening circle contests use their own fixed minute rates without these personal modifiers.</p>
         <Table
           caption="One record, two scoring contexts"
           captionVisibility="screen-reader"
           minWidth="0"
           columns={[
-            { id: 'context', header: 'Context and example rule', rowHeader: true, cell: row => <span className="guide-score-context">{row.context}<small>{row.rule}</small></span> },
+            { id: 'context', header: 'Context and example rule', rowHeader: true, cell: row => <span {...stylex.props(editorialStyles.guideScoreContext)}>{row.context}<small {...stylex.props(descendantStyles.guideScoreContextU_uSmall)}>{row.rule}</small></span> },
             { id: 'score', header: 'Score', align: 'end', cell: row => row.score },
           ]}
           rows={[
@@ -197,18 +200,18 @@ function Rules() {
             { context: 'A community contest', rule: '20 pages × 0.5 points', score: '10' },
           ]}
         />
-        <p className="guide-fineprint">These rates are illustrative. The rule saved with your log or contest submission determines its score.</p>
-        <Link className="text-link" to="/logs/reading-konbini">See the breakdown in log details</Link>
+        <p {...stylex.props(editorialStyles.guideFineprint, descendantStyles.guideSectionU_uP, descendantStyles.guideSectionU_uGuideFineprint)}>These rates are illustrative. The rule saved with your log or contest submission determines its score.</p>
+        <Link {...stylex.props(linkStyles.base)} to="/logs/reading-konbini">See the breakdown in log details</Link>
       </section>
-      <section className="guide-section" id="eligibility">
-        <h2>Eligibility and repeats</h2>
-        <p>Official rounds include reading and listening. A community contest may accept a smaller set of activities or languages. Books, manga, games, podcasts and video describe the material; choose the activity you actually did.</p>
-        <p>For repeats or changes to playback speed, consult the applicable contest guidance before submitting. Check the score preview; do not apply a second manual adjustment when a scoring rule already accounts for it.</p>
+      <section {...stylex.props(editorialStyles.guideSection)} id="eligibility">
+        <h2 {...stylex.props(descendantStyles.guideSectionU_uH2)}>Eligibility and repeats</h2>
+        <p {...stylex.props(descendantStyles.guideSectionU_uP)}>Official rounds include reading and listening. A community contest may accept a smaller set of activities or languages. Books, manga, games, podcasts and video describe the material; choose the activity you actually did.</p>
+        <p {...stylex.props(descendantStyles.guideSectionU_uP)}>For repeats or changes to playback speed, consult the applicable contest guidance before submitting. Check the score preview; do not apply a second manual adjustment when a scoring rule already accounts for it.</p>
       </section>
-      <section className="guide-section" id="questions">
-        <h2>When something looks wrong</h2>
-        <p>If a submission seems incorrect, contact the team with the log and contest links. Include the amount recorded and the score you expected so the context is clear.</p>
-        <Link className="text-link" to="/contact">Ask about a rule</Link>
+      <section {...stylex.props(editorialStyles.guideSection)} id="questions">
+        <h2 {...stylex.props(descendantStyles.guideSectionU_uH2)}>When something looks wrong</h2>
+        <p {...stylex.props(descendantStyles.guideSectionU_uP)}>If a submission seems incorrect, contact the team with the log and contest links. Include the amount recorded and the score you expected so the context is clear.</p>
+        <Link {...stylex.props(linkStyles.base)} to="/contact">Ask about a rule</Link>
       </section>
     </>
   )
@@ -226,21 +229,21 @@ function Questions() {
   return (
     <>
       <form.AppForm>
-        <form.Form role="search" className="guide-search">
+        <form.Form role="search" xstyle={[editorialStyles.guideSearch]}>
           <form.AppField name="query">{field => <field.Input label="Search these questions" type="search" autoComplete="off" aria-describedby="guide-search-results" placeholder="Try registration, language or score" />}</form.AppField>
-          <div className="guide-search-meta">
-            <p id="guide-search-results" role="status">{visible.length} {visible.length === 1 ? 'question' : 'questions'}</p>
+          <div {...stylex.props(editorialStyles.guideSearchMeta)}>
+            <p {...stylex.props(descendantStyles.guideSearchMetaU_uP)} id="guide-search-results" role="status">{visible.length} {visible.length === 1 ? 'question' : 'questions'}</p>
             {query && <Button variant="link" onClick={clear}>Clear search</Button>}
           </div>
         </form.Form>
       </form.AppForm>
-      <div className="guide-questions">
+      <div {...stylex.props(editorialStyles.guideQuestions)}>
         {visible.map(item => (
-          <details key={item.question}>
-            <summary>{item.question}</summary>
-            <div className="guide-answer">
-              <p>{item.answer}</p>
-              <Link className="text-link" to={item.href}>{item.link}</Link>
+          <details {...stylex.props(descendantStyles.guideQuestionsU_uDetails)} key={item.question}>
+            <summary {...stylex.props(descendantStyles.guideQuestionsU_uSummary)}>{item.question}</summary>
+            <div {...stylex.props(editorialStyles.guideAnswer)}>
+              <p {...stylex.props(descendantStyles.guideAnswerU_uP)}>{item.answer}</p>
+              <Link {...stylex.props(linkStyles.base)} to={item.href}>{item.link}</Link>
             </div>
           </details>
         ))}
@@ -248,10 +251,10 @@ function Questions() {
       {visible.length === 0 && (
         <EmptyState headingLevel={2} title="No questions match that search." description="Try a broader term or clear the search." />
       )}
-      <section className="guide-section" id="contact">
-        <h2>Still looking for an answer?</h2>
-        <p>Tell us what you were trying to do and where you got stuck.</p>
-        <Link className={buttonClassName({ variant: 'outline' })} to="/contact">Contact Tadoku</Link>
+      <section {...stylex.props(editorialStyles.guideSection)} id="contact">
+        <h2 {...stylex.props(descendantStyles.guideSectionU_uH2)}>Still looking for an answer?</h2>
+        <p {...stylex.props(descendantStyles.guideSectionU_uP)}>Tell us what you were trying to do and where you got stuck.</p>
+        <Link {...stylex.props(...buttonStyles({ variant: 'outline' }))} to="/contact">Contact Tadoku</Link>
       </section>
     </>
   )
@@ -268,13 +271,13 @@ export function GuidePage({ page }: { page: GuideSection }) {
   }
 
   return (
-    <div className="guide-layout">
-      <nav className="guide-navigation" aria-label={ia === 'separate' ? 'Learn' : ia === 'guide' ? 'Guide' : 'Help'}>
-        {pageOrder.map(key => <Link key={key} to={routes[key]} className="text-link" aria-current={key === page ? 'page' : undefined}>{currentLabels[key]}</Link>)}
+    <div {...stylex.props(editorialStyles.guideLayout)}>
+      <nav {...stylex.props(editorialStyles.guideNavigation)} aria-label={ia === 'separate' ? 'Learn' : ia === 'guide' ? 'Guide' : 'Help'}>
+        {pageOrder.map(key => <Link key={key} to={routes[key]} {...stylex.props(linkStyles.base)} aria-current={key === page ? 'page' : undefined}>{currentLabels[key]}</Link>)}
       </nav>
-      <article className="guide-article">
-        <PageHeader className="guide-header" title={headings[page].title} lead={headings[page].description}>
-          {inPageLinks[page] && <nav className="guide-contents" aria-label="On this page">{inPageLinks[page]?.map(link => <a key={link.id} href={`#${link.id}`} className="text-link">{link.label}</a>)}</nav>}
+      <article {...stylex.props(editorialStyles.guideArticle)}>
+        <PageHeader xstyle={[editorialStyles.guideHeader]} title={headings[page].title} lead={headings[page].description}>
+          {inPageLinks[page] && <nav {...stylex.props(editorialStyles.guideContents)} aria-label="On this page">{inPageLinks[page]?.map(link => <a key={link.id} href={`#${link.id}`} {...stylex.props(linkStyles.base, descendantStyles.guideContentsU_uA)}>{link.label}</a>)}</nav>}
         </PageHeader>
         {page === 'about' && <About />}
         {page === 'manual' && <Manual />}

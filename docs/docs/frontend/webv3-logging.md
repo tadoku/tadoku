@@ -99,8 +99,11 @@ log as first read; later reads do not replace it.
 contest registrations the saved log counts in; another account sees that the
 record is someone else's, and an anonymous visitor is asked to sign in. Each
 registration is offered unless the contest does not allow the log's activity,
-the registration lacks its language or the contest has ended, in that order,
-and the reason is shown beside it. The owner's current submissions start
+the registration lacks its language or the contest has ended, in that order.
+As in Webv2, the page opens with a summary of the log and lists each
+registration as a card naming its organizer and the points the log adds;
+offered contests come first, and an unavailable one shows its reason on its
+card. The owner's current submissions start
 selected; with `?preselect=1`, a log not yet submitted anywhere starts with every
 eligible registration selected, as Webv2's link after saving does. Saving sends
 the selection to the contest registration update operation, which adds and removes submissions to unfinished contests and keeps

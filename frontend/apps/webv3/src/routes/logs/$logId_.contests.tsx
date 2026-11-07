@@ -6,7 +6,8 @@ import { useState } from 'react'
 import { z } from 'zod'
 import { DraftOwnerGate } from '../../components/DraftOwnerGate'
 import { useLinks } from '../../lib/links'
-import { contestChoices, type ContestChoice } from '../../lib/log-draft'
+import { formatTracking, numberFormat, pointsUnit } from '../../lib/format'
+import { contestChoices } from '../../lib/log-draft'
 import {
   logOptionsQuery,
   logQuery,
@@ -134,32 +135,31 @@ function ContestsForm({ log, registrations, viewerId }: {
     <div className="goal-page">
       <PageHeader
         title="Submit to contests"
-        lead={`${log.language.name} · ${log.activity.name}`}
         backLink={{ href: `/logs/${log.id}`, label: log.description || `${log.language.name} ${log.activity.name}` }}
       />
       <Surface className="log-surface">
+        <LogSummary log={log} />
         <form.AppForm>
           <form.Form className="goal-form" aria-busy={pending}>
             <fieldset className="goal-form__controls" disabled={disabled}>
               <fieldset className="paper-choice-field log-contest-choices">
                 <legend className="paper-visually-hidden">Contests</legend>
-                {choices.filter(choice => choice.kind !== 'ineligible').map(choice => (
+                {/* As in Webv2: open contests first, then unavailable ones, each naming why on its own row. */}
+                {[...choices].sort((a, b) => Number(a.kind === 'ineligible') - Number(b.kind === 'ineligible')).map(choice => (
                   <form.AppField key={choice.registration.id} name="registrationIds">
-                    {field => <field.Checkbox label={choice.registration.contest.title} value={choice.registration.id} />}
+                    {field => (
+                      <field.Checkbox
+                        variant="card"
+                        value={choice.registration.id}
+                        label={choice.registration.contest.title}
+                        description={`Administered by ${organizer(choice.registration.contest)}`}
+                        aside={choice.kind === 'ineligible' ? choice.reason : `${numberFormat.format(log.score)} ${pointsUnit(log.score)}`}
+                        disabled={choice.kind === 'ineligible'}
+                      />
+                    )}
                   </form.AppField>
                 ))}
                 {eligible.length ? <p className="log-contests-note">Unchecking removes this log’s score from that contest.</p> : null}
-                {/* Unavailable contests are grouped under their shared reason instead of repeating it on every row. */}
-                {ineligibleByReason(choices).map(([reason, group]) => (
-                  <div key={reason} className="log-contest-group" role="group" aria-label={reason}>
-                    <p className="log-contest-group__reason">{reason}</p>
-                    {group.map(choice => (
-                      <form.AppField key={choice.registration.id} name="registrationIds">
-                        {field => <field.Checkbox label={choice.registration.contest.title} value={choice.registration.id} disabled />}
-                      </form.AppField>
-                    ))}
-                  </div>
-                ))}
                 {finished.map(submission => (
                   <p key={submission.registration_id}>
                     {submission.title} has finished. Its saved score
@@ -196,13 +196,22 @@ function ContestsForm({ log, registrations, viewerId }: {
   )
 }
 
-/** Ineligible choices grouped by their reason, in first-seen order. */
-function ineligibleByReason(choices: ContestChoice[]) {
-  const groups = new Map<string, Extract<ContestChoice, { kind: 'ineligible' }>[]>()
-  for (const choice of choices) {
-    if (choice.kind === 'ineligible') groups.set(choice.reason, [...(groups.get(choice.reason) ?? []), choice])
-  }
-  return [...groups]
+const organizer = (contest: Registration['contest']) =>
+  contest.official ? 'Tadoku' : contest.owner_user_display_name ?? 'Unknown user'
+
+/** The log being submitted, as Webv2 shows it above the contests: what, how much and its score. */
+function LogSummary({ log }: { log: ImmersionLog }) {
+  const nsfw = log.tags.some(tag => tag.toLowerCase() === 'nsfw')
+  const what = [log.language.name, log.activity.name, formatTracking(log)].filter(Boolean).join(' · ')
+
+  return (
+    <section className="log-contests-summary" aria-label="Your log">
+      <p className="log-contests-summary__label">Your log</p>
+      <p className="log-contests-summary__what">{what}</p>
+      {log.description && !nsfw ? <p className="log-contests-summary__description">{log.description}</p> : null}
+      <p className="log-contests-summary__score">{numberFormat.format(log.score)} <small>{pointsUnit(log.score)}</small></p>
+    </section>
+  )
 }
 
 const failureMessages: Record<LogFailure, string> = {

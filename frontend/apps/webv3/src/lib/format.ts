@@ -1,4 +1,4 @@
-import type { ImmersionContest } from 'api-client'
+import type { ImmersionContest, ImmersionLog } from 'api-client'
 
 // Contest dates are UTC calendar days. Formatting them by hand keeps server (Node ICU) and browser markup identical.
 export const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']
@@ -11,3 +11,11 @@ export const formatPeriod = ({ contest_start: start, contest_end: end }: Pick<Im
 
 /** The unit word for a score: "1 point", "2 points", "0.4 points". */
 export const pointsUnit = (score: number) => (score === 1 ? 'point' : 'points')
+
+/** A log's amount in its unit and its duration, as Webv2 lists them, for example `12 pages · 30 min`. */
+export function formatTracking(log: Pick<ImmersionLog, 'amount' | 'unit_name' | 'duration_seconds'>) {
+  const values = []
+  if (log.unit_name) values.push(`${numberFormat.format(log.amount)} ${log.unit_name.toLowerCase()}${log.amount === 1 ? '' : 's'}`)
+  if (log.duration_seconds !== undefined) values.push(`${numberFormat.format(log.duration_seconds / 60)} min`)
+  return values.join(' · ')
+}

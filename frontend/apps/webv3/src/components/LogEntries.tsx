@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import { EmptyState, Pagination } from 'paper-ui'
 import type { ImmersionLog } from 'api-client'
-import { formatDate, numberFormat, pointsUnit } from '../lib/format'
+import { formatDate, formatTracking, numberFormat, pointsUnit } from '../lib/format'
 import { activityPageSize } from '../lib/profile'
 import { renderLink } from './router-link'
 
@@ -75,7 +75,7 @@ function Entry({ log, showParticipant, actions, firstOfDay }: {
   const day = logDay(log)
   const subject = `${log.language.name} ${log.activity.name.toLocaleLowerCase()}`
   const nsfw = log.tags.some(tag => tag.toLowerCase() === 'nsfw')
-  const meta = [showParticipant ? log.user_display_name ?? 'Unknown user' : null, log.language.name, log.activity.name, tracking(log)]
+  const meta = [showParticipant ? log.user_display_name ?? 'Unknown user' : null, log.language.name, log.activity.name, formatTracking(log)]
 
   return (
     <li className={firstOfDay ? undefined : 'profile-entry--same-day'}>
@@ -96,12 +96,4 @@ function Entry({ log, showParticipant, actions, firstOfDay }: {
       <span className="profile-entry-score">{numberFormat.format(log.score)} <small>{pointsUnit(log.score)}</small></span>
     </li>
   )
-}
-
-/** The amount in its unit and the duration, as Webv2 lists them, for example `12 pages · 30 min`. */
-function tracking(log: ImmersionLog) {
-  const values = []
-  if (log.unit_name) values.push(`${numberFormat.format(log.amount)} ${log.unit_name.toLowerCase()}${log.amount === 1 ? '' : 's'}`)
-  if (log.duration_seconds !== undefined) values.push(`${numberFormat.format(log.duration_seconds / 60)} min`)
-  return values.join(' · ')
 }

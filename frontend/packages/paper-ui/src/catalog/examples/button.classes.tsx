@@ -1,20 +1,16 @@
+import { buttonClassName, cluster } from 'paper-ui'
+
 export default function Example() {
   return (
-    <div className="paper-cluster">
-      <button type="button" className="paper-button paper-button--default">
+    <div className={cluster()}>
+      <button type="button" className={buttonClassName()}>
         Save log
       </button>
-      <a href="#logs" className="paper-button paper-button--outline">
+      <a href="#logs" className={buttonClassName({ variant: 'outline' })}>
         View logs
       </a>
-      <button
-        type="button"
-        disabled
-        aria-busy="true"
-        className="paper-button paper-button--default paper-button--loading"
-      >
-        <span className="paper-button__spinner" aria-hidden="true" />
-        <span className="paper-button__label">Saving log</span>
+      <button type="button" disabled aria-busy="true" className={buttonClassName({ loading: true })}>
+        Saving log
       </button>
     </div>
   )

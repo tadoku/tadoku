@@ -1,8 +1,8 @@
-import { DescriptionList, SectionHeading } from 'paper-ui'
+import { DescriptionList, SectionHeading, stack } from 'paper-ui'
 
 export default function Example() {
   return (
-    <div className="paper-stack" style={{ maxWidth: '36rem' }}>
+    <div className={stack({ className: "max-w-panel-narrow" })}>
       <section aria-labelledby="dates-heading">
         <SectionHeading level={3} id="dates-heading" title="Dates & registration" />
         <DescriptionList

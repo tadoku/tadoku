@@ -1,13 +1,6 @@
 import { useStore } from '@tanstack/react-form'
-import {
-  AppliedFilters,
-  Button,
-  EmptyState,
-  SectionHeading,
-  Table,
-  usePaperForm,
-} from 'paper-ui'
-import { ChevronDownIcon } from 'paper-ui/icons'
+import { AppliedFilters, Button, cluster, EmptyState, SectionHeading, Table, typography, usePaperForm } from 'paper-ui'
+import { ChevronDownIcon, iconClassName } from 'paper-ui/icons'
 import { useId, useRef, useState } from 'react'
 
 interface Standing {
@@ -55,7 +48,7 @@ export default function FilterBarExample() {
   }
 
   return (
-    <section aria-labelledby={headingId} style={{ maxWidth: '44rem' }}>
+    <section aria-labelledby={headingId} className="max-w-panel-wide">
       <SectionHeading
         level={2}
         id={headingId}
@@ -69,8 +62,7 @@ export default function FilterBarExample() {
             onClick={() => setOpen(!open)}
             trailingIcon={
               <ChevronDownIcon
-                className="paper-icon-compact"
-                style={open ? { transform: 'rotate(180deg)' } : undefined}
+                className={iconClassName('compact', open ? 'rotate-flip' : undefined)}
               />
             }
           >
@@ -82,12 +74,7 @@ export default function FilterBarExample() {
         <methods.AppForm>
           <form
             onSubmit={event => event.preventDefault()}
-            style={{
-              display: 'grid',
-              gap: '0.75rem',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(11rem, 1fr))',
-              paddingBlockEnd: '1rem',
-            }}
+            className="grid grid-cols-filters gap-3 pb-4"
           >
             <methods.AppField name="language">
               {field => (
@@ -122,11 +109,10 @@ export default function FilterBarExample() {
         </methods.AppForm>
       </div>
       <div
-        className="paper-cluster"
-        style={{ justifyContent: 'space-between' }}
+        className={cluster({ className: 'justify-between' })}
       >
         <AppliedFilters filters={applied} onClear={clearFilters} />
-        <p className="paper-type-metadata" role="status">
+        <p className={typography({ role: 'metadata' })} role="status">
           {rows.length} of {standings.length} participants
         </p>
       </div>

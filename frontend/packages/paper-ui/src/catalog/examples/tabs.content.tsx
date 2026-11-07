@@ -1,10 +1,10 @@
-import { Tabs } from 'paper-ui'
+import { stack, Tabs } from 'paper-ui'
 import { useState } from 'react'
 
 export default function TabsExample() {
   const [view, setView] = useState('summary')
   return (
-    <div className="paper-stack">
+    <div className={stack()}>
       <section>
         <h3>Automatic selection</h3>
         <Tabs.Root defaultValue="summary">

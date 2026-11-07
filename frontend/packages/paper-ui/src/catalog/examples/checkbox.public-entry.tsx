@@ -1,5 +1,5 @@
 import { useStore } from '@tanstack/react-form'
-import { Button, Flash, usePaperForm } from 'paper-ui'
+import { Button, cluster, Flash, stack, usePaperForm } from 'paper-ui'
 import { useState } from 'react'
 
 export default function Example() {
@@ -15,7 +15,7 @@ export default function Example() {
 
   return (
     <methods.AppForm>
-      <methods.Form className="paper-stack" style={{ maxWidth: '32rem' }}>
+      <methods.Form className={stack({ className: "max-w-form" })}>
         <methods.AppField name="public">
           {field => (
             <field.Checkbox
@@ -24,7 +24,7 @@ export default function Example() {
             />
           )}
         </methods.AppField>
-        <div className="paper-cluster">
+        <div className={cluster()}>
           <Button type="submit">Save entry</Button>
           <Button
             variant="outline"
@@ -38,20 +38,14 @@ export default function Example() {
         </div>
         {savedValues ? (
           <Flash variant="success" title="Entry saved">
-            <pre
-              style={{
-                whiteSpace: 'pre-wrap',
-                overflowWrap: 'anywhere',
-                margin: 0,
-              }}
-            >
+            <pre className="m-0 whitespace-pre-wrap wrap-anywhere">
               {JSON.stringify(savedValues, null, 2)}
             </pre>
           </Flash>
         ) : null}
         <details>
           <summary>Current form values</summary>
-          <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+          <pre className="whitespace-pre-wrap wrap-anywhere">
             {JSON.stringify(values, null, 2)}
           </pre>
         </details>

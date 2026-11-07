@@ -1,4 +1,4 @@
-import { Sidebar } from 'paper-ui'
+import { Sidebar, stack } from 'paper-ui'
 import { useState } from 'react'
 
 const sidebarSections = [
@@ -23,7 +23,7 @@ const sidebarSections = [
 export default function SidebarExample() {
   const [path, setPath] = useState('#logs')
   return (
-    <div className="paper-stack" style={{ maxWidth: '22rem' }}>
+    <div className={stack({ className: "max-w-nav-demo" })}>
       <Sidebar
         label="Admin sections"
         currentPath={path}

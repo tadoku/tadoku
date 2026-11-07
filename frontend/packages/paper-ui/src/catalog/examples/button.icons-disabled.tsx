@@ -1,17 +1,17 @@
-import { Button } from 'paper-ui'
+import { Button, cluster, stack } from 'paper-ui'
 import { PlusIcon, XMarkIcon, iconClassName } from 'paper-ui/icons'
 
 export default function Example() {
   return (
-    <div className="paper-stack">
-      <div className="paper-cluster">
+    <div className={stack()}>
+      <div className={cluster()}>
         <Button leadingIcon={<PlusIcon className={iconClassName()} />}>
           Add reading
         </Button>
         <Button
           variant="ghost"
           aria-label="Close entry"
-          style={{ minWidth: '2.75rem', minHeight: '2.75rem' }}
+          className="min-h-target min-w-target"
         >
           <XMarkIcon className={iconClassName()} aria-hidden="true" />
         </Button>

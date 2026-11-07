@@ -143,7 +143,7 @@ function Suspended() {
       title="Your account is suspended"
       description="If you believe this is an error, contact us on Discord."
       actions={<>
-        <a className="text-link" href={discordUrl}>Contact us on Discord</a>
+        <a className="text-link hover:text-link-hover" href={discordUrl}>Contact us on Discord</a>
         <Button type="submit" form={logoutFormId}>Log out</Button>
       </>}
     />

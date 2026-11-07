@@ -56,7 +56,7 @@ const strip = [
 ].join(' ')
 const stripText = 'm-0 max-w-measure-strip leading-170'
 const stripLink = [
-  'col-start-3 justify-self-end text-sm text-link max-lg:col-start-2 max-lg:justify-self-start max-tablet:col-auto',
+  'col-start-3 justify-self-end text-sm text-link hover:text-link-hover max-lg:col-start-2 max-lg:justify-self-start max-tablet:col-auto',
 ].join(' ')
 const ledgerHeader = 'm-0 border-b border-rule px-ledger-inset py-5.5 max-xs:py-4.5'
 // The card frames the table, so the table's own top and bottom rules would double its edges.
@@ -143,7 +143,7 @@ export function HomePage() {
 
 /** The goal is kept in the browser, so guests can set one too. Until one is saved, the hero's actions offer to set it. */
 function SetGoalLink() {
-  return useStoredGoal() ? null : <Link className="text-link" to="/plan">Set a daily goal</Link>
+  return useStoredGoal() ? null : <Link className="text-link hover:text-link-hover" to="/plan">Set a daily goal</Link>
 }
 
 function DailyGoal() {
@@ -154,7 +154,7 @@ function DailyGoal() {
     <section className="mb-0 mt-8 text-ui leading-160" aria-labelledby="home-goal-title">
       <h2 id="home-goal-title" className="mb-1 mt-0 font-body text-metadata font-regular text-muted">Daily goal</h2>
       <p className="m-0 font-semibold text-ink">
-        {describeGoal(goal)} <Link className="ms-3 text-sm font-regular text-link" to="/plan">Change goal</Link>
+        {describeGoal(goal)} <Link className="ms-3 text-sm font-regular text-link hover:text-link-hover" to="/plan">Change goal</Link>
       </p>
     </section>
   )
@@ -245,7 +245,7 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
         headingLevel={3}
         title="No official round right now"
         description="Keep logging at your own pace. The next round will appear here once it’s scheduled."
-        actions={<a href={links.contests} className="text-link">Browse contests</a>}
+        actions={<a href={links.contests} className="text-link hover:text-link-hover">Browse contests</a>}
       />
     </>
   }
@@ -258,7 +258,7 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
   if (phase === 'upcoming') {
     const activities = contest.allowed_activities.map(({ name }, index) => index ? name.toLowerCase() : name).join(' & ')
     return <>
-      {header(formatPeriod(contest), <a href={links.contest(contest.id)} className="text-link">Contest details</a>)}
+      {header(formatPeriod(contest), <a href={links.contest(contest.id)} className="text-link hover:text-link-hover">Contest details</a>)}
       <StatGrid className="px-ledger-inset py-4.5" stats={[{ label: 'Length', value: `${length} days` }, ...(activities ? [{ label: 'Activities', value: activities }] : [])]} />
       <div className={message}>
         <p className="grid gap-1">
@@ -275,7 +275,7 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
   return <>
     {header(
       `${formatPeriod(contest)} · ${ended ? 'Final results' : `Day ${dayNumber(contest.contest_start, today)} of ${length}`}`,
-      <a href={links.contest(contest.id)} className="text-link">{ended ? 'See final board' : 'Full leaderboard'}</a>,
+      <a href={links.contest(contest.id)} className="text-link hover:text-link-hover">{ended ? 'See final board' : 'Full leaderboard'}</a>,
     )}
     <StatGrid className="px-ledger-inset py-4.5" stats={[
       { label: 'Participants', value: numberFormat.format(summary.participant_count) },

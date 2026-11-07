@@ -169,7 +169,7 @@ function OwnContests({ log }: { log: ImmersionLog }) {
           ))}
         </ul>
       ) : <p>Saved to your personal record only.</p>}
-      <Link className="text-link" to="/logs/$logId/contests" params={{ logId: log.id }}>Manage contest submissions</Link>
+      <Link className="text-link hover:text-link-hover" to="/logs/$logId/contests" params={{ logId: log.id }}>Manage contest submissions</Link>
     </>
   )
 }

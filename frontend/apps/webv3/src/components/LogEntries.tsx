@@ -25,7 +25,7 @@ export function LogEntries({ logs, total, page, pageHref, empty, showParticipant
         headingLevel={3}
         title="This page is past the end of the updates"
         description={`There are ${numberFormat.format(total)} updates.`}
-        actions={<Link className="text-link" to={pageHref(1)}>Go to the first page</Link>}
+        actions={<Link className="text-link hover:text-link-hover" to={pageHref(1)}>Go to the first page</Link>}
       />
     ) : empty
   }

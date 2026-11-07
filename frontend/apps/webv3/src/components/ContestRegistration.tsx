@@ -126,7 +126,7 @@ function RegistrationState({ contest, viewerId, phase }: { contest: ImmersionCon
       <>
         <Flash variant="danger">{closed}</Flash>
         {previous ? <p className="my-4">Your languages: {previous.map(language => language.name).join(', ')}.</p> : null}
-        <p className="my-4"><a className="text-link" href={links.contest(contest.id)}>Back to the contest</a></p>
+        <p className="my-4"><a className="text-link hover:text-link-hover" href={links.contest(contest.id)}>Back to the contest</a></p>
       </>
     )
   }
@@ -209,7 +209,7 @@ function RegistrationForm({ contest, viewerId, previous, options }: {
           <div className={formFooter().root()}>
             <div className={formFooter().actions()}>
               <Button type="submit" disabled={disabled}>{pending ? 'Saving…' : previous ? 'Update registration' : 'Register'}</Button>
-              <a className="text-link" href={links.contest(contest.id)}>Cancel</a>
+              <a className="text-link hover:text-link-hover" href={links.contest(contest.id)}>Cancel</a>
             </div>
           </div>
         </form.Form>
@@ -235,7 +235,7 @@ function failureMessage(failure: RegistrationFailure, registered: boolean) {
 function SaveFailure({ failure, registered }: { failure: RegistrationFailure; registered: boolean }) {
   const loginUrl = useLoginUrl()
   return (
-    <Flash variant="danger" action={failure === 'signed-out' ? <a className="text-link" href={loginUrl}>Log in</a> : undefined}>
+    <Flash variant="danger" action={failure === 'signed-out' ? <a className="text-link hover:text-link-hover" href={loginUrl}>Log in</a> : undefined}>
       {failureMessage(failure, registered)}
     </Flash>
   )

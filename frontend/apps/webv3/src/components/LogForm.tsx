@@ -116,8 +116,8 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
                     {editing ? 'Save' : 'Log activity'}
                   </Button>
                   {editing
-                    ? <Link className="text-link" to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
-                    : <Link className="text-link" to="/">Cancel</Link>}
+                    ? <Link className="text-link hover:text-link-hover" to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
+                    : <Link className="text-link hover:text-link-hover" to="/">Cancel</Link>}
                 </div>
                 <ScoreEstimate form={form} options={options} />
               </div>
@@ -337,7 +337,7 @@ function SaveFailure({ failure, viewerId, editing }: { failure: LogFailure; view
 function EditFailureAction({ failure }: { failure: LogFailure }) {
   const loginUrl = useLoginUrl()
   return failure === 'signed-out'
-    ? <a className="text-link" href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
+    ? <a className="text-link hover:text-link-hover" href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
     : null
 }
 
@@ -348,13 +348,13 @@ function FailureAction({ failure, viewerId }: { failure: LogFailure; viewerId: s
 
   switch (failure) {
     case 'switched':
-      return <a className="text-link" href="/logs/new">Start a new activity for this account</a>
+      return <a className="text-link hover:text-link-hover" href="/logs/new">Start a new activity for this account</a>
     case 'signed-out':
-      return <a className="text-link" href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
+      return <a className="text-link hover:text-link-hover" href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
     case 'unavailable':
       return (
         <a
-          className="text-link"
+          className="text-link hover:text-link-hover"
           href={links.profileUpdates(viewerId)}
           target="_blank"
           rel="noopener noreferrer"

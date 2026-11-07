@@ -43,7 +43,7 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
       <section className={band} aria-labelledby="home-year-title">
         <div className={head}>
           <h2 id="home-year-title" className={headTitle}>Your {year}</h2>
-          <a className="text-link" href={links.profile(viewer.userId)}>Your profile</a>
+          <a className="text-link hover:text-link-hover" href={links.profile(viewer.userId)}>Your profile</a>
         </div>
         <StatGrid
           stats={[
@@ -65,7 +65,7 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
           <section aria-labelledby="home-recent-title">
             <div className={head}>
               <h2 id="home-recent-title" className={headTitle}>Recent updates</h2>
-              {logs.length ? <Link className="text-link" to={links.profileUpdates(viewer.userId)}>All updates</Link> : null}
+              {logs.length ? <Link className="text-link hover:text-link-hover" to={links.profileUpdates(viewer.userId)}>All updates</Link> : null}
             </div>
             <LogEntries
               logs={logs}
@@ -77,7 +77,7 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
                   variant="plain"
                   headingLevel={3}
                   title="No updates yet"
-                  actions={<a className="text-link" href={links.logs}>Log your first activity</a>}
+                  actions={<a className="text-link hover:text-link-hover" href={links.logs}>Log your first activity</a>}
                 />
               )}
             />
@@ -87,7 +87,7 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
           <section aria-labelledby="home-contests-title">
             <div className={head}>
               <h2 id="home-contests-title" className={headTitle}>Your contests</h2>
-              {ordered.length ? <Link className="text-link" to={contestsHref.joined(year)}>All joined</Link> : null}
+              {ordered.length ? <Link className="text-link hover:text-link-hover" to={contestsHref.joined(year)}>All joined</Link> : null}
             </div>
             {ordered.length ? (
               <ul className={rows.root()}>
@@ -105,7 +105,7 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
                 variant="plain"
                 headingLevel={3}
                 title={`You haven’t joined a contest in ${year}`}
-                actions={<Link className="text-link" to={contestsHref.official()}>Browse official contests</Link>}
+                actions={<Link className="text-link hover:text-link-hover" to={contestsHref.official()}>Browse official contests</Link>}
               />
             )}
           </section>

@@ -23,7 +23,7 @@ export function ProfileActivity({ activity, page, date, owner }: {
       <ProfileHeader profile={profile} owner={owner} view="activity" overviewHref={links.profile(profile.id)} />
       <section className="mt-8" aria-label="Activity log">
         {date ? (
-          <Flash className="mb-4" action={<Link className="text-link" to={links.profileUpdates(profile.id)}>Show all updates</Link>}>
+          <Flash className="mb-4" action={<Link className="text-link hover:text-link-hover" to={links.profileUpdates(profile.id)}>Show all updates</Link>}>
             Showing updates on {formatDate(date)}
           </Flash>
         ) : null}

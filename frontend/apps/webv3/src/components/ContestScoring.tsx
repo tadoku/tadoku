@@ -72,7 +72,7 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
         <Flash variant="information">
           Scoring is locked because this contest has started.{contestRuleSets.length > 0
             ? ' Its rule-set versions are listed below.'
-            : <> It uses the <a className="text-link" href={`${links.guide}#media`}>platform defaults</a>.</>}
+            : <> It uses the <a className="text-link hover:text-link-hover" href={`${links.guide}#media`}>platform defaults</a>.</>}
         </Flash>
       ) : (
         <RuleSetForm

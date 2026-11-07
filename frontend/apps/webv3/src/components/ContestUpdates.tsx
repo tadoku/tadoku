@@ -137,7 +137,7 @@ function reasonError(value: string) {
 function DetachFailure({ failure }: { failure: LogFailure }) {
   const loginUrl = useLoginUrl()
   return (
-    <Flash variant="danger" action={failure === 'signed-out' ? <a className="text-link" href={loginUrl}>Log in</a> : undefined}>
+    <Flash variant="danger" action={failure === 'signed-out' ? <a className="text-link hover:text-link-hover" href={loginUrl}>Log in</a> : undefined}>
       {detachFailures[failure]}
     </Flash>
   )

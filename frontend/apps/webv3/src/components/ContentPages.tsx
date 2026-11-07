@@ -70,7 +70,7 @@ export function BlogList({ blog, page }: { blog: BlogPage; page: number }) {
           headingLevel={2}
           title={`There is no page ${page}`}
           description={`The blog has ${totalPages} ${totalPages === 1 ? 'page' : 'pages'}.`}
-          actions={<Link to={blogHref.list()} className="text-link">Newest posts</Link>}
+          actions={<Link to={blogHref.list()} className="text-link hover:text-link-hover">Newest posts</Link>}
         />
       ) : null}
 

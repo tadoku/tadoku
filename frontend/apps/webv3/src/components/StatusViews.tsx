@@ -5,7 +5,7 @@ export function NotFoundView() {
   return (
     <>
       <PageHeader title="Page not found" />
-      <Link to="/" className="text-link">Return home</Link>
+      <Link to="/" className="text-link hover:text-link-hover">Return home</Link>
     </>
   )
 }

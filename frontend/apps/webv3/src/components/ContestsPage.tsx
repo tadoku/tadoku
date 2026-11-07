@@ -131,7 +131,7 @@ function Contests({ scope, view, page }: { scope: ContestListScope; view: Contes
         headingLevel={2}
         title="This page is past the end of the list"
         description={`There are ${numberFormat.format(total)} contests.`}
-        actions={<Link className="text-link" to={pageHref(1)}>Go to the first page</Link>}
+        actions={<Link className="text-link hover:text-link-hover" to={pageHref(1)}>Go to the first page</Link>}
       />
     ) : view.collection === 'organizing' ? (
       <EmptyState

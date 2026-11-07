@@ -133,7 +133,7 @@ export function ContestForm({ options, viewerId, admin }: {
             <div className={formFooter().root()}>
               <div className={formFooter().actions()}>
                 <Button type="submit" disabled={disabled}>{pending ? 'Creating…' : 'Create contest'}</Button>
-                <Link className="text-link" to="/contests/official/$" params={{ _splat: '1' }}>Cancel</Link>
+                <Link className="text-link hover:text-link-hover" to="/contests/official/$" params={{ _splat: '1' }}>Cancel</Link>
               </div>
             </div>
           </form.Form>
@@ -163,11 +163,11 @@ function CreateFailure({ failure }: { failure: LogFailure }) {
           'We could not confirm whether the contest was created. Check the contests you organize before creating it again.'}
       </p>
       {failure === 'signed-out' ? (
-        <a className="text-link" href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
+        <a className="text-link hover:text-link-hover" href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
       ) : failure === 'switched' ? (
-        <a className="text-link" href="/contests/new">Start a new contest for this account</a>
+        <a className="text-link hover:text-link-hover" href="/contests/new">Start a new contest for this account</a>
       ) : failure === 'unavailable' || failure === 'not-found' ? (
-        <a className="text-link" href={contestsHref.organizing()} target="_blank" rel="noopener noreferrer">Check the contests you organize</a>
+        <a className="text-link hover:text-link-hover" href={contestsHref.organizing()} target="_blank" rel="noopener noreferrer">Check the contests you organize</a>
       ) : null}
     </div>
   )

@@ -64,7 +64,7 @@ function ContestsDraft({ viewerId }: { viewerId: string }) {
         headingLevel={1}
         title="This is someone else's record"
         description="Only the learner who logged this activity can submit it to contests."
-        actions={<Link className="text-link" to="/logs/$logId" params={{ logId }}>View the log</Link>}
+        actions={<Link className="text-link hover:text-link-hover" to="/logs/$logId" params={{ logId }}>View the log</Link>}
       />
     )
   }
@@ -177,7 +177,7 @@ function ContestsForm({ log, registrations, viewerId }: {
                   description={choices.length
                     ? 'This activity already counts in your personal history.'
                     : 'No contest registrations found. You can submit to contests after joining one. This activity already counts in your personal history.'}
-                  actions={<a className="text-link" href={links.contests}>Find a contest to join</a>}
+                  actions={<a className="text-link hover:text-link-hover" href={links.contests}>Find a contest to join</a>}
                 />
               )}
             </fieldset>
@@ -188,7 +188,7 @@ function ContestsForm({ log, registrations, viewerId }: {
                 <Button type="submit" disabled={disabled || !eligible.length}>
                   {pending ? 'Saving…' : 'Save submissions'}
                 </Button>
-                <Link className="text-link" to="/logs/$logId" params={{ logId: log.id }}>Cancel</Link>
+                <Link className="text-link hover:text-link-hover" to="/logs/$logId" params={{ logId: log.id }}>Cancel</Link>
               </div>
             </div>
           </form.Form>
@@ -241,7 +241,7 @@ function SaveFailure({ failure }: { failure: LogFailure }) {
     <div role="alert">
       <p>{failureMessages[failure]}</p>
       {failure === 'signed-out'
-        ? <a className="text-link" href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
+        ? <a className="text-link hover:text-link-hover" href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
         : null}
     </div>
   )

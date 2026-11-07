@@ -64,7 +64,7 @@ export function Announcements() {
           <div className="grid gap-1 wrap-anywhere [&_p]:m-0">
             <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{announcement.content}</ReactMarkdown>
             {announcement.href && pathOf(announcement.href) !== currentPath
-              ? <a className="text-link" href={announcement.href}>Learn more</a>
+              ? <a className="text-link hover:text-link-hover" href={announcement.href}>Learn more</a>
               : null}
           </div>
         </Flash>

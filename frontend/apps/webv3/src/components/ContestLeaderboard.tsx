@@ -63,7 +63,7 @@ function LatestBoard({ board, today, page }: { board: ContestBoard; today: strin
         pageHref={leaderboardHref.latest}
         title={contest.title}
         status={<RoundStatus phase={phase} />}
-        asideLink={<a className="text-link" href={links.contest(contest.id)}>Contest details</a>}
+        asideLink={<a className="text-link hover:text-link-hover" href={links.contest(contest.id)}>Contest details</a>}
       />
     </LeaderboardFrame>
   )
@@ -90,7 +90,7 @@ export function ContestBoardBody({ board, phase, page, pageHref, title, status, 
   return (
     <>
       {viewer?.status === 'anonymous' && !phase.ended ? (
-        <Flash className={standingsNotice} action={<a className="text-link" href={loginUrl}>Log in</a>}>
+        <Flash className={standingsNotice} action={<a className="text-link hover:text-link-hover" href={loginUrl}>Log in</a>}>
           You need to log in to participate in this contest.
         </Flash>
       ) : null}
@@ -146,7 +146,7 @@ export function ContestFacts({ contest, phase }: { contest: ImmersionContestView
   const organizer = contest.official
     ? 'Tadoku'
     : contest.owner_user_id
-      ? <a className="text-link" href={links.profile(contest.owner_user_id)}>{contest.owner_user_display_name ?? 'Unknown user'}</a>
+      ? <a className="text-link hover:text-link-hover" href={links.profile(contest.owner_user_id)}>{contest.owner_user_display_name ?? 'Unknown user'}</a>
       : contest.owner_user_display_name ?? 'Unknown user'
   return (
     <DescriptionList

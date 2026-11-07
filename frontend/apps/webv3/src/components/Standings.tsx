@@ -50,7 +50,7 @@ export function Standings({ result, page, caption, pageHref, profileHref, empty,
         headingLevel={3}
         title="This page is past the end of the standings"
         description={`The standings have ${numberFormat.format(total)} participants.`}
-        actions={<Link className="text-link" to={pageHref(1)}>Go to the first page</Link>}
+        actions={<Link className="text-link hover:text-link-hover" to={pageHref(1)}>Go to the first page</Link>}
       />
     ) : <EmptyState variant="plain" className={sheetEmpty} headingLevel={3} {...empty} />
   }

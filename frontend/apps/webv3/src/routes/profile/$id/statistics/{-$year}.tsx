@@ -25,7 +25,7 @@ export const Route = createFileRoute('/profile/$id/statistics/{-$year}')({
       headingLevel={1}
       title="Profile not found"
       description="No Tadoku account has this address."
-      actions={<Link to="/" className="text-link">Return home</Link>}
+      actions={<Link to="/" className="text-link hover:text-link-hover">Return home</Link>}
     />
   ),
   component: ProfileStatisticsPage,

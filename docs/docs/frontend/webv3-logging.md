@@ -80,8 +80,9 @@ record again. An expired session cookie retries a public detail read
 anonymously. Public detail omits private contest submissions; only the owner
 gets the link to manage them.
 
-The detail page shows the measure and score with the log's date, its tags and,
-for visitors, its learner; the record's ID is not shown. It offers its owner
+The detail page is titled Log details. Its lead names the language, the activity
+and who logged it, linked to their profile. It shows the measure, score and date,
+then the description and tags as labelled rows; the record's ID is not shown. It offers its owner
 Edit log and Delete log; visitors see neither.
 `/logs/$logId/edit` shows the edit form only to the log's owner; another account
 sees that the record is someone else's, and an anonymous visitor is asked to

@@ -154,7 +154,7 @@ export function ContestFacts({ contest, phase }: { contest: ImmersionContestView
         { label: 'Languages', value: contest.allowed_languages?.length ? contest.allowed_languages.map(language => language.name).join(', ') : 'No restrictions' },
         { label: 'Activities', value: contest.allowed_activities.map(activity => activity.name).join(', ') || 'No restrictions' },
         ...(contest.private ? [{ label: 'Listing', value: 'Unlisted: left out of contest lists, open to anyone with the link' }] : []),
-        { label: 'Administered by', value: organizer },
+        { label: 'Organized by', value: organizer },
       ]}
     />
   )

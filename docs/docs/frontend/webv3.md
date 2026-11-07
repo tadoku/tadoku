@@ -18,7 +18,7 @@ points in the current round, or whether they have joined it. Both see their dail
 goal under the hero, or a link to set one. `/plan` demonstrates a validated immersion goal kept in the current
 browser. It does not sync the goal to a Tadoku account. [Native activity logging](webv3-logging.md), including a saved log's contest submissions, uses the existing account session and API.
 The latest official, yearly and all-time [leaderboards](webv3-leaderboards.md)
-read their standings from the API, and the official, community and My contests
+read their standings from the API, and the Official, Community, Joined and Organizing
 [contest lists](webv3-contests.md) list contests as the visitor sees them.
 Each [contest page](webv3-contest.md) shows its standings, its updates and the
 viewer's actions and opens each participant's contest profile. Signed-in learners

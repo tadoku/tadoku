@@ -152,7 +152,7 @@ function ContestsForm({ log, registrations, viewerId }: {
                         variant="card"
                         value={choice.registration.id}
                         label={choice.registration.contest.title}
-                        description={`Administered by ${organizer(choice.registration.contest)}`}
+                        description={`Organized by ${organizer(choice.registration.contest)}`}
                         aside={choice.kind === 'ineligible' ? choice.reason : `${numberFormat.format(log.score)} ${pointsUnit(log.score)}`}
                         disabled={choice.kind === 'ineligible'}
                       />

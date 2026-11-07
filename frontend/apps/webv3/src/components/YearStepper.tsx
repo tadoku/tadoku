@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { Button, buttonClassName } from 'paper-ui'
-import { ChevronLeftIcon, ChevronRightIcon } from 'paper-ui/icons'
+import { ChevronLeftIcon, ChevronRightIcon, iconClassName } from 'paper-ui/icons'
 import type { ReactNode } from 'react'
 
 /**
@@ -22,10 +22,10 @@ export function YearStepper({ year, first, current, href, label }: {
     : <Link className={buttonClassName({ variant: 'ghost' })} aria-label={`${name}, ${target}`} to={href(target)}>{icon}</Link>
 
   return (
-    <div className="year-stepper" role="group" aria-label={label}>
-      {step(previous, 'Previous year', <ChevronLeftIcon className="paper-icon-default" aria-hidden="true" />)}
-      <strong aria-live="polite">{year}</strong>
-      {step(next, 'Next year', <ChevronRightIcon className="paper-icon-default" aria-hidden="true" />)}
+    <div className="flex items-center gap-1" role="group" aria-label={label}>
+      {step(previous, 'Previous year', <ChevronLeftIcon className={iconClassName()} aria-hidden="true" />)}
+      <strong aria-live="polite" className="min-w-18 text-center font-display text-section leading-section tabular-nums">{year}</strong>
+      {step(next, 'Next year', <ChevronRightIcon className={iconClassName()} aria-hidden="true" />)}
     </div>
   )
 }

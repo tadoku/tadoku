@@ -1,10 +1,11 @@
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { nitro } from 'nitro/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  plugins: [tanstackStart(), nitro({ serverDir: './server', preset: 'node-server', devServer: { runner: 'self' } }), react()],
+  plugins: [tanstackStart(), nitro({ serverDir: './server', preset: 'node-server', devServer: { runner: 'self' } }), react(), tailwindcss()],
   resolve: {
     dedupe: ['react', 'react-dom', '@tanstack/react-query'],
   },

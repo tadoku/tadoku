@@ -9,12 +9,12 @@ export function CardPage({ title, lead, footer, children }: {
   readonly children: ReactNode
 }) {
   return (
-    <div className="card-page">
-      <Surface className="card-page__card">
-        <PageHeader title={title} lead={lead} className="card-page__header" />
+    <div className="mx-auto w-card">
+      <Surface className="p-card-pad max-sm:px-5 max-sm:py-6">
+        <PageHeader title={title} lead={lead} className="mb-7" />
         {children}
       </Surface>
-      {footer ? <p className="card-page__footer">{footer}</p> : null}
+      {footer ? <p className="mb-0 mt-6 text-center text-ui text-muted">{footer}</p> : null}
     </div>
   )
 }

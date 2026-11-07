@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import { Shell, themeBootScript } from '../components/Shell'
 import { NotFound, Unavailable } from '../components/StatusViews'
 import { getSession } from '../lib/session'
-import 'paper-ui/styles.css'
+import { bodyClassName, documentClassName } from 'paper-ui'
 import '../styles.css'
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
@@ -25,16 +25,19 @@ function AccountLayout() {
   return <Shell identity={identity}>{identity.status === 'unavailable' ? <Unavailable /> : <Outlet />}</Shell>
 }
 
+// Account pages colour every plain link; Paper's buttons keep their own colours.
+const htmlClassName = `${documentClassName} [:where(&_a:not(.paper-button))]:text-link`
+
 function RootDocument({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={htmlClassName} suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
         <HeadContent />
       </head>
-      <body>
+      <body className={bodyClassName}>
         {children}
         <Scripts />
       </body>

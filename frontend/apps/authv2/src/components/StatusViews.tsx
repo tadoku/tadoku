@@ -1,6 +1,7 @@
 import { useLocation, useRouteContext } from '@tanstack/react-router'
 import { buttonClassName } from 'paper-ui'
 import { CardPage } from './CardPage'
+import { accountConfirmation } from '../styles'
 
 export function Unavailable() {
   const location = useLocation({ select: current => current.href })
@@ -27,7 +28,7 @@ export function Deleted() {
   const webUrl = useRouteContext({ from: '__root__', select: context => context.identity.webUrl })
   return (
     <CardPage title="Your account is deleted" lead="You’ve been logged out, and you can’t log in to this account again.">
-      <div className="account-confirmation account-confirmation--spaced">
+      <div className={`${accountConfirmation} mb-7`}>
         <p>We’re removing its data now; this finishes shortly.</p>
         <p>We’ve sent a notice to your old email address.</p>
       </div>

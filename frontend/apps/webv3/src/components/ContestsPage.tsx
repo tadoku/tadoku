@@ -3,34 +3,45 @@ import { PlusIcon, iconClassName } from 'paper-ui/icons'
 import { Link } from '@tanstack/react-router'
 import { Button, EmptyState, PageHeader, Pagination, StatusTag, Tabbar, buttonClassName } from 'paper-ui'
 import {
+  accountSinceQuery,
   canCreateContestQuery,
   contestScope,
   contestsHref,
   contestsPageSize,
   contestsQuery,
+  viewHref,
   type ContestCollection,
   type ContestList,
   type ContestListScope,
+  type ContestView,
 } from '../lib/contests'
 import { formatDate, formatPeriod, numberFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { useLoginUrl, viewerKey, viewerQueryOptions } from '../lib/session'
 import { renderLink } from './router-link'
+import { YearStepper } from './YearStepper'
 
 const tabs: { id: ContestCollection; label: string }[] = [
   { id: 'official', label: 'Official' },
   { id: 'community', label: 'Community' },
-  { id: 'mine', label: 'My contests' },
+  { id: 'joined', label: 'Joined' },
+  { id: 'organizing', label: 'Organizing' },
 ]
 
-/** One page of the official, community or viewer's own contests, with the collection tabs and create action. */
-export function ContestsPage({ collection, page }: { collection: ContestCollection; page: number }) {
+const thisYear = () => new Date().getUTCFullYear()
+
+/**
+ * One page of the official or community contests, the contests the viewer joined in a year, or the ones they
+ * organize, with the collection tabs and create action.
+ */
+export function ContestsPage({ view, page }: { view: ContestView; page: number }) {
+  const { collection } = view
   const links = useLinks()
   const viewerQuery = useQuery(viewerQueryOptions())
   const viewer = viewerQuery.data
   const signedIn = viewer?.status === 'signed-in'
   const canCreate = useQuery({ ...canCreateContestQuery(viewerKey(viewer)), enabled: signedIn }).data === true
-  const scope = contestScope(collection, viewer)
+  const scope = contestScope(view, viewer)
 
   return (
     <div className="contests-page">
@@ -42,12 +53,17 @@ export function ContestsPage({ collection, page }: { collection: ContestCollecti
       <Tabbar
         label="Contest collections"
         renderLink={renderLink}
-        links={tabs.map(tab => ({ ...tab, href: contestsHref[tab.id](), current: tab.id === collection }))}
+        links={tabs.map(tab => ({
+          ...tab,
+          href: tab.id === 'joined' ? contestsHref.joined(thisYear()) : contestsHref[tab.id](),
+          current: tab.id === collection,
+        }))}
       />
+      {view.collection === 'joined' && scope?.kind === 'participant' ? <JoinedYear userId={scope.userId} year={view.year} /> : null}
       {scope ? (
-        <Contests scope={scope} collection={collection} page={page} />
+        <Contests scope={scope} view={view} page={page} />
       ) : viewer?.status === 'anonymous' ? (
-        <SignInPrompt />
+        <SignInPrompt joined={collection === 'joined'} />
       ) : (
         <EmptyState
           headingLevel={2}
@@ -61,18 +77,29 @@ export function ContestsPage({ collection, page }: { collection: ContestCollecti
   )
 }
 
-function SignInPrompt() {
+/** The Joined list's year, stepping between the year the account joined Tadoku and this year. */
+function JoinedYear({ userId, year }: { userId: string; year: number }) {
+  const since = useQuery(accountSinceQuery(userId)).data
+  const current = thisYear()
+  return (
+    <div className="contests-year">
+      <YearStepper year={year} first={Math.min(since ?? current, current)} current={current} href={contestsHref.joined} label="Year" />
+    </div>
+  )
+}
+
+function SignInPrompt({ joined }: { joined: boolean }) {
   return (
     <EmptyState
       headingLevel={2}
-      title="Sign in to see the contests you organize"
+      title={joined ? 'Sign in to see the contests you joined' : 'Sign in to see the contests you organize'}
       description="You can still browse official rounds and community contests."
       actions={<a className={buttonClassName()} href={useLoginUrl()}>Log in</a>}
     />
   )
 }
 
-function Contests({ scope, collection, page }: { scope: ContestListScope; collection: ContestCollection; page: number }) {
+function Contests({ scope, view, page }: { scope: ContestListScope; view: ContestView; page: number }) {
   const { data: viewer } = useQuery(viewerQueryOptions())
   const list = useQuery(contestsQuery(scope, page, viewerKey(viewer)))
   // The route loader read the list; its read time decides each contest's phase on the server and after hydration.
@@ -95,7 +122,7 @@ function Contests({ scope, collection, page }: { scope: ContestListScope; collec
   // A session cookie can belong to a guest, whom the configuration endpoint also answers; Webv2 names restrictions
   // for signed-in viewers only.
   const names = viewer?.status === 'signed-in' ? result.data.names : null
-  const pageHref = contestsHref[collection]
+  const pageHref = (next: number) => viewHref(view, next)
   if (contests.length === 0) {
     return total > 0 ? (
       <EmptyState
@@ -104,11 +131,17 @@ function Contests({ scope, collection, page }: { scope: ContestListScope; collec
         description={`There are ${numberFormat.format(total)} contests.`}
         actions={<Link className="text-link" to={pageHref(1)}>Go to the first page</Link>}
       />
-    ) : collection === 'mine' ? (
+    ) : view.collection === 'organizing' ? (
       <EmptyState
         headingLevel={2}
         title="You don’t organize any contests yet"
         actions={<Link className={buttonClassName({ variant: 'outline' })} to={contestsHref.community()}>Browse community contests</Link>}
+      />
+    ) : view.collection === 'joined' ? (
+      <EmptyState
+        headingLevel={2}
+        title={`You didn’t join any contests in ${view.year}`}
+        actions={<Link className={buttonClassName({ variant: 'outline' })} to={contestsHref.official()}>Browse official contests</Link>}
       />
     ) : <EmptyState headingLevel={2} title="No contests found" description="Contests appear here once they’re scheduled." />
   }
@@ -122,7 +155,7 @@ function Contests({ scope, collection, page }: { scope: ContestListScope; collec
           <Pagination totalPages={totalPages} currentPage={page} getHref={pageHref} renderLink={renderLink} label="Contest pages, top" />
         </div>
       ) : null}
-      <ul className="contest-list" aria-label={`${tabs.find(tab => tab.id === collection)?.label} contests`}>
+      <ul className="contest-list" aria-label={view.collection === 'joined' ? `Contests joined in ${view.year}` : `${tabs.find(tab => tab.id === view.collection)?.label} contests`}>
         {contests.map(contest => <ContestRow key={contest.id} contest={contest} names={names} today={today} />)}
       </ul>
       {totalPages > 1 ? (
@@ -153,7 +186,9 @@ function ContestRow({ contest, names, today }: {
   const activities = contest.activity_type_id_allow_list.length
     ? contest.activity_type_id_allow_list.map(id => names?.activities[id] ?? String(id)).join(', ')
     : null
-  const meta = [registration, names ? languages : null, names ? activities : null].filter(Boolean).join(' · ')
+  // Official rounds are open to every language and activity in practice, and the Official list never names them.
+  const restrictions = names && !contest.official
+  const meta = [registration, restrictions ? languages : null, restrictions ? activities : null].filter(Boolean).join(' · ')
 
   return (
     <li className="contest-row">

@@ -8,18 +8,34 @@ import type { Read } from './leaderboard'
 import type { LogResult } from './logs'
 import { viewerKey, viewerQueryOptions, type Viewer } from './session'
 
-/** Which contests a list holds. An organizer's list holds the community contests one account created. */
-export type ContestListScope = { kind: 'official' } | { kind: 'community' } | { kind: 'organizer'; userId: string }
+/**
+ * Which contests a list holds. An organizer's list holds the community contests one account created; a participant's
+ * the contests one account registered for in a calendar year, which is how the API keeps registrations.
+ */
+export type ContestListScope =
+  | { kind: 'official' }
+  | { kind: 'community' }
+  | { kind: 'organizer'; userId: string }
+  | { kind: 'participant'; userId: string; year: number }
 
 export const contestsPageSize = 25
 
-export type ContestCollection = 'official' | 'community' | 'mine'
+/** The collection tabs. Organizing keeps Webv2's My contests address. */
+export type ContestCollection = 'official' | 'community' | 'joined' | 'organizing'
 
-export const contestsHref: Record<ContestCollection, (page?: number) => string> = {
+/** A collection as a page shows it: the joined list also names its year. */
+export type ContestView = { collection: Exclude<ContestCollection, 'joined'> } | { collection: 'joined'; year: number }
+
+export const contestsHref = {
   official: (page = 1) => `/contests/official/${page}`,
   community: (page = 1) => `/contests/user-contests/${page}`,
-  mine: (page = 1) => `/contests/my-contests/${page}`,
+  joined: (year: number, page = 1) => `/contests/joined/${year}/${page}`,
+  organizing: (page = 1) => `/contests/my-contests/${page}`,
 }
+
+/** The address of a view's page `page`. */
+export const viewHref = (view: ContestView, page = 1) =>
+  view.collection === 'joined' ? contestsHref.joined(view.year, page) : contestsHref[view.collection](page)
 
 export interface ContestList {
   /** In the API's order, newest first. */
@@ -37,6 +53,7 @@ const listInput = z.object({
     z.object({ kind: z.literal('official') }),
     z.object({ kind: z.literal('community') }),
     z.object({ kind: z.literal('organizer'), userId: z.guid() }),
+    z.object({ kind: z.literal('participant'), userId: z.guid(), year: z.int().min(2000).max(9999) }),
   ]),
   page: z.int().min(1),
 })
@@ -64,6 +81,21 @@ export const contestsQuery = (scope: ContestListScope, page: number, forViewer: 
   retry: false,
 })
 
+const getAccountSince = createServerFn({ method: 'GET' })
+  .inputValidator(z.object({ userId: z.guid() }))
+  .handler(async ({ data }) => {
+    const { readAccountSince } = await import('./contests.server')
+    return readAccountSince(data.userId)
+  })
+
+/** The year an account joined Tadoku, where the Joined list's years start; null when it can't be read. */
+export const accountSinceQuery = (userId: string) => queryOptions({
+  queryKey: ['account-since', userId],
+  queryFn: (): Promise<number | null> => getAccountSince({ data: { userId } }),
+  staleTime: Infinity,
+  retry: false,
+})
+
 /** Whether the signed-in viewer may create a contest, which shows the create action. */
 export const canCreateContestQuery = (forViewer: string) => queryOptions({
   queryKey: ['can-create-contest', forViewer],
@@ -72,18 +104,22 @@ export const canCreateContestQuery = (forViewer: string) => queryOptions({
   retry: false,
 })
 
-/** The list a collection shows this viewer; null while the viewer has no account to organize contests with. */
-export function contestScope(collection: ContestCollection, viewer: Viewer | undefined): ContestListScope | null {
-  if (collection !== 'mine') return { kind: collection }
-  return viewer && 'userId' in viewer ? { kind: 'organizer', userId: viewer.userId } : null
+/** The list a view shows this viewer; null for the viewer's own lists while they have no account. */
+export function contestScope(view: ContestView, viewer: Viewer | undefined): ContestListScope | null {
+  if (view.collection === 'official' || view.collection === 'community') return { kind: view.collection }
+  if (!viewer || !('userId' in viewer)) return null
+  return view.collection === 'joined'
+    ? { kind: 'participant', userId: viewer.userId, year: view.year }
+    : { kind: 'organizer', userId: viewer.userId }
 }
 
-/** Prefetches a collection page and, for signed-in viewers, whether they may create contests. */
-export async function loadContests(queryClient: QueryClient, collection: ContestCollection, page: number) {
+/** Prefetches a view's page and, for signed-in viewers, whether they may create contests. */
+export async function loadContests(queryClient: QueryClient, view: ContestView, page: number) {
   const viewer = await queryClient.ensureQueryData(viewerQueryOptions())
-  const scope = contestScope(collection, viewer)
+  const scope = contestScope(view, viewer)
   await Promise.all([
     scope ? queryClient.ensureQueryData(contestsQuery(scope, page, viewerKey(viewer))) : null,
+    scope?.kind === 'participant' ? queryClient.ensureQueryData(accountSinceQuery(scope.userId)) : null,
     viewer.status === 'signed-in' ? queryClient.ensureQueryData(canCreateContestQuery(viewerKey(viewer))) : null,
   ])
 }

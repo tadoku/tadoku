@@ -1,9 +1,12 @@
 import {
+  immersionProfileFindByUserId,
+  immersionProfileYearlyContestRegistrationsByUserId,
   immersionContestCreate,
   immersionContestCreatePermissionCheck,
   immersionContestGetConfigurations,
   immersionContestList,
   type ImmersionContest,
+  type ImmersionContestView,
 } from 'api-client'
 import type { NewContest } from './contest-form'
 import type { ContestEditor, ContestList, ContestListScope } from './contests'
@@ -29,6 +32,7 @@ async function listContests(query: NonNullable<Parameters<typeof immersionContes
 const identified = (contest: ImmersionContest): contest is Identified<ImmersionContest> => contest.id !== undefined
 
 export async function readContests(scope: ContestListScope, page: number): Promise<Read<ContestList>> {
+  if (scope.kind === 'participant') return readJoinedContests(scope.userId, scope.year, page)
   const cookie = sessionCookie()
   const query = {
     page_size: contestsPageSize,
@@ -52,6 +56,43 @@ export async function readContests(scope: ContestListScope, page: number): Promi
     activities: Object.fromEntries(options.data.activities.map(activity => [String(activity.id), activity.name])),
   }
   return { ok: true, data: { contests, total: list.data.total_size, names: names ?? null } }
+}
+
+/**
+ * The contests one account registered for in a year, newest first, as contest rows. The registrations carry each
+ * contest's allowed languages and activities with their names, so the rows name restrictions without another read.
+ */
+async function readJoinedContests(userId: string, year: number, page: number): Promise<Read<ContestList>> {
+  const read = (cookie?: string) => immersionProfileYearlyContestRegistrationsByUserId({
+    ...sessionRequest(cookie),
+    path: { userId, year },
+    query: { page_size: contestsPageSize, page: page - 1 },
+  }).catch(() => failed)
+  const cookie = sessionCookie()
+  let result = await read(cookie)
+  if (cookie && result.response?.status === 401) result = await read()
+  const views = result.data?.registrations.map(registration => registration.contest)
+  if (!result.data || !views?.every((view): view is Identified<ImmersionContestView> => view?.id !== undefined)) {
+    return { ok: false }
+  }
+
+  const contests = views.map(({ allowed_languages: languages, allowed_activities: activities, ...contest }) => ({
+    ...contest,
+    language_code_allow_list: languages?.map(language => language.code) ?? null,
+    activity_type_id_allow_list: activities.map(activity => activity.id),
+  }))
+  const names = {
+    languages: Object.fromEntries(views.flatMap(view => view.allowed_languages ?? []).map(language => [language.code, language.name])),
+    activities: Object.fromEntries(views.flatMap(view => view.allowed_activities).map(activity => [String(activity.id), activity.name])),
+  }
+  return { ok: true, data: { contests, total: result.data.total_size, names } }
+}
+
+/** The calendar year an account joined Tadoku, from its public profile; null when the profile can't be read. */
+export async function readAccountSince(userId: string): Promise<number | null> {
+  const profile = await immersionProfileFindByUserId({ ...sessionRequest(), path: { userId } }).catch(() => failed)
+  const year = Number(profile.data?.created_at?.slice(0, 4))
+  return Number.isInteger(year) && year > 0 ? year : null
 }
 
 /** The API answers 200 when the visitor may create a contest; anything else hides the action, as in Webv2. */

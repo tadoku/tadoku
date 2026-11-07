@@ -8,8 +8,9 @@
 .profile-export { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--paper-color-text-muted); font-size: .875rem; }
 .profile-year { margin-block-start: 32px; padding: 32px; border: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
 .profile-year-head { margin: -8px 0 20px -12px; }
-.profile-year-control { display: flex; align-items: center; gap: 4px; }
-.profile-year-control strong { min-inline-size: 4.5rem; text-align: center; font-family: var(--paper-font-display); font-size: var(--paper-type-section-size); line-height: var(--paper-type-section-line-height); font-variant-numeric: tabular-nums; }
+/* The year stepper, shared by the profile and the Joined contest list. */
+.year-stepper { display: flex; align-items: center; gap: 4px; }
+.year-stepper strong { min-inline-size: 4.5rem; text-align: center; font-family: var(--paper-font-display); font-size: var(--paper-type-section-size); line-height: var(--paper-type-section-line-height); font-variant-numeric: tabular-nums; }
 .profile-stats { margin-block: 28px 32px; }
 .profile-rhythm { border-block-start: 1px solid var(--paper-color-rule-default); padding-block-start: 24px; }
 /* One section role across the profile: the in-sheet calendar heading matches the sections below it. */

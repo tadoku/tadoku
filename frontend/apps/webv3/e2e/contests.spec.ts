@@ -126,7 +126,7 @@ test('server-rendered official and community lists show the API contests and lin
   await context.close()
 })
 
-test('collection tabs, pages and the signed-out My contests prompt work in the browser', async ({ page, request }, testInfo) => {
+test('collection tabs, pages and the signed-out Joined and Organizing prompts work in the browser', async ({ page, request }, testInfo) => {
   const failures: string[] = []
   page.on('pageerror', error => failures.push(error.message))
   page.on('console', message => {
@@ -161,7 +161,12 @@ test('collection tabs, pages and the signed-out My contests prompt work in the b
   }
 
   await hydrated(page)
-  await page.getByRole('navigation', { name: 'Contest collections' }).getByRole('link', { name: 'My contests' }).click()
+  await page.getByRole('navigation', { name: 'Contest collections' }).getByRole('link', { name: 'Joined' }).click()
+  await expect(page).toHaveURL(new RegExp(`/contests/joined/${new Date().getUTCFullYear()}/1$`))
+  await expect(page.getByRole('heading', { level: 2, name: 'Sign in to see the contests you joined' })).toBeVisible()
+
+  // Organizing keeps Webv2's My contests address.
+  await page.getByRole('navigation', { name: 'Contest collections' }).getByRole('link', { name: 'Organizing' }).click()
   await expect(page).toHaveURL(/\/contests\/my-contests\/1$/)
   await expect(page.getByRole('heading', { level: 2, name: 'Sign in to see the contests you organize' })).toBeVisible()
   const login = new URL((await page.locator('main').getByRole('link', { name: 'Log in', exact: true }).getAttribute('href'))!)
@@ -200,7 +205,7 @@ test('an organizer pages through their own contests, unlisted ones included, and
   await page.screenshot({ path: testInfo.outputPath('my-contests-organizer-390.png'), fullPage: true })
 })
 
-test('a participant sees their unlisted contest in My contests and Community, which anonymous visitors do not', async ({ page, readerContext, request }) => {
+test('a participant sees their unlisted contest in Organizing and Community, which anonymous visitors do not', async ({ page, readerContext, request }) => {
   test.skip(!reader.email || !reader.password, 'Set E2E_READER_EMAIL and E2E_READER_PASSWORD')
   const userId = await accountId(readerContext)
   const mine = await contests(readerContext.request, false, 1, userId)
@@ -216,6 +221,35 @@ test('a participant sees their unlisted contest in My contests and Community, wh
   await expectRows(page, await contests(readerContext.request, false))
   const anonymous = await contests(request, false)
   expect(anonymous.contests.map(contest => contest.id)).not.toContain(unlisted[0].id)
+})
+
+test('a participant’s Joined list holds their registrations for the chosen year, newest first', async ({ readerContext }) => {
+  test.skip(!reader.email || !reader.password, 'Set E2E_READER_EMAIL and E2E_READER_PASSWORD')
+  const userId = await accountId(readerContext)
+  const year = new Date().getUTCFullYear()
+  const response = await readerContext.request.get(`${api}/immersion/users/${userId}/contest-registrations/${year}?page_size=${pageSize}&page=0`)
+  expect(response.ok()).toBeTruthy()
+  const joined = await response.json() as { registrations: { contest: Contest }[]; total_size: number }
+  expect(joined.total_size, 'Dev Reader joined the seeded round').toBeGreaterThan(0)
+
+  const page = await readerContext.newPage()
+  await page.goto('/contests/official/1')
+  await hydrated(page)
+  await page.getByRole('navigation', { name: 'Contest collections' }).getByRole('link', { name: 'Joined' }).click()
+  await expect(page).toHaveURL(new RegExp(`/contests/joined/${year}/1$`))
+  await expectRows(page, { contests: joined.registrations.map(registration => registration.contest), total_size: joined.total_size })
+
+  // The year steps from the year the account joined Tadoku to this one; Dev Reader joined this year.
+  const profile = await (await readerContext.request.get(`${api}/immersion/users/${userId}/profile`)).json() as { created_at: string }
+  const since = Number(profile.created_at.slice(0, 4))
+  const stepper = page.getByRole('group', { name: 'Year' })
+  await expect(stepper).toContainText(String(year))
+  if (since === year) await expect(stepper.getByRole('button', { name: 'Previous year' })).toBeDisabled()
+  else await expect(stepper.getByRole('link', { name: `Previous year, ${year - 1}` })).toBeVisible()
+
+  await page.goto('/contests/joined/2020/1')
+  await expect(page.getByRole('heading', { level: 2, name: 'You didn’t join any contests in 2020' })).toBeVisible()
+  await expect(page.locator('.contest-row')).toHaveCount(0)
 })
 
 test('contest lists stay within mobile and desktop viewports', async ({ page }, testInfo) => {

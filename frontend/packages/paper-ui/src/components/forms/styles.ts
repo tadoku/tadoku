@@ -273,7 +273,7 @@ export const combobox = tv({
     ],
     chipTrigger: "focus-visible:outline-none",
     chip: [
-      "paper-combobox__chip inline-flex min-w-0 max-w-full items-center gap-0.5 rounded-chip bg-action-soft",
+      "paper-combobox__chip inline-flex min-w-0 max-w-full items-center gap-0.5 rounded-chip bg-chip",
       "py-0.5 ps-2 pe-0.5 text-metadata leading-150 font-medium text-ink wrap-anywhere",
     ],
     chipRemove: [

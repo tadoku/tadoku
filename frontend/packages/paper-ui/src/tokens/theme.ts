@@ -105,7 +105,9 @@ const color = {
   'canvas-table-shade': mix('ink', 22),
   'tab-hover': mix('ink', 4),
   'toggle-hover': mix('ink', 3, 'paper'),
-  'chip-remove-hover': mix('link', 16),
+  /** A selected value inside a field: a neutral step off the field, so it doesn't read as a link. */
+  chip: themed(p.sand[200], p.graphite[600]),
+  'chip-remove-hover': themed(p.sand[300], p.graphite[500]),
   'destructive-soft': mix('danger', 14),
   'current-row-hover': mix('ink', 5, 'action-soft'),
   'checkbox-disabled-edge': `color-mix(in srgb, var(--color-field-edge) 85%, var(--color-rule))`,

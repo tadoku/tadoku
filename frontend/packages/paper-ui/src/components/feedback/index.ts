@@ -6,7 +6,7 @@ export {
   Surface,
   ToastContainer,
   ToastProvider,
-  surfaceClassName,
+  surfaceStyles,
   useToast,
   type ButtonGroupAction,
   type ButtonGroupProps,

@@ -1,7 +1,7 @@
 export {
   BUTTON_VARIANTS,
   Button,
-  buttonClassName,
+  buttonStyles,
   type ButtonProps,
   type ButtonRecipeOptions,
   type ButtonVariant,

@@ -54,7 +54,7 @@ const frame = appFrame()
 const brandMark = 'block h-auto w-brand-mark'
 const brandWordmark = 'block h-auto w-brand'
 const accountActions = [
-  'ms-4 flex flex-wrap items-center justify-end gap-3',
+  'ms-4 flex min-w-0 items-center justify-end gap-3 max-md:flex-wrap',
   'max-md:max-w-account-label max-md:gap-1.6 max-md:text-sm-tight',
 ].join(' ')
 const mobileLink = navbarStyles({ contained: true }).mobileLink()

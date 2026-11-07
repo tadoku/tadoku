@@ -1,10 +1,66 @@
-import { EmptyState, Pagination, SectionHeading, StatGrid, StatusTag, buttonClassName } from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { a11y, buttonStyles, EmptyState, Pagination, SectionHeading, StatGrid, StatusTag } from 'paper-ui'
+import { entryStyles, entryTitle, pageStyles } from './page-styles'
+import { border, breakpoints, color, font, fontSize, fontWeight, lineHeight, size, space } from 'paper-ui/tokens.stylex'
 import { formatPeriod, pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { activeDays, contestPageSize, type ContestHistory, type ProfileStatistics as Statistics, type Section } from '../lib/profile'
 import { ActivityCalendar } from './ActivityCalendar'
 import { ProfileHeader } from './ProfileHeader'
 import { YearStepper } from './YearStepper'
+
+const ruledBlock = { borderBlockStartColor: color.ruleDefault, borderBlockStartStyle: 'solid', borderBlockStartWidth: border.static } as const
+
+const styles = stylex.create({
+  year: {
+    padding: { default: space[32], [breakpoints.phone]: space[20] },
+    borderColor: color.ruleDefault,
+    borderStyle: 'solid',
+    borderWidth: border.static,
+    backgroundColor: color.surfacePaper,
+    marginBlockStart: space[32],
+  },
+  yearHead: {
+    marginBlockEnd: space[20],
+    marginBlockStart: `calc(-1 * ${space[8]})`,
+    marginInlineEnd: 0,
+    marginInlineStart: `calc(-1 * ${space[12]})`,
+  },
+  stats: { marginBlockEnd: space[32], marginBlockStart: space[28] },
+  rhythm: { ...ruledBlock, paddingBlockStart: space[24] },
+  emptyYear: ruledBlock,
+  /** One section role across the profile: the in-sheet calendar heading matches the sections below it. */
+  sectionTitle: { fontFamily: font.display, fontSize: fontSize[22], fontWeight: fontWeight.bold, lineHeight: lineHeight[30] },
+  columns: {
+    columnGap: space[48],
+    display: 'grid',
+    gridTemplateColumns: { default: 'repeat(2, minmax(0, 1fr))', [breakpoints.lg]: 'minmax(0, 1fr)' },
+    marginBlockStart: space[32],
+    rowGap: 0,
+  },
+  column: { ...ruledBlock, paddingBlock: space[28], minInlineSize: 0, },
+  /** The two score breakdowns share a row; the contest list, the longest column, runs full width below them. */
+  fullRow: { gridColumnEnd: '-1',
+ gridColumnStart: '1' },
+  breakdown: { margin: 0, padding: 0, listStyle: 'none', },
+  breakdownItem: { marginBlockStart: { default: space[20], ':first-child': 0 } },
+  breakdownLabel: {
+    gap: space[16],
+    display: 'flex',
+    fontSize: fontSize[15],
+    justifyContent: 'space-between',
+    marginBlockEnd: space[8],
+    overflowWrap: 'anywhere',
+  },
+  breakdownScore: { fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' },
+  unit: { color: color.textMuted, fontWeight: fontWeight.regular },
+  bar: { backgroundColor: color.ruleDefault, blockSize: size[8], display: 'block' },
+  /** Bars use the calendar's fourth heat step, so the data colour holds about 3.9:1 on the track in both themes. */
+  barFill: { backgroundColor: color.heat3, blockSize: '100%', display: 'block', minInlineSize: size[2] },
+  barWidth: (width: string) => ({ inlineSize: width }),
+  contestTitle: { alignItems: 'center', columnGap: space[12], display: 'flex', flexWrap: 'wrap', rowGap: space[4] },
+  contestPages: { marginBlockStart: space[20] },
+})
 
 type Found = Extract<Statistics, { status: 'found' }>
 
@@ -21,26 +77,26 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
   const empty = activity.ok && activity.data.total_updates === 0
 
   return (
-    <div className="profile-page">
+    <div>
       <ProfileHeader profile={profile} owner={owner} view="overview" overviewHref={`/profile/${profile.id}/statistics/${year}`} />
-      <section className="profile-year" aria-labelledby="profile-year-heading">
-        <div className="profile-year-head">
-          <h2 id="profile-year-heading" className="paper-visually-hidden">{name}’s activity in {year}</h2>
+      <section {...stylex.props(styles.year)} aria-labelledby="profile-year-heading">
+        <div {...stylex.props(styles.yearHead)}>
+          <h2 id="profile-year-heading" {...stylex.props(a11y.visuallyHidden)}>{name}’s activity in {year}</h2>
           <YearControl statistics={statistics} year={year} />
         </div>
         {empty ? (
           <EmptyState
             variant="plain"
-            className="profile-empty-year"
+            xstyle={styles.emptyYear}
             headingLevel={3}
             title={`No activity recorded in ${year}`}
-            actions={owner ? <a className={buttonClassName()} href={links.logs}>Log activity</a> : null}
+            actions={owner ? <a {...stylex.props(...buttonStyles())} href={links.logs}>Log activity</a> : null}
           />
         ) : (
           <>
             <YearTotals statistics={statistics} year={year} />
-            <div className="profile-rhythm">
-              <SectionHeading level={3} id="profile-rhythm-heading" title="Daily activity" />
+            <div {...stylex.props(styles.rhythm)}>
+              <SectionHeading level={3} id="profile-rhythm-heading" title="Daily activity" titleXstyle={styles.sectionTitle} />
               {activity.ok ? (<>
                 <ActivityCalendar
                   userId={profile.id}
@@ -49,19 +105,19 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
                   activity={activity.data}
                   labelledBy="profile-rhythm-heading"
                 />
-              </>) : <p className="profile-muted">Could not retrieve updates for {year}.</p>}
+              </>) : <p {...stylex.props(pageStyles.muted)}>Could not retrieve updates for {year}.</p>}
             </div>
           </>
         )}
       </section>
-      <div className="profile-columns">
+      <div {...stylex.props(styles.columns)}>
         {!empty ? (
           <>
             <Breakdown id="profile-languages" title="Score by language" section={statistics.scores} items={scores => scores.scores.map(score => ({ label: score.language_name ?? score.language_code, score: score.score }))} empty="No scores recorded this year." />
             <Breakdown id="profile-activities" title="Score by activity" section={statistics.split} items={split => split.activities.map(item => ({ label: item.activity_name, score: item.score }))} empty="Not enough data to show the activity split." />
           </>
         ) : null}
-        <ContestHistorySection history={statistics.contests} userId={profile.id} year={year} page={page} />
+        <ContestHistorySection history={statistics.contests} userId={profile.id} year={year} page={page} fullRow={!empty} />
       </div>
     </div>
   )
@@ -75,7 +131,7 @@ function YearTotals({ statistics, year }: { statistics: Found; year: number }) {
 
   return (
     <StatGrid
-      className="profile-stats"
+      xstyle={styles.stats}
       stats={[
         { label: 'Overall score', value: total === undefined ? 'Unavailable' : scoreFormat.format(total), detail: average },
         ...(activity.ok ? [{ label: 'Updates', value: activity.data.total_updates, detail: `${activeDays(activity.data.scores)} active days` }] : []),
@@ -109,26 +165,33 @@ function Breakdown<T>({ id, title, section, items, empty }: {
   const total = rows.reduce((sum, row) => sum + row.score, 0)
 
   return (
-    <section aria-labelledby={id}>
-      <SectionHeading level={2} id={id} title={title} />
-      {!section.ok ? <p className="profile-muted">Could not retrieve this breakdown.</p> : rows.length ? (
-        <ol className="profile-breakdown">
+    <section {...stylex.props(styles.column)} aria-labelledby={id}>
+      <SectionHeading level={2} id={id} title={title} titleXstyle={styles.sectionTitle} />
+      {!section.ok ? <p {...stylex.props(pageStyles.muted)}>Could not retrieve this breakdown.</p> : rows.length ? (
+        <ol {...stylex.props(styles.breakdown)}>
           {rows.map(row => (
-            <li key={row.label}>
-              <div><span>{row.label}</span><strong>{scoreFormat.format(row.score)} <small>{pointsUnit(row.score)}</small></strong></div>
-              <span className="profile-bar" aria-hidden="true">
-                <span style={{ width: `${total ? row.score / total * 100 : 0}%` }} />
+            <li key={row.label} {...stylex.props(styles.breakdownItem)}>
+              <div {...stylex.props(styles.breakdownLabel)}>
+                <span>{row.label}</span>
+                <strong {...stylex.props(styles.breakdownScore)}>
+                  {scoreFormat.format(row.score)} <small {...stylex.props(styles.unit)}>{pointsUnit(row.score)}</small>
+                </strong>
+              </div>
+              <span {...stylex.props(styles.bar)} aria-hidden="true">
+                <span {...stylex.props(styles.barFill, styles.barWidth(`${total ? row.score / total * 100 : 0}%`))} />
               </span>
             </li>
           ))}
         </ol>
-      ) : <p className="profile-muted">{empty}</p>}
+      ) : <p {...stylex.props(pageStyles.muted)}>{empty}</p>}
     </section>
   )
 }
 
-function ContestHistorySection({ history, userId, year, page }: {
+function ContestHistorySection({ history, userId, year, page, fullRow }: {
   history: Section<ContestHistory>
+  /** Below the two breakdowns the list takes the full width. */
+  fullRow: boolean
   userId: string
   year: number
   page: number
@@ -137,23 +200,29 @@ function ContestHistorySection({ history, userId, year, page }: {
   const pages = history.ok ? Math.ceil(history.data.total / contestPageSize) : 0
 
   return (
-    <section aria-labelledby="profile-contests">
-      <SectionHeading level={2} id="profile-contests" title="Contests" />
-      {!history.ok ? <p className="profile-muted">Could not retrieve contests.</p> : history.data.contests.length ? (
-        <ul className="profile-contests">
+    <section {...stylex.props(styles.column, fullRow && styles.fullRow)} aria-labelledby="profile-contests">
+      <SectionHeading level={2} id="profile-contests" title="Contests" titleXstyle={styles.sectionTitle} />
+      {!history.ok ? <p {...stylex.props(pageStyles.muted)}>Could not retrieve contests.</p> : history.data.contests.length ? (
+        <ul {...stylex.props(entryStyles.contestList)}>
           {history.data.contests.map(contest => (
-            <li key={contest.id}>
-              <span className="profile-contest-title">
-                <a className="profile-entry-title" href={links.contestProfile(contest.id, userId)}>{contest.title}</a>
+            <li key={contest.id} {...stylex.props(entryStyles.contestItem)}>
+              <span {...stylex.props(styles.contestTitle)}>
+                <a {...stylex.props(...entryTitle)} href={links.contestProfile(contest.id, userId)}>{contest.title}</a>
                 {contest.private ? <StatusTag>Unlisted</StatusTag> : null}
               </span>
-              <span className="profile-entry-meta">{[formatPeriod(contest), ...contest.languages].join(' · ')}</span>
+              <span {...stylex.props(entryStyles.meta)}>{[formatPeriod(contest), ...contest.languages].join(' · ')}</span>
             </li>
           ))}
         </ul>
-      ) : <p className="profile-muted">Hasn’t participated in any contests in {year}.</p>}
+      ) : <p {...stylex.props(pageStyles.muted)}>Hasn’t participated in any contests in {year}.</p>}
       {pages > 1 && page <= pages ? (
-        <Pagination label="Contest pages" totalPages={pages} currentPage={page} getHref={target => `/profile/${userId}/statistics/${year}?contests=${target}`} />
+        <Pagination
+          label="Contest pages"
+          totalPages={pages}
+          currentPage={page}
+          getHref={target => `/profile/${userId}/statistics/${year}?contests=${target}`}
+          xstyle={styles.contestPages}
+        />
       ) : null}
     </section>
   )

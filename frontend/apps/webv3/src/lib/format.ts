@@ -19,3 +19,6 @@ export function formatTracking(log: Pick<ImmersionLog, 'amount' | 'unit_name' | 
   if (log.duration_seconds !== undefined) values.push(`${numberFormat.format(log.duration_seconds / 60)} min`)
   return values.join(' · ')
 }
+
+/** A score or point total with at most one decimal, for example `12.5`. */
+export const scoreFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 })

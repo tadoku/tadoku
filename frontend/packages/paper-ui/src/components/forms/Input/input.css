@@ -92,7 +92,7 @@
     --paper-input-focus-color: var(--paper-color-status-danger);
   }
 
-  /* Disabled fields stay legible: muted text at full opacity, with the not-allowed cursor carrying the state. */
+  /* Disabled fields stay legible: muted text at full opacity; the default cursor and no hover say nothing happens. */
   .paper-field--disabled {
     color: var(--paper-color-text-muted);
   }
@@ -100,7 +100,7 @@
   .paper-input:disabled {
     border-color: var(--paper-color-rule-default);
     color: var(--paper-color-text-muted);
-    cursor: not-allowed;
+    cursor: default;
   }
 
   @media (forced-colors: active) {

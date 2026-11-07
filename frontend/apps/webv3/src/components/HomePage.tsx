@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { BookOpenIcon, LanguageIcon, TrophyIcon, iconClassName } from 'paper-ui/icons'
-import { Link } from '@tanstack/react-router'
+import { Link, useLoaderData } from '@tanstack/react-router'
 import { Button, EmptyState, Loading, SectionHeading, StatGrid, Surface, Table, buttonClassName } from 'paper-ui'
 import type { ReactNode } from 'react'
 import { homeQueryOptions, type HomeData } from '../lib/home'
@@ -8,6 +8,7 @@ import { formatDate, formatPeriod, numberFormat, pointsUnit } from '../lib/forma
 import { describeGoal, useStoredGoal } from '../lib/goal'
 import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
+import { MemberDashboard } from './MemberDashboard'
 import { viewerQueryOptions, type Viewer } from '../lib/session'
 
 const dayNumber = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000) + 1
@@ -39,6 +40,8 @@ const promise: Record<Phase, { headline: ReactNode; lead: string }> = {
 export function HomePage() {
   const links = useLinks()
   const { data, dataUpdatedAt, isError, refetch, isFetching } = useQuery(homeQueryOptions())
+  // The loader's year matches the dashboard queries it prefetched, even when the contest board fails.
+  const { year } = useLoaderData({ from: '/' })
   // The fetch time travels with the dehydrated data, so server and client agree on the contest day.
   const today = new Date(dataUpdatedAt).toISOString().slice(0, 10)
   const phase = phaseOf(data, isError, today)
@@ -73,7 +76,7 @@ export function HomePage() {
         </Surface>
       </section>
 
-      {member ? null : (
+      {member ? <MemberDashboard viewer={member} year={year} /> : (
         <section className="home-how" aria-labelledby="home-how-title">
           <h2 id="home-how-title">How Tadoku works</h2>
           <ol>
@@ -167,7 +170,6 @@ function MemberPromise({ member, data, phase }: {
       {/* Log activity is already the header's action; the hero adds Join only while the member can still join. */}
       <div className="home-actions">
         {joinable ? <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a> : null}
-        <a href={links.profile(member.userId)} className="text-link">Your profile</a>
         <SetGoalLink />
       </div>
       <DailyGoal />

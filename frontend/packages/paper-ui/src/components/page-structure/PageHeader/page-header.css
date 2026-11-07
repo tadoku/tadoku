@@ -42,13 +42,24 @@
   }
 
   .paper-page-header__heading,
-  .paper-page-header__status,
-  /* Actions overhang the title line slightly instead of making a header with actions taller than one without. */
-  .paper-page-header__actions {
+  .paper-page-header__status {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     margin-block: calc((var(--paper-type-page-line-height) - var(--paper-control-height)) / 2);
+  }
+
+  /*
+   * Actions sit top-aligned beside the title and are trimmed by the controls' overhang of its first line on each side,
+   * so a single row of controls centres on that line and takes no more room than the heading row does, while wrapped
+   * rows still add their height.
+   */
+  .paper-page-header__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    align-self: flex-start;
+    margin-block: calc(var(--paper-type-page-line-height) - var(--paper-control-height));
   }
 
   .paper-page-header__heading {

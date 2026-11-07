@@ -74,9 +74,9 @@
     cursor: pointer;
   }
 
-  .paper-navbar__link:hover,
+  .paper-navbar__link:hover:not([aria-disabled="true"]),
   .paper-navbar__dropdown-trigger:hover,
-  .paper-navbar__mobile-link:hover {
+  .paper-navbar__mobile-link:hover:not([aria-disabled="true"]) {
     background: var(--paper-color-action-neutral-hover);
   }
 
@@ -146,7 +146,7 @@
   [aria-disabled="true"].paper-navbar__link,
   [aria-disabled="true"].paper-navbar__mobile-link {
     opacity: 0.5;
-    cursor: not-allowed;
+    cursor: default;
   }
 
   .paper-navbar__mobile-panel {
@@ -237,7 +237,7 @@
     content: "";
   }
 
-  .paper-sidebar__link:hover {
+  .paper-sidebar__link:hover:not([aria-disabled="true"]) {
     color: var(--paper-color-text-ink);
     background: var(--paper-color-surface-raised);
   }
@@ -254,7 +254,7 @@
 
   .paper-sidebar__link[aria-disabled="true"] {
     opacity: 0.5;
-    cursor: not-allowed;
+    cursor: default;
   }
 
   .paper-breadcrumb__list,
@@ -321,7 +321,7 @@
     cursor: pointer;
   }
 
-  .paper-tabbar__link:hover {
+  .paper-tabbar__link:hover:not([aria-disabled="true"]):not([aria-current="page"]) {
     color: var(--paper-color-text-ink);
     background: color-mix(in srgb, var(--paper-color-text-ink) 4%, transparent);
   }
@@ -338,7 +338,7 @@
 
   .paper-tabbar__link[aria-disabled="true"] {
     opacity: 0.5;
-    cursor: not-allowed;
+    cursor: default;
   }
 
   .paper-pagination__list {
@@ -365,12 +365,14 @@
     cursor: pointer;
   }
 
-  .paper-pagination__control:hover,
-  .paper-pagination__page:hover {
+  /* Unavailable and current items do nothing, so they don't answer hover. */
+  .paper-pagination__control:hover:not([aria-disabled="true"]),
+  .paper-pagination__page:hover:not([aria-current="page"]) {
     background: var(--paper-color-action-neutral-hover);
   }
 
   .paper-pagination__page[aria-current="page"] {
+    cursor: default;
     box-shadow: inset 0 -3px 0 var(--paper-color-text-link);
     color: var(--paper-color-text-ink);
     font-weight: var(--paper-type-label-weight);
@@ -378,7 +380,7 @@
 
   .paper-pagination__control[aria-disabled="true"] {
     color: var(--paper-color-text-muted);
-    cursor: not-allowed;
+    cursor: default;
   }
 
   .paper-pagination__of {

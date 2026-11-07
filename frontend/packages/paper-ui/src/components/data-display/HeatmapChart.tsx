@@ -191,7 +191,7 @@ export function HeatmapChart({ id, data, year, getHref, today }: HeatmapChartPro
         {today && today < end.toISODate()! ? (
           <span className="paper-heatmap__legend-item">
             <svg width={CELL_WIDTH} height={CELL_HEIGHT} aria-hidden="true">
-              <rect x={0.5} y={0.5} width={CELL_WIDTH - 1} height={CELL_HEIGHT - 1} className="paper-heatmap__cell" data-future="" />
+              <rect width={CELL_WIDTH} height={CELL_HEIGHT} className="paper-heatmap__cell" data-future="" />
             </svg>
             Not yet
           </span>

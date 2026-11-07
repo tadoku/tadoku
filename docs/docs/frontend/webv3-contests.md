@@ -30,7 +30,7 @@ own, and every one for administrators. Lists are therefore read as the visitor
 and cached per viewer; a rejected session cookie falls back to the public list.
 Organizing lists the community contests the signed-in account organizes; Joined
 lists the contests it registered for in the chosen year, read from the yearly
-registrations the API keeps. A year stepper, shared with the profile, moves
+registrations the API keeps. A year stepper moves
 between the year the account joined Tadoku and the current year. Both ask anonymous
 visitors to log in. As in Webv2, Community, Joined and Organizing name each
 community contest's languages and activities for signed-in visitors only, and

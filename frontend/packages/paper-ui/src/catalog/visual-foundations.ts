@@ -30,10 +30,10 @@ export const visualFoundationDocuments = [
   }),
   guidanceDocument({
     id: "foundation.shape-and-borders", route: "/foundations/shape-and-borders", name: "Shape and borders", kind: "foundation",
-    summary: "Square geometry, quiet rules, straight accent rails, and deliberate lower edges.",
+    summary: "Square geometry, quiet rules, straight accent rails, and raised fields.",
     keywords: ["shape", "borders", "rules", "accent rail"], sourcePath: "styles/recipes.css",
     whenToUse: ["Use borders to explain structure or interaction, never to decorate every region."],
-    content: ["Static surfaces use a quiet one-pixel rule. Pale controls receive a subtle two-pixel lower edge; filled actions keep a stronger action edge.", "A 3px accent rail covers the leading hairline of a bordered Surface and meets its top and bottom edges squarely. Borderless rails stay within their host’s height."],
+    content: ["Static surfaces use a quiet one-pixel rule. Fields sit a step lighter than their card on a soft edge; filled actions keep a deeper lower edge.", "A 3px accent rail covers the leading hairline of a bordered Surface and meets its top and bottom edges squarely. Borderless rails stay within their host’s height."],
     requirements: ["Focus rings remain distinct from borders and status rails."],
     publicContract: ["Use accentRail(), fieldEdge() and actionEdge()."],
   }),

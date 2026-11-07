@@ -221,14 +221,15 @@ describe("HeatmapChart", () => {
     fireEvent.focus(cell);
 
     const tooltip = text.closest("g")!;
-    const background = tooltip.querySelector("rect")!;
+    // The outline starts at the box's top-left corner, runs to its right edge, then down to its bottom edge.
+    const [x, y, right, bottom] = tooltip.querySelector("path")!.getAttribute("d")!.match(/^M(-?[\d.]+),(-?[\d.]+) H(-?[\d.]+) V(-?[\d.]+)/)!.slice(1).map(Number);
     expect(tooltipIsHidden(tooltip)).toBe(false);
-    expect(background).toHaveAttribute("width", "192");
-    expect(background).toHaveAttribute("height", "28");
-    expect(Number(background.getAttribute("x"))).toBeGreaterThanOrEqual(0);
+    expect(right - x).toBe(192);
+    expect(bottom - y).toBe(28);
+    expect(x).toBeGreaterThanOrEqual(0);
     const [minX, , viewWidth] = container.querySelector<SVGSVGElement>("svg.paper-heatmap")!.getAttribute("viewBox")!.split(" ").map(Number);
-    expect(Number(background.getAttribute("x"))).toBeGreaterThanOrEqual(minX);
-    expect(Number(background.getAttribute("x")) + Number(background.getAttribute("width"))).toBeLessThanOrEqual(minX + viewWidth);
+    expect(x).toBeGreaterThanOrEqual(minX);
+    expect(right).toBeLessThanOrEqual(minX + viewWidth);
     fireEvent.blur(cell);
     expect(tooltipIsHidden(tooltip)).toBe(true);
   });

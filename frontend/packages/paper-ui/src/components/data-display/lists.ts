@@ -29,7 +29,7 @@ export const listRows = tv({
  */
 export const entryList = tv({
   slots: {
-    root: "m-0 list-none border-b border-rule p-0",
+    root: "m-0 list-none p-0",
     item: [
       "relative grid grid-cols-entry items-start gap-6 border-t border-rule py-4 first:border-t-transparent",
       "max-sm:grid-cols-content-end max-sm:gap-x-4 max-sm:gap-y-1.5",

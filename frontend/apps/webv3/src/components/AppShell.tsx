@@ -54,7 +54,7 @@ const frame = appFrame()
 const brandMark = 'block h-auto w-brand-mark'
 const brandWordmark = 'block h-auto w-brand'
 const accountActions = [
-  'ms-4 flex flex-wrap items-center justify-end gap-3',
+  'ms-4 flex min-w-0 items-center justify-end gap-3 max-md:flex-wrap',
   'max-md:max-w-account-label max-md:gap-1.6 max-md:text-sm-tight',
 ].join(' ')
 const mobileLink = navbarStyles({ contained: true }).mobileLink()
@@ -180,8 +180,8 @@ function AccountActions({ viewer }: { viewer: Viewer | undefined }) {
       return <span>Account service unavailable</span>
     case 'anonymous':
       return <>
-        <a href={login} className="font-semibold text-ink no-underline hover:underline focus-visible:underline">Log in</a>
-        <a href={register} className={buttonClassName({ variant: 'outline' })}>Sign up</a>
+        <a href={login} className={buttonClassName({ variant: 'ghost' })}>Log in</a>
+        <a href={register} className={buttonClassName({ className: 'shrink-0 whitespace-nowrap' })}>Sign up</a>
       </>
     case 'signed-in':
       return <>
@@ -194,7 +194,7 @@ function AccountActions({ viewer }: { viewer: Viewer | undefined }) {
 function AccountMenu({ viewer }: { viewer: SignedIn }) {
   const hydrated = useHydrated()
   return (
-    <span className="max-tablet:hidden [&_.paper-button>span]:max-w-measure-label [&_.paper-button>span]:truncate">
+    <span className="max-lg:hidden [&_.paper-button>span]:max-w-measure-label [&_.paper-button>span]:truncate">
       {hydrated
         ? <AccountMenuOpen viewer={viewer} />
         : (
@@ -242,9 +242,17 @@ function MobileAccount({ viewer, closeMenu }: { viewer: SignedIn; closeMenu: () 
         </Fragment>
       ))}
       {/* Server-rendered, so CSS shows the label for the current theme instead of reading it during render. */}
-      <Button variant="ghost" className={cn(mobileButton, 'mt-3 border-t border-rule-subtle')} onClick={toggleTheme}>
-        <MoonIcon className={iconClassName('compact', 'dark:hidden')} aria-hidden="true" />
-        <SunIcon className={iconClassName('compact', 'hidden dark:inline')} aria-hidden="true" />
+      <Button
+        variant="ghost"
+        className={cn(mobileButton, 'mt-3 border-t border-rule-subtle')}
+        onClick={toggleTheme}
+        leadingIcon={(
+          <>
+            <MoonIcon className={iconClassName('compact', 'dark:hidden')} />
+            <SunIcon className={iconClassName('compact', 'hidden dark:inline')} />
+          </>
+        )}
+      >
         <span className="dark:hidden">Use dark theme</span>
         <span className="hidden dark:inline">Use light theme</span>
       </Button>

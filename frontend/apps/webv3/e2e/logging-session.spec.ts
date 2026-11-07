@@ -16,6 +16,7 @@ import {
   reader,
   saveButton,
   sessionCookie,
+  logDescription,
   signIn,
   test,
   webv3,
@@ -43,7 +44,7 @@ test('expired session keeps draft, rejects save and recovers through authv2 logi
 
   await page.bringToFront()
   await createLog(page)
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText(description)
+  await expect(logDescription(page)).toHaveText(description)
 })
 
 test('server function rejects foreign and absent Origin without creating activity', async ({ page, readerContext }) => {
@@ -149,7 +150,7 @@ test('public activity detail still loads with an expired session cookie and has 
 
   await readerContext.addCookies([{ ...await sessionCookie(readerContext), value: 'expired' }])
   await page.reload()
-  await expect(page.getByRole('heading', { level: 1, name: description })).toBeVisible()
+  await expect(logDescription(page)).toHaveText(description)
   await expect(page.getByRole('link', { name: 'Manage contest submissions' })).toHaveCount(0)
   await expect(page).toHaveTitle('Activity · Tadoku')
 })

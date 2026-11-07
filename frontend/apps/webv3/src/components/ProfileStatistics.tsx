@@ -1,10 +1,12 @@
-import { buttonClassName, EmptyState, entryLink, listRows, metaLine, Pagination, SectionHeading, StatGrid, StatusTag } from 'paper-ui'
+import { buttonClassName, EmptyState, entryLink, listRows, metaLine, Pagination, SectionHeading, StatGrid, StatusTag, Tabbar } from 'paper-ui'
+import { activityTone } from '../lib/activity'
 import { formatPeriod, pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { activeDays, contestPageSize, type ContestHistory, type ProfileStatistics as Statistics, type Section } from '../lib/profile'
 import { ActivityCalendar } from './ActivityCalendar'
 import { ProfileHeader } from './ProfileHeader'
-import { YearStepper } from './YearStepper'
+import { renderLink } from './router-link'
+import { sheetTabs } from './standings-styles'
 
 type Found = Extract<Statistics, { status: 'found' }>
 
@@ -31,15 +33,13 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
   return (
     <div className="profile-page">
       <ProfileHeader profile={profile} owner={owner} view="overview" overviewHref={`/profile/${profile.id}/statistics/${year}`} />
-      <section className="mt-8 border border-rule bg-paper p-8 max-sm:p-5" aria-labelledby="profile-year-heading">
-        <div className="-ms-3 -mt-2 mb-5">
-          <h2 id="profile-year-heading" className="sr-only">{name}’s activity in {year}</h2>
-          <YearControl statistics={statistics} year={year} />
-        </div>
+      <section className="mt-8 border border-rule bg-paper" aria-labelledby="profile-year-heading">
+        <h2 id="profile-year-heading" className="sr-only">{name}’s activity in {year}</h2>
+        <YearTabs statistics={statistics} year={year} />
+        <div className="p-8 max-sm:p-5">
         {empty ? (
           <EmptyState
             variant="plain"
-            className="border-t border-rule"
             headingLevel={3}
             title={`No activity recorded in ${year}`}
             actions={owner ? <a className={buttonClassName()} href={links.logs}>Log activity</a> : null}
@@ -61,12 +61,13 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
             </div>
           </>
         )}
+        </div>
       </section>
       <div className={columns}>
         {!empty ? (
           <>
             <Breakdown id="profile-languages" title="Score by language" section={statistics.scores} items={scores => scores.scores.map(score => ({ label: score.language_name ?? score.language_code, score: score.score }))} empty="No scores recorded this year." />
-            <Breakdown id="profile-activities" title="Score by activity" section={statistics.split} items={split => split.activities.map(item => ({ label: item.activity_name, score: item.score }))} empty="Not enough data to show the activity split." />
+            <Breakdown id="profile-activities" title="Score by activity" section={statistics.split} items={split => split.activities.map(item => ({ label: item.activity_name, score: item.score, fill: activityTone(item.activity_id).fill }))} empty="Not enough data to show the activity split." />
           </>
         ) : null}
         <ContestHistorySection history={statistics.contests} userId={profile.id} year={year} page={page} />
@@ -83,25 +84,38 @@ function YearTotals({ statistics, year }: { statistics: Found; year: number }) {
 
   return (
     <StatGrid
-      className="profile-stats mb-8 mt-7"
+      className="profile-stats mb-8"
       stats={[
         { label: 'Overall score', value: total === undefined ? 'Unavailable' : scoreFormat.format(total), detail: average },
-        ...(activity.ok ? [{ label: 'Updates', value: activity.data.total_updates, detail: `${activeDays(activity.data.scores)} active days` }] : []),
+        ...(activity.ok ? [{ label: 'Updates', value: activity.data.total_updates, detail: daysActive(activeDays(activity.data.scores)) }] : []),
         ...(scores.ok ? [{ label: 'Languages', value: scores.data.scores.length }] : []),
       ]}
     />
   )
 }
 
-/** Steps through the years from the profile's first year to the current one. */
-function YearControl({ statistics, year }: { statistics: Found; year: number }) {
+const daysActive = (days: number) => `${days} active ${days === 1 ? 'day' : 'days'}`
+
+/**
+ * One tab per year from the profile's first year to the current one, newest first, as the yearly leaderboard shows
+ * them. A year opened by address outside that range gets its own tab, so the page always names the year it shows.
+ */
+function YearTabs({ statistics, year }: { statistics: Found; year: number }) {
+  const first = Number(statistics.profile.created_at.slice(0, 4))
+  const current = Number(statistics.today.slice(0, 4))
+  const span = Array.from({ length: current - first + 1 }, (_, index) => current - index)
+  const years = span.includes(year) ? span : [...span, year].sort((a, b) => b - a)
   return (
-    <YearStepper
-      year={year}
-      first={Number(statistics.profile.created_at.slice(0, 4))}
-      current={Number(statistics.today.slice(0, 4))}
-      href={target => `/profile/${statistics.profile.id}/statistics/${target}`}
+    <Tabbar
+      classNames={sheetTabs}
       label="Profile year"
+      renderLink={renderLink}
+      links={years.map(target => ({
+        id: String(target),
+        label: String(target),
+        href: `/profile/${statistics.profile.id}/statistics/${target}`,
+        current: target === year,
+      }))}
     />
   )
 }
@@ -110,7 +124,8 @@ function Breakdown<T>({ id, title, section, items, empty }: {
   id: string
   title: string
   section: Section<T>
-  items: (data: T) => { label: string; score: number }[]
+  /** `fill` colours the row's bar, for example by activity; it defaults to the chart accent. */
+  items: (data: T) => { label: string; score: number; fill?: string }[]
   empty: string
 }) {
   const rows = section.ok ? items(section.data).sort((left, right) => right.score - left.score) : []
@@ -130,7 +145,7 @@ function Breakdown<T>({ id, title, section, items, empty }: {
                 </strong>
               </div>
               <span className="block h-2 bg-rule" aria-hidden="true">
-                <span className="block h-full min-w-0.5 bg-heat-3" style={{ width: `${total ? row.score / total * 100 : 0}%` }} />
+                <span className={`block h-full min-w-0.5 ${row.fill ?? 'bg-heat-3'}`} style={{ width: `${total ? row.score / total * 100 : 0}%` }} />
               </span>
             </li>
           ))}

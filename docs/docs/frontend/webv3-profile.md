@@ -12,7 +12,7 @@ Read this when you change a Webv3 profile page or its data.
 page does: overall score with the per-day average over UTC calendar days, updates
 and active days, score by language and by activity, the daily activity calendar
 and contest history. Without a year segment it shows the current UTC year. The
-year control steps from the profile's first year to the current one; an unknown
+year tabs run from the current year back to the profile's first year; an unknown
 or malformed ID or year is not found. The parts are read together but fail on their own, so a failed part
 reports itself while the rest of the year shows. A year without updates shows an
 empty state, and contest history remains visible.
@@ -37,7 +37,7 @@ through Webv2's API path.
 Overview and Activity views.
 
 `profile.spec.ts` creates a log through the form, compares each total, breakdown
-and contest with the API for two years, switches years with the year control,
+and contest with the API for two years, switches years with the year tabs,
 and checks owner tools and private contests, the empty year, not-found addresses
 and a 390px layout. It reuses the shared Dev Reader session. Without fixture
 credentials only the visitor and not-found journeys run: a visitor opens a

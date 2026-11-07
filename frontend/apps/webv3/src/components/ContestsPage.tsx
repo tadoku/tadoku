@@ -152,11 +152,6 @@ function Contests({ scope, view, page }: { scope: ContestListScope; view: Contes
   const totalPages = Math.max(page, Math.ceil(total / contestsPageSize))
   return (
     <>
-      {totalPages > 1 ? (
-        <div className="mb-1 mt-2 flex justify-end">
-          <Pagination totalPages={totalPages} currentPage={page} getHref={pageHref} renderLink={renderLink} label="Contest pages, top" classNames={{ list: 'flex-wrap' }} />
-        </div>
-      ) : null}
       <ul className="mb-0 mt-2 list-none p-0" aria-label={view.collection === 'joined' ? `Contests joined in ${view.year}` : `${tabs.find(tab => tab.id === view.collection)?.label} contests`}>
         {contests.map(contest => <ContestRow key={contest.id} contest={contest} names={names} today={today} />)}
       </ul>

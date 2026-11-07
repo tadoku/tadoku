@@ -1,9 +1,11 @@
-import type { ReactNode } from 'react'
+import { Fragment, type ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import { EmptyState, Pagination, entryLink, entryList, listFooter, metaLine } from 'paper-ui'
 import type { ImmersionLog } from 'api-client'
 import { formatDate, formatTracking, numberFormat, pointsUnit } from '../lib/format'
+import { useLinks } from '../lib/links'
 import { activityPageSize } from '../lib/profile'
+import { ActivityName } from './ActivityName'
 import { renderLink } from './router-link'
 
 /** A page of logs, newest first, each opening its detail page, with its count, pagination and empty states. */
@@ -53,7 +55,7 @@ export function LogEntries({ logs, total, page, pageHref, empty, showParticipant
         ))}
       </ol>
       {pages > 1 ? (
-        <div className={footer.root({ className: 'profile-entries-footer py-4' })}>
+        <div className={footer.root({ className: 'profile-entries-footer border-t border-rule py-4' })}>
           <p className={footer.summary()}>{numberFormat.format(first)}–{numberFormat.format(first + logs.length - 1)} of {numberFormat.format(total)} updates</p>
           <Pagination label="Update pages" totalPages={pages} currentPage={page} getHref={pageHref} renderLink={renderLink} classNames={{ list: 'flex-wrap' }} />
         </div>
@@ -68,6 +70,8 @@ const footer = listFooter()
 /** Webv2 hides a description tagged NSFW until the reader chooses to see it. */
 const logDay = (log: ImmersionLog) => new Date(log.created_at).toISOString().slice(0, 10)
 
+const participantLink = 'text-ink underline decoration-rule underline-offset-link hover:text-link hover:decoration-current'
+
 /** A day's first entry shows its date; later entries that day keep it for assistive technology only. */
 function Entry({ log, showParticipant, actions, firstOfDay }: {
   log: ImmersionLog
@@ -78,7 +82,18 @@ function Entry({ log, showParticipant, actions, firstOfDay }: {
   const day = logDay(log)
   const subject = `${log.language.name} ${log.activity.name.toLocaleLowerCase()}`
   const nsfw = log.tags.some(tag => tag.toLowerCase() === 'nsfw')
-  const meta = [showParticipant ? log.user_display_name ?? 'Unknown user' : null, log.language.name, log.activity.name, formatTracking(log)]
+  const links = useLinks()
+  const tracking = formatTracking(log)
+  const meta = [
+    showParticipant
+      ? log.user_display_name
+        ? <a className={participantLink} href={links.profile(log.user_id)}>{log.user_display_name}</a>
+        : 'Unknown user'
+      : null,
+    log.language.name,
+    <ActivityName activity={log.activity} />,
+    tracking || null,
+  ].filter(part => part !== null)
 
   return (
     <li className={entries.item({ className: firstOfDay ? undefined : entries.sameDay() })}>
@@ -87,16 +102,27 @@ function Entry({ log, showParticipant, actions, firstOfDay }: {
         <Link className={entryLink({ clamp: true, className: 'profile-entry-title' })} to="/logs/$logId" params={{ logId: log.id }}>
           {nsfw || !log.description ? subject : log.description}
         </Link>
-        <p className={metaLine({ className: 'profile-entry-meta' })}>{meta.filter(Boolean).join(' · ')}</p>
+        <p className={metaLine({ className: 'profile-entry-meta' })}>
+          {/* Each part stays whole and keeps its separator, so a wrapped line never starts with a dot. */}
+          {meta.map((part, index) => (
+            <Fragment key={index}>
+              <span className="whitespace-nowrap">{part}{index < meta.length - 1 ? ' ·' : null}</span>
+              {index < meta.length - 1 ? ' ' : null}
+            </Fragment>
+          ))}
+        </p>
         {nsfw && log.description ? (
           <details className="mt-2.5 text-sm">
             <summary className="cursor-pointer text-muted">Show NSFW description</summary>
             <p className="mb-0 mt-2 max-w-measure-note leading-170 wrap-anywhere">{log.description}</p>
           </details>
         ) : null}
-        {actions ? <div className="-ms-3 mt-2">{actions}</div> : null}
       </div>
-      <span className={entries.score()}>{numberFormat.format(log.score)} <small>{pointsUnit(log.score)}</small></span>
+      {/* Actions sit under the score, so they add no row of their own. */}
+      <div className={entries.score({ className: 'grid content-start justify-items-end gap-1' })}>
+        <span>{numberFormat.format(log.score)} <small>{pointsUnit(log.score)}</small></span>
+        {actions}
+      </div>
     </li>
   )
 }

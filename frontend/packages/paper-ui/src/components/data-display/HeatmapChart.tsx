@@ -392,17 +392,7 @@ function Tooltip({
       className={slots.tooltip({ className: visible ? undefined : "hidden" })}
       aria-hidden={!visible}
     >
-      <rect
-        width={rect.width}
-        height={rect.height}
-        x={rect.x}
-        y={rect.y}
-        className={slots.tooltipBackground()}
-      />
-      <polygon
-        points={pointsForRect(rect)}
-        className={slots.tooltipBackground()}
-      />
+      <path d={outlineForRect(rect)} className={slots.tooltipBackground()} />
       <text
         ref={textRef}
         x={rect.x + 6}
@@ -416,20 +406,22 @@ function Tooltip({
   );
 }
 
-function pointsForRect({
-  y,
-  width,
-  height,
-  arrowX,
-}: TooltipRect): string {
+/** The tooltip box and its pointer as one outline, so the border runs around the pointer instead of across it. */
+function outlineForRect({ x, y, width, height, arrowX }: TooltipRect): string {
   const size = 8;
   const middle = arrowX + width / 2 + CELL_WIDTH / 2;
-  const left = middle - size / 2;
-  const right = middle + size / 2;
-  const top = y + height - 1;
-  const bottom = top + 5;
+  const bottom = y + height;
 
-  return `${left},${top} ${right},${top} ${middle},${bottom}`;
+  return [
+    `M${x},${y}`,
+    `H${x + width}`,
+    `V${bottom}`,
+    `H${middle + size / 2}`,
+    `L${middle},${bottom + 5}`,
+    `L${middle - size / 2},${bottom}`,
+    `H${x}`,
+    "Z",
+  ].join(" ");
 }
 
 function getCellDepth(value: number | undefined): "empty" | (typeof LEVELS)[number]["level"] {

@@ -9,6 +9,7 @@ import {
   expect,
   fillDraft,
   isSaveRequest,
+  logDescription,
   openForm,
   reader,
   sessionCookie,
@@ -78,9 +79,9 @@ test('owner edits a saved log, sees the estimate and the persisted change after 
   page.on('request', request => { if (isSaveRequest(request)) saves++ })
   await saveChanges(page).click()
   await expect(page).toHaveURL(`${webv3}/logs/${id}`)
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText(text)
+  await expect(logDescription(page)).toHaveText(text)
   await page.reload()
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText(text)
+  await expect(logDescription(page)).toHaveText(text)
   await expect(page.getByText(`12 ${before.unit_name.toLowerCase()}s`, { exact: true })).toBeVisible()
   await expect(page.getByText('30 min', { exact: true })).toBeVisible()
   expect(saves).toBe(1)
@@ -109,7 +110,7 @@ test('editing only the description keeps a saved tag that holds a comma', async 
   const text = `edit-comma-after-${Date.now()}`
   await description(page).fill(text)
   await saveChanges(page).click()
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText(text)
+  await expect(logDescription(page)).toHaveText(text)
 
   expect((await (await readRecord(readerContext, id)).json()).tags).toEqual(['reading, fiction'])
 })
@@ -162,7 +163,7 @@ test('visitors see no owner actions and cannot open the edit page for another le
 
   const readerPage = await readerContext.newPage()
   await readerPage.goto(`/logs/${id}`)
-  await expect(readerPage.getByRole('heading', { level: 1, name: description })).toBeVisible()
+  await expect(logDescription(readerPage)).toHaveText(description)
   await expect(readerPage.getByRole('link', { name: 'Edit log' })).toHaveCount(0)
   await expect(readerPage.getByRole('button', { name: 'Delete log' })).toHaveCount(0)
   await readerPage.goto(`/logs/${id}/edit`)
@@ -173,7 +174,7 @@ test('visitors see no owner actions and cannot open the edit page for another le
   try {
     const anonymousPage = await anonymous.newPage()
     await anonymousPage.goto(`/logs/${id}`)
-    await expect(anonymousPage.getByRole('heading', { level: 1, name: description })).toBeVisible()
+    await expect(logDescription(anonymousPage)).toHaveText(description)
     await expect(anonymousPage.getByRole('link', { name: 'Edit log' })).toHaveCount(0)
     await expect(anonymousPage.getByRole('button', { name: 'Delete log' })).toHaveCount(0)
     await anonymousPage.goto(`/logs/${id}/edit`)

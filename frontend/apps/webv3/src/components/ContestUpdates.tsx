@@ -100,7 +100,17 @@ function RemoveFromContest({ log, contestId, viewerId, onRemoved }: {
 
   return (
     <Modal
-      trigger={<Button variant="ghost" disabled={!hydrated}>Remove from contest</Button>}
+      trigger={(
+        // Muted until pointed at or focused: the row stays calm, and the confirmation names the consequence.
+        <Button
+          variant="link"
+          aria-label="Remove from contest"
+          className="text-sm font-regular text-muted no-underline hover:text-danger hover:underline focus-visible:text-danger"
+          disabled={!hydrated}
+        >
+          Remove
+        </Button>
+      )}
       title="Remove log from contest"
       open={open}
       onOpenChange={next => {
@@ -119,8 +129,8 @@ function RemoveFromContest({ log, contestId, viewerId, onRemoved }: {
           </form.AppField>
           {failure ? <DetachFailure failure={failure} /> : null}
           <div className="registration-actions">
-            <Button type="submit" variant="destructive" disabled={pending}>{pending ? 'Removing…' : 'Yes, remove it'}</Button>
             <Button type="button" variant="ghost" disabled={pending} onClick={() => setOpen(false)}>Cancel</Button>
+            <Button type="submit" variant="destructive" disabled={pending}>{pending ? 'Removing…' : 'Yes, remove it'}</Button>
           </div>
         </form.Form>
       </form.AppForm>

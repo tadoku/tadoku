@@ -61,7 +61,7 @@ function ComboboxPopup<Value>({
                 <Combobox.ItemIndicator className={slots.indicator()} aria-hidden="true">
                   <CheckIcon className={iconClassName("compact")} />
                 </Combobox.ItemIndicator>
-                <span>{format(option)}</span>
+                <span className={slots.label()}>{format(option)}</span>
               </Combobox.Item>
             ))}
           </Combobox.List>

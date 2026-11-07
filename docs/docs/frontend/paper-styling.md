@@ -14,7 +14,7 @@ Paper applications have no handwritten CSS. Every value comes from the typed tok
 | Tier | Where | What it holds |
 | --- | --- | --- |
 | Primitives | `frontend/packages/paper-ui/src/tokens/palette.ts` and the scales in `theme.ts` | Colour ramps and the spacing, type, line-height, radius, border, shadow, motion, z-index and breakpoint steps. Screens never read the palette directly |
-| Semantic | `theme.ts` | Surface, text, rule, action, focus, status, chart and heat colours, each with a light and a dark value, and the type roles |
+| Semantic | `theme.ts` | Surface, text, rule, action, focus, status, chart, heat and activity colours, each with a light and a dark value, and the type roles. Violet belongs to links and actions, so activity colours avoid it |
 | Component | `theme.ts` and `effects.ts` | Knobs that one control needs and the semantic set does not name, such as the footer band colours or the table scroll shade |
 | Layout | `layout.ts` | Page widths, gutters, grids and brand sizes that the applications use |
 

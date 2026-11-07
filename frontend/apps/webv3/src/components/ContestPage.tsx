@@ -57,13 +57,13 @@ function ContestBoardPage({ board, today, view, page }: { board: ContestBoard; t
 
   const actions = (
     <>
+      {admin ? <Link className={buttonClassName({ variant: 'ghost' })} to={links.contestScoring(contest.id)}>Scoring rules</Link> : null}
       {phase.registrationOpen && !registered && !banned
         ? <a className={buttonClassName()} href={links.joinContest(contest.id)}>Join contest</a>
         : null}
       {registered && !phase.ended
         ? <a className={buttonClassName({ variant: 'outline' })} href={links.joinContest(contest.id)}>Update registration</a>
         : null}
-      {admin ? <Link className={buttonClassName({ variant: 'ghost' })} to={links.contestScoring(contest.id)}>Scoring rules</Link> : null}
     </>
   )
 

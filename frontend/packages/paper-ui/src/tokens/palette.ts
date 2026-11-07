@@ -99,7 +99,7 @@ export const palette = {
   },
   /** Leaderboard podium medals. */
   gold: { 100: '#f3e2a6', 300: '#f2d77c', 800: '#4d3f12', 900: '#5c4300' },
-  silver: { 100: '#e3e3ea', 200: '#dcdce6', 800: '#3b3b46', 850: '#3d3d4a' },
+  silver: { 100: '#e3e3ea', 200: '#dcdce6', 800: '#565660', 850: '#3d3d4a' },
   bronze: { 100: '#f0d3bd', 300: '#eebc98', 800: '#4a2c1b', 850: '#6b3412' },
   /** Shadow and scrim bases. */
   shade: {

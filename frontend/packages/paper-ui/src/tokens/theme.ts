@@ -32,6 +32,8 @@ const color = {
   paper: themed(p.sand[50], p.graphite[850]),
   raised: themed(p.white, p.graphite[750]),
   overlay: themed(p.sand[50], p.graphite[750]),
+  /** Text fields and pickers: a step lighter than the card, on a soft edge. */
+  field: themed(p.white, p.graphite[700]),
   scrim: themed(p.shade.scrimLight, p.shade.scrimDark),
 
   ink: themed(p.plum[900], p.graphite[100]),
@@ -43,15 +45,20 @@ const color = {
   'rule-subtle': themed(p.sand[250], p.graphite[700]),
   rule: themed(p.sand[400], p.graphite[600]),
   'rule-strong': themed(p.plum[700], p.graphite[500]),
-  'field-edge': themed(p.sand[500], p.graphite[400]),
-  'action-edge': themed(p.violet[800], p.violet[775]),
-  'destructive-edge': themed(p.red[800], p.red[700]),
+  'field-edge': themed(p.sand[300], p.graphite[600]),
+  'field-edge-hover': themed(p.sand[500], p.graphite[500]),
+  /** Outline buttons: quieter than a field's edge in dark mode, where the field edge reads harsh on a button. */
+  'button-edge': themed(p.sand[500], p.graphite[500]),
+  'button-edge-hover': themed(p.plum[700], p.graphite[400]),
+  /** A filled button's edge: one translucent shade on every side, deeper at the bottom, so corners don't mitre. */
+  'button-shade': themed('rgb(33 26 29 / 22%)', 'rgb(0 0 0 / 40%)'),
 
   action: themed(p.violet[600], p.violet[525]),
   'action-hover': themed(p.violet[700], p.violet[475]),
   'action-active': themed(p.violet[725], p.violet[550]),
   'action-soft': themed(p.violet[50], p.violet[900]),
   'neutral-hover': themed(p.sand[200], p.graphite[800]),
+  'raised-hover': themed(p.sand[200], p.graphite[700]),
   'on-action': themed(p.sand[50], p.sand[50]),
   destructive: themed(p.red[500], p.red[450]),
   'destructive-hover': themed(p.red[600], p.red[400]),
@@ -64,7 +71,7 @@ const color = {
 
   focus: themed(p.violet[600], p.violet[300]),
   'focus-offset': 'var(--color-canvas)',
-  'focus-halo': mix('focus', 22),
+  'focus-halo': mix('focus', 12),
   'danger-halo': mix('danger', 22),
   shadow: themed(p.shade.plum, p.shade.violet),
 
@@ -76,6 +83,15 @@ const color = {
   'chart-6': themed(p.violet[625], p.violet[250]),
   'chart-7': themed(p.teal[600], p.teal[300]),
   'chart-8': themed(p.rose[600], p.rose[300]),
+
+  /** One hue per immersion activity, so lists and breakdowns can be scanned by activity. */
+  /** Violet is left out: it is the link and action colour, and an activity must not read as a link. */
+  'activity-reading': 'var(--color-chart-3)',
+  'activity-listening': 'var(--color-chart-7)',
+  'activity-writing': 'var(--color-chart-8)',
+  'activity-speaking': 'var(--color-chart-2)',
+  'activity-study': 'var(--color-chart-4)',
+  'activity-other': 'var(--color-muted)',
 
   'heat-future': themed(p.sand[150], p.graphite[800]),
   'heat-0': themed(p.sand[300], p.graphite[600]),
@@ -89,7 +105,10 @@ const color = {
   'canvas-table-shade': mix('ink', 22),
   'tab-hover': mix('ink', 4),
   'toggle-hover': mix('ink', 3, 'paper'),
-  'chip-remove-hover': mix('link', 16),
+  /** A selected value inside a field: a neutral step off the field, so it doesn't read as a link. */
+  chip: themed(p.sand[200], p.graphite[600]),
+  'chip-remove-hover': themed(p.sand[300], p.graphite[500]),
+  'destructive-soft': mix('danger', 14),
   'current-row-hover': mix('ink', 5, 'action-soft'),
   'checkbox-disabled-edge': `color-mix(in srgb, var(--color-field-edge) 85%, var(--color-rule))`,
 
@@ -201,7 +220,6 @@ const spacing = {
   'flash-start': 'calc(var(--spacing-4) + var(--spacing-rail))',
   'page-title-trim': 'calc((var(--leading-page) - var(--spacing-control)) / 2)',
   'page-actions-trim': 'calc(var(--leading-page) - var(--spacing-control))',
-  'stat-inset': 'clamp(var(--spacing-2), 2vw, var(--spacing-4))',
   'compound-input': 'calc(var(--spacing-control) - 2px)',
   'compound-unit': 'calc(var(--spacing-control) - 1px)',
   ...layoutSpacing,

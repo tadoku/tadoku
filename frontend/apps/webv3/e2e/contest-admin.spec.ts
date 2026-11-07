@@ -286,7 +286,8 @@ test('a started contest’s scoring is locked, and only administrators reach sco
   await page.goto(`/contests/${started.id}/scoring`)
   await expect(page.getByText('Scoring is locked because this contest has started.')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Create draft' })).toHaveCount(0)
-  await expect(page.getByText('No contest-specific rule sets yet; this contest scores with the platform defaults.')).toBeVisible()
+  // With no contest rule sets, the lock notice itself names the platform defaults.
+  await expect(page.getByRole('link', { name: 'platform defaults' })).toBeVisible()
   await fitsWidth(page, 'locked scoring', testInfo.outputPath('scoring-locked-390.png'))
 
   await page.goto('/contests/not-a-contest/scoring')

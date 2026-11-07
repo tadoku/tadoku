@@ -1,4 +1,5 @@
-import { Button, Flash, Surface, usePaperForm } from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { Button, Flash, Surface, layout, typography, usePaperForm } from 'paper-ui'
 import { useEffect, useRef, useState } from 'react'
 
 export default function LoggingExperimentFixture() {
@@ -16,8 +17,8 @@ export default function LoggingExperimentFixture() {
   return (
     <methods.AppForm>
       {reviewing ? (
-        <Surface className="paper-stack">
-          <h3 ref={heading} tabIndex={-1} className="paper-type-component">
+        <Surface {...stylex.props(layout.stack)}>
+          <h3 ref={heading} tabIndex={-1} {...stylex.props(typography.component)}>
             Review reading
           </h3>
           <p>
@@ -34,7 +35,7 @@ export default function LoggingExperimentFixture() {
           </div>
         </Surface>
       ) : (
-        <methods.Form className="paper-stack">
+        <methods.Form xstyle={layout.stack}>
           <Flash title="Experimental flow">
             Review the entry before considering a separate contest step.
           </Flash>
@@ -69,7 +70,7 @@ export default function LoggingExperimentFixture() {
               />
             )}
           </methods.AppField>
-          <div className="paper-cluster">
+          <div {...stylex.props(layout.cluster)}>
             <Button type="submit">Review entry</Button>
           </div>
         </methods.Form>

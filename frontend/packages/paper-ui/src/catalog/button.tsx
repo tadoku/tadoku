@@ -322,10 +322,7 @@ export const buttonDocument = defineCatalogDocument({
         "description": "Application-owned action handler. Native button attributes and refs are forwarded."
       }
     ],
-    "cssClasses": [
-      "paper-button",
-      "buttonClassName()"
-    ],
+    "styleExports": ["buttonStyles"],
     "publicTypes": [
       "ButtonProps",
       "ButtonVariant",
@@ -337,7 +334,7 @@ export const buttonDocument = defineCatalogDocument({
       "loading=false"
     ],
     "invalidCombinations": [
-      "Do not put href on Button; style a real anchor with buttonClassName()."
+      "Do not put href on Button; style a real anchor with buttonStyles()."
     ]
   },
   "migration": {
@@ -368,7 +365,7 @@ export const buttonDocument = defineCatalogDocument({
       "whenNotToUse": {
         "heading": "When not to use",
         "content": [
-          "Use an anchor when activation navigates to a URL, including links styled with buttonClassName(). Do not use a disabled button as an explanation; keep the reason visible near the unavailable action."
+          "Use an anchor when activation navigates to a URL, including links styled with buttonStyles(). Do not use a disabled button as an explanation; keep the reason visible near the unavailable action."
         ]
       },
       "choosingBetween": {
@@ -392,7 +389,7 @@ export const buttonDocument = defineCatalogDocument({
       "variants": {
         "heading": "Variants",
         "content": [
-          "Use default for the main action in a task, outline for a visible alternative, ghost for compact secondary actions, link for button behavior that belongs inline with text, and destructive for a destructive operation. buttonClassName() gives a real anchor the same visual hierarchy without changing its navigation semantics."
+          "Use default for the main action in a task, outline for a visible alternative, ghost for compact secondary actions, link for button behavior that belongs inline with text, and destructive for a destructive operation. buttonStyles() gives a real anchor the same visual hierarchy without changing its navigation semantics."
         ]
       },
       "statesAndAdaptation": {
@@ -422,7 +419,7 @@ export const buttonDocument = defineCatalogDocument({
       "implementation": {
         "heading": "Implementation",
         "content": [
-          "Button and buttonClassName() call the same recipe; load paper-ui/styles.css once at the application root."
+          "Button and buttonStyles() use the same recipe; compile paper-ui with the application’s StyleX plugin, as Setup describes."
         ]
       },
       "apiReference": {

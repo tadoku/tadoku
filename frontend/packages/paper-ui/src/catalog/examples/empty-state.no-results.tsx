@@ -1,8 +1,14 @@
+import * as stylex from '@stylexjs/stylex'
+import { size } from 'paper-ui/tokens.stylex'
 import { useStore } from '@tanstack/react-form'
-import { Button, EmptyState, usePaperForm } from 'paper-ui'
+import { Button, EmptyState, layout, usePaperForm } from 'paper-ui'
 import { useRef } from 'react'
 
 const contests = ['2026 Round 5', 'Japanese novel club', 'Autumn in French']
+
+const styles = stylex.create({
+  column: { maxInlineSize: size[640] },
+})
 
 export default function Example() {
   const search = useRef<HTMLInputElement>(null)
@@ -17,7 +23,7 @@ export default function Example() {
   }
 
   return (
-    <div className="paper-stack" style={{ maxWidth: '40rem' }}>
+    <div {...stylex.props(layout.stack, styles.column)}>
       <methods.AppForm>
         <form role="search" onSubmit={event => event.preventDefault()}>
           <methods.AppField name="query">

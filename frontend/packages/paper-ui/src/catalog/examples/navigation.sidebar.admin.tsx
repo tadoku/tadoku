@@ -1,4 +1,6 @@
-import { Sidebar } from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { size } from 'paper-ui/tokens.stylex'
+import { Sidebar, layout } from 'paper-ui'
 import { useState } from 'react'
 
 const sidebarSections = [
@@ -20,10 +22,14 @@ const sidebarSections = [
   },
 ] as const
 
+const styles = stylex.create({
+  column: { maxInlineSize: size[352] },
+})
+
 export default function SidebarExample() {
   const [path, setPath] = useState('#logs')
   return (
-    <div className="paper-stack" style={{ maxWidth: '22rem' }}>
+    <div {...stylex.props(layout.stack, styles.column)}>
       <Sidebar
         label="Admin sections"
         currentPath={path}

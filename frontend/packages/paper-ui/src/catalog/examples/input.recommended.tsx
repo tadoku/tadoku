@@ -1,5 +1,16 @@
-import { Button, usePaperForm } from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { Button, layout, usePaperForm } from 'paper-ui'
+import { breakpoints, size, space } from 'paper-ui/tokens.stylex'
 import { useState } from 'react'
+
+const styles = stylex.create({
+  form: { inlineSize: '100%', maxInlineSize: size[672] },
+  pair: {
+    gap: space[16],
+    display: 'grid',
+    gridTemplateColumns: { default: '1fr', [breakpoints.wide]: 'repeat(2, minmax(0, 1fr))' },
+  },
+})
 
 export default function InputRecommendedFixture() {
   const [saved, setSaved] = useState('')
@@ -14,7 +25,7 @@ export default function InputRecommendedFixture() {
   })
   return (
     <methods.AppForm>
-      <methods.Form className="paper-stack w-full max-w-2xl">
+      <methods.Form xstyle={[layout.stack, styles.form]}>
         <methods.AppField
           name="title"
           validators={{
@@ -25,7 +36,7 @@ export default function InputRecommendedFixture() {
         >
           {field => <field.Input label="Log title" required />}
         </methods.AppField>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div {...stylex.props(styles.pair)}>
           <methods.AppField
             name="pages"
             validators={{
@@ -57,7 +68,7 @@ export default function InputRecommendedFixture() {
             )}
           </methods.AppField>
         </div>
-        <div className="paper-cluster">
+        <div {...stylex.props(layout.cluster)}>
           <Button type="submit">Save log</Button>
         </div>
         {saved && <p role="status">{saved}</p>}

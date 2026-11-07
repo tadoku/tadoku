@@ -38,7 +38,7 @@ export function guidanceDocument(options: GuidanceDocumentOptions): CatalogDocum
     },
     api: {
       react: [],
-      cssClasses: [],
+      styleExports: [],
       publicTypes: [],
       defaults: options.publicContract,
       invalidCombinations: ["Private palette values and package source paths are not consumer APIs."],

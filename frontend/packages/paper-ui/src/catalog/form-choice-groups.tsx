@@ -103,7 +103,6 @@ export const toggleSelectSpec: DocSpec = {
   sourcePath: "src/components/forms/ToggleSelect.tsx",
   react: ["ToggleSelect"],
   types: ["ToggleSelectProps", "Option"],
-  css: ["paper-toggle-select", "paper-toggle-select__options", "paper-toggle-select__option", "paper-toggle-select__text", "paper-toggle-select__description", "paper-toggle-select__check"],
   when: "Use for a small set of optional, mutually exclusive choices such as score modifiers.",
   avoid: "Use RadioSelect when one choice must always remain selected, or Checkbox for independent choices that can be combined.",
   choose: "ToggleSelect lets users return to no selection by pressing the active option again.",

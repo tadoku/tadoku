@@ -1,4 +1,5 @@
-import { usePaperForm } from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { layout, usePaperForm } from 'paper-ui'
 
 export default function InputStatesFixture() {
   const methods = usePaperForm({
@@ -6,7 +7,7 @@ export default function InputStatesFixture() {
   })
   return (
     <methods.AppForm>
-      <div className="paper-stack">
+      <div {...stylex.props(layout.stack)}>
         <methods.AppField name="readonly">
           {field => <field.Input label="Language" readOnly />}
         </methods.AppField>

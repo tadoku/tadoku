@@ -1,4 +1,5 @@
-import { Button, usePaperForm } from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { Button, layout, usePaperForm } from 'paper-ui'
 import { useState } from 'react'
 
 export default function Example() {
@@ -16,7 +17,7 @@ export default function Example() {
 
   return (
     <methods.AppForm>
-      <methods.Form className="paper-stack">
+      <methods.Form xstyle={layout.stack}>
         <methods.AppField name="modifiers">
           {field => (
             <field.ToggleSelect
@@ -34,7 +35,7 @@ export default function Example() {
             />
           )}
         </methods.AppField>
-        <div className="paper-cluster">
+        <div {...stylex.props(layout.cluster)}>
           <Button type="submit">Save selection</Button>
           <Button
             variant="ghost"

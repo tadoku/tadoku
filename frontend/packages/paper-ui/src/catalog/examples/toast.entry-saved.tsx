@@ -1,14 +1,15 @@
-import { Button, ToastProvider, useToast } from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { Button, ToastProvider, layout, useToast } from 'paper-ui'
 
 function ToastFixture() {
   const toast = useToast()
   return (
-    <div className="paper-stack">
+    <div {...stylex.props(layout.stack)}>
       <p>
         Notifications remain visible in this preview until dismissed.
         Applications normally use a finite timeout.
       </p>
-      <div className="paper-cluster">
+      <div {...stylex.props(layout.cluster)}>
         <Button
           onClick={() =>
             toast.add({

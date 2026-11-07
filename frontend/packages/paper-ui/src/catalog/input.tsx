@@ -237,10 +237,7 @@ export const inputDocument = defineCatalogDocument({
         "description": "Optional explicit ID or imperative focus target."
       }
     ],
-    "cssClasses": [
-      "paper-field",
-      "paper-input"
-    ],
+    "styleExports": ["buttonStyles"],
     "publicTypes": [
       "InputProps"
     ],

@@ -128,7 +128,7 @@ function document(spec: DocSpec): CatalogDocument {
     api: {
       react: spec.react,
       props: details[spec.id].props,
-      cssClasses: spec.css ?? [],
+      styleExports: spec.styleExports ?? [],
       publicTypes: spec.types,
       defaults: ["Theme and density inherit from the nearest Paper root."],
       invalidCombinations: [spec.avoid],

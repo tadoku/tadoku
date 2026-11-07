@@ -1,8 +1,14 @@
-import { DescriptionList, SectionHeading } from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { size } from 'paper-ui/tokens.stylex'
+import { DescriptionList, SectionHeading, layout } from 'paper-ui'
+
+const styles = stylex.create({
+  column: { maxInlineSize: size[576] },
+})
 
 export default function Example() {
   return (
-    <div className="paper-stack" style={{ maxWidth: '36rem' }}>
+    <div {...stylex.props(layout.stack, styles.column)}>
       <section aria-labelledby="dates-heading">
         <SectionHeading level={3} id="dates-heading" title="Dates & registration" />
         <DescriptionList

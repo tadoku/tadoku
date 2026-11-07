@@ -1,4 +1,5 @@
-import { SectionHeading, buttonClassName } from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { SectionHeading, buttonStyles } from 'paper-ui'
 
 export default function Example() {
   return (
@@ -9,7 +10,7 @@ export default function Example() {
         title="Anton’s activity"
         description="Reading and listening recorded in 2026."
         actions={
-          <a className={buttonClassName({ variant: 'outline' })} href="#activity-log">
+          <a {...stylex.props(...buttonStyles({ variant: 'outline' }))} href="#activity-log">
             View activity log
           </a>
         }
@@ -21,7 +22,7 @@ export default function Example() {
           id="rhythm-heading"
           title="Immersion rhythm"
           actions={
-            <a className={buttonClassName({ variant: 'link' })} href="#scoring">
+            <a {...stylex.props(...buttonStyles({ variant: 'link' }))} href="#scoring">
               How scoring works
             </a>
           }

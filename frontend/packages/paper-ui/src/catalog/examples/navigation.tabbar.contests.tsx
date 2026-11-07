@@ -1,4 +1,5 @@
-import { Tabbar } from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { Tabbar, layout } from 'paper-ui'
 import { useState } from 'react'
 
 const contestLinks = [
@@ -10,7 +11,7 @@ const contestLinks = [
 export default function TabbarExample() {
   const [path, setPath] = useState('#mine')
   return (
-    <div className="paper-stack">
+    <div {...stylex.props(layout.stack)}>
       <Tabbar
         label="Contest views"
         currentPath={path}

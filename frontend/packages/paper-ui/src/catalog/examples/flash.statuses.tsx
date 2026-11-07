@@ -1,8 +1,9 @@
-import { Flash } from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { Flash, layout } from 'paper-ui'
 
 export default function Example() {
   return (
-    <div className="paper-stack">
+    <div {...stylex.props(layout.stack)}>
       <Flash title="Contest note">Only finished reading counts.</Flash>
       <Flash variant="success" title="Entry saved">
         48 pages added.

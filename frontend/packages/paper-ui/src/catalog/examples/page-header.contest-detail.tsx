@@ -1,4 +1,5 @@
-import { PageHeader, StatusTag, buttonClassName } from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { PageHeader, StatusTag, buttonStyles } from 'paper-ui'
 
 export default function Example() {
   return (
@@ -14,10 +15,10 @@ export default function Example() {
       lead="Two weeks of reading and listening with the Tadoku community. Join with up to three languages."
       actions={
         <>
-          <a className={buttonClassName()} href="#join">
+          <a {...stylex.props(...buttonStyles())} href="#join">
             Join contest
           </a>
-          <a className={buttonClassName({ variant: 'outline' })} href="#standings">
+          <a {...stylex.props(...buttonStyles({ variant: 'outline' }))} href="#standings">
             View standings
           </a>
         </>

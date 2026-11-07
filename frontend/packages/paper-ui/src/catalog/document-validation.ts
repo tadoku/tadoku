@@ -135,7 +135,7 @@ export function validateDocumentMetadata(
     addIssue(issues, "missing-metadata", `${path}.api`, "is required");
   } else {
     validateStringList(issues, document.api.react, `${path}.api.react`);
-    validateStringList(issues, document.api.cssClasses, `${path}.api.cssClasses`);
+    validateStringList(issues, document.api.styleExports, `${path}.api.styleExports`);
     validateStringList(issues, document.api.publicTypes, `${path}.api.publicTypes`);
     validateStringList(issues, document.api.defaults, `${path}.api.defaults`);
     validateStringList(

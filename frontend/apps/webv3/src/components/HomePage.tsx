@@ -8,7 +8,7 @@ import { Person, Rank, currentRow, personLink } from './StandingsParts'
 import { formatDate, formatPeriod, numberFormat, pointsUnit } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
-import { MemberDashboard } from './MemberDashboard'
+import { MemberDashboard, MemberYearTotals } from './MemberDashboard'
 import { viewerQueryOptions, type Viewer } from '../lib/session'
 
 const dayNumber = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000) + 1
@@ -83,7 +83,7 @@ export function HomePage() {
     <div className="home-page">
       <section className={hero} aria-labelledby="home-title">
         {member
-          ? <MemberPromise member={member} data={data} phase={phase} />
+          ? <MemberPromise member={member} data={data} phase={phase} year={year} />
           : (
             <div>
               {phase === 'unavailable' && <p className={status}>Contest updates are delayed</p>}
@@ -144,10 +144,11 @@ const suffix: Record<string, string> = { one: 'st', two: 'nd', few: 'rd', other:
 const place = (rank: number) => `${rank}${suffix[ordinal.select(rank)]}`
 
 /** A signed-in learner's hero: where they stand in the current round and the one action that moves it. */
-function MemberPromise({ member, data, phase }: {
+function MemberPromise({ member, data, phase, year }: {
   member: Extract<Viewer, { status: 'signed-in' }>
   data: HomeData | undefined
   phase: Phase
+  year: number
 }) {
   const links = useLinks()
   const contest = data?.latestContest
@@ -183,6 +184,7 @@ function MemberPromise({ member, data, phase }: {
           <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a>
         </div>
       ) : null}
+      <MemberYearTotals viewer={member} year={year} />
     </div>
   )
 }

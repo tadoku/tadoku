@@ -15,8 +15,8 @@ type SignedIn = Extract<Viewer, { status: 'signed-in' }>
 const recentCount = 5
 
 /**
- * A signed-in learner's year under the home hero: totals and the calendar, their newest updates and this year's
- * contests, unfinished ones first. Each part that can't be read is left out rather than shown as an error.
+ * A signed-in learner's year under the home hero: the calendar, their newest updates and this year's contests,
+ * unfinished ones first. Each part that can't be read is left out rather than shown as an error.
  */
 const band = 'border-t border-rule pt-7'
 const head = 'mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1'
@@ -30,9 +30,7 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
   const recent = useQuery(activityQuery).data
   if (statistics?.status !== 'found') return null
 
-  const { today, activity, scores, contests } = statistics
-  const total = scores.ok ? scores.data.scores.reduce((sum, score) => sum + score.score, 0) : undefined
-  const todayScore = activity.ok ? activity.data.scores.find(day => day.date === today)?.score ?? 0 : undefined
+  const { today, activity, contests } = statistics
   const logs = recent?.status === 'found' && recent.logs.ok ? recent.logs.data.logs.slice(0, recentCount) : null
   const ordered = contests.ok
     ? [...contests.data.contests].sort((a, b) => Number(a.contest_end < today) - Number(b.contest_end < today)).slice(0, recentCount)
@@ -42,19 +40,8 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
     <div className="mt-12 grid gap-10 *:min-w-0">
       <section className={band} aria-labelledby="home-year-title">
         <div className={head}>
-          <h2 id="home-year-title" className={headTitle}>Your {year}</h2>
-          <a className="text-link hover:text-link-hover" href={links.profile(viewer.userId)}>Your profile</a>
+          <h2 id="home-year-title" className={headTitle}>Daily activity</h2>
         </div>
-        <StatGrid
-          stats={[
-            ...(total === undefined ? [] : [{ label: 'Points this year', value: scoreFormat.format(total) }]),
-            ...(todayScore === undefined ? [] : [{ label: 'Today', value: scoreFormat.format(todayScore), detail: pointsUnit(todayScore) }]),
-            ...(activity.ok ? [
-              { label: 'Updates', value: activity.data.total_updates },
-              { label: 'Active days', value: activeDays(activity.data.scores) },
-            ] : []),
-          ]}
-        />
         {activity.ok ? (
           <ActivityCalendar userId={viewer.userId} year={year} today={today} activity={activity.data} labelledBy="home-year-title" surface="canvas" />
         ) : null}
@@ -112,5 +99,36 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
         ) : null}
       </div>
     </div>
+  )
+}
+
+/** The year's totals beside the home hero's headline, with the way to the full profile. */
+export function MemberYearTotals({ viewer, year }: { viewer: SignedIn; year: number }) {
+  const links = useLinks()
+  const [statisticsQuery] = memberDashboardQueries(viewer, year)
+  const statistics = useQuery(statisticsQuery).data
+  if (statistics?.status !== 'found') return null
+
+  const { today, activity, scores } = statistics
+  const total = scores.ok ? scores.data.scores.reduce((sum, score) => sum + score.score, 0) : undefined
+  const todayScore = activity.ok ? activity.data.scores.find(day => day.date === today)?.score ?? 0 : undefined
+  return (
+    <section className="mt-9 border-t border-rule pt-6" aria-labelledby="home-totals-title">
+      <div className={head}>
+        <h2 id="home-totals-title" className="m-0 text-ui font-semibold leading-150 text-muted">Your {year} so far</h2>
+        <a className="text-link hover:text-link-hover" href={links.profile(viewer.userId)}>Your profile</a>
+      </div>
+      <StatGrid
+        className="grid-cols-halves"
+        stats={[
+          ...(total === undefined ? [] : [{ label: 'Points this year', value: scoreFormat.format(total) }]),
+          ...(todayScore === undefined ? [] : [{ label: 'Today', value: scoreFormat.format(todayScore), detail: pointsUnit(todayScore) }]),
+          ...(activity.ok ? [
+            { label: 'Updates', value: activity.data.total_updates },
+            { label: 'Active days', value: activeDays(activity.data.scores) },
+          ] : []),
+        ]}
+      />
+    </section>
   )
 }

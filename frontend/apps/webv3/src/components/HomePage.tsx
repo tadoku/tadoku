@@ -154,8 +154,8 @@ function MemberPromise({ member, data, phase, year }: {
   const contest = data?.latestContest
   const running = contest && (phase === 'open' || phase === 'live' || phase === 'upcoming')
   const entry = running ? data?.standings?.entries.find(row => row.user_id === member.userId) : undefined
-  const { registered } = useParticipation(running ? contest.id : '')
-  const joinable = running && !registered && (phase === 'open' || phase === 'upcoming')
+  const { registration, registered } = useParticipation(running ? contest.id : '')
+  const joinable = running && registration?.kind === 'not-registered' && (phase === 'open' || phase === 'upcoming')
 
   let title: string
   let summary: string

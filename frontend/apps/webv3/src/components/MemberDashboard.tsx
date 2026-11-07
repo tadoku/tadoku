@@ -41,6 +41,7 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
       <section className={band} aria-labelledby="home-year-title">
         <div className={head}>
           <h2 id="home-year-title" className={headTitle}>Daily activity</h2>
+          <a className="text-link hover:text-link-hover" href={links.profile(viewer.userId)}>Your profile</a>
         </div>
         {activity.ok ? (
           <ActivityCalendar userId={viewer.userId} year={year} today={today} activity={activity.data} labelledBy="home-year-title" surface="canvas" />
@@ -102,9 +103,8 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
   )
 }
 
-/** The year's totals beside the home hero's headline, with the way to the full profile. */
+/** The year's totals beside the home hero's headline. */
 export function MemberYearTotals({ viewer, year }: { viewer: SignedIn; year: number }) {
-  const links = useLinks()
   const [statisticsQuery] = memberDashboardQueries(viewer, year)
   const statistics = useQuery(statisticsQuery).data
   if (statistics?.status !== 'found') return null
@@ -114,15 +114,12 @@ export function MemberYearTotals({ viewer, year }: { viewer: SignedIn; year: num
   const todayScore = activity.ok ? activity.data.scores.find(day => day.date === today)?.score ?? 0 : undefined
   return (
     <section className="mt-9 border-t border-rule pt-6" aria-labelledby="home-totals-title">
-      <div className={head}>
-        <h2 id="home-totals-title" className="m-0 text-ui font-semibold leading-150 text-muted">Your {year} so far</h2>
-        <a className="text-link hover:text-link-hover" href={links.profile(viewer.userId)}>Your profile</a>
-      </div>
+      <h2 id="home-totals-title" className="mb-4 mt-0 text-ui font-semibold leading-150 text-muted">Your {year} so far</h2>
       <StatGrid
         className="grid-cols-halves"
         stats={[
           ...(total === undefined ? [] : [{ label: 'Points this year', value: scoreFormat.format(total) }]),
-          ...(todayScore === undefined ? [] : [{ label: 'Today', value: scoreFormat.format(todayScore), detail: pointsUnit(todayScore) }]),
+          ...(todayScore === undefined ? [] : [{ label: 'Today', value: scoreFormat.format(todayScore), unit: pointsUnit(todayScore) }]),
           ...(activity.ok ? [
             { label: 'Updates', value: activity.data.total_updates },
             { label: 'Active days', value: activeDays(activity.data.scores) },

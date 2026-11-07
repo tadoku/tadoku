@@ -1,12 +1,114 @@
+import * as stylex from "@stylexjs/stylex";
 import { DateTime, Interval } from "luxon";
 import {
   useEffect,
   useRef,
   useState,
-  type CSSProperties,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import type { StyleXProp } from "../../foundations/props";
+import {
+  border,
+  breakpoints,
+  color,
+  font,
+  fontSize,
+  space,
+  type,
+  zIndex,
+} from "../../tokens/tokens.stylex";
+
+const styles = stylex.create({
+  frame: { alignItems: "flex-start", display: "flex", inlineSize: "100%" },
+  /** Pinned beside a sideways-scrolling year; the surface fill covers weeks scrolling underneath. */
+  weekdays: {
+    backgroundColor: color.surfacePaper,
+    blockSize: "auto",
+    flexGrow: 0,
+    flexShrink: 0,
+    insetInlineStart: 0,
+    position: "sticky",
+    zIndex: zIndex.raised,
+  },
+  gutter: (basis: string) => ({ flexBasis: basis }),
+  onCanvas: { backgroundColor: color.surfaceCanvas },
+  chart: {
+    overflow: "visible",
+    blockSize: "auto",
+    display: "block",
+    flexBasis: 0,
+    flexGrow: 1,
+    flexShrink: 1,
+    maxInlineSize: "none",
+    minInlineSize: 0,
+  },
+  cell: {
+    fill: { default: "transparent", [breakpoints.forcedColors]: "Canvas" },
+    shapeRendering: "crispEdges",
+    stroke: { default: null, [breakpoints.forcedColors]: "CanvasText" },
+    strokeWidth: { default: null, [breakpoints.forcedColors]: border.static },
+  },
+  level0: { fill: { default: color.heat0, [breakpoints.forcedColors]: "Canvas" } },
+  level1: { fill: { default: color.heat1, [breakpoints.forcedColors]: "Canvas" } },
+  level2: { fill: { default: color.heat2, [breakpoints.forcedColors]: "Canvas" } },
+  level3: { fill: { default: color.heat3, [breakpoints.forcedColors]: "Canvas" } },
+  level4: { fill: { default: color.heat4, [breakpoints.forcedColors]: "Canvas" } },
+  /** Days still to come are a faint fill, a step quieter than a day with no activity, so the year ahead recedes. */
+  future: { fill: { default: color.heatFuture, [breakpoints.forcedColors]: "Canvas" } },
+  /** An ink ring separates a focused day from every step of the ramp in both themes. */
+  focusable: {
+    stroke: { default: null, ":focus": color.textInk },
+    strokeWidth: { default: null, ":focus": border.focusRing },
+    outlineStyle: {
+      default: null,
+      ":focus": "none",
+    },
+  },
+  linkedCell: {
+    stroke: { default: null, [stylex.when.ancestor(":focus")]: color.textInk },
+    strokeWidth: { default: null, [stylex.when.ancestor(":focus")]: border.focusRing },
+  },
+  link: { outline: { default: null, ":focus": "none" } },
+  /** Sticky so the legend stays in view when a narrow container scrolls the year sideways. */
+  legend: {
+    marginInline: 0,
+    alignItems: "center",
+    color: color.textMuted,
+    columnGap: space[12],
+    display: "flex",
+    flexWrap: "wrap",
+    fontSize: type.metadataSize,
+    inlineSize: "max-content",
+    insetInlineStart: 0,
+    marginBlockEnd: 0,
+    marginBlockStart: space[8],
+    maxInlineSize: "100%",
+    position: "sticky",
+    rowGap: space[8],
+  },
+  legendTitle: { flexBasis: { default: null, [breakpoints.md]: "100%" } },
+  legendItem: { gap: space[4], alignItems: "center", display: "inline-flex", },
+  /** The chart scales with its column: on wide screens 9-unit labels render at about 13px; phones show it near 1:1. */
+  axisLabel: {
+    fill: color.textInk,
+    fontFamily: font.body,
+    fontSize: { default: fontSize[9], [breakpoints.md]: fontSize[12] },
+  },
+  passive: { pointerEvents: "none" },
+  hidden: { display: "none" },
+  tooltipBackground: { fill: color.surfaceOverlay, stroke: color.ruleStrong, strokeWidth: border.static },
+  tooltipText: { fill: color.textInk, fontFamily: font.body, fontSize: type.metadataSize },
+});
+
+const levelStyles = {
+  "0": styles.level0,
+  "1": styles.level1,
+  "2": styles.level2,
+  "3": styles.level3,
+  "4": styles.level4,
+  empty: null,
+} as const;
 
 export interface HeatmapChartDatum {
   readonly date: string;
@@ -22,6 +124,11 @@ export interface HeatmapChartProps {
   readonly getHref?: (date: string) => string;
   /** The current ISO day; later days are drawn as not yet happened rather than as empty. */
   readonly today?: string;
+  /** The surface behind the chart, which the pinned weekday gutter matches. */
+  readonly surface?: "paper" | "canvas";
+  /** Layout for the chart frame, such as a minimum width inside a scrolling region. */
+  readonly frameXstyle?: StyleXProp;
+  readonly legendXstyle?: StyleXProp;
 }
 
 interface CalendarCell {
@@ -59,7 +166,16 @@ const LEVELS = [
  * follow the original ui HeatmapChart so existing consumers can pass the
  * same dated activity records without reshaping them into a generic matrix.
  */
-export function HeatmapChart({ id, data, year, getHref, today }: HeatmapChartProps) {
+export function HeatmapChart({
+  id,
+  data,
+  year,
+  getHref,
+  today,
+  surface = "paper",
+  frameXstyle,
+  legendXstyle,
+}: HeatmapChartProps) {
   const start = DateTime.fromObject({ year, month: 1, day: 1 });
   const end = DateTime.fromObject({ year, month: 12, day: 31 });
   const values = new Map<string, number>();
@@ -117,18 +233,23 @@ export function HeatmapChart({ id, data, year, getHref, today }: HeatmapChartPro
     <>
       {/* The weekday gutter is its own SVG, sized to the same scale, so it can stay pinned while a narrow container
           scrolls the weeks sideways. */}
-      <div className="paper-heatmap__frame" style={{ "--paper-heatmap-gutter": `${(OFFSET.x / width) * 100}%` } as CSSProperties}>
+      <div {...stylex.props(styles.frame, frameXstyle)}>
         <svg
           width={OFFSET.x}
           height={height}
           viewBox={`0 0 ${OFFSET.x} ${height}`}
-          className="paper-heatmap__weekdays"
+          {...stylex.props(
+            styles.weekdays,
+            styles.gutter(`${(OFFSET.x / width) * 100}%`),
+            surface === "canvas" && styles.onCanvas,
+          )}
           aria-hidden="true"
+          data-heatmap="weekdays"
         >
           {WEEKDAYS.map((label, row) => label ? (
             <text
               key={label}
-              className="paper-heatmap__axis-label"
+              {...stylex.props(styles.axisLabel)}
               textAnchor="end"
               x={OFFSET.x - CELL_GAP * 2}
               y={OFFSET.y + CELL_HEIGHT * row + CELL_GAP * row}
@@ -142,17 +263,18 @@ export function HeatmapChart({ id, data, year, getHref, today }: HeatmapChartPro
         width={width - OFFSET.x}
         height={height}
         viewBox={`${OFFSET.x} 0 ${width - OFFSET.x} ${height}`}
-        className="paper-heatmap"
+        {...stylex.props(styles.chart)}
         // A group, not an image: active days are links that assistive technology must reach.
         role="group"
         aria-labelledby={titleId}
         data-year={year}
+        data-heatmap="year"
       >
         <title id={titleId}>Daily activity for {year}</title>
         {months.map((label, column) => label ? (
           <text
             key={label}
-            className="paper-heatmap__axis-label"
+            {...stylex.props(styles.axisLabel)}
             textAnchor="start"
             x={OFFSET.x + CELL_WIDTH * column + CELL_GAP * column}
             y={0}
@@ -175,23 +297,23 @@ export function HeatmapChart({ id, data, year, getHref, today }: HeatmapChartPro
             />
           )),
         )}
-        <g id={tooltipLayerId} className="paper-heatmap__tooltip-layer" />
+        <g id={tooltipLayerId} {...stylex.props(styles.passive)} />
       </svg>
       </div>
-      <p className="paper-heatmap__legend">
-        <span>Points per day</span>
+      <p {...stylex.props(styles.legend, legendXstyle)}>
+        <span {...stylex.props(styles.legendTitle)}>Points per day</span>
         {LEVELS.map(({ level, label }) => (
-          <span key={level} className="paper-heatmap__legend-item">
+          <span key={level} {...stylex.props(styles.legendItem)}>
             <svg width={CELL_WIDTH} height={CELL_HEIGHT} aria-hidden="true">
-              <rect width={CELL_WIDTH} height={CELL_HEIGHT} className="paper-heatmap__cell" data-level={level} />
+              <rect width={CELL_WIDTH} height={CELL_HEIGHT} {...stylex.props(styles.cell, levelStyles[level])} data-level={level} />
             </svg>
             {label}
           </span>
         ))}
         {today && today < end.toISODate()! ? (
-          <span className="paper-heatmap__legend-item">
+          <span {...stylex.props(styles.legendItem)}>
             <svg width={CELL_WIDTH} height={CELL_HEIGHT} aria-hidden="true">
-              <rect width={CELL_WIDTH} height={CELL_HEIGHT} className="paper-heatmap__cell" data-future="" />
+              <rect width={CELL_WIDTH} height={CELL_HEIGHT} {...stylex.props(styles.cell, styles.future)} data-future="" />
             </svg>
             Not yet
           </span>
@@ -249,7 +371,12 @@ function Cell({
       height={CELL_HEIGHT}
       x={x}
       y={y}
-      className="paper-heatmap__cell"
+      {...stylex.props(
+        styles.cell,
+        levelStyles[level],
+        future && styles.future,
+        href ? styles.linkedCell : styles.focusable,
+      )}
       data-level={level}
       data-future={future ? "" : undefined}
       data-today={today && isoDate === today ? "" : undefined}
@@ -267,7 +394,7 @@ function Cell({
       onTouchCancel={hideTooltip}
     />
   );
-  const rect = href ? <a href={href} className="paper-heatmap__link" {...focusProps}>{shape}</a> : shape;
+  const rect = href ? <a href={href} {...stylex.props(stylex.defaultMarker(), styles.link)} {...focusProps}>{shape}</a> : shape;
 
   if (!mounted || !tooltip) return rect;
   const tooltipLayer = document.getElementById(tooltipLayerId);
@@ -337,7 +464,7 @@ function Tooltip({
     <g
       id={id}
       role="tooltip"
-      className={`paper-heatmap__tooltip${visible ? "" : " hidden"}`}
+      {...stylex.props(styles.passive, !visible && styles.hidden)}
       aria-hidden={!visible}
     >
       <rect
@@ -345,18 +472,18 @@ function Tooltip({
         height={rect.height}
         x={rect.x}
         y={rect.y}
-        className="paper-heatmap__tooltip-background"
+        {...stylex.props(styles.tooltipBackground)}
       />
       <polygon
         points={pointsForRect(rect)}
-        className="paper-heatmap__tooltip-background"
+        {...stylex.props(styles.tooltipBackground)}
       />
       <text
         ref={textRef}
         x={rect.x + 6}
         y={rect.y + 8}
         dominantBaseline="hanging"
-        className="paper-heatmap__tooltip-text"
+        {...stylex.props(styles.tooltipText)}
       >
         {children}
       </text>

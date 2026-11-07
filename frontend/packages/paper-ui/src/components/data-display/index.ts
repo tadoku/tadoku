@@ -1,5 +1,6 @@
 export {
   Table,
+  tableRowLink,
   type TableColumn,
   type TableColumnAlignment,
   type TableProps,

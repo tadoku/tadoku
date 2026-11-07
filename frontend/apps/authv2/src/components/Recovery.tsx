@@ -1,3 +1,4 @@
+import * as stylex from '@stylexjs/stylex'
 import { Button } from 'paper-ui'
 import { continuation, emailProblem, withReturnTo } from '../lib/identity'
 import { useAccountForm } from '../lib/account-form'
@@ -5,6 +6,7 @@ import type { AccountSearch } from '../lib/search'
 import { useIdentity } from '../lib/session'
 import { FormProblem, ReturnTo } from './AccountForm'
 import { CardPage } from './CardPage'
+import { formStyles, cardStyles, textLink } from './styles'
 
 export function Recovery({ search }: { readonly search: AccountSearch }) {
   const { origin, webUrl } = useIdentity()
@@ -21,10 +23,10 @@ export function Recovery({ search }: { readonly search: AccountSearch }) {
 
   if (succeeded || (search.sent && !submitted)) {
     return (
-      <CardPage title="Check your email" footer={<a href={login}>Back to log in</a>}>
-        <div className="account-confirmation" role="status">
-          <p>If an account uses that address, we’ve sent it a link to choose a new password. The link works once and expires after an hour.</p>
-          <p>Nothing arrived? Check your spam folder, or <a href={withReturnTo('/recovery', next)}>send another link</a>.</p>
+      <CardPage title="Check your email" footer={<a {...stylex.props(textLink)} href={login}>Back to log in</a>}>
+        <div {...stylex.props(cardStyles.confirmation)} role="status">
+          <p {...stylex.props(cardStyles.confirmationText)}>If an account uses that address, we’ve sent it a link to choose a new password. The link works once and expires after an hour.</p>
+          <p {...stylex.props(cardStyles.confirmationText)}>Nothing arrived? Check your spam folder, or <a {...stylex.props(textLink)} href={withReturnTo('/recovery', next)}>send another link</a>.</p>
         </div>
       </CardPage>
     )
@@ -34,10 +36,10 @@ export function Recovery({ search }: { readonly search: AccountSearch }) {
     <CardPage
       title="Reset your password"
       lead="Enter the email you use for Tadoku. We’ll send you a link to choose a new password."
-      footer={<>Remembered it? <a href={login}>Log in</a></>}
+      footer={<>Remembered it? <a {...stylex.props(textLink)} href={login}>Log in</a></>}
     >
       <form.AppForm>
-        <form.Form {...formProps} className="account-form">
+        <form.Form {...formProps} xstyle={formStyles.form}>
           <FormProblem problem={problem} />
           <ReturnTo value={next} />
           <form.AppField name="email" validators={{ onChange: ({ value }) => emailProblem(value) }}>

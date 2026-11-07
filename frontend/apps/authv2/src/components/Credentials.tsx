@@ -1,11 +1,13 @@
-import { Button, Flash } from 'paper-ui'
-import { InformationCircleIcon, iconClassName } from 'paper-ui/icons'
+import * as stylex from '@stylexjs/stylex'
+import { Button, Flash, iconSizes } from 'paper-ui'
+import { InformationCircleIcon } from 'paper-ui/icons'
 import { continuation, displayNameProblem, emailProblem, passwordProblem, withReturnTo } from '../lib/identity'
 import { navigate, useAccountForm } from '../lib/account-form'
 import type { AccountSearch } from '../lib/search'
 import { useIdentity } from '../lib/session'
 import { FormProblem, ReturnTo } from './AccountForm'
 import { CardPage } from './CardPage'
+import { formStyles, textLink } from './styles'
 
 export const passwordHint = '8 or more characters. Avoid words from your email.'
 
@@ -13,8 +15,8 @@ function SignedInNotice() {
   const { session } = useIdentity()
   if (!session.account) return null
   return (
-    <Flash variant="information" icon={<InformationCircleIcon className={iconClassName()} />}>
-      You’re logged in as {session.account.display_name}. <a href="/">Go to your account</a>
+    <Flash variant="information" icon={<InformationCircleIcon {...stylex.props(iconSizes.default)} />}>
+      You’re logged in as {session.account.display_name}. <a {...stylex.props(textLink)} href="/">Go to your account</a>
     </Flash>
   )
 }
@@ -35,12 +37,12 @@ export function Login({ search }: { readonly search: AccountSearch }) {
   return (
     <CardPage
       title="Log in"
-      footer={<>New to Tadoku? <a href={withReturnTo('/register', next)}>Create an account</a></>}
+      footer={<>New to Tadoku? <a {...stylex.props(textLink)} href={withReturnTo('/register', next)}>Create an account</a></>}
     >
       <form.AppForm>
-        <form.Form {...formProps} className="account-form">
+        <form.Form {...formProps} xstyle={formStyles.form}>
           {reauth ? (
-            <Flash variant="information" icon={<InformationCircleIcon className={iconClassName()} />}>
+            <Flash variant="information" icon={<InformationCircleIcon {...stylex.props(iconSizes.default)} />}>
               Privileged actions require a fresh login. Log in again to continue.
             </Flash>
           ) : <SignedInNotice />}
@@ -54,7 +56,7 @@ export function Login({ search }: { readonly search: AccountSearch }) {
             {field => <field.Input id={fieldId('password')} label="Password" type="password" autoComplete="current-password" required />}
           </form.AppField>
           <Button type="submit" fullWidth loading={pending} loadingLabel="Logging in">Log in</Button>
-          <a className="account-form__aside" href={withReturnTo('/recovery', next)}>Forgot your password?</a>
+          <a {...stylex.props(textLink, formStyles.aside)} href={withReturnTo('/recovery', next)}>Forgot your password?</a>
         </form.Form>
       </form.AppForm>
     </CardPage>
@@ -75,10 +77,10 @@ export function Register({ search }: { readonly search: AccountSearch }) {
   return (
     <CardPage
       title="Create an account"
-      footer={<>Already have an account? <a href={withReturnTo('/login', next)}>Log in</a></>}
+      footer={<>Already have an account? <a {...stylex.props(textLink)} href={withReturnTo('/login', next)}>Log in</a></>}
     >
       <form.AppForm>
-        <form.Form {...formProps} className="account-form">
+        <form.Form {...formProps} xstyle={formStyles.form}>
           <SignedInNotice />
           <FormProblem problem={problem} />
           <ReturnTo value={next} />

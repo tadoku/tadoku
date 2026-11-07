@@ -73,7 +73,7 @@ function document(overrides: Partial<CatalogDocument> = {}): CatalogDocument {
     },
     api: {
       react: ["Button"],
-      cssClasses: ["btn"],
+      styleExports: ["buttonStyles"],
       publicTypes: ["ButtonProps"],
       defaults: ["type is button"],
       invalidCombinations: ["Navigation must use an anchor."],

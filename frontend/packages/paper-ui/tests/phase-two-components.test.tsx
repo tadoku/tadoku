@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { usePaperForm, ActionMenu, Button, Modal, buttonClassName } from '../src';
+import * as stylex from '@stylexjs/stylex';
+import { usePaperForm, ActionMenu, Button, Modal, buttonStyles } from '../src';
 
 import { describe, expect, it, vi } from "vitest";
 
@@ -23,7 +24,7 @@ describe("Button", () => {
     render(
       <form onSubmit={submit}>
         <Button variant="outline">Review log</Button>
-        <a className={buttonClassName({ variant: "outline" })} href="#logs">
+        <a {...stylex.props(...buttonStyles({ variant: "outline" }))} href="#logs">
           View logs
         </a>
       </form>,
@@ -31,7 +32,6 @@ describe("Button", () => {
 
     const button = screen.getByRole("button", { name: "Review log" });
     expect(button).toHaveAttribute("type", "button");
-    expect(button.className).toBe(buttonClassName({ variant: "outline" }));
     expect(screen.getByRole("link", { name: "View logs" })).not.toHaveAttribute(
       "role",
       "button",
@@ -107,7 +107,7 @@ describe("Modal", () => {
     expect(screen.getByRole("dialog", { name: "Delete this log?" })).toHaveAccessibleDescription(
       "This cannot be undone.",
     );
-    const iconClose = document.querySelector(".paper-modal__icon-close");
+    const iconClose = screen.getAllByRole("button", { name: "Close" })[0];
     expect(iconClose?.querySelector("svg")).not.toBeNull();
     expect(iconClose).not.toHaveTextContent("×");
     await user.keyboard("{Escape}");
@@ -179,7 +179,7 @@ describe("ActionMenu", () => {
     const { rerender } = render(<ActionMenu label="Log actions" items={items} />);
     const trigger = screen.getByRole("button", { name: "Log actions" });
     expect(trigger).not.toHaveTextContent("▾");
-    expect(trigger.querySelector("svg.paper-icon-compact")).not.toBeNull();
+    expect(trigger.querySelector("svg")).not.toBeNull();
     rerender(<ActionMenu label="Log actions" items={items} iconOnly />);
     expect(trigger).toHaveAccessibleName("Log actions");
     expect(trigger.textContent).toBe("");

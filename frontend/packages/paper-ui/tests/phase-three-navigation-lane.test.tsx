@@ -126,9 +126,8 @@ describe("router-neutral navigation", () => {
 
     const navigation = screen.getByRole("navigation", { name: "Main navigation" });
     expect(within(navigation).getByRole("button", { name: "Search Paper" })).toBeInTheDocument();
-    expect(navigation.querySelector(".paper-navbar__actions")).not.toBeNull();
     expect(screen.queryByRole("button", { name: "Open menu" })).not.toBeInTheDocument();
-    expect(navigation.querySelector(".paper-navbar__mobile-panel")).toBeNull();
+    expect(navigation.querySelector("[data-open]")).toBeNull();
   });
 
   it("uses Base UI keyboard behavior for the Navbar account dropdown", async () => {
@@ -203,14 +202,14 @@ describe("router-neutral navigation", () => {
       </>,
     );
 
-    const headings = Array.from(container.querySelectorAll<HTMLHeadingElement>(".paper-sidebar__title"));
+    const headings = Array.from(container.querySelectorAll<HTMLHeadingElement>("nav h2"));
     const headingIds = headings.map((heading) => heading.id);
     expect(new Set(headingIds)).toHaveProperty("size", headingIds.length);
     for (const headingId of headingIds) {
       expect(headingId).toMatch(/^[a-zA-Z][a-zA-Z0-9_-]*$/u);
     }
 
-    for (const section of container.querySelectorAll<HTMLElement>(".paper-sidebar__section")) {
+    for (const section of container.querySelectorAll<HTMLElement>("nav > section")) {
       const labelledBy = section.getAttribute("aria-labelledby");
       expect(labelledBy).toBeTruthy();
       expect(container.querySelectorAll(`[id="${labelledBy}"]`)).toHaveLength(1);
@@ -229,7 +228,7 @@ describe("router-neutral navigation", () => {
 
     const breadcrumb = screen.getByRole("navigation", { name: "Breadcrumb" });
     expect(within(breadcrumb).getAllByRole("listitem")).toHaveLength(3);
-    expect(within(breadcrumb).getByText("August Japanese").closest(".paper-breadcrumb__current")).toHaveAttribute("aria-current", "page");
+    expect(within(breadcrumb).getByText("August Japanese").closest("[aria-current]")).toHaveAttribute("aria-current", "page");
     expect(within(breadcrumb).queryByRole("link", { name: "August Japanese" })).not.toBeInTheDocument();
   });
 
@@ -255,7 +254,7 @@ describe("router-neutral navigation", () => {
 
   it("reveals the current horizontal destination without scrolling again on unrelated renders", () => {
     const measure = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
-      const list = this.classList.contains("paper-tabbar__list");
+      const list = this.tagName === "UL";
       const statistics = this.getAttribute("href") === "/stats";
       return { left: list ? 0 : statistics ? 240 : -160, right: list ? 200 : statistics ? 360 : -60 } as DOMRect;
     });
@@ -280,14 +279,14 @@ describe("router-neutral navigation", () => {
       <Pagination totalPages={12} currentPage={5} onPageChange={onPageChange} siblingCount={1} />,
     );
 
-    expect(document.querySelectorAll(".paper-pagination__gap").length).toBeGreaterThan(0);
+    expect(document.querySelectorAll('li[aria-hidden="true"]').length).toBeGreaterThan(0);
     expect(screen.getByText("5")).toHaveAttribute("aria-current", "page");
     await user.click(screen.getByRole("button", { name: "Next page" }));
     expect(onPageChange).toHaveBeenCalledWith(6);
 
     rerender(<Pagination totalPages={12} currentPage={1} onPageChange={onPageChange} />);
     expect(screen.queryByRole("button", { name: "Previous page" })).not.toBeInTheDocument();
-    expect(screen.getByText("Previous").closest(".paper-pagination__control")).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText("Previous").closest("[aria-disabled]")).toHaveAttribute("aria-disabled", "true");
   });
 
   it("renders pagination hrefs through the router adapter and intercepts only when requested", async () => {

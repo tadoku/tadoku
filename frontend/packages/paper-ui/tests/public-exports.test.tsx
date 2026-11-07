@@ -19,7 +19,6 @@ import {
   TabsRoot,
   TabsTab,
   VerticalTabbar,
-  buttonClassName,
   chartPalette,
   chartSeries,
   type DrawerPlacement,
@@ -65,9 +64,6 @@ describe("public source entries", () => {
   it("server-renders the public component entry without browser globals", () => {
     expect(renderToString(createElement(Button, null, "Save log"))).toContain(
       "Save log",
-    );
-    expect(buttonClassName({ variant: "destructive" })).toContain(
-      "paper-button--destructive",
     );
   });
 

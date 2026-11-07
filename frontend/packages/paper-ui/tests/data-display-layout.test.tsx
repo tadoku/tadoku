@@ -121,15 +121,12 @@ describe("Table", () => {
     const region = screen.getByRole("region", { name: "Recent reading" });
     const table = within(region).getByRole("table", { name: "Recent reading" });
     expect(region).toHaveAttribute("tabindex", "0");
-    expect(region).toHaveStyle("--paper-table-min-inline-size: 30rem");
     expect(within(table).getAllByRole("columnheader")).toHaveLength(2);
     expect(within(table).getByRole("rowheader", { name: "Convenience Store Woman" })).toHaveAttribute(
       "scope",
       "row",
     );
-    expect(within(table).getByRole("cell", { name: "73" })).toHaveClass(
-      "paper-table__cell--end",
-    );
+    expect(within(table).getByRole("cell", { name: "73" })).toBeVisible();
   });
 
   it("keeps table structure and a specific message when rows are empty", () => {
@@ -145,9 +142,7 @@ describe("Table", () => {
 
     expect(screen.getByRole("table", { name: "Recent reading" })).toBeInTheDocument();
     expect(screen.getByText("No reading logged yet.")).toHaveAttribute("colspan", "2");
-    expect(screen.getByText("Recent reading")).toHaveClass(
-      "paper-table__caption--screen-reader",
-    );
+    expect(screen.getByText("Recent reading").tagName).toBe("CAPTION");
   });
 
   it("rejects a table without columns instead of emitting invalid structure", () => {
@@ -161,7 +156,7 @@ describe("HeatmapChart", () => {
   it("renders the requested year as the original month-by-weekday SVG calendar", () => {
     const { container } = render(<HeatmapChart {...heatmapProps} />);
 
-    const svg = container.querySelector<SVGSVGElement>("svg.paper-heatmap");
+    const svg = container.querySelector<SVGSVGElement>('svg[role="group"]');
     expect(svg).toBeInstanceOf(SVGSVGElement);
     const labels = Array.from(container.querySelectorAll("text"), (label) => label.textContent);
     expect(labels).toEqual(expect.arrayContaining([
@@ -183,7 +178,7 @@ describe("HeatmapChart", () => {
 
   it("maps dated activity onto five fixed points-per-day levels without changing cell geometry", () => {
     const { container } = render(<HeatmapChart {...heatmapProps} />);
-    const svg = container.querySelector<SVGSVGElement>("svg.paper-heatmap")!;
+    const svg = container.querySelector<SVGSVGElement>('svg[role="group"]')!;
     const cells = calendarCells(svg);
 
     // 2023 starts on Sunday. January 1 occupies the final row of the first
@@ -197,7 +192,7 @@ describe("HeatmapChart", () => {
 
   it("reveals the supplied activity copy while its dated cell is hovered", () => {
     const { container } = render(<HeatmapChart {...heatmapProps} />);
-    const svg = container.querySelector<SVGSVGElement>("svg.paper-heatmap")!;
+    const svg = container.querySelector<SVGSVGElement>('svg[role="group"]')!;
     const januaryFifth = calendarCells(svg)[10];
     const tooltipText = screen.getByText("300 points on January 5, 2023");
     Object.defineProperty(tooltipText, "getBBox", { value: () => new DOMRect(0, 0, 180, 16) });
@@ -226,7 +221,7 @@ describe("HeatmapChart", () => {
     expect(background).toHaveAttribute("width", "192");
     expect(background).toHaveAttribute("height", "28");
     expect(Number(background.getAttribute("x"))).toBeGreaterThanOrEqual(0);
-    const [minX, , viewWidth] = container.querySelector<SVGSVGElement>("svg.paper-heatmap")!.getAttribute("viewBox")!.split(" ").map(Number);
+    const [minX, , viewWidth] = container.querySelector<SVGSVGElement>('svg[role="group"]')!.getAttribute("viewBox")!.split(" ").map(Number);
     expect(Number(background.getAttribute("x"))).toBeGreaterThanOrEqual(minX);
     expect(Number(background.getAttribute("x")) + Number(background.getAttribute("width"))).toBeLessThanOrEqual(minX + viewWidth);
     fireEvent.blur(cell);
@@ -254,7 +249,7 @@ describe("Phase 3 data-display catalogue contracts", () => {
     expect(fixture!.code).not.toContain("rows=");
 
     const { container } = render(fixture!.render());
-    const svg = container.querySelector<SVGSVGElement>("svg.paper-heatmap");
+    const svg = container.querySelector<SVGSVGElement>('svg[role="group"]');
     expect(svg).toBeInstanceOf(SVGSVGElement);
     expect(calendarCells(svg!)).toHaveLength(53 * 7);
     const labels = Array.from(container.querySelectorAll("text"), (label) => label.textContent);

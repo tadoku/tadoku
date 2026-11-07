@@ -39,7 +39,7 @@ describe("Phase 3 foundation and product content", () => {
 
   it("renders both deterministic product fixtures without a router", () => {
     for (const fixture of phaseThreeContentFixtures) {
-      expect(renderToString(<>{fixture.render()}</>)).toContain("paper-");
+      expect(renderToString(<>{fixture.render()}</>)).toMatch(/<(article|section|form|div)\b/);
     }
   });
 

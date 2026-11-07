@@ -194,12 +194,10 @@ describe("native TanStack Form controls", () => {
     const group = screen.getByRole("group", { name: /Preview size/u });
     const radios = within(group).getAllByRole("radio");
 
-    expect(group).toHaveClass("paper-radio-select--segmented");
     expect(radios).toHaveLength(4);
     expect(screen.getByRole("radio", { name: "Tablet" })).toBeChecked();
     expect(screen.getByRole("radio", { name: "Wide" })).toBeDisabled();
     expect(container.querySelector("button[aria-pressed]")).toBeNull();
-    expect(group.querySelector(".paper-button")).toBeNull();
 
     await user.click(screen.getByRole("radio", { name: "Phone" }));
     expect(screen.getByRole("radio", { name: "Phone" })).toBeChecked();

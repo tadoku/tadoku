@@ -20,7 +20,7 @@ export const field = tv({
 /** Text inputs, text areas and selects. */
 export const control = tv({
   base: [
-    "paper-input min-h-control w-full rounded-none border border-b-edge border-field-edge bg-field px-field-x py-field-y",
+    "paper-input min-h-control w-full rounded-none border border-field-edge bg-field px-field-x py-field-y",
     "font-body text-body leading-125 text-ink",
     "[&::-webkit-datetime-edit-fields-wrapper]:p-0 placeholder:text-muted placeholder:opacity-full",
     "focus-visible:relative focus-visible:z-lift focus-visible:border-focus",
@@ -113,7 +113,7 @@ export const segment = tv({
     root: [
       "paper-radio-select__segment group/segment relative inline-grid min-h-control min-w-radio-min grow basis-28",
       "grid-cols-label-check items-center -ms-px -mt-px first:ms-0 cursor-pointer",
-      "border border-b-edge border-field-edge bg-field px-field-x py-field-y",
+      "border border-field-edge bg-field px-field-x py-field-y",
       "text-body leading-125 font-semibold text-ink",
       "not-has-disabled:not-has-checked:hover:border-field-edge-hover not-has-disabled:not-has-checked:hover:bg-neutral-hover",
       "has-checked:z-lift has-checked:border-link has-checked:bg-action-soft",
@@ -170,39 +170,30 @@ export const radioCard = tv({
   defaultVariants: { invalid: false },
 });
 
-/** An amount input joined to its unit select. */
+/** An amount input joined to its unit select. Focus on either control rings the whole field. */
 export const compoundField = tv({
   slots: {
     root: [
-      "paper-compound-field grid min-h-control grid-cols-content-end border border-b-0 border-field-edge bg-field",
-      "has-[>input:focus-visible]:outline-halo has-[>input:focus-visible]:outline-offset-0",
+      "paper-compound-field grid min-h-control grid-cols-content-end border border-field-edge bg-field",
+      "not-has-disabled:hover:border-field-edge-hover",
+      "has-focus-visible:outline-halo has-focus-visible:outline-offset-0",
       "forced-colors:border-forced-ink forced-colors:bg-forced-canvas",
-      "forced-colors:has-[>input:focus-visible]:outline-forced-highlight",
+      "forced-colors:has-focus-visible:outline-forced-highlight",
     ],
-    input: [
-      "min-h-compound-input border-0 border-b-edge border-field-edge bg-transparent",
-      "focus-visible:outline-none forced-colors:border-b-forced-ink forced-colors:focus-visible:border-b-forced-highlight",
-    ],
+    input: "min-h-compound-input border-0 bg-transparent focus-visible:outline-none",
     unit: [
       "paper-compound-field__unit h-compound-unit w-auto min-w-unit-select border-s border-rule",
       "forced-colors:border-s-forced-ink",
     ],
-    select: [
-      "h-full min-h-0 border-0 border-b-edge border-field-edge bg-transparent",
-      "not-disabled:hover:border-field-edge-hover",
-    ],
+    select: "h-full min-h-0 border-0 bg-transparent focus-visible:bg-neutral-hover focus-visible:outline-none",
   },
   variants: {
     invalid: {
       true: {
-        root: [
-          "border-danger has-[>input:focus-visible]:outline-danger-halo forced-colors:border-forced-mark",
-        ],
-        input: "border-b-danger focus-visible:border-b-danger forced-colors:border-b-forced-mark",
+        root: "border-danger has-focus-visible:border-danger has-focus-visible:outline-danger-halo forced-colors:border-forced-mark",
       },
       false: {
-        root: "has-[>input:focus-visible]:outline-focus-halo",
-        input: "focus-visible:border-b-focus",
+        root: "has-focus-visible:border-focus has-focus-visible:outline-focus-halo",
       },
     },
   },
@@ -215,7 +206,7 @@ export const toggleSelect = tv({
     root: "paper-toggle-select @container min-w-0",
     legend: "mb-2",
     options: [
-      "paper-toggle-select__options flex flex-wrap gap-px border border-b-edge border-field-edge bg-rule",
+      "paper-toggle-select__options flex flex-wrap gap-px border border-field-edge bg-rule",
       "@max-toggle:flex-col forced-colors:border-forced-ink forced-colors:bg-forced-ink",
     ],
     option: [
@@ -268,7 +259,7 @@ export const combobox = tv({
     empty: "paper-combobox__empty px-field-x py-field-y text-muted empty:hidden",
     chips: [
       "paper-combobox__chips relative flex min-h-control flex-wrap items-center gap-1.4 p-1 pe-combobox-end",
-      "border border-b-edge border-field-edge bg-field font-body text-body leading-125",
+      "border border-field-edge bg-field font-body text-body leading-125",
       "has-[input:focus-visible]:z-lift",
       "has-[input:focus-visible]:outline-halo",
       "has-[input:focus-visible]:outline-offset-0",

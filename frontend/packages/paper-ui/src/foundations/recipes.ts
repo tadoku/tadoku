@@ -40,8 +40,8 @@ export const surface = tv({
   defaultVariants: { tone: 'paper', elevation: 'flat' },
 })
 
-/** The pale field edge: hairline perimeter with a heavier lower edge. */
-export const fieldEdge = tv({ base: 'rounded-none border border-rule border-b-edge border-b-field-edge' })
+/** The field edge: a soft hairline on every side. */
+export const fieldEdge = tv({ base: 'rounded-none border border-field-edge' })
 
 /** The filled action edge. */
 export const actionEdge = tv({ base: 'rounded-none border border-b-edge border-button-shade' })

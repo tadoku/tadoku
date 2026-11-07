@@ -32,8 +32,8 @@ const color = {
   paper: themed(p.sand[50], p.graphite[850]),
   raised: themed(p.white, p.graphite[750]),
   overlay: themed(p.sand[50], p.graphite[750]),
-  /** Text fields and pickers: lighter than paper in light mode, sunk below it in dark mode. */
-  field: themed(p.white, p.graphite[900]),
+  /** Text fields and pickers: a step lighter than the card, on a soft edge. */
+  field: themed(p.white, p.graphite[700]),
   scrim: themed(p.shade.scrimLight, p.shade.scrimDark),
 
   ink: themed(p.plum[900], p.graphite[100]),
@@ -45,8 +45,8 @@ const color = {
   'rule-subtle': themed(p.sand[250], p.graphite[700]),
   rule: themed(p.sand[400], p.graphite[600]),
   'rule-strong': themed(p.plum[700], p.graphite[500]),
-  'field-edge': themed(p.sand[500], p.graphite[400]),
-  'field-edge-hover': themed(p.plum[700], p.graphite[300]),
+  'field-edge': themed(p.sand[300], p.graphite[600]),
+  'field-edge-hover': themed(p.sand[500], p.graphite[500]),
   /** Outline buttons: quieter than a field's edge in dark mode, where the field edge reads harsh on a button. */
   'button-edge': themed(p.sand[500], p.graphite[500]),
   'button-edge-hover': themed(p.plum[700], p.graphite[400]),
@@ -71,7 +71,7 @@ const color = {
 
   focus: themed(p.violet[600], p.violet[300]),
   'focus-offset': 'var(--color-canvas)',
-  'focus-halo': mix('focus', 22),
+  'focus-halo': mix('focus', 12),
   'danger-halo': mix('danger', 22),
   shadow: themed(p.shade.plum, p.shade.violet),
 

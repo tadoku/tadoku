@@ -15,7 +15,7 @@ const colorRoles = [
   ['Subtle rule', 'rule-subtle', 'Low-emphasis division within related content.'],
   ['Rule', 'rule', 'Ordinary one-pixel separator.'],
   ['Strong rule', 'rule-strong', 'Floating surface boundary.'],
-  ['Field lower edge', 'field-edge', 'The lower border of pale controls.'],
+  ['Field edge', 'field-edge', 'The border of text fields and pickers.'],
   ['Button edge', 'button-edge', 'The border of outline buttons.'],
   ['Button shade', 'button-shade', 'The translucent edge of filled buttons, deeper at the bottom.'],
   ['Action', 'action', 'Filled action background; pair with on-action.'],

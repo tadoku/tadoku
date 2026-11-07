@@ -3,7 +3,7 @@
 .app-awaiting-hydration:disabled { opacity: 1; cursor: progress; }
 
 /* Footer: an ink band in both themes, as Webv2's, with the brand and community links beside grouped page links. */
-.app-footer { --footer-ink: #f2efe8; --footer-muted: #b4abaf; color: var(--footer-ink); background: #1b1618; padding: 48px var(--app-gutter) 56px; }
+.app-footer { --footer-ink: #f2efe8; --footer-muted: #b4abaf; --footer-link: #ddd6d9; --footer-label: #9d9498; color: var(--footer-ink); background: #1b1618; padding: 48px var(--app-gutter) 56px; }
 [data-theme="dark"] .app-footer { background: #0b090b; border-top: 1px solid var(--paper-color-rule-default); }
 .app-footer__inner { max-width: var(--app-content-width); margin: auto; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px 64px; }
 .app-footer a { color: inherit; text-decoration: none; }
@@ -18,10 +18,11 @@
 .app-footer__social a { display: grid; place-items: center; inline-size: 40px; block-size: 40px; border: 1px solid #4a4245; color: var(--footer-ink); }
 .app-footer__social a:hover { border-color: #8f80e8; color: #c4b9ff; background: rgb(143 128 232 / 14%); }
 .app-footer__social svg { inline-size: 20px; block-size: 20px; }
-.app-footer__links { display: flex; flex-wrap: wrap; gap: 32px 64px; }
-.app-footer__group h2 { margin: 0 0 14px; padding-bottom: 6px; border-bottom: 2px solid #8f80e8; font-family: var(--paper-font-body); font-size: .875rem; font-weight: 700; line-height: 1.4; letter-spacing: .02em; }
-.app-footer__group ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; font-size: .875rem; color: var(--footer-muted); }
-@media (max-width: 720px) { .app-footer__inner { grid-template-columns: minmax(0, 1fr); } .app-footer__links { gap: 28px 40px; } }
+/* Link groups: equal columns under small uppercase labels, so the links lead rather than the headings. */
+.app-footer__links { display: grid; grid-template-columns: repeat(3, minmax(0, 10rem)); gap: 32px 40px; }
+.app-footer__group h2 { margin: 0 0 14px; color: var(--footer-label); font-family: var(--paper-font-body); font-size: .75rem; font-weight: 600; line-height: 1.4; letter-spacing: .08em; text-transform: uppercase; }
+.app-footer__group ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; font-size: .875rem; line-height: 1.5; color: var(--footer-link); }
+@media (max-width: 720px) { .app-footer__inner { grid-template-columns: minmax(0, 1fr); } .app-footer__links { grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 28px 24px; } }
 
 /* The appearance switch is a row in the phone menu's account section, set apart from the account's pages; it shows the
    label and icon for the theme it switches to. */

@@ -64,7 +64,8 @@ registration returns to the contest page.
 The Leaderboard and Updates tabs share the page header and actions.
 `/contests/$id/updates` lists every participant's contest logs as Webv2's updates
 page does: newest first, 50 per page, without deleted logs, each naming its
-learner and opening its [native detail page](webv3-logging.md). A missing or
+learner beside their [avatar](webv3.md#avatars) and opening its
+[native detail page](webv3-logging.md). A missing or
 malformed page segment reads as the first page; a page past the end links back
 to it.
 

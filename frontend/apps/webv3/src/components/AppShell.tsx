@@ -20,6 +20,7 @@ import { DiscordIcon, GitHubIcon, TwitterIcon } from './BrandIcons'
 import { useAccountUrls, viewerQueryOptions, type Viewer } from '../lib/session'
 import { useLinks } from '../lib/links'
 import { Announcements } from './Announcements'
+import { Avatar } from './Avatar'
 import { renderLink } from './router-link'
 
 type Theme = ThemeName
@@ -84,6 +85,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           currentPath={currentPath}
           renderLink={renderLink}
           actions={<div className={accountActions}><AccountActions viewer={viewer} /></div>}
+          // A long account name truncates further rather than squeezing the fixed-width brand.
+          classNames={{ brand: 'shrink-0', actions: 'min-w-0' }}
           mobileFooter={viewer?.status === 'signed-in' ? closeMenu => <MobileAccount viewer={viewer} closeMenu={closeMenu} /> : undefined}
         />
         {viewer && 'userId' in viewer ? <form id={logoutFormId} method="post" action="/logout" hidden /> : null}
@@ -184,12 +187,18 @@ function AccountActions({ viewer }: { viewer: Viewer | undefined }) {
 function AccountMenu({ viewer }: { viewer: SignedIn }) {
   const hydrated = useHydrated()
   return (
-    <span className="max-lg:hidden [&_.paper-button>span]:max-w-measure-label [&_.paper-button>span]:truncate">
+    <span
+      className={cn(
+        'flex min-w-0 max-lg:hidden [&_.paper-button]:min-w-0',
+        '[&_.paper-button>span:last-of-type]:max-w-measure-label [&_.paper-button>span:last-of-type]:truncate',
+      )}
+    >
       {hydrated
         ? <AccountMenuOpen viewer={viewer} />
         : (
           // The menu's trigger as server HTML renders it, disabled until it can open.
           <button type="button" className={buttonClassName({ variant: 'ghost', className: 'disabled:cursor-progress disabled:opacity-full' })} disabled>
+            <Avatar userId={viewer.userId} name={viewer.displayName} size="md" />
             <span>{viewer.displayName}</span>
             <ChevronDownIcon className={iconClassName('compact')} aria-hidden="true" />
           </button>
@@ -211,6 +220,7 @@ function AccountMenuOpen({ viewer }: { viewer: SignedIn }) {
   return (
     <ActionMenu
       label={viewer.displayName}
+      triggerLeading={<Avatar userId={viewer.userId} name={viewer.displayName} size="md" />}
       triggerVariant="ghost"
       items={[
         ...items,
@@ -226,7 +236,10 @@ function MobileAccount({ viewer, closeMenu }: { viewer: SignedIn; closeMenu: () 
   const { accountUrl } = useLoaderData({ from: rootRouteId })
   return (
     <section className="mt-3 border-t border-rule-subtle pt-3" aria-label={`${viewer.displayName} account`}>
-      <p className="mb-1 mt-0 px-field-x text-sm font-semibold text-muted wrap-anywhere">{viewer.displayName}</p>
+      <p className="mb-1 mt-0 flex items-center gap-2 px-field-x text-sm font-semibold text-muted wrap-anywhere">
+        <Avatar userId={viewer.userId} name={viewer.displayName} size="md" />
+        {viewer.displayName}
+      </p>
       {links.map(link => (
         <Fragment key={link.id}>
           {renderLink({ href: link.href, className: mobileLink, onClick: closeMenu, children: link.label })}

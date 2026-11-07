@@ -121,7 +121,7 @@ describe("Table", () => {
     const region = screen.getByRole("region", { name: "Recent reading" });
     const table = within(region).getByRole("table", { name: "Recent reading" });
     expect(region).toHaveAttribute("tabindex", "0");
-    expect(region).toHaveStyle("--paper-table-min-inline-size: 30rem");
+    expect(table).toHaveStyle("min-inline-size: 30rem");
     expect(within(table).getAllByRole("columnheader")).toHaveLength(2);
     expect(within(table).getByRole("rowheader", { name: "Convenience Store Woman" })).toHaveAttribute(
       "scope",

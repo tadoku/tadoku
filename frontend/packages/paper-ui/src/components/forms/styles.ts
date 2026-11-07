@@ -20,7 +20,7 @@ export const field = tv({
 /** Text inputs, text areas and selects. */
 export const control = tv({
   base: [
-    "paper-input min-h-control w-full rounded-none border border-b-edge border-field-edge bg-paper px-field-x py-field-y",
+    "paper-input min-h-control w-full rounded-none border border-b-edge border-field-edge bg-field px-field-x py-field-y",
     "font-body text-body leading-125 text-ink",
     "[&::-webkit-datetime-edit-fields-wrapper]:p-0 placeholder:text-muted placeholder:opacity-full",
     "focus-visible:relative focus-visible:z-lift focus-visible:border-focus",
@@ -34,7 +34,7 @@ export const control = tv({
       textarea: "paper-textarea min-h-textarea resize-y leading-body",
       select: "paper-select appearance-none pe-select-end",
     },
-    interactive: { true: "not-disabled:hover:border-rule-strong" },
+    interactive: { true: "not-disabled:hover:border-field-edge-hover" },
     readOnly: { true: "border-b-rule bg-raised" },
     invalid: {
       true: "border-danger border-b-danger focus-visible:border-danger focus-visible:outline-danger-halo",
@@ -89,7 +89,7 @@ export const choice = tv({
       true: {
         root: [
           "paper-choice--card grid w-full grid-cols-icon-content-end items-center gap-x-inline gap-y-1",
-          "border border-field-edge bg-paper px-4 py-3 max-sm:grid-cols-icon-content",
+          "border border-field-edge bg-field px-4 py-3 max-sm:grid-cols-icon-content",
           "not-has-disabled:hover:bg-neutral-hover",
           "has-checked:border-link has-checked:bg-action-soft has-checked:shadow-underline-link",
           "has-disabled:cursor-default has-disabled:border-rule",
@@ -113,9 +113,9 @@ export const segment = tv({
     root: [
       "paper-radio-select__segment group/segment relative inline-grid min-h-control min-w-radio-min grow basis-28",
       "grid-cols-label-check items-center -ms-px -mt-px first:ms-0 cursor-pointer",
-      "border border-b-edge border-field-edge bg-paper px-field-x py-field-y",
+      "border border-b-edge border-field-edge bg-field px-field-x py-field-y",
       "text-body leading-125 font-semibold text-ink",
-      "not-has-disabled:not-has-checked:hover:border-rule-strong not-has-disabled:not-has-checked:hover:bg-neutral-hover",
+      "not-has-disabled:not-has-checked:hover:border-field-edge-hover not-has-disabled:not-has-checked:hover:bg-neutral-hover",
       "has-checked:z-lift has-checked:border-link has-checked:bg-action-soft",
       "has-focus-visible:z-lift-2 has-focus-visible:outline-halo has-focus-visible:outline-offset-0",
       "has-disabled:cursor-default has-disabled:text-muted",
@@ -151,7 +151,7 @@ export const radioCard = tv({
   slots: {
     list: "paper-radio-cards grid grid-cols-radio-cards gap-2.6",
     root: [
-      "paper-radio-card grid cursor-pointer grid-cols-mark-label gap-3 border border-field-edge bg-paper p-3.4",
+      "paper-radio-card grid cursor-pointer grid-cols-mark-label gap-3 border border-field-edge bg-field p-3.4",
       "has-checked:border-b-edge has-checked:border-link",
       "has-focus-visible:relative has-focus-visible:z-lift has-focus-visible:outline-halo has-focus-visible:outline-offset-0",
       "has-disabled:cursor-default has-disabled:text-muted",
@@ -174,7 +174,7 @@ export const radioCard = tv({
 export const compoundField = tv({
   slots: {
     root: [
-      "paper-compound-field grid min-h-control grid-cols-content-end border border-b-0 border-field-edge bg-paper",
+      "paper-compound-field grid min-h-control grid-cols-content-end border border-b-0 border-field-edge bg-field",
       "has-[>input:focus-visible]:outline-halo has-[>input:focus-visible]:outline-offset-0",
       "forced-colors:border-forced-ink forced-colors:bg-forced-canvas",
       "forced-colors:has-[>input:focus-visible]:outline-forced-highlight",
@@ -189,7 +189,7 @@ export const compoundField = tv({
     ],
     select: [
       "h-full min-h-0 border-0 border-b-edge border-field-edge bg-transparent",
-      "not-disabled:hover:border-rule-strong",
+      "not-disabled:hover:border-field-edge-hover",
     ],
   },
   variants: {
@@ -220,7 +220,7 @@ export const toggleSelect = tv({
     ],
     option: [
       "paper-toggle-select__option flex min-h-target min-w-0 grow basis-34 cursor-pointer items-center justify-between gap-2",
-      "@max-toggle:basis-auto rounded-none border-0 bg-paper px-field-x py-field-y text-start",
+      "@max-toggle:basis-auto rounded-none border-0 bg-field px-field-x py-field-y text-start",
       "font-body text-sm leading-125 font-semibold text-ink",
       "not-disabled:not-aria-pressed:hover:bg-toggle-hover aria-pressed:bg-action-soft",
       "focus-visible:relative focus-visible:z-lift focus-visible:outline-ring focus-visible:outline-focus",
@@ -263,10 +263,12 @@ export const combobox = tv({
       "px-field-x py-field-y outline-none data-highlighted:bg-action data-highlighted:text-on-action",
     ],
     indicator: "paper-combobox__indicator invisible group-data-selected/item:visible",
-    empty: "paper-combobox__empty px-field-x py-field-y text-muted",
+    // Base UI unmounts the indicator on unselected items, so the label must name its column.
+    label: "col-start-2",
+    empty: "paper-combobox__empty px-field-x py-field-y text-muted empty:hidden",
     chips: [
       "paper-combobox__chips relative flex min-h-control flex-wrap items-center gap-1.4 p-1 pe-combobox-end",
-      "border border-b-edge border-field-edge bg-paper font-body text-body leading-125",
+      "border border-b-edge border-field-edge bg-field font-body text-body leading-125",
       "has-[input:focus-visible]:z-lift",
       "has-[input:focus-visible]:outline-halo",
       "has-[input:focus-visible]:outline-offset-0",

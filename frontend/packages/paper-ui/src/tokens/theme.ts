@@ -32,6 +32,8 @@ const color = {
   paper: themed(p.sand[50], p.graphite[850]),
   raised: themed(p.white, p.graphite[750]),
   overlay: themed(p.sand[50], p.graphite[750]),
+  /** Text fields and pickers: lighter than paper in light mode, sunk below it in dark mode. */
+  field: themed(p.white, p.graphite[900]),
   scrim: themed(p.shade.scrimLight, p.shade.scrimDark),
 
   ink: themed(p.plum[900], p.graphite[100]),
@@ -44,6 +46,7 @@ const color = {
   rule: themed(p.sand[400], p.graphite[600]),
   'rule-strong': themed(p.plum[700], p.graphite[500]),
   'field-edge': themed(p.sand[500], p.graphite[400]),
+  'field-edge-hover': themed(p.plum[700], p.graphite[300]),
   'action-edge': themed(p.violet[800], p.violet[775]),
   'destructive-edge': themed(p.red[800], p.red[700]),
 
@@ -52,6 +55,7 @@ const color = {
   'action-active': themed(p.violet[725], p.violet[550]),
   'action-soft': themed(p.violet[50], p.violet[900]),
   'neutral-hover': themed(p.sand[200], p.graphite[800]),
+  'raised-hover': themed(p.sand[200], p.graphite[700]),
   'on-action': themed(p.sand[50], p.sand[50]),
   destructive: themed(p.red[500], p.red[450]),
   'destructive-hover': themed(p.red[600], p.red[400]),
@@ -90,6 +94,7 @@ const color = {
   'tab-hover': mix('ink', 4),
   'toggle-hover': mix('ink', 3, 'paper'),
   'chip-remove-hover': mix('link', 16),
+  'destructive-soft': mix('danger', 14),
   'current-row-hover': mix('ink', 5, 'action-soft'),
   'checkbox-disabled-edge': `color-mix(in srgb, var(--color-field-edge) 85%, var(--color-rule))`,
 

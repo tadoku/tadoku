@@ -1040,6 +1040,15 @@ export const zImmersionProfileFindByUserIdPath = z.object({
  */
 export const zImmersionProfileFindByUserIdResponse = zImmersionUserProfile;
 
+export const zImmersionProfileAvatarByUserIdPath = z.object({
+    userId: z.string().guid()
+});
+
+/**
+ * The avatar image, as JPEG, PNG, GIF or WebP.
+ */
+export const zImmersionProfileAvatarByUserIdResponse = z.string();
+
 export const zImmersionProfileYearlyActivityByUserIdPath = z.object({
     userId: z.string().guid(),
     year: z.int()

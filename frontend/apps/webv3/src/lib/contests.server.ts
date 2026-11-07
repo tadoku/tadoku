@@ -1,4 +1,5 @@
 import {
+  immersionProfileFindByUserId,
   immersionProfileYearlyContestRegistrationsByUserId,
   immersionContestCreate,
   immersionContestCreatePermissionCheck,
@@ -85,6 +86,13 @@ async function readJoinedContests(userId: string, year: number, page: number): P
     activities: Object.fromEntries(views.flatMap(view => view.allowed_activities).map(activity => [String(activity.id), activity.name])),
   }
   return { ok: true, data: { contests, total: result.data.total_size, names } }
+}
+
+/** The calendar year an account joined Tadoku, from its public profile; null when the profile can't be read. */
+export async function readAccountSince(userId: string): Promise<number | null> {
+  const profile = await immersionProfileFindByUserId({ ...sessionRequest(), path: { userId } }).catch(() => failed)
+  const year = Number(profile.data?.created_at?.slice(0, 4))
+  return Number.isInteger(year) && year > 0 ? year : null
 }
 
 /** The API answers 200 when the visitor may create a contest; anything else hides the action, as in Webv2. */

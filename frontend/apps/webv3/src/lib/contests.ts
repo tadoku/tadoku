@@ -81,6 +81,21 @@ export const contestsQuery = (scope: ContestListScope, page: number, forViewer: 
   retry: false,
 })
 
+const getAccountSince = createServerFn({ method: 'GET' })
+  .inputValidator(z.object({ userId: z.guid() }))
+  .handler(async ({ data }) => {
+    const { readAccountSince } = await import('./contests.server')
+    return readAccountSince(data.userId)
+  })
+
+/** The year an account joined Tadoku, where the Joined list's years start; null when it can't be read. */
+export const accountSinceQuery = (userId: string) => queryOptions({
+  queryKey: ['account-since', userId],
+  queryFn: (): Promise<number | null> => getAccountSince({ data: { userId } }),
+  staleTime: Infinity,
+  retry: false,
+})
+
 /** Whether the signed-in viewer may create a contest, which shows the create action. */
 export const canCreateContestQuery = (forViewer: string) => queryOptions({
   queryKey: ['can-create-contest', forViewer],
@@ -104,6 +119,7 @@ export async function loadContests(queryClient: QueryClient, view: ContestView, 
   const scope = contestScope(view, viewer)
   await Promise.all([
     scope ? queryClient.ensureQueryData(contestsQuery(scope, page, viewerKey(viewer))) : null,
+    scope?.kind === 'participant' ? queryClient.ensureQueryData(accountSinceQuery(scope.userId)) : null,
     viewer.status === 'signed-in' ? queryClient.ensureQueryData(canCreateContestQuery(viewerKey(viewer))) : null,
   ])
 }

@@ -3,6 +3,7 @@ import { PlusIcon, iconClassName } from 'paper-ui/icons'
 import { Link } from '@tanstack/react-router'
 import { Button, EmptyState, PageHeader, Pagination, StatusTag, Tabbar, buttonClassName } from 'paper-ui'
 import {
+  accountSinceQuery,
   canCreateContestQuery,
   contestScope,
   contestsHref,
@@ -18,6 +19,7 @@ import { formatDate, formatPeriod, numberFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { useLoginUrl, viewerKey, viewerQueryOptions } from '../lib/session'
 import { renderLink } from './router-link'
+import { YearStepper } from './YearStepper'
 
 const tabs: { id: ContestCollection; label: string }[] = [
   { id: 'official', label: 'Official' },
@@ -26,8 +28,6 @@ const tabs: { id: ContestCollection; label: string }[] = [
   { id: 'organizing', label: 'Organizing' },
 ]
 
-/** Registrations are kept per calendar year from Tadoku's first year, so the joined list pages through years. */
-const firstYear = 2020
 const thisYear = () => new Date().getUTCFullYear()
 
 /**
@@ -59,7 +59,7 @@ export function ContestsPage({ view, page }: { view: ContestView; page: number }
           current: tab.id === collection,
         }))}
       />
-      {view.collection === 'joined' && scope ? <JoinedYears year={view.year} /> : null}
+      {view.collection === 'joined' && scope?.kind === 'participant' ? <JoinedYear userId={scope.userId} year={view.year} /> : null}
       {scope ? (
         <Contests scope={scope} view={view} page={page} />
       ) : viewer?.status === 'anonymous' ? (
@@ -77,20 +77,13 @@ export function ContestsPage({ view, page }: { view: ContestView; page: number }
   )
 }
 
-function JoinedYears({ year }: { year: number }) {
-  const years = Array.from({ length: thisYear() - firstYear + 1 }, (_, index) => thisYear() - index)
+/** The Joined list's year, stepping between the year the account joined Tadoku and this year. */
+function JoinedYear({ userId, year }: { userId: string; year: number }) {
+  const since = useQuery(accountSinceQuery(userId)).data
+  const current = thisYear()
   return (
-    <div className="contests-years">
-      <Tabbar
-        label="Year"
-        renderLink={renderLink}
-        links={years.map(each => ({
-          id: String(each),
-          label: String(each),
-          href: contestsHref.joined(each),
-          current: each === year,
-        }))}
-      />
+    <div className="contests-year">
+      <YearStepper year={year} first={Math.min(since ?? current, current)} current={current} href={contestsHref.joined} label="Year" />
     </div>
   )
 }

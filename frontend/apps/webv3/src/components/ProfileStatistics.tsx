@@ -1,11 +1,10 @@
 import { useEffect, useRef, type ReactNode } from 'react'
-import { Link } from '@tanstack/react-router'
-import { Button, EmptyState, HeatmapChart, Pagination, SectionHeading, StatGrid, StatusTag, buttonClassName } from 'paper-ui'
-import { ChevronLeftIcon, ChevronRightIcon } from 'paper-ui/icons'
+import { EmptyState, HeatmapChart, Pagination, SectionHeading, StatGrid, StatusTag, buttonClassName } from 'paper-ui'
 import { formatPeriod, pointsUnit } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { contestPageSize, type ContestHistory, type ProfileStatistics as Statistics, type Section } from '../lib/profile'
 import { ProfileHeader } from './ProfileHeader'
+import { YearStepper } from './YearStepper'
 
 type Found = Extract<Statistics, { status: 'found' }>
 
@@ -138,29 +137,14 @@ function HeatmapScroll({ latest, children }: { latest: boolean; children: ReactN
 
 /** Steps through the years from the profile's first year to the current one. */
 function YearControl({ statistics, year }: { statistics: Found; year: number }) {
-  const first = Number(statistics.profile.created_at.slice(0, 4))
-  const current = Number(statistics.today.slice(0, 4))
-  const previous = year > first ? Math.min(year - 1, current) : undefined
-  const next = year < current ? Math.max(year + 1, first) : undefined
-  const step = (target: number | undefined, label: string, icon: ReactNode) => target === undefined
-    ? <Button variant="ghost" aria-label={label} disabled>{icon}</Button>
-    : (
-      <Link
-        className={buttonClassName({ variant: 'ghost' })}
-        aria-label={`${label}, ${target}`}
-        to="/profile/$id/statistics/{-$year}"
-        params={{ id: statistics.profile.id, year: String(target) }}
-      >
-        {icon}
-      </Link>
-    )
-
   return (
-    <div className="profile-year-control" role="group" aria-label="Profile year">
-      {step(previous, 'Previous year', <ChevronLeftIcon className="paper-icon-default" aria-hidden="true" />)}
-      <strong aria-live="polite">{year}</strong>
-      {step(next, 'Next year', <ChevronRightIcon className="paper-icon-default" aria-hidden="true" />)}
-    </div>
+    <YearStepper
+      year={year}
+      first={Number(statistics.profile.created_at.slice(0, 4))}
+      current={Number(statistics.today.slice(0, 4))}
+      href={target => `/profile/${statistics.profile.id}/statistics/${target}`}
+      label="Profile year"
+    />
   )
 }
 

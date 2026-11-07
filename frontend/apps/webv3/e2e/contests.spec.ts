@@ -239,8 +239,15 @@ test('a participant’s Joined list holds their registrations for the chosen yea
   await expect(page).toHaveURL(new RegExp(`/contests/joined/${year}/1$`))
   await expectRows(page, { contests: joined.registrations.map(registration => registration.contest), total_size: joined.total_size })
 
-  await page.getByRole('navigation', { name: 'Year' }).getByRole('link', { name: '2020', exact: true }).click()
-  await expect(page).toHaveURL(/\/contests\/joined\/2020\/1$/)
+  // The year steps from the year the account joined Tadoku to this one; Dev Reader joined this year.
+  const profile = await (await readerContext.request.get(`${api}/immersion/users/${userId}/profile`)).json() as { created_at: string }
+  const since = Number(profile.created_at.slice(0, 4))
+  const stepper = page.getByRole('group', { name: 'Year' })
+  await expect(stepper).toContainText(String(year))
+  if (since === year) await expect(stepper.getByRole('button', { name: 'Previous year' })).toBeDisabled()
+  else await expect(stepper.getByRole('link', { name: `Previous year, ${year - 1}` })).toBeVisible()
+
+  await page.goto('/contests/joined/2020/1')
   await expect(page.getByRole('heading', { level: 2, name: 'You didn’t join any contests in 2020' })).toBeVisible()
   await expect(page.locator('.contest-row')).toHaveCount(0)
 })

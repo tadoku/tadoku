@@ -94,9 +94,12 @@ function Entry({ log, showParticipant, actions, firstOfDay }: {
             <p className="mb-0 mt-2 max-w-measure-note leading-170 wrap-anywhere">{log.description}</p>
           </details>
         ) : null}
-        {actions ? <div className="-ms-3 mt-2">{actions}</div> : null}
       </div>
-      <span className={entries.score()}>{numberFormat.format(log.score)} <small>{pointsUnit(log.score)}</small></span>
+      {/* Actions sit under the score, so they add no row of their own. */}
+      <div className={entries.score({ className: 'grid content-start justify-items-end gap-1' })}>
+        <span>{numberFormat.format(log.score)} <small>{pointsUnit(log.score)}</small></span>
+        {actions}
+      </div>
     </li>
   )
 }

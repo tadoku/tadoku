@@ -29,10 +29,9 @@ export const button = tv({
     base: [
       "paper-button relative inline-flex min-h-control select-none items-center justify-center gap-2",
       "px-button-x pt-button-top pb-button-bottom text-button font-semibold leading-none text-center no-underline",
-      "rounded-none border border-action border-b-edge border-b-action-edge bg-action text-on-action",
+      "rounded-none border border-b-edge border-button-shade bg-action text-on-action",
       "cursor-pointer transition-colors duration-quick motion-reduce:transition-none",
-      "not-disabled:hover:border-action-hover not-disabled:hover:border-b-action-edge not-disabled:hover:bg-action-hover",
-      "not-disabled:active:border-action-active not-disabled:active:border-b-action-edge not-disabled:active:bg-action-active",
+      "not-disabled:hover:bg-action-hover not-disabled:active:bg-action-active",
       "not-disabled:active:translate-y-px",
       "disabled:cursor-default disabled:opacity-disabled aria-disabled:cursor-default aria-disabled:opacity-disabled",
     ],
@@ -49,10 +48,10 @@ export const button = tv({
       default: { base: "paper-button--default" },
       outline: {
         base: [
-          "paper-button--outline border-field-edge bg-raised text-ink",
-          "not-disabled:hover:border-field-edge-hover not-disabled:hover:bg-raised-hover",
-          "not-disabled:active:border-field-edge-hover not-disabled:active:bg-raised-hover",
-          "data-popup-open:border-field-edge-hover data-popup-open:bg-raised-hover",
+          "paper-button--outline border-button-edge bg-raised text-ink",
+          "not-disabled:hover:border-button-edge-hover not-disabled:hover:bg-raised-hover",
+          "not-disabled:active:border-button-edge-hover not-disabled:active:bg-raised-hover",
+          "data-popup-open:border-button-edge-hover data-popup-open:bg-raised-hover",
         ],
       },
       ghost: {
@@ -71,9 +70,8 @@ export const button = tv({
       },
       destructive: {
         base: [
-          "paper-button--destructive border-destructive border-b-destructive-edge bg-destructive text-on-destructive",
-          "not-disabled:hover:border-destructive-hover not-disabled:hover:border-b-destructive-edge not-disabled:hover:bg-destructive-hover",
-          "not-disabled:active:border-destructive-hover not-disabled:active:border-b-destructive-edge not-disabled:active:bg-destructive-hover",
+          "paper-button--destructive bg-destructive text-on-destructive",
+          "not-disabled:hover:bg-destructive-hover not-disabled:active:bg-destructive-hover",
         ],
       },
       "destructive-ghost": {

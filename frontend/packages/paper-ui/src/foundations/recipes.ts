@@ -44,7 +44,7 @@ export const surface = tv({
 export const fieldEdge = tv({ base: 'rounded-none border border-rule border-b-edge border-b-field-edge' })
 
 /** The filled action edge. */
-export const actionEdge = tv({ base: 'rounded-none border border-action border-b-edge border-b-action-edge' })
+export const actionEdge = tv({ base: 'rounded-none border border-b-edge border-button-shade' })
 
 /** Paper's type roles. Display roles use the serif; the rest use the body face. */
 export const typography = tv({

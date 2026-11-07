@@ -47,8 +47,11 @@ const color = {
   'rule-strong': themed(p.plum[700], p.graphite[500]),
   'field-edge': themed(p.sand[500], p.graphite[400]),
   'field-edge-hover': themed(p.plum[700], p.graphite[300]),
-  'action-edge': themed(p.violet[800], p.violet[775]),
-  'destructive-edge': themed(p.red[800], p.red[700]),
+  /** Outline buttons: quieter than a field's edge in dark mode, where the field edge reads harsh on a button. */
+  'button-edge': themed(p.sand[500], p.graphite[500]),
+  'button-edge-hover': themed(p.plum[700], p.graphite[400]),
+  /** A filled button's edge: one translucent shade on every side, deeper at the bottom, so corners don't mitre. */
+  'button-shade': themed('rgb(33 26 29 / 22%)', 'rgb(0 0 0 / 40%)'),
 
   action: themed(p.violet[600], p.violet[525]),
   'action-hover': themed(p.violet[700], p.violet[475]),

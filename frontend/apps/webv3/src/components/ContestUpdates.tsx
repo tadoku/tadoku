@@ -100,7 +100,17 @@ function RemoveFromContest({ log, contestId, viewerId, onRemoved }: {
 
   return (
     <Modal
-      trigger={<Button variant="link" className="text-sm font-regular text-danger" disabled={!hydrated}>Remove from contest</Button>}
+      trigger={(
+        // Muted until pointed at or focused: the row stays calm, and the confirmation names the consequence.
+        <Button
+          variant="link"
+          aria-label="Remove from contest"
+          className="text-sm font-regular text-muted no-underline hover:text-danger hover:underline focus-visible:text-danger"
+          disabled={!hydrated}
+        >
+          Remove
+        </Button>
+      )}
       title="Remove log from contest"
       open={open}
       onOpenChange={next => {

@@ -26,7 +26,7 @@ documented here.
 | token-reflector | Publishes the Kubernetes service-account JWKS and returns exchanged service tokens | `services/token-reflector/` |
 | Flipt | Feature flags | `k8s/dev/base/flipt/`, `feature-flags.contract.json` |
 | PostgreSQL | Tadoku API database in an operator-managed server | `k8s/dev/base/data/postgres.yaml` |
-| Valkey | Leaderboard cache | `k8s/dev/base/data/cache.yaml` |
+| Valkey | Caches and throttling counters; PostgreSQL stays the source of truth | `k8s/dev/base/data/cache.yaml` |
 
 Each component runs in its own `tdk-dev-*` namespace. `tdk-dev-routing`
 attaches the application routes to the platform Envoy Gateway.

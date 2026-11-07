@@ -24,7 +24,7 @@ environment variables. Development values are in
 - `API_REQUEST_TIMEOUT` (default 30s), the shared request deadline.
 - `API_DIAL_TIMEOUT` (default 3s), `API_RESPONSE_HEADER_TIMEOUT` (default 10s)
   and `API_IDLE_TIMEOUT` (default 30s) bound the owned outgoing HTTP transport
-  shared by the service-token exchange and Flipt clients.
+  shared by the service-token exchange, Flipt and Gravatar clients.
   `API_IDLE_TIMEOUT` is also the listeners' idle-connection timeout.
 - `API_SHUTDOWN_TIMEOUT` (default 10s).
 
@@ -126,6 +126,24 @@ the latter.
   clients are lazy and bounded to 16. Missing namespaces, missing tenant
   contexts and disabled Flipt give `Boolean` consumers safe defaults. See
   [Feature flags](../architecture/feature-flags.md).
+
+### Gravatar avatars
+
+`API_GRAVATAR_URL` (default `https://gravatar.com`) is the Gravatar base URL,
+with the same HTTP(S) URL rules as the other provider base URLs. The profile
+avatar operation fetches
+`<base>/avatar/<SHA-256 of the trimmed, lowercased email>?s=128&d=404` with a
+3-second timeout and no redirects. The request carries nothing from the viewer,
+so browsers never receive the email or its hash and Gravatar never sees viewers.
+
+- Only JPEG, PNG, GIF and WebP images up to 256 KiB are served. Any other
+  response, a timeout or a transport error fails the request and is not cached.
+- The image and its content type, or the absence of one (a Gravatar `404`), are
+  cached in Valkey under `tenant:<name>/<id>:profile:avatar:<user id>` for 24
+  hours. A changed email or Gravatar image can therefore take up to 24 hours to
+  show. Valkey failures fall back to fetching from Gravatar.
+- The operation checks the user before the cache, so a deleted user's cached
+  avatar is never served.
 
 ### Scoring engine
 

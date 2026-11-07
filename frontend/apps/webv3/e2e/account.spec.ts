@@ -73,11 +73,11 @@ test('login, exact return, SSR reload, foreign-origin refusal and logout invalid
   }
   await page.screenshot({ path: testInfo.outputPath('signed-in.png'), fullPage: true })
 
-  // Webv2's account menu: profile, account settings returning here, and no admin entry for a learner.
+  // Webv2's account menu: profile, account settings returning here, the theme switch, and no admin entry for a learner.
   await expect(page.getByRole('button', { name: 'Dev Reader', exact: true })).toBeEnabled()
   await page.getByRole('button', { name: 'Dev Reader', exact: true }).click()
   const menu = page.getByRole('menu')
-  await expect(menu.getByRole('menuitem')).toHaveText(['Profile', 'Account settings', 'Log out'])
+  await expect(menu.getByRole('menuitem')).toHaveText(['Profile', 'Account settings', 'Use dark theme', 'Log out'])
   await page.screenshot({ path: testInfo.outputPath('account-menu.png') })
   await menu.getByRole('menuitem', { name: 'Profile', exact: true }).click()
   await expect(page).toHaveURL(new RegExp(`^${base}/profile/[a-f0-9-]{36}/statistics$`))
@@ -149,7 +149,7 @@ test('thirty interleaved requests isolate two identities and anonymous HTML', as
     // An administrator's menu adds Webv2's Admin entry, which opens the matching admin host.
     await expect(page.getByRole('button', { name: 'Dev Admin', exact: true })).toBeEnabled()
     await page.getByRole('button', { name: 'Dev Admin', exact: true }).click()
-    await expect(page.getByRole('menu').getByRole('menuitem')).toHaveText(['Profile', 'Admin', 'Account settings', 'Log out'])
+    await expect(page.getByRole('menu').getByRole('menuitem')).toHaveText(['Profile', 'Admin', 'Account settings', 'Use dark theme', 'Log out'])
     await page.getByRole('menuitem', { name: 'Admin', exact: true }).click()
     await page.waitForURL(url => url.hostname === new URL(base!).hostname.replace(/(^|\.)next\./, '$1admin.'))
   } finally {

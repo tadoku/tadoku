@@ -80,7 +80,8 @@ in the header and leaves public pages readable.
 
 A signed-in account's menu, and its section of the phone menu, holds the
 theme switch, named for the theme it switches to; visitors follow their stored
-or system choice. The footer is an ink band, as in Webv2: the brand, the credit
+or system choice. The footer is an ink band in light mode, as in Webv2, and
+sits on the paper surface in dark mode: the brand, the credit
 line and Tadoku's Discord, GitHub and Twitter beside grouped links to Home,
 Leaderboard, Contests and Blog, About, Guide, Rules and Questions & help, and
 Privacy and Contact. `frontend/apps/webv3/src/components/Announcements.tsx`

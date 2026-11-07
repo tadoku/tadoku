@@ -292,15 +292,16 @@
     color: var(--paper-color-rule-strong);
   }
 
+  /* The rule is an inset shadow so the active tab's bar covers it rather than stacking a second line above it. */
   .paper-tabbar__list--horizontal {
     display: flex;
     overflow-x: auto;
-    border-block-end: 1px solid var(--paper-color-rule-default);
+    box-shadow: inset 0 -1px 0 var(--paper-color-rule-default);
   }
 
   .paper-tabbar__list--vertical {
     display: grid;
-    border-inline-start: 1px solid var(--paper-color-rule-default);
+    box-shadow: inset 1px 0 0 var(--paper-color-rule-default);
   }
 
   .paper-tabbar__link {

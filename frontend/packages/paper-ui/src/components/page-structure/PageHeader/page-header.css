@@ -16,6 +16,11 @@
     text-underline-offset: 0.2em;
   }
 
+  .paper-page-header__back:hover {
+    color: var(--paper-color-text-link-hover);
+    text-decoration-thickness: 2px;
+  }
+
   .paper-page-header__back > svg:dir(rtl) {
     transform: scaleX(-1);
   }

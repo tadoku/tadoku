@@ -11,6 +11,9 @@ const actionHugTargets = [
   ".paper-combobox__chips:has(.paper-combobox__chip-input:focus-visible)",
 ] as const;
 
+/** Fields draw focus on their own edge with a halo; a checkbox is too small for that and keeps a solid ring. */
+const fieldFocusTargets = actionHugTargets.filter(selector => selector !== ".paper-choice input:focus-visible");
+
 function leafRulesContaining(selector: string) {
   return [...formsCss.matchAll(/(?<selectors>[^{}]+)\{(?<declarations>[^{}]*)\}/gs)]
     .filter((match) => match.groups?.selectors.includes(selector))
@@ -48,29 +51,40 @@ describe("segmented RadioSelect visual contract", () => {
 });
 
 describe("choice and multi-value control focus ring", () => {
-  it.each(actionHugTargets)(
-    "gives %s the approved solid, offset keyboard-focus ring",
+  it("gives a checkbox the solid, offset keyboard-focus ring", () => {
+    const focusedRule = leafRulesContaining(".paper-choice input:focus-visible").find((declarations) =>
+      declarations.includes("var(--paper-focus-ring-offset)"),
+    );
+
+    expect(focusedRule ?? "").toMatch(
+      /outline:\s*var\(--paper-focus-ring-width\) solid var\(--paper-control-focus-color\)/s,
+    );
+  });
+
+  it.each(fieldFocusTargets)(
+    "gives %s the field focus: a focus-coloured edge and a soft halo flush with it",
     (selector) => {
       const focusedRule = leafRulesContaining(selector).find((declarations) =>
-        declarations.includes("var(--paper-focus-ring-offset)"),
+        declarations.includes("var(--paper-field-focus-halo-width)"),
       );
 
       expect(focusedRule).toBeDefined();
       expect(focusedRule ?? "").toContain(
         "--paper-control-focus-color: var(--paper-color-focus-ring)",
       );
+      expect(focusedRule ?? "").toMatch(/border-color:\s*var\(--paper-control-focus-color\)/s);
       expect(focusedRule ?? "").toMatch(
-        /outline:\s*var\(--paper-focus-ring-width\) solid var\(--paper-control-focus-color\)/s,
+        /outline:\s*var\(--paper-field-focus-halo-width\) solid color-mix\(in srgb, var\(--paper-control-focus-color\) 22%, transparent\)/s,
       );
-      expect(focusedRule ?? "").toMatch(/outline-offset:\s*var\(--paper-focus-ring-offset\)/s);
+      expect(focusedRule ?? "").toMatch(/outline-offset:\s*0/s);
     },
   );
 
-  it.each(actionHugTargets)(
+  it.each(fieldFocusTargets)(
     "keeps %s focus styling free of border-width and layout changes",
     (selector) => {
       const focusedRule = leafRulesContaining(selector).find((declarations) =>
-        declarations.includes("var(--paper-focus-ring-offset)"),
+        declarations.includes("var(--paper-field-focus-halo-width)"),
       );
 
       expect(focusedRule).toBeDefined();

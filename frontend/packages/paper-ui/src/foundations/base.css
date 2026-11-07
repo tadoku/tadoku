@@ -40,6 +40,12 @@ svg {
   display: none !important;
 }
 
+/* Every link answers the pointer: a deeper colour and a thicker underline. */
+:where(a:any-link):hover {
+  color: var(--paper-color-text-link-hover);
+  text-decoration-thickness: 2px;
+}
+
 :focus-visible {
   outline: var(--paper-focus-ring-width) solid var(--paper-color-focus-ring);
   outline-offset: var(--paper-focus-ring-offset);

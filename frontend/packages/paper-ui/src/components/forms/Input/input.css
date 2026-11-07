@@ -67,9 +67,9 @@
 
     position: relative;
     z-index: 1;
-    border-block-end-color: var(--paper-input-focus-color);
-    outline: var(--paper-focus-ring-width) solid var(--paper-input-focus-color);
-    outline-offset: var(--paper-focus-ring-offset);
+    border-color: var(--paper-input-focus-color);
+    outline: var(--paper-field-focus-halo-width) solid color-mix(in srgb, var(--paper-input-focus-color) 22%, transparent);
+    outline-offset: 0;
   }
 
   .paper-input::placeholder {

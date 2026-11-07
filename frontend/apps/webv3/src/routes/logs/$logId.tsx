@@ -98,8 +98,8 @@ function OwnerActions({ log }: { log: ImmersionLog }) {
       </Link>
       <Modal
         trigger={(
-          <Button variant="ghost" className="text-danger" disabled={!hydrated}>
-            <TrashIcon className={iconClassName('compact')} aria-hidden="true" />Delete log
+          <Button variant="destructive-ghost" disabled={!hydrated} leadingIcon={<TrashIcon className={iconClassName('compact')} />}>
+            Delete log
           </Button>
         )}
         title="Delete this log?"

@@ -1,7 +1,10 @@
+import * as stylex from '@stylexjs/stylex'
 import { useQuery } from '@tanstack/react-query'
 import { useStore } from '@tanstack/react-form'
 import { Link, createFileRoute, notFound, useHydrated, useNavigate } from '@tanstack/react-router'
-import { Button, EmptyState, PageHeader, Surface, buttonClassName, usePaperForm } from 'paper-ui'
+import { a11y, Button, buttonStyles, EmptyState, FieldSet, FormFooter, linkStyles, PageHeader, Surface, usePaperForm } from 'paper-ui'
+import { pageStyles } from '../../components/page-styles'
+import { border, color, fluid, fontSize, fontWeight, space, type } from 'paper-ui/tokens.stylex'
 import { useState } from 'react'
 import { z } from 'zod'
 import { DraftOwnerGate } from '../../components/DraftOwnerGate'
@@ -17,6 +20,39 @@ import {
   type Registration,
 } from '../../lib/logs'
 import { useLoginUrl, viewerQueryOptions } from '../../lib/session'
+
+const cardInset = `clamp(${space[16]}, ${fluid[4]}, ${space[32]})`
+
+const styles = stylex.create({
+  choices: { gap: space[8] },
+  note: { marginInline: 0, color: color.textMuted, fontSize: type.metadataSize, marginBlockEnd: 0, marginBlockStart: space[8], },
+  /** The log being submitted heads the card as a tinted band: what and how much, with its score at the end. */
+  summary: {
+    marginInline: `calc(-1 * ${cardInset})`,
+    paddingBlock: space[16],
+    paddingInline: cardInset,
+    alignItems: 'baseline',
+    backgroundColor: color.surfaceCanvas,
+    borderBlockEndColor: color.ruleDefault,
+    borderBlockEndStyle: 'solid',
+    borderBlockEndWidth: border.static,
+    columnGap: space[16],
+    display: 'grid',
+    gridTemplateColumns: 'minmax(0, 1fr) auto',
+    marginBlockEnd: space[24],
+    marginBlockStart: `calc(-1 * ${cardInset})`,
+    rowGap: space[2],
+  },
+  summaryText: { margin: 0 },
+  summaryLabel: { color: color.textMuted,
+ fontSize: type.metadataSize,
+ gridColumnEnd: '-1',
+ gridColumnStart: '1', },
+  summaryWhat: { fontWeight: fontWeight.semibold },
+  summaryDescription: { gridColumn: 1, color: color.textMuted, fontSize: fontSize[14], overflowWrap: 'anywhere', },
+  summaryScore: { gridColumn: 2, gridRow: 2, fontVariantNumeric: 'tabular-nums', fontWeight: fontWeight.bold, whiteSpace: 'nowrap', },
+  unit: { color: color.textMuted, fontSize: type.metadataSize, fontWeight: fontWeight.regular },
+})
 
 export const Route = createFileRoute('/logs/$logId_/contests')({
   head: () => ({ meta: [{ title: 'Submit to contests · Tadoku' }] }),
@@ -62,7 +98,7 @@ function ContestsDraft({ viewerId }: { viewerId: string }) {
         headingLevel={1}
         title="This is someone else's record"
         description="Only the learner who logged this activity can submit it to contests."
-        actions={<Link className="text-link" to="/logs/$logId" params={{ logId }}>View the log</Link>}
+        actions={<Link {...stylex.props(linkStyles.base)} to="/logs/$logId" params={{ logId }}>View the log</Link>}
       />
     )
   }
@@ -79,7 +115,7 @@ function ContestsDraft({ viewerId }: { viewerId: string }) {
         headingLevel={1}
         title="Your session ended"
         description="Log in again to submit this activity to contests."
-        actions={<a className={buttonClassName()} href={loginUrl}>Log in</a>}
+        actions={<a {...stylex.props(...buttonStyles())} href={loginUrl}>Log in</a>}
       />
     )
   }
@@ -132,18 +168,18 @@ function ContestsForm({ log, registrations, viewerId }: {
   const finished = submitted.filter(submission => submission.contest_end < today)
 
   return (
-    <div className="goal-page">
+    <div>
       <PageHeader
         title="Submit to contests"
         backLink={{ href: `/logs/${log.id}`, label: log.description || `${log.language.name} ${log.activity.name}` }}
       />
-      <Surface className="log-surface">
+      <Surface inset="fluid" xstyle={pageStyles.column}>
         <LogSummary log={log} />
         <form.AppForm>
-          <form.Form className="goal-form" aria-busy={pending}>
-            <fieldset className="goal-form__controls" disabled={disabled}>
-              <fieldset className="paper-choice-field log-contest-choices">
-                <legend className="paper-visually-hidden">Contests</legend>
+          <form.Form xstyle={pageStyles.form} aria-busy={pending}>
+            <FieldSet disabled={disabled}>
+              <FieldSet xstyle={styles.choices}>
+                <legend {...stylex.props(a11y.visuallyHidden)}>Contests</legend>
                 {/* As in Webv2: open contests first, then unavailable ones, each naming why on its own row. */}
                 {[...choices].sort((a, b) => Number(a.kind === 'ineligible') - Number(b.kind === 'ineligible')).map(choice => (
                   <form.AppField key={choice.registration.id} name="registrationIds">
@@ -159,14 +195,14 @@ function ContestsForm({ log, registrations, viewerId }: {
                     )}
                   </form.AppField>
                 ))}
-                {eligible.length ? <p className="log-contests-note">Unchecking removes this log’s score from that contest.</p> : null}
+                {eligible.length ? <p {...stylex.props(styles.note)}>Unchecking removes this log’s score from that contest.</p> : null}
                 {finished.map(submission => (
                   <p key={submission.registration_id}>
                     {submission.title} has finished. Its saved score
                     {submission.score === undefined ? '' : ` of ${submission.score} points`} stays.
                   </p>
                 ))}
-              </fieldset>
+              </FieldSet>
               {eligible.length ? null : (
                 <EmptyState
                   variant="plain"
@@ -175,20 +211,18 @@ function ContestsForm({ log, registrations, viewerId }: {
                   description={choices.length
                     ? 'This activity already counts in your personal history.'
                     : 'No contest registrations found. You can submit to contests after joining one. This activity already counts in your personal history.'}
-                  actions={<a className="text-link" href={links.contests}>Find a contest to join</a>}
+                  actions={<a {...stylex.props(linkStyles.base)} href={links.contests}>Find a contest to join</a>}
                 />
               )}
-            </fieldset>
+            </FieldSet>
 
             {failure ? <SaveFailure failure={failure} /> : null}
-            <div className="paper-form-footer">
-              <div className="paper-form-footer__actions">
+            <FormFooter>
                 <Button type="submit" disabled={disabled || !eligible.length}>
                   {pending ? 'Saving…' : 'Save submissions'}
                 </Button>
-                <Link className="text-link" to="/logs/$logId" params={{ logId: log.id }}>Cancel</Link>
-              </div>
-            </div>
+                <Link {...stylex.props(linkStyles.base)} to="/logs/$logId" params={{ logId: log.id }}>Cancel</Link>
+              </FormFooter>
           </form.Form>
         </form.AppForm>
       </Surface>
@@ -205,11 +239,13 @@ function LogSummary({ log }: { log: ImmersionLog }) {
   const what = [log.language.name, log.activity.name, formatTracking(log)].filter(Boolean).join(' · ')
 
   return (
-    <section className="log-contests-summary" aria-label="Your log">
-      <p className="log-contests-summary__label">Your log</p>
-      <p className="log-contests-summary__what">{what}</p>
-      {log.description && !nsfw ? <p className="log-contests-summary__description">{log.description}</p> : null}
-      <p className="log-contests-summary__score">{numberFormat.format(log.score)} <small>{pointsUnit(log.score)}</small></p>
+    <section {...stylex.props(styles.summary)} aria-label="Your log">
+      <p {...stylex.props(styles.summaryText, styles.summaryLabel)}>Your log</p>
+      <p {...stylex.props(styles.summaryText, styles.summaryWhat)}>{what}</p>
+      {log.description && !nsfw ? <p {...stylex.props(styles.summaryText, styles.summaryDescription)}>{log.description}</p> : null}
+      <p {...stylex.props(styles.summaryText, styles.summaryScore)}>
+        {numberFormat.format(log.score)} <small {...stylex.props(styles.unit)}>{pointsUnit(log.score)}</small>
+      </p>
     </section>
   )
 }
@@ -231,7 +267,7 @@ function SaveFailure({ failure }: { failure: LogFailure }) {
     <div role="alert">
       <p>{failureMessages[failure]}</p>
       {failure === 'signed-out'
-        ? <a className="text-link" href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
+        ? <a {...stylex.props(linkStyles.base)} href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
         : null}
     </div>
   )

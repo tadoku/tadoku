@@ -1,6 +1,7 @@
+import * as stylex from '@stylexjs/stylex'
 import { useQuery } from '@tanstack/react-query'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
-import { Button, EmptyState, buttonClassName } from 'paper-ui'
+import { Button, buttonStyles, EmptyState, linkStyles } from 'paper-ui'
 import { z } from 'zod'
 import { DraftOwnerGate } from '../../components/DraftOwnerGate'
 import { LogForm } from '../../components/LogForm'
@@ -45,7 +46,7 @@ function EditDraft({ viewerId }: { viewerId: string }) {
         headingLevel={1}
         title="This is someone else's record"
         description="Only the learner who logged this activity can edit it."
-        actions={<Link className="text-link" to="/logs/$logId" params={{ logId }}>View the log</Link>}
+        actions={<Link {...stylex.props(linkStyles.base)} to="/logs/$logId" params={{ logId }}>View the log</Link>}
       />
     )
   }
@@ -60,7 +61,7 @@ function EditDraft({ viewerId }: { viewerId: string }) {
         headingLevel={1}
         title="Your session ended"
         description="Log in again to edit this activity."
-        actions={<a className={buttonClassName()} href={loginUrl}>Log in</a>}
+        actions={<a {...stylex.props(...buttonStyles())} href={loginUrl}>Log in</a>}
       />
     )
   }

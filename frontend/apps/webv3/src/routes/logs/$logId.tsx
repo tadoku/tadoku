@@ -1,17 +1,10 @@
+import * as stylex from '@stylexjs/stylex'
 import { useQuery } from '@tanstack/react-query'
-import { PencilSquareIcon, TrashIcon, iconClassName } from 'paper-ui/icons'
+import { PencilSquareIcon, TrashIcon } from 'paper-ui/icons'
 import { Link, createFileRoute, notFound, useHydrated } from '@tanstack/react-router'
-import {
-  Button,
-  DescriptionList,
-  EmptyState,
-  Modal,
-  PageHeader,
-  SectionHeading,
-  StatGrid,
-  Surface,
-  buttonClassName,
-} from 'paper-ui'
+import { Button, buttonStyles, DescriptionList, EmptyState, iconSizes, linkStyles, Modal, PageHeader, SectionHeading, StatGrid, Surface } from 'paper-ui'
+import { entryTitle, pageStyles } from '../../components/page-styles'
+import { border, color, fontWeight, space, type } from 'paper-ui/tokens.stylex'
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
 import { formatDate, pointsUnit } from '../../lib/format'
@@ -19,6 +12,25 @@ import { useLinks } from '../../lib/links'
 import { logQuery, useDeleteLog, type ImmersionLog, type LogFailure } from '../../lib/logs'
 import { viewerKey, viewerQueryOptions } from '../../lib/session'
 import { renderLink } from '../../components/router-link'
+
+const styles = stylex.create({
+  /** The figures and facts read as one record, with the contests a section below it. */
+  record: { gap: space[24], display: 'grid', },
+  delete: { color: color.statusDanger },
+  contests: { padding: 0, listStyle: 'none', marginInline: 0, marginBlockEnd: space[16], marginBlockStart: 0, },
+  contest: {
+    gap: space[16],
+    paddingBlock: space[12],
+    alignItems: 'baseline',
+    borderBlockStartColor: color.ruleDefault,
+    borderBlockStartStyle: 'solid',
+    borderBlockStartWidth: { default: border.static, ':first-child': 0 },
+    display: 'flex',
+    justifyContent: 'space-between',
+  },
+  contestScore: { fontVariantNumeric: 'tabular-nums', fontWeight: fontWeight.bold, whiteSpace: 'nowrap' },
+  unit: { color: color.textMuted, fontSize: type.metadataSize, fontWeight: fontWeight.regular },
+})
 
 export const Route = createFileRoute('/logs/$logId')({
   head: () => ({ meta: [{ title: 'Activity · Tadoku' }] }),
@@ -53,15 +65,16 @@ function LogDetail() {
   const owner = viewer?.status === 'signed-in' && viewer.userId === log.user_id
   const subject = `${log.language.name} ${log.activity.name}`
   return (
-    <div className="goal-page log-detail">
+    <div>
       <PageHeader
+        xstyle={pageStyles.column}
         backLink={{ href: links.profileUpdates(log.user_id), label: owner ? 'Your activity' : 'Activity' }}
         renderLink={renderLink}
         title={log.description || subject}
         lead={`${log.language.name} · ${log.activity.name}`}
         actions={owner ? <OwnerActions log={log} /> : null}
       />
-      <Surface className="log-surface log-record">
+      <Surface inset="fluid" xstyle={[pageStyles.column, styles.record]}>
         <StatGrid stats={[...measure(log), { label: 'Score', value: scoreFormat.format(log.score) }]} />
         <DescriptionList
           layout="inline"
@@ -101,13 +114,13 @@ function OwnerActions({ log }: { log: ImmersionLog }) {
 
   return (
     <>
-      <Link className={buttonClassName({ variant: 'outline' })} to="/logs/$logId/edit" params={{ logId: log.id }}>
-        <PencilSquareIcon className={iconClassName('compact')} aria-hidden="true" />Edit log
+      <Link {...stylex.props(...buttonStyles({ variant: 'outline' }))} to="/logs/$logId/edit" params={{ logId: log.id }}>
+        <PencilSquareIcon {...stylex.props(iconSizes.compact)} aria-hidden="true" />Edit log
       </Link>
       <Modal
         trigger={(
-          <Button variant="ghost" className="log-delete" disabled={!hydrated}>
-            <TrashIcon className={iconClassName('compact')} aria-hidden="true" />Delete log
+          <Button variant="ghost" xstyle={styles.delete} disabled={!hydrated}>
+            <TrashIcon {...stylex.props(iconSizes.compact)} aria-hidden="true" />Delete log
           </Button>
         )}
         title="Delete this log?"
@@ -149,7 +162,7 @@ const deleteFailures: Partial<Record<LogFailure, string>> = {
 /** Contest submissions are private: only the log's owner sees them and the way to manage them. */
 function LogContests({ log, owner }: { log: ImmersionLog; owner: boolean }) {
   return (
-    <section className="log-contests" aria-labelledby="log-contests">
+    <section {...stylex.props(pageStyles.column, pageStyles.section)} aria-labelledby="log-contests">
       <SectionHeading id="log-contests" level={2} title="Contests" />
       {owner ? <OwnContests log={log} /> : <p>Contest submissions are visible to the log&apos;s owner.</p>}
     </section>
@@ -163,16 +176,20 @@ function OwnContests({ log }: { log: ImmersionLog }) {
   return (
     <>
       {registrations.length > 0 ? (
-        <ul className="log-contest-list">
+        <ul {...stylex.props(styles.contests)}>
           {registrations.map(registration => (
-            <li key={registration.contest_id}>
-              <a className="profile-entry-title" href={links.contest(registration.contest_id)}>{registration.title}</a>
-              {registration.score !== undefined ? <span>{scoreFormat.format(registration.score)} <small>{pointsUnit(registration.score)}</small></span> : null}
+            <li key={registration.contest_id} {...stylex.props(styles.contest)}>
+              <a {...stylex.props(...entryTitle)} href={links.contest(registration.contest_id)}>{registration.title}</a>
+              {registration.score !== undefined ? (
+                <span {...stylex.props(styles.contestScore)}>
+                  {scoreFormat.format(registration.score)} <small {...stylex.props(styles.unit)}>{pointsUnit(registration.score)}</small>
+                </span>
+              ) : null}
             </li>
           ))}
         </ul>
       ) : <p>Saved to your personal record only.</p>}
-      <Link className="text-link" to="/logs/$logId/contests" params={{ logId: log.id }}>Manage contest submissions</Link>
+      <Link {...stylex.props(linkStyles.base)} to="/logs/$logId/contests" params={{ logId: log.id }}>Manage contest submissions</Link>
     </>
   )
 }

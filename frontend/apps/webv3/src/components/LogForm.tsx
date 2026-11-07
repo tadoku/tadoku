@@ -1,15 +1,9 @@
+import * as stylex from '@stylexjs/stylex'
 import { useQuery } from '@tanstack/react-query'
 import { useStore } from '@tanstack/react-form'
 import { Link, useHydrated, useNavigate } from '@tanstack/react-router'
-import {
-  Button,
-  PageHeader,
-  Surface,
-  usePaperForm,
-  withPaperForm,
-  type Option,
-  type OptionGroup,
-} from 'paper-ui'
+import { Button, FieldSet, FormFooter, linkStyles, PageHeader, Surface, usePaperForm, withPaperForm, type Option, type OptionGroup } from 'paper-ui'
+import { breakpoints, color, fluid, fontWeight, size, space } from 'paper-ui/tokens.stylex'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   draftFromLog,
@@ -36,6 +30,36 @@ import {
 } from '../lib/logs'
 import { useLoginUrl } from '../lib/session'
 import { TagsSidebar, maxTags } from './TagsSidebar'
+
+const cardInset = `clamp(${space[16]}, ${fluid[4]}, ${space[32]})`
+
+/** Activity form: the card, then the tag sidebar beside it on wide screens or inside it below the tags. */
+const styles = stylex.create({
+  layout: {
+    gap: { default: space[24], [breakpoints.wide]: space[48] },
+    alignItems: 'start',
+    display: 'grid',
+    gridTemplateColumns: { default: null, [breakpoints.wide]: `minmax(0, ${size[640]}) minmax(${size[192]}, ${size[256]})` },
+    minInlineSize: 0,
+  },
+  form: { gap: space[16], display: 'grid', maxInlineSize: size[640], minInlineSize: 0, },
+  card: { overflow: 'hidden', minInlineSize: 0, overflowWrap: 'anywhere', },
+  fields: { padding: cardInset },
+  /** The card has no padding of its own, so its form footer takes the fields' inset, keeping the rule inset too. */
+  footer: { marginBlock: 0, marginInline: cardInset, paddingBlockEnd: cardInset },
+  cardNotice: { marginInline: cardInset, marginBlockEnd: 0, marginBlockStart: space[16], },
+  /** On a phone the estimate takes its own line above the actions instead of squeezing beside them. */
+  estimate: { margin: 0, flexBasis: { default: null, [breakpoints.phone]: '100%' }, fontVariantNumeric: 'tabular-nums', },
+  pendingScore: { color: color.textMuted, fontWeight: fontWeight.regular },
+  narrowTags: { display: { default: null, ':empty': 'none', [breakpoints.wide]: 'none' } },
+  aside: {
+    display: { default: 'none', [breakpoints.wide]: 'block' },
+    insetBlockStart: space[24],
+    minInlineSize: 0,
+    paddingBlockStart: space[4],
+    position: 'sticky',
+  },
+})
 
 /** A new activity, or a change to a saved one, whose language, activity and contest submissions stay fixed. */
 export type LogFormTarget = { kind: 'new'; amount?: number } | { kind: 'edit'; log: ImmersionLog }
@@ -84,7 +108,7 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
   const editing = target.kind === 'edit' ? target.log : null
 
   return (
-    <div className="log-form-page">
+    <div>
       {editing ? (
         <PageHeader
           title="Edit log"
@@ -95,10 +119,10 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
         <PageHeader title="Log activity" />
       )}
       <form.AppForm>
-        <div className="log-form-layout">
-          <form.Form className="log-form" aria-busy={pending}>
-            <Surface className="log-form__card">
-              <fieldset className="goal-form__controls log-form__fields" disabled={disabled}>
+        <div {...stylex.props(styles.layout)}>
+          <form.Form xstyle={styles.form} aria-busy={pending}>
+            <Surface inset="none" xstyle={styles.card}>
+              <FieldSet disabled={disabled} xstyle={styles.fields}>
                 {/* An edit can't change language or activity; the header states them. */}
                 {editing ? null : <ChoiceFields form={form} options={options} />}
                 <MeasureField form={form} timed={isTimed(options, activityId)} units={units} />
@@ -106,25 +130,24 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
                   {field => <field.Input label="Description (optional)" placeholder="e.g. One Piece volume 45" />}
                 </form.AppField>
                 <TagsField form={form} viewerId={viewerId} />
-                <div className="log-form__narrow-tags">
+                <div {...stylex.props(styles.narrowTags)}>
                   <TagsSidebar form={form} activityId={activityId} disabled={disabled} compact />
                 </div>
-              </fieldset>
-              {failure ? <SaveFailure failure={failure} viewerId={viewerId} editing={editing} /> : null}
-              <div className="paper-form-footer log-form__footer">
-                <div className="paper-form-footer__actions">
-                  <Button type="submit" disabled={disabled} loading={pending} loadingLabel="Saving">
-                    {editing ? 'Save' : 'Log activity'}
-                  </Button>
-                  {editing
-                    ? <Link className="text-link" to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
-                    : <Link className="text-link" to="/">Cancel</Link>}
-                </div>
-                <ScoreEstimate form={form} options={options} />
-              </div>
+              </FieldSet>
+              {failure ? (
+                <div {...stylex.props(styles.cardNotice)}><SaveFailure failure={failure} viewerId={viewerId} editing={editing} /></div>
+              ) : null}
+              <FormFooter xstyle={styles.footer} summary={<ScoreEstimate form={form} options={options} />}>
+                <Button type="submit" disabled={disabled} loading={pending} loadingLabel="Saving">
+                  {editing ? 'Save' : 'Log activity'}
+                </Button>
+                {editing
+                  ? <Link {...stylex.props(linkStyles.base)} to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
+                  : <Link {...stylex.props(linkStyles.base)} to="/">Cancel</Link>}
+              </FormFooter>
             </Surface>
           </form.Form>
-          <aside className="log-form__aside" aria-label="Suggested tags">
+          <aside {...stylex.props(styles.aside)} aria-label="Suggested tags">
             <TagsSidebar form={form} activityId={activityId} disabled={disabled} compact={false} />
           </aside>
         </div>
@@ -287,8 +310,8 @@ const ScoreEstimate = withPaperForm({
 
     const score = input !== undefined && data?.ok ? data.data.platform.score : undefined
     return (
-      <p className="log-form__estimate" aria-live="polite">
-        Estimated score: <strong data-pending={score === undefined ? '' : undefined}>{score === undefined ? '—' : score ? estimateFormat.format(score) : 'N/A'}</strong>
+      <p {...stylex.props(styles.estimate)} aria-live="polite" data-estimate="">
+        Estimated score: <strong {...stylex.props(score === undefined && styles.pendingScore)}>{score === undefined ? '—' : score ? estimateFormat.format(score) : 'N/A'}</strong>
       </p>
     )
   },
@@ -338,7 +361,7 @@ function SaveFailure({ failure, viewerId, editing }: { failure: LogFailure; view
 function EditFailureAction({ failure }: { failure: LogFailure }) {
   const loginUrl = useLoginUrl()
   return failure === 'signed-out'
-    ? <a className="text-link" href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
+    ? <a {...stylex.props(linkStyles.base)} href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
     : null
 }
 
@@ -349,13 +372,13 @@ function FailureAction({ failure, viewerId }: { failure: LogFailure; viewerId: s
 
   switch (failure) {
     case 'switched':
-      return <a className="text-link" href="/logs/new">Start a new activity for this account</a>
+      return <a {...stylex.props(linkStyles.base)} href="/logs/new">Start a new activity for this account</a>
     case 'signed-out':
-      return <a className="text-link" href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
+      return <a {...stylex.props(linkStyles.base)} href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
     case 'unavailable':
       return (
         <a
-          className="text-link"
+          {...stylex.props(linkStyles.base)}
           href={links.profileUpdates(viewerId)}
           target="_blank"
           rel="noopener noreferrer"

@@ -74,9 +74,11 @@ A suspended account sees the suspended screen, with a Discord contact link and
 Log out, in place of every page. An unavailable account service names itself
 in the header and leaves public pages readable.
 
-The footer links Home, Leaderboard, Contests, Blog, About, Guide, Rules,
-Questions & help, Privacy and Contact, Tadoku's GitHub, Discord and Twitter,
-and the theme toggle. `frontend/apps/webv3/src/components/Announcements.tsx`
+The header holds the theme toggle, an icon button named for the theme it
+switches to. The footer is an ink band, as in Webv2: the brand, the credit
+line and Tadoku's Discord, GitHub and Twitter beside grouped links to Home,
+Leaderboard, Contests and Blog, About, Guide, Rules and Questions & help, and
+Privacy and Contact. `frontend/apps/webv3/src/components/Announcements.tsx`
 shows the CMS's active announcements above each page after hydration, rendering
 their Markdown as the blog does, with Learn more unless the announcement links
 to the current page. A dismissal is stored in the browser under Webv2's

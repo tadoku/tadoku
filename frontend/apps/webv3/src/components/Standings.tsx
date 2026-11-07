@@ -58,7 +58,11 @@ export function Standings({ result, page, caption, pageHref, profileHref, empty,
       id: 'rank',
       header: 'Rank',
       width: '4.5rem',
-      cell: row => <span className="standings-rank">{row.is_tie ? <abbr title="Tied rank">T</abbr> : null}{row.rank}</span>,
+      cell: row => (
+        <span className="standings-rank" data-podium={row.rank <= 3 ? row.rank : undefined}>
+          {row.is_tie ? <abbr title="Tied rank">T</abbr> : null}{row.rank}
+        </span>
+      ),
     },
     {
       id: 'participant',
@@ -86,6 +90,7 @@ export function Standings({ result, page, caption, pageHref, profileHref, empty,
         getRowKey={row => row.user_id}
         getRowProps={row => (row.user_id === viewerId ? { 'aria-current': 'true' } : {})}
         minWidth="17rem"
+        linkedRows
         tableClassName="standings-table"
       />
       {totalPages > 1 ? (

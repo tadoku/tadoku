@@ -28,7 +28,7 @@ const unique = () => `${Date.now().toString(36)}${Math.random().toString(36).sli
 const createButton = (page: Page) => page.getByRole('button', { name: 'Create contest', exact: true })
 
 async function hydrated(page: Page) {
-  await expect(page.getByRole('button', { name: 'Use dark theme', exact: true })).toBeEnabled()
+  await expect(page.locator('.app-theme-toggle')).toBeEnabled()
 }
 
 async function fitsWidth(page: Page, name: string, path: string) {

@@ -1,4 +1,5 @@
 import { Tabbar } from 'paper-ui'
+import { ArrowDownTrayIcon, iconClassName } from 'paper-ui/icons'
 import type { ImmersionUserProfile } from 'api-client'
 import { renderLink } from './router-link'
 import { useLinks } from '../lib/links'
@@ -30,6 +31,7 @@ export function ProfileHeader({ profile, owner, view, overviewHref }: {
         </div>
         {owner ? (
           <p className="profile-export">
+            <ArrowDownTrayIcon className={iconClassName('compact')} aria-hidden="true" />
             Export logs: <a className="text-link" href={links.logExport('csv')} aria-label="Download CSV">CSV</a> · <a className="text-link" href={links.logExport('json')} aria-label="Download JSON">JSON</a>
           </p>
         ) : null}

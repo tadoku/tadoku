@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { PencilSquareIcon, TrashIcon, iconClassName } from 'paper-ui/icons'
 import { Link, createFileRoute, notFound, useHydrated } from '@tanstack/react-router'
 import {
   Button,
@@ -101,10 +102,14 @@ function OwnerActions({ log }: { log: ImmersionLog }) {
   return (
     <>
       <Link className={buttonClassName({ variant: 'outline' })} to="/logs/$logId/edit" params={{ logId: log.id }}>
-        Edit log
+        <PencilSquareIcon className={iconClassName('compact')} aria-hidden="true" />Edit log
       </Link>
       <Modal
-        trigger={<Button variant="ghost" className="log-delete" disabled={!hydrated}>Delete log</Button>}
+        trigger={(
+          <Button variant="ghost" className="log-delete" disabled={!hydrated}>
+            <TrashIcon className={iconClassName('compact')} aria-hidden="true" />Delete log
+          </Button>
+        )}
         title="Delete this log?"
         initialFocus={keepRef}
         open={open}

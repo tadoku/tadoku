@@ -32,7 +32,7 @@ test('hydrates without errors and keeps the homepage within mobile and desktop v
     await page.goto('/')
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
     await expect(page.locator('table')).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Use dark theme', exact: true })).toBeEnabled()
+    await expect(page.locator('.app-theme-toggle')).toBeEnabled()
     await page.evaluate(() => document.fonts.ready)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await page.screenshot({ path: testInfo.outputPath(`homepage-${width}.png`), fullPage: true })
@@ -99,11 +99,13 @@ test('returns a useful not-found page for an unknown route', async ({ page }) =>
 test('preserves the dark theme and opens the blog through mobile navigation', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 900 })
   await page.goto('/')
+  // On a phone the theme switch lives in the menu; the header has no room for it.
+  await page.getByRole('button', { name: 'Open menu', exact: true }).click()
   await page.getByRole('button', { name: 'Use dark theme', exact: true }).click()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
-  await expect(page.getByRole('button', { name: 'Use light theme', exact: true })).toBeEnabled()
+  await expect(page.getByRole('button', { name: 'Open menu', exact: true })).toBeEnabled()
   await page.evaluate(() => document.fonts.ready)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: testInfo.outputPath('homepage-dark-mobile.png'), fullPage: true })
@@ -119,7 +121,8 @@ test('keeps client-only mobile controls disabled before hydration', async ({ bro
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 900 } })
   const page = await context.newPage()
   await page.goto(testInfo.project.use.baseURL || 'http://127.0.0.1:5183')
-  await expect(page.getByRole('button', { name: 'Use dark theme', exact: true })).toBeDisabled()
+  // The header's theme switch is hidden on a phone, but its server markup is disabled until hydration too.
+  await expect(page.locator('.app-theme-toggle')).toBeDisabled()
   await expect(page.getByRole('button', { name: 'Open menu', exact: true })).toBeDisabled()
   await page.screenshot({ path: testInfo.outputPath('homepage-before-hydration.png'), fullPage: true })
   await context.close()

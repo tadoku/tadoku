@@ -208,7 +208,7 @@ test('contest and registration pages stay within mobile and desktop viewports', 
     for (const [name, path] of pages) {
       await page.goto(path)
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-      await expect(page.getByRole('button', { name: 'Use dark theme', exact: true })).toBeEnabled()
+      await expect(page.locator('.app-theme-toggle')).toBeEnabled()
       await page.evaluate(() => document.fonts.ready)
       expect(await fitsViewport(page), `${path} at ${width}px`).toBe(true)
       await page.screenshot({ path: testInfo.outputPath(`${name}-${width}.png`), fullPage: true })

@@ -28,7 +28,7 @@ An unknown or malformed contest ID answers 404 with a not-found page.
   `frontend/apps/webv3/src/components/ContestLeaderboard.tsx` shares with the
   latest official leaderboard: notices, standings and conditions; the Updates
   tab lists the contest's logs.
-  The selected Standings tab names the standings, so the contest page shows no
+  The selected Leaderboard tab names the standings, so the contest page shows no
   separate standings heading. `frontend/apps/webv3/src/components/ContestRegistration.tsx` holds the
   registration states and form.
 
@@ -61,7 +61,7 @@ registration returns to the contest page.
 
 ## Updates and participant profiles
 
-The Standings and Updates tabs share the page header and actions.
+The Leaderboard and Updates tabs share the page header and actions.
 `/contests/$id/updates` lists every participant's contest logs as Webv2's updates
 page does: newest first, 50 per page, without deleted logs, each naming its
 learner and opening its [native detail page](webv3-logging.md). A missing or

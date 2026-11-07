@@ -87,7 +87,7 @@ test('year and period tabs switch boards in the browser', async ({ page, request
     if (message.type() === 'error') failures.push(message.text())
   })
   await page.goto(`/leaderboard/yearly/${year}/1`)
-  await expect(page.getByRole('button', { name: 'Use dark theme', exact: true })).toBeEnabled()
+  await expect(page.locator('.app-theme-toggle')).toBeEnabled()
   const years = page.getByRole('navigation', { name: 'Year' })
   await expect(years.getByRole('link')).toHaveText(Array.from({ length: year - 2019 }, (_, index) => String(year - index)))
   await expect(years.getByRole('link', { name: String(year) })).toHaveAttribute('aria-current', 'page')
@@ -108,7 +108,7 @@ test('year and period tabs switch boards in the browser', async ({ page, request
   await expect(page).toHaveURL(new RegExp(`/leaderboard/yearly/${year}/1$`))
   await periods.getByRole('link', { name: 'Latest official' }).click()
   await expect(page).toHaveURL(/\/leaderboard\/latest\/1$/)
-  await expect(page.getByRole('heading', { level: 2 }).first()).toBeVisible()
+  await expect(page.getByRole('main').getByRole('heading', { level: 2 }).first()).toBeVisible()
   expect(failures).toEqual([])
 })
 
@@ -145,7 +145,7 @@ test('leaderboards stay within mobile and desktop viewports', async ({ page }, t
     for (const path of ['/leaderboard/latest/1', `/leaderboard/yearly/${year}/1`, '/leaderboard/all-time/1']) {
       await page.goto(path)
       await expect(page.getByRole('heading', { level: 1, name: 'Leaderboard' })).toBeVisible()
-      await expect(page.getByRole('button', { name: 'Use dark theme', exact: true })).toBeEnabled()
+      await expect(page.locator('.app-theme-toggle')).toBeEnabled()
       await page.evaluate(() => document.fonts.ready)
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${path} at ${width}px`).toBe(true)
       await page.screenshot({ path: testInfo.outputPath(`${path.split('/')[2]}-${width}.png`), fullPage: true })

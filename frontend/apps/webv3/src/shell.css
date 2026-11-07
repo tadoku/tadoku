@@ -1,0 +1,29 @@
+/* The app shell beyond the header layout in styles.css: the footer band and the theme switch. */
+/* Header and footer controls wait only for hydration; they keep their colours instead of looking unavailable. */
+.app-awaiting-hydration:disabled { opacity: 1; cursor: progress; }
+
+/* Footer: an ink band in both themes, as Webv2's, with the brand and community links beside grouped page links. */
+.app-footer { --footer-ink: #f2efe8; --footer-muted: #b4abaf; color: var(--footer-ink); background: #1b1618; padding: 48px var(--app-gutter) 56px; }
+[data-theme="dark"] .app-footer { background: #0b090b; border-top: 1px solid var(--paper-color-rule-default); }
+.app-footer__inner { max-width: var(--app-content-width); margin: auto; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px 64px; }
+.app-footer a { color: inherit; text-decoration: none; }
+.app-footer a:hover { color: #c4b9ff; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: .2em; }
+.app-footer :focus-visible { outline-color: #c4b9ff; }
+.app-footer__brand { display: grid; align-content: start; justify-items: start; gap: 16px; }
+.app-footer__lockup { display: inline-flex; align-items: center; gap: 10px; }
+.app-footer__lockup:hover { text-decoration: none; }
+.app-footer__brand p { margin: 0; color: var(--footer-muted); font-size: .875rem; }
+.app-footer__brand p a { color: var(--footer-ink); text-decoration: underline; text-decoration-color: #8f80e8; text-underline-offset: .2em; }
+.app-footer__social { display: flex; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.app-footer__social a { display: grid; place-items: center; inline-size: 40px; block-size: 40px; border: 1px solid #4a4245; color: var(--footer-ink); }
+.app-footer__social a:hover { border-color: #8f80e8; color: #c4b9ff; background: rgb(143 128 232 / 14%); }
+.app-footer__social svg { inline-size: 20px; block-size: 20px; }
+.app-footer__links { display: flex; flex-wrap: wrap; gap: 32px 64px; }
+.app-footer__group h2 { margin: 0 0 14px; padding-bottom: 6px; border-bottom: 2px solid #8f80e8; font-family: var(--paper-font-body); font-size: .875rem; font-weight: 700; line-height: 1.4; letter-spacing: .02em; }
+.app-footer__group ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; font-size: .875rem; color: var(--footer-muted); }
+@media (max-width: 720px) { .app-footer__inner { grid-template-columns: minmax(0, 1fr); } .app-footer__links { gap: 28px 40px; } }
+
+/* The theme switch sits in the header as an icon button with a 44px target. */
+.app-theme-toggle { inline-size: var(--paper-control-height); padding: 0; justify-content: center; }
+.app-theme-row { justify-content: flex-start; inline-size: 100%; margin-top: 12px; border-top: 1px solid var(--paper-color-rule-subtle); }
+@media (width < 48rem) { .app-account-actions .app-theme-toggle { display: none; } }

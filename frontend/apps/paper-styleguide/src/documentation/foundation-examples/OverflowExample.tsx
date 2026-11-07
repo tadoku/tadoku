@@ -1,12 +1,20 @@
+import * as stylex from '@stylexjs/stylex'
+import { size } from 'paper-ui/tokens.stylex'
+
+const styles = stylex.create({
+  region: { maxInlineSize: '100%', overflowX: 'auto' },
+  table: { minInlineSize: size[576] },
+})
+
 export default function ReadingTotals() {
   return (
     <div
       role="region"
       aria-label="Reading totals"
       tabIndex={0}
-      style={{ maxWidth: '100%', overflowX: 'auto' }}
+      {...stylex.props(styles.region)}
     >
-      <table style={{ minWidth: '34rem' }}>
+      <table {...stylex.props(styles.table)}>
         <caption>Reading totals</caption>
         <thead>
           <tr>

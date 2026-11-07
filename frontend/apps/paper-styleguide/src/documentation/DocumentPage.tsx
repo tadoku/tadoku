@@ -1,3 +1,5 @@
+import * as stylex from '@stylexjs/stylex'
+import { a11y, accentRail, linkStyles, typography } from 'paper-ui'
 import {
   catalogRegistry,
   type CatalogDocument,
@@ -8,6 +10,8 @@ import { ComponentWorkbench } from './ComponentWorkbench'
 import { FoundationSpecimen } from './FoundationSpecimen'
 import { GovernanceGuide } from './FoundationGuide'
 import { type OutlineItem, TableOfContents } from './TableOfContents'
+import { shellStyles } from '../styles/shell.styles'
+import { descendantStyles } from '../descendants.styles'
 
 const FOUNDATION_OUTLINE: readonly OutlineItem[] = [
   { id: 'overview', label: 'Overview' },
@@ -41,11 +45,11 @@ function LabeledList({
 }) {
   if (!items.length) return null
   return (
-    <div className="document-list-group">
-      <h3>{heading}</h3>
+    <div {...stylex.props(shellStyles.documentListGroup, descendantStyles.documentListGroup)}>
+      <h3 {...stylex.props(descendantStyles.documentListGroupU_uH3)}>{heading}</h3>
       {items.length > 0 ? (
-        <ul>
-          {items.map((item) => <li key={item}>{item}</li>)}
+        <ul {...stylex.props(descendantStyles.documentListGroupU_uUl)}>
+          {items.map((item) => <li {...stylex.props(descendantStyles.documentListGroupU_uLi)} key={item}>{item}</li>)}
         </ul>
       ) : (
         <p>None registered.</p>
@@ -63,22 +67,22 @@ function sourceHref(sourcePath: string): string {
 
 function Metadata({ document }: { document: CatalogDocument }) {
   return (
-    <dl className="metadata-list">
-      <div>
-        <dt>Canonical route</dt>
-        <dd><code>{document.route}</code></dd>
+    <dl {...stylex.props(shellStyles.metadataList)}>
+      <div {...stylex.props(descendantStyles.metadataListU_uDiv)}>
+        <dt {...stylex.props(descendantStyles.metadataListU_uDt)}>Canonical route</dt>
+        <dd {...stylex.props(descendantStyles.metadataListU_uDd)}><code>{document.route}</code></dd>
       </div>
-      <div>
-        <dt>Source</dt>
-        <dd>
-          <a className="text-link paper-focus-ring" href={sourceHref(document.sourcePath)}>
+      <div {...stylex.props(descendantStyles.metadataListU_uDiv)}>
+        <dt {...stylex.props(descendantStyles.metadataListU_uDt)}>Source</dt>
+        <dd {...stylex.props(descendantStyles.metadataListU_uDd)}>
+          <a {...stylex.props(linkStyles.base, a11y.focusRing)} href={sourceHref(document.sourcePath)}>
             <code>{document.sourcePath}</code>
           </a>
         </dd>
       </div>
-      <div>
-        <dt>Dependencies</dt>
-        <dd>{[...document.dependencies.documents, ...document.dependencies.packages].join(', ') || 'None'}</dd>
+      <div {...stylex.props(descendantStyles.metadataListU_uDiv)}>
+        <dt {...stylex.props(descendantStyles.metadataListU_uDt)}>Dependencies</dt>
+        <dd {...stylex.props(descendantStyles.metadataListU_uDd)}>{[...document.dependencies.documents, ...document.dependencies.packages].join(', ') || 'None'}</dd>
       </div>
     </dl>
   )
@@ -86,14 +90,14 @@ function Metadata({ document }: { document: CatalogDocument }) {
 
 function Hero({ document }: { document: CatalogDocument }) {
   return (
-    <header className="document-hero paper-accent-rail">
-      <p className="eyebrow">{document.kind} · {document.category}</p>
-      <h1 className="paper-type-page">{document.name}</h1>
-      <p className="document-summary">{document.summary}</p>
-      <dl className="metadata-strip">
-        <div><dt>Status</dt><dd>{document.lifecycle}</dd></div>
-        <div><dt>Version</dt><dd>{document.packageVersion}</dd></div>
-        <div><dt>Reviewed</dt><dd>{document.reviewDate}</dd></div>
+    <header {...stylex.props(shellStyles.documentHero, accentRail.base)}>
+      <p {...stylex.props(shellStyles.eyebrow)}>{document.kind} · {document.category}</p>
+      <h1 {...stylex.props(typography.page, descendantStyles.documentHeroU_uH1)}>{document.name}</h1>
+      <p {...stylex.props(shellStyles.documentSummary)}>{document.summary}</p>
+      <dl {...stylex.props(shellStyles.metadataStrip)}>
+        <div><dt {...stylex.props(descendantStyles.metadataStripU_uDt)}>Status</dt><dd {...stylex.props(descendantStyles.metadataStripU_uDd)}>{document.lifecycle}</dd></div>
+        <div><dt {...stylex.props(descendantStyles.metadataStripU_uDt)}>Version</dt><dd {...stylex.props(descendantStyles.metadataStripU_uDd)}>{document.packageVersion}</dd></div>
+        <div><dt {...stylex.props(descendantStyles.metadataStripU_uDt)}>Reviewed</dt><dd {...stylex.props(descendantStyles.metadataStripU_uDd)}>{document.reviewDate}</dd></div>
       </dl>
     </header>
   )
@@ -107,9 +111,9 @@ function ComponentSection({
   section: CatalogDocumentationSection
 }) {
   return (
-    <section id={id} className="document-section">
-      <h2 className="paper-type-section">{section.heading}</h2>
-      {section.content.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+    <section id={id} {...stylex.props(shellStyles.documentSection, descendantStyles.documentSection)}>
+      <h2 {...stylex.props(typography.section, descendantStyles.documentSectionU_uH2)}>{section.heading}</h2>
+      {section.content.map((paragraph) => <p {...stylex.props(descendantStyles.documentSectionU_uP)} key={paragraph}>{paragraph}</p>)}
     </section>
   )
 }
@@ -132,15 +136,15 @@ function SectionParagraphs({ section }: { section?: CatalogDocumentationSection 
 function UsageSection({ document }: { document: CatalogDocument }) {
   const sections = document.sections?.required
   return (
-    <section id="usage" className="document-section">
-      <h2 className="paper-type-section">Usage</h2>
-      <h3>Use when</h3>
+    <section id="usage" {...stylex.props(shellStyles.documentSection, descendantStyles.documentSection)}>
+      <h2 {...stylex.props(typography.section, descendantStyles.documentSectionU_uH2)}>Usage</h2>
+      <h3 {...stylex.props(descendantStyles.documentSectionU_uH3)}>Use when</h3>
       <SectionParagraphs section={sections?.whenToUse} />
-      <h3>Avoid when</h3>
+      <h3 {...stylex.props(descendantStyles.documentSectionU_uH3)}>Avoid when</h3>
       <SectionParagraphs section={sections?.whenNotToUse} />
-      <h3>Choosing between components</h3>
+      <h3 {...stylex.props(descendantStyles.documentSectionU_uH3)}>Choosing between components</h3>
       <SectionParagraphs section={sections?.choosingBetween} />
-      <h3>How it is composed</h3>
+      <h3 {...stylex.props(descendantStyles.documentSectionU_uH3)}>How it is composed</h3>
       <SectionParagraphs section={sections?.anatomy} />
       <LabeledList heading="Common mistakes" items={document.guidance.commonMistakes} />
     </section>
@@ -155,8 +159,8 @@ function ExamplesSection({
   fixtures: Parameters<typeof ComponentWorkbench>[0]['fixtures']
 }) {
   return (
-    <section id="examples" className="document-section document-section--wide">
-      <h2 className="paper-type-section">Examples</h2>
+    <section id="examples" {...stylex.props(shellStyles.documentSection, shellStyles.documentSection_wide, descendantStyles.documentSection)}>
+      <h2 {...stylex.props(typography.section, descendantStyles.documentSectionU_uH2)}>Examples</h2>
       <SectionParagraphs section={document.sections?.required.recommendedExample} />
       <SectionParagraphs section={document.sections?.required.implementation} />
       <ComponentWorkbench document={document} fixtures={fixtures} />
@@ -167,11 +171,11 @@ function ExamplesSection({
 function VariantsAndStatesSection({ document }: { document: CatalogDocument }) {
   const sections = document.sections?.required
   return (
-    <section id="variantsAndStates" className="document-section">
-      <h2 className="paper-type-section">Variants and states</h2>
-      <h3>Variants</h3>
+    <section id="variantsAndStates" {...stylex.props(shellStyles.documentSection, descendantStyles.documentSection)}>
+      <h2 {...stylex.props(typography.section, descendantStyles.documentSectionU_uH2)}>Variants and states</h2>
+      <h3 {...stylex.props(descendantStyles.documentSectionU_uH3)}>Variants</h3>
       <SectionParagraphs section={sections?.variants} />
-      <h3>States and adaptation</h3>
+      <h3 {...stylex.props(descendantStyles.documentSectionU_uH3)}>States and adaptation</h3>
       <SectionParagraphs section={sections?.statesAndAdaptation} />
     </section>
   )
@@ -212,8 +216,8 @@ function ComponentDocumentPage({ document }: { document: CatalogDocument }) {
   }))
 
   return (
-    <div className="document-layout">
-      <article className="document-page">
+    <div {...stylex.props(shellStyles.documentLayout)}>
+      <article>
         <Hero document={document} />
         {pageSections.map((key) => (
           <PublicComponentSection
@@ -231,22 +235,22 @@ function ComponentDocumentPage({ document }: { document: CatalogDocument }) {
 
 function FoundationDocumentPage({ document }: { document: CatalogDocument }) {
   return (
-    <div className="document-layout">
-      <article className="document-page">
+    <div {...stylex.props(shellStyles.documentLayout)}>
+      <article>
         <div id="overview"><Hero document={document} /></div>
-        <div id="specimen" className="document-section document-section--wide">
-          <h2 className="paper-type-section">Examples and usage</h2>
+        <div id="specimen" {...stylex.props(shellStyles.documentSection, shellStyles.documentSection_wide, descendantStyles.documentSection)}>
+          <h2 {...stylex.props(typography.section, descendantStyles.documentSectionU_uH2)}>Examples and usage</h2>
           <FoundationSpecimen document={document} />
         </div>
         <section
           id="guidance"
-          className="document-section"
+          {...stylex.props(shellStyles.documentSection, descendantStyles.documentSection)}
           aria-labelledby="foundation-guidance-heading"
         >
-          <h2 id="foundation-guidance-heading" className="paper-type-section">
+          <h2 id="foundation-guidance-heading" {...stylex.props(typography.section, descendantStyles.documentSectionU_uH2)}>
             Guidance
           </h2>
-          <div className="document-list-grid">
+          <div {...stylex.props(shellStyles.documentListGrid)}>
             <LabeledList heading="When to use" items={document.guidance.whenToUse} />
             <LabeledList heading="Avoid when" items={document.guidance.whenNotToUse} />
             <LabeledList heading="Guidance" items={document.guidance.content} />
@@ -254,21 +258,21 @@ function FoundationDocumentPage({ document }: { document: CatalogDocument }) {
           </div>
         </section>
 
-        <section id="accessibility" className="document-section">
-          <h2 className="paper-type-section">Accessibility</h2>
-          <div className="document-list-grid">
+        <section id="accessibility" {...stylex.props(shellStyles.documentSection, descendantStyles.documentSection)}>
+          <h2 {...stylex.props(typography.section, descendantStyles.documentSectionU_uH2)}>Accessibility</h2>
+          <div {...stylex.props(shellStyles.documentListGrid)}>
             <LabeledList heading="Requirements" items={document.accessibility.requirements} />
             <LabeledList heading="Keyboard" items={document.accessibility.keyboard} />
             <LabeledList heading="Known constraints" items={document.accessibility.knownConstraints} />
           </div>
         </section>
-        <section id="contract" className="document-section">
-          <h2 className="paper-type-section">Public contract</h2>
+        <section id="contract" {...stylex.props(shellStyles.documentSection, descendantStyles.documentSection)}>
+          <h2 {...stylex.props(typography.section, descendantStyles.documentSectionU_uH2)}>Public contract</h2>
           <LabeledList heading="Defaults" items={document.api.defaults} />
           <LabeledList heading="Not public API" items={document.api.invalidCombinations} />
         </section>
-        <section id="metadata" className="document-section">
-          <h2 className="paper-type-section">Metadata</h2>
+        <section id="metadata" {...stylex.props(shellStyles.documentSection, descendantStyles.documentSection)}>
+          <h2 {...stylex.props(typography.section, descendantStyles.documentSectionU_uH2)}>Metadata</h2>
           <Metadata document={document} />
         </section>
       </article>
@@ -294,29 +298,29 @@ function GeneralDocumentPage({ document }: { document: CatalogDocument }) {
   const outlineWithUsage = [...generalOutline, { id: 'usage', label: 'Usage' }]
 
   return (
-    <div className="document-layout">
-      <article className="document-page">
+    <div {...stylex.props(shellStyles.documentLayout)}>
+      <article>
         <div id="overview"><Hero document={document} /></div>
-        <section id="guidance" className="document-section">
-          <h2 className="paper-type-section">Guidance</h2>
+        <section id="guidance" {...stylex.props(shellStyles.documentSection, descendantStyles.documentSection)}>
+          <h2 {...stylex.props(typography.section, descendantStyles.documentSectionU_uH2)}>Guidance</h2>
           <SectionCopy value={document.guidance} fallback="No additional guidance is registered for this document." />
         </section>
-        <section id="accessibility" className="document-section">
-          <h2 className="paper-type-section">Accessibility</h2>
+        <section id="accessibility" {...stylex.props(shellStyles.documentSection, descendantStyles.documentSection)}>
+          <h2 {...stylex.props(typography.section, descendantStyles.documentSectionU_uH2)}>Accessibility</h2>
           <SectionCopy value={document.accessibility} fallback="Accessibility requirements are tracked in the catalogue registry." />
         </section>
         {fixture ? (
-          <div id="preview" className="document-section document-section--wide">
+          <div id="preview" {...stylex.props(shellStyles.documentSection, shellStyles.documentSection_wide, descendantStyles.documentSection)}>
             <ComponentWorkbench document={document} fixtures={[fixture]} />
           </div>
         ) : null}
         <GovernanceGuide document={document} />
-        <section id="contract" className="document-section">
-          <h2 className="paper-type-section">Public contract</h2>
+        <section id="contract" {...stylex.props(shellStyles.documentSection, descendantStyles.documentSection)}>
+          <h2 {...stylex.props(typography.section, descendantStyles.documentSectionU_uH2)}>Public contract</h2>
           <SectionCopy value={document.api} fallback="This foundation does not expose a component API." />
         </section>
-        <section id="metadata" className="document-section">
-          <h2 className="paper-type-section">Metadata</h2>
+        <section id="metadata" {...stylex.props(shellStyles.documentSection, descendantStyles.documentSection)}>
+          <h2 {...stylex.props(typography.section, descendantStyles.documentSectionU_uH2)}>Metadata</h2>
           <Metadata document={document} />
         </section>
       </article>

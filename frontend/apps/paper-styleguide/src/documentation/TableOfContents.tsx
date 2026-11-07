@@ -1,8 +1,7 @@
-import {
-  VerticalTabbar,
-  type NavigationLinkProps,
-  type TabbarItem,
-} from 'paper-ui'
+import * as stylex from '@stylexjs/stylex'
+import { typography, VerticalTabbar, type NavigationLinkProps, type TabbarItem } from 'paper-ui'
+import { shellStyles } from '../styles/shell.styles'
+import { descendantStyles } from '../descendants.styles'
 
 export interface OutlineItem {
   id: string
@@ -25,8 +24,8 @@ export function TableOfContents({ items }: TableOfContentsProps) {
   }))
 
   return (
-    <aside className="local-outline">
-      <h2 className="paper-type-metadata">On this page</h2>
+    <aside {...stylex.props(shellStyles.localOutline)}>
+      <h2 {...stylex.props(typography.metadata, descendantStyles.localOutlineU_uH2)}>On this page</h2>
       <VerticalTabbar
         label="On this page"
         links={links}

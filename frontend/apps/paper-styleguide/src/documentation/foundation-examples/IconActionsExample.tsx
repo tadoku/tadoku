@@ -1,14 +1,18 @@
+import * as stylex from '@stylexjs/stylex'
 import { useState } from 'react'
-import { Button } from 'paper-ui'
+import { Button, iconSizes, layout } from 'paper-ui'
 import { PlusIcon, XMarkIcon } from 'paper-ui/icons'
+import { size } from 'paper-ui/tokens.stylex'
+
+const styles = stylex.create({ iconAction: { minBlockSize: size[44], minInlineSize: size[44] } })
 
 export default function ReadingActions() {
   const [open, setOpen] = useState(false)
   return (
-    <div className="paper-stack">
-      <div className="paper-cluster">
+    <div {...stylex.props(layout.stack)}>
+      <div {...stylex.props(layout.cluster)}>
         <Button
-          leadingIcon={<PlusIcon className="paper-icon-default" />}
+          leadingIcon={<PlusIcon {...stylex.props(iconSizes.default)} />}
           onClick={() => setOpen(true)}
         >
           Add reading
@@ -16,10 +20,10 @@ export default function ReadingActions() {
         <Button
           variant="ghost"
           aria-label="Close reading entry"
-          style={{ minWidth: '2.75rem', minHeight: '2.75rem' }}
+          xstyle={styles.iconAction}
           onClick={() => setOpen(false)}
         >
-          <XMarkIcon className="paper-icon-default" aria-hidden="true" />
+          <XMarkIcon {...stylex.props(iconSizes.default)} aria-hidden="true" />
         </Button>
       </div>
       <p role="status">

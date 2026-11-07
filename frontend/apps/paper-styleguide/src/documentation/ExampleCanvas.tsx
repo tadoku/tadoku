@@ -1,7 +1,8 @@
+import * as stylex from '@stylexjs/stylex'
 import { useStore } from '@tanstack/react-form'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { usePaperForm } from 'paper-ui'
+import { applyDensity, applyTheme, rootProps, typography, usePaperForm } from 'paper-ui'
 import type {
   CatalogFixture,
   CatalogFixtureViewport,
@@ -9,6 +10,15 @@ import type {
   FixtureTheme,
 } from 'paper-ui/catalog'
 import type { PaperDensity, PaperTheme } from '../app/displayPreferences'
+import { shellStyles } from '../styles/shell.styles'
+import { descendantStyles } from '../descendants.styles'
+import { size } from 'paper-ui/tokens.stylex'
+
+/** The frame takes the chosen viewport's size, capped so a tall viewport doesn't push the page away. */
+const frame = stylex.create({
+  base: { borderWidth: 0, boxSizing: 'content-box' },
+  size: (inlineSize: string, blockSize: string) => ({ blockSize, inlineSize }),
+})
 
 const FALLBACK_VIEWPORTS = [
   { id: 'phone', label: 'Phone', width: 360, height: 720 },
@@ -48,16 +58,16 @@ function titleCase(value: string): string {
 
 function PreviewSpecimen() {
   return (
-    <article className="preview-specimen">
-      <p className="paper-type-metadata">Responsive Paper specimen</p>
-      <h3 className="paper-type-section">Read more, one page at a time.</h3>
+    <article {...stylex.props(shellStyles.previewSpecimen)}>
+      <p {...stylex.props(typography.metadata)}>Responsive Paper specimen</p>
+      <h3 {...stylex.props(typography.section, descendantStyles.previewSpecimenU_uH3)}>Read more, one page at a time.</h3>
       <p>
         The canvas is a separate document. Change its width to exercise real
         media queries without shrinking the catalogue itself.
       </p>
-      <div className="preview-breakpoint" aria-live="polite">
-        <span className="preview-breakpoint__narrow">Narrow layout active</span>
-        <span className="preview-breakpoint__wide">Wide layout active</span>
+      <div {...stylex.props(shellStyles.previewBreakpoint)} aria-live="polite">
+        <span {...stylex.props(shellStyles.previewBreakpoint__narrow)}>Narrow layout active</span>
+        <span {...stylex.props(shellStyles.previewBreakpoint__wide)}>Wide layout active</span>
       </div>
     </article>
   )
@@ -75,8 +85,10 @@ function applyPreferences(
   theme: PaperTheme,
   density: PaperDensity,
 ) {
-  target.documentElement.dataset.theme = theme
-  target.documentElement.dataset.density = density
+  target.documentElement.className = rootProps.html().className ?? ''
+  target.body.className = rootProps.body().className ?? ''
+  applyTheme(theme, target.documentElement)
+  applyDensity(density, target.documentElement)
 }
 
 export function ExampleCanvas({
@@ -183,9 +195,9 @@ export function ExampleCanvas({
   if (!viewport) return null
 
   return (
-    <methods.AppForm><section className="example-canvas" aria-label="Isolated component preview">
+    <methods.AppForm><section {...stylex.props(shellStyles.exampleCanvas)} aria-label="Isolated component preview">
       <div
-        className="canvas-controls"
+        {...stylex.props(shellStyles.canvasControls)}
         role="group"
         aria-labelledby={settingsTitleId}
         onChange={(event) => {
@@ -194,48 +206,48 @@ export function ExampleCanvas({
       >
         <h3
           id={settingsTitleId}
-          className="canvas-controls__title paper-type-label"
+          {...stylex.props(shellStyles.canvasControls__title, typography.label)}
         >
           Preview settings
         </h3>
         {availableFixtures.length > 1 ? (
-          <div className="canvas-controls__fixture">
+          <div {...stylex.props(shellStyles.canvasControls__fixture)}>
             <methods.AppField name="fixtureId">{field => <field.Select label="Fixture" options={availableFixtures.map((candidate) => ({
                 value: candidate.id,
                 label: candidate.name,
               }))} />}</methods.AppField>
           </div>
         ) : null}
-        <div className="canvas-controls__theme">
+        <div {...stylex.props(shellStyles.canvasControls__theme)}>
           <methods.AppField name="theme">{field => <field.Select label="Theme" options={themes.map((candidate) => ({
               value: candidate,
               label: titleCase(candidate),
             }))} />}</methods.AppField>
         </div>
-        <div className="canvas-controls__density">
+        <div {...stylex.props(shellStyles.canvasControls__density)}>
           <methods.AppField name="density">{field => <field.Select label="Density" options={densities.map((candidate) => ({
               value: candidate,
               label: titleCase(candidate),
             }))} />}</methods.AppField>
         </div>
-        <div className="canvas-controls__viewport">
+        <div {...stylex.props(shellStyles.canvasControls__viewport)}>
           <methods.AppField name="viewportId">{field => <field.RadioSelect label="Viewport" variant="segmented" options={[{ value: 'fit', label: 'Fit' }, ...viewports.map((option) => ({
               value: option.id,
               label: option.label,
             }))]} />}</methods.AppField>
         </div>
       </div>
-      <p className="canvas-status paper-type-metadata" aria-live="polite">
+      <p {...stylex.props(shellStyles.canvasStatus, typography.metadata)} aria-live="polite">
         {viewport.label} · {viewport.width} px · {titleCase(theme)} ·{' '}
         {titleCase(density)}
       </p>
       {previewDestination && previewDestination.fixtureId === fixture?.id && (
-        <p className="canvas-status paper-type-metadata" role="status">
+        <p {...stylex.props(shellStyles.canvasStatus, typography.metadata)} role="status">
           Preview destination: {previewDestination.href}. Navigation stays in this example.
         </p>
       )}
-      <div className="example-canvas__stage" ref={stageRef}>
-        <iframe
+      <div {...stylex.props(shellStyles.exampleCanvas__stage)} ref={stageRef}>
+        <iframe {...stylex.props(descendantStyles.exampleCanvasU_uIframe, frame.base, frame.size(isFit ? '100%' : `${viewport.width}px`, `min(${viewport.height}px, ${size[352]})`))}
           title="Paper responsive component preview"
           width={isFit ? '100%' : viewport.width}
           height={viewport.height}
@@ -243,12 +255,6 @@ export function ExampleCanvas({
           srcDoc={'<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="paper-preview-root"></div></body></html>'}
           data-preview-width={viewport.width}
           data-preview-height={viewport.height}
-          style={{
-            inlineSize: isFit ? '100%' : `${viewport.width}px`,
-            blockSize: `min(${viewport.height}px, 22rem)`,
-            boxSizing: 'content-box',
-            border: 0,
-          }}
           onLoad={(event) => {
             const targetDocument = event.currentTarget.contentDocument
             if (!targetDocument) return
@@ -262,7 +268,7 @@ export function ExampleCanvas({
       {previewRoot
         ? createPortal(
             fixture ? (
-              <div key={fixture.id} className="paper-fixture-stage" onClick={(event) => {
+              <div key={fixture.id} {...stylex.props(shellStyles.paperFixtureStage)} onClick={(event) => {
                 const link = (event.target as Element).closest?.('a[href]')
                 if (!link || event.defaultPrevented) return
                 event.preventDefault()

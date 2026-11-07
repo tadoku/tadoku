@@ -194,7 +194,7 @@ function AccountActions({ viewer }: { viewer: Viewer | undefined }) {
 function AccountMenu({ viewer }: { viewer: SignedIn }) {
   const hydrated = useHydrated()
   return (
-    <span className="max-tablet:hidden [&_.paper-button>span]:max-w-measure-label [&_.paper-button>span]:truncate">
+    <span className="max-lg:hidden [&_.paper-button>span]:max-w-measure-label [&_.paper-button>span]:truncate">
       {hydrated
         ? <AccountMenuOpen viewer={viewer} />
         : (
@@ -242,9 +242,17 @@ function MobileAccount({ viewer, closeMenu }: { viewer: SignedIn; closeMenu: () 
         </Fragment>
       ))}
       {/* Server-rendered, so CSS shows the label for the current theme instead of reading it during render. */}
-      <Button variant="ghost" className={cn(mobileButton, 'mt-3 border-t border-rule-subtle')} onClick={toggleTheme}>
-        <MoonIcon className={iconClassName('compact', 'dark:hidden')} aria-hidden="true" />
-        <SunIcon className={iconClassName('compact', 'hidden dark:inline')} aria-hidden="true" />
+      <Button
+        variant="ghost"
+        className={cn(mobileButton, 'mt-3 border-t border-rule-subtle')}
+        onClick={toggleTheme}
+        leadingIcon={(
+          <>
+            <MoonIcon className={iconClassName('compact', 'dark:hidden')} />
+            <SunIcon className={iconClassName('compact', 'hidden dark:inline')} />
+          </>
+        )}
+      >
         <span className="dark:hidden">Use dark theme</span>
         <span className="hidden dark:inline">Use light theme</span>
       </Button>

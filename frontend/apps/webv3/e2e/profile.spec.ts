@@ -42,7 +42,7 @@ async function apiYear(request: APIRequestContext, userId: string, target: numbe
 /** The page shows the year's totals, breakdowns and contests exactly as the API reports them. */
 async function expectYear(page: Page, request: APIRequestContext, userId: string, target: number) {
   const expected = await apiYear(request, userId, target)
-  await expect(page.getByRole('group', { name: 'Profile year' })).toContainText(String(target))
+  await expect(page.getByRole('navigation', { name: 'Profile year' }).locator('[aria-current="page"]')).toHaveText(String(target))
 
   if (expected.activity.total_updates === 0) {
     await expect(page.getByRole('heading', { name: `No activity recorded in ${target}` })).toBeVisible()
@@ -98,11 +98,11 @@ test('an owner sees API totals, switches years and gets the export and day links
   await expect(day).toHaveAttribute('aria-label', / points on /)
   await page.screenshot({ path: testInfo.outputPath('owner-current-year.png'), fullPage: true })
 
-  // Year switching: the previous year, then back through the year control without a reload.
+  // Year switching: the previous year, then back through the year tabs without a reload.
   await page.goto(`/profile/${userId}/statistics/${year - 1}`)
   const previous = await expectYear(page, readerContext.request, userId, year - 1)
   expect(previous.activity.total_updates).not.toBe(current.activity.total_updates)
-  await page.getByRole('link', { name: `Next year, ${year}` }).click()
+  await page.getByRole('navigation', { name: 'Profile year' }).getByRole('link', { name: String(year), exact: true }).click()
   await expect(page).toHaveURL(new RegExp(`/profile/${userId}/statistics/${year}$`))
   await expectYear(page, readerContext.request, userId, year)
 })

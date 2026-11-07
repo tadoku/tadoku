@@ -135,7 +135,8 @@ describe('catalogue experience stability', () => {
     await user.click(screen.getByRole('radio', { name: 'Tablet' }))
     const frame = screen.getByTitle('Paper responsive component preview')
     expect(frame).toHaveAttribute('width', '768')
-    expect(frame).toHaveStyle({ inlineSize: '768px', boxSizing: 'content-box' })
+    expect(frame).toHaveStyle({ inlineSize: '768px' })
+    expect(frame).toHaveClass('box-content')
   })
 
   it('moves from search input to the first result with ArrowDown', async () => {

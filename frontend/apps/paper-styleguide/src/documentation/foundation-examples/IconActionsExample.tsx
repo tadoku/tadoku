@@ -1,14 +1,14 @@
 import { useState } from 'react'
-import { Button } from 'paper-ui'
-import { PlusIcon, XMarkIcon } from 'paper-ui/icons'
+import { Button, cluster, stack } from 'paper-ui'
+import { iconClassName, PlusIcon, XMarkIcon } from 'paper-ui/icons'
 
 export default function ReadingActions() {
   const [open, setOpen] = useState(false)
   return (
-    <div className="paper-stack">
-      <div className="paper-cluster">
+    <div className={stack()}>
+      <div className={cluster()}>
         <Button
-          leadingIcon={<PlusIcon className="paper-icon-default" />}
+          leadingIcon={<PlusIcon className={iconClassName()} />}
           onClick={() => setOpen(true)}
         >
           Add reading
@@ -16,10 +16,10 @@ export default function ReadingActions() {
         <Button
           variant="ghost"
           aria-label="Close reading entry"
-          style={{ minWidth: '2.75rem', minHeight: '2.75rem' }}
+          className="min-h-target min-w-target"
           onClick={() => setOpen(false)}
         >
-          <XMarkIcon className="paper-icon-default" aria-hidden="true" />
+          <XMarkIcon className={iconClassName()} aria-hidden="true" />
         </Button>
       </div>
       <p role="status">

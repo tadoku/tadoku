@@ -21,7 +21,7 @@ Read this when you start frontend work and need to find the right application, p
 | [styleguide](styleguide.md) | Reference for the `ui` components | Next.js 13 | `ui` (legacy) |
 
 - `frontend/packages/ui` is the legacy design system: React components, Tailwind configuration and global CSS. The Next.js apps compile it from source through `transpilePackages`.
-- `frontend/packages/paper-ui` is the Paper design system: framework-neutral controls, tokens, icons, a Tailwind preset and the catalogue registry. Consumers import the tsup build in `dist/`, which each Paper app's `predev` script rebuilds.
+- `frontend/packages/paper-ui` is the Paper design system: framework-neutral controls, typed design tokens and the Tailwind CSS theme generated from them, icons, an ESLint plugin and the catalogue registry. [Paper styling](paper-styling.md) explains how Paper code is styled. Consumers import the tsup build in `dist/`, which each Paper app's `predev` script rebuilds.
 
 `frontend/paper-boundaries.json` marks each application as `legacy` or `paper`. `pnpm check:paper-boundaries` rejects `paper-ui` in legacy applications, and rejects `ui`, Next.js and Headless UI in Paper code.
 

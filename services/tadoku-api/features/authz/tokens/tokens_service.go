@@ -121,8 +121,19 @@ func (s *Service) Create(ctx context.Context, request Create) (Issued, error) {
 	return Issued{Token: row, Secret: raw}, nil
 }
 
-func (s *Service) List(ctx context.Context) ([]Token, error) { return s.repository.list(ctx) }
+func (s *Service) List(ctx context.Context) ([]Token, error) {
+	if _, ok := tenant.FromContext(ctx); !ok {
+		return nil, errx.NewUnavailableError("access tokens require a tenant", postgres.ErrNoTenant)
+	}
+
+	return s.repository.list(ctx)
+}
+
 func (s *Service) Revoke(ctx context.Context, id uuid.UUID) error {
+	if _, ok := tenant.FromContext(ctx); !ok {
+		return errx.NewUnavailableError("access tokens require a tenant", postgres.ErrNoTenant)
+	}
+
 	return s.repository.revoke(ctx, id, timex.Now(ctx))
 }
 

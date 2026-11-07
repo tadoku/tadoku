@@ -1,5 +1,6 @@
 import { createFormHookContexts, useStore } from "@tanstack/react-form"
 import type { ReactNode } from "react";
+import { field as fieldStyles } from "./styles";
 
 export const { fieldContext, formContext, useFieldContext, useFormContext } = createFormHookContexts();
 
@@ -48,15 +49,16 @@ export function FieldFrame({
   readonly required?: boolean;
   readonly children: ReactNode;
 }) {
+  const slots = fieldStyles({ invalid: Boolean(error) });
   return (
-    <div className={`paper-field${error ? " paper-field--invalid" : ""}`}>
-      <label className="paper-field__label" htmlFor={id} id={`${id}-label`}>
+    <div className={slots.root()}>
+      <label className={slots.label()} htmlFor={id} id={`${id}-label`}>
         {label}
-        {required ? <span className="paper-field__required" aria-hidden="true">*</span> : null}
+        {required ? <span className={slots.required()} aria-hidden="true">*</span> : null}
       </label>
       {children}
-      {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
-      {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error}</p> : null}
+      {hint ? <p className={slots.hint()} id={`${id}-hint`}>{hint}</p> : null}
+      {error ? <p className={slots.error()} id={`${id}-error`} role="alert">{error}</p> : null}
     </div>
   );
 }

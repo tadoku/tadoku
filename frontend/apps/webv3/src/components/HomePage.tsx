@@ -1,12 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { BookOpenIcon, LanguageIcon, TrophyIcon, iconClassName } from 'paper-ui/icons'
-import { Link, useLoaderData } from '@tanstack/react-router'
+import { useLoaderData } from '@tanstack/react-router'
 import { Button, EmptyState, IconTile, Loading, SectionHeading, StatGrid, Surface, Table, buttonClassName } from 'paper-ui'
 import type { ReactNode } from 'react'
 import { homeQueryOptions, type HomeData } from '../lib/home'
 import { Person, Rank, currentRow, personLink } from './StandingsParts'
 import { formatDate, formatPeriod, numberFormat, pointsUnit } from '../lib/format'
-import { describeGoal, useStoredGoal } from '../lib/goal'
 import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
 import { MemberDashboard } from './MemberDashboard'
@@ -46,8 +45,9 @@ const status = 'mb-4 mt-0 text-sm font-semibold text-warning'
 const headline = 'm-0 max-w-measure-hero text-balance font-display text-hero leading-120 tracking-hero'
 const lead = 'my-6 max-w-measure-sm text-lead leading-175 text-ink max-tablet:my-5 max-tablet:text-base'
 const actions = 'flex flex-wrap items-center gap-x-5 gap-y-3'
-const step = 'grid content-start justify-items-start'
-const stepTitle = 'mb-2 mt-0 text-base leading-150'
+// The tile spans the title and text rows; the title's top margin centres it on the tile.
+const step = 'grid grid-cols-icon-content content-start gap-x-4'
+const stepTitle = 'mb-2 mt-2.5 text-base leading-150'
 const stepText = 'm-0 max-w-measure-how text-ui leading-170 text-ink'
 const strip = [
   'mt-8 grid max-w-record grid-cols-strip items-center gap-8 border-t border-rule pt-6',
@@ -93,10 +93,8 @@ export function HomePage() {
                 {joinable
                   ? <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a>
                   : <a href={links.logs} className={buttonClassName()}>Log activity</a>}
-                <SetGoalLink />
               </div>
               {joinable && <p className="mb-0 mt-4 text-metadata leading-160 text-muted">Free to join. Registration closes {formatDate(contest.registration_end)}.</p>}
-              <DailyGoal />
             </div>
           )}
 
@@ -110,15 +108,15 @@ export function HomePage() {
           <h2 id="home-how-title" className="mb-6 mt-0 font-display text-heading">How Tadoku works</h2>
           <ol className="m-0 grid list-none grid-cols-thirds gap-10 p-0 max-tablet:grid-cols-single max-tablet:gap-6">
             <li className={step}>
-              <IconTile className="mb-3.5"><LanguageIcon className={iconClassName()} /></IconTile>
+              <IconTile className="row-span-2"><LanguageIcon className={iconClassName()} /></IconTile>
               <h3 className={stepTitle}>Choose your language</h3><p className={stepText}>Join an official round or track immersion at your own pace between contests.</p>
             </li>
             <li className={step}>
-              <IconTile className="mb-3.5"><BookOpenIcon className={iconClassName()} /></IconTile>
+              <IconTile className="row-span-2"><BookOpenIcon className={iconClassName()} /></IconTile>
               <h3 className={stepTitle}>Read and listen</h3><p className={stepText}>Books, manga, games, podcasts, video: whatever keeps you engaged.</p>
             </li>
             <li className={step}>
-              <IconTile className="mb-3.5"><TrophyIcon className={iconClassName()} /></IconTile>
+              <IconTile className="row-span-2"><TrophyIcon className={iconClassName()} /></IconTile>
               <h3 className={stepTitle}>Log your progress</h3><p className={stepText}>Record what you did and see where it counts.</p>
             </li>
           </ol>
@@ -138,25 +136,6 @@ export function HomePage() {
       )}
 
     </div>
-  )
-}
-
-/** The goal is kept in the browser, so guests can set one too. Until one is saved, the hero's actions offer to set it. */
-function SetGoalLink() {
-  return useStoredGoal() ? null : <Link className="text-link hover:text-link-hover" to="/plan">Set a daily goal</Link>
-}
-
-function DailyGoal() {
-  const goal = useStoredGoal()
-  if (!goal) return null
-
-  return (
-    <section className="mb-0 mt-8 text-ui leading-160" aria-labelledby="home-goal-title">
-      <h2 id="home-goal-title" className="mb-1 mt-0 font-body text-metadata font-regular text-muted">Daily goal</h2>
-      <p className="m-0 font-semibold text-ink">
-        {describeGoal(goal)} <Link className="ms-3 text-sm font-regular text-link hover:text-link-hover" to="/plan">Change goal</Link>
-      </p>
-    </section>
   )
 }
 
@@ -199,11 +178,11 @@ function MemberPromise({ member, data, phase }: {
       <h1 id="home-title" className={headline}>{title}</h1>
       <p className={lead}>{summary}</p>
       {/* Log activity is already the header's action; the hero adds Join only while the member can still join. */}
-      <div className={actions}>
-        {joinable ? <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a> : null}
-        <SetGoalLink />
-      </div>
-      <DailyGoal />
+      {joinable ? (
+        <div className={actions}>
+          <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a>
+        </div>
+      ) : null}
     </div>
   )
 }

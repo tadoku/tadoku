@@ -45,9 +45,7 @@ test('validates and saves an editable local immersion goal without sending write
   page.on('request', request => {
     if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method())) writes.push(`${request.method()} ${new URL(request.url()).pathname}`)
   })
-  await page.goto('/')
-  await page.getByRole('link', { name: /goal/i }).first().click()
-  await expect(page).toHaveURL(/\/plan$/)
+  await page.goto('/plan')
   const minutes = page.getByRole('spinbutton', { name: /minutes/i })
   const days = page.getByRole('spinbutton', { name: /days/i })
   const save = page.getByRole('button', { name: /save.*goal/i })

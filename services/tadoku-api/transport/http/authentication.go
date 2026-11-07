@@ -85,6 +85,7 @@ func NewJWTAuthentication(
 				claims := &userClaims{}
 				token, err := jwt.ParseWithClaims(header[len("Bearer "):], claims, keyForToken, jwt.WithValidMethods([]string{"RS256"}))
 				key, tenantErr := tenant.Parse(claims.Tenant)
+				accountID, accountErr := uuid.Parse(claims.Subject)
 				if err == nil &&
 					tenantErr == nil &&
 					token.Valid &&
@@ -93,7 +94,7 @@ func NewJWTAuthentication(
 					!claims.IssuedAt.Time.Add(maxTokenAge).Before(jwt.TimeFunc()) &&
 					(issuer == "" || claims.Issuer == issuer) &&
 					claims.Type != "service" &&
-					(claims.Subject == "guest" || uuid.Validate(claims.Subject) == nil) {
+					(claims.Subject == "guest" || (accountErr == nil && accountID != uuid.Nil)) {
 					if !deployment.Serves(key) {
 						logger.Warn("tenant not served by deployment", "tenant", key.String())
 						writeJSON(w, stdhttp.StatusMisdirectedRequest, struct {

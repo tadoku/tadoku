@@ -112,6 +112,7 @@ func TestAuthenticationTokenPolicy(t *testing.T) {
 		{name: "non RS256 with matching key", issuedAt: now.Add(-time.Minute), subject: userID, method: jwt.SigningMethodEdDSA, kid: "ed-key", privateKey: edPrivateKey, want: stdhttp.StatusUnauthorized},
 		{name: "guest subject", issuedAt: now.Add(-time.Minute), subject: "guest", method: jwt.SigningMethodRS256, kid: "rsa-key", privateKey: rsaPrivateKey, want: stdhttp.StatusNoContent},
 		{name: "non UUID subject", issuedAt: now.Add(-time.Minute), subject: "policy-user", method: jwt.SigningMethodRS256, kid: "rsa-key", privateKey: rsaPrivateKey, want: stdhttp.StatusUnauthorized},
+		{name: "nil UUID subject", issuedAt: now.Add(-time.Minute), subject: "00000000-0000-0000-0000-000000000000", method: jwt.SigningMethodRS256, kid: "rsa-key", privateKey: rsaPrivateKey, want: stdhttp.StatusUnauthorized},
 		{name: "missing subject", issuedAt: now.Add(-time.Minute), method: jwt.SigningMethodRS256, kid: "rsa-key", privateKey: rsaPrivateKey, want: stdhttp.StatusUnauthorized},
 	} {
 		t.Run(test.name, func(t *testing.T) {

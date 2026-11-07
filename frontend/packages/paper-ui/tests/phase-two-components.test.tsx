@@ -172,13 +172,13 @@ describe("ActionMenu", () => {
     expect(trigger).toHaveFocus();
   });
 
-  it("shows leading content before the label without adding to the trigger's name", () => {
+  it("labels its items with a heading, such as the account's name", async () => {
+    const user = userEvent.setup();
     const items = [{ id: "profile", label: "Profile", onSelect: vi.fn() }];
-    const { rerender } = render(<ActionMenu label="Anton" triggerLeading={<span data-testid="avatar">AV</span>} items={items} />);
-    const trigger = screen.getByRole("button", { name: "Anton" });
-    expect(trigger.textContent).toBe("AVAnton");
-    rerender(<ActionMenu label="Anton" triggerLeading={<span data-testid="avatar">AV</span>} items={items} iconOnly />);
-    expect(screen.queryByTestId("avatar")).toBeNull();
+    render(<ActionMenu label="Account menu" heading="Anton" iconOnly items={items} />);
+    await user.click(screen.getByRole("button", { name: "Account menu" }));
+    const item = await screen.findByRole("menuitem", { name: "Profile" });
+    expect(screen.getByRole("group", { name: "Anton" })).toContainElement(item);
   });
 
   it("uses the curated chevron and offers a named icon-only trigger", async () => {

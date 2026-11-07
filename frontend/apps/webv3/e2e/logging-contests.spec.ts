@@ -24,7 +24,7 @@ async function createPersonalLog(page: Page, text: string) {
   await page.getByLabel('Language', { exact: true }).selectOption('jpn')
   await page.getByLabel('Activity', { exact: true }).selectOption({ label: 'Reading' })
   await amountInput(page).fill('7')
-  await page.getByLabel('Description', { exact: true }).fill(text)
+  await page.getByLabel(/^Description/).fill(text)
   return createLog(page)
 }
 
@@ -70,7 +70,7 @@ test('owner submits a saved log to a contest, sees it after reload, then removes
   await page.setViewportSize({ width: 1280, height: 800 })
 
   const chosen = (await eligible.first().getAttribute('value'))!
-  const title = (await page.locator(`label:has(input[value="${chosen}"])`).innerText()).trim()
+  const title = (await page.locator(`label:has(input[value="${chosen}"]) .paper-choice__label`).innerText()).trim()
   await eligible.first().check()
   await saveSubmissions(page).click()
   await expect(page).toHaveURL(`${webv3}/logs/${id}`)
@@ -99,11 +99,12 @@ test('owner submits a saved log to a contest, sees it after reload, then removes
 
 test('another learner cannot manage the log\'s contests', async ({ page, readerContext, adminContext }) => {
   test.skip(!webv3 || !api || !reader.email || !admin.email, 'Set both development fixture identities')
-  const id = await createPersonalLog(page, `contests-visitor-${Date.now()}`)
+  const description = `contests-visitor-${Date.now()}`
+  const id = await createPersonalLog(page, description)
 
   const adminPage = await adminContext.newPage()
   await adminPage.goto(`${webv3}/logs/${id}`)
-  await expect(adminPage.getByText(id, { exact: true })).toBeVisible()
+  await expect(adminPage.getByRole('heading', { level: 1, name: description })).toBeVisible()
   await expect(manageLink(adminPage)).toHaveCount(0)
   await adminPage.goto(`${webv3}/logs/${id}/contests`)
   await expect(adminPage.getByRole('heading', { name: 'This is someone else\'s record' })).toBeVisible()

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import { EmptyState, Pagination } from 'paper-ui'
 import type { ImmersionLog } from 'api-client'
-import { formatDate, numberFormat } from '../lib/format'
+import { formatDate, formatTracking, numberFormat, pointsUnit } from '../lib/format'
 import { activityPageSize } from '../lib/profile'
 import { renderLink } from './router-link'
 
@@ -35,29 +35,53 @@ export function LogEntries({ logs, total, page, pageHref, empty, showParticipant
 
   return (
     <>
+      {/* Long pages repeat their page links above the list, so the next page is reachable without scrolling 50 rows. */}
+      {pages > 1 ? (
+        <div className="list-pagination-top">
+          <Pagination label="Update pages, top" totalPages={pages} currentPage={page} getHref={pageHref} renderLink={renderLink} />
+        </div>
+      ) : null}
       <ol className="profile-entries">
-        {logs.map(log => <Entry key={log.id} log={log} showParticipant={showParticipant} actions={actions?.(log)} />)}
+        {logs.map((log, index) => (
+          <Entry
+            key={log.id}
+            log={log}
+            showParticipant={showParticipant}
+            actions={actions?.(log)}
+            firstOfDay={index === 0 || logDay(logs[index - 1]) !== logDay(log)}
+          />
+        ))}
       </ol>
-      <div className="profile-entries-footer">
-        <p>{numberFormat.format(first)}–{numberFormat.format(first + logs.length - 1)} of {numberFormat.format(total)} updates</p>
-        {pages > 1 ? <Pagination label="Update pages" totalPages={pages} currentPage={page} getHref={pageHref} renderLink={renderLink} /> : null}
-      </div>
+      {pages > 1 ? (
+        <div className="profile-entries-footer">
+          <p>{numberFormat.format(first)}–{numberFormat.format(first + logs.length - 1)} of {numberFormat.format(total)} updates</p>
+          <Pagination label="Update pages" totalPages={pages} currentPage={page} getHref={pageHref} renderLink={renderLink} />
+        </div>
+      ) : null}
     </>
   )
 }
 
 /** Webv2 hides a description tagged NSFW until the reader chooses to see it. */
-function Entry({ log, showParticipant, actions }: { log: ImmersionLog; showParticipant: boolean; actions: ReactNode }) {
-  const day = new Date(log.created_at).toISOString().slice(0, 10)
+const logDay = (log: ImmersionLog) => new Date(log.created_at).toISOString().slice(0, 10)
+
+/** A day's first entry shows its date; later entries that day keep it for assistive technology only. */
+function Entry({ log, showParticipant, actions, firstOfDay }: {
+  log: ImmersionLog
+  showParticipant: boolean
+  actions: ReactNode
+  firstOfDay: boolean
+}) {
+  const day = logDay(log)
   const subject = `${log.language.name} ${log.activity.name.toLocaleLowerCase()}`
   const nsfw = log.tags.some(tag => tag.toLowerCase() === 'nsfw')
-  const meta = [showParticipant ? log.user_display_name ?? 'Unknown user' : null, log.language.name, log.activity.name, tracking(log)]
+  const meta = [showParticipant ? log.user_display_name ?? 'Unknown user' : null, log.language.name, log.activity.name, formatTracking(log)]
 
   return (
-    <li>
-      <time dateTime={day} className="profile-entry-date">{formatDate(day)}</time>
+    <li className={firstOfDay ? undefined : 'profile-entry--same-day'}>
+      <time dateTime={day} className={firstOfDay ? 'profile-entry-date' : 'profile-entry-date paper-visually-hidden'}>{formatDate(day)}</time>
       <div className="profile-entry-body">
-        <Link className="profile-entry-title text-link" to="/logs/$logId" params={{ logId: log.id }}>
+        <Link className="profile-entry-title profile-entry-title--log" to="/logs/$logId" params={{ logId: log.id }}>
           {nsfw || !log.description ? subject : log.description}
         </Link>
         <p className="profile-entry-meta">{meta.filter(Boolean).join(' · ')}</p>
@@ -69,15 +93,7 @@ function Entry({ log, showParticipant, actions }: { log: ImmersionLog; showParti
         ) : null}
         {actions ? <div className="profile-entry-actions">{actions}</div> : null}
       </div>
-      <span className="profile-entry-score">{numberFormat.format(log.score)}<small>points</small></span>
+      <span className="profile-entry-score">{numberFormat.format(log.score)} <small>{pointsUnit(log.score)}</small></span>
     </li>
   )
-}
-
-/** The amount in its unit and the duration, as Webv2 lists them, for example `12 pages · 30 min`. */
-function tracking(log: ImmersionLog) {
-  const values = []
-  if (log.unit_name) values.push(`${numberFormat.format(log.amount)} ${log.unit_name.toLowerCase()}${log.amount === 1 ? '' : 's'}`)
-  if (log.duration_seconds !== undefined) values.push(`${numberFormat.format(log.duration_seconds / 60)} min`)
-  return values.join(' · ')
 }

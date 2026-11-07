@@ -10,15 +10,13 @@
   --paper-private-overlay: #fffefa;
   --paper-private-scrim: rgb(33 26 29 / 28%);
   --paper-private-ink: #211a1d;
-  --paper-private-muted: #686064;
+  --paper-private-muted: #5e5659;
   --paper-private-inverse: #fffefa;
   --paper-private-rule-subtle: #e2ddd4;
-  --paper-private-rule-default: #c7c0b5;
+  --paper-private-rule-default: #bcb4a8;
   --paper-private-rule-strong: #393235;
-  --paper-private-field-edge: #aba398;
+  --paper-private-field-edge: #857d72;
   --paper-private-accent: #5747b8;
-  --paper-private-accent-hover: #49399f;
-  --paper-private-accent-active: #40318c;
   --paper-private-accent-edge: #35277f;
   --paper-private-accent-soft: #e8e4fa;
   --paper-private-neutral-action-hover: #e9e5dc;
@@ -31,7 +29,6 @@
   --paper-private-success: #3f7048;
   --paper-private-warning: #8a5b16;
   --paper-private-danger: #a33333;
-  --paper-private-danger-hover: #892828;
   --paper-private-danger-edge: #651b1b;
   --paper-private-shadow: rgb(33 26 29 / 16%);
 
@@ -58,6 +55,7 @@
   --paper-color-action-text: var(--paper-private-inverse);
   --paper-color-action-destructive: var(--paper-private-action-destructive);
   --paper-color-action-destructive-hover: var(--paper-private-action-destructive-hover);
+  --paper-color-action-destructive-text: var(--paper-private-inverse);
   --paper-color-status-information: var(--paper-private-information);
   --paper-color-status-success: var(--paper-private-success);
   --paper-color-status-warning: var(--paper-private-warning);
@@ -74,6 +72,12 @@
   --paper-color-chart-7: #55716d;
   --paper-color-chart-8: #83565d;
 
+  --paper-color-heat-0: #d3ccc0;
+  --paper-color-heat-1: #8a7ae0;
+  --paper-color-heat-2: #6a58cf;
+  --paper-color-heat-3: #4d3daa;
+  --paper-color-heat-4: #33277c;
+
   --paper-elevation-flat: none;
   --paper-elevation-floating: 3px 3px 0 var(--paper-private-shadow);
   --paper-elevation-showcase: 5px 5px 0 var(--paper-private-shadow);
@@ -82,36 +86,33 @@
 [data-theme="dark"] {
   color-scheme: dark;
 
-  --paper-private-canvas: #171517;
-  --paper-private-paper: #222022;
-  --paper-private-raised: #2b282b;
-  --paper-private-overlay: #2b282b;
+  --paper-private-canvas: #121012;
+  --paper-private-paper: #272326;
+  --paper-private-raised: #322e31;
+  --paper-private-overlay: #322e31;
   --paper-private-scrim: rgb(0 0 0 / 38%);
-  --paper-private-ink: #f2eee8;
-  --paper-private-muted: #b8afb3;
+  --paper-private-ink: #ece7e0;
+  --paper-private-muted: #aaa1a5;
   --paper-private-inverse: #fffefa;
-  --paper-private-rule-subtle: #363235;
-  --paper-private-rule-default: #4e484b;
-  --paper-private-rule-strong: #81777c;
-  --paper-private-field-edge: #5b5458;
-  --paper-private-accent: #9a8bea;
-  --paper-private-accent-hover: #6d5cc7;
-  --paper-private-accent-active: #5747b8;
-  --paper-private-accent-edge: #5242a6;
-  --paper-private-accent-soft: #332d52;
-  --paper-private-neutral-action-hover: #2d292c;
-  --paper-private-action-default: #6150bc;
-  --paper-private-action-hover: #6d5cc7;
-  --paper-private-action-active: #49399f;
-  --paper-private-action-destructive: #9f3d3d;
-  --paper-private-action-destructive-hover: #b14a4a;
+  --paper-private-rule-subtle: #3c373a;
+  --paper-private-rule-default: #5a5356;
+  --paper-private-rule-strong: #b8afb3;
+  --paper-private-field-edge: #968d91;
+  --paper-private-accent: #a99cf0;
+  --paper-private-accent-edge: #5f52aa;
+  --paper-private-accent-soft: #3a3448;
+  --paper-private-neutral-action-hover: #353134;
+  --paper-private-action-default: #9b8cf2;
+  --paper-private-action-hover: #aa9ef5;
+  --paper-private-action-active: #8b7be6;
+  --paper-private-action-destructive: #d77171;
+  --paper-private-action-destructive-hover: #e09292;
   --paper-private-information: #70acd0;
   --paper-private-success: #7fb488;
   --paper-private-warning: #ddb66f;
   --paper-private-danger: #d77171;
-  --paper-private-danger-hover: #b94f4f;
   --paper-private-danger-edge: #883434;
-  --paper-private-shadow: rgb(0 0 0 / 48%);
+  --paper-private-shadow: rgb(236 231 224 / 18%);
 
   --paper-color-surface-canvas: var(--paper-private-canvas);
   --paper-color-surface-paper: var(--paper-private-paper);
@@ -130,6 +131,8 @@
   --paper-color-rule-destructive-action-edge: var(--paper-private-danger-edge);
   --paper-color-action-destructive: var(--paper-private-action-destructive);
   --paper-color-action-destructive-hover: var(--paper-private-action-destructive-hover);
+  /* Dark destructive fills are light enough to clear 3:1 on every surface, so their label is canvas-dark. */
+  --paper-color-action-destructive-text: var(--paper-private-canvas);
   --paper-color-status-information: var(--paper-private-information);
   --paper-color-status-success: var(--paper-private-success);
   --paper-color-status-warning: var(--paper-private-warning);
@@ -137,13 +140,13 @@
   --paper-color-focus-ring: var(--paper-private-accent);
   --paper-color-focus-offset: var(--paper-private-canvas);
 
-  /* Filled actions use a deeper violet and light text in dark mode. */
+  /* Filled actions use a light violet with canvas-dark text in dark mode, so the fill clears 3:1 on every surface. */
   --paper-color-action-default: var(--paper-private-action-default);
   --paper-color-action-hover: var(--paper-private-action-hover);
   --paper-color-action-active: var(--paper-private-action-active);
   --paper-color-action-soft: var(--paper-private-accent-soft);
   --paper-color-action-neutral-hover: var(--paper-private-neutral-action-hover);
-  --paper-color-action-text: var(--paper-private-inverse);
+  --paper-color-action-text: var(--paper-private-canvas);
 
   --paper-color-chart-1: #9a8bea;
   --paper-color-chart-2: #7fb488;
@@ -153,12 +156,20 @@
   --paper-color-chart-6: #b69ad0;
   --paper-color-chart-7: #83aaa3;
   --paper-color-chart-8: #c58e9b;
+
+  --paper-color-heat-0: #575054;
+  --paper-color-heat-1: #7a6ad2;
+  --paper-color-heat-2: #9a8ae6;
+  --paper-color-heat-3: #c0b4f5;
+  --paper-color-heat-4: #ece7ff;
 }
 
 :root {
-  --paper-font-display: "Merriweather", Georgia, "Times New Roman", serif;
+  --paper-font-display: "Merriweather", Georgia, "Hiragino Mincho ProN", "Yu Mincho",
+    "Noto Serif JP", "Noto Serif CJK JP", "Times New Roman", serif;
   --paper-font-body: "Open Sans", Inter, ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", sans-serif;
+    BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", "Noto Sans JP",
+    "Noto Sans CJK JP", sans-serif;
   --paper-font-monospace: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", monospace;
 
@@ -174,11 +185,11 @@
   --paper-type-component-size: 1.125rem;
   --paper-type-component-line-height: 1.5rem;
   --paper-type-component-weight: 700;
-  --paper-type-label-size: 0.75rem;
-  --paper-type-label-line-height: 1rem;
-  --paper-type-label-weight: 700;
-  --paper-type-metadata-size: 0.75rem;
-  --paper-type-metadata-line-height: 1.125rem;
+  --paper-type-label-size: 0.8125rem;
+  --paper-type-label-line-height: 1.125rem;
+  --paper-type-label-weight: 600;
+  --paper-type-metadata-size: 0.875rem;
+  --paper-type-metadata-line-height: 1.25rem;
   --paper-type-metadata-weight: 400;
 
   /* Fixed composition rhythm; density changes controls, not page hierarchy. */

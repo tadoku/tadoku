@@ -9,6 +9,7 @@
   .paper-flash__icon { display: grid; place-items: center; inline-size: var(--paper-icon-size-default); block-size: var(--paper-icon-size-default); }
   .paper-flash__content { min-inline-size: 0; overflow-wrap: anywhere; display: grid; gap: 0.2rem; }
   .paper-flash__action { align-self: center; }
+  .paper-flash:has(> .paper-flash__action) > .paper-flash__content { align-self: center; }
   .paper-loading { display: inline-grid; place-items: center; }
   .paper-loading__spinner { inline-size: 1.25rem; block-size: 1.25rem; border: 2px solid var(--paper-color-rule-default); border-block-start-color: var(--paper-color-action-default); border-radius: 50%; animation: paper-loading-spin 700ms linear infinite; }
   .paper-loading--small .paper-loading__spinner { inline-size: 1rem; block-size: 1rem; }

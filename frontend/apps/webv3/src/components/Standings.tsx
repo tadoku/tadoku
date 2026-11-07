@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { Button, EmptyState, Pagination, Table, type TableColumn } from 'paper-ui'
+import { Button, EmptyState, Pagination, StatusTag, Table, type TableColumn } from 'paper-ui'
 import type { ImmersionLeaderboard, ImmersionLeaderboardEntry } from 'api-client'
 import { numberFormat } from '../lib/format'
 import { standingsPageSize, type Read } from '../lib/leaderboard'
@@ -67,7 +67,7 @@ export function Standings({ result, page, caption, pageHref, profileHref, empty,
       cell: row => (
         <span className="standings-person">
           <a href={profileHref(row.user_id)}>{row.user_display_name}</a>
-          {row.user_id === viewerId ? <span className="standings-you">You</span> : null}
+          {row.user_id === viewerId ? <StatusTag className="standings-you">You</StatusTag> : null}
         </span>
       ),
     },
@@ -88,14 +88,15 @@ export function Standings({ result, page, caption, pageHref, profileHref, empty,
         minWidth="17rem"
         tableClassName="standings-table"
       />
-      <div className="standings-pagination">
-        <p>
-          {numberFormat.format(first)}–{numberFormat.format(first + entries.length - 1)} of {numberFormat.format(total)} participants
-        </p>
-        {totalPages > 1
-          ? <Pagination totalPages={totalPages} currentPage={page} getHref={pageHref} renderLink={renderLink} label="Standings pages" />
-          : null}
-      </div>
+      {totalPages > 1 ? (
+        <div className="standings-pagination">
+          <p>
+            {numberFormat.format(first)}–{numberFormat.format(first + entries.length - 1)} of {numberFormat.format(total)} participants
+          </p>
+          <Pagination totalPages={totalPages} currentPage={page} getHref={pageHref} renderLink={renderLink} label="Standings pages" />
+        </div>
+      ) : null}
+      {entries.some(entry => entry.is_tie) ? <p className="standings-tie-note"><abbr title="Tied rank">T</abbr> marks a tied rank.</p> : null}
     </>
   )
 }

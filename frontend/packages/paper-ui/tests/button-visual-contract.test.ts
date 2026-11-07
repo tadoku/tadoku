@@ -17,7 +17,7 @@ describe("Button visual contract", () => {
       /\.paper-button\s*\{[^}]*border: var\(--paper-border-static-width\) solid var\(--paper-color-action-default\);[^}]*border-block-end-color: var\(--paper-color-rule-action-edge\);[^}]*border-block-end-width: var\(--paper-border-action-edge-width\);/s,
     );
     expect(buttonCss).toMatch(
-      /\.paper-button--outline\s*\{[^}]*border-color: var\(--paper-color-rule-default\);[^}]*border-block-end-color: var\(--paper-color-rule-field-edge\);/s,
+      /\.paper-button--outline\s*\{[^}]*border-color: var\(--paper-color-rule-field-edge\);/s,
     );
     expect(buttonCss).toMatch(
       /\.paper-button--ghost\s*\{[^}]*border-color: transparent;[^}]*color: var\(--paper-color-text-ink\);/s,

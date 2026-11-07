@@ -10,7 +10,7 @@ const formsCss = readFileSync(
 describe("AmountWithUnit focus visual contract", () => {
   it("uses one parent-owned frame instead of two standalone control frames", () => {
     expect(formsCss).toMatch(
-      /\.paper-compound-field\s*\{[^}]*border: var\(--paper-border-static-width\) solid var\(--paper-color-rule-default\);[^}]*border-block-end: 0;[^}]*background: var\(--paper-color-surface-paper\);/s,
+      /\.paper-compound-field\s*\{[^}]*border: var\(--paper-border-static-width\) solid var\(--paper-color-rule-field-edge\);[^}]*border-block-end: 0;[^}]*background: var\(--paper-color-surface-paper\);/s,
     );
     expect(formsCss).toMatch(
       /\.paper-compound-field > \.paper-input\s*\{[^}]*border: 0;[^}]*border-block-end: var\(--paper-border-field-edge-width\) solid var\(--paper-color-rule-field-edge\);/s,
@@ -23,9 +23,9 @@ describe("AmountWithUnit focus visual contract", () => {
     );
   });
 
-  it("puts one low-opacity action hug around the whole compound control", () => {
+  it("puts one solid focus ring around the whole compound control", () => {
     expect(formsCss).toMatch(
-      /\.paper-compound-field:has\(> \.paper-input:focus-visible\)\s*\{[^}]*--paper-compound-focus-color: var\(--paper-color-focus-ring\);[^}]*outline: 3px solid color-mix\(in srgb, var\(--paper-compound-focus-color\) 10%, transparent\);[^}]*outline-offset: 0;/s,
+      /\.paper-compound-field:has\(> \.paper-input:focus-visible\)\s*\{[^}]*--paper-compound-focus-color: var\(--paper-color-focus-ring\);[^}]*outline: var\(--paper-focus-ring-width\) solid var\(--paper-compound-focus-color\);[^}]*outline-offset: var\(--paper-focus-ring-offset\);/s,
     );
 
     const compoundFocusRule = formsCss.match(
@@ -51,7 +51,7 @@ describe("AmountWithUnit focus visual contract", () => {
     );
   });
 
-  it("keeps the compound hug and focused edge in the invalid color", () => {
+  it("keeps the compound ring and focused edge in the invalid color", () => {
     expect(formsCss).toMatch(
       /\.paper-field--invalid \.paper-compound-field:has\(> \.paper-input:focus-visible\)\s*\{[^}]*--paper-compound-focus-color: var\(--paper-color-status-danger\);/s,
     );

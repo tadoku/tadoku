@@ -5,7 +5,6 @@ import {
   Button,
   PageHeader,
   Surface,
-  buttonClassName,
   usePaperForm,
   withPaperForm,
   type Option,
@@ -87,40 +86,46 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
   return (
     <div className="log-form-page">
       {editing ? (
-        <PageHeader title="Edit activity" backLink={{ href: `/logs/${editing.id}`, label: 'Back to log' }} />
+        <PageHeader
+          title="Edit log"
+          lead={`${editing.language.name} · ${editing.activity.name}`}
+          backLink={{ href: `/logs/${editing.id}`, label: editing.description || `${editing.language.name} ${editing.activity.name}` }}
+        />
       ) : (
-        <PageHeader title="Log activity" lead="Keep a record of what you read, listen to or practise." />
+        <PageHeader title="Log activity" />
       )}
       <form.AppForm>
         <div className="log-form-layout">
           <form.Form className="log-form" aria-busy={pending}>
             <Surface className="log-form__card">
               <fieldset className="goal-form__controls log-form__fields" disabled={disabled}>
-                {editing ? <FixedFields form={form} log={editing} /> : <ChoiceFields form={form} options={options} />}
+                {/* An edit can't change language or activity; the header states them. */}
+                {editing ? null : <ChoiceFields form={form} options={options} />}
                 <MeasureField form={form} timed={isTimed(options, activityId)} units={units} />
                 <form.AppField name="description">
-                  {field => <field.Input label="Description" placeholder="e.g. One Piece volume 45" />}
+                  {field => <field.Input label="Description (optional)" placeholder="e.g. One Piece volume 45" />}
                 </form.AppField>
                 <TagsField form={form} viewerId={viewerId} />
                 <div className="log-form__narrow-tags">
-                  <TagsSidebar form={form} activityId={activityId} disabled={disabled} />
+                  <TagsSidebar form={form} activityId={activityId} disabled={disabled} compact />
                 </div>
               </fieldset>
-              <ScoreEstimate form={form} options={options} />
+              {failure ? <SaveFailure failure={failure} viewerId={viewerId} editing={editing} /> : null}
+              <div className="paper-form-footer log-form__footer">
+                <div className="paper-form-footer__actions">
+                  <Button type="submit" disabled={disabled} loading={pending} loadingLabel="Saving">
+                    {editing ? 'Save' : 'Log activity'}
+                  </Button>
+                  {editing
+                    ? <Link className="text-link" to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
+                    : <Link className="text-link" to="/">Cancel</Link>}
+                </div>
+                <ScoreEstimate form={form} options={options} />
+              </div>
             </Surface>
-
-            {failure ? <SaveFailure failure={failure} viewerId={viewerId} editing={editing} /> : null}
-            <div className="log-form__actions">
-              {editing
-                ? <Link className={buttonClassName({ variant: 'ghost' })} to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
-                : <Link className={buttonClassName({ variant: 'ghost' })} to="/">Cancel</Link>}
-              <Button type="submit" disabled={disabled} loading={pending} loadingLabel="Saving">
-                {editing ? 'Save' : 'Create'}
-              </Button>
-            </div>
           </form.Form>
           <aside className="log-form__aside" aria-label="Suggested tags">
-            <TagsSidebar form={form} activityId={activityId} disabled={disabled} />
+            <TagsSidebar form={form} activityId={activityId} disabled={disabled} compact={false} />
           </aside>
         </div>
       </form.AppForm>
@@ -163,8 +168,7 @@ const TagsField = withPaperForm({
       <form.AppField name="tags">
         {field => (
           <field.TagsInput
-            label="Tags"
-            hint={`Up to ${maxTags} tags.`}
+            label={`Tags (optional, up to ${maxTags})`}
             placeholder="Add tags..."
             maxSelections={maxTags}
             options={suggestions.map(suggestion => suggestion.tag)}
@@ -185,7 +189,7 @@ const MeasureField = withPaperForm({
     const timeSpent = (
       <form.AppField name="minutes">
         {field => (
-          <field.Input label="Time spent" hint="minutes" required={timed} type="number" inputMode="decimal" step="any" min={0} />
+          <field.Input label={timed ? 'Time spent (minutes)' : 'Time spent (minutes, optional)'} required={timed} type="number" inputMode="decimal" step="any" min={0} />
         )}
       </form.AppField>
     )
@@ -200,6 +204,7 @@ const MeasureField = withPaperForm({
               {field => (
                 <field.AmountWithUnit
                   label="Amount"
+                  required
                   unitsLabel="Unit"
                   units={units.length ? units : [{ value: '', label: 'No units available' }]}
                   unitField={unitField}
@@ -260,38 +265,11 @@ const ChoiceFields = withPaperForm({
   },
 })
 
-/** A saved log's language and activity, which an edit cannot change. */
-const FixedFields = withPaperForm({
-  defaultValues: {} as LogDraft,
-  props: { log: {} as ImmersionLog },
-  render: function FixedFields({ form, log }) {
-    return (
-      <>
-        <form.AppField name="languageCode">
-          {field => (
-            <field.Select label="Language" disabled options={[{ value: log.language.code, label: log.language.name }]} />
-          )}
-        </form.AppField>
-        <form.AppField name="activityId">
-          {field => (
-            <field.Select
-              label="Activity"
-              hint="Language and activity stay fixed for existing entries."
-              disabled
-              options={[{ value: String(log.activity.id), label: log.activity.name }]}
-            />
-          )}
-        </form.AppField>
-      </>
-    )
-  },
-})
-
 const estimateFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 })
 
 /**
  * The API's estimate of the draft's score, requested once the draft is valid and has stopped changing for 300 ms. An
- * incomplete draft, a pending first estimate and a failed one show a dash, and a zero estimate shows N/A.
+ * incomplete draft, a pending first estimate and a failed one show an em dash, and a zero estimate shows N/A.
  */
 const ScoreEstimate = withPaperForm({
   defaultValues: {} as LogDraft,
@@ -310,7 +288,7 @@ const ScoreEstimate = withPaperForm({
     const score = input !== undefined && data?.ok ? data.data.platform.score : undefined
     return (
       <p className="log-form__estimate" aria-live="polite">
-        Estimated score: <strong>{score === undefined ? '-' : score ? estimateFormat.format(score) : 'N/A'}</strong>
+        Estimated score: <strong data-pending={score === undefined ? '' : undefined}>{score === undefined ? '—' : score ? estimateFormat.format(score) : 'N/A'}</strong>
       </p>
     )
   },

@@ -17,7 +17,7 @@ and optional for the others. Changing the activity clears the quantity, because
 activities count in different units. A missing unit is reported on the amount
 field, which shows one error for the amount and its unit. The description is one
 line. As in Webv2, `/logs/new?amount=<n>` prefills a positive whole amount; any
-other value is ignored. Cancel returns home, and Create saves.
+other value is ignored. Cancel returns home, and Log activity saves.
 
 Tags are chips, at most 10. While the viewer types, and once typing pauses for
 300 ms, the tag suggestion operation offers the viewer's own tags containing the
@@ -70,7 +70,7 @@ and persistence; Webv3 never calculates a score itself.
 Both forms show the API's estimated score in the footer of the form card,
 "Estimated score: X", once the draft is valid and has not changed for 300 ms. The request is a GET server function and sends no contest
 registrations, so it estimates the personal score only. An incomplete draft, a
-pending first estimate and a failed one show a dash; a zero estimate shows N/A.
+pending first estimate and a failed one show an em dash; a zero estimate shows N/A.
 A saved amount names its unit by the configuration's `unit_key`; the API resolves
 the language's variant.
 
@@ -80,7 +80,9 @@ record again. An expired session cookie retries a public detail read
 anonymously. Public detail omits private contest submissions; only the owner
 gets the link to manage them.
 
-The detail page offers its owner Edit log and Delete log; visitors see neither.
+The detail page shows the measure and score with the log's date, its tags and,
+for visitors, its learner; the record's ID is not shown. It offers its owner
+Edit log and Delete log; visitors see neither.
 `/logs/$logId/edit` shows the edit form only to the log's owner; another account
 sees that the record is someone else's, and an anonymous visitor is asked to
 sign in. It uses the same tags and tag sidebar, shows language and activity
@@ -97,8 +99,11 @@ log as first read; later reads do not replace it.
 contest registrations the saved log counts in; another account sees that the
 record is someone else's, and an anonymous visitor is asked to sign in. Each
 registration is offered unless the contest does not allow the log's activity,
-the registration lacks its language or the contest has ended, in that order,
-and the reason is shown beside it. The owner's current submissions start
+the registration lacks its language or the contest has ended, in that order.
+As in Webv2, the page opens with a summary of the log and lists each
+registration as a card naming its organizer and the points the log adds;
+offered contests come first, and an unavailable one shows its reason on its
+card. The owner's current submissions start
 selected; with `?preselect=1`, a log not yet submitted anywhere starts with every
 eligible registration selected, as Webv2's link after saving does. Saving sends
 the selection to the contest registration update operation, which adds and removes submissions to unfinished contests and keeps

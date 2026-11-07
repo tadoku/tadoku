@@ -9,9 +9,9 @@ const inputCss = readFileSync(
 );
 
 describe("Form control visual contract", () => {
-  it("uses the same neutral perimeter and field edge for Input, TextArea, and Select", () => {
+  it("uses the same field-edge perimeter and heavier lower edge for Input, TextArea, and Select", () => {
     expect(inputCss).toMatch(
-      /\.paper-input\s*\{[^}]*border: var\(--paper-border-static-width\) solid var\(--paper-color-rule-default\);[^}]*border-block-end: var\(--paper-border-field-edge-width\) solid\s*var\(--paper-color-rule-field-edge\);/s,
+      /\.paper-input\s*\{[^}]*border: var\(--paper-border-static-width\) solid var\(--paper-color-rule-field-edge\);[^}]*border-block-end-width: var\(--paper-border-field-edge-width\);/s,
     );
 
     const elementSpecificRule = inputCss.match(
@@ -19,14 +19,17 @@ describe("Form control visual contract", () => {
     )?.groups?.declarations;
 
     expect(elementSpecificRule ?? "").not.toMatch(/border(?:-[\w-]+)?\s*:/u);
+    expect(inputCss).toMatch(
+      /\.paper-input::placeholder\s*\{[^}]*color: var\(--paper-color-text-muted\);[^}]*opacity: 1;/s,
+    );
   });
 
   it("strengthens only interactive controls on hover and preserves focus visibility", () => {
     expect(inputCss).toMatch(
-      /\.paper-input:where\(input, textarea\):where\(:hover:not\(:disabled\):not\(\[readonly\]\)\)\s*\{[^}]*border-color: var\(--paper-color-rule-field-edge\);/s,
+      /\.paper-input:where\(input, textarea\):where\(:hover:not\(:disabled\):not\(\[readonly\]\)\)\s*\{[^}]*border-color: var\(--paper-color-rule-strong\);/s,
     );
     expect(inputCss).toMatch(
-      /\.paper-input:where\(select\):where\(:hover:not\(:disabled\)\)\s*\{[^}]*border-color: var\(--paper-color-rule-field-edge\);/s,
+      /\.paper-input:where\(select\):where\(:hover:not\(:disabled\)\)\s*\{[^}]*border-color: var\(--paper-color-rule-strong\);/s,
     );
     expect(baseCss).toMatch(
       /:focus-visible\s*\{[^}]*outline: var\(--paper-focus-ring-width\) solid var\(--paper-color-focus-ring\);[^}]*outline-offset: var\(--paper-focus-ring-offset\);/s,
@@ -40,9 +43,9 @@ describe("Form control visual contract", () => {
     expect(inputCss).not.toMatch(/\.paper-input:read-only\s*\{/u);
   });
 
-  it("gives Paper inputs a zero-offset, low-opacity action hug on keyboard focus", () => {
+  it("gives Paper inputs a solid, offset focus ring on keyboard focus", () => {
     expect(inputCss).toMatch(
-      /\.paper-input:focus-visible\s*\{[^}]*--paper-input-focus-color: var\(--paper-color-focus-ring\);[^}]*position: relative;[^}]*z-index: 1;[^}]*border-block-end-color: var\(--paper-input-focus-color\);[^}]*outline: 3px solid color-mix\(in srgb, var\(--paper-input-focus-color\) 10%, transparent\);[^}]*outline-offset: 0;/s,
+      /\.paper-input:focus-visible\s*\{[^}]*--paper-input-focus-color: var\(--paper-color-focus-ring\);[^}]*position: relative;[^}]*z-index: 1;[^}]*border-block-end-color: var\(--paper-input-focus-color\);[^}]*outline: var\(--paper-focus-ring-width\) solid var\(--paper-input-focus-color\);[^}]*outline-offset: var\(--paper-focus-ring-offset\);/s,
     );
 
     const focusedRule = inputCss.match(

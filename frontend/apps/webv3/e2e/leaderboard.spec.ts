@@ -17,18 +17,21 @@ test('server-rendered boards show the API standings, their scopes and profile li
       path: '/leaderboard/latest/1',
       api: `/immersion/contests/${latest.id}/leaderboard`,
       scope: latest.title,
+      role: 'heading' as const,
       profile: () => (userId: string) => `/contests/${latest.id}/profile/${userId}/1`,
     },
     {
       path: `/leaderboard/yearly/${year}/1`,
       api: `/immersion/leaderboard/yearly/${year}`,
       scope: `${year} official standings`,
+      role: 'region' as const,
       profile: statistics,
     },
     {
       path: '/leaderboard/all-time/1',
       api: '/immersion/leaderboard/global',
       scope: 'All-time official standings',
+      role: 'region' as const,
       profile: statistics,
     },
   ]
@@ -40,7 +43,7 @@ test('server-rendered boards show the API standings, their scopes and profile li
     const response = await page.goto(item.path)
     expect(response?.status()).toBe(200)
     await expect(page.getByRole('heading', { level: 1, name: 'Leaderboard' })).toBeVisible()
-    await expect(page.getByRole('heading', { level: 2, name: item.scope, exact: true })).toBeVisible()
+    await expect(page.getByRole(item.role, { name: item.scope, exact: true })).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Leaderboard period' }).locator('[aria-current="page"]')).toHaveCount(1)
     await expect(page.getByRole('link', { name: 'Leaderboard', exact: true }).first()).toHaveAttribute('href', '/leaderboard/latest/1')
     await expectRows(page, data.entries, item.profile())
@@ -93,14 +96,14 @@ test('year and period tabs switch boards in the browser', async ({ page, request
   await years.getByRole('link', { name: String(year - 1) }).click()
   await expect(page).toHaveURL(new RegExp(`/leaderboard/yearly/${year - 1}/1$`))
   await expect(page).toHaveTitle(`${year - 1} leaderboard · Tadoku`)
-  await expect(page.getByRole('heading', { level: 2, name: `${year - 1} official standings` })).toBeVisible()
+  await expect(page.getByRole('region', { name: `${year - 1} official standings` })).toBeVisible()
   await expectRows(page, previous.entries, statistics())
   await expectTotal(page, previous)
 
   const periods = page.getByRole('navigation', { name: 'Leaderboard period' })
   await periods.getByRole('link', { name: 'All time' }).click()
   await expect(page).toHaveURL(/\/leaderboard\/all-time\/1$/)
-  await expect(page.getByRole('heading', { level: 2, name: 'All-time official standings' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'All-time official standings' })).toBeVisible()
   await periods.getByRole('link', { name: 'Yearly' }).click()
   await expect(page).toHaveURL(new RegExp(`/leaderboard/yearly/${year}/1$`))
   await periods.getByRole('link', { name: 'Latest official' }).click()
@@ -109,7 +112,7 @@ test('year and period tabs switch boards in the browser', async ({ page, request
   expect(failures).toEqual([])
 })
 
-test('a signed-in participant sees their own row and the contest action their registration allows', async ({ page, readerContext, request }, testInfo) => {
+test('a signed-in participant sees their own row and the join action while they can join', async ({ page, readerContext, request }, testInfo) => {
   test.skip(!reader.email || !reader.password, 'Set E2E_READER_EMAIL and E2E_READER_PASSWORD')
   const latest = await apiJson<{ id: string; contest_start: string; contest_end: string; registration_end: string }>(
     request, '/immersion/contests/latest-official',
@@ -119,7 +122,6 @@ test('a signed-in participant sees their own row and the contest action their re
   const registered = registration.status() === 200
   const data = await board(request, `/immersion/contests/${latest.id}/leaderboard`)
   const today = new Date().toISOString().slice(0, 10)
-  const ongoing = today >= latest.contest_start && today <= latest.contest_end
 
   await page.goto('/leaderboard/latest/1')
   await expect(page.getByText('You need to log in to participate in this contest.')).toHaveCount(0)
@@ -131,8 +133,8 @@ test('a signed-in participant sees their own row and the contest action their re
     await expect(own).toHaveCount(0)
   }
   const header = page.locator('.standings-header')
-  if (ongoing && registered) await expect(header.getByRole('link', { name: 'Log activity' })).toHaveAttribute('href', '/logs/new')
-  else if (!registered && today <= latest.registration_end) await expect(header.getByRole('link', { name: 'Join contest' })).toBeVisible()
+  // Registered participants log through the site header's Log activity action; the board offers only joining.
+  if (!registered && today <= latest.registration_end) await expect(header.getByRole('link', { name: 'Join contest' })).toBeVisible()
   else await expect(header.getByRole('link')).toHaveCount(0)
   await page.screenshot({ path: testInfo.outputPath('latest-signed-in.png'), fullPage: true })
 })

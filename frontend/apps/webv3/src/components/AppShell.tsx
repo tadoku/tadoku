@@ -35,7 +35,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     { type: 'link', id: 'home', label: 'Home', href: links.home, current: currentPath === links.home },
     { type: 'link', id: 'leaderboard', label: 'Leaderboard', href: links.leaderboard, current: currentPath.startsWith('/leaderboard/') },
     { type: 'link', id: 'contests', label: 'Contests', href: links.contests, current: currentPath.startsWith('/contests/') },
-    { type: 'link', id: 'blog', label: 'Blog', href: links.blog, current: currentPath.startsWith('/blog/') },
+    { type: 'link', id: 'blog', label: 'Blog', href: links.blog, current: currentPath === '/blog' || currentPath.startsWith('/blog/') },
     { type: 'link', id: 'guide', label: 'Guide', href: links.guide, current: currentPath === links.guide },
   ]
 
@@ -82,7 +82,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
           <div className="app-footer__meta">
             <span>Built by <a className="text-link" href="https://antonve.be">antonve</a></span>
-            <Button variant="link" onClick={toggleTheme} disabled={!hydrated}>
+            <Button variant="link" className="app-awaiting-hydration" onClick={toggleTheme} disabled={!hydrated}>
               <span className="app-theme-label--light">Use dark theme</span>
               <span className="app-theme-label--dark">Use light theme</span>
             </Button>
@@ -136,7 +136,7 @@ function AccountActions({ viewer }: { viewer: Viewer | undefined }) {
       return <span>Account service unavailable</span>
     case 'anonymous':
       return <>
-        <a href={login} className="text-link">Log in</a>
+        <a href={login} className="app-login-link">Log in</a>
         <a href={register} className={buttonClassName({ variant: 'outline' })}>Sign up</a>
       </>
     case 'signed-in':
@@ -161,7 +161,7 @@ function AccountMenu({ viewer }: { viewer: SignedIn }) {
         ? <ActionMenu label={viewer.displayName} triggerVariant="ghost" items={[...items, { id: 'logout', label: 'Log out', onSelect: logOut }]} />
         : (
           // The menu's trigger as server HTML renders it, disabled until it can open.
-          <button type="button" className={buttonClassName({ variant: 'ghost' })} disabled>
+          <button type="button" className={buttonClassName({ variant: 'ghost', className: 'app-awaiting-hydration' })} disabled>
             <span>{viewer.displayName}</span>
             <ChevronDownIcon className={iconClassName('compact')} aria-hidden="true" />
           </button>

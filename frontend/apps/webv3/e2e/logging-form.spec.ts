@@ -14,7 +14,7 @@ import {
   webv3,
 } from './logging-fixtures'
 
-const tagsInput = (page: Page) => page.getByRole('combobox', { name: 'Tags', exact: true })
+const tagsInput = (page: Page) => page.getByRole('combobox', { name: /^Tags \(/ })
 const chip = (page: Page, tag: string) => page.getByRole('button', { name: `Remove ${tag}`, exact: true })
 const language = (page: Page) => page.getByLabel('Language', { exact: true })
 const activity = (page: Page) => page.getByLabel('Activity', { exact: true })
@@ -119,7 +119,7 @@ test('the last logged language and activity are restored for the next log, and `
 
   // A remembered timed activity starts without an amount, even when `?amount=` asks for one.
   await page.goto('/logs/new?amount=12')
-  await expect(page.getByRole('button', { name: 'Create', exact: true })).toBeEnabled({ timeout: 15_000 })
+  await expect(page.getByRole('button', { name: 'Log activity', exact: true })).toBeEnabled({ timeout: 15_000 })
   await expect(language(page)).toHaveValue(listened)
   await expect(activity(page)).toHaveValue(String((await record(readerContext, timed)).activity.id))
   await expect(amountInput(page)).toHaveCount(0)
@@ -131,7 +131,7 @@ test('the last logged language and activity are restored for the next log, and `
   await createLog(page)
 
   await page.goto('/logs/new?amount=12')
-  await expect(page.getByRole('button', { name: 'Create', exact: true })).toBeEnabled({ timeout: 15_000 })
+  await expect(page.getByRole('button', { name: 'Log activity', exact: true })).toBeEnabled({ timeout: 15_000 })
   await expect(language(page)).toHaveValue(read)
   await expect(activity(page).locator('option:checked')).toHaveText('Reading')
   await expect(amountInput(page)).toHaveValue('12')
@@ -165,8 +165,10 @@ test('edit keeps language and activity fixed, uses the same tags and sidebar and
   await page.goto(`/logs/${id}/edit`)
   const save = page.getByRole('button', { name: 'Save', exact: true })
   await expect(save).toBeEnabled({ timeout: 15_000 })
-  await expect(language(page)).toBeDisabled()
-  await expect(activity(page)).toBeDisabled()
+  // An edit can't change language or activity, so the header states them and the form offers no controls for them.
+  await expect(page.locator('.paper-page-header__lead')).toHaveText(/ · /)
+  await expect(language(page)).toHaveCount(0)
+  await expect(activity(page)).toHaveCount(0)
   await expect(chip(page, 'book')).toBeVisible()
   await expect(page.getByRole('link', { name: 'Cancel', exact: true })).toHaveAttribute('href', `/logs/${id}`)
   const aside = page.getByRole('complementary', { name: 'Suggested tags' })
@@ -197,7 +199,7 @@ test('a learner without ongoing registrations goes from Create straight to the s
 
   await openForm(page)
   await amountInput(page).fill('3')
-  await page.getByRole('button', { name: 'Create', exact: true }).click()
+  await page.getByRole('button', { name: 'Log activity', exact: true }).click()
   await expect(page).toHaveURL(savedLogUrl)
   const saved = await record(page.context(), new URL(page.url()).pathname.split('/')[2])
   expect(saved).toMatchObject({ amount: 3, registrations: [] })

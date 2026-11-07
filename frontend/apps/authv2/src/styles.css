@@ -6,7 +6,8 @@ a:where(:not(.paper-button)) { color: var(--paper-color-text-link); }
 .account-shell { --account-gutter: clamp(16px, 4vw, 32px); min-height: 100vh; display: flex; flex-direction: column; }
 .account-skip { position: fixed; z-index: 100; left: 12px; top: 12px; transform: translateY(-180%); }
 .account-skip:focus { transform: none; }
-.account-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 14px var(--account-gutter); border-bottom: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
+/* Matches Webv3's header height and content column so moving between the hosts keeps the brand in place. */
+.account-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; min-height: 61px; padding: 8px max(var(--account-gutter), calc((100% - 1160px) / 2)); border-bottom: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
 .account-brand { display: inline-flex; align-items: center; gap: 14px; color: var(--paper-color-text-muted); text-decoration: none; }
 .account-lockup { display: flex; align-items: center; gap: 7px; }
 .account-mark { display: block; width: 35px; height: auto; }
@@ -16,7 +17,17 @@ a:where(:not(.paper-button)) { color: var(--paper-color-text-link); }
 [data-theme="dark"] .account-mark--dark, [data-theme="dark"] .account-wordmark--dark { display: block; }
 .account-brand__label { padding-left: 14px; border-left: 1px solid var(--paper-color-rule-default); font-size: .875rem; font-weight: 600; line-height: 1.25rem; }
 .account-session { display: flex; align-items: center; gap: 16px; min-width: 0; margin: 0; }
-.account-session__name { min-width: 0; color: var(--paper-color-text-muted); font-size: .875rem; overflow-wrap: anywhere; }
+.account-session__name { min-width: 0; max-width: 12rem; overflow: hidden; color: var(--paper-color-text-ink); font-size: .875rem; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 30rem) {
+  .account-header { flex-wrap: nowrap; }
+  .account-brand__label { display: none; }
+  .account-wordmark { width: 100px; }
+  .account-mark { width: 28px; }
+  .account-header { gap: 12px; }
+  .account-session { gap: 8px; }
+  .account-session .paper-button { flex-shrink: 0; white-space: nowrap; }
+  .account-session__name { max-width: none; }
+}
 .account-main { flex: 1; width: 100%; padding: clamp(32px, 7vh, 72px) var(--account-gutter) 72px; }
 .account-main:focus { outline: none; }
 
@@ -47,19 +58,19 @@ a:where(:not(.paper-button)) { color: var(--paper-color-text-link); }
 .settings-group__rows { padding: 0; }
 .settings-row { display: grid; grid-template-columns: 10rem minmax(0, 1fr) auto; align-items: center; gap: 4px 24px; padding: 16px 20px; }
 .settings-row + .settings-row { border-top: 1px solid var(--paper-color-rule-subtle); }
-.settings-row__label { margin: 0; color: var(--paper-color-text-muted); font-family: var(--paper-font-body); font-size: var(--paper-type-metadata-size); font-weight: 600; line-height: var(--paper-type-metadata-line-height); }
+.settings-row__label { margin: 0; color: var(--paper-color-text-muted); font-family: var(--paper-font-body); font-size: var(--paper-type-metadata-size); font-weight: 400; line-height: var(--paper-type-metadata-line-height); }
 .settings-row__summary { min-width: 0; }
 .settings-row__value { margin: 0; color: var(--paper-color-text-ink); font-size: var(--paper-type-body-size); line-height: var(--paper-type-body-line-height); overflow-wrap: anywhere; white-space: break-spaces; }
-.settings-row__description, .settings-row__hint { margin: 0; color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); line-height: var(--paper-type-metadata-line-height); }
+.settings-row__hint { margin: 0; color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); line-height: var(--paper-type-metadata-line-height); }
 .settings-row--open { grid-template-columns: 10rem minmax(0, 1fr); align-items: start; background: var(--paper-color-surface-raised); box-shadow: inset var(--paper-accent-rail-width) 0 0 var(--paper-color-focus-ring); }
 .settings-row__editor { min-width: 0; max-width: 26rem; overflow-wrap: anywhere; }
 /* The email hint holds the stored address, whose raw spaces would otherwise hang past the row. */
 .settings-row__editor .paper-field__hint { white-space: break-spaces; }
 .settings-row__editor .account-form { gap: 16px; }
 /* Deletion stays off the rows: one quiet link below the groups. */
-.settings-delete { margin: 40px 0 0; font-size: var(--paper-type-metadata-size); line-height: var(--paper-type-metadata-line-height); }
-.settings-delete a { color: var(--paper-color-text-muted); }
-.settings-saved { margin: 0; color: var(--paper-color-status-success); font-size: var(--paper-type-metadata-size); font-weight: 600; line-height: var(--paper-type-metadata-line-height); }
+.settings-delete { margin: 40px 0 0; }
+.settings-delete a { color: var(--paper-color-status-danger); }
+.settings-saved { margin: 0; color: var(--paper-color-status-success); font-size: var(--paper-type-metadata-size); font-weight: 400; line-height: var(--paper-type-metadata-line-height); }
 
 @media (max-width: 720px) {
   .settings-row, .settings-row--open { grid-template-columns: minmax(0, 1fr) auto; }
@@ -69,6 +80,11 @@ a:where(:not(.paper-button)) { color: var(--paper-color-text-link); }
 
 @media (max-width: 480px) {
   .account-brand__label { display: none; }
+  .account-wordmark { width: 100px; }
+  .account-mark { width: 28px; }
   .account-session { gap: 12px; }
   .card-page__card { padding: 24px 20px; }
 }
+
+/* The session row reads as a name and a plain action of equal size and weight, aligned to the content edge. */
+.account-session .paper-button { min-block-size: 24px; padding: 0; border: 0; font-size: .875rem; font-weight: 400; text-decoration: underline; }

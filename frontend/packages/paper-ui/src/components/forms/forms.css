@@ -1,43 +1,62 @@
 @layer paper-recipes {
-  .paper-textarea { line-height: var(--paper-type-body-line-height); min-block-size: 8rem; resize: vertical; }
+  .paper-textarea { line-height: var(--paper-type-body-line-height); min-block-size: 5.5rem; resize: vertical; }
   .paper-select__control { position: relative; display: block; inline-size: 100%; }
   .paper-select { appearance: none; padding-inline-end: calc(var(--paper-field-padding-inline) * 2 + var(--paper-icon-size-compact)); }
   .paper-select__icon { position: absolute; z-index: 2; inset-block-start: 50%; inset-inline-end: var(--paper-field-padding-inline); color: var(--paper-color-text-muted); pointer-events: none; transform: translateY(-50%); }
   .paper-choice-field { display: grid; gap: 0.5rem; margin: 0; padding: 0; border: 0; }
+  /* A floated legend joins the grid, so the field gap separates it from its options like a label. */
+  .paper-choice-field > legend:not(.paper-visually-hidden) { float: inline-start; inline-size: 100%; padding: 0; }
   .paper-choice-list { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; }
   .paper-choice { display: inline-flex; align-items: start; gap: var(--paper-inline-gap); cursor: pointer; }
-  .paper-choice input { inline-size: 1.15rem; block-size: 1.15rem; margin-block-start: 0.2rem; accent-color: var(--paper-color-action-default); }
-  .paper-choice input:focus-visible { --paper-control-focus-color: var(--paper-color-focus-ring); outline: 3px solid color-mix(in srgb, var(--paper-control-focus-color) 10%, transparent); outline-offset: 0; box-shadow: inset 0 0 0 1px var(--paper-control-focus-color); }
+  .paper-choice input { inline-size: 1.15rem; block-size: 1.15rem; margin: 0.2rem 0 0; accent-color: var(--paper-color-action-default); }
+  .paper-choice input:focus-visible { --paper-control-focus-color: var(--paper-color-focus-ring); outline: var(--paper-focus-ring-width) solid var(--paper-control-focus-color); outline-offset: var(--paper-focus-ring-offset); box-shadow: inset 0 0 0 1px var(--paper-control-focus-color); }
   .paper-field--invalid .paper-choice input:focus-visible { --paper-control-focus-color: var(--paper-color-status-danger); }
   .paper-choice input:disabled + span { color: var(--paper-color-text-muted); cursor: not-allowed; }
+  /* A card choice is a selectable row: the box, the label over its description, and a trailing detail. */
+  .paper-choice--card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.25rem var(--paper-inline-gap); inline-size: 100%; padding: 0.75rem 1rem; border: var(--paper-border-static-width) solid var(--paper-color-rule-field-edge); background: var(--paper-color-surface-paper); }
+  .paper-choice--card input { margin: 0; }
+  .paper-choice--card:hover:not(:has(input:disabled)) { background: var(--paper-color-action-neutral-hover); }
+  .paper-choice--card:has(input:checked) { border-color: var(--paper-color-text-link); box-shadow: inset 0 -1px 0 var(--paper-color-text-link); background: var(--paper-color-action-soft); }
+  .paper-choice--card:has(input:disabled) { border-color: var(--paper-color-rule-default); cursor: not-allowed; }
+  .paper-choice__body { display: grid; gap: 0.125rem; min-inline-size: 0; }
+  .paper-choice__label { font-weight: 600; overflow-wrap: anywhere; }
+  .paper-choice__description, .paper-choice__aside { color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); }
+  .paper-choice__aside { text-align: end; font-variant-numeric: tabular-nums; }
+  .paper-choice--card:has(input:disabled) .paper-choice__label { color: var(--paper-color-text-muted); font-weight: 400; }
+  @media (max-width: 30rem) { .paper-choice--card { grid-template-columns: auto minmax(0, 1fr); } .paper-choice--card .paper-choice__aside { grid-column: 2; text-align: start; } }
+  /* Browsers fade a disabled box to about 1.3:1; an outline a step lighter than the field edge (about 3.5:1) keeps it
+     reading as a control without matching an enabled box. */
+  .paper-choice input[type="checkbox"]:disabled { outline: var(--paper-border-static-width) solid color-mix(in srgb, var(--paper-color-rule-field-edge) 85%, var(--paper-color-rule-default)); outline-offset: -1px; border-radius: 2px; }
   .paper-radio-select--segmented .paper-choice-list { display: inline-flex; flex-wrap: wrap; align-items: stretch; inline-size: fit-content; max-inline-size: 100%; gap: 0; }
-  .paper-radio-select__segment { position: relative; display: inline-grid; grid-template-columns: 1fr auto; align-items: center; flex: 1 1 7rem; min-block-size: var(--paper-control-height); min-inline-size: var(--paper-radio-min-width); margin-block-start: calc(-1 * var(--paper-border-static-width)); margin-inline-start: calc(-1 * var(--paper-border-static-width)); padding: var(--paper-field-padding-block) var(--paper-field-padding-inline); border: var(--paper-border-static-width) solid var(--paper-color-rule-default); border-block-end: var(--paper-border-field-edge-width) solid var(--paper-color-rule-field-edge); color: var(--paper-color-text-ink); background: var(--paper-color-surface-paper); font-size: var(--paper-type-body-size); font-weight: var(--paper-type-label-weight); line-height: 1.25; cursor: pointer; }
+  .paper-radio-select__segment { position: relative; display: inline-grid; grid-template-columns: 1fr auto; align-items: center; flex: 1 1 7rem; min-block-size: var(--paper-control-height); min-inline-size: var(--paper-radio-min-width); margin-block-start: calc(-1 * var(--paper-border-static-width)); margin-inline-start: calc(-1 * var(--paper-border-static-width)); padding: var(--paper-field-padding-block) var(--paper-field-padding-inline); border: var(--paper-border-static-width) solid var(--paper-color-rule-field-edge); border-block-end-width: var(--paper-border-field-edge-width); color: var(--paper-color-text-ink); background: var(--paper-color-surface-paper); font-size: var(--paper-type-body-size); font-weight: var(--paper-type-label-weight); line-height: 1.25; cursor: pointer; }
   .paper-radio-select__segment:first-child { margin-inline-start: 0; }
   .paper-radio-select__segment input { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .paper-radio-select__check { margin-inline-start: var(--paper-inline-gap); color: var(--paper-color-action-default); opacity: 0; }
-  .paper-radio-select__segment:hover:not(:has(input:disabled)):not(:has(input:checked)) { border-color: var(--paper-color-rule-field-edge); background: var(--paper-color-action-neutral-hover); }
-  .paper-radio-select__segment:has(input:checked) { z-index: 1; border-color: var(--paper-color-action-default); border-block-end-color: var(--paper-color-rule-action-edge); background: var(--paper-color-action-soft); }
+  .paper-radio-select__check { inline-size: 1rem; block-size: 1rem; margin-inline-start: var(--paper-inline-gap); color: var(--paper-color-text-link); stroke-width: 2.5; opacity: 0; }
+  .paper-radio-select__segment:hover:not(:has(input:disabled)):not(:has(input:checked)) { border-color: var(--paper-color-rule-strong); background: var(--paper-color-action-neutral-hover); }
+  .paper-radio-select__segment:has(input:checked) { z-index: 1; border-color: var(--paper-color-text-link); background: var(--paper-color-action-soft); }
   .paper-radio-select__segment:has(input:checked) .paper-radio-select__check { opacity: 1; }
-  .paper-radio-select__segment:has(input:focus-visible) { --paper-control-focus-color: var(--paper-color-focus-ring); z-index: 2; border-block-end-color: var(--paper-control-focus-color); outline: 3px solid color-mix(in srgb, var(--paper-control-focus-color) 10%, transparent); outline-offset: 0; }
+  .paper-radio-select__segment:has(input:focus-visible) { --paper-control-focus-color: var(--paper-color-focus-ring); z-index: 2; border-block-end-color: var(--paper-control-focus-color); outline: var(--paper-focus-ring-width) solid var(--paper-control-focus-color); outline-offset: var(--paper-focus-ring-offset); }
   .paper-field--invalid .paper-radio-select__segment:has(input:focus-visible) { --paper-control-focus-color: var(--paper-color-status-danger); }
-  .paper-radio-select__segment:has(input:disabled) { color: var(--paper-color-text-muted); cursor: not-allowed; opacity: 0.56; }
+  .paper-radio-select__segment:has(input:disabled) { color: var(--paper-color-text-muted); cursor: not-allowed; }
   .paper-field--invalid.paper-radio-select--segmented .paper-radio-select__segment { border-color: var(--paper-color-status-danger); border-block-end-color: var(--paper-color-status-danger); }
   .paper-radio-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0.65rem; }
-  .paper-radio-card { display: grid; grid-template-columns: auto 1fr; gap: 0.75rem; padding: 0.85rem; border: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); cursor: pointer; }
-  .paper-radio-card:has(input:checked) { border-color: var(--paper-color-action-default); border-block-end-width: 2px; }
+  .paper-radio-card { display: grid; grid-template-columns: auto 1fr; gap: 0.75rem; padding: 0.85rem; border: 1px solid var(--paper-color-rule-field-edge); background: var(--paper-color-surface-paper); cursor: pointer; }
+  .paper-radio-card:has(input:checked) { border-color: var(--paper-color-text-link); border-block-end-width: 2px; }
   .paper-radio-card input { margin-block-start: 0.25rem; accent-color: var(--paper-color-action-default); }
-  .paper-radio-card:has(input:focus-visible) { --paper-control-focus-color: var(--paper-color-focus-ring); position: relative; z-index: 1; border-block-end-color: var(--paper-control-focus-color); outline: 3px solid color-mix(in srgb, var(--paper-control-focus-color) 10%, transparent); outline-offset: 0; }
+  .paper-radio-card:has(input:focus-visible) { --paper-control-focus-color: var(--paper-color-focus-ring); position: relative; z-index: 1; border-block-end-color: var(--paper-control-focus-color); outline: var(--paper-focus-ring-width) solid var(--paper-control-focus-color); outline-offset: var(--paper-focus-ring-offset); }
   .paper-field--invalid .paper-radio-card:has(input:focus-visible) { --paper-control-focus-color: var(--paper-color-status-danger); }
   .paper-radio-card input:focus-visible { outline: 0; }
   .paper-radio-card span { display: grid; gap: 0.2rem; }
   .paper-radio-card small { color: var(--paper-color-text-muted); }
-  .paper-radio-card:has(input:disabled) { opacity: 0.55; cursor: not-allowed; }
-  .paper-compound-field { display: grid; grid-template-columns: minmax(0, 1fr) auto; min-block-size: var(--paper-control-height); border: var(--paper-border-static-width) solid var(--paper-color-rule-default); border-block-end: 0; background: var(--paper-color-surface-paper); }
+  .paper-radio-card:has(input:disabled) { color: var(--paper-color-text-muted); cursor: not-allowed; }
+  .paper-compound-field { display: grid; grid-template-columns: minmax(0, 1fr) auto; min-block-size: var(--paper-control-height); border: var(--paper-border-static-width) solid var(--paper-color-rule-field-edge); border-block-end: 0; background: var(--paper-color-surface-paper); }
   .paper-compound-field > .paper-input { min-block-size: calc(var(--paper-control-height) - (var(--paper-border-static-width) * 2)); border: 0; border-block-end: var(--paper-border-field-edge-width) solid var(--paper-color-rule-field-edge); background: transparent; }
   .paper-compound-field > .paper-compound-field__unit { block-size: calc(var(--paper-control-height) - var(--paper-border-static-width)); inline-size: auto; min-inline-size: 6rem; border-inline-start: var(--paper-border-static-width) solid var(--paper-color-rule-default); }
+  .paper-compound-field__unit > .paper-select { block-size: 100%; min-block-size: 0; border: 0; border-block-end: var(--paper-border-field-edge-width) solid var(--paper-color-rule-field-edge); background: transparent; }
+  .paper-compound-field__unit > .paper-select:hover:not(:disabled) { border-color: var(--paper-color-rule-strong); }
   .paper-field--invalid .paper-compound-field { border-color: var(--paper-color-status-danger); }
   .paper-field--invalid .paper-compound-field > .paper-input { border-block-end-color: var(--paper-color-status-danger); }
-  .paper-compound-field:has(> .paper-input:focus-visible) { --paper-compound-focus-color: var(--paper-color-focus-ring); outline: 3px solid color-mix(in srgb, var(--paper-compound-focus-color) 10%, transparent); outline-offset: 0; }
+  .paper-compound-field:has(> .paper-input:focus-visible) { --paper-compound-focus-color: var(--paper-color-focus-ring); outline: var(--paper-focus-ring-width) solid var(--paper-compound-focus-color); outline-offset: var(--paper-focus-ring-offset); }
   .paper-compound-field > .paper-input:focus-visible { border-block-end-color: var(--paper-compound-focus-color); outline: 0; }
   .paper-field--invalid .paper-compound-field:has(> .paper-input:focus-visible) { --paper-compound-focus-color: var(--paper-color-status-danger); }
   .paper-combobox__input-group { position: relative; }
@@ -50,15 +69,19 @@
   .paper-combobox__item[data-highlighted] { color: var(--paper-color-action-text); background: var(--paper-color-action-default); }
   .paper-combobox__item:not([data-selected]) > .paper-combobox__indicator { visibility: hidden; }
   .paper-combobox__empty { padding: var(--paper-field-padding-block) var(--paper-field-padding-inline); color: var(--paper-color-text-muted); }
-  .paper-combobox__chips { position: relative; font-family: var(--paper-font-body); font-size: var(--paper-type-body-size); line-height: 1.25; display: flex; flex-wrap: wrap; align-items: center; min-block-size: var(--paper-control-height); gap: 0.35rem; padding: 0.25rem; padding-inline-end: calc(44px + 0.25rem); border: 1px solid var(--paper-color-rule-field-edge); border-block-end: 2px solid var(--paper-color-rule-action-edge); background: var(--paper-color-surface-paper); }
+  .paper-combobox__chips { position: relative; font-family: var(--paper-font-body); font-size: var(--paper-type-body-size); line-height: 1.25; display: flex; flex-wrap: wrap; align-items: center; min-block-size: var(--paper-control-height); gap: 0.35rem; padding: 0.25rem; padding-inline-end: calc(44px + 0.25rem); border: 1px solid var(--paper-color-rule-field-edge); border-block-end-width: 2px; background: var(--paper-color-surface-paper); }
   .paper-combobox__chip { display: inline-flex; align-items: center; max-inline-size: 100%; min-inline-size: 0; overflow-wrap: anywhere; gap: 0.3rem; padding: 0.2rem 0.4rem; border: 1px solid var(--paper-color-rule-default); background: var(--paper-color-action-soft); font-size: var(--paper-type-metadata-size); }
-  .paper-combobox__chip button { flex-shrink: 0; display: inline-grid; place-items: center; padding: 0; border: 0; color: inherit; background: transparent; cursor: pointer; }
-  .paper-combobox__chip-input { flex: 1 1 8rem; min-inline-size: 6rem; border: 0; outline: 0; background: transparent; }
-  .paper-tags-input .paper-combobox__chip { padding: 0.1rem 0.2rem 0.1rem 0.55rem; border-color: transparent; background: var(--paper-color-surface-canvas); }
-  .paper-tags-input .paper-combobox__chip button { min-inline-size: 24px; min-block-size: 24px; }
-  .paper-tags-input__option { display: block; overflow-wrap: anywhere; }
+  .paper-combobox__chip button { flex-shrink: 0; display: inline-grid; place-items: center; min-inline-size: 24px; min-block-size: 24px; padding: 0; border: 0; color: inherit; background: transparent; cursor: pointer; }
+  .paper-combobox__chip-input { flex: 1 1 4rem; min-inline-size: 3rem; border: 0; outline: 0; background: transparent; }
+  /* With no chips the input starts the field, so its text aligns with other fields' inset. */
+  .paper-combobox__chip-input:first-child { padding-inline-start: calc(var(--paper-field-padding-inline) - 0.25rem); }
+  /* A checkbox hint sits under its label text, so it reads as that option's, not the next one's. */
+  .paper-choice + .paper-field__hint { margin-block-start: -0.25rem; padding-inline-start: calc(1.15rem + var(--paper-inline-gap)); }
+  .paper-combobox__chip-input::placeholder { color: var(--paper-color-text-muted); opacity: 1; }
+  .paper-combobox__chip button:focus-visible { outline: var(--paper-focus-ring-width) solid var(--paper-color-focus-ring); outline-offset: 0; }
+    .paper-tags-input__option { display: block; overflow-wrap: anywhere; }
   .paper-combobox__chips:has(.paper-combobox__chip-input:focus-visible),
-  .paper-combobox__chips:has(> .paper-combobox__trigger:focus-visible) { --paper-control-focus-color: var(--paper-color-focus-ring); position: relative; z-index: 1; border-block-end-color: var(--paper-control-focus-color); outline: 3px solid color-mix(in srgb, var(--paper-control-focus-color) 10%, transparent); outline-offset: 0; }
+  .paper-combobox__chips:has(> .paper-combobox__trigger:focus-visible) { --paper-control-focus-color: var(--paper-color-focus-ring); position: relative; z-index: 1; border-block-end-color: var(--paper-control-focus-color); outline: var(--paper-focus-ring-width) solid var(--paper-control-focus-color); outline-offset: var(--paper-focus-ring-offset); }
   .paper-field--invalid .paper-combobox__chips:has(.paper-combobox__chip-input:focus-visible),
   .paper-field--invalid .paper-combobox__chips:has(> .paper-combobox__trigger:focus-visible) { --paper-control-focus-color: var(--paper-color-status-danger); }
   .paper-combobox__chips > .paper-combobox__trigger:focus-visible { outline: 0; }
@@ -83,4 +106,8 @@
     .paper-combobox__chips:has(.paper-combobox__chip-input:focus-visible),
     .paper-combobox__chips:has(> .paper-combobox__trigger:focus-visible) { --paper-control-focus-color: Highlight; border-block-end-color: Highlight; outline: 3px solid Highlight; outline-offset: 0; box-shadow: none; }
   }
+
+  /* A form's closing row: actions at the start, an optional summary such as an estimate at the end. */
+  .paper-form-footer { display: flex; flex-wrap: wrap-reverse; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem; margin-block-start: var(--paper-space-6); padding-block-start: var(--paper-space-6); border-block-start: var(--paper-border-static-width) solid var(--paper-color-rule-default); }
+  .paper-form-footer__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; }
 }

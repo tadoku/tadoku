@@ -16,7 +16,7 @@ describe("Tabs visual contract", () => {
     const activeRule = tabsCss.match(/\.paper-tabs__tab\[data-active\]\s*\{([^}]*)\}/s)?.[1];
     expect(activeRule).toBeDefined();
     expect(activeRule).toContain(
-      "border-block-end-color: var(--paper-color-action-default);",
+      "border-block-end-color: var(--paper-color-text-link);",
     );
     expect(activeRule).toContain("background: transparent;");
     expect(activeRule).not.toMatch(/(?:^|[;\s])border(?:-block-start|-inline(?:-start|-end)?)?(?:-color)?:/);
@@ -31,7 +31,9 @@ describe("Tabs visual contract", () => {
     expect(tabsCss).toContain('[data-density="compact"] .paper-tabs__tab');
     expect(tabsCss).toContain("var(--paper-color-surface-paper)");
     expect(tabsCss).toContain("var(--paper-color-text-ink)");
-    expect(tabsCss).toContain("var(--paper-color-action-default)");
+    expect(tabsCss).toMatch(
+      /\.paper-tabs\[data-orientation="vertical"\] \.paper-tabs__tab\[data-active\]\s*\{[^}]*border-inline-end-color: var\(--paper-color-text-link\);/s,
+    );
     expect(tabsCss).toContain("var(--paper-color-focus-ring)");
   });
 

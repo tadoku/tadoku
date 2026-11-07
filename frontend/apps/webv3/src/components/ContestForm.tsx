@@ -51,8 +51,7 @@ export function ContestForm({ options, viewerId, admin }: {
     <div className="goal-page">
       <PageHeader
         title="Create new contest"
-        lead="Set a shared window for immersion, with clear dates and eligibility."
-        backLink={{ href: contestsHref.official(), label: 'Back to contests' }}
+        backLink={{ href: contestsHref.official(), label: 'Contests' }}
         renderLink={renderLink}
       />
       <Surface className="log-surface">
@@ -65,15 +64,14 @@ export function ContestForm({ options, viewerId, admin }: {
               <form.AppField name="description">
                 {field => (
                   <field.TextArea
-                    label="Description"
-                    hint="Optional. Explain any extra rules or details; it is shown on the contest's standings."
+                    label="Description (optional)"
                     rows={3}
                   />
                 )}
               </form.AppField>
 
               <fieldset className="contest-form-group">
-                <legend className="paper-field__label">Schedule</legend>
+                <legend>Schedule</legend>
                 <div className="goal-form__row">
                   <form.AppField name="contestStart">
                     {field => <field.Input label="Start date (UTC)" type="date" required />}
@@ -88,12 +86,12 @@ export function ContestForm({ options, viewerId, admin }: {
               </fieldset>
 
               <fieldset className="contest-form-group">
-                <legend className="paper-field__label">Eligibility</legend>
+                <legend>Eligibility</legend>
                 <form.AppField name="languages">
                   {field => (
                     <field.AutocompleteMultiInput
                       label="Allowed languages"
-                      hint="Leave empty to accept all languages."
+                      placeholder="All languages"
                       options={options.languages}
                       match={(language, query) => searchable(language.name, query)}
                       getId={language => language.code}
@@ -113,6 +111,9 @@ export function ContestForm({ options, viewerId, admin }: {
                     />
                   )}
                 </form.AppField>
+              </fieldset>
+              <fieldset className="contest-form-group">
+                <legend>Visibility</legend>
                 {options.can_create_official_round && !unlisted ? (
                   <form.AppField name="official">
                     {field => <field.Checkbox label="Official round" />}
@@ -127,9 +128,11 @@ export function ContestForm({ options, viewerId, admin }: {
             </fieldset>
 
             {failure ? <CreateFailure failure={failure} /> : null}
-            <div className="goal-actions">
-              <Button type="submit" disabled={disabled}>{pending ? 'Creating…' : 'Create contest'}</Button>
-              <Link className="text-link" to="/contests/official/$" params={{ _splat: '1' }}>Cancel</Link>
+            <div className="paper-form-footer">
+              <div className="paper-form-footer__actions">
+                <Button type="submit" disabled={disabled}>{pending ? 'Creating…' : 'Create contest'}</Button>
+                <Link className="text-link" to="/contests/official/$" params={{ _splat: '1' }}>Cancel</Link>
+              </div>
             </div>
           </form.Form>
         </form.AppForm>

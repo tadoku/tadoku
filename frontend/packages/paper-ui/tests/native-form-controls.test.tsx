@@ -226,3 +226,38 @@ describe("native TanStack Form controls", () => {
     }
   });
 });
+
+describe("card checkboxes", () => {
+  function Cards({ onSubmit }: { onSubmit: (values: unknown) => void }) {
+    const methods = usePaperForm({ defaultValues: { contests: [] as string[] }, onSubmit: ({ value }) => onSubmit(value) });
+    return (
+      <methods.AppForm>
+        <methods.Form>
+          <methods.AppField name="contests">{field => <field.Checkbox variant="card" value="round" label="Spring round" description="Administered by Tadoku" aside="18 points" />}</methods.AppField>
+          <methods.AppField name="contests">{field => <field.Checkbox variant="card" value="sprint" label="Reading sprint" description="Administered by Ana" aside="Language not registered" disabled />}</methods.AppField>
+          <Button type="submit">Save</Button>
+        </methods.Form>
+      </methods.AppForm>
+    );
+  }
+
+  it("names the box by its title, describes it by its details and toggles from anywhere on the card", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(<Cards onSubmit={onSubmit} />);
+
+    const round = screen.getByRole("checkbox", { name: "Spring round" });
+    expect(round).toHaveAccessibleDescription("Administered by Tadoku 18 points");
+    await user.click(screen.getByText("Administered by Tadoku"));
+    expect(round).toBeChecked();
+
+    const sprint = screen.getByRole("checkbox", { name: "Reading sprint" });
+    expect(sprint).toBeDisabled();
+    expect(sprint).toHaveAccessibleDescription("Administered by Ana Language not registered");
+    await user.click(screen.getByText("Reading sprint"));
+    expect(sprint).not.toBeChecked();
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSubmit).toHaveBeenCalledWith({ contests: ["round"] });
+  });
+});

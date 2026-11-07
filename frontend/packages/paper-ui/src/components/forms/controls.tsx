@@ -1,6 +1,7 @@
 import {
   useId,
   type InputHTMLAttributes,
+  type ReactNode,
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from "react";
@@ -101,22 +102,38 @@ export function Select({
 
 export interface CheckboxProps
   extends FieldContract,
-    Omit<InputHTMLAttributes<HTMLInputElement>, "name" | "type" | "onChange" | "onBlur" | "required"> {}
+    Omit<InputHTMLAttributes<HTMLInputElement>, "name" | "type" | "onChange" | "onBlur" | "required"> {
+  /** `card` frames the choice as a selectable row, for choices with their own details. */
+  readonly variant?: "default" | "card";
+  /** A card's secondary line under its label. */
+  readonly description?: ReactNode;
+  /** A card's trailing detail, such as a value or why it is unavailable. */
+  readonly aside?: ReactNode;
+}
 
 export function Checkbox({
   label,
   hint,
   required,
   id: providedId,
+  variant = "default",
+  description,
+  aside,
   ...props
 }: CheckboxProps) {
   const id = providedId ?? `paper-checkbox-${useId().replace(/:/gu, "")}`;
   const { field, error } = useField<boolean | string[]>();
   const selected = field.state.value;
   const option = typeof props.value === "string" ? props.value : undefined;
+  const card = variant === "card";
+  // A card's label element wraps its details too, so the box is named by the label text alone and described by the rest.
+  const details = card
+    ? [description ? `${id}-description` : undefined, aside ? `${id}-aside` : undefined].filter(Boolean).join(" ")
+    : "";
+  const external = [details, props["aria-describedby"]].filter(Boolean).join(" ") || undefined;
   return (
     <fieldset className={`paper-choice-field${error ? " paper-field--invalid" : ""}`}>
-      <label className="paper-choice" htmlFor={id}>
+      <label className={card ? "paper-choice paper-choice--card" : "paper-choice"} htmlFor={id}>
         <input
           {...props}
           name={field.name}
@@ -136,9 +153,18 @@ export function Checkbox({
           type="checkbox"
           required={required}
           aria-invalid={error ? true : undefined}
-          aria-describedby={describedBy(id, hint, error, props["aria-describedby"])}
+          aria-labelledby={card ? `${id}-label` : undefined}
+          aria-describedby={describedBy(id, hint, error, external)}
         />
-        <span>{label}</span>
+        {card ? (
+          <>
+            <span className="paper-choice__body">
+              <span className="paper-choice__label" id={`${id}-label`}>{label}</span>
+              {description ? <span className="paper-choice__description" id={`${id}-description`}>{description}</span> : null}
+            </span>
+            {aside ? <span className="paper-choice__aside" id={`${id}-aside`}>{aside}</span> : null}
+          </>
+        ) : <span>{label}</span>}
       </label>
       {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
       {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error}</p> : null}

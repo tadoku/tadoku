@@ -1,4 +1,5 @@
 import { useId, type InputHTMLAttributes } from "react";
+import { ChevronDownIcon, iconClassName } from "../../icons";
 import { FieldFrame, describedBy, useField, type Option } from "./field";
 
 export interface AmountWithUnitProps
@@ -35,18 +36,21 @@ export function AmountWithUnit({ label, units, unitsLabel, unitField, hint, requ
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy(id, hint, error, props['aria-describedby'])}
         />
-        <select
-          name={unitField.name}
-          value={unitField.state.value}
-          onChange={event => unitField.handleChange(event.currentTarget.value)}
-          onBlur={unitField.handleBlur}
-          disabled={disabled}
-          aria-label={unitsLabel ?? `Unit for ${label.toLocaleLowerCase()}`}
-          className="paper-input paper-compound-field__unit"
-          aria-describedby={describedBy(id, hint, error, props['aria-describedby'])}
-        >
-          {units.map(unit => <option key={unit.value} value={unit.value} disabled={unit.disabled}>{unit.label}</option>)}
-        </select>
+        <span className="paper-select__control paper-compound-field__unit">
+          <select
+            name={unitField.name}
+            value={unitField.state.value}
+            onChange={event => unitField.handleChange(event.currentTarget.value)}
+            onBlur={unitField.handleBlur}
+            disabled={disabled}
+            aria-label={unitsLabel ?? `Unit for ${label.toLocaleLowerCase()}`}
+            className="paper-input paper-select"
+            aria-describedby={describedBy(id, hint, error, props['aria-describedby'])}
+          >
+            {units.map(unit => <option key={unit.value} value={unit.value} disabled={unit.disabled}>{unit.label}</option>)}
+          </select>
+          <ChevronDownIcon className={iconClassName("compact", "paper-select__icon")} aria-hidden="true" />
+        </span>
       </div>
     </FieldFrame>
   );

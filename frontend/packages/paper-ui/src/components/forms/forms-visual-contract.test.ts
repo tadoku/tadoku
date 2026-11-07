@@ -26,7 +26,10 @@ describe("segmented RadioSelect visual contract", () => {
     expect(formsCss).toContain("var(--paper-color-surface-paper)");
     expect(formsCss).toContain("var(--paper-color-text-ink)");
     expect(formsCss).toContain("var(--paper-color-action-soft)");
-    expect(formsCss).toContain("var(--paper-color-rule-action-edge)");
+    expect(formsCss).toMatch(
+      /\.paper-radio-select__segment:has\(input:checked\)\s*\{[^}]*border-color: var\(--paper-color-text-link\);/s,
+    );
+    expect(formsCss).toMatch(/\.paper-radio-select__check\s*\{[^}]*color: var\(--paper-color-text-link\);/s);
     expect(formsCss).toContain("min-inline-size: var(--paper-radio-min-width)");
     expect(formsCss).not.toContain('[data-density="compact"] .paper-radio-select__segment');
   });
@@ -44,12 +47,12 @@ describe("segmented RadioSelect visual contract", () => {
   });
 });
 
-describe("choice and multi-value control action hug", () => {
+describe("choice and multi-value control focus ring", () => {
   it.each(actionHugTargets)(
-    "gives %s the approved zero-offset, low-opacity keyboard-focus hug",
+    "gives %s the approved solid, offset keyboard-focus ring",
     (selector) => {
       const focusedRule = leafRulesContaining(selector).find((declarations) =>
-        declarations.includes("color-mix"),
+        declarations.includes("var(--paper-focus-ring-offset)"),
       );
 
       expect(focusedRule).toBeDefined();
@@ -57,9 +60,9 @@ describe("choice and multi-value control action hug", () => {
         "--paper-control-focus-color: var(--paper-color-focus-ring)",
       );
       expect(focusedRule ?? "").toMatch(
-        /outline:\s*3px solid color-mix\(in srgb, var\(--paper-control-focus-color\) 10%, transparent\)/s,
+        /outline:\s*var\(--paper-focus-ring-width\) solid var\(--paper-control-focus-color\)/s,
       );
-      expect(focusedRule ?? "").toMatch(/outline-offset:\s*0/s);
+      expect(focusedRule ?? "").toMatch(/outline-offset:\s*var\(--paper-focus-ring-offset\)/s);
     },
   );
 
@@ -67,7 +70,7 @@ describe("choice and multi-value control action hug", () => {
     "keeps %s focus styling free of border-width and layout changes",
     (selector) => {
       const focusedRule = leafRulesContaining(selector).find((declarations) =>
-        declarations.includes("color-mix"),
+        declarations.includes("var(--paper-focus-ring-offset)"),
       );
 
       expect(focusedRule).toBeDefined();
@@ -78,7 +81,7 @@ describe("choice and multi-value control action hug", () => {
   );
 
   it.each(actionHugTargets)(
-    "switches %s to the danger hug when its field is invalid",
+    "switches %s to the danger ring when its field is invalid",
     (selector) => {
       const invalidSelector = `.paper-field--invalid ${selector}`;
       const invalidRule = leafRulesContaining(invalidSelector).find((declarations) =>
@@ -120,5 +123,11 @@ describe("choice and multi-value control action hug", () => {
       /<Combobox\.Chips className="paper-combobox__chips">/s,
     );
     expect(controlsSource).toContain('className="paper-combobox__chips paper-tags-input"');
+    expect(formsCss).toMatch(
+      /\.paper-combobox__chip button\s*\{[^}]*min-inline-size: 24px;[^}]*min-block-size: 24px;/s,
+    );
+    expect(formsCss).toMatch(
+      /\.paper-combobox__chip-input::placeholder\s*\{[^}]*color: var\(--paper-color-text-muted\);[^}]*opacity: 1;/s,
+    );
   });
 });

@@ -77,7 +77,6 @@ function Registration({ contest, viewerId, phase }: { contest: ImmersionContestV
         backLink={{ href: links.contest(contest.id), label: contest.title }}
         renderLink={renderLink}
         title={registered ? 'Update registration' : `Join ${contest.title}`}
-        lead="Choose the languages you’ll read or listen in. You can register up to three."
       />
       <div className="standings-workspace">
         <div className="standings-main">
@@ -85,7 +84,8 @@ function Registration({ contest, viewerId, phase }: { contest: ImmersionContestV
         </div>
         <aside className="standings-aside">
           <section aria-labelledby="registration-round">
-            <h2 id="registration-round" className="paper-type-component">Your round</h2>
+            <h2 id="registration-round" className="paper-type-component">About this contest</h2>
+            {contest.description ? <p className="standings-description">{contest.description}</p> : null}
             <ContestFacts contest={contest} phase={phase} />
           </section>
         </aside>
@@ -185,8 +185,7 @@ function RegistrationForm({ contest, viewerId, previous, options }: {
             <form.AppField name="languages" validators={{ onChange: validateLanguages, onSubmit: validateLanguages }}>
               {field => (
                 <field.AutocompleteMultiInput
-                  label="Languages"
-                  hint="Select up to 3 languages."
+                  label="Languages (up to 3)"
                   required
                   maxSelections={3}
                   options={options}
@@ -205,9 +204,11 @@ function RegistrationForm({ contest, viewerId, previous, options }: {
             ) : null}
           </fieldset>
           {failure ? <SaveFailure failure={failure} registered={previous !== null} /> : null}
-          <div className="registration-actions">
-            <Button type="submit" disabled={disabled}>{pending ? 'Saving…' : previous ? 'Update registration' : 'Register'}</Button>
-            <a className={buttonClassName({ variant: 'ghost' })} href={links.contest(contest.id)}>Cancel</a>
+          <div className="paper-form-footer">
+            <div className="paper-form-footer__actions">
+              <Button type="submit" disabled={disabled}>{pending ? 'Saving…' : previous ? 'Update registration' : 'Register'}</Button>
+              <a className="text-link" href={links.contest(contest.id)}>Cancel</a>
+            </div>
           </div>
         </form.Form>
       </form.AppForm>

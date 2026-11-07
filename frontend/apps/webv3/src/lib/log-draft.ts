@@ -193,10 +193,10 @@ export type ContestChoice =
 export function contestChoices(log: ImmersionLog, registrations: Registration[], today: string): ContestChoice[] {
   return registrations.map(registration => {
     const reason = !registration.contest.allowed_activities.some(activity => activity.id === log.activity.id)
-      ? 'Activity not allowed in this contest'
+      ? 'Activity not allowed'
       : !registration.languages.some(language => language.code === log.language.code)
-        ? 'Language not registered for this contest'
-        : registration.contest.contest_end < today ? 'Contest has ended' : undefined
+        ? 'Language not registered'
+        : registration.contest.contest_end < today ? 'Ended' : undefined
 
     return reason ? { kind: 'ineligible', registration, reason } : { kind: 'eligible', registration }
   })

@@ -1,8 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import type { ImmersionContestProfileActivityRow } from 'api-client'
-import { Breadcrumb, SectionHeading, StatGrid, Table, buttonClassName, type TableColumn } from 'paper-ui'
+import { PageHeader, SectionHeading, StatGrid, Table, buttonClassName, type TableColumn } from 'paper-ui'
 import type { ContestProfile as Profile } from '../lib/contest-activity'
-import { contestsHref } from '../lib/contests'
 import { formatDate, numberFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { ContestLogs } from './ContestUpdates'
@@ -19,28 +18,13 @@ export function ContestProfile({ profile, page }: { profile: Found; page: number
   const total = scores.reduce((sum, score) => sum + score.score, 0)
 
   return (
-    <div className="profile-page">
-      <Breadcrumb
+    <div className="profile-page contest-profile">
+      <PageHeader
+        backLink={{ href: links.contest(contest.id), label: contest.title }}
         renderLink={renderLink}
-        items={[
-          { id: 'home', label: 'Home', href: '/' },
-          contest.official
-            ? { id: 'contests', label: 'Official contests', href: contestsHref.official() }
-            : { id: 'contests', label: 'Community contests', href: contestsHref.community() },
-          { id: 'contest', label: contest.title, href: links.contest(contest.id) },
-          { id: 'participant', label: name },
-        ]}
+        title={name}
+        actions={<Link className={buttonClassName({ variant: 'outline' })} to={links.profile(userId)}>View profile</Link>}
       />
-      <header className="profile-header">
-        <div className="profile-identity">
-          <span className="profile-avatar" aria-hidden="true">{name.slice(0, 2).toLocaleUpperCase()}</span>
-          <div>
-            <h1 className="paper-type-page">{name}</h1>
-            <p><Link className="text-link" to={links.contest(contest.id)}>{contest.title}</Link></p>
-          </div>
-        </div>
-        <Link className={buttonClassName({ variant: 'outline' })} to={links.profile(userId)}>View profile</Link>
-      </header>
       <StatGrid
         className="profile-stats"
         stats={[
@@ -51,7 +35,7 @@ export function ContestProfile({ profile, page }: { profile: Found; page: number
       <section className="profile-activity" aria-labelledby="contest-daily-heading">
         <SectionHeading level={2} id="contest-daily-heading" title="Daily scores" />
         {daily.ok
-          ? <DailyScores rows={daily.data} languages={registration.languages} name={name} />
+          ? <div className="standings-sheet contest-daily"><DailyScores rows={daily.data} languages={registration.languages} name={name} /></div>
           : <p className="profile-muted">Could not load the daily scores. Try reloading this page.</p>}
       </section>
       <section className="profile-activity" aria-labelledby="contest-profile-updates">
@@ -85,6 +69,8 @@ function DailyScores({ rows, languages, name }: {
 
   const columns: TableColumn<Day>[] = [
     { id: 'day', header: 'Day', rowHeader: true, cell: day => formatDate(day.date) },
+    { id: 'score', header: 'Score', align: 'end', cell: day => numberFormat.format(day.total) },
+    { id: 'cumulative', header: 'Running total', align: 'end', cell: day => numberFormat.format(day.cumulative) },
     ...(languages.length > 1
       ? languages.map((language): TableColumn<Day> => ({
         id: language.code,
@@ -93,17 +79,15 @@ function DailyScores({ rows, languages, name }: {
         cell: day => numberFormat.format(day.scores.get(language.code) ?? 0),
       }))
       : []),
-    { id: 'score', header: 'Score', align: 'end', cell: day => numberFormat.format(day.total) },
-    { id: 'cumulative', header: 'Running total', align: 'end', cell: day => numberFormat.format(day.cumulative) },
   ]
   return (
     <Table
       caption={`${name}’s daily scores`}
       captionVisibility="screen-reader"
       columns={columns}
-      rows={ordered}
+      rows={[...ordered].reverse()}
       getRowKey={day => day.date}
-      minWidth="18rem"
+      minWidth="36rem"
       tableClassName="standings-table"
     />
   )

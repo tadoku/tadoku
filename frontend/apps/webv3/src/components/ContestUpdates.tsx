@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useStore } from '@tanstack/react-form'
 import { useHydrated } from '@tanstack/react-router'
 import type { ImmersionContestView, ImmersionLog } from 'api-client'
-import { Button, EmptyState, Flash, Modal, SectionHeading, usePaperForm } from 'paper-ui'
+import { Button, EmptyState, Flash, Modal, usePaperForm } from 'paper-ui'
 import { useState } from 'react'
 import { contestLogsQuery, detachSchema, useDetachLog } from '../lib/contest-activity'
 import type { LogFailure } from '../lib/logs'
@@ -16,8 +16,7 @@ type Contest = ImmersionContestView & { id: string }
 export function ContestUpdates({ contest, page }: { contest: Contest; page: number }) {
   const links = useLinks()
   return (
-    <section className="contest-updates" aria-labelledby="contest-updates-heading">
-      <SectionHeading level={2} id="contest-updates-heading" title="Updates" />
+    <section className="contest-updates" aria-label="Updates">
       <ContestLogs contest={contest} page={page} pageHref={next => links.contestUpdates(contest.id, next)} showParticipant />
     </section>
   )

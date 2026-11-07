@@ -26,8 +26,10 @@ An unknown or malformed contest ID answers 404 with a not-found page.
 - `frontend/apps/webv3/src/components/ContestPage.tsx` composes the page header
   and actions around the board that
   `frontend/apps/webv3/src/components/ContestLeaderboard.tsx` shares with the
-  latest official leaderboard: notices, standings, conditions, summary and recent
-  logs. `frontend/apps/webv3/src/components/ContestRegistration.tsx` holds the
+  latest official leaderboard: notices, standings and conditions; the Updates
+  tab lists the contest's logs.
+  The selected Standings tab names the standings, so the contest page shows no
+  separate standings heading. `frontend/apps/webv3/src/components/ContestRegistration.tsx` holds the
   registration states and form.
 
 ## Rules
@@ -41,8 +43,8 @@ with its link can view and join it.
 
 The page shows only the actions Webv2 allows the viewer: Join contest while
 registration is open and the viewer hasn't joined, Update registration until the
-contest ends for participants, Log activity while it runs for participants, and
-Scoring rules for administrators. Anonymous visitors see a login prompt; joining
+contest ends for participants, and Scoring rules for administrators. Logging
+uses the header's Log activity action. Anonymous visitors see a login prompt; joining
 sends them to log in and back to the registration. Suspended accounts get no join
 action. Scoring rules opens the native [scoring page](webv3-contest-admin.md),
 participant rows open their contest profile and the organizer opens their Webv3

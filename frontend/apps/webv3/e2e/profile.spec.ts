@@ -84,7 +84,7 @@ test('an owner sees API totals, switches years and gets the export and day links
   const current = await expectYear(page, readerContext.request, userId, year)
   expect(current.activity.total_updates).toBeGreaterThan(0)
   for (const contest of current.contests.filter(contest => contest.private)) {
-    await expect(page.getByRole('listitem').filter({ hasText: contest.title })).toContainText('Private')
+    await expect(page.getByRole('listitem').filter({ hasText: contest.title })).toContainText('Unlisted')
   }
 
   await expect(page.getByRole('link', { name: 'Download CSV' })).toHaveAttribute('href', /\/api\/internal\/immersion\/logs\/export\?format=csv$/)

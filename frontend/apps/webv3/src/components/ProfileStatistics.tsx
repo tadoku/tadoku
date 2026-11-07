@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
-import { Button, EmptyState, HeatmapChart, Pagination, SectionHeading, StatGrid, StatusTag, buttonClassName, chartPalette } from 'paper-ui'
+import { Button, EmptyState, HeatmapChart, Pagination, SectionHeading, StatGrid, StatusTag, buttonClassName } from 'paper-ui'
 import { ChevronLeftIcon, ChevronRightIcon } from 'paper-ui/icons'
+import { formatPeriod, pointsUnit } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { contestPageSize, type ContestHistory, type ProfileStatistics as Statistics, type Section } from '../lib/profile'
 import { ProfileHeader } from './ProfileHeader'
@@ -24,16 +25,16 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
     <div className="profile-page">
       <ProfileHeader profile={profile} owner={owner} view="overview" overviewHref={`/profile/${profile.id}/statistics/${year}`} />
       <section className="profile-year" aria-labelledby="profile-year-heading">
-        <SectionHeading level={2} id="profile-year-heading" title={`${name}’s activity`} actions={<YearControl statistics={statistics} year={year} />} />
+        <div className="profile-year-head">
+          <h2 id="profile-year-heading" className="paper-visually-hidden">{name}’s activity in {year}</h2>
+          <YearControl statistics={statistics} year={year} />
+        </div>
         {empty ? (
           <EmptyState
             variant="plain"
             className="profile-empty-year"
             headingLevel={3}
             title={`No activity recorded in ${year}`}
-            description={owner
-              ? 'A few pages or minutes are a good place to start. Your personal record grows with every entry.'
-              : 'Scores and the activity calendar appear after the first update of the year.'}
             actions={owner ? <a className={buttonClassName()} href={links.logs}>Log activity</a> : null}
           />
         ) : (
@@ -42,21 +43,32 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
             <div className="profile-rhythm">
               <SectionHeading level={3} id="profile-rhythm-heading" title="Daily activity" />
               {activity.ok ? (<>
-                <div className="profile-heatmap-scroll paper-focus-ring" role="region" aria-labelledby="profile-rhythm-heading" tabIndex={0}>
+                <HeatmapScroll latest={year === Number(statistics.today.slice(0, 4))}>
                   <HeatmapChart
+                    today={statistics.today}
                     id={`profile-${profile.id}-${year}`}
                     year={year}
                     getHref={date => links.profileUpdates(profile.id, date)}
                     data={activity.data.scores.map(day => ({
                       date: day.date,
                       value: day.score,
-                      tooltip: `${scoreFormat.format(day.score)} points on ${formatDay(day.date)}`,
+                      tooltip: `${scoreFormat.format(day.score)} ${pointsUnit(day.score)} on ${formatDay(day.date)}`,
                     }))}
                   />
-                </div>
-                <p className="profile-caption">
-                  {activeDays(activity.data.scores)} active days and {activity.data.total_updates} updates in {year}. Select a day to see its updates.
-                </p>
+                </HeatmapScroll>
+                <form className="profile-day-picker" method="get" action={links.profileUpdates(profile.id)}>
+                  <label htmlFor="profile-day">Show a day’s updates</label>
+                  <input
+                    id="profile-day"
+                    className="paper-input"
+                    type="date"
+                    name="date"
+                    required
+                    min={`${year}-01-01`}
+                    max={year === Number(statistics.today.slice(0, 4)) ? statistics.today : `${year}-12-31`}
+                  />
+                  <button type="submit" className={buttonClassName({ variant: 'outline' })}>Show</button>
+                </form>
               </>) : <p className="profile-muted">Could not retrieve updates for {year}.</p>}
             </div>
           </>
@@ -79,9 +91,7 @@ function YearTotals({ statistics, year }: { statistics: Found; year: number }) {
   const { scores, activity } = statistics
   const total = scores.ok ? scores.data.scores.reduce((sum, score) => sum + score.score, 0) : undefined
   const days = daysCounted(year, statistics.today)
-  const average = total && days ? `${scoreFormat.format(total / days)} per day · average over ${
-    year === Number(statistics.today.slice(0, 4)) ? `the ${days} ${days === 1 ? 'day' : 'days'} of ${year} so far` : `all ${days} days of ${year}`
-  }` : undefined
+  const average = total && days ? `${scoreFormat.format(total / days)} per day` : undefined
 
   return (
     <StatGrid
@@ -92,6 +102,37 @@ function YearTotals({ statistics, year }: { statistics: Found; year: number }) {
         ...(scores.ok ? [{ label: 'Languages', value: scores.data.scores.length }] : []),
       ]}
     />
+  )
+}
+
+/** On narrow screens the year scrolls sideways; the current year opens at its latest weeks. */
+function HeatmapScroll({ latest, children }: { latest: boolean; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const scroller = ref.current
+    if (!scroller) return
+    // While the year scrolls, month labels under the pinned weekday gutter or past the visible edge would show as
+    // clipped fragments, so they hide there. Glyph side bearings sit a few pixels outside a label's anchor.
+    const hideCoveredMonths = () => {
+      const scrolls = scroller.scrollWidth - scroller.clientWidth > 2
+      const start = (scroller.querySelector('.paper-heatmap__weekdays')?.getBoundingClientRect().right ?? 0) - 4
+      const end = scroller.getBoundingClientRect().right + 1
+      for (const label of scroller.querySelectorAll<SVGTextElement>('svg.paper-heatmap text')) {
+        const { left, right } = label.getBoundingClientRect()
+        label.style.visibility = scrolls && (left < start || right > end) ? 'hidden' : ''
+      }
+    }
+    // The current year opens with today near the right edge and about a week after it in view.
+    const todayCell = latest && scroller.scrollWidth - scroller.clientWidth > 2 ? scroller.querySelector('[data-today]') : null
+    if (todayCell) scroller.scrollLeft += todayCell.getBoundingClientRect().right - (scroller.getBoundingClientRect().right - 48)
+    hideCoveredMonths()
+    scroller.addEventListener('scroll', hideCoveredMonths, { passive: true })
+    return () => scroller.removeEventListener('scroll', hideCoveredMonths)
+  }, [latest])
+  return (
+    <div ref={ref} className="profile-heatmap-scroll paper-focus-ring" role="region" aria-labelledby="profile-rhythm-heading" tabIndex={0}>
+      {children}
+    </div>
   )
 }
 
@@ -138,11 +179,11 @@ function Breakdown<T>({ id, title, section, items, empty }: {
       <SectionHeading level={2} id={id} title={title} />
       {!section.ok ? <p className="profile-muted">Could not retrieve this breakdown.</p> : rows.length ? (
         <ol className="profile-breakdown">
-          {rows.map((row, index) => (
+          {rows.map(row => (
             <li key={row.label}>
-              <div><span>{row.label}</span><strong>{scoreFormat.format(row.score)} <small>points</small></strong></div>
+              <div><span>{row.label}</span><strong>{scoreFormat.format(row.score)} <small>{pointsUnit(row.score)}</small></strong></div>
               <span className="profile-bar" aria-hidden="true">
-                <span style={{ width: `${total ? row.score / total * 100 : 0}%`, backgroundColor: chartPalette[index % chartPalette.length] }} />
+                <span style={{ width: `${total ? row.score / total * 100 : 0}%` }} />
               </span>
             </li>
           ))}
@@ -168,8 +209,11 @@ function ContestHistorySection({ history, userId, year, page }: {
         <ul className="profile-contests">
           {history.data.contests.map(contest => (
             <li key={contest.id}>
-              <a className="text-link" href={links.contestProfile(contest.id, userId)}>{contest.title}</a>
-              {contest.private ? <StatusTag>Private</StatusTag> : null}
+              <span className="profile-contest-title">
+                <a className="profile-entry-title" href={links.contestProfile(contest.id, userId)}>{contest.title}</a>
+                {contest.private ? <StatusTag>Unlisted</StatusTag> : null}
+              </span>
+              <span className="profile-entry-meta">{[formatPeriod(contest), ...contest.languages].join(' · ')}</span>
             </li>
           ))}
         </ul>

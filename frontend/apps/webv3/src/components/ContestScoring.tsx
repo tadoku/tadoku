@@ -64,13 +64,14 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
     <div className="scoring-page">
       <PageHeader
         title="Contest scoring"
-        lead={contest.title}
-        backLink={{ href: links.contest(contestId), label: `Back to ${contest.title}` }}
+        backLink={{ href: links.contest(contestId), label: contest.title }}
         renderLink={renderLink}
       />
       {locked ? (
-        <Flash variant="warning">
-          Scoring is locked because this contest has started. Published snapshots and active rules remain visible below.
+        <Flash variant="information">
+          Scoring is locked because this contest has started.{contestRuleSets.length > 0
+            ? ' Its rule-set versions are listed below.'
+            : <> It uses the <a className="text-link" href={`${links.guide}#media`}>platform defaults</a>.</>}
         </Flash>
       ) : (
         <RuleSetForm
@@ -80,9 +81,9 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
           platformRuleSets={platformRuleSets}
         />
       )}
-      <section className="scoring-versions" aria-labelledby="scoring-versions">
+      {contestRuleSets.length === 0 && !locked ? <p className="scoring-empty">No contest-specific rule sets yet; this contest scores with the platform defaults.</p> : null}
+      {contestRuleSets.length === 0 ? null : <section className="scoring-versions" aria-labelledby="scoring-versions">
         <SectionHeading level={2} id="scoring-versions" title="Rule-set versions" />
-        {contestRuleSets.length === 0 ? <p>No contest-specific rule sets yet.</p> : null}
         {contestRuleSets.map(ruleSet => (
           <RuleSetVersion
             key={ruleSet.id}
@@ -91,7 +92,7 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
             change={locked ? null : { viewerId, contestId, ruleSetId: ruleSet.id }}
           />
         ))}
-      </section>
+      </section>}
     </div>
   )
 }

@@ -3,6 +3,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
@@ -19,6 +20,8 @@ export interface HeatmapChartProps {
   readonly id: string;
   /** Makes each day with activity a link, for example to that day's records. */
   readonly getHref?: (date: string) => string;
+  /** The current ISO day; later days are drawn as not yet happened rather than as empty. */
+  readonly today?: string;
 }
 
 interface CalendarCell {
@@ -45,9 +48,9 @@ const WEEKDAYS = ["Mon", undefined, "Wed", undefined, "Fri", undefined, "Sun"] a
 // Fixed points-per-day bins keep a record day from recolouring earlier activity.
 const LEVELS = [
   { level: "0", lowerBound: 0, label: "0" },
-  { level: "1", lowerBound: 0, label: "< 30" },
-  { level: "2", lowerBound: 30, label: "30+" },
-  { level: "3", lowerBound: 100, label: "100+" },
+  { level: "1", lowerBound: 0, label: "Under 30" },
+  { level: "2", lowerBound: 30, label: "30–99" },
+  { level: "3", lowerBound: 100, label: "100–299" },
   { level: "4", lowerBound: 300, label: "300+" },
 ] as const;
 
@@ -56,7 +59,7 @@ const LEVELS = [
  * follow the original ui HeatmapChart so existing consumers can pass the
  * same dated activity records without reshaping them into a generic matrix.
  */
-export function HeatmapChart({ id, data, year, getHref }: HeatmapChartProps) {
+export function HeatmapChart({ id, data, year, getHref, today }: HeatmapChartProps) {
   const start = DateTime.fromObject({ year, month: 1, day: 1 });
   const end = DateTime.fromObject({ year, month: 12, day: 31 });
   const values = new Map<string, number>();
@@ -112,28 +115,40 @@ export function HeatmapChart({ id, data, year, getHref }: HeatmapChartProps) {
 
   return (
     <>
+      {/* The weekday gutter is its own SVG, sized to the same scale, so it can stay pinned while a narrow container
+          scrolls the weeks sideways. */}
+      <div className="paper-heatmap__frame" style={{ "--paper-heatmap-gutter": `${(OFFSET.x / width) * 100}%` } as CSSProperties}>
+        <svg
+          width={OFFSET.x}
+          height={height}
+          viewBox={`0 0 ${OFFSET.x} ${height}`}
+          className="paper-heatmap__weekdays"
+          aria-hidden="true"
+        >
+          {WEEKDAYS.map((label, row) => label ? (
+            <text
+              key={label}
+              className="paper-heatmap__axis-label"
+              textAnchor="end"
+              x={OFFSET.x - CELL_GAP * 2}
+              y={OFFSET.y + CELL_HEIGHT * row + CELL_GAP * row}
+              dominantBaseline="hanging"
+            >
+              {label}
+            </text>
+          ) : null)}
+        </svg>
       <svg
-        width={width}
+        width={width - OFFSET.x}
         height={height}
-        viewBox={`0 0 ${width} ${height}`}
+        viewBox={`${OFFSET.x} 0 ${width - OFFSET.x} ${height}`}
         className="paper-heatmap"
-        role="img"
+        // A group, not an image: active days are links that assistive technology must reach.
+        role="group"
         aria-labelledby={titleId}
         data-year={year}
       >
         <title id={titleId}>Daily activity for {year}</title>
-        {WEEKDAYS.map((label, row) => label ? (
-          <text
-            key={label}
-            className="paper-heatmap__axis-label"
-            textAnchor="end"
-            x={OFFSET.x - CELL_GAP * 2}
-            y={OFFSET.y + CELL_HEIGHT * row + CELL_GAP * row}
-            dominantBaseline="hanging"
-          >
-            {label}
-          </text>
-        ) : null)}
         {months.map((label, column) => label ? (
           <text
             key={label}
@@ -153,6 +168,7 @@ export function HeatmapChart({ id, data, year, getHref }: HeatmapChartProps) {
               cell={cell}
               tooltipLayerId={tooltipLayerId}
               getHref={getHref}
+              today={today}
               column={columnPosition}
               row={rowPosition}
               parentWidth={width}
@@ -161,6 +177,7 @@ export function HeatmapChart({ id, data, year, getHref }: HeatmapChartProps) {
         )}
         <g id={tooltipLayerId} className="paper-heatmap__tooltip-layer" />
       </svg>
+      </div>
       <p className="paper-heatmap__legend">
         <span>Points per day</span>
         {LEVELS.map(({ level, label }) => (
@@ -171,6 +188,14 @@ export function HeatmapChart({ id, data, year, getHref }: HeatmapChartProps) {
             {label}
           </span>
         ))}
+        {today && today < end.toISODate()! ? (
+          <span className="paper-heatmap__legend-item">
+            <svg width={CELL_WIDTH} height={CELL_HEIGHT} aria-hidden="true">
+              <rect x={0.5} y={0.5} width={CELL_WIDTH - 1} height={CELL_HEIGHT - 1} className="paper-heatmap__cell" data-future="" />
+            </svg>
+            Not yet
+          </span>
+        ) : null}
       </p>
     </>
   );
@@ -180,6 +205,7 @@ function Cell({
   cell,
   tooltipLayerId,
   getHref,
+  today,
   row,
   column,
   parentWidth,
@@ -187,6 +213,7 @@ function Cell({
   readonly cell: CalendarCell | undefined;
   readonly tooltipLayerId: string;
   readonly getHref: ((date: string) => string) | undefined;
+  readonly today: string | undefined;
   readonly row: number;
   readonly column: number;
   readonly parentWidth: number;
@@ -200,7 +227,8 @@ function Cell({
   const tooltipId = `${tooltipLayerId}-${column}-${row}`;
   const level = getCellDepth(cell?.value);
   const href = cell && isoDate && cell.value !== 0 ? getHref?.(isoDate) : undefined;
-  const label = cell ? (cell.tooltip ?? `${isoDate}: ${cell.value}`) : undefined;
+  const future = Boolean(today && isoDate && isoDate > today);
+  const label = cell ? (future ? `${isoDate}: not yet` : (cell.tooltip ?? `${isoDate}: ${cell.value}`)) : undefined;
   const showTooltip = tooltip ? () => setTooltipVisible(true) : undefined;
   const hideTooltip = tooltip ? () => setTooltipVisible(false) : undefined;
   const focusProps = {
@@ -223,6 +251,8 @@ function Cell({
       y={y}
       className="paper-heatmap__cell"
       data-level={level}
+      data-future={future ? "" : undefined}
+      data-today={today && isoDate === today ? "" : undefined}
       data-date={isoDate}
       data-value={cell?.value}
       aria-hidden={cell === undefined || href ? true : undefined}
@@ -295,9 +325,10 @@ function Tooltip({
     const y = OFFSET.y + CELL_HEIGHT * row + CELL_GAP * row - height - 2;
     let x = arrowX;
 
-    if (x < 0) x = 20;
+    // The weekday gutter is a separate, pinned SVG; tooltips stay right of it.
+    if (x < OFFSET.x) x = OFFSET.x;
     if (x + width > parentWidth) x = parentWidth - width;
-    x = Math.max(0, x);
+    x = Math.max(OFFSET.x, x);
 
     setRect({ x, y, width, height, arrowX });
   }, [children, column, parentWidth, row, visible]);

@@ -40,10 +40,17 @@ async function readContestHistory(userId: string, year: number, page: number): P
   if (!data) return { ok: false }
 
   const contests = []
-  for (const { contest } of data.registrations) {
+  for (const { contest, languages } of data.registrations) {
     // Request bodies share the registration schema, so its contest is optional there; history needs it.
     if (!contest?.id) return { ok: false }
-    contests.push({ id: contest.id, title: contest.title, private: contest.private })
+    contests.push({
+      id: contest.id,
+      title: contest.title,
+      private: contest.private,
+      contest_start: contest.contest_start,
+      contest_end: contest.contest_end,
+      languages: languages.map(language => language.name),
+    })
   }
   return { ok: true, data: { contests, total: data.total_size } }
 }

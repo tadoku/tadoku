@@ -1,13 +1,11 @@
 import { PageHeader } from 'paper-ui'
-import { renderLink } from './router-link'
 
 /** Webv2's code-owned manual, ported as written. CMS pages render through `CmsPage` instead. */
 export function ManualPage() {
   return (
     <article className="content-article">
-      <PageHeader title="Manual" backLink={{ href: '/', label: 'Home' }} renderLink={renderLink} />
+      <PageHeader title="Manual" />
       <div className="content-prose">
-        <p>This document is a work in progress and will be updated over time.</p>
         <h2 id="signing-up-for-a-contest">Signing up for a contest</h2>
         <p>
           A contest is open for registration before it starts. A contest also has

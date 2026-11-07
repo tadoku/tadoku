@@ -1,14 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
 import type { ImmersionContestView } from 'api-client'
 import { Button, DescriptionList, EmptyState, Flash, SectionHeading, StatusTag, buttonClassName } from 'paper-ui'
 import type { ReactNode } from 'react'
-import { formatDate, formatPeriod, numberFormat } from '../lib/format'
+import { formatDate, formatPeriod } from '../lib/format'
 import { latestBoardQuery, leaderboardHref, standingsQuery, contestPhase, readDay, type ContestBoard, type ContestPhase } from '../lib/leaderboard'
 import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
 import { useLoginUrl, viewerQueryOptions } from '../lib/session'
-import { LeaderboardFrame, StandingsFootnote } from './LeaderboardPage'
+import { LeaderboardFrame } from './LeaderboardPage'
 import { Standings } from './Standings'
 
 export function RoundStatus({ phase }: { phase: ContestPhase }) {
@@ -50,11 +49,9 @@ function LatestBoard({ board, today, page }: { board: ContestBoard; today: strin
   const phase = contestPhase(contest, today)
   const { viewer, registered } = useParticipation(contest.id)
 
-  const actions = phase.ongoing && registered
-    ? <a className={buttonClassName({ variant: 'outline' })} href={links.logs}>Log activity</a>
-    : phase.registrationOpen && !registered && viewer?.status !== 'banned'
-      ? <a className={buttonClassName()} href={links.joinContest(contest.id)}>Join contest</a>
-      : null
+  const actions = phase.registrationOpen && !registered && viewer?.status !== 'banned'
+    ? <a className={buttonClassName()} href={links.joinContest(contest.id)}>Join contest</a>
+    : null
 
   return (
     <LeaderboardFrame period="latest" currentYear={Number(today.slice(0, 4))} actions={actions}>
@@ -71,21 +68,21 @@ function LatestBoard({ board, today, page }: { board: ContestBoard; today: strin
   )
 }
 
-/** A contest's notices, standings, conditions, summary and, while it runs, its ten most recent logs. */
+/** A contest's notices, standings and conditions. */
 export function ContestBoardBody({ board, phase, page, pageHref, title, status, asideLink }: {
   board: ContestBoard
   phase: ContestPhase
   page: number
   pageHref: (page: number) => string
-  /** The standings sheet's heading. */
-  title: string
+  /** The standings sheet's visible heading; without one the page's tab names the standings. */
+  title?: string
   status?: ReactNode
   /** The link that closes the conditions section. */
-  asideLink: ReactNode
+  asideLink?: ReactNode
 }) {
   const links = useLinks()
   const loginUrl = useLoginUrl()
-  const { contest, summary, recentLogs } = board
+  const { contest } = board
   const { data: viewer } = useQuery(viewerQueryOptions())
   const standings = useQuery(standingsQuery({ kind: 'contest', contestId: contest.id }, page))
 
@@ -103,15 +100,16 @@ export function ContestBoardBody({ board, phase, page, pageHref, title, status, 
       ) : null}
       <div className="standings-workspace">
         <div className="standings-main">
-          <section className="standings-sheet" aria-labelledby="standings-title">
-            <SectionHeading
-              level={2}
-              id="standings-title"
-              className="standings-context"
-              title={title}
-              status={status}
-              description={`${formatPeriod(contest)} · ${contest.official ? 'Official contest' : 'Community contest'}`}
-            />
+          <section className="standings-sheet" aria-labelledby={title ? 'standings-title' : undefined} aria-label={title ? undefined : 'Standings'}>
+            {title ? (
+              <SectionHeading
+                level={2}
+                id="standings-title"
+                className="standings-context"
+                title={title}
+                status={status}
+              />
+            ) : null}
             <Standings
               result={standings.data}
               page={page}
@@ -126,40 +124,14 @@ export function ContestBoardBody({ board, phase, page, pageHref, title, status, 
               onRetry={() => void standings.refetch()}
             />
           </section>
-          <StandingsFootnote />
         </div>
         <aside className="standings-aside">
           <section aria-labelledby="standings-conditions">
-            <h2 id="standings-conditions" className="paper-type-component">Contest conditions</h2>
-            <ContestFacts contest={contest} phase={phase} />
+            <h2 id="standings-conditions" className="paper-type-component">About this contest</h2>
             {contest.description ? <p className="standings-description">{contest.description}</p> : null}
+            <ContestFacts contest={contest} phase={phase} />
             {asideLink}
           </section>
-          {summary ? (
-            <section aria-labelledby="standings-summary">
-              <h2 id="standings-summary" className="paper-type-component">Summary</h2>
-              <p>
-                <strong>{numberFormat.format(summary.participant_count)}</strong> {summary.participant_count === 1 ? 'participant' : 'participants'} immersing
-                in <strong>{numberFormat.format(summary.language_count)}</strong> {summary.language_count === 1 ? 'language' : 'languages'} for
-                a total score of <strong>{numberFormat.format(summary.total_score)}</strong>.
-              </p>
-            </section>
-          ) : null}
-          {phase.ongoing && recentLogs.length > 0 ? (
-            <section aria-labelledby="standings-recent">
-              <h2 id="standings-recent" className="paper-type-component">Recent updates</h2>
-              <ul className="standings-activity">
-                {recentLogs.map(log => (
-                  <li key={log.id}>
-                    <Link className="text-link" to="/logs/$logId" params={{ logId: log.id }}>
-                      <span>{log.user_display_name ?? 'Unknown user'}</span>
-                      <span>+{numberFormat.format(log.score)}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
         </aside>
       </div>
     </>
@@ -177,8 +149,7 @@ export function ContestFacts({ contest, phase }: { contest: ImmersionContestView
   return (
     <DescriptionList
       items={[
-        { label: phase.started ? 'Started' : 'Starts', value: formatDate(contest.contest_start) },
-        { label: phase.ended ? 'Ended' : 'Ends', value: formatDate(contest.contest_end) },
+        { label: 'Dates', value: formatPeriod(contest) },
         { label: 'Registration', value: phase.registrationOpen ? `Open until ${formatDate(contest.registration_end)}` : 'Closed to new participants' },
         { label: 'Languages', value: contest.allowed_languages?.length ? contest.allowed_languages.map(language => language.name).join(', ') : 'No restrictions' },
         { label: 'Activities', value: contest.allowed_activities.map(activity => activity.name).join(', ') || 'No restrictions' },

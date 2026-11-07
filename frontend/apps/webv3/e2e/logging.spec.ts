@@ -34,7 +34,7 @@ for (const activity of ['Reading', 'Listening']) {
     test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
     const timed = activity === 'Listening'
     const quantity = timed ? page.getByRole('spinbutton', { name: /^Time spent/ }) : amountInput(page)
-    const description = page.getByLabel('Description', { exact: true })
+    const description = page.getByLabel(/^Description/)
     await openForm(page)
     await expect(description).toHaveAttribute('placeholder', 'e.g. One Piece volume 45')
     await page.getByLabel('Activity', { exact: true }).selectOption({ label: activity })
@@ -95,7 +95,7 @@ for (const activity of ['Reading', 'Listening']) {
     if (timed) expect(record.duration_seconds).toBe(150)
     else expect(record.amount).toBe(17)
     expect(record.registrations.length).toBeGreaterThan(0)
-    await expect(page.getByText(record.id, { exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: text })).toBeVisible()
     for (const registration of record.registrations) {
       await expect(page.getByRole('link', { name: registration.title, exact: true })).toBeVisible()
     }
@@ -108,19 +108,19 @@ for (const activity of ['Reading', 'Listening']) {
 
 test('text limits follow the API: description characters, tag bytes and normalized tags', async ({ page, readerContext }) => {
   test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
-  const tags = page.getByLabel('Tags', { exact: true })
+  const tags = page.getByLabel(/^Tags \(/)
   await openForm(page)
   await amountInput(page).fill('1')
 
   // 128 emoji are 256 UTF-16 units but 128 characters; the API allows 255 characters.
   const description = `${'😀'.repeat(128)}${Date.now()}`
-  await page.getByLabel('Description', { exact: true }).fill(description)
+  await page.getByLabel(/^Description/).fill(description)
   // 18 characters but 54 UTF-8 bytes; the API allows 50 bytes per tag.
   const long = '日本語'.repeat(6)
   await addTags(page, [long])
   await saveButton(page).click()
   await expect(tags).toBeFocused()
-  await expect(page.getByLabel('Description', { exact: true })).not.toHaveAttribute('aria-invalid', 'true')
+  await expect(page.getByLabel(/^Description/)).not.toHaveAttribute('aria-invalid', 'true')
   await page.getByRole('button', { name: `Remove ${long}`, exact: true }).click()
 
   // The chips ignore case when they add a tag. Seven chips normalize to four tags, as Go's strings.TrimSpace and
@@ -166,13 +166,13 @@ test('transport failure keeps values and never navigates or claims success', asy
   const page = await readerContext.newPage()
   await openForm(page)
   await amountInput(page).fill('12')
-  await page.getByLabel('Description', { exact: true }).fill('preserve my draft')
+  await page.getByLabel(/^Description/).fill('preserve my draft')
   await page.route('**/*', route => isSaveRequest(route.request()) ? route.abort() : route.continue())
 
   await saveButton(page).click()
   await expect(page.getByRole('alert')).toContainText(/check your activity/i)
   await expect(amountInput(page)).toHaveValue('12')
-  await expect(page.getByLabel('Description', { exact: true })).toHaveValue('preserve my draft')
+  await expect(page.getByLabel(/^Description/)).toHaveValue('preserve my draft')
   await expect(page).toHaveURL(/\/logs\/new$/)
 })
 
@@ -196,12 +196,12 @@ for (const width of [390, 1280]) {
     await page.keyboard.press('Tab')
     await expect(page.getByLabel('Unit', { exact: true })).toBeFocused()
     await page.keyboard.press('Tab')
-    await expect(page.getByLabel('Time spent', { exact: true })).toBeFocused()
+    await expect(page.getByLabel(/^Time spent/)).toBeFocused()
     await page.keyboard.press('Tab')
     const description = `keyboard-${width}-${Date.now()}`
     await page.keyboard.type(description)
     await page.keyboard.press('Tab')
-    await expect(page.getByLabel('Tags', { exact: true })).toBeFocused()
+    await expect(page.getByLabel(/^Tags \(/)).toBeFocused()
     await page.keyboard.type('keyboard')
     await page.keyboard.press('Enter')
     await expect(page.getByRole('button', { name: 'Remove keyboard', exact: true })).toBeVisible()
@@ -223,7 +223,7 @@ test('API rejection preserves entered activity instead of showing success', asyn
   const page = await readerContext.newPage()
   await openForm(page)
   await amountInput(page).fill('8')
-  await page.getByLabel('Description', { exact: true }).fill('rejected activity draft')
+  await page.getByLabel(/^Description/).fill('rejected activity draft')
   let changed = false
   await page.route('**/*', async route => {
     if (!isSaveRequest(route.request())) return route.continue()
@@ -235,7 +235,7 @@ test('API rejection preserves entered activity instead of showing success', asyn
   await expect(page.getByRole('alert')).toContainText('could not be saved')
   expect(changed).toBe(true)
   await expect(amountInput(page)).toHaveValue('8')
-  await expect(page.getByLabel('Description', { exact: true })).toHaveValue('rejected activity draft')
+  await expect(page.getByLabel(/^Description/)).toHaveValue('rejected activity draft')
   await expect(page).toHaveURL(/\/logs\/new$/)
 })
 
@@ -243,7 +243,8 @@ test('public detail hides contest management and the canonical tenant cannot rea
   test.skip(!webv3 || !api || !reader.email, 'Set development fixture credentials')
   await openForm(page)
   await amountInput(page).fill('6')
-  await page.getByLabel('Description', { exact: true }).fill(`isolation-${Date.now()}`)
+  const description = `isolation-${Date.now()}`
+  await page.getByLabel(/^Description/).fill(description)
   const id = await createLog(page)
   await expect(page.getByRole('link', { name: 'Manage contest submissions' })).toBeVisible()
 
@@ -251,7 +252,7 @@ test('public detail hides contest management and the canonical tenant cannot rea
   try {
     const publicPage = await publicContext.newPage()
     await publicPage.goto(`${webv3}/logs/${id}`)
-    await expect(publicPage.getByText(id, { exact: true })).toBeVisible()
+    await expect(publicPage.getByRole('heading', { level: 1, name: description })).toBeVisible()
     await expect(publicPage.getByRole('link', { name: 'Manage contest submissions' })).toHaveCount(0)
     const publicRecord = await publicContext.request.get(`${api}/immersion/logs/${id}`)
     expect((await publicRecord.json()).registrations).toEqual([])
@@ -267,11 +268,12 @@ test('a different signed-in learner cannot change another learner\'s activity', 
   const adminPage = await adminContext.newPage()
   await openForm(adminPage)
   await amountInput(adminPage).fill('9')
-  await adminPage.getByLabel('Description', { exact: true }).fill(`ownership-${Date.now()}`)
+  const description = `ownership-${Date.now()}`
+  await adminPage.getByLabel(/^Description/).fill(description)
   const id = await createLog(adminPage)
 
   await page.goto(`${webv3}/logs/${id}`)
-  await expect(page.getByText(id, { exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: description })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Manage contest submissions' })).toHaveCount(0)
 
   const path = `${api}/immersion/logs/${id}`

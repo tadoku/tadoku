@@ -35,7 +35,6 @@ export function Login({ search }: { readonly search: AccountSearch }) {
   return (
     <CardPage
       title="Log in"
-      lead="Welcome back. Pick up your reading where you left off."
       footer={<>New to Tadoku? <a href={withReturnTo('/register', next)}>Create an account</a></>}
     >
       <form.AppForm>
@@ -76,7 +75,6 @@ export function Register({ search }: { readonly search: AccountSearch }) {
   return (
     <CardPage
       title="Create an account"
-      lead="Log your reading and listening, join contests and see how you’re doing."
       footer={<>Already have an account? <a href={withReturnTo('/login', next)}>Log in</a></>}
     >
       <form.AppForm>

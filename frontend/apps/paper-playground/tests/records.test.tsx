@@ -140,7 +140,7 @@ it('keeps the selected profile year and contest context in local navigation', as
   const user = userEvent.setup()
   renderRoute('/users/anton?scenario=profile&contest=round5')
   await user.click(screen.getByRole('button', { name: 'Previous year' }))
-  expect(screen.getByRole('img', { name: 'Daily activity for 2025' })).toBeInTheDocument()
+  expect(screen.getByRole('group', { name: 'Daily activity for 2025' })).toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'Activity log' })).toHaveAttribute('href', '/users/anton/activity?year=2025&contest=round5&scenario=profile')
   expect(screen.getByRole('link', { name: '2026 Round 5 standings' })).toHaveAttribute('href', '/contests/round5/leaderboard')
 })

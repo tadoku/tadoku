@@ -22,20 +22,24 @@ a { text-underline-offset: .2em; }
 .app-footer__inner { max-width: var(--app-content-width); margin: auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; }
 .app-footer nav { display: flex; flex-wrap: wrap; gap: 12px 24px; font-size: .875rem; }
 .app-footer .paper-button { font-size: .875rem; font-weight: 400; }
+.app-footer nav .text-link { color: var(--paper-color-text-muted); text-decoration: none; }
+.app-footer nav .text-link:hover, .app-footer nav .text-link:focus-visible { color: var(--paper-color-text-ink); text-decoration: underline; }
 .app-skip { position: fixed; z-index: 100; left: 12px; top: 12px; transform: translateY(-180%); }
 .app-skip:focus { transform: none; }
 .app-pending { padding-block: 64px; }
 
 /* Home */
-.home-hero { --home-ledger-inset: 24px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 64px; padding: 8px 5px 8px 0; }
+.home-hero { --home-ledger-inset: 24px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 64px; padding: 8px 5px 8px 0; }
 .home-status { margin: 0 0 16px; font-size: .875rem; font-weight: 600; color: var(--paper-color-status-success); }
-.home-status[data-tone="quiet"] { color: var(--paper-color-text-muted); }
 .home-status[data-tone="warning"] { color: var(--paper-color-status-warning); }
 .home-promise h1 { margin: 0; max-width: 17ch; font-family: var(--paper-font-display); font-size: clamp(2rem, 3.5vw, 2.75rem); line-height: 1.2; letter-spacing: -.045em; text-wrap: balance; }
-.home-lead { margin: 24px 0; max-width: 47ch; color: var(--paper-color-text-muted); font-size: 1.0625rem; line-height: 1.75; }
+.home-lead { margin: 24px 0; max-width: 47ch; color: var(--paper-color-text-ink); font-size: 1.0625rem; line-height: 1.75; }
 .home-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
-.home-actions > .text-link { font-size: .9375rem; }
-.home-fineprint { margin: 16px 0 0; color: var(--paper-color-text-muted); font-size: .8125rem; line-height: 1.6; }
+.home-goal { margin: 32px 0 0; font-size: .9375rem; line-height: 1.6; }
+.home-goal h2 { margin: 0 0 4px; color: var(--paper-color-text-muted); font-family: var(--paper-font-body); font-size: var(--paper-type-metadata-size); font-weight: 400; }
+.home-goal p { margin: 0; color: var(--paper-color-text-ink); font-weight: 600; }
+.home-goal p .text-link { margin-inline-start: 12px; font-size: .875rem; font-weight: 400; }
+.home-fineprint { margin: 16px 0 0; color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); line-height: 1.6; }
 .home-ledger { min-width: 0; padding: 0; }
 .home-ledger-header { margin: 0; padding: 22px var(--home-ledger-inset); border-bottom: 1px solid var(--paper-color-rule-default); }
 .home-ledger-stats { padding: 18px var(--home-ledger-inset); }
@@ -44,13 +48,12 @@ a { text-underline-offset: .2em; }
 .home-ledger .paper-table td:first-child { color: var(--paper-color-text-muted); }
 .home-person-link, .standings-person a { color: var(--paper-color-text-ink); text-decoration-color: var(--paper-color-rule-default); overflow-wrap: anywhere; }
 .home-person-link:hover, .standings-person a:hover { color: var(--paper-color-text-link); text-decoration-color: currentColor; }
-.home-ledger-note { padding: 14px var(--home-ledger-inset); margin: 0; color: var(--paper-color-text-muted); font-size: .75rem; line-height: 1.6; }
 .home-ledger-message { padding: 24px var(--home-ledger-inset); }
 .home-ledger-message h3 { margin: 0 0 12px; font-size: 1.0625rem; line-height: 1.5; }
 .home-ledger-message > p { margin: 0 0 20px; max-width: 42ch; line-height: 1.75; }
 .home-ledger-message > p:last-child { margin-bottom: 0; }
 .home-start-date { display: grid; gap: 4px; }
-.home-start-date span { color: var(--paper-color-text-muted); font-size: .8125rem; }
+.home-start-date span { color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); }
 .home-start-date strong { font-family: var(--paper-font-display); font-size: 2rem; line-height: 1.3; }
 .home-how { margin-top: 48px; padding-top: 28px; border-top: 1px solid var(--paper-color-rule-default); }
 .home-how h2 { margin: 0 0 24px; font-size: 1.375rem; font-family: var(--paper-font-display); }
@@ -58,9 +61,9 @@ a { text-underline-offset: .2em; }
 .home-how li { position: relative; padding-left: 28px; counter-increment: home-step; }
 .home-how li::before { content: counter(home-step); position: absolute; left: 0; top: 1px; color: var(--paper-color-text-muted); font-family: var(--paper-font-display); font-weight: 700; }
 .home-how h3 { margin: 0 0 8px; font-size: 1rem; line-height: 1.5; }
-.home-how p { margin: 0; max-width: 34ch; font-size: .9375rem; line-height: 1.7; color: var(--paper-color-text-muted); }
-.home-strip { display: grid; grid-template-columns: 230px minmax(0, 1fr) auto; align-items: center; gap: 32px; margin-top: 32px; padding: 24px 0 0; border-top: 1px solid var(--paper-color-rule-default); }
-.home-strip + .home-strip { margin-top: 24px; }
+.home-how p { margin: 0; max-width: 34ch; font-size: .9375rem; line-height: 1.7; color: var(--paper-color-text-ink); }
+.home-strip { max-width: 48rem; display: grid; grid-template-columns: 230px minmax(0, 1fr) auto; align-items: center; gap: 32px; margin-top: 32px; padding: 24px 0 0; border-top: 1px solid var(--paper-color-rule-default); }
+.home-strip > a { grid-column: 3; justify-self: end; }
 .home-strip h2 { margin: 0 0 4px; font-size: .875rem; font-family: var(--paper-font-body); }
 .home-strip p { margin: 0; max-width: 53ch; font-size: .875rem; color: var(--paper-color-text-muted); line-height: 1.7; }
 .home-strip > div p { font-size: 1.0625rem; color: var(--paper-color-text-ink); font-weight: 600; }
@@ -73,6 +76,7 @@ a { text-underline-offset: .2em; }
 /* Webv3 has no CSS reset, so Paper legends keep the browser's 2px inline padding without this. */
 .paper-choice-field > legend { padding: 0; }
 .goal-form__row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.goal-form__note { margin: -12px 0 0; color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); }
 .goal-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-top: 4px; }
 .goal-status { margin: 0; color: var(--paper-color-status-success); font-size: .875rem; font-weight: 600; }
 .goal-status:empty { display: none; }
@@ -84,13 +88,13 @@ a { text-underline-offset: .2em; }
 .goal-summary h2 { margin: 0 0 12px; font-family: var(--paper-font-body); font-size: .875rem; line-height: 1.5; color: var(--paper-color-text-muted); }
 .goal-summary__statement { margin: 0; font-family: var(--paper-font-display); font-size: 1.25rem; font-weight: 700; line-height: 1.45; text-wrap: balance; }
 .goal-summary__total { margin: 8px 0 0; font-size: 1rem; font-weight: 600; font-variant-numeric: tabular-nums; }
-.goal-summary__note { margin: 4px 0 20px; color: var(--paper-color-text-muted); font-size: .8125rem; }
+.goal-summary__note { margin: 4px 0 20px; color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); }
 
 @media (max-width: 1000px) {
   .home-hero { --home-ledger-inset: 20px; gap: 32px; }
   .home-promise h1 { font-size: 2.25rem; }
   .home-strip { grid-template-columns: 200px minmax(0, 1fr); gap: 16px 24px; }
-  .home-strip > a { grid-column: 2; }
+  .home-strip > a { grid-column: 2; justify-self: start; }
 }
 
 @media (max-width: 800px) {
@@ -138,19 +142,35 @@ a { text-underline-offset: .2em; }
   .app-shell { --app-brand-width: 72px; }
 }
 
-.app-account-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-3, .75rem); }
+.app-login-link { color: var(--paper-color-text-ink); font-weight: 600; text-decoration: none; }
+.app-login-link:hover, .app-login-link:focus-visible { text-decoration: underline; }
+.contest-daily .paper-table__row-header { font-weight: 400; white-space: nowrap; }
+/* Phones keep every daily column and scroll the table sideways, with the edge shade showing more columns. */
+.app-account-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-3, .75rem); margin-inline-start: 16px; }
 .app-account-menu--desktop .paper-button > span { max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .app-mobile-account { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--paper-color-rule-subtle); }
 .app-mobile-account__name { margin: 0 0 4px; padding-inline: var(--paper-field-padding-inline); font-size: .875rem; font-weight: 600; color: var(--paper-color-text-muted); overflow-wrap: anywhere; }
 .app-mobile-account .paper-button { justify-content: flex-start; width: 100%; }
 @media (width < 48rem) { .app-account-menu--desktop { display: none; } }
-.app-announcements { display: grid; gap: 8px; margin-bottom: 24px; }
+.app-announcements { display: grid; gap: 8px; margin-bottom: 32px; }
 .app-announcement { display: grid; gap: 4px; overflow-wrap: anywhere; }
 .app-announcement p { margin: 0; }
 .app-footer__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; font-size: .875rem; }
 @media (max-width: 600px) { .app-account-actions { font-size: .8rem; gap: .4rem; max-width: 12rem; } }
+.standings-main > .log-surface { max-width: none; }
+/* Log detail: the figures and facts read as one record, with the contests a section below it. */
+.log-record { display: grid; gap: 24px; }
+.log-detail > .paper-page-header { max-width: 48rem; }
+/* A participant's contest record reads as one 48rem column. */
+.contest-profile > * { max-width: 48rem; }
+.log-contests { max-width: 48rem; margin-top: 32px; }
+.log-contest-list { list-style: none; margin: 0 0 16px; padding: 0; }
+.log-contest-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-block: 12px; }
+.log-contest-list li + li { border-top: 1px solid var(--paper-color-rule-default); }
+.log-contest-list li > span { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.log-contest-list small { color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); font-weight: 400; }
+.log-delete { color: var(--paper-color-status-danger); }
 .log-surface { max-width: 48rem; padding: clamp(1rem, 4vw, 2rem); overflow-wrap: anywhere; }
-.registration-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 24px; }
 .registration-languages { margin: 16px 0; }
 .log-contest { display: flex; align-items: center; gap: .5rem; padding-block: .5rem; }
 .log-contest input { width: 1.25rem; height: 1.25rem; }
@@ -161,27 +181,28 @@ a { text-underline-offset: .2em; }
 .standings-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 256px; align-items: start; gap: 32px; margin-top: 20px; }
 .standings-main, .standings-aside { min-width: 0; }
 .standings-sheet { min-width: 0; background: var(--paper-color-surface-paper); border: 1px solid var(--paper-color-rule-default); }
-.standings-sheet > .paper-tabbar { padding-inline: 20px; }
+/* Inset the tabs, not the tab bar, so its rule runs edge to edge across the sheet. */
+.standings-sheet > .paper-tabbar .paper-tabbar__list { padding-inline: 20px; }
 .standings-context { margin: 0; padding: 20px; row-gap: 0; }
 .standings-context h2 { font-size: 1.375rem; }
 .standings-empty { margin: 0; padding: 24px 20px; border-block-start: 1px solid var(--paper-color-rule-default); }
 .standings-table { font-variant-numeric: tabular-nums; --paper-field-padding-inline: 20px; }
-.standings-table tr[aria-current="true"] { background: var(--paper-color-action-soft); }
+.home-ledger tr[aria-current="true"] > :first-child,
+.standings-table tr[aria-current="true"] > :first-child { box-shadow: inset var(--paper-accent-rail-width) 0 0 var(--paper-color-text-link); }
 .standings-person { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
-.standings-you { font-size: .6875rem; color: var(--paper-color-text-muted); font-weight: 400; }
 .standings-rank { color: var(--paper-color-text-muted); }
-.standings-rank abbr, .standings-footnote abbr { text-decoration: none; }
+.standings-rank abbr, .standings-tie-note abbr { text-decoration: none; }
+.standings-tie-note { margin: 0; padding: 12px 20px; border-top: 1px solid var(--paper-color-rule-subtle); color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); }
 .standings-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 12px 20px; }
-.standings-pagination > p { margin: 0; font-size: .8125rem; color: var(--paper-color-text-muted); }
-.standings-footnote { max-width: 76ch; color: var(--paper-color-text-muted); margin: 16px 0 0; font-size: .8125rem; line-height: 1.65; }
+.standings-pagination > p { margin: 0; font-size: var(--paper-type-metadata-size); color: var(--paper-color-text-muted); }
 .standings-aside { padding-top: 4px; font-size: .875rem; line-height: 1.7; overflow-wrap: anywhere; }
 .standings-aside > section + section { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--paper-color-rule-default); }
-.standings-aside h2 { margin: 0 0 12px; }
+.standings-aside h2 { margin: 0 0 12px; font-family: var(--paper-font-display); font-size: var(--paper-type-component-size); line-height: var(--paper-type-component-line-height); font-weight: 700; }
 .standings-aside p { margin: 0 0 16px; }
-.standings-description { margin-top: 16px !important; white-space: pre-line; }
-.standings-activity { list-style: none; margin: 0; padding: 0; }
-.standings-activity li + li { margin-top: 12px; }
-.standings-activity a { display: flex; justify-content: space-between; gap: 16px; }
+.standings-aside > p { color: var(--paper-color-text-muted); }
+.standings-description { white-space: pre-line; }
+/* The aside's closing link stands apart from the last fact rather than reading as part of its value. */
+.standings-aside .paper-description-list + .text-link { display: inline-block; margin-top: 16px; }
 
 @media (max-width: 1000px) {
   .standings-workspace { grid-template-columns: minmax(0, 1fr) 224px; gap: 24px; }
@@ -192,7 +213,7 @@ a { text-underline-offset: .2em; }
 @media (max-width: 580px) {
   .standings-context { padding: 20px 16px 16px; }
   .standings-context h2 { font-size: 1.125rem; }
-  .standings-sheet > .paper-tabbar { padding-inline: 16px; }
+  .standings-sheet > .paper-tabbar .paper-tabbar__list { padding-inline: 16px; }
   .standings-empty { padding-inline: 16px; }
   .standings-table { --paper-field-padding-inline: 16px; }
   .standings-pagination { padding: 12px 16px; }
@@ -201,28 +222,38 @@ a { text-underline-offset: .2em; }
 
 /* Contest lists */
 .contests-page > .paper-tabbar { margin-top: 8px; }
-.contests-status, .contests-note { color: var(--paper-color-text-muted); font-size: .8125rem; }
+.contests-status, .contests-note { color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); }
 .contests-note { border-top: 1px solid var(--paper-color-rule-default); margin: 24px 0 0; padding-top: 20px; }
 .contest-list { list-style: none; margin: 8px 0 0; padding: 0; }
-.contest-row { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; column-gap: 24px; padding: 24px 0; border-top: 1px solid var(--paper-color-rule-default); }
+.contest-row { padding: 16px 0; border-top: 1px solid var(--paper-color-rule-default); }
 .contest-row:first-child { border-top: 0; }
-.contest-date { text-align: center; padding-top: 2px; }
-.contest-date span { display: block; font-size: .75rem; color: var(--paper-color-text-muted); line-height: 1.4; white-space: nowrap; }
-.contest-date strong { display: block; font-family: var(--paper-font-display); font-size: 1.75rem; line-height: 1.5; }
 .contest-row__body { min-width: 0; overflow-wrap: anywhere; }
-.contest-row__title { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
-.contest-row__title h2 { margin: 0; }
-.contest-row__title a { color: inherit; text-decoration: none; }
-.contest-row__title a:hover { text-decoration: underline; }
+/* The tag stays on the title's first line; a long title wraps beside it rather than around it. */
+.contest-row__title { display: grid; grid-template-columns: minmax(0, max-content) auto; justify-content: start; align-items: start; gap: 4px 8px; }
+.contest-row__tags { display: flex; flex-wrap: wrap; gap: 4px 6px; margin-block-start: 2px; }
+/* On a phone two tags would squeeze the title, so it takes the row and the tags sit beneath it. */
+@media (max-width: 30rem) {
+  .contest-row__title:has(.contest-row__tags > :nth-child(2)) { grid-template-columns: minmax(0, 1fr); }
+  .contest-row__title:has(.contest-row__tags > :nth-child(2)) .contest-row__tags { margin-block-start: 0; }
+}
+.contest-row__title h2 { margin: 0; font-family: var(--paper-font-body); font-size: 1rem; line-height: 1.5; font-weight: 600; }
+.contest-row__title a { color: inherit; text-decoration: underline; text-decoration-color: var(--paper-color-text-muted); text-decoration-thickness: 1px; text-underline-offset: .2em; }
+.contest-row__title a:hover, .contest-row__title a:focus-visible { color: var(--paper-color-text-link); text-decoration-color: currentColor; }
 .contest-row__body p { margin: 6px 0 0; font-size: .875rem; line-height: 1.6; }
-.contest-row__allows { color: var(--paper-color-text-muted); }
-.contest-row__status { display: flex; flex-direction: column; align-items: end; gap: 8px; }
+.contest-row__body p { color: var(--paper-color-text-muted); }
 .contests-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding-top: 12px; border-top: 1px solid var(--paper-color-rule-default); }
-.contests-pagination > p { margin: 0; font-size: .8125rem; color: var(--paper-color-text-muted); }
+.contests-pagination > p { margin: 0; font-size: var(--paper-type-metadata-size); color: var(--paper-color-text-muted); }
 
 @media (max-width: 580px) {
-  .contest-row { grid-template-columns: 48px minmax(0, 1fr); column-gap: 16px; padding: 20px 0; }
-  .contest-row__status { grid-column: 2; flex-direction: row; flex-wrap: wrap; align-items: center; margin-top: 12px; }
-  .contests-pagination .paper-pagination__list { flex-wrap: wrap; }
+    .contests-pagination .paper-pagination__list { flex-wrap: wrap; }
 }
 
+
+.list-pagination-top { display: flex; justify-content: flex-end; margin-block: 8px 4px; }
+.list-pagination-top .paper-pagination__list { flex-wrap: wrap; }
+
+/* Daily scores share their numeric columns evenly. */
+.contest-daily th { white-space: nowrap; }
+
+/* Header and footer controls wait only for hydration; they keep their colours instead of looking unavailable. */
+.app-awaiting-hydration:disabled { opacity: 1; cursor: progress; }

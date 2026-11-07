@@ -1,10 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { Button, EmptyState, Loading, SectionHeading, StatGrid, Surface, Table, buttonClassName } from 'paper-ui'
+import { Button, EmptyState, Loading, SectionHeading, StatGrid, StatusTag, Surface, Table, buttonClassName } from 'paper-ui'
 import type { ReactNode } from 'react'
 import { homeQueryOptions, type HomeData } from '../lib/home'
-import { formatDate, formatPeriod, numberFormat } from '../lib/format'
+import { formatDate, formatPeriod, numberFormat, pointsUnit } from '../lib/format'
+import { describeGoal, useStoredGoal } from '../lib/goal'
 import { useLinks } from '../lib/links'
+import { useParticipation } from '../lib/registration'
+import { viewerQueryOptions, type Viewer } from '../lib/session'
 
 const dayNumber = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000) + 1
 
@@ -40,64 +43,124 @@ export function HomePage() {
   const phase = phaseOf(data, isError, today)
   const contest = data?.latestContest ?? null
   const joinable = contest && (phase === 'open' || phase === 'upcoming')
+  const { data: viewer } = useQuery(viewerQueryOptions())
+  const member = viewer?.status === 'signed-in' ? viewer : null
 
   return (
     <div className="home-page">
       <section className="home-hero" aria-labelledby="home-title">
-        <div className="home-promise">
-          {contest && phase !== 'unavailable' ? (
-            <p className="home-status" data-tone={phase === 'open' || phase === 'live' ? 'live' : 'quiet'}>
-              {phase === 'upcoming' ? 'Registration is open' : phase === 'ended' ? `${contest.title} has ended` : `${contest.title} is live`}
-            </p>
-          ) : phase === 'unavailable' ? <p className="home-status" data-tone="warning">Contest updates are delayed</p> : null}
-          <h1 id="home-title">{promise[phase].headline}</h1>
-          <p className="home-lead">{promise[phase].lead}</p>
-          <div className="home-actions">
-            {joinable
-              ? <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a>
-              : <a href={links.logs} className={buttonClassName()}>Log activity</a>}
-            <a href={links.guide} className="text-link">How Tadoku works</a>
-          </div>
-          {joinable
-            ? <p className="home-fineprint">Free to join. Registration closes {formatDate(contest.registration_end)}.</p>
-            : <p className="home-fineprint">You can track your progress without joining a contest.</p>}
-        </div>
+        {member
+          ? <MemberPromise member={member} data={data} phase={phase} />
+          : (
+            <div className="home-promise">
+              {phase === 'unavailable' && <p className="home-status" data-tone="warning">Contest updates are delayed</p>}
+              <h1 id="home-title">{promise[phase].headline}</h1>
+              <p className="home-lead">{promise[phase].lead}</p>
+              <div className="home-actions">
+                {joinable
+                  ? <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a>
+                  : <a href={links.logs} className={buttonClassName()}>Log activity</a>}
+                <SetGoalLink />
+              </div>
+              {joinable && <p className="home-fineprint">Free to join. Registration closes {formatDate(contest.registration_end)}.</p>}
+              <DailyGoal />
+            </div>
+          )}
 
-        <Surface as="section" elevation="showcase" accent className="home-ledger" aria-labelledby="home-board-title">
+        <Surface as="section" elevation="showcase" className="home-ledger" aria-labelledby="home-board-title">
           <ContestBoard data={data} phase={phase} today={today} retrying={isFetching} retry={() => void refetch()} />
         </Surface>
       </section>
 
-      <section className="home-how" aria-labelledby="home-how-title">
-        <h2 id="home-how-title">How Tadoku works</h2>
-        <ol>
-          <li><h3>Choose your language</h3><p>Join an official round or track immersion at your own pace between contests.</p></li>
-          <li><h3>Read and listen</h3><p>Books, manga, games, podcasts, video. Find something that keeps you engaged.</p></li>
-          <li><h3>Log your progress</h3><p>Record what you did, see where it counts, and let a little company keep you going.</p></li>
-        </ol>
-      </section>
+      {member ? null : (
+        <section className="home-how" aria-labelledby="home-how-title">
+          <h2 id="home-how-title">How Tadoku works</h2>
+          <ol>
+            <li><h3>Choose your language</h3><p>Join an official round or track immersion at your own pace between contests.</p></li>
+            <li><h3>Read and listen</h3><p>Books, manga, games, podcasts, video: whatever keeps you engaged.</p></li>
+            <li><h3>Log your progress</h3><p>Record what you did and see where it counts.</p></li>
+          </ol>
+        </section>
+      )}
 
-      {phase !== 'loading' && phase !== 'unavailable' && (
+      {/* While a round is running the card covers it; the next round earns a row once it is scheduled. */}
+      {phase !== 'loading' && phase !== 'unavailable' && (data?.nextContest || (phase !== 'open' && phase !== 'live')) && (
         <section className="home-strip" aria-labelledby="home-next-title">
           <div>
             <h2 id="home-next-title">Next official round</h2>
             <p>{data?.nextContest ? formatPeriod(data.nextContest) : 'Not announced yet'}</p>
           </div>
-          <p>{data?.nextContest
-            ? `Registration closes ${formatDate(data.nextContest.registration_end)}.`
-            : 'New official rounds appear on the contests page as soon as they’re scheduled.'}</p>
+          {data?.nextContest && <p>Registration closes {formatDate(data.nextContest.registration_end)}.</p>}
           <a className="text-link" href={links.contests}>See all contests</a>
         </section>
       )}
 
-      <section className="home-strip" aria-labelledby="home-goal-title">
-        <div>
-          <h2 id="home-goal-title">Daily goal</h2>
-          <p>Plan your sessions</p>
-        </div>
-        <p>Decide how long you want to read or listen each day, and keep that goal in view.</p>
-        <Link className="text-link" to="/plan">Set a daily goal</Link>
-      </section>
+    </div>
+  )
+}
+
+/** The goal is kept in the browser, so guests can set one too. Until one is saved, the hero's actions offer to set it. */
+function SetGoalLink() {
+  return useStoredGoal() ? null : <Link className="text-link" to="/plan">Set a daily goal</Link>
+}
+
+function DailyGoal() {
+  const goal = useStoredGoal()
+  if (!goal) return null
+
+  return (
+    <section className="home-goal" aria-labelledby="home-goal-title">
+      <h2 id="home-goal-title">Daily goal</h2>
+      <p>{describeGoal(goal)} <Link className="text-link" to="/plan">Change goal</Link></p>
+    </section>
+  )
+}
+
+const ordinal = new Intl.PluralRules('en', { type: 'ordinal' })
+const suffix: Record<string, string> = { one: 'st', two: 'nd', few: 'rd', other: 'th' }
+const place = (rank: number) => `${rank}${suffix[ordinal.select(rank)]}`
+
+/** A signed-in learner's hero: where they stand in the current round and the one action that moves it. */
+function MemberPromise({ member, data, phase }: {
+  member: Extract<Viewer, { status: 'signed-in' }>
+  data: HomeData | undefined
+  phase: Phase
+}) {
+  const links = useLinks()
+  const contest = data?.latestContest
+  const running = contest && (phase === 'open' || phase === 'live' || phase === 'upcoming')
+  const entry = running ? data?.standings?.entries.find(row => row.user_id === member.userId) : undefined
+  const { registered } = useParticipation(running ? contest.id : '')
+  const joinable = running && !registered && (phase === 'open' || phase === 'upcoming')
+
+  let headline: string
+  let lead: string
+  if (running && entry) {
+    headline = `${place(entry.rank)} place`
+    lead = `${numberFormat.format(entry.score)} ${pointsUnit(entry.score)} in ${contest.title}.`
+  } else if (running && registered) {
+    headline = `You’re in ${contest.title}`
+    lead = phase === 'upcoming' ? `The round starts ${formatDate(contest.contest_start)}.` : 'Log what you read and listen to; every entry counts towards the round.'
+  } else if (joinable) {
+    headline = `${contest.title} is open`
+    lead = `Registration closes ${formatDate(contest.registration_end)}.`
+  } else {
+    headline = `Welcome back, ${member.displayName}`
+    lead = 'Log what you read and listen to today.'
+  }
+
+  return (
+    <div className="home-promise">
+      {phase === 'unavailable' && <p className="home-status" data-tone="warning">Contest updates are delayed</p>}
+      <h1 id="home-title">{headline}</h1>
+      <p className="home-lead">{lead}</p>
+      {/* Log activity is already the header's action; the hero adds Join only while the member can still join. */}
+      <div className="home-actions">
+        {joinable ? <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a> : null}
+        <a href={links.profile(member.userId)} className="text-link">Your profile</a>
+        <SetGoalLink />
+      </div>
+      <DailyGoal />
     </div>
   )
 }
@@ -110,6 +173,8 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
   retry: () => void
 }) {
   const links = useLinks()
+  const { data: viewer } = useQuery(viewerQueryOptions())
+  const viewerId = viewer?.status === 'signed-in' ? viewer.userId : undefined
   if (phase === 'loading') {
     return <>
       <SectionHeading level={2} id="home-board-title" className="home-ledger-header" title="Current contest" />
@@ -154,8 +219,6 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
       <StatGrid className="home-ledger-stats" stats={[{ label: 'Length', value: `${length} days` }, ...(activities ? [{ label: 'Activities', value: activities }] : [])]} />
       <div className="home-ledger-message">
         <p className="home-start-date"><span>Starts</span><strong>{formatDate(contest.contest_start)}</strong></p>
-        <h3>Make space for immersion</h3>
-        <p>Choose your languages when you join. Contest scoring begins when the round starts.</p>
       </div>
     </>
   }
@@ -180,11 +243,22 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
         minWidth="0"
         columns={[
           { id: 'rank', header: 'Rank', width: '4.5rem', cell: row => row.rank },
-          { id: 'person', header: 'Participant', rowHeader: true, cell: row => <a className="home-person-link" href={links.profile(row.user_id)}>{row.user_display_name}</a> },
+          {
+            id: 'person',
+            header: 'Participant',
+            rowHeader: true,
+            cell: row => (
+              <span className="standings-person">
+                <a className="home-person-link" href={links.profile(row.user_id)}>{row.user_display_name}</a>
+                {row.user_id === viewerId ? <StatusTag>You</StatusTag> : null}
+              </span>
+            ),
+          },
           { id: 'score', header: 'Score', align: 'end', cell: row => numberFormat.format(row.score) },
         ]}
         rows={standings.entries}
         getRowKey={row => row.user_id}
+        getRowProps={row => (row.user_id === viewerId ? { 'aria-current': 'true' } : {})}
       />
     ) : (
       <EmptyState
@@ -195,6 +269,5 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
         description="Standings appear here once participants log reading or listening in this round."
       />
     )}
-    <p className="home-ledger-note">{ended ? 'Thanks for reading and listening together.' : 'Reading and listening, across all languages in this round.'}</p>
   </>
 }

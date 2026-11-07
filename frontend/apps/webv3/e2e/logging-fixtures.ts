@@ -42,7 +42,7 @@ export const contestStepUrl = /\/logs\/[a-f0-9-]{36}\/contests\?preselect=1$/
 /** A save: the only POST the activity form sends, to its server function. */
 export const isSaveRequest = (request: Request) => request.method() === 'POST' && request.url().includes('_serverFn')
 
-export const saveButton = (page: Page) => page.getByRole('button', { name: 'Create', exact: true })
+export const saveButton = (page: Page) => page.getByRole('button', { name: 'Log activity', exact: true })
 
 /**
  * Creates the open draft and returns its ID, leaving the page on the saved log's detail. An account with ongoing
@@ -58,7 +58,7 @@ export async function createLog(page: Page) {
 
 /** Adds each tag as a chip by typing it and pressing Enter. */
 export async function addTags(page: Page, tags: string[]) {
-  const input = page.getByRole('combobox', { name: 'Tags', exact: true })
+  const input = page.getByRole('combobox', { name: /^Tags \(/ })
   for (const tag of tags) {
     await input.fill(tag)
     await input.press('Enter')
@@ -71,13 +71,13 @@ export const amountInput = (page: Page) => page.getByRole('spinbutton', { name: 
 /** Enters an amount and a description in the open activity form. */
 export async function fillDraft(page: Page, amount: string, description: string) {
   await amountInput(page).fill(amount)
-  await page.getByLabel('Description', { exact: true }).fill(description)
+  await page.getByLabel(/^Description/).fill(description)
 }
 
 /** The open activity form still holds the draft, unsaved. */
 export async function expectDraftKept(page: Page, amount: string, description: string) {
   await expect(amountInput(page)).toHaveValue(amount)
-  await expect(page.getByLabel('Description', { exact: true })).toHaveValue(description)
+  await expect(page.getByLabel(/^Description/)).toHaveValue(description)
   await expect(page).toHaveURL(/\/logs\/new$/)
 }
 

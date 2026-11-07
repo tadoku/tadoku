@@ -67,8 +67,9 @@ export const maxTags = 10
 /** The activity's score modifier and common tags, each toggling in the draft's tags until it holds `maxTags`. */
 export const TagsSidebar = withPaperForm({
   defaultValues: {} as LogDraft,
-  props: { activityId: '', disabled: false },
-  render: function TagsSidebar({ form, activityId, disabled }) {
+  /** `compact` folds the common tags behind a disclosure, for the narrow layout where they sit inside the form. */
+  props: { activityId: '', disabled: false, compact: false },
+  render: function TagsSidebar({ form, activityId, disabled, compact }) {
     const tags = useStore(form.store, state => state.values.tags)
     const suggested = activityTags[activityId] ?? []
     if (!suggested.length) return null
@@ -96,17 +97,23 @@ export const TagsSidebar = withPaperForm({
               disabled={disabled || (!selected.has(tag) && atLimit)}
               onClick={() => toggle(tag)}
             >
-              {tag}
+              {tag.replaceAll('_', ' ')}
             </button>
           ))}
         </div>
       </section>
     ) : null
 
+    const common = group('Common tags', suggested.filter(item => !item.modifier))
     return (
       <div className="log-tags-sidebar">
         {group('Score modifiers', suggested.filter(item => item.modifier))}
-        {group('Common tags', suggested.filter(item => !item.modifier))}
+        {compact && common ? (
+          <details className="log-tags-sidebar__more">
+            <summary>Common tags</summary>
+            {common}
+          </details>
+        ) : common}
       </div>
     )
   },

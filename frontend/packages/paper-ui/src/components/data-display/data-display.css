@@ -1,8 +1,19 @@
 @layer paper-recipes {
+  /*
+   * Edge shades appear only while columns sit off-screen: covers in the surface colour scroll with the
+   * table and hide the fixed shades at whichever end is fully visible. Set --paper-table-region-surface
+   * when the table sits on a surface other than paper.
+   */
   .paper-table-region {
+    --paper-table-region-shade: color-mix(in srgb, var(--paper-color-text-ink) 35%, transparent);
     max-inline-size: 100%;
     overflow-x: auto;
     overscroll-behavior-inline: contain;
+    background:
+      linear-gradient(to right, var(--paper-table-region-surface, var(--paper-color-surface-paper)) 40%, transparent) left / 2rem 100% no-repeat local,
+      linear-gradient(to left, var(--paper-table-region-surface, var(--paper-color-surface-paper)) 40%, transparent) right / 2rem 100% no-repeat local,
+      radial-gradient(farthest-side at 0 50%, var(--paper-table-region-shade), transparent) left / 0.75rem 100% no-repeat scroll,
+      radial-gradient(farthest-side at 100% 50%, var(--paper-table-region-shade), transparent) right / 0.75rem 100% no-repeat scroll;
   }
 
   .paper-table-region:focus {
@@ -49,11 +60,12 @@
     vertical-align: top;
   }
 
+  /* Headers sit on the row's baseline edge, so a wrapped header doesn't leave its neighbours floating. */
   .paper-table__header {
-    background: var(--paper-color-surface-canvas);
-    font-size: var(--paper-type-label-size);
-    font-weight: var(--paper-type-label-weight);
-    letter-spacing: 0.04em;
+    vertical-align: bottom;
+    color: var(--paper-color-text-muted);
+    font-size: var(--paper-type-metadata-size);
+    font-weight: 600;
     line-height: var(--paper-type-label-line-height);
   }
 
@@ -75,8 +87,27 @@
     text-align: center;
   }
 
+  .paper-heatmap__frame {
+    display: flex;
+    align-items: flex-start;
+    inline-size: 100%;
+  }
+
+  /* Pinned beside a sideways-scrolling year; the surface fill covers weeks scrolling underneath. */
+  .paper-heatmap__weekdays {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 1;
+    flex: 0 0 var(--paper-heatmap-gutter);
+    block-size: auto;
+    background: var(--paper-heatmap-surface, var(--paper-color-surface-paper));
+  }
+
   .paper-heatmap {
     display: block;
+    flex: 1 1 0;
+    min-inline-size: 0;
+    block-size: auto;
     max-inline-size: none;
     overflow: visible;
   }
@@ -87,37 +118,50 @@
   }
 
   .paper-heatmap__cell[data-level="0"] {
-    fill: var(--paper-color-rule-subtle);
+    fill: var(--paper-color-heat-0);
   }
 
   .paper-heatmap__cell[data-level="1"] {
-    fill: color-mix(in srgb, var(--paper-color-chart-7) 38%, var(--paper-color-surface-paper));
+    fill: var(--paper-color-heat-1);
   }
 
   .paper-heatmap__cell[data-level="2"] {
-    fill: color-mix(in srgb, var(--paper-color-chart-7) 60%, var(--paper-color-surface-paper));
+    fill: var(--paper-color-heat-2);
   }
 
   .paper-heatmap__cell[data-level="3"] {
-    fill: color-mix(in srgb, var(--paper-color-chart-7) 80%, var(--paper-color-surface-paper));
+    fill: var(--paper-color-heat-3);
   }
 
   .paper-heatmap__cell[data-level="4"] {
-    fill: var(--paper-color-chart-7);
+    fill: var(--paper-color-heat-4);
+  }
+
+  /* Future days differ by shape, an outline with no fill, rather than by another shade of grey. */
+  .paper-heatmap__cell[data-future] {
+    fill: transparent;
+    stroke: var(--paper-color-rule-field-edge);
+    stroke-width: 1;
   }
 
   .paper-heatmap__link:focus {
     outline: none;
   }
 
+  /* An ink ring separates a focused day from every step of the ramp in both themes. */
   .paper-heatmap__link:focus .paper-heatmap__cell,
   .paper-heatmap__cell:focus {
     outline: none;
-    stroke: var(--paper-color-focus-ring);
+    stroke: var(--paper-color-text-ink);
     stroke-width: var(--paper-focus-ring-width);
   }
 
+  /* Sticky so the legend stays in view when a narrow container scrolls the year sideways. */
   .paper-heatmap__legend {
+    position: sticky;
+    inset-inline-start: 0;
+    inline-size: max-content;
+    max-inline-size: 100%;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -127,6 +171,12 @@
     font-size: var(--paper-type-metadata-size);
   }
 
+  @media (max-width: 48rem) {
+    .paper-heatmap__legend > span:first-child {
+      flex-basis: 100%;
+    }
+  }
+
   .paper-heatmap__legend-item {
     display: inline-flex;
     align-items: center;
@@ -134,9 +184,16 @@
   }
 
   .paper-heatmap__axis-label {
-    fill: var(--paper-color-text-muted);
+    fill: var(--paper-color-text-ink);
     font-family: var(--paper-font-body);
-    font-size: 10px;
+    font-size: 9px;
+  }
+
+  /* The chart scales with its column: on wide screens 9-unit labels render at about 13px; phones show it near 1:1. */
+  @media (max-width: 48rem) {
+    .paper-heatmap__axis-label {
+      font-size: 12px;
+    }
   }
 
   .paper-heatmap__tooltip-layer,

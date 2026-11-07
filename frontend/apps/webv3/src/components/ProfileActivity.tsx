@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { EmptyState, Flash, SectionHeading, buttonClassName } from 'paper-ui'
+import { EmptyState, Flash, buttonClassName } from 'paper-ui'
 import { formatDate } from '../lib/format'
 import { useLinks } from '../lib/links'
 import type { ProfileActivity as Activity } from '../lib/profile'
@@ -21,8 +21,7 @@ export function ProfileActivity({ activity, page, date, owner }: {
   return (
     <div className="profile-page">
       <ProfileHeader profile={profile} owner={owner} view="activity" overviewHref={links.profile(profile.id)} />
-      <section className="profile-activity" aria-labelledby="profile-activity-heading">
-        <SectionHeading level={2} id="profile-activity-heading" title="Activity log" />
+      <section className="profile-activity" aria-label="Activity log">
         {date ? (
           <Flash className="profile-day" action={<Link className="text-link" to={links.profileUpdates(profile.id)}>Show all updates</Link>}>
             Showing updates on {formatDate(date)}

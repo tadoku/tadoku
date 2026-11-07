@@ -137,8 +137,12 @@
     background: var(--paper-color-action-default);
   }
 
+  /* The menu trigger is disabled only until hydration; it keeps full ink so first paint doesn't look broken. */
+  .paper-navbar__mobile-trigger:disabled {
+    cursor: progress;
+  }
+
   .paper-navbar__dropdown-item[data-disabled],
-  .paper-navbar__mobile-trigger:disabled,
   [aria-disabled="true"].paper-navbar__link,
   [aria-disabled="true"].paper-navbar__mobile-link {
     opacity: 0.5;
@@ -339,7 +343,7 @@
   .paper-pagination__list {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end;
     gap: 0.25rem;
   }
 
@@ -373,8 +377,12 @@
 
   .paper-pagination__control[aria-disabled="true"] {
     color: var(--paper-color-text-muted);
-    opacity: 0.55;
     cursor: not-allowed;
+  }
+
+  .paper-pagination__of {
+    display: none;
+    font-weight: 400;
   }
 
   .paper-pagination__gap {
@@ -394,8 +402,10 @@
     .paper-navbar__mobile-trigger { display: grid; }
     .paper-navbar__mobile-panel[data-open="true"] { display: block; }
     .paper-breadcrumb__item:not(:nth-last-child(2), :last-child) { display: none; }
-    .paper-pagination__page,
+    /* Phones keep only the current page, as "2 of 5", between Previous and Next. */
+    .paper-pagination__list > li:has(> .paper-pagination__page:not([aria-current="page"])),
     .paper-pagination__gap { display: none; }
+    .paper-pagination__of { display: inline; }
     .paper-pagination__list { justify-content: space-between; }
   }
 

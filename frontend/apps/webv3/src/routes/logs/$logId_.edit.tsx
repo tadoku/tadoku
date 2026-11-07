@@ -8,7 +8,7 @@ import { logOptionsQuery, logQuery } from '../../lib/logs'
 import { useLoginUrl, viewerQueryOptions } from '../../lib/session'
 
 export const Route = createFileRoute('/logs/$logId_/edit')({
-  head: () => ({ meta: [{ title: 'Edit activity · Tadoku' }] }),
+  head: () => ({ meta: [{ title: 'Edit log · Tadoku' }] }),
   loader: async ({ context, params }) => {
     if (!z.guid().safeParse(params.logId).success) throw notFound()
     const viewer = await context.queryClient.ensureQueryData(viewerQueryOptions())

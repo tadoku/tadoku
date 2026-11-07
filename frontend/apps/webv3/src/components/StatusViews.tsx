@@ -1,14 +1,12 @@
 import { Link, useRouter } from '@tanstack/react-router'
-import { Button, EmptyState, Loading } from 'paper-ui'
+import { Button, EmptyState, Loading, PageHeader } from 'paper-ui'
 
 export function NotFoundView() {
   return (
-    <EmptyState
-      headingLevel={1}
-      title="Page not found"
-      description="This address doesn’t match a Tadoku page."
-      actions={<Link to="/" className="text-link">Return home</Link>}
-    />
+    <>
+      <PageHeader title="Page not found" />
+      <Link to="/" className="text-link">Return home</Link>
+    </>
   )
 }
 

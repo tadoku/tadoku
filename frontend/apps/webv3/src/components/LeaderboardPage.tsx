@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { PageHeader, SectionHeading, Tabbar } from 'paper-ui'
+import { PageHeader, Tabbar } from 'paper-ui'
 import type { ReactNode } from 'react'
 import { firstYear, leaderboardHref, standingsQuery, type StandingsScope } from '../lib/leaderboard'
 import { useLinks } from '../lib/links'
@@ -45,14 +45,7 @@ export function GlobalLeaderboard({ scope, page }: { scope: Exclude<StandingsSco
     <LeaderboardFrame period={yearly ? 'yearly' : 'all-time'} currentYear={currentYear}>
       <div className="standings-workspace">
         <div className="standings-main">
-          <section className="standings-sheet" aria-labelledby="standings-title">
-            <SectionHeading
-              level={2}
-              id="standings-title"
-              className="standings-context"
-              title={yearly ? `${scope.year} official standings` : 'All-time official standings'}
-              description={yearly ? `Official contest scores logged in ${scope.year}` : 'Official contest scores since Tadoku began'}
-            />
+          <section className="standings-sheet" aria-label={yearly ? `${scope.year} official standings` : 'All-time official standings'}>
             {yearly ? (
               <Tabbar
                 label="Year"
@@ -79,23 +72,11 @@ export function GlobalLeaderboard({ scope, page }: { scope: Exclude<StandingsSco
               onRetry={() => void standings.refetch()}
             />
           </section>
-          <StandingsFootnote />
         </div>
         <aside className="standings-aside">
-          <section aria-labelledby="standings-about">
-            <h2 id="standings-about" className="paper-type-component">About these standings</h2>
-            <p>Includes activity submitted to official contests {period}. Community contest scores are not added to this board.</p>
-          </section>
+          <p>Official contests only; community contests don’t count here.</p>
         </aside>
       </div>
     </LeaderboardFrame>
-  )
-}
-
-export function StandingsFootnote() {
-  return (
-    <p className="standings-footnote">
-      Scores may take a few seconds to update. <abbr title="Tied rank">T</abbr> means a tie.
-    </p>
   )
 }

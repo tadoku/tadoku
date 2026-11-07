@@ -46,15 +46,14 @@
   }
 
   .paper-button--outline {
-    border-color: var(--paper-color-rule-default);
-    border-block-end-color: var(--paper-color-rule-field-edge);
+    border-color: var(--paper-color-rule-field-edge);
     color: var(--paper-color-text-ink);
     background: var(--paper-color-surface-paper);
   }
 
   .paper-button--outline:hover:not(:disabled),
   .paper-button--outline:active:not(:disabled) {
-    border-color: var(--paper-color-rule-field-edge);
+    border-color: var(--paper-color-rule-strong);
     background: var(--paper-color-action-neutral-hover);
   }
 
@@ -87,6 +86,7 @@
   }
 
   .paper-button--destructive {
+    color: var(--paper-color-action-destructive-text);
     background: var(--paper-color-action-destructive);
     border-color: var(--paper-color-action-destructive);
     border-block-end-color: var(--paper-color-rule-destructive-action-edge);

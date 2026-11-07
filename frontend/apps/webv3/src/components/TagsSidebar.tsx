@@ -5,7 +5,7 @@ import { CheckIcon, ChevronRightIcon } from 'paper-ui/icons'
 
 const tagButton = [
   'min-h-8 cursor-pointer border border-field-edge bg-field px-2.5 py-1 text-fine text-ink',
-  'not-disabled:hover:bg-action-soft focus-visible:outline-ring focus-visible:outline-focus',
+  'not-disabled:hover:border-field-edge-hover not-disabled:hover:bg-neutral-hover focus-visible:outline-ring focus-visible:outline-focus',
   'focus-visible:outline-offset-ring disabled:cursor-default disabled:opacity-faded',
 ].join(' ')
 

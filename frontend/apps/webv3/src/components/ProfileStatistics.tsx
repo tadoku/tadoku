@@ -1,4 +1,5 @@
 import { buttonClassName, EmptyState, entryLink, listRows, metaLine, Pagination, SectionHeading, StatGrid, StatusTag, Tabbar } from 'paper-ui'
+import { activityTone } from '../lib/activity'
 import { formatPeriod, pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { activeDays, contestPageSize, type ContestHistory, type ProfileStatistics as Statistics, type Section } from '../lib/profile'
@@ -66,7 +67,7 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
         {!empty ? (
           <>
             <Breakdown id="profile-languages" title="Score by language" section={statistics.scores} items={scores => scores.scores.map(score => ({ label: score.language_name ?? score.language_code, score: score.score }))} empty="No scores recorded this year." />
-            <Breakdown id="profile-activities" title="Score by activity" section={statistics.split} items={split => split.activities.map(item => ({ label: item.activity_name, score: item.score }))} empty="Not enough data to show the activity split." />
+            <Breakdown id="profile-activities" title="Score by activity" section={statistics.split} items={split => split.activities.map(item => ({ label: item.activity_name, score: item.score, fill: activityTone(item.activity_id).fill }))} empty="Not enough data to show the activity split." />
           </>
         ) : null}
         <ContestHistorySection history={statistics.contests} userId={profile.id} year={year} page={page} />
@@ -123,7 +124,8 @@ function Breakdown<T>({ id, title, section, items, empty }: {
   id: string
   title: string
   section: Section<T>
-  items: (data: T) => { label: string; score: number }[]
+  /** `fill` colours the row's bar, for example by activity; it defaults to the chart accent. */
+  items: (data: T) => { label: string; score: number; fill?: string }[]
   empty: string
 }) {
   const rows = section.ok ? items(section.data).sort((left, right) => right.score - left.score) : []
@@ -143,7 +145,7 @@ function Breakdown<T>({ id, title, section, items, empty }: {
                 </strong>
               </div>
               <span className="block h-2 bg-rule" aria-hidden="true">
-                <span className="block h-full min-w-0.5 bg-heat-3" style={{ width: `${total ? row.score / total * 100 : 0}%` }} />
+                <span className={`block h-full min-w-0.5 ${row.fill ?? 'bg-heat-3'}`} style={{ width: `${total ? row.score / total * 100 : 0}%` }} />
               </span>
             </li>
           ))}

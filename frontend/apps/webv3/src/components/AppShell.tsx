@@ -180,8 +180,8 @@ function AccountActions({ viewer }: { viewer: Viewer | undefined }) {
       return <span>Account service unavailable</span>
     case 'anonymous':
       return <>
-        <a href={login} className="font-semibold text-ink no-underline hover:underline focus-visible:underline">Log in</a>
-        <a href={register} className={buttonClassName({ variant: 'outline' })}>Sign up</a>
+        <a href={login} className={buttonClassName({ variant: 'ghost' })}>Log in</a>
+        <a href={register} className={buttonClassName({ className: 'shrink-0 whitespace-nowrap' })}>Sign up</a>
       </>
     case 'signed-in':
       return <>

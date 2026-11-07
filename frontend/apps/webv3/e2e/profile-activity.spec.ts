@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { APIRequestContext, Page } from '@playwright/test'
-import { accountId, api, branch, expect, reader, test, webv3 } from './logging-fixtures'
+import { accountId, api, branch, expect, logDescription, reader, test, webv3 } from './logging-fixtures'
 
 // The fixtures' own test.use applies only to the first file that imports them; authenticated runs keep traces off.
 test.use({ trace: 'off', video: 'off', ignoreHTTPSErrors: false })
@@ -124,7 +124,8 @@ test('an owner pages through their newest-first activity, opens a day from the c
   const entry = first.logs[0]
   await page.locator(`a.profile-entry-title[href="/logs/${entry.id}"]`).click()
   await expect(page).toHaveURL(new RegExp(`/logs/${entry.id}$`))
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText(entry.description || `${entry.language.name} ${entry.activity.name}`)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Log details')
+  if (entry.description) await expect(logDescription(page)).toHaveText(entry.description)
 })
 
 test('a new account’s activity shows the empty state to its owner and to visitors', async ({ browser }, testInfo) => {

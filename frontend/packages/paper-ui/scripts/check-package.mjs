@@ -18,10 +18,10 @@ const required = [
   'dist/icons.d.ts',
   'dist/catalog.js',
   'dist/catalog.d.ts',
-  'dist/styles.css',
-  'dist/tokens.css',
+  'dist/tokens.stylex.js',
+  'dist/tokens.stylex.d.ts',
   'dist/fonts.css',
-  'dist/tailwind-preset.cjs',
+  'eslint/index.mjs',
   'dist/assets/brand/cut-meter.svg',
   'dist/assets/brand/wordmark-accent.svg',
   'dist/assets/brand/wordmark-reversed.svg',
@@ -45,13 +45,12 @@ for (const forbidden of ['next', '@headlessui/react']) {
   }
 }
 
-const styles = readFileSync(new URL('../dist/styles.css', import.meta.url), 'utf8')
-for (const forbidden of ['fonts.googleapis.com', 'fonts.gstatic.com', 'border-radius: var(']) {
-  if (styles.includes(forbidden)) throw new Error(`styles.css contains forbidden value ${forbidden}`)
-}
-
-for (const selector of ['.paper-surface', '.paper-accent-rail', '.paper-field-edge', '.paper-focus-ring']) {
-  if (!styles.includes(selector)) throw new Error(`styles.css is missing ${selector}`)
+// Paper ships StyleX source for the consumer's compiler; fonts.css is its only stylesheet.
+const stylesheets = [...files].filter((file) => file.endsWith('.css'))
+if (stylesheets.join() !== 'dist/fonts.css') throw new Error(`Unexpected stylesheets: ${stylesheets.join(', ')}`)
+const fonts = readFileSync(new URL('../dist/fonts.css', import.meta.url), 'utf8')
+for (const forbidden of ['fonts.googleapis.com', 'fonts.gstatic.com']) {
+  if (fonts.includes(forbidden)) throw new Error(`fonts.css contains forbidden value ${forbidden}`)
 }
 
 console.log(`Paper package contains ${files.size} validated files.`)

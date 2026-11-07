@@ -7,9 +7,21 @@ export default defineConfig({
     index: 'src/index.ts',
     icons: 'src/icons/index.ts',
     catalog: 'src/catalog/index.ts',
+    // Rewritten by scripts/build-assets.mjs; the entry supplies its declarations.
+    'tokens.stylex': 'src/tokens/tokens.stylex.ts',
   },
   format: ['esm'],
   esbuildPlugins: [
+    {
+      // StyleX hashes variable names by file, so every entry shares one dist/tokens.stylex.js.
+      name: 'stylex-tokens',
+      setup(build) {
+        build.onResolve({ filter: /\/tokens\.stylex$/ }, () => ({
+          path: './tokens.stylex.js',
+          external: true,
+        }))
+      },
+    },
     {
       name: 'example-source',
       setup(build) {
@@ -36,6 +48,7 @@ export default defineConfig({
     'react',
     'react-dom',
     '@tanstack/react-form',
+    '@stylexjs/stylex',
     /^@base-ui\/react(?:\/.*)?$/,
   ],
 })

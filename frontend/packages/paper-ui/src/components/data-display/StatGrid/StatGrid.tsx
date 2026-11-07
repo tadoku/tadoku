@@ -7,6 +7,7 @@ const statGrid = tv({
     item: "paper-stat-grid__item row-span-2 grid min-w-0 grid-rows-subgrid gap-y-1",
     label: "paper-stat-grid__label self-start text-sm leading-150 text-muted wrap-anywhere",
     value: "paper-stat-grid__value m-0 text-section leading-130 font-bold text-ink tabular-nums wrap-anywhere",
+    unit: "paper-stat-grid__unit ms-1 text-metadata font-regular text-muted",
     detail: "paper-stat-grid__detail mt-1 block text-fine leading-150 font-regular text-muted",
   },
 });
@@ -14,6 +15,8 @@ const statGrid = tv({
 export interface StatGridItem {
   readonly label: ReactNode;
   readonly value: ReactNode;
+  /** A unit read beside the value, such as "points". */
+  readonly unit?: ReactNode;
   /** Supporting context read with the value, such as "12 active days". */
   readonly detail?: ReactNode;
 }
@@ -32,6 +35,7 @@ export function StatGrid({ stats, className }: StatGridProps) {
           <dt className={slots.label()}>{stat.label}</dt>
           <dd className={slots.value()}>
             {stat.value}
+            {stat.unit ? <span className={slots.unit()}>{stat.unit}</span> : null}
             {stat.detail ? <span className={slots.detail()}>{stat.detail}</span> : null}
           </dd>
         </div>

@@ -57,7 +57,7 @@ Put a component in its own file when its API, examples, tests, or consumers warr
 | Facts about one subject | `DescriptionList`, `stacked` or `inline` |
 | A summary of collapsed filters with one reset action | `AppliedFilters` |
 
-These controls are Experimental; paper-playground is their only consumer. They own semantics, spacing and type roles, not page layout: screens keep page grids, columns, breakpoints, a main column beside an aside, and page-specific typography, and pass `className` for them. The Filter bar catalogue pattern shows how a screen composes a Filters toggle, the filter panel, `AppliedFilters`, a result count and `EmptyState` while owning the filter state.
+These controls own semantics, spacing and type roles, not page layout: screens keep page grids, columns, breakpoints, a main column beside an aside, and page-specific typography, and pass `className`, or `classNames` keyed by part, for them. [Paper styling](paper-styling.md) explains the tokens and utilities they use. The Filter bar catalogue pattern shows how a screen composes a Filters toggle, the filter panel, `AppliedFilters`, a result count and `EmptyState` while owning the filter state.
 
 `PageHeader` and `SectionHeading` wrap according to their content at every width. Status tags stay beside the title while they fit. Actions share the row while the text, status and actions fit together; otherwise actions move below the text without squeezing the title into a narrow column. Long titles still wrap within the available width.
 

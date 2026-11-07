@@ -1,4 +1,4 @@
-import { Tabbar } from 'paper-ui'
+import { stack, Tabbar } from 'paper-ui'
 import { useState } from 'react'
 
 const contestLinks = [
@@ -10,7 +10,7 @@ const contestLinks = [
 export default function TabbarExample() {
   const [path, setPath] = useState('#mine')
   return (
-    <div className="paper-stack">
+    <div className={stack()}>
       <Tabbar
         label="Contest views"
         currentPath={path}

@@ -1,5 +1,5 @@
 import type { ImmersionUserActivity } from 'api-client'
-import { HeatmapChart } from 'paper-ui'
+import { HeatmapChart, focusRing } from 'paper-ui'
 import { useEffect, useRef, type ReactNode } from 'react'
 import { pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
@@ -13,19 +13,22 @@ const formatDay = (date: string) => dayFormat.format(new Date(`${date}T00:00:00Z
  * A learner's year of daily scores, each day linking to its updates. The region is named by the heading `labelledBy`;
  * on narrow screens the year scrolls sideways and the current year opens at its latest weeks.
  */
-export function ActivityCalendar({ userId, year, today, activity, labelledBy }: {
+export function ActivityCalendar({ userId, year, today, activity, labelledBy, surface }: {
   userId: string
   year: number
   /** The server's UTC date, so the calendar marks the same today on the server and after hydration. */
   today: string
   activity: ImmersionUserActivity
   labelledBy: string
+  surface?: 'paper' | 'canvas'
 }) {
   const links = useLinks()
   return (
     <HeatmapScroll latest={year === Number(today.slice(0, 4))} labelledBy={labelledBy}>
       <HeatmapChart
         today={today}
+        surface={surface}
+        scrolls
         id={`activity-${userId}-${year}`}
         year={year}
         getHref={date => links.profileUpdates(userId, date)}
@@ -63,7 +66,7 @@ function HeatmapScroll({ latest, labelledBy, children }: { latest: boolean; labe
     return () => scroller.removeEventListener('scroll', hideCoveredMonths)
   }, [latest])
   return (
-    <div ref={ref} className="profile-heatmap-scroll paper-focus-ring" role="region" aria-labelledby={labelledBy} tabIndex={0}>
+    <div ref={ref} className={focusRing({ className: 'max-w-full overflow-x-auto pb-3 pt-6' })} role="region" aria-labelledby={labelledBy} tabIndex={0}>
       {children}
     </div>
   )

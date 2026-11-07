@@ -14,7 +14,7 @@ paper-playground is a Vite and React Router app that composes `paper-ui` into fu
 
 All data is sample fixtures (`src/data.ts`), and every action changes only browser-local state (`src/state.tsx`, persisted in `localStorage`). There is no API connection, deployment image or publishing workflow. Do not connect its sample sign-in or administrative flows to live services.
 
-Page headers, section headings, status tags, empty states, figures, facts and applied-filter summaries come from the `paper-ui` page structure controls described in [Paper composition](paper-composition.md#page-structure-controls). The stylesheets in `frontend/apps/paper-playground/src/pages` hold only page-specific layout.
+Page headers, section headings, status tags, empty states, figures, facts and applied-filter summaries come from the `paper-ui` page structure controls described in [Paper composition](paper-composition.md#page-structure-controls). Pages lay themselves out with token utilities, as [Paper styling](paper-styling.md) describes; the app's only stylesheet is its Tailwind entry.
 
 The screens illustrate composition; they are not a shared implementation. A production screen still owns its data, routing and permissions, as described in [Paper composition](paper-composition.md).
 

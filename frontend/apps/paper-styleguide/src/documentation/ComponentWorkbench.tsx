@@ -75,11 +75,11 @@ export function ComponentWorkbench({
   return (
     <Surface
       as="section"
-      className="component-workbench"
+      className="component-workbench overflow-clip p-0"
       aria-label={`${document.name} examples`}
     >
       <Tabs.Root defaultValue="preview">
-        <div className="component-workbench__tabs">
+        <div className="component-workbench__tabs min-w-0 px-3">
           <Tabs.List aria-label="Example views">
             {VIEWS.map(candidate => (
               <Tabs.Tab key={candidate} value={candidate}>
@@ -89,7 +89,7 @@ export function ComponentWorkbench({
           </Tabs.List>
         </div>
 
-        <Tabs.Panel value="preview" className="component-workbench__panel">
+        <Tabs.Panel value="preview" className="component-workbench__panel min-w-0 p-0">
           <ExampleCanvas
             fixture={fixture}
             fixtures={fixtures}
@@ -97,14 +97,14 @@ export function ComponentWorkbench({
           />
         </Tabs.Panel>
 
-        <Tabs.Panel value="code" className="component-workbench__panel">
-          <div className="code-view">
-            <div className="code-view__heading">
+        <Tabs.Panel value="code" className="component-workbench__panel min-w-0 p-0">
+          <div className="code-view p-5 [&_h3]:mt-0 [&_pre]:mb-0 [&_pre]:max-h-code [&_pre]:overflow-auto [&_pre]:border-s-rail [&_pre]:border-action [&_pre]:bg-canvas [&_pre]:p-4 [&_pre]:font-mono [&_pre]:text-ink">
+            <div className="flex items-start justify-between gap-4 max-tablet:flex-col max-tablet:items-stretch">
               <div>
                 <h3>{fixture?.name ?? 'Example'}</h3>
                 <p>{fixture?.description}</p>
               </div>
-              <div className="code-copy">
+              <div className="grid min-w-48 justify-items-end gap-1.4 max-tablet:min-w-0 max-tablet:justify-items-start">
                 <Button
                   variant="outline"
                   className="code-copy__button"
@@ -114,7 +114,7 @@ export function ComponentWorkbench({
                   {copyState === 'copied' ? 'Copied' : 'Copy code'}
                 </Button>
                 <span
-                  className="code-copy__status"
+                  className="min-h-metadata-line text-end text-metadata text-muted"
                   role="status"
                   aria-live="polite"
                 >
@@ -132,12 +132,12 @@ export function ComponentWorkbench({
           </div>
         </Tabs.Panel>
 
-        <Tabs.Panel value="api" className="component-workbench__panel">
-          <div className="workbench-api">
+        <Tabs.Panel value="api" className="component-workbench__panel min-w-0 p-0">
+          <div className="grid gap-8 p-5 [&_code]:wrap-normal [&_code]:break-normal [&_.workbench-reference-grid]:p-0">
             {document.api.props?.length ? (
               <Table
                 caption={`${document.name} props`}
-                tableClassName="workbench-props-table"
+                tableClassName="table-fixed"
                 rows={document.api.props}
                 getRowKey={prop => prop.name}
                 minWidth="34rem"
@@ -150,7 +150,7 @@ export function ComponentWorkbench({
                     cell: prop => (
                       <>
                         <code>{prop.name}</code>
-                        <span className="workbench-prop-type">
+                        <span className="mt-1.6 block text-fine font-regular">
                           <code>{prop.type}</code>
                         </span>
                       </>
@@ -161,7 +161,7 @@ export function ComponentWorkbench({
                     header: 'Usage',
                     cell: prop => (
                       <>
-                        <p className="workbench-prop-default">
+                        <p className="mb-2 mt-0 text-fine">
                           {prop.required ? (
                             <strong>Required</strong>
                           ) : (
@@ -201,7 +201,7 @@ export function ComponentWorkbench({
                 ]}
               />
             ) : null}
-            <div className="workbench-reference-grid">
+            <div className="grid grid-cols-1 gap-6 p-5 [&_h4]:mb-2 [&_h4]:mt-0 [&_section]:border-0 [&_section]:p-0 [&_ul]:m-0 [&_ul]:ps-5 [&_li+li]:mt-1.6 [&_li]:wrap-anywhere [&_code]:wrap-normal">
               <ApiList title="React exports" items={document.api.react} code />
               <ApiList
                 title="Public types"
@@ -219,9 +219,9 @@ export function ComponentWorkbench({
 
         <Tabs.Panel
           value="accessibility"
-          className="component-workbench__panel"
+          className="component-workbench__panel min-w-0 p-0"
         >
-          <div className="workbench-reference-grid">
+          <div className="grid grid-cols-1 gap-6 p-5 [&_h4]:mb-2 [&_h4]:mt-0 [&_section]:border-0 [&_section]:p-0 [&_ul]:m-0 [&_ul]:ps-5 [&_li+li]:mt-1.6 [&_li]:wrap-anywhere [&_code]:wrap-normal">
             <ApiList
               title="Requirements"
               items={document.accessibility.requirements}

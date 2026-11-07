@@ -1,17 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { PencilSquareIcon, TrashIcon, iconClassName } from 'paper-ui/icons'
 import { Link, createFileRoute, notFound, useHydrated } from '@tanstack/react-router'
-import {
-  Button,
-  DescriptionList,
-  EmptyState,
-  Modal,
-  PageHeader,
-  SectionHeading,
-  StatGrid,
-  Surface,
-  buttonClassName,
-} from 'paper-ui'
+import { Button, buttonClassName, DescriptionList, EmptyState, entryLink, Modal, PageHeader, SectionHeading, StatGrid, Surface } from 'paper-ui'
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
 import { formatDate, pointsUnit } from '../../lib/format'
@@ -19,6 +9,7 @@ import { useLinks } from '../../lib/links'
 import { logQuery, useDeleteLog, type ImmersionLog, type LogFailure } from '../../lib/logs'
 import { viewerKey, viewerQueryOptions } from '../../lib/session'
 import { renderLink } from '../../components/router-link'
+import { recordSurface } from '../../components/standings-styles'
 
 export const Route = createFileRoute('/logs/$logId')({
   head: () => ({ meta: [{ title: 'Activity · Tadoku' }] }),
@@ -53,15 +44,16 @@ function LogDetail() {
   const owner = viewer?.status === 'signed-in' && viewer.userId === log.user_id
   const subject = `${log.language.name} ${log.activity.name}`
   return (
-    <div className="goal-page log-detail">
+    <div>
       <PageHeader
         backLink={{ href: links.profileUpdates(log.user_id), label: owner ? 'Your activity' : 'Activity' }}
         renderLink={renderLink}
+        className="max-w-record"
         title={log.description || subject}
         lead={`${log.language.name} · ${log.activity.name}`}
         actions={owner ? <OwnerActions log={log} /> : null}
       />
-      <Surface className="log-surface log-record">
+      <Surface className={`${recordSurface} grid gap-6`}>
         <StatGrid stats={[...measure(log), { label: 'Score', value: scoreFormat.format(log.score) }]} />
         <DescriptionList
           layout="inline"
@@ -106,7 +98,7 @@ function OwnerActions({ log }: { log: ImmersionLog }) {
       </Link>
       <Modal
         trigger={(
-          <Button variant="ghost" className="log-delete" disabled={!hydrated}>
+          <Button variant="ghost" className="text-danger" disabled={!hydrated}>
             <TrashIcon className={iconClassName('compact')} aria-hidden="true" />Delete log
           </Button>
         )}
@@ -149,7 +141,7 @@ const deleteFailures: Partial<Record<LogFailure, string>> = {
 /** Contest submissions are private: only the log's owner sees them and the way to manage them. */
 function LogContests({ log, owner }: { log: ImmersionLog; owner: boolean }) {
   return (
-    <section className="log-contests" aria-labelledby="log-contests">
+    <section className="mt-8 max-w-record" aria-labelledby="log-contests">
       <SectionHeading id="log-contests" level={2} title="Contests" />
       {owner ? <OwnContests log={log} /> : <p>Contest submissions are visible to the log&apos;s owner.</p>}
     </section>
@@ -163,16 +155,21 @@ function OwnContests({ log }: { log: ImmersionLog }) {
   return (
     <>
       {registrations.length > 0 ? (
-        <ul className="log-contest-list">
+        <ul className="mb-4 mt-0 list-none p-0">
           {registrations.map(registration => (
-            <li key={registration.contest_id}>
-              <a className="profile-entry-title" href={links.contest(registration.contest_id)}>{registration.title}</a>
-              {registration.score !== undefined ? <span>{scoreFormat.format(registration.score)} <small>{pointsUnit(registration.score)}</small></span> : null}
+            <li key={registration.contest_id} className="flex items-baseline justify-between gap-4 py-3 [&+&]:border-t [&+&]:border-rule">
+              <a className={entryLink({ className: 'profile-entry-title' })} href={links.contest(registration.contest_id)}>{registration.title}</a>
+              {registration.score !== undefined ? (
+                <span className="whitespace-nowrap font-bold tabular-nums">
+                  {scoreFormat.format(registration.score)}{' '}
+                  <small className="text-metadata font-regular text-muted">{pointsUnit(registration.score)}</small>
+                </span>
+              ) : null}
             </li>
           ))}
         </ul>
       ) : <p>Saved to your personal record only.</p>}
-      <Link className="text-link" to="/logs/$logId/contests" params={{ logId: log.id }}>Manage contest submissions</Link>
+      <Link className="text-link hover:text-link-hover" to="/logs/$logId/contests" params={{ logId: log.id }}>Manage contest submissions</Link>
     </>
   )
 }

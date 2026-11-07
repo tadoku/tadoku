@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navbar } from 'paper-ui'
+import { Navbar, stack } from 'paper-ui'
 
 const navbarNavigation = [
   { type: 'link', id: 'home', label: 'Home', href: '#home' },
@@ -18,7 +18,7 @@ const navbarNavigation = [
 export default function NavbarExample() {
   const [path, setPath] = useState('#home')
   return (
-    <div className="paper-stack">
+    <div className={stack()}>
       <Navbar
         brand="Tadoku"
         brandHref="#home"

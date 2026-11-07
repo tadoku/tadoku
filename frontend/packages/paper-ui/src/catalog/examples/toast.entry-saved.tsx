@@ -1,14 +1,14 @@
-import { Button, ToastProvider, useToast } from 'paper-ui'
+import { Button, cluster, stack, ToastProvider, useToast } from 'paper-ui'
 
 function ToastFixture() {
   const toast = useToast()
   return (
-    <div className="paper-stack">
+    <div className={stack()}>
       <p>
         Notifications remain visible in this preview until dismissed.
         Applications normally use a finite timeout.
       </p>
-      <div className="paper-cluster">
+      <div className={cluster()}>
         <Button
           onClick={() =>
             toast.add({

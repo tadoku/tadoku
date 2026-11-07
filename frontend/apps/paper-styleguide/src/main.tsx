@@ -1,11 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
-import 'paper-ui/styles.css'
-import './styles/tailwind.css'
+import { bodyClassName, documentClassName } from 'paper-ui'
+import './styles.css'
 import faviconUrl from 'paper-ui/assets/brand/favicon.svg'
 import { App } from './app/App'
-import './styles/shell.css'
 
 let favicon = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
 if (!favicon) {
@@ -15,6 +14,9 @@ if (!favicon) {
 }
 favicon.type = 'image/svg+xml'
 favicon.href = faviconUrl
+
+document.documentElement.className = documentClassName
+document.body.className = bodyClassName
 
 const root = document.getElementById('root')
 

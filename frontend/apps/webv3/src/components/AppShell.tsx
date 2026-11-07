@@ -1,10 +1,10 @@
-import { Link, rootRouteId, useHydrated, useLoaderData, useNavigate, useRouterState } from '@tanstack/react-router'
-import { ActionMenu, Button, EmptyState, Navbar, buttonClassName, type NavbarItem } from 'paper-ui'
+import { rootRouteId, useHydrated, useLoaderData, useNavigate, useRouterState } from '@tanstack/react-router'
+import { ActionMenu, Button, EmptyState, Navbar, SiteFooter, SkipLink, appFrame, buttonClassName, cn, navbarStyles, type NavbarItem } from 'paper-ui'
 import mark from 'paper-ui/assets/brand/cut-meter.svg?url'
 import reversedMark from 'paper-ui/assets/brand/cut-meter-reversed.svg?url'
 import wordmark from 'paper-ui/assets/brand/wordmark-accent.svg?url'
 import reversedWordmark from 'paper-ui/assets/brand/wordmark-reversed.svg?url'
-import { Children, Fragment, useState, type ReactNode } from 'react'
+import { Fragment, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowRightStartOnRectangleIcon,
@@ -50,6 +50,15 @@ function useThemeSwitch() {
 }
 
 const discordUrl = 'https://discord.gg/AsC9vZs2Ex'
+const frame = appFrame()
+const brandMark = 'block h-auto w-brand-mark'
+const brandWordmark = 'block h-auto w-brand'
+const accountActions = [
+  'ms-4 flex flex-wrap items-center justify-end gap-3',
+  'max-md:max-w-account-label max-md:gap-1.6 max-md:text-sm-tight',
+].join(' ')
+const mobileLink = navbarStyles({ contained: true }).mobileLink()
+const mobileButton = cn(mobileLink, 'w-full justify-start')
 const logoutFormId = 'app-logout'
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -65,72 +74,63 @@ export function AppShell({ children }: { children: ReactNode }) {
   ]
 
   return (
-    <div className="app-shell">
-      <a className={`${buttonClassName()} app-skip`} href="#main-content">Skip to content</a>
-      <header className="app-header">
+    <div className={frame.root()}>
+      <SkipLink href="#main-content">Skip to content</SkipLink>
+      <header className={frame.header()}>
         <Navbar
+          contained
           brand={<>
-            <img className="app-mark app-mark--light" src={mark} width="40" height="40" alt="" />
-            <img className="app-mark app-mark--dark" src={reversedMark} width="40" height="40" alt="" />
-            <img className="app-wordmark app-wordmark--light" src={wordmark} width="158" height="29" alt="Tadoku" />
-            <img className="app-wordmark app-wordmark--dark" src={reversedWordmark} width="158" height="29" alt="Tadoku" />
+            <img className={`${brandMark} dark:hidden`} src={mark} width="40" height="40" alt="" />
+            <img className={`${brandMark} hidden dark:block`} src={reversedMark} width="40" height="40" alt="" />
+            <img className={`${brandWordmark} dark:hidden`} src={wordmark} width="158" height="29" alt="Tadoku" />
+            <img className={`${brandWordmark} hidden dark:block`} src={reversedWordmark} width="158" height="29" alt="Tadoku" />
           </>}
           brandHref="/"
           navigation={navigation}
           currentPath={currentPath}
           renderLink={renderLink}
-          actions={<div className="app-account-actions"><AccountActions viewer={viewer} /></div>}
+          actions={<div className={accountActions}><AccountActions viewer={viewer} /></div>}
           mobileFooter={viewer?.status === 'signed-in' ? closeMenu => <MobileAccount viewer={viewer} closeMenu={closeMenu} /> : undefined}
         />
         {viewer && 'userId' in viewer ? <form id={logoutFormId} method="post" action="/logout" hidden /> : null}
       </header>
-      <main id="main-content" className="app-content" tabIndex={-1}>
+      <main id="main-content" className={frame.content()} tabIndex={-1}>
         <Announcements />
         {viewer?.status === 'banned' ? <Suspended /> : children}
       </main>
-      <footer className="app-footer">
-        <div className="app-footer__inner">
-          <div className="app-footer__brand">
-            <Link to={links.home} className="app-footer__lockup" aria-label="Tadoku home">
-              <img src={reversedMark} width="32" height="32" alt="" />
-              <img src={reversedWordmark} width="126" height="23" alt="" />
-            </Link>
-            <p>Built &amp; designed by <a href="https://antonve.be">antonve</a></p>
-            <ul className="app-footer__social" aria-label="Community">
-              <li><a href={discordUrl} aria-label="Discord"><DiscordIcon /></a></li>
-              <li><a href="https://github.com/tadoku" aria-label="GitHub"><GitHubIcon /></a></li>
-              <li><a href="https://twitter.com/tadoku_app" aria-label="Twitter"><TwitterIcon /></a></li>
-            </ul>
-          </div>
-          <nav className="app-footer__links" aria-label="Footer">
-            <FooterGroup title="Get started">
-              <Link to={links.home}>Home</Link>
-              <Link to={links.leaderboard}>Leaderboard</Link>
-              <Link to={links.contests}>Contests</Link>
-              <Link to={links.blog}>Blog</Link>
-            </FooterGroup>
-            <FooterGroup title="Learn">
-              <Link to={links.page('about')}>About Tadoku</Link>
-              <Link to={links.guide}>Guide</Link>
-              <Link to={links.page('rules')}>Rules</Link>
-              <Link to={links.page('faq')}>Questions &amp; help</Link>
-            </FooterGroup>
-            <FooterGroup title="Legal">
-              <Link to={links.page('privacy')}>Privacy</Link>
-              <Link to={links.page('contact')}>Contact</Link>
-            </FooterGroup>
-          </nav>
-        </div>
-      </footer>
-    </div>
-  )
-}
-
-function FooterGroup({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <div className="app-footer__group">
-      <h2>{title}</h2>
-      <ul>{Children.map(children, child => <li>{child}</li>)}</ul>
+      <SiteFooter
+        brand={<>
+          <img src={reversedMark} width="32" height="32" alt="" />
+          <img src={reversedWordmark} width="126" height="23" alt="" />
+        </>}
+        brandHref={links.home}
+        brandLabel="Tadoku home"
+        renderLink={renderLink}
+        credit={<>Built &amp; designed by <a href="https://antonve.be">antonve</a></>}
+        social={[
+          { label: 'Discord', href: discordUrl, icon: <DiscordIcon /> },
+          { label: 'GitHub', href: 'https://github.com/tadoku', icon: <GitHubIcon /> },
+          { label: 'Twitter', href: 'https://twitter.com/tadoku_app', icon: <TwitterIcon /> },
+        ]}
+        groups={[
+          { title: 'Get started', links: [
+            { label: 'Home', href: links.home },
+            { label: 'Leaderboard', href: links.leaderboard },
+            { label: 'Contests', href: links.contests },
+            { label: 'Blog', href: links.blog },
+          ] },
+          { title: 'Learn', links: [
+            { label: 'About Tadoku', href: links.page('about') },
+            { label: 'Guide', href: links.guide },
+            { label: 'Rules', href: links.page('rules') },
+            { label: 'Questions & help', href: links.page('faq') },
+          ] },
+          { title: 'Legal', links: [
+            { label: 'Privacy', href: links.page('privacy') },
+            { label: 'Contact', href: links.page('contact') },
+          ] },
+        ]}
+      />
     </div>
   )
 }
@@ -143,7 +143,7 @@ function Suspended() {
       title="Your account is suspended"
       description="If you believe this is an error, contact us on Discord."
       actions={<>
-        <a className="text-link" href={discordUrl}>Contact us on Discord</a>
+        <a className="text-link hover:text-link-hover" href={discordUrl}>Contact us on Discord</a>
         <Button type="submit" form={logoutFormId}>Log out</Button>
       </>}
     />
@@ -180,13 +180,13 @@ function AccountActions({ viewer }: { viewer: Viewer | undefined }) {
       return <span>Account service unavailable</span>
     case 'anonymous':
       return <>
-        <a href={login} className="app-login-link">Log in</a>
+        <a href={login} className="font-semibold text-ink no-underline hover:underline focus-visible:underline">Log in</a>
         <a href={register} className={buttonClassName({ variant: 'outline' })}>Sign up</a>
       </>
     case 'signed-in':
       return <>
         <AccountMenu viewer={viewer} />
-        <a href={links.logs} className={buttonClassName({ className: 'app-header-action' })}>Log activity</a>
+        <a href={links.logs} className={buttonClassName({ className: 'shrink-0 whitespace-nowrap' })}>Log activity</a>
       </>
   }
 }
@@ -194,12 +194,12 @@ function AccountActions({ viewer }: { viewer: Viewer | undefined }) {
 function AccountMenu({ viewer }: { viewer: SignedIn }) {
   const hydrated = useHydrated()
   return (
-    <span className="app-account-menu--desktop">
+    <span className="max-tablet:hidden [&_.paper-button>span]:max-w-measure-label [&_.paper-button>span]:truncate">
       {hydrated
         ? <AccountMenuOpen viewer={viewer} />
         : (
           // The menu's trigger as server HTML renders it, disabled until it can open.
-          <button type="button" className={buttonClassName({ variant: 'ghost', className: 'app-awaiting-hydration' })} disabled>
+          <button type="button" className={buttonClassName({ variant: 'ghost', className: 'disabled:cursor-progress disabled:opacity-full' })} disabled>
             <span>{viewer.displayName}</span>
             <ChevronDownIcon className={iconClassName('compact')} aria-hidden="true" />
           </button>
@@ -234,21 +234,21 @@ function AccountMenuOpen({ viewer }: { viewer: SignedIn }) {
 function MobileAccount({ viewer, closeMenu }: { viewer: SignedIn; closeMenu: () => void }) {
   const links = useAccountLinks(viewer)
   return (
-    <section className="app-mobile-account" aria-label={`${viewer.displayName} account`}>
-      <p className="app-mobile-account__name">{viewer.displayName}</p>
+    <section className="mt-3 border-t border-rule-subtle pt-3" aria-label={`${viewer.displayName} account`}>
+      <p className="mb-1 mt-0 px-field-x text-sm font-semibold text-muted wrap-anywhere">{viewer.displayName}</p>
       {links.map(link => (
         <Fragment key={link.id}>
-          {renderLink({ href: link.href, className: 'paper-navbar__mobile-link', onClick: closeMenu, children: link.label })}
+          {renderLink({ href: link.href, className: mobileLink, onClick: closeMenu, children: link.label })}
         </Fragment>
       ))}
       {/* Server-rendered, so CSS shows the label for the current theme instead of reading it during render. */}
-      <Button variant="ghost" className="paper-navbar__mobile-link app-theme-row" onClick={toggleTheme}>
-        <MoonIcon className={`${iconClassName('compact')} app-theme-label--light`} aria-hidden="true" />
-        <SunIcon className={`${iconClassName('compact')} app-theme-label--dark`} aria-hidden="true" />
-        <span className="app-theme-label--light">Use dark theme</span>
-        <span className="app-theme-label--dark">Use light theme</span>
+      <Button variant="ghost" className={cn(mobileButton, 'mt-3 border-t border-rule-subtle')} onClick={toggleTheme}>
+        <MoonIcon className={iconClassName('compact', 'dark:hidden')} aria-hidden="true" />
+        <SunIcon className={iconClassName('compact', 'hidden dark:inline')} aria-hidden="true" />
+        <span className="dark:hidden">Use dark theme</span>
+        <span className="hidden dark:inline">Use light theme</span>
       </Button>
-      <Button type="submit" form={logoutFormId} variant="ghost" className="paper-navbar__mobile-link">Log out</Button>
+      <Button type="submit" form={logoutFormId} variant="ghost" className={mobileButton}>Log out</Button>
     </section>
   )
 }

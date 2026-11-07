@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { EmptyState, StatGrid } from 'paper-ui'
+import { EmptyState, entryLink, listRows, metaLine, StatGrid } from 'paper-ui'
 import { contestsHref } from '../lib/contests'
 import { formatPeriod, pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
@@ -18,6 +18,11 @@ const recentCount = 5
  * A signed-in learner's year under the home hero: totals and the calendar, their newest updates and this year's
  * contests, unfinished ones first. Each part that can't be read is left out rather than shown as an error.
  */
+const band = 'border-t border-rule pt-7'
+const head = 'mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1'
+const headTitle = 'm-0 font-display text-heading leading-section'
+const rows = listRows()
+
 export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: number }) {
   const links = useLinks()
   const [statisticsQuery, activityQuery] = memberDashboardQueries(viewer, year)
@@ -34,14 +39,13 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
     : null
 
   return (
-    <div className="home-dashboard">
-      <section className="home-dashboard__year" aria-labelledby="home-year-title">
-        <div className="home-dashboard__head">
-          <h2 id="home-year-title">Your {year}</h2>
-          <a className="text-link" href={links.profile(viewer.userId)}>Your profile</a>
+    <div className="mt-12 grid gap-10 *:min-w-0">
+      <section className={band} aria-labelledby="home-year-title">
+        <div className={head}>
+          <h2 id="home-year-title" className={headTitle}>Your {year}</h2>
+          <a className="text-link hover:text-link-hover" href={links.profile(viewer.userId)}>Your profile</a>
         </div>
         <StatGrid
-          className="home-dashboard__stats"
           stats={[
             ...(total === undefined ? [] : [{ label: 'Points this year', value: scoreFormat.format(total) }]),
             ...(todayScore === undefined ? [] : [{ label: 'Today', value: scoreFormat.format(todayScore), detail: pointsUnit(todayScore) }]),
@@ -52,16 +56,16 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
           ]}
         />
         {activity.ok ? (
-          <ActivityCalendar userId={viewer.userId} year={year} today={today} activity={activity.data} labelledBy="home-year-title" />
+          <ActivityCalendar userId={viewer.userId} year={year} today={today} activity={activity.data} labelledBy="home-year-title" surface="canvas" />
         ) : null}
       </section>
 
-      <div className="home-dashboard__columns">
+      <div className={`${band} grid grid-cols-halves gap-x-14 gap-y-8 *:min-w-0 max-lg:grid-cols-single`}>
         {logs ? (
           <section aria-labelledby="home-recent-title">
-            <div className="home-dashboard__head">
-              <h2 id="home-recent-title">Recent updates</h2>
-              {logs.length ? <Link className="text-link" to={links.profileUpdates(viewer.userId)}>All updates</Link> : null}
+            <div className={head}>
+              <h2 id="home-recent-title" className={headTitle}>Recent updates</h2>
+              {logs.length ? <Link className="text-link hover:text-link-hover" to={links.profileUpdates(viewer.userId)}>All updates</Link> : null}
             </div>
             <LogEntries
               logs={logs}
@@ -73,7 +77,7 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
                   variant="plain"
                   headingLevel={3}
                   title="No updates yet"
-                  actions={<a className="text-link" href={links.logs}>Log your first activity</a>}
+                  actions={<a className="text-link hover:text-link-hover" href={links.logs}>Log your first activity</a>}
                 />
               )}
             />
@@ -81,16 +85,16 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
         ) : null}
         {ordered ? (
           <section aria-labelledby="home-contests-title">
-            <div className="home-dashboard__head">
-              <h2 id="home-contests-title">Your contests</h2>
-              {ordered.length ? <Link className="text-link" to={contestsHref.joined(year)}>All joined</Link> : null}
+            <div className={head}>
+              <h2 id="home-contests-title" className={headTitle}>Your contests</h2>
+              {ordered.length ? <Link className="text-link hover:text-link-hover" to={contestsHref.joined(year)}>All joined</Link> : null}
             </div>
             {ordered.length ? (
-              <ul className="profile-contests">
+              <ul className={rows.root()}>
                 {ordered.map(contest => (
-                  <li key={contest.id}>
-                    <a className="profile-entry-title" href={links.contestProfile(contest.id, viewer.userId)}>{contest.title}</a>
-                    <span className="profile-entry-meta">
+                  <li key={contest.id} className={rows.item()}>
+                    <a className={entryLink({ className: 'profile-entry-title' })} href={links.contestProfile(contest.id, viewer.userId)}>{contest.title}</a>
+                    <span className={metaLine({ className: 'profile-entry-meta' })}>
                       {[formatPeriod(contest), ...contest.languages, contest.contest_end < today ? 'Ended' : null].filter(Boolean).join(' · ')}
                     </span>
                   </li>
@@ -101,7 +105,7 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
                 variant="plain"
                 headingLevel={3}
                 title={`You haven’t joined a contest in ${year}`}
-                actions={<Link className="text-link" to={contestsHref.official()}>Browse official contests</Link>}
+                actions={<Link className="text-link hover:text-link-hover" to={contestsHref.official()}>Browse official contests</Link>}
               />
             )}
           </section>

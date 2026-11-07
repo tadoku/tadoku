@@ -7,6 +7,7 @@ import {
 } from "react";
 import { ChevronDownIcon, iconClassName } from "../../icons";
 import { FieldFrame, describedBy, useField, type FieldContract, type Option, type OptionGroup } from "./field";
+import { choice, choiceField, control, field as fieldStyles, selectFrame } from "./styles";
 
 export interface TextAreaProps
   extends FieldContract,
@@ -33,7 +34,7 @@ export function TextArea({
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(id, hint, error, props["aria-describedby"])}
-        className="paper-input paper-textarea"
+        className={control({ kind: "textarea", interactive: !props.readOnly && !error, readOnly: Boolean(props.readOnly), invalid: Boolean(error) })}
       />
     </FieldFrame>
   );
@@ -59,9 +60,10 @@ export function Select({
 }: SelectProps) {
   const id = providedId ?? `paper-select-${useId().replace(/:/gu, "")}`;
   const { field, error } = useField<string>();
+  const frame = selectFrame();
   return (
     <FieldFrame id={id} label={label} hint={hint} required={required} error={error}>
-      <span className="paper-select__control">
+      <span className={frame.root()}>
         <select
           {...props}
           name={field.name}
@@ -72,7 +74,7 @@ export function Select({
           required={required}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy(id, hint, error, props["aria-describedby"])}
-          className="paper-input paper-select"
+          className={control({ kind: "select", interactive: !error, invalid: Boolean(error) })}
         >
           {placeholder ? <option value="">{placeholder}</option> : null}
           {groups
@@ -92,7 +94,7 @@ export function Select({
               ))}
         </select>
         <ChevronDownIcon
-          className={iconClassName("compact", "paper-select__icon")}
+          className={iconClassName("compact", frame.icon())}
           aria-hidden="true"
         />
       </span>
@@ -131,9 +133,11 @@ export function Checkbox({
     ? [description ? `${id}-description` : undefined, aside ? `${id}-aside` : undefined].filter(Boolean).join(" ")
     : "";
   const external = [details, props["aria-describedby"]].filter(Boolean).join(" ") || undefined;
+  const slots = choice({ card, invalid: Boolean(error) });
+  const fieldSlots = fieldStyles({ afterChoice: true });
   return (
-    <fieldset className={`paper-choice-field${error ? " paper-field--invalid" : ""}`}>
-      <label className={card ? "paper-choice paper-choice--card" : "paper-choice"} htmlFor={id}>
+    <fieldset className={choiceField({ invalid: Boolean(error) }).root()}>
+      <label className={slots.root()} htmlFor={id}>
         <input
           {...props}
           name={field.name}
@@ -155,19 +159,20 @@ export function Checkbox({
           aria-invalid={error ? true : undefined}
           aria-labelledby={card ? `${id}-label` : undefined}
           aria-describedby={describedBy(id, hint, error, external)}
+          className={slots.input()}
         />
         {card ? (
           <>
-            <span className="paper-choice__body">
-              <span className="paper-choice__label" id={`${id}-label`}>{label}</span>
-              {description ? <span className="paper-choice__description" id={`${id}-description`}>{description}</span> : null}
+            <span className={slots.body()}>
+              <span className={slots.label()} id={`${id}-label`}>{label}</span>
+              {description ? <span className={slots.description()} id={`${id}-description`}>{description}</span> : null}
             </span>
-            {aside ? <span className="paper-choice__aside" id={`${id}-aside`}>{aside}</span> : null}
+            {aside ? <span className={slots.aside()} id={`${id}-aside`}>{aside}</span> : null}
           </>
-        ) : <span>{label}</span>}
+        ) : <span className={slots.text()}>{label}</span>}
       </label>
-      {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
-      {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error}</p> : null}
+      {hint ? <p className={fieldSlots.hint()} id={`${id}-hint`}>{hint}</p> : null}
+      {error ? <p className={fieldSlots.error()} id={`${id}-error`} role="alert">{error}</p> : null}
     </fieldset>
   );
 }

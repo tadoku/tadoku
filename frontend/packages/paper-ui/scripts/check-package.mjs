@@ -18,10 +18,10 @@ const required = [
   'dist/icons.d.ts',
   'dist/catalog.js',
   'dist/catalog.d.ts',
-  'dist/styles.css',
-  'dist/tokens.css',
-  'dist/fonts.css',
-  'dist/tailwind-preset.cjs',
+  'dist/theme.css',
+  'dist/tokens.js',
+  'dist/tokens.d.ts',
+  'eslint-plugin.mjs',
   'dist/assets/brand/cut-meter.svg',
   'dist/assets/brand/wordmark-accent.svg',
   'dist/assets/brand/wordmark-reversed.svg',
@@ -45,13 +45,12 @@ for (const forbidden of ['next', '@headlessui/react']) {
   }
 }
 
-const styles = readFileSync(new URL('../dist/styles.css', import.meta.url), 'utf8')
-for (const forbidden of ['fonts.googleapis.com', 'fonts.gstatic.com', 'border-radius: var(']) {
-  if (styles.includes(forbidden)) throw new Error(`styles.css contains forbidden value ${forbidden}`)
+const theme = readFileSync(new URL('../dist/theme.css', import.meta.url), 'utf8')
+for (const forbidden of ['fonts.googleapis.com', 'fonts.gstatic.com']) {
+  if (theme.includes(forbidden)) throw new Error(`theme.css contains forbidden value ${forbidden}`)
 }
-
-for (const selector of ['.paper-surface', '.paper-accent-rail', '.paper-field-edge', '.paper-focus-ring']) {
-  if (!styles.includes(selector)) throw new Error(`styles.css is missing ${selector}`)
+for (const required of ['@theme reference', '@source "./index.js";', '[data-theme="dark"]', '[data-density="compact"]', '@font-face']) {
+  if (!theme.includes(required)) throw new Error(`theme.css is missing ${required}`)
 }
 
 console.log(`Paper package contains ${files.size} validated files.`)

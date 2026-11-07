@@ -50,7 +50,7 @@ export function Announcements() {
   const visible = announcements.filter(announcement => !dismissed.includes(announcement.id))
   if (!visible.length) return null
   return (
-    <div className="app-announcements">
+    <div className="mb-8 grid gap-2">
       {visible.map(announcement => (
         <Flash
           key={announcement.id}
@@ -61,10 +61,10 @@ export function Announcements() {
             </Button>
           }
         >
-          <div className="app-announcement">
+          <div className="grid gap-1 wrap-anywhere [&_p]:m-0">
             <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{announcement.content}</ReactMarkdown>
             {announcement.href && pathOf(announcement.href) !== currentPath
-              ? <a className="text-link" href={announcement.href}>Learn more</a>
+              ? <a className="text-link hover:text-link-hover" href={announcement.href}>Learn more</a>
               : null}
           </div>
         </Flash>

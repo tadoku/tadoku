@@ -8,6 +8,7 @@ import type { AccountSearch } from '../lib/search'
 import { useIdentity } from '../lib/session'
 import { FormProblem, ReturnTo } from './AccountForm'
 import { CardPage } from './CardPage'
+import { accountConfirmation, accountForm, accountFormActions } from '../styles'
 
 const subscribeNever = () => () => {}
 
@@ -42,13 +43,13 @@ export function DeleteAccount({ search }: { readonly search: AccountSearch }) {
 
   return (
     <CardPage title="Delete your account" lead="You can’t undo this.">
-      <div className="account-confirmation account-confirmation--spaced">
+      <div className={`${accountConfirmation} mb-7`}>
         <p>Deleting your account removes your sign-in, your logs outside finished contests and your registrations in running contests.</p>
         <p>Finished contests keep your scores as “Deleted participant”. Contests you organize continue under “Deleted organizer”.</p>
         <p><a href={`${webUrl}/profile/${account.id}/updates`}>Export your logs first</a> if you want to keep a copy.</p>
       </div>
       <form.AppForm>
-        <form.Form {...formProps} className="account-form">
+        <form.Form {...formProps} className={accountForm}>
           <FormProblem problem={problem} />
           <ReturnTo value={next} />
           <form.AppField name="email" validators={{ onChange: ({ value }) => value.trim() ? undefined : 'Type your email address.' }}>
@@ -65,7 +66,7 @@ export function DeleteAccount({ search }: { readonly search: AccountSearch }) {
               />
             )}
           </form.AppField>
-          <div className="account-form__actions">
+          <div className={accountFormActions}>
             <Button
               type="submit"
               variant="destructive"

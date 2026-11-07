@@ -7,6 +7,22 @@ export type {
   ChartCategoryStyle,
   ChartSeries,
 } from './foundations/chart-palette'
+export { cn, tv, twMergeConfig, type VariantProps } from './foundations/variants'
+export {
+  accentRail,
+  actionEdge,
+  appFrame,
+  cluster,
+  fieldEdge,
+  focusRing,
+  measure,
+  stack,
+  surface,
+  typography,
+} from './foundations/recipes'
+export { bodyClassName, documentClassName } from './foundations/document'
+export { prose } from './foundations/prose'
+export { formFooter } from './components/forms/styles'
 export {
   BUTTON_VARIANTS,
   Button,
@@ -15,6 +31,7 @@ export {
   type ButtonRecipeOptions,
   type ButtonVariant,
 } from './components/actions/Button'
+export { SkipLink } from './components/actions/SkipLink'
 export {
   AmountWithUnit,
   AutocompleteInput,
@@ -86,6 +103,12 @@ export {
   type PageHeaderProps,
 } from './components/page-structure/PageHeader'
 export {
+  SiteFooter,
+  type SiteFooterGroup,
+  type SiteFooterLink,
+  type SiteFooterProps,
+} from './components/page-structure/SiteFooter'
+export {
   SectionHeading,
   type SectionHeadingProps,
 } from './components/page-structure/SectionHeading'
@@ -99,6 +122,8 @@ export {
   type StatGridItem,
   type StatGridProps,
 } from './components/data-display/StatGrid'
+export { IconTile } from './components/data-display/IconTile'
+export { entryLink, entryList, listFooter, listRows, metaLine } from './components/data-display/lists'
 export { Modal, type ModalProps } from './components/overlays/Modal'
 export {
   DRAWER_PLACEMENTS,
@@ -120,6 +145,7 @@ export {
   type TableColumnAlignment,
   type TableProps,
 } from './components/data-display'
+export { navbar as navbarStyles } from './components/navigation/styles'
 export {
   Breadcrumb,
   Navbar,

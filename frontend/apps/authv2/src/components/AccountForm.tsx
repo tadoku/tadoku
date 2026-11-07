@@ -7,7 +7,7 @@ export function FormProblem({ problem, reauthenticate }: { readonly problem?: Pr
   return (
     <Flash variant="danger" icon={<ExclamationCircleIcon className={iconClassName()} />}>
       {problem.message}
-      {problem.reauthenticate && reauthenticate ? <> <a href={reauthenticate}>Log in again</a></> : null}
+      {problem.reauthenticate && reauthenticate ? <> <a className="whitespace-nowrap" href={reauthenticate}>Log in again</a></> : null}
     </Flash>
   )
 }

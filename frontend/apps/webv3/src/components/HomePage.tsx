@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { BookOpenIcon, LanguageIcon, TrophyIcon, iconClassName } from 'paper-ui/icons'
 import { Link, useLoaderData } from '@tanstack/react-router'
-import { Button, EmptyState, Loading, SectionHeading, StatGrid, Surface, Table, buttonClassName } from 'paper-ui'
+import { Button, EmptyState, IconTile, Loading, SectionHeading, StatGrid, Surface, Table, buttonClassName } from 'paper-ui'
 import type { ReactNode } from 'react'
 import { homeQueryOptions, type HomeData } from '../lib/home'
+import { Person, Rank, currentRow, personLink } from './StandingsParts'
 import { formatDate, formatPeriod, numberFormat, pointsUnit } from '../lib/format'
 import { describeGoal, useStoredGoal } from '../lib/goal'
 import { useLinks } from '../lib/links'
@@ -37,6 +38,34 @@ const promise: Record<Phase, { headline: ReactNode; lead: string }> = {
   loading: { headline: guestHeadline, lead: 'Turn time with your languages into a habit. Join a friendly immersion contest, log what you read and listen to, and follow the community’s progress.' },
 }
 
+const hero = [
+  'grid grid-cols-halves items-start gap-16 py-2 pe-1.25 max-lg:gap-8',
+  'max-tablet:grid-cols-single max-tablet:gap-8 max-tablet:pt-0',
+].join(' ')
+const status = 'mb-4 mt-0 text-sm font-semibold text-warning'
+const headline = 'm-0 max-w-measure-hero text-balance font-display text-hero leading-120 tracking-hero'
+const lead = 'my-6 max-w-measure-sm text-lead leading-175 text-ink max-tablet:my-5 max-tablet:text-base'
+const actions = 'flex flex-wrap items-center gap-x-5 gap-y-3'
+const step = 'grid content-start justify-items-start'
+const stepTitle = 'mb-2 mt-0 text-base leading-150'
+const stepText = 'm-0 max-w-measure-how text-ui leading-170 text-ink'
+const strip = [
+  'mt-8 grid max-w-record grid-cols-strip items-center gap-8 border-t border-rule pt-6',
+  'max-lg:grid-cols-strip-narrow max-lg:gap-x-6 max-lg:gap-y-4',
+  'max-tablet:mt-7 max-tablet:grid-cols-single max-tablet:gap-3',
+].join(' ')
+const stripText = 'm-0 max-w-measure-strip leading-170'
+const stripLink = [
+  'col-start-3 justify-self-end text-sm text-link hover:text-link-hover max-lg:col-start-2 max-lg:justify-self-start max-tablet:col-auto',
+].join(' ')
+const ledgerHeader = 'm-0 border-b border-rule px-ledger-inset py-5.5 max-xs:py-4.5'
+// The card frames the table, so the table's own top and bottom rules would double its edges.
+export const cardTable = 'border-y-0 [&_tbody_tr:last-child>*]:border-b-0'
+const message = [
+  'px-ledger-inset py-6 [&_h3]:mb-3 [&_h3]:mt-0 [&_h3]:text-lead [&_h3]:leading-150',
+  '[&>p]:mb-5 [&>p]:mt-0 [&>p]:max-w-measure-message [&>p]:leading-175 [&>p:last-child]:mb-0',
+].join(' ')
+
 export function HomePage() {
   const links = useLinks()
   const { data, dataUpdatedAt, isError, refetch, isFetching } = useQuery(homeQueryOptions())
@@ -52,45 +81,45 @@ export function HomePage() {
 
   return (
     <div className="home-page">
-      <section className="home-hero" aria-labelledby="home-title">
+      <section className={hero} aria-labelledby="home-title">
         {member
           ? <MemberPromise member={member} data={data} phase={phase} />
           : (
-            <div className="home-promise">
-              {phase === 'unavailable' && <p className="home-status" data-tone="warning">Contest updates are delayed</p>}
-              <h1 id="home-title">{promise[phase].headline}</h1>
-              <p className="home-lead">{promise[phase].lead}</p>
-              <div className="home-actions">
+            <div>
+              {phase === 'unavailable' && <p className={status}>Contest updates are delayed</p>}
+              <h1 id="home-title" className={headline}>{promise[phase].headline}</h1>
+              <p className={lead}>{promise[phase].lead}</p>
+              <div className={actions}>
                 {joinable
                   ? <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a>
                   : <a href={links.logs} className={buttonClassName()}>Log activity</a>}
                 <SetGoalLink />
               </div>
-              {joinable && <p className="home-fineprint">Free to join. Registration closes {formatDate(contest.registration_end)}.</p>}
+              {joinable && <p className="mb-0 mt-4 text-metadata leading-160 text-muted">Free to join. Registration closes {formatDate(contest.registration_end)}.</p>}
               <DailyGoal />
             </div>
           )}
 
-        <Surface as="section" elevation="showcase" className="home-ledger" aria-labelledby="home-board-title">
+        <Surface as="section" elevation="showcase" className="min-w-0 p-0" aria-labelledby="home-board-title">
           <ContestBoard data={data} phase={phase} today={today} retrying={isFetching} retry={() => void refetch()} />
         </Surface>
       </section>
 
       {member ? <MemberDashboard viewer={member} year={year} /> : (
-        <section className="home-how" aria-labelledby="home-how-title">
-          <h2 id="home-how-title">How Tadoku works</h2>
-          <ol>
-            <li>
-              <span className="home-how__icon" aria-hidden="true"><LanguageIcon className={iconClassName()} /></span>
-              <h3>Choose your language</h3><p>Join an official round or track immersion at your own pace between contests.</p>
+        <section className="mt-12 border-t border-rule pt-7 max-tablet:mt-9 max-tablet:pt-6" aria-labelledby="home-how-title">
+          <h2 id="home-how-title" className="mb-6 mt-0 font-display text-heading">How Tadoku works</h2>
+          <ol className="m-0 grid list-none grid-cols-thirds gap-10 p-0 max-tablet:grid-cols-single max-tablet:gap-6">
+            <li className={step}>
+              <IconTile className="mb-3.5"><LanguageIcon className={iconClassName()} /></IconTile>
+              <h3 className={stepTitle}>Choose your language</h3><p className={stepText}>Join an official round or track immersion at your own pace between contests.</p>
             </li>
-            <li>
-              <span className="home-how__icon" aria-hidden="true"><BookOpenIcon className={iconClassName()} /></span>
-              <h3>Read and listen</h3><p>Books, manga, games, podcasts, video: whatever keeps you engaged.</p>
+            <li className={step}>
+              <IconTile className="mb-3.5"><BookOpenIcon className={iconClassName()} /></IconTile>
+              <h3 className={stepTitle}>Read and listen</h3><p className={stepText}>Books, manga, games, podcasts, video: whatever keeps you engaged.</p>
             </li>
-            <li>
-              <span className="home-how__icon" aria-hidden="true"><TrophyIcon className={iconClassName()} /></span>
-              <h3>Log your progress</h3><p>Record what you did and see where it counts.</p>
+            <li className={step}>
+              <IconTile className="mb-3.5"><TrophyIcon className={iconClassName()} /></IconTile>
+              <h3 className={stepTitle}>Log your progress</h3><p className={stepText}>Record what you did and see where it counts.</p>
             </li>
           </ol>
         </section>
@@ -98,13 +127,13 @@ export function HomePage() {
 
       {/* While a round is running the card covers it; the next round earns a row once it is scheduled. */}
       {phase !== 'loading' && phase !== 'unavailable' && (data?.nextContest || (phase !== 'open' && phase !== 'live')) && (
-        <section className="home-strip" aria-labelledby="home-next-title">
+        <section className={strip} aria-labelledby="home-next-title">
           <div>
-            <h2 id="home-next-title">Next official round</h2>
-            <p>{data?.nextContest ? formatPeriod(data.nextContest) : 'Not announced yet'}</p>
+            <h2 id="home-next-title" className="mb-1 mt-0 font-body text-sm">Next official round</h2>
+            <p className={`${stripText} text-lead font-semibold text-ink`}>{data?.nextContest ? formatPeriod(data.nextContest) : 'Not announced yet'}</p>
           </div>
-          {data?.nextContest && <p>Registration closes {formatDate(data.nextContest.registration_end)}.</p>}
-          <a className="text-link" href={links.contests}>See all contests</a>
+          {data?.nextContest && <p className={`${stripText} text-sm text-muted`}>Registration closes {formatDate(data.nextContest.registration_end)}.</p>}
+          <a className={stripLink} href={links.contests}>See all contests</a>
         </section>
       )}
 
@@ -114,7 +143,7 @@ export function HomePage() {
 
 /** The goal is kept in the browser, so guests can set one too. Until one is saved, the hero's actions offer to set it. */
 function SetGoalLink() {
-  return useStoredGoal() ? null : <Link className="text-link" to="/plan">Set a daily goal</Link>
+  return useStoredGoal() ? null : <Link className="text-link hover:text-link-hover" to="/plan">Set a daily goal</Link>
 }
 
 function DailyGoal() {
@@ -122,9 +151,11 @@ function DailyGoal() {
   if (!goal) return null
 
   return (
-    <section className="home-goal" aria-labelledby="home-goal-title">
-      <h2 id="home-goal-title">Daily goal</h2>
-      <p>{describeGoal(goal)} <Link className="text-link" to="/plan">Change goal</Link></p>
+    <section className="mb-0 mt-8 text-ui leading-160" aria-labelledby="home-goal-title">
+      <h2 id="home-goal-title" className="mb-1 mt-0 font-body text-metadata font-regular text-muted">Daily goal</h2>
+      <p className="m-0 font-semibold text-ink">
+        {describeGoal(goal)} <Link className="ms-3 text-sm font-regular text-link hover:text-link-hover" to="/plan">Change goal</Link>
+      </p>
     </section>
   )
 }
@@ -146,29 +177,29 @@ function MemberPromise({ member, data, phase }: {
   const { registered } = useParticipation(running ? contest.id : '')
   const joinable = running && !registered && (phase === 'open' || phase === 'upcoming')
 
-  let headline: string
-  let lead: string
+  let title: string
+  let summary: string
   if (running && entry) {
-    headline = `${place(entry.rank)} place`
-    lead = `${numberFormat.format(entry.score)} ${pointsUnit(entry.score)} in ${contest.title}.`
+    title = `${place(entry.rank)} place`
+    summary = `${numberFormat.format(entry.score)} ${pointsUnit(entry.score)} in ${contest.title}.`
   } else if (running && registered) {
-    headline = `You’re in ${contest.title}`
-    lead = phase === 'upcoming' ? `The round starts ${formatDate(contest.contest_start)}.` : 'Log what you read and listen to; every entry counts towards the round.'
+    title = `You’re in ${contest.title}`
+    summary = phase === 'upcoming' ? `The round starts ${formatDate(contest.contest_start)}.` : 'Log what you read and listen to; every entry counts towards the round.'
   } else if (joinable) {
-    headline = `${contest.title} is open`
-    lead = `Registration closes ${formatDate(contest.registration_end)}.`
+    title = `${contest.title} is open`
+    summary = `Registration closes ${formatDate(contest.registration_end)}.`
   } else {
-    headline = `Welcome back, ${member.displayName}`
-    lead = 'Log what you read and listen to today.'
+    title = `Welcome back, ${member.displayName}`
+    summary = 'Log what you read and listen to today.'
   }
 
   return (
-    <div className="home-promise">
-      {phase === 'unavailable' && <p className="home-status" data-tone="warning">Contest updates are delayed</p>}
-      <h1 id="home-title">{headline}</h1>
-      <p className="home-lead">{lead}</p>
+    <div>
+      {phase === 'unavailable' && <p className={status}>Contest updates are delayed</p>}
+      <h1 id="home-title" className={headline}>{title}</h1>
+      <p className={lead}>{summary}</p>
       {/* Log activity is already the header's action; the hero adds Join only while the member can still join. */}
-      <div className="home-actions">
+      <div className={actions}>
         {joinable ? <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a> : null}
         <SetGoalLink />
       </div>
@@ -189,14 +220,14 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
   const viewerId = viewer?.status === 'signed-in' ? viewer.userId : undefined
   if (phase === 'loading') {
     return <>
-      <SectionHeading level={2} id="home-board-title" className="home-ledger-header" title="Current contest" />
-      <Loading className="home-ledger-message" label="Loading the current contest" />
+      <SectionHeading level={2} id="home-board-title" className={ledgerHeader} title="Current contest" />
+      <Loading className={message} label="Loading the current contest" />
     </>
   }
 
   const unavailable = <>
-    <SectionHeading level={2} id="home-board-title" className="home-ledger-header" title={data?.latestContest?.title ?? 'Current contest'} description="Standings temporarily unavailable" />
-    <div className="home-ledger-message" role="status">
+    <SectionHeading level={2} id="home-board-title" className={ledgerHeader} title={data?.latestContest?.title ?? 'Current contest'} description="Standings temporarily unavailable" />
+    <div className={message} role="status">
       <h3>The board could not be loaded</h3>
       <p>Try again to see the current standings. You can still log your activity in the meantime.</p>
       <Button variant="outline" loading={retrying} onClick={retry}>Retry standings</Button>
@@ -207,30 +238,33 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
   const contest = data.latestContest
   if (!contest) {
     return <>
-      <SectionHeading level={2} id="home-board-title" className="home-ledger-header" title="Official contests" />
+      <SectionHeading level={2} id="home-board-title" className={ledgerHeader} title="Official contests" />
       <EmptyState
-        className="home-ledger-message"
+        className={message}
         variant="plain"
         headingLevel={3}
         title="No official round right now"
         description="Keep logging at your own pace. The next round will appear here once it’s scheduled."
-        actions={<a href={links.contests} className="text-link">Browse contests</a>}
+        actions={<a href={links.contests} className="text-link hover:text-link-hover">Browse contests</a>}
       />
     </>
   }
 
   const length = dayNumber(contest.contest_start, contest.contest_end)
   const header = (description: string, action: ReactNode) => (
-    <SectionHeading level={2} id="home-board-title" className="home-ledger-header" title={contest.title} description={description} actions={action} />
+    <SectionHeading level={2} id="home-board-title" className={ledgerHeader} title={contest.title} description={description} actions={action} />
   )
 
   if (phase === 'upcoming') {
     const activities = contest.allowed_activities.map(({ name }, index) => index ? name.toLowerCase() : name).join(' & ')
     return <>
-      {header(formatPeriod(contest), <a href={links.contest(contest.id)} className="text-link">Contest details</a>)}
-      <StatGrid className="home-ledger-stats" stats={[{ label: 'Length', value: `${length} days` }, ...(activities ? [{ label: 'Activities', value: activities }] : [])]} />
-      <div className="home-ledger-message">
-        <p className="home-start-date"><span>Starts</span><strong>{formatDate(contest.contest_start)}</strong></p>
+      {header(formatPeriod(contest), <a href={links.contest(contest.id)} className="text-link hover:text-link-hover">Contest details</a>)}
+      <StatGrid className="px-ledger-inset py-4.5" stats={[{ label: 'Length', value: `${length} days` }, ...(activities ? [{ label: 'Activities', value: activities }] : [])]} />
+      <div className={message}>
+        <p className="grid gap-1">
+          <span className="text-metadata text-muted">Starts</span>
+          <strong className="font-display text-3xl leading-130">{formatDate(contest.contest_start)}</strong>
+        </p>
       </div>
     </>
   }
@@ -241,9 +275,9 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
   return <>
     {header(
       `${formatPeriod(contest)} · ${ended ? 'Final results' : `Day ${dayNumber(contest.contest_start, today)} of ${length}`}`,
-      <a href={links.contest(contest.id)} className="text-link">{ended ? 'See final board' : 'Full leaderboard'}</a>,
+      <a href={links.contest(contest.id)} className="text-link hover:text-link-hover">{ended ? 'See final board' : 'Full leaderboard'}</a>,
     )}
-    <StatGrid className="home-ledger-stats" stats={[
+    <StatGrid className="px-ledger-inset py-4.5" stats={[
       { label: 'Participants', value: numberFormat.format(summary.participant_count) },
       { label: 'Languages', value: numberFormat.format(summary.language_count) },
       { label: 'Points logged', value: numberFormat.format(summary.total_score) },
@@ -255,27 +289,27 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
         minWidth="0"
         linkedRows
         columns={[
-          { id: 'rank', header: 'Rank', width: '4.5rem', cell: row => <span className="standings-rank" data-podium={row.rank <= 3 ? row.rank : undefined}>{row.rank}</span> },
+          { id: 'rank', header: 'Rank', width: '4.5rem', headerClassName: 'ps-ledger-inset', cellClassName: 'ps-ledger-inset text-muted', cell: row => <Rank rank={row.rank} /> },
           {
             id: 'person',
             header: 'Participant',
             rowHeader: true,
             cell: row => (
-              <span className="standings-person">
-                <a className="home-person-link" href={links.profile(row.user_id)}>{row.user_display_name}</a>
-                {row.user_id === viewerId ? <span className="standings-you">You</span> : null}
-              </span>
+              <Person you={row.user_id === viewerId}>
+                <a className={`home-person-link ${personLink}`} href={links.profile(row.user_id)}>{row.user_display_name}</a>
+              </Person>
             ),
           },
-          { id: 'score', header: 'Score', align: 'end', cell: row => numberFormat.format(row.score) },
+          { id: 'score', header: 'Score', align: 'end', headerClassName: 'pe-ledger-inset', cellClassName: 'pe-ledger-inset', cell: row => numberFormat.format(row.score) },
         ]}
         rows={standings.entries}
         getRowKey={row => row.user_id}
-        getRowProps={row => (row.user_id === viewerId ? { 'aria-current': 'true' } : {})}
+        tableClassName={cardTable}
+        getRowProps={row => (row.user_id === viewerId ? { 'aria-current': 'true', className: currentRow } : {})}
       />
     ) : (
       <EmptyState
-        className="home-ledger-message"
+        className={message}
         variant="plain"
         headingLevel={3}
         title="No scores yet"

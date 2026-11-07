@@ -1,4 +1,4 @@
-import { EmptyState, Pagination, SectionHeading, StatGrid, StatusTag, buttonClassName } from 'paper-ui'
+import { buttonClassName, EmptyState, entryLink, listRows, metaLine, Pagination, SectionHeading, StatGrid, StatusTag } from 'paper-ui'
 import { formatPeriod, pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { activeDays, contestPageSize, type ContestHistory, type ProfileStatistics as Statistics, type Section } from '../lib/profile'
@@ -9,6 +9,14 @@ import { YearStepper } from './YearStepper'
 type Found = Extract<Statistics, { status: 'found' }>
 
 /** A profile's year: its scores, daily activity, activity split and contest history, as Webv2's statistics show them. */
+const muted = 'mb-0 mt-2 text-metadata leading-160 text-muted'
+const sectionTitle = 'text-heading leading-section'
+const columns = [
+  'mt-8 grid grid-cols-halves gap-x-12 gap-y-0 max-lg:grid-cols-single',
+  '*:min-w-0 *:border-t *:border-rule *:py-7 [&>:nth-child(3)]:col-span-full [&_h2]:text-heading [&_h2]:leading-section',
+].join(' ')
+const rows = listRows()
+
 export function ProfileStatistics({ statistics, year, page, owner }: {
   statistics: Found
   year: number
@@ -23,15 +31,15 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
   return (
     <div className="profile-page">
       <ProfileHeader profile={profile} owner={owner} view="overview" overviewHref={`/profile/${profile.id}/statistics/${year}`} />
-      <section className="profile-year" aria-labelledby="profile-year-heading">
-        <div className="profile-year-head">
-          <h2 id="profile-year-heading" className="paper-visually-hidden">{name}’s activity in {year}</h2>
+      <section className="mt-8 border border-rule bg-paper p-8 max-sm:p-5" aria-labelledby="profile-year-heading">
+        <div className="-ms-3 -mt-2 mb-5">
+          <h2 id="profile-year-heading" className="sr-only">{name}’s activity in {year}</h2>
           <YearControl statistics={statistics} year={year} />
         </div>
         {empty ? (
           <EmptyState
             variant="plain"
-            className="profile-empty-year"
+            className="border-t border-rule"
             headingLevel={3}
             title={`No activity recorded in ${year}`}
             actions={owner ? <a className={buttonClassName()} href={links.logs}>Log activity</a> : null}
@@ -39,8 +47,8 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
         ) : (
           <>
             <YearTotals statistics={statistics} year={year} />
-            <div className="profile-rhythm">
-              <SectionHeading level={3} id="profile-rhythm-heading" title="Daily activity" />
+            <div className="border-t border-rule pt-6">
+              <SectionHeading level={3} id="profile-rhythm-heading" title="Daily activity" classNames={{ title: sectionTitle }} />
               {activity.ok ? (<>
                 <ActivityCalendar
                   userId={profile.id}
@@ -49,12 +57,12 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
                   activity={activity.data}
                   labelledBy="profile-rhythm-heading"
                 />
-              </>) : <p className="profile-muted">Could not retrieve updates for {year}.</p>}
+              </>) : <p className={muted}>Could not retrieve updates for {year}.</p>}
             </div>
           </>
         )}
       </section>
-      <div className="profile-columns">
+      <div className={columns}>
         {!empty ? (
           <>
             <Breakdown id="profile-languages" title="Score by language" section={statistics.scores} items={scores => scores.scores.map(score => ({ label: score.language_name ?? score.language_code, score: score.score }))} empty="No scores recorded this year." />
@@ -75,7 +83,7 @@ function YearTotals({ statistics, year }: { statistics: Found; year: number }) {
 
   return (
     <StatGrid
-      className="profile-stats"
+      className="profile-stats mb-8 mt-7"
       stats={[
         { label: 'Overall score', value: total === undefined ? 'Unavailable' : scoreFormat.format(total), detail: average },
         ...(activity.ok ? [{ label: 'Updates', value: activity.data.total_updates, detail: `${activeDays(activity.data.scores)} active days` }] : []),
@@ -111,18 +119,23 @@ function Breakdown<T>({ id, title, section, items, empty }: {
   return (
     <section aria-labelledby={id}>
       <SectionHeading level={2} id={id} title={title} />
-      {!section.ok ? <p className="profile-muted">Could not retrieve this breakdown.</p> : rows.length ? (
-        <ol className="profile-breakdown">
+      {!section.ok ? <p className={muted}>Could not retrieve this breakdown.</p> : rows.length ? (
+        <ol className="m-0 list-none p-0 [&>li+li]:mt-5">
           {rows.map(row => (
             <li key={row.label}>
-              <div><span>{row.label}</span><strong>{scoreFormat.format(row.score)} <small>{pointsUnit(row.score)}</small></strong></div>
-              <span className="profile-bar" aria-hidden="true">
-                <span style={{ width: `${total ? row.score / total * 100 : 0}%` }} />
+              <div className="mb-2 flex justify-between gap-4 text-ui wrap-anywhere">
+                <span>{row.label}</span>
+                <strong className="whitespace-nowrap tabular-nums">
+                  {scoreFormat.format(row.score)} <small className="font-regular text-muted">{pointsUnit(row.score)}</small>
+                </strong>
+              </div>
+              <span className="block h-2 bg-rule" aria-hidden="true">
+                <span className="block h-full min-w-0.5 bg-heat-3" style={{ width: `${total ? row.score / total * 100 : 0}%` }} />
               </span>
             </li>
           ))}
         </ol>
-      ) : <p className="profile-muted">{empty}</p>}
+      ) : <p className={muted}>{empty}</p>}
     </section>
   )
 }
@@ -139,21 +152,21 @@ function ContestHistorySection({ history, userId, year, page }: {
   return (
     <section aria-labelledby="profile-contests">
       <SectionHeading level={2} id="profile-contests" title="Contests" />
-      {!history.ok ? <p className="profile-muted">Could not retrieve contests.</p> : history.data.contests.length ? (
-        <ul className="profile-contests">
+      {!history.ok ? <p className={muted}>Could not retrieve contests.</p> : history.data.contests.length ? (
+        <ul className={rows.root()}>
           {history.data.contests.map(contest => (
-            <li key={contest.id}>
-              <span className="profile-contest-title">
-                <a className="profile-entry-title" href={links.contestProfile(contest.id, userId)}>{contest.title}</a>
+            <li key={contest.id} className={rows.item()}>
+              <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <a className={entryLink({ className: 'profile-entry-title' })} href={links.contestProfile(contest.id, userId)}>{contest.title}</a>
                 {contest.private ? <StatusTag>Unlisted</StatusTag> : null}
               </span>
-              <span className="profile-entry-meta">{[formatPeriod(contest), ...contest.languages].join(' · ')}</span>
+              <span className={metaLine({ className: 'profile-entry-meta' })}>{[formatPeriod(contest), ...contest.languages].join(' · ')}</span>
             </li>
           ))}
         </ul>
-      ) : <p className="profile-muted">Hasn’t participated in any contests in {year}.</p>}
+      ) : <p className={muted}>Hasn’t participated in any contests in {year}.</p>}
       {pages > 1 && page <= pages ? (
-        <Pagination label="Contest pages" totalPages={pages} currentPage={page} getHref={target => `/profile/${userId}/statistics/${year}?contests=${target}`} />
+        <Pagination className="mt-5" label="Contest pages" totalPages={pages} currentPage={page} getHref={target => `/profile/${userId}/statistics/${year}?contests=${target}`} />
       ) : null}
     </section>
   )

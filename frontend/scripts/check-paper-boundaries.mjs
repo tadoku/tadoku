@@ -63,7 +63,58 @@ function moduleSpecifiers(source) {
   return modules
 }
 
-async function inspectTree(path, system, requireStyles = false) {
+const ENTRY_STYLESHEET = 'src/styles.css'
+const ENTRY_RULE = 'entry stylesheet may only contain @import, @tailwind, @source, @custom-variant, @layer statements and @font-face'
+
+/** The top-level statements of an entry stylesheet that are not declarative Tailwind or font set-up. */
+function entryProblems(source) {
+  const text = source.replace(/\/\*[\s\S]*?\*\//g, '')
+  const problems = []
+  let index = 0
+  const blockEnd = (start) => {
+    let depth = 0
+    for (let at = start; at < text.length; at += 1) {
+      if (text[at] === '{') depth += 1
+      else if (text[at] === '}' && (depth -= 1) === 0) return at + 1
+    }
+    return text.length
+  }
+  while (index < text.length) {
+    if (/\s/.test(text[index])) { index += 1; continue }
+    const rest = text.slice(index)
+    const name = rest.match(/^@([\w-]+)/)?.[1]
+    if (name === 'font-face' || (name === 'custom-variant' && /^[^;{]*\{/.test(rest))) {
+      index = blockEnd(index)
+    } else if (name === 'import' || name === 'tailwind' || name === 'source' || name === 'layer' || name === 'custom-variant') {
+      if (name === 'layer' && /^@layer[^;{]*\{/.test(rest)) {
+        problems.push(rest.slice(0, 40).trim())
+        index = blockEnd(index)
+        continue
+      }
+      const end = text.indexOf(';', index)
+      index = end < 0 ? text.length : end + 1
+    } else {
+      problems.push(rest.slice(0, 40).trim())
+      index = rest.includes('{') ? blockEnd(index) : text.length
+    }
+  }
+  return problems
+}
+
+async function inspectStylesheets(path, application) {
+  for (const file of await sourceFiles(path)) {
+    if (extname(file) !== '.css') continue
+    if (application && relative(path, file) === ENTRY_STYLESHEET) {
+      const source = await readFile(file, 'utf8')
+      if (entryProblems(source).length) report(file, ENTRY_RULE)
+      if (!/@import\s+["']paper-ui\/theme\.css["']/.test(source)) report(file, 'entry stylesheet does not import paper-ui/theme.css')
+    } else {
+      report(file, `handwritten stylesheet; style with Paper's token utilities, and only ${ENTRY_STYLESHEET} may exist`)
+    }
+  }
+}
+
+async function inspectTree(path, system) {
   try {
     const manifestPath = join(path, 'package.json')
     const manifest = JSON.parse(await readFile(manifestPath, 'utf8'))
@@ -83,12 +134,10 @@ async function inspectTree(path, system, requireStyles = false) {
     if (error?.code !== 'ENOENT') throw error
   }
 
-  let paperStyleImports = 0
   for (const file of await sourceFiles(path)) {
     const source = await readFile(file, 'utf8')
     const modules = moduleSpecifiers(source)
     if (modules.some((name) => name.startsWith('paper-ui/src/'))) report(file, 'private paper-ui source import')
-    paperStyleImports += modules.filter((name) => name === 'paper-ui/styles.css').length
 
     if (system === 'paper') {
       if (modules.some((name) => name === 'ui' || name.startsWith('ui/'))) report(file, 'legacy ui import in Paper code')
@@ -99,14 +148,13 @@ async function inspectTree(path, system, requireStyles = false) {
       report(file, 'paper-ui import in an unmigrated application')
     }
   }
-  if (requireStyles && paperStyleImports !== 1) report(path, `paper-ui/styles.css imported ${paperStyleImports} times; expected exactly once`)
-  if (paperStyleImports > 1) report(path, `paper-ui/styles.css imported ${paperStyleImports} times`)
 }
 
 for (const [application, system] of Object.entries(config.applications)) {
   const path = new URL(`../apps/${application}`, import.meta.url).pathname
   try {
-    await inspectTree(path, system, system === 'paper')
+    await inspectTree(path, system)
+    if (system === 'paper') await inspectStylesheets(path, true)
   } catch (error) {
     if (error?.code !== 'ENOENT' || application !== 'paper-styleguide') throw error
   }
@@ -115,6 +163,7 @@ for (const [application, system] of Object.entries(config.applications)) {
 const paperPackage = new URL('../packages/paper-ui', import.meta.url).pathname
 try {
   await inspectTree(paperPackage, 'paper')
+  await inspectStylesheets(paperPackage, false)
 } catch (error) {
   if (error?.code !== 'ENOENT') throw error
 }
@@ -123,5 +172,5 @@ if (violations.length) {
   console.error(violations.join('\n'))
   process.exitCode = 1
 } else {
-  console.log('Paper package boundaries are valid.')
+  console.log('Paper package boundaries are valid, and Paper code has no handwritten stylesheets.')
 }

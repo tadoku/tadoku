@@ -1,8 +1,8 @@
-import { Button, buttonClassName } from 'paper-ui'
+import { Button, buttonClassName, cluster } from 'paper-ui'
 
 export default function Example() {
   return (
-    <div className="paper-cluster">
+    <div className={cluster()}>
       <Button>Save log</Button>
       <Button variant="outline">Cancel</Button>
       <Button variant="ghost">More options</Button>

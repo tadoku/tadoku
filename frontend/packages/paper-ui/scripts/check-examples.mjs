@@ -13,9 +13,7 @@ try {
     writeFileSync(filename, fixture.code);
     return filename;
   });
-  const cssDeclaration = join(directory, "styles.d.ts");
-  writeFileSync(cssDeclaration, 'declare module "paper-ui/styles.css";\n');
-  const program = ts.createProgram([...files, cssDeclaration], {
+  const program = ts.createProgram(files, {
     noEmit: true, strict: true, noImplicitAny: false, skipLibCheck: true,
     jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2020,
     module: ts.ModuleKind.ESNext, moduleResolution: ts.ModuleResolutionKind.Bundler,

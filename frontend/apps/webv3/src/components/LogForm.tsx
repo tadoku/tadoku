@@ -1,15 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useStore } from '@tanstack/react-form'
 import { Link, useHydrated, useNavigate } from '@tanstack/react-router'
-import {
-  Button,
-  PageHeader,
-  Surface,
-  usePaperForm,
-  withPaperForm,
-  type Option,
-  type OptionGroup,
-} from 'paper-ui'
+import { Button, cn, formFooter, type Option, type OptionGroup, PageHeader, Surface, usePaperForm, withPaperForm } from 'paper-ui'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   draftFromLog,
@@ -36,6 +28,7 @@ import {
 } from '../lib/logs'
 import { useLoginUrl } from '../lib/session'
 import { TagsSidebar, maxTags } from './TagsSidebar'
+import { formControls } from './form-styles'
 
 /** A new activity, or a change to a saved one, whose language, activity and contest submissions stay fixed. */
 export type LogFormTarget = { kind: 'new'; amount?: number } | { kind: 'edit'; log: ImmersionLog }
@@ -45,6 +38,12 @@ export type LogFormTarget = { kind: 'new'; amount?: number } | { kind: 'edit'; l
  * log starts from the browser's last logged language and activity once hydrated, and after saving opens its contest
  * step when the viewer has ongoing registrations.
  */
+const card = [
+  'min-w-0 overflow-hidden p-0 wrap-anywhere',
+  '[&>.paper-flash]:mx-record-inset [&>.paper-flash]:mb-0 [&>.paper-flash]:mt-4',
+  '[&>[role=alert]]:mx-record-inset [&>[role=alert]]:mb-0 [&>[role=alert]]:mt-4',
+].join(' ')
+
 export function LogForm({ options, viewerId, target }: { options: LogOptions; viewerId: string; target: LogFormTarget }) {
   const hydrated = useHydrated()
   const navigate = useNavigate()
@@ -95,10 +94,10 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
         <PageHeader title="Log activity" />
       )}
       <form.AppForm>
-        <div className="log-form-layout">
-          <form.Form className="log-form" aria-busy={pending}>
-            <Surface className="log-form__card">
-              <fieldset className="goal-form__controls log-form__fields" disabled={disabled}>
+        <div className="grid min-w-0 items-start gap-6 lg:grid-cols-log lg:gap-12">
+          <form.Form className="grid min-w-0 max-w-panel gap-4" aria-busy={pending}>
+            <Surface className={card}>
+              <fieldset className={`${formControls} p-record-inset`} disabled={disabled}>
                 {/* An edit can't change language or activity; the header states them. */}
                 {editing ? null : <ChoiceFields form={form} options={options} />}
                 <MeasureField form={form} timed={isTimed(options, activityId)} units={units} />
@@ -106,25 +105,25 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
                   {field => <field.Input label="Description (optional)" placeholder="e.g. One Piece volume 45" />}
                 </form.AppField>
                 <TagsField form={form} viewerId={viewerId} />
-                <div className="log-form__narrow-tags">
+                <div className="empty:hidden lg:hidden">
                   <TagsSidebar form={form} activityId={activityId} disabled={disabled} compact />
                 </div>
               </fieldset>
               {failure ? <SaveFailure failure={failure} viewerId={viewerId} editing={editing} /> : null}
-              <div className="paper-form-footer log-form__footer">
-                <div className="paper-form-footer__actions">
+              <div className={cn(formFooter().root(), 'mx-record-inset mt-0 pb-record-inset')}>
+                <div className={formFooter().actions()}>
                   <Button type="submit" disabled={disabled} loading={pending} loadingLabel="Saving">
                     {editing ? 'Save' : 'Log activity'}
                   </Button>
                   {editing
-                    ? <Link className="text-link" to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
-                    : <Link className="text-link" to="/">Cancel</Link>}
+                    ? <Link className="text-link hover:text-link-hover" to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
+                    : <Link className="text-link hover:text-link-hover" to="/">Cancel</Link>}
                 </div>
                 <ScoreEstimate form={form} options={options} />
               </div>
             </Surface>
           </form.Form>
-          <aside className="log-form__aside" aria-label="Suggested tags">
+          <aside className="hidden lg:sticky lg:top-6 lg:block lg:min-w-0 lg:pt-1" aria-label="Suggested tags">
             <TagsSidebar form={form} activityId={activityId} disabled={disabled} compact={false} />
           </aside>
         </div>
@@ -287,8 +286,8 @@ const ScoreEstimate = withPaperForm({
 
     const score = input !== undefined && data?.ok ? data.data.platform.score : undefined
     return (
-      <p className="log-form__estimate" aria-live="polite">
-        Estimated score: <strong data-pending={score === undefined ? '' : undefined}>{score === undefined ? '—' : score ? estimateFormat.format(score) : 'N/A'}</strong>
+      <p className="log-form__estimate m-0 tabular-nums max-sm:basis-full" aria-live="polite">
+        Estimated score: <strong className="data-pending:font-regular data-pending:text-muted" data-pending={score === undefined ? '' : undefined}>{score === undefined ? '—' : score ? estimateFormat.format(score) : 'N/A'}</strong>
       </p>
     )
   },
@@ -338,7 +337,7 @@ function SaveFailure({ failure, viewerId, editing }: { failure: LogFailure; view
 function EditFailureAction({ failure }: { failure: LogFailure }) {
   const loginUrl = useLoginUrl()
   return failure === 'signed-out'
-    ? <a className="text-link" href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
+    ? <a className="text-link hover:text-link-hover" href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
     : null
 }
 
@@ -349,13 +348,13 @@ function FailureAction({ failure, viewerId }: { failure: LogFailure; viewerId: s
 
   switch (failure) {
     case 'switched':
-      return <a className="text-link" href="/logs/new">Start a new activity for this account</a>
+      return <a className="text-link hover:text-link-hover" href="/logs/new">Start a new activity for this account</a>
     case 'signed-out':
-      return <a className="text-link" href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
+      return <a className="text-link hover:text-link-hover" href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
     case 'unavailable':
       return (
         <a
-          className="text-link"
+          className="text-link hover:text-link-hover"
           href={links.profileUpdates(viewerId)}
           target="_blank"
           rel="noopener noreferrer"

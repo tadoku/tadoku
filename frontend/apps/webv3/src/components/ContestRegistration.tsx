@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useStore } from '@tanstack/react-form'
 import { useHydrated, useNavigate } from '@tanstack/react-router'
 import type { ImmersionContestView, ImmersionLanguage } from 'api-client'
-import { Button, EmptyState, Flash, PageHeader, Surface, buttonClassName, usePaperForm } from 'paper-ui'
+import { Button, buttonClassName, EmptyState, Flash, formFooter, PageHeader, Surface, typography, usePaperForm } from 'paper-ui'
 import { useState } from 'react'
 import { contestBoardQuery, contestPhase, readDay, type ContestPhase } from '../lib/leaderboard'
 import { useLinks } from '../lib/links'
@@ -16,6 +16,8 @@ import { useLoginUrl, viewerKey, viewerQueryOptions } from '../lib/session'
 import { ContestFacts } from './ContestLeaderboard'
 import { ContestNotFound } from './ContestPage'
 import { renderLink } from './router-link'
+import { description, recordSurface, standingsAside, standingsHeader, workspace } from './standings-styles'
+import { formControls } from './form-styles'
 
 /** Joining a contest or changing the languages of a registration, for the signed-in viewer. */
 export function ContestRegistrationPage({ contestId }: { contestId: string }) {
@@ -73,19 +75,19 @@ function Registration({ contest, viewerId, phase }: { contest: ImmersionContestV
   return (
     <div className="standings-page">
       <PageHeader
-        className="standings-header"
+        className={standingsHeader}
         backLink={{ href: links.contest(contest.id), label: contest.title }}
         renderLink={renderLink}
         title={registered ? 'Update registration' : `Join ${contest.title}`}
       />
-      <div className="standings-workspace">
-        <div className="standings-main">
+      <div className={workspace}>
+        <div>
           <RegistrationState contest={contest} viewerId={viewerId} phase={phase} />
         </div>
-        <aside className="standings-aside">
+        <aside className={standingsAside}>
           <section aria-labelledby="registration-round">
-            <h2 id="registration-round" className="paper-type-component">About this contest</h2>
-            {contest.description ? <p className="standings-description">{contest.description}</p> : null}
+            <h2 id="registration-round" className={typography({ role: 'component' })}>About this contest</h2>
+            {contest.description ? <p className={description}>{contest.description}</p> : null}
             <ContestFacts contest={contest} phase={phase} />
           </section>
         </aside>
@@ -123,8 +125,8 @@ function RegistrationState({ contest, viewerId, phase }: { contest: ImmersionCon
     return (
       <>
         <Flash variant="danger">{closed}</Flash>
-        {previous ? <p className="registration-languages">Your languages: {previous.map(language => language.name).join(', ')}.</p> : null}
-        <p className="registration-languages"><a className="text-link" href={links.contest(contest.id)}>Back to the contest</a></p>
+        {previous ? <p className="my-4">Your languages: {previous.map(language => language.name).join(', ')}.</p> : null}
+        <p className="my-4"><a className="text-link hover:text-link-hover" href={links.contest(contest.id)}>Back to the contest</a></p>
       </>
     )
   }
@@ -178,10 +180,10 @@ function RegistrationForm({ contest, viewerId, previous, options }: {
   const disabled = !hydrated || pending
 
   return (
-    <Surface className="log-surface">
+    <Surface className={`${recordSurface} max-w-none`}>
       <form.AppForm>
-        <form.Form className="goal-form" aria-busy={pending}>
-          <fieldset className="goal-form__controls" disabled={disabled}>
+        <form.Form className="min-w-0" aria-busy={pending}>
+          <fieldset className={formControls} disabled={disabled}>
             <form.AppField name="languages" validators={{ onChange: validateLanguages, onSubmit: validateLanguages }}>
               {field => (
                 <field.AutocompleteMultiInput
@@ -204,10 +206,10 @@ function RegistrationForm({ contest, viewerId, previous, options }: {
             ) : null}
           </fieldset>
           {failure ? <SaveFailure failure={failure} registered={previous !== null} /> : null}
-          <div className="paper-form-footer">
-            <div className="paper-form-footer__actions">
+          <div className={formFooter().root()}>
+            <div className={formFooter().actions()}>
               <Button type="submit" disabled={disabled}>{pending ? 'Saving…' : previous ? 'Update registration' : 'Register'}</Button>
-              <a className="text-link" href={links.contest(contest.id)}>Cancel</a>
+              <a className="text-link hover:text-link-hover" href={links.contest(contest.id)}>Cancel</a>
             </div>
           </div>
         </form.Form>
@@ -233,7 +235,7 @@ function failureMessage(failure: RegistrationFailure, registered: boolean) {
 function SaveFailure({ failure, registered }: { failure: RegistrationFailure; registered: boolean }) {
   const loginUrl = useLoginUrl()
   return (
-    <Flash variant="danger" action={failure === 'signed-out' ? <a className="text-link" href={loginUrl}>Log in</a> : undefined}>
+    <Flash variant="danger" action={failure === 'signed-out' ? <a className="text-link hover:text-link-hover" href={loginUrl}>Log in</a> : undefined}>
       {failureMessage(failure, registered)}
     </Flash>
   )

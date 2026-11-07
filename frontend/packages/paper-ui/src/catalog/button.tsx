@@ -422,7 +422,7 @@ export const buttonDocument = defineCatalogDocument({
       "implementation": {
         "heading": "Implementation",
         "content": [
-          "Button and buttonClassName() call the same recipe; load paper-ui/styles.css once at the application root."
+          "Button and buttonClassName() call the same recipe; import paper-ui/theme.css once in the application's Tailwind entry stylesheet."
         ]
       },
       "apiReference": {

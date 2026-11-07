@@ -1,13 +1,14 @@
 import { useState } from 'react'
-import { Button } from 'paper-ui'
+import { Button, cluster, typography } from 'paper-ui'
 import type { CatalogDocument } from 'paper-ui/catalog'
 import { CodeBlock } from './CodeBlock'
-import './foundation-guide.css'
+
+const documentSection = 'document-section max-w-docs-section scroll-mt-24 [&+&]:mt-12 [&>h2]:mb-5 [&>h2]:mt-0 [&>h3]:mb-2.5 [&>h3]:mt-7 [&>h2+h3]:mt-0 [&>p]:mb-4 [&>p]:mt-0 foundation-guide min-w-0 [&&_h3]:mb-3 [&&_h3]:mt-6 [&&&&_.paper-stack>h3]:my-0 [&&&>h3]:mt-8 [&_a]:text-link [&_a]:underline-offset-link [&_p]:max-w-measure [&_code]:wrap-anywhere'
 
 export function GuideCode({ code, label = 'Complete example' }: { code: string; label?: string }) {
   const [status, setStatus] = useState('')
-  return <div className="foundation-code">
-    <div className="paper-cluster"><h3>{label}</h3><Button variant="outline" onClick={async () => {
+  return <div className="my-6 min-w-0 [&_h3]:m-0 [&_h3]:grow [&_h3]:basis-60 [&_pre]:max-w-full [&_pre]:overflow-auto [&_pre]:border [&_pre]:border-rule [&_pre]:bg-canvas [&_pre]:p-4 [&_pre]:text-fine [&_pre]:leading-165 [&_pre]:text-ink [&_pre_code]:wrap-normal [&_[role=status]]:text-sm">
+    <div className={cluster()}><h3>{label}</h3><Button variant="outline" onClick={async () => {
       try { await navigator.clipboard.writeText(code); setStatus('Copied.') }
       catch { setStatus('Select the code below and copy it manually.') }
     }}>Copy code</Button><span role="status">{status}</span></div>
@@ -16,16 +17,16 @@ export function GuideCode({ code, label = 'Complete example' }: { code: string; 
 }
 
 export function GuideTable({ columns, rows, label }: { columns: readonly string[]; rows: readonly (readonly string[])[]; label: string }) {
-  return <div className="foundation-reference" role="region" aria-label={label} tabIndex={0}>
-    <p className="foundation-reference-hint">Scroll horizontally to see all columns.</p><table><caption>{label}</caption><thead><tr>{columns.map(c => <th key={c} scope="col">{c}</th>)}</tr></thead>
+  return <div className="foundation-reference my-6 overflow-x-auto [&_table]:w-full [&_table]:min-w-reference-table [&_table]:border-collapse [&_table]:text-start [&_table]:text-sm [&_caption]:mb-3 [&_caption]:text-start [&_caption]:font-bold [&_:is(th,td)]:border-b [&_:is(th,td)]:border-rule [&_:is(th,td)]:p-3 [&_:is(th,td)]:text-start [&_:is(th,td)]:align-top [&_:is(th,td)]:wrap-anywhere [&_th]:min-w-32 [&_th]:font-semibold max-xs:[&_:is(th,td)]:px-1 max-xs:[&_:is(th,td)]:py-2" role="region" aria-label={label} tabIndex={0}>
+    <p className="hidden max-md:sticky max-md:start-0 max-md:block max-md:text-xs max-md:text-muted">Scroll horizontally to see all columns.</p><table><caption>{label}</caption><thead><tr>{columns.map(c => <th key={c} scope="col">{c}</th>)}</tr></thead>
       <tbody>{rows.map((row, index) => <tr key={index}>{row.map((cell, i) => i === 0 ? <th key={i} scope="row">{cell}</th> : <td key={i}>{cell}</td>)}</tr>)}</tbody>
     </table>
   </div>
 }
 
 export function GovernanceGuide({ document }: { document: CatalogDocument }) {
-  if (document.id === 'governance.contributing') return <section id="usage" className="document-section foundation-guide">
-    <h2 className="paper-type-section">Make a reviewable change</h2>
+  if (document.id === 'governance.contributing') return <section id="usage" className={documentSection}>
+    <h2 className={typography({ role: 'section' })}>Make a reviewable change</h2>
     <ol>
       <li><strong>Check the existing contract.</strong> Read the component page, public export, CSS and tests in <code>frontend/packages/paper-ui</code>. Record the concrete user problem and whether an existing component can cover it.</li>
       <li><strong>Reproduce the behavior.</strong> For a bug, add a failing interaction or visual regression before fixing it. For a new API, describe defaults, controlled state, keyboard behavior and invalid combinations.</li>
@@ -43,8 +44,8 @@ export function GovernanceGuide({ document }: { document: CatalogDocument }) {
     ]} />
     <p><a href="https://github.com/tadoku/tadoku/tree/62536c7988107f6856c83cf443735638230937ed/docs/wip/tadoku-paper">Decision log and design history</a> explain the accepted Bookplate direction. Keep application routing, fetching, persistence and contest rules in applications.</p>
   </section>
-  if (document.id === 'governance.changelog') return <section id="usage" className="document-section foundation-guide">
-    <h2 className="paper-type-section">Change history</h2>
+  if (document.id === 'governance.changelog') return <section id="usage" className={documentSection}>
+    <h2 className={typography({ role: 'section' })}>Change history</h2>
     <p>The package version remains <code>0.1.0</code>. A documentation review date is not a release or deployment date. These entries describe repository work; verify the deployed commit before relying on a change in a live app.</p>
     <GuideTable label="Changes and consumer impact" columns={['When', 'Change', 'Consumer impact']} rows={[
       ['Current review · unreleased', 'Foundation usage examples, spacing scale and layout utilities; corrected accent rail perimeter alignment. Experimental page-composition controls (PageHeader, SectionHeading, StatusTag, EmptyState, StatGrid, DescriptionList, AppliedFilters) and the Filter bar pattern.', 'Existing composition remains valid. New utilities and controls require the rebuilt package; the controls are Experimental and only paper-playground uses them. Application migrations remain separate work.'],
@@ -54,8 +55,8 @@ export function GovernanceGuide({ document }: { document: CatalogDocument }) {
     <h3>Before upgrading an application</h3><p>Read the affected component’s contract and migration notes, compare the application’s current commit to the intended version, then review its actual screens in both themes and densities. This page does not assert that Admin, Auth or webv2 has migrated.</p>
     <p><a href="https://github.com/tadoku/tadoku/commits/main/frontend/packages/paper-ui">Package commit history</a> and <a href="https://github.com/tadoku/tadoku/commits/main/frontend/apps/paper-styleguide">styleguide commit history</a> contain exact changes. Container digests and deployment approvals belong in release records, not inferred from the package version.</p>
   </section>
-  if (document.id === 'pattern.filter-bar') return <section id="usage" className="document-section foundation-guide">
-    <h2 className="paper-type-section">Compose the filter bar</h2>
+  if (document.id === 'pattern.filter-bar') return <section id="usage" className={documentSection}>
+    <h2 className={typography({ role: 'section' })}>Compose the filter bar</h2>
     <GuideTable label="Parts in reading order" columns={['Part', 'Paper controls', 'Screen responsibility']} rows={[
       ['Filters toggle', 'A ghost Button in SectionHeading actions, with aria-expanded and aria-controls.', 'Open state, any default-open rule and the applied count in its label.'],
       ['Filter panel', 'Select, Input and other form controls inside a form.AppForm.', 'Field layout and filter state. Keep the panel mounted while collapsed.'],
@@ -67,8 +68,8 @@ export function GovernanceGuide({ document }: { document: CatalogDocument }) {
     <p>Collapsed without filters shows only the toggle. Collapsed with filters keeps the summary visible. Expanded shows the fields, and changes apply immediately. No matches replaces the results with a plain EmptyState. Clearing from the summary or the empty state resets every field and returns focus to the toggle.</p>
     <p>When a screen has only one or two filters, keep the fields visible beside the list with a Clear filters button instead, as the contest list does; the toggle and summary add nothing there.</p>
   </section>
-  if (document.id === 'pattern.logging' || document.id === 'experiment.logging-v2') return <section id="usage" className="document-section foundation-guide">
-    <h2 className="paper-type-section">Compose the reading flow</h2>
+  if (document.id === 'pattern.logging' || document.id === 'experiment.logging-v2') return <section id="usage" className={documentSection}>
+    <h2 className={typography({ role: 'section' })}>Compose the reading flow</h2>
     <GuideTable label="Information the reader must see" columns={['Moment', 'Required content', 'Application responsibility']} rows={[
       ['Entry', 'Work, language, amount/unit and reading date.', 'Validate values and preserve edits after failure.'],
       ['Review (when included)', 'Repeat the exact amount and work before saving.', 'Return to editing without losing values.'],

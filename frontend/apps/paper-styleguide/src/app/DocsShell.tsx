@@ -1,11 +1,4 @@
-import {
-  Button,
-  Drawer,
-  Navbar,
-  Sidebar,
-  type NavigationLinkRenderer,
-  type SidebarSection,
-} from 'paper-ui'
+import { Button, cn, Drawer, focusRing, Navbar, type NavigationLinkRenderer, Sidebar, type SidebarSection } from 'paper-ui'
 import type { CatalogDocument } from 'paper-ui/catalog'
 import cutMeterUrl from 'paper-ui/assets/brand/cut-meter.svg?no-inline'
 import cutMeterReversedUrl from 'paper-ui/assets/brand/cut-meter-reversed.svg?no-inline'
@@ -75,7 +68,7 @@ function MobileCatalogueNavigation({
       onOpenChange={setOpen}
       trigger={
         <Button
-          className="mobile-nav-trigger"
+          className="mobile-nav-trigger hidden max-lg:inline-flex max-2xs:w-control max-2xs:justify-center max-2xs:px-0"
           variant="ghost"
           aria-label="Browse"
           leadingIcon={
@@ -85,7 +78,7 @@ function MobileCatalogueNavigation({
             />
           }
         >
-          <span className="mobile-nav-trigger__label">Browse</span>
+          <span className="mobile-nav-trigger__label max-2xs:hidden">Browse</span>
         </Button>
       }
     >
@@ -104,20 +97,20 @@ export function DocsShell({ documents, children }: DocsShellProps) {
   const sections = navigationSections(documents)
 
   return (
-    <div className="docs-shell">
-      <a className="skip-link paper-focus-ring" href="#main-content">
+    <div className="docs-shell grid min-h-screen grid-cols-docs-shell grid-rows-docs max-lg:block [&_code]:text-link [&_code]:wrap-anywhere">
+      <a className={cn(focusRing(), 'skip-link fixed start-inline top-inline z-skip -translate-y-offscreen bg-action px-field-x py-field-y text-inverse focus:translate-y-0 motion-safe:transition-transform motion-safe:duration-quick')} href="#main-content">
         Skip to content
       </a>
-      <header className="docs-navbar">
+      <header className="docs-navbar sticky top-0 z-docs-navbar col-span-full">
         <Navbar
           brandHref="/"
           navigation={[]}
           renderLink={renderRouterLink}
           mobileNavigation={false}
           brand={
-            <span className="docs-wordmark" role="img" aria-label="Tadoku">
+            <span className="docs-wordmark flex items-center gap-1.75" role="img" aria-label="Tadoku">
               <img
-                className="docs-wordmark__mark docs-wordmark__mark--ink"
+                className="block size-9 docs-wordmark__mark--ink dark:hidden"
                 src={cutMeterUrl}
                 alt=""
                 aria-hidden="true"
@@ -125,7 +118,7 @@ export function DocsShell({ documents, children }: DocsShellProps) {
                 height={36}
               />
               <img
-                className="docs-wordmark__mark docs-wordmark__mark--reversed"
+                className="block size-9 docs-wordmark__mark--reversed hidden dark:block"
                 src={cutMeterReversedUrl}
                 alt=""
                 aria-hidden="true"
@@ -133,7 +126,7 @@ export function DocsShell({ documents, children }: DocsShellProps) {
                 height={36}
               />
               <img
-                className="docs-wordmark__image docs-wordmark__image--accent"
+                className="docs-wordmark__image block h-docs-wordmark-y w-docs-wordmark docs-wordmark__image--accent dark:hidden"
                 src={wordmarkAccentUrl}
                 alt=""
                 aria-hidden="true"
@@ -141,7 +134,7 @@ export function DocsShell({ documents, children }: DocsShellProps) {
                 height={23.2}
               />
               <img
-                className="docs-wordmark__image docs-wordmark__image--reversed"
+                className="docs-wordmark__image block h-docs-wordmark-y w-docs-wordmark docs-wordmark__image--reversed hidden dark:block"
                 src={wordmarkReversedUrl}
                 alt=""
                 aria-hidden="true"
@@ -163,7 +156,7 @@ export function DocsShell({ documents, children }: DocsShellProps) {
         />
       </header>
 
-      <aside className="docs-sidebar" data-density="compact">
+      <aside className="docs-sidebar sticky top-docs-navbar h-docs-sidebar self-start overflow-y-auto border-e border-rule-subtle bg-paper px-4 pb-12 pt-5 max-lg:hidden" data-density="compact">
         <Sidebar
           sections={sections}
           currentPath={location.pathname}
@@ -172,7 +165,7 @@ export function DocsShell({ documents, children }: DocsShellProps) {
         />
       </aside>
 
-      <main id="main-content" className="docs-main" tabIndex={-1}>
+      <main id="main-content" className="min-w-0 px-docs-x pb-28 pt-docs-y max-tablet:pt-8" tabIndex={-1}>
         {children}
       </main>
     </div>

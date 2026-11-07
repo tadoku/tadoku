@@ -1,8 +1,8 @@
-import { Flash } from 'paper-ui'
+import { Flash, stack } from 'paper-ui'
 
 export default function Example() {
   return (
-    <div className="paper-stack">
+    <div className={stack()}>
       <Flash title="Contest note">Only finished reading counts.</Flash>
       <Flash variant="success" title="Entry saved">
         48 pages added.

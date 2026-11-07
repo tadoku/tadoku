@@ -3,14 +3,14 @@
  * dash metadata keep adjacent categories distinguishable without hue alone.
  */
 export const chartPalette = [
-  "var(--paper-color-chart-1)",
-  "var(--paper-color-chart-2)",
-  "var(--paper-color-chart-3)",
-  "var(--paper-color-chart-4)",
-  "var(--paper-color-chart-5)",
-  "var(--paper-color-chart-6)",
-  "var(--paper-color-chart-7)",
-  "var(--paper-color-chart-8)",
+  "var(--color-chart-1)",
+  "var(--color-chart-2)",
+  "var(--color-chart-3)",
+  "var(--color-chart-4)",
+  "var(--color-chart-5)",
+  "var(--color-chart-6)",
+  "var(--color-chart-7)",
+  "var(--color-chart-8)",
 ] as const;
 
 export const chartCategoryStyles = chartPalette.map((color, index) => ({

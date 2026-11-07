@@ -1,5 +1,5 @@
 import { useStore } from '@tanstack/react-form'
-import { Button, EmptyState, usePaperForm } from 'paper-ui'
+import { Button, EmptyState, stack, usePaperForm } from 'paper-ui'
 import { useRef } from 'react'
 
 const contests = ['2026 Round 5', 'Japanese novel club', 'Autumn in French']
@@ -17,7 +17,7 @@ export default function Example() {
   }
 
   return (
-    <div className="paper-stack" style={{ maxWidth: '40rem' }}>
+    <div className={stack({ className: "max-w-panel" })}>
       <methods.AppForm>
         <form role="search" onSubmit={event => event.preventDefault()}>
           <methods.AppField name="query">

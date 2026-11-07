@@ -1,7 +1,13 @@
 import { Combobox } from "@base-ui/react/combobox";
 import { useId, useMemo, useRef, useState } from "react";
 import { CheckIcon, ChevronDownIcon, XMarkIcon, iconClassName } from "../../icons";
+import { surface } from "../../foundations/recipes";
+import { cn } from "../../foundations/variants";
 import { FieldFrame, describedBy, useField, type FieldContract } from "./field";
+import { combobox, control } from "./styles";
+
+const slots = combobox();
+const popupClassName = cn(surface({ tone: "overlay", elevation: "floating" }), slots.popup());
 
 interface AutocompleteContract<Value> extends FieldContract {
   readonly options: readonly Value[];
@@ -41,18 +47,18 @@ function ComboboxPopup<Value>({
 }) {
   return (
     <Combobox.Portal container={portalContainer}>
-      <Combobox.Positioner className="paper-combobox__positioner" sideOffset={4}>
-        <Combobox.Popup className="paper-combobox__popup paper-elevation-floating">
-          <Combobox.Empty className="paper-combobox__empty">No matching options.</Combobox.Empty>
+      <Combobox.Positioner className={slots.positioner()} sideOffset={4}>
+        <Combobox.Popup className={popupClassName}>
+          <Combobox.Empty className={slots.empty()}>No matching options.</Combobox.Empty>
           <Combobox.List>
             {options.map((option, index) => (
               <Combobox.Item
                 key={getId(option)}
                 value={option}
                 index={index}
-                className="paper-combobox__item"
+                className={slots.item()}
               >
-                <Combobox.ItemIndicator className="paper-combobox__indicator" aria-hidden="true">
+                <Combobox.ItemIndicator className={slots.indicator()} aria-hidden="true">
                   <CheckIcon className={iconClassName("compact")} />
                 </Combobox.ItemIndicator>
                 <span>{format(option)}</span>
@@ -102,21 +108,21 @@ export function AutocompleteInput<Value>({
         isItemEqualToValue={(left, right) => getId(left) === getId(right)}
         disabled={disabled}
       >
-        <div className="paper-combobox__input-group">
+        <div className={slots.group()}>
           <Combobox.Input
             id={id}
             name={field.name}
             onBlur={field.handleBlur}
             aria-required={required || undefined}
             placeholder={placeholder}
-            className="paper-input"
+            className={cn(control({ interactive: !error, invalid: Boolean(error) }), slots.input())}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy(id, hint, error)}
             ref={(node) => {
               if (node && node.ownerDocument.body !== portalContainer) setPortalContainer(node.ownerDocument.body);
             }}
           />
-          <Combobox.Trigger className="paper-combobox__trigger" aria-label={`Show ${label.toLocaleLowerCase()} options`}>
+          <Combobox.Trigger className={slots.trigger()} aria-label={`Show ${label.toLocaleLowerCase()} options`}>
             <ChevronDownIcon className={iconClassName("compact")} aria-hidden="true" />
           </Combobox.Trigger>
         </div>
@@ -169,11 +175,11 @@ export function AutocompleteMultiInput<Value>({
         isItemEqualToValue={(left, right) => getId(left) === getId(right)}
         disabled={disabled}
       >
-        <Combobox.Chips className="paper-combobox__chips">
+        <Combobox.Chips className={combobox({ invalid: Boolean(error) }).chips()}>
           {values.map((value) => (
-            <Combobox.Chip key={getId(value)} className="paper-combobox__chip">
+            <Combobox.Chip key={getId(value)} className={slots.chip()}>
               {format(value)}
-              <Combobox.ChipRemove aria-label={`Remove ${format(value)}`}>
+              <Combobox.ChipRemove className={slots.chipRemove()} aria-label={`Remove ${format(value)}`}>
                 <XMarkIcon className={iconClassName("compact")} aria-hidden="true" />
               </Combobox.ChipRemove>
             </Combobox.Chip>
@@ -184,7 +190,7 @@ export function AutocompleteMultiInput<Value>({
             onBlur={field.handleBlur}
             aria-required={required || undefined}
             placeholder={atLimit ? "Maximum selections reached" : placeholder}
-            className="paper-combobox__chip-input"
+            className={slots.chipInput()}
             disabled={disabled || atLimit}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy(id, hint, error)}
@@ -192,7 +198,7 @@ export function AutocompleteMultiInput<Value>({
               if (node && node.ownerDocument.body !== portalContainer) setPortalContainer(node.ownerDocument.body);
             }}
           />
-          <Combobox.Trigger disabled={disabled || atLimit} className="paper-combobox__trigger" aria-label={`Show ${label.toLocaleLowerCase()} options`}>
+          <Combobox.Trigger disabled={disabled || atLimit} className={cn(slots.trigger(), slots.chipTrigger())} aria-label={`Show ${label.toLocaleLowerCase()} options`}>
             <ChevronDownIcon className={iconClassName("compact")} aria-hidden="true" />
           </Combobox.Trigger>
         </Combobox.Chips>
@@ -273,11 +279,11 @@ export function TagsInput({
         }}
         disabled={disabled}
       >
-        <Combobox.Chips ref={chipsRef} className="paper-combobox__chips paper-tags-input">
+        <Combobox.Chips ref={chipsRef} className={combobox({ invalid: Boolean(error) }).chips({ className: "paper-tags-input" })}>
           {values.map(value => (
-            <Combobox.Chip key={value} className="paper-combobox__chip">
+            <Combobox.Chip key={value} className={slots.chip()}>
               {value}
-              <Combobox.ChipRemove aria-label={`Remove ${value}`}>
+              <Combobox.ChipRemove className={slots.chipRemove()} aria-label={`Remove ${value}`}>
                 <XMarkIcon className={iconClassName("compact")} aria-hidden="true" />
               </Combobox.ChipRemove>
             </Combobox.Chip>
@@ -306,7 +312,7 @@ export function TagsInput({
             }}
             aria-required={required || undefined}
             placeholder={atLimit ? "Maximum tags reached" : placeholder}
-            className="paper-combobox__chip-input"
+            className={slots.chipInput()}
             disabled={disabled}
             readOnly={atLimit}
             aria-invalid={error ? true : undefined}
@@ -315,17 +321,17 @@ export function TagsInput({
               if (node && node.ownerDocument.body !== portalContainer) setPortalContainer(node.ownerDocument.body);
             }}
           />
-          <Combobox.Trigger disabled={disabled || atLimit} className="paper-combobox__trigger" aria-label={`Show ${label.toLocaleLowerCase()} options`}>
+          <Combobox.Trigger disabled={disabled || atLimit} className={cn(slots.trigger(), slots.chipTrigger())} aria-label={`Show ${label.toLocaleLowerCase()} options`}>
             <ChevronDownIcon className={iconClassName("compact")} aria-hidden="true" />
           </Combobox.Trigger>
         </Combobox.Chips>
         <Combobox.Portal container={portalContainer}>
-          <Combobox.Positioner anchor={chipsRef} align="start" className="paper-combobox__positioner" sideOffset={4}>
-            <Combobox.Popup className="paper-combobox__popup paper-elevation-floating">
-              <Combobox.Empty className="paper-combobox__empty">{alreadySelected ? "This tag is already added." : "Type to add a tag."}</Combobox.Empty>
+          <Combobox.Positioner anchor={chipsRef} align="start" className={slots.positioner()} sideOffset={4}>
+            <Combobox.Popup className={popupClassName}>
+              <Combobox.Empty className={slots.empty()}>{alreadySelected ? "This tag is already added." : "Type to add a tag."}</Combobox.Empty>
               <Combobox.List>
                 {items.map((value, index) => (
-                  <Combobox.Item key={value} value={value} index={index} className="paper-combobox__item paper-tags-input__option">
+                  <Combobox.Item key={value} value={value} index={index} className={cn(slots.item(), slots.option())}>
                     {canCreate && value === candidate ? `Add “${value}”` : formatOption(value)}
                   </Combobox.Item>
                 ))}

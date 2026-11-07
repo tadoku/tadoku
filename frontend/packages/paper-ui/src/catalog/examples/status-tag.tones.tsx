@@ -1,8 +1,8 @@
-import { StatusTag } from 'paper-ui'
+import { cluster, StatusTag } from 'paper-ui'
 
 export default function Example() {
   return (
-    <div className="paper-cluster">
+    <div className={cluster()}>
       <StatusTag>Unlisted</StatusTag>
       <StatusTag tone="information">Scheduled</StatusTag>
       <StatusTag tone="success">Live now</StatusTag>

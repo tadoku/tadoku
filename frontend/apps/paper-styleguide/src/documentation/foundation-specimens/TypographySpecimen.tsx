@@ -1,3 +1,4 @@
+import { typography } from 'paper-ui'
 import TypographyExample from '../foundation-examples/TypographyExample'
 import TypographyExampleSource from '../foundation-examples/TypographyExample.tsx?raw'
 import { GuideTable } from '../FoundationGuide'
@@ -8,10 +9,10 @@ const typeRoles = [
 ] as const
 export function TypographySpecimen() {
   return <>
-    <FoundationCanvas><ul className="foundation-type-list">{typeRoles.map(([role, text]) => <li key={role}><span className={`paper-type-${role}`}>{text}</span><code>paper-type-{role}</code></li>)}</ul></FoundationCanvas>
-    <GuideTable label="Type roles at a 16px root" columns={['CSS class', 'Size / line height (px)', 'Weight', 'Use']} rows={typeRoles.map(([role, , size, weight, use]) => [`paper-type-${role}`, size, weight, use])} />
+    <FoundationCanvas><ul className="grid list-none gap-4 p-0 [&_li]:border-b [&_li]:border-rule-subtle [&_li]:pb-4 [&_li]:wrap-anywhere [&_code]:mt-2 [&_code]:block [&_code]:text-xs">{typeRoles.map(([role, text]) => <li key={role}><span className={typography({ role })}>{text}</span><code>{`typography({ role: '${role}' })`}</code></li>)}</ul></FoundationCanvas>
+    <GuideTable label="Type roles at a 16px root" columns={['Recipe role', 'Size / line height (px)', 'Weight', 'Use']} rows={typeRoles.map(([role, , size, weight, use]) => [`typography({ role: '${role}' })`, size, weight, use])} />
     <FoundationExample Example={TypographyExample} code={TypographyExampleSource} />
-    <p>The full stylesheet includes the bundled fonts: Merriweather ships at 700; Open Sans at 400, 600 and 700. Unshipped italics or weights may be synthesized by the browser. Japanese and other scripts use available fallback fonts. Test realistic multilingual titles rather than assuming every script shares Latin metrics.</p><p>Type classes do not choose heading levels. Keep DOM headings sequential, use body text for instructions and let text wrap. The fixed scale uses rem units and follows browser zoom.</p>
+    <p><code>paper-ui/theme.css</code> declares the bundled fonts: Merriweather ships at 700; Open Sans at 400, 600 and 700. Unshipped italics or weights may be synthesized by the browser. Japanese and other scripts use available fallback fonts. Test realistic multilingual titles rather than assuming every script shares Latin metrics.</p><p>Type classes do not choose heading levels. Keep DOM headings sequential, use body text for instructions and let text wrap. The fixed scale uses rem units and follows browser zoom.</p>
   </>
 }
 

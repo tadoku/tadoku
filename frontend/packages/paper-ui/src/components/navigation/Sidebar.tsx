@@ -6,6 +6,9 @@ import {
   type NavigationItem,
   type NavigationLinkRenderer,
 } from "./navigation";
+import { navigationIcon, sidebar } from "./styles";
+
+const slots = sidebar();
 
 export interface SidebarSection {
   readonly id: string;
@@ -34,25 +37,25 @@ export function Sidebar({
   const sidebarId = `paper-sidebar-${useId().replace(/:/gu, "")}`;
 
   return (
-    <nav className="paper-sidebar" aria-label={label}>
+    <nav className={slots.root()} aria-label={label}>
       {sections.map((section) => (
-        <section key={section.id} className="paper-sidebar__section" aria-labelledby={sidebarSectionHeadingId(sidebarId, section.id)}>
-          <h2 id={sidebarSectionHeadingId(sidebarId, section.id)} className="paper-sidebar__title">{section.title}</h2>
-          <ul className="paper-sidebar__list">
+        <section key={section.id} className={slots.section()} aria-labelledby={sidebarSectionHeadingId(sidebarId, section.id)}>
+          <h2 id={sidebarSectionHeadingId(sidebarId, section.id)} className={slots.title()}>{section.title}</h2>
+          <ul className={slots.list()}>
             {section.links.map((link) => {
               const current = linkIsCurrent(link, currentPath);
               return (
                 <li key={link.id}>
                   {renderNavigationLink(renderLink, {
                     href: link.href,
-                    className: "paper-sidebar__link",
+                    className: slots.link(),
                     "aria-current": current ? "page" : undefined,
                     "aria-disabled": link.disabled || undefined,
                     tabIndex: link.disabled ? -1 : undefined,
                     onClick: link.disabled ? disabledLinkClick : () => link.onSelect?.(),
                     children: (
                       <>
-                        {link.icon ? <span className="paper-navigation__icon" aria-hidden="true">{link.icon}</span> : null}
+                        {link.icon ? <span className={navigationIcon} aria-hidden="true">{link.icon}</span> : null}
                         <span>{link.label}</span>
                       </>
                     ),

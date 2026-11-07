@@ -84,9 +84,9 @@ describe('ExampleCanvas', () => {
     const settings = screen.getByRole('group', { name: 'Preview settings' })
     expect(within(settings).getByLabelText('Fixture')).toBeInTheDocument()
     expect(
-      Array.from(settings.children).map((child) => child.className),
+      Array.from(settings.children).map((child) => child.classList[0]),
     ).toEqual([
-      'canvas-controls__title paper-type-label',
+      'canvas-controls__title',
       'canvas-controls__fixture',
       'canvas-controls__theme',
       'canvas-controls__density',
@@ -100,9 +100,9 @@ describe('ExampleCanvas', () => {
     const settings = screen.getByRole('group', { name: 'Preview settings' })
     expect(within(settings).queryByLabelText('Fixture')).not.toBeInTheDocument()
     expect(
-      Array.from(settings.children).map((child) => child.className),
+      Array.from(settings.children).map((child) => child.classList[0]),
     ).toEqual([
-      'canvas-controls__title paper-type-label',
+      'canvas-controls__title',
       'canvas-controls__theme',
       'canvas-controls__density',
       'canvas-controls__viewport',

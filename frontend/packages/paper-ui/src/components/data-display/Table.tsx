@@ -1,6 +1,7 @@
+import { focusRing } from "../../foundations/recipes";
+import { cn, tv } from "../../foundations/variants";
 import {
   useId,
-  type CSSProperties,
   type HTMLAttributes,
   type Key,
   type ReactNode,
@@ -18,6 +19,10 @@ export interface TableColumn<Row> {
   readonly rowHeader?: boolean;
   /** Optional CSS width or min-width hint, for example `8rem` or `20%`. */
   readonly width?: string;
+  /** Classes for this column's header cell, merged over Paper's. */
+  readonly headerClassName?: string;
+  /** Classes for this column's body cells, merged over Paper's. */
+  readonly cellClassName?: string;
 }
 
 export interface TableProps<Row>
@@ -37,13 +42,40 @@ export interface TableProps<Row>
   readonly linkedRows?: boolean;
 }
 
-type TableStyle = CSSProperties & {
-  readonly "--paper-table-min-inline-size": string;
-};
+const table = tv({
+  slots: {
+    region: [
+      "paper-table-region max-w-full overflow-x-auto overscroll-x-contain [background:var(--effect-table-scroll)]",
+      "focus:scroll-smooth motion-reduce:focus:scroll-auto",
+    ],
+    table: "paper-table w-full border-collapse border-y border-rule text-ink tabular-nums",
+    caption: [
+      "paper-table__caption pb-2.5 text-start font-display text-component leading-component font-bold text-ink",
+    ],
+    header: [
+      "paper-table__header border-b border-rule px-field-x py-field-y text-start align-bottom",
+      "text-metadata leading-label font-semibold text-muted",
+    ],
+    cell: "paper-table__cell border-b border-rule px-field-x py-field-y text-start align-top",
+    row: "",
+    empty: "paper-table__empty px-field-x py-6 text-center text-muted",
+  },
+  variants: {
+    captionVisibility: { visible: {}, "screen-reader": { caption: "paper-table__caption--screen-reader sr-only" } },
+    linkedRows: {
+      true: { table: "paper-table--linked-rows", row: "relative hover:bg-neutral-hover" },
+    },
+  },
+});
 
-function classNames(...values: readonly (string | false | undefined)[]): string {
-  return values.filter(Boolean).join(" ");
-}
+const alignments = {
+  start: "paper-table__cell--start text-start",
+  center: "paper-table__cell--center text-center",
+  end: "paper-table__cell--end text-end",
+} as const;
+
+const rowHeaderClassName = "paper-table__row-header font-semibold";
+const linkedRowHeaderClassName = "paper-table__row-header font-semibold [&_a]:after:absolute [&_a]:after:inset-0";
 
 /**
  * A native data table in a labelled, keyboard-scrollable responsive region.
@@ -69,28 +101,19 @@ export function Table<Row>({
   }
   const reactId = useId();
   const captionId = `paper-table-caption-${reactId.replace(/:/gu, "")}`;
-  const regionStyle: TableStyle = {
-    ...style,
-    "--paper-table-min-inline-size": minWidth,
-  };
+  const slots = table({ captionVisibility, linkedRows });
 
   return (
     <div
       {...regionProps}
-      className={classNames("paper-table-region", "paper-focus-ring", className)}
-      style={regionStyle}
+      className={cn(slots.region(), "paper-focus-ring", focusRing(), className)}
+      style={style}
       role="region"
       aria-labelledby={captionId}
       tabIndex={0}
     >
-      <table className={classNames("paper-table", linkedRows && "paper-table--linked-rows", tableClassName)}>
-        <caption
-          id={captionId}
-          className={classNames(
-            "paper-table__caption",
-            captionVisibility === "screen-reader" && "paper-table__caption--screen-reader",
-          )}
-        >
+      <table className={slots.table({ className: tableClassName })} style={{ minInlineSize: minWidth }}>
+        <caption id={captionId} className={slots.caption()}>
           {caption}
         </caption>
         <thead>
@@ -99,10 +122,7 @@ export function Table<Row>({
               <th
                 key={column.id}
                 scope="col"
-                className={classNames(
-                  "paper-table__header",
-                  `paper-table__cell--${column.align ?? "start"}`,
-                )}
+                className={slots.header({ className: [alignments[column.align ?? "start"], column.headerClassName] })}
                 style={column.width ? { width: column.width } : undefined}
               >
                 {column.header}
@@ -113,31 +133,40 @@ export function Table<Row>({
         <tbody>
           {rows.length === 0 ? (
             <tr>
-              <td className="paper-table__empty" colSpan={columns.length}>
+              <td className={slots.empty()} colSpan={columns.length}>
                 {emptyMessage}
               </td>
             </tr>
           ) : (
-            rows.map((row, rowIndex) => (
-              <tr {...getRowProps?.(row, rowIndex)} key={getRowKey?.(row, rowIndex) ?? rowIndex}>
+            rows.map((row, rowIndex) => {
+              const rowProps = getRowProps?.(row, rowIndex);
+              return (
+              <tr
+                {...rowProps}
+                className={slots.row({ className: rowProps?.className })}
+                key={getRowKey?.(row, rowIndex) ?? rowIndex}
+              >
                 {columns.map((column) => {
                   const Cell = column.rowHeader ? "th" : "td";
                   return (
                     <Cell
                       key={column.id}
                       {...(column.rowHeader ? { scope: "row" as const } : {})}
-                      className={classNames(
-                        "paper-table__cell",
-                        column.rowHeader && "paper-table__row-header",
-                        `paper-table__cell--${column.align ?? "start"}`,
-                      )}
+                      className={slots.cell({
+                        className: [
+                          column.rowHeader && (linkedRows ? linkedRowHeaderClassName : rowHeaderClassName),
+                          alignments[column.align ?? "start"],
+                          column.cellClassName,
+                        ],
+                      })}
                     >
                       {column.cell(row, rowIndex)}
                     </Cell>
                   );
                 })}
               </tr>
-            ))
+              );
+            })
           )}
         </tbody>
       </table>

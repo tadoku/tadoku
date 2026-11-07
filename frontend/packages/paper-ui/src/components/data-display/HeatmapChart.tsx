@@ -3,10 +3,55 @@ import {
   useEffect,
   useRef,
   useState,
-  type CSSProperties,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import { tv } from "../../foundations/variants";
+
+const heatmap = tv({
+  slots: {
+    frame: "paper-heatmap__frame flex w-full items-start",
+    weekdays: "paper-heatmap__weekdays sticky start-0 z-lift h-auto shrink-0 grow-0",
+    chart: "paper-heatmap block h-auto min-w-0 max-w-none flex-1 overflow-visible",
+    axis: "paper-heatmap__axis-label fill-ink font-body text-heat-axis max-tablet:text-heat-axis-phone",
+    layer: "paper-heatmap__tooltip-layer pointer-events-none",
+    legend: [
+      "paper-heatmap__legend sticky start-0 m-0 mt-2 flex w-max max-w-full flex-wrap items-center gap-x-3 gap-y-2",
+      "text-metadata text-muted",
+    ],
+    legendTitle: "max-tablet:basis-full",
+    legendItem: "paper-heatmap__legend-item inline-flex items-center gap-1",
+    cell: [
+      "paper-heatmap__cell focus:stroke-ink focus:stroke-ring focus:outline-none",
+      "group-focus/day:stroke-ink group-focus/day:stroke-ring",
+      "forced-colors:fill-forced-canvas forced-colors:stroke-forced-ink forced-colors:stroke-hairline",
+    ],
+    link: "paper-heatmap__link group/day focus:outline-none",
+    tooltip: "paper-heatmap__tooltip pointer-events-none",
+    tooltipBackground: "paper-heatmap__tooltip-background fill-overlay stroke-rule-strong stroke-hairline",
+    tooltipText: "paper-heatmap__tooltip-text fill-ink font-body text-metadata",
+  },
+  variants: {
+    surface: { paper: { weekdays: "bg-paper" }, canvas: { weekdays: "bg-canvas" } },
+    scrolls: { true: { frame: "min-w-heatmap", legend: "max-w-heatmap-legend" } },
+  },
+  defaultVariants: { surface: "paper" },
+});
+
+const slots = heatmap();
+
+const levelFills = {
+  "0": "fill-heat-0",
+  "1": "fill-heat-1",
+  "2": "fill-heat-2",
+  "3": "fill-heat-3",
+  "4": "fill-heat-4",
+} as const;
+
+function cellClassName(level: string | undefined, future: boolean) {
+  const fill = level && level in levelFills ? levelFills[level as keyof typeof levelFills] : "fill-transparent";
+  return slots.cell({ className: future ? "fill-heat-future" : fill });
+}
 
 export interface HeatmapChartDatum {
   readonly date: string;
@@ -22,6 +67,10 @@ export interface HeatmapChartProps {
   readonly getHref?: (date: string) => string;
   /** The current ISO day; later days are drawn as not yet happened rather than as empty. */
   readonly today?: string;
+  /** The surface behind the chart, which the pinned weekday labels repeat. */
+  readonly surface?: "paper" | "canvas";
+  /** Keeps the year at a readable width inside a sideways-scrolling region, with the legend in view. */
+  readonly scrolls?: boolean;
 }
 
 interface CalendarCell {
@@ -59,7 +108,8 @@ const LEVELS = [
  * follow the original ui HeatmapChart so existing consumers can pass the
  * same dated activity records without reshaping them into a generic matrix.
  */
-export function HeatmapChart({ id, data, year, getHref, today }: HeatmapChartProps) {
+export function HeatmapChart({ id, data, year, getHref, today, surface = "paper", scrolls = false }: HeatmapChartProps) {
+  const variant = heatmap({ surface, scrolls });
   const start = DateTime.fromObject({ year, month: 1, day: 1 });
   const end = DateTime.fromObject({ year, month: 12, day: 31 });
   const values = new Map<string, number>();
@@ -117,18 +167,19 @@ export function HeatmapChart({ id, data, year, getHref, today }: HeatmapChartPro
     <>
       {/* The weekday gutter is its own SVG, sized to the same scale, so it can stay pinned while a narrow container
           scrolls the weeks sideways. */}
-      <div className="paper-heatmap__frame" style={{ "--paper-heatmap-gutter": `${(OFFSET.x / width) * 100}%` } as CSSProperties}>
+      <div className={variant.frame()}>
         <svg
           width={OFFSET.x}
           height={height}
           viewBox={`0 0 ${OFFSET.x} ${height}`}
-          className="paper-heatmap__weekdays"
+          className={variant.weekdays()}
+          style={{ flexBasis: `${(OFFSET.x / width) * 100}%` }}
           aria-hidden="true"
         >
           {WEEKDAYS.map((label, row) => label ? (
             <text
               key={label}
-              className="paper-heatmap__axis-label"
+              className={slots.axis()}
               textAnchor="end"
               x={OFFSET.x - CELL_GAP * 2}
               y={OFFSET.y + CELL_HEIGHT * row + CELL_GAP * row}
@@ -142,7 +193,7 @@ export function HeatmapChart({ id, data, year, getHref, today }: HeatmapChartPro
         width={width - OFFSET.x}
         height={height}
         viewBox={`${OFFSET.x} 0 ${width - OFFSET.x} ${height}`}
-        className="paper-heatmap"
+        className={slots.chart()}
         // A group, not an image: active days are links that assistive technology must reach.
         role="group"
         aria-labelledby={titleId}
@@ -152,7 +203,7 @@ export function HeatmapChart({ id, data, year, getHref, today }: HeatmapChartPro
         {months.map((label, column) => label ? (
           <text
             key={label}
-            className="paper-heatmap__axis-label"
+            className={slots.axis()}
             textAnchor="start"
             x={OFFSET.x + CELL_WIDTH * column + CELL_GAP * column}
             y={0}
@@ -175,23 +226,23 @@ export function HeatmapChart({ id, data, year, getHref, today }: HeatmapChartPro
             />
           )),
         )}
-        <g id={tooltipLayerId} className="paper-heatmap__tooltip-layer" />
+        <g id={tooltipLayerId} className={slots.layer()} />
       </svg>
       </div>
-      <p className="paper-heatmap__legend">
-        <span>Points per day</span>
+      <p className={variant.legend()}>
+        <span className={slots.legendTitle()}>Points per day</span>
         {LEVELS.map(({ level, label }) => (
-          <span key={level} className="paper-heatmap__legend-item">
+          <span key={level} className={slots.legendItem()}>
             <svg width={CELL_WIDTH} height={CELL_HEIGHT} aria-hidden="true">
-              <rect width={CELL_WIDTH} height={CELL_HEIGHT} className="paper-heatmap__cell" data-level={level} />
+              <rect width={CELL_WIDTH} height={CELL_HEIGHT} className={cellClassName(level, false)} shapeRendering="crispEdges" data-level={level} />
             </svg>
             {label}
           </span>
         ))}
         {today && today < end.toISODate()! ? (
-          <span className="paper-heatmap__legend-item">
+          <span className={slots.legendItem()}>
             <svg width={CELL_WIDTH} height={CELL_HEIGHT} aria-hidden="true">
-              <rect width={CELL_WIDTH} height={CELL_HEIGHT} className="paper-heatmap__cell" data-future="" />
+              <rect width={CELL_WIDTH} height={CELL_HEIGHT} className={cellClassName(undefined, true)} shapeRendering="crispEdges" data-future="" />
             </svg>
             Not yet
           </span>
@@ -249,7 +300,8 @@ function Cell({
       height={CELL_HEIGHT}
       x={x}
       y={y}
-      className="paper-heatmap__cell"
+      className={cellClassName(level, future)}
+      shapeRendering="crispEdges"
       data-level={level}
       data-future={future ? "" : undefined}
       data-today={today && isoDate === today ? "" : undefined}
@@ -267,7 +319,7 @@ function Cell({
       onTouchCancel={hideTooltip}
     />
   );
-  const rect = href ? <a href={href} className="paper-heatmap__link" {...focusProps}>{shape}</a> : shape;
+  const rect = href ? <a href={href} className={slots.link()} {...focusProps}>{shape}</a> : shape;
 
   if (!mounted || !tooltip) return rect;
   const tooltipLayer = document.getElementById(tooltipLayerId);
@@ -337,7 +389,7 @@ function Tooltip({
     <g
       id={id}
       role="tooltip"
-      className={`paper-heatmap__tooltip${visible ? "" : " hidden"}`}
+      className={slots.tooltip({ className: visible ? undefined : "hidden" })}
       aria-hidden={!visible}
     >
       <rect
@@ -345,18 +397,18 @@ function Tooltip({
         height={rect.height}
         x={rect.x}
         y={rect.y}
-        className="paper-heatmap__tooltip-background"
+        className={slots.tooltipBackground()}
       />
       <polygon
         points={pointsForRect(rect)}
-        className="paper-heatmap__tooltip-background"
+        className={slots.tooltipBackground()}
       />
       <text
         ref={textRef}
         x={rect.x + 6}
         y={rect.y + 8}
         dominantBaseline="hanging"
-        className="paper-heatmap__tooltip-text"
+        className={slots.tooltipText()}
       >
         {children}
       </text>

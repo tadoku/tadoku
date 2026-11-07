@@ -1,4 +1,4 @@
-import { VerticalTabbar } from 'paper-ui'
+import { stack, VerticalTabbar } from 'paper-ui'
 import { useState } from 'react'
 
 const profileLinks = [
@@ -10,7 +10,7 @@ const profileLinks = [
 export default function VerticalTabbarExample() {
   const [path, setPath] = useState('#statistics')
   return (
-    <div className="paper-stack" style={{ maxWidth: '22rem' }}>
+    <div className={stack({ className: "max-w-nav-demo" })}>
       <VerticalTabbar
         label="Profile views"
         currentPath={path}

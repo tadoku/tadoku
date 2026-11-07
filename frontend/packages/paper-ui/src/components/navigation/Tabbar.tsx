@@ -6,6 +6,7 @@ import {
   type NavigationItem,
   type NavigationLinkRenderer,
 } from "./navigation";
+import { navigationIcon, tabbar, type TabbarSlot } from "./styles";
 
 export interface TabbarItem extends NavigationItem {
   readonly href: string;
@@ -16,6 +17,9 @@ export interface TabbarProps {
   readonly currentPath?: string;
   readonly renderLink?: NavigationLinkRenderer;
   readonly label?: string;
+  readonly className?: string;
+  /** Classes merged over a part's own, for a screen's layout needs. */
+  readonly classNames?: Partial<Record<TabbarSlot, string>>;
 }
 
 function TabbarList({
@@ -23,7 +27,9 @@ function TabbarList({
   currentPath,
   renderLink,
   orientation,
+  classNames,
 }: TabbarProps & { readonly orientation: "horizontal" | "vertical" }) {
+  const slots = tabbar({ orientation });
   const listRef = useRef<HTMLUListElement>(null);
   const currentId = links.find((link) => linkIsCurrent(link, currentPath))?.id;
   useEffect(() => {
@@ -45,21 +51,21 @@ function TabbarList({
   }, [currentId, orientation]);
 
   return (
-    <ul ref={listRef} className={`paper-tabbar__list paper-tabbar__list--${orientation}`}>
+    <ul ref={listRef} className={slots.list({ className: classNames?.list })}>
       {links.map((link) => {
         const current = linkIsCurrent(link, currentPath);
         return (
           <li key={link.id}>
             {renderNavigationLink(renderLink, {
               href: link.href,
-              className: "paper-tabbar__link",
+              className: slots.link({ className: classNames?.link }),
               "aria-current": current ? "page" : undefined,
               "aria-disabled": link.disabled || undefined,
               tabIndex: link.disabled ? -1 : undefined,
               onClick: link.disabled ? disabledLinkClick : () => link.onSelect?.(),
               children: (
                 <>
-                  {link.icon ? <span className="paper-navigation__icon" aria-hidden="true">{link.icon}</span> : null}
+                  {link.icon ? <span className={navigationIcon} aria-hidden="true">{link.icon}</span> : null}
                   <span>{link.label}</span>
                 </>
               ),
@@ -72,9 +78,17 @@ function TabbarList({
 }
 
 export function Tabbar({ label = "Page sections", ...props }: TabbarProps) {
-  return <nav className="paper-tabbar" aria-label={label}><TabbarList {...props} label={label} orientation="horizontal" /></nav>;
+  return (
+    <nav className={tabbar({ orientation: "horizontal" }).root({ className: [props.classNames?.root, props.className] })} aria-label={label}>
+      <TabbarList {...props} label={label} orientation="horizontal" />
+    </nav>
+  );
 }
 
 export function VerticalTabbar({ label = "Page sections", ...props }: TabbarProps) {
-  return <nav className="paper-tabbar paper-tabbar--vertical" aria-label={label}><TabbarList {...props} label={label} orientation="vertical" /></nav>;
+  return (
+    <nav className={tabbar({ orientation: "vertical" }).root({ className: [props.classNames?.root, props.className] })} aria-label={label}>
+      <TabbarList {...props} label={label} orientation="vertical" />
+    </nav>
+  );
 }

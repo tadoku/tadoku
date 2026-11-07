@@ -45,7 +45,7 @@ function EditDraft({ viewerId }: { viewerId: string }) {
         headingLevel={1}
         title="This is someone else's record"
         description="Only the learner who logged this activity can edit it."
-        actions={<Link className="text-link" to="/logs/$logId" params={{ logId }}>View the log</Link>}
+        actions={<Link className="text-link hover:text-link-hover" to="/logs/$logId" params={{ logId }}>View the log</Link>}
       />
     )
   }

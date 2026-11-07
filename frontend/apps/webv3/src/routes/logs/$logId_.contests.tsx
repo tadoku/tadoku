@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useStore } from '@tanstack/react-form'
 import { Link, createFileRoute, notFound, useHydrated, useNavigate } from '@tanstack/react-router'
-import { Button, EmptyState, PageHeader, Surface, buttonClassName, usePaperForm } from 'paper-ui'
+import { Button, buttonClassName, EmptyState, formFooter, PageHeader, Surface, usePaperForm } from 'paper-ui'
 import { useState } from 'react'
 import { z } from 'zod'
 import { DraftOwnerGate } from '../../components/DraftOwnerGate'
@@ -17,6 +17,8 @@ import {
   type Registration,
 } from '../../lib/logs'
 import { useLoginUrl, viewerQueryOptions } from '../../lib/session'
+import { recordSurface } from '../../components/standings-styles'
+import { formControls } from '../../components/form-styles'
 
 export const Route = createFileRoute('/logs/$logId_/contests')({
   head: () => ({ meta: [{ title: 'Submit to contests · Tadoku' }] }),
@@ -62,7 +64,7 @@ function ContestsDraft({ viewerId }: { viewerId: string }) {
         headingLevel={1}
         title="This is someone else's record"
         description="Only the learner who logged this activity can submit it to contests."
-        actions={<Link className="text-link" to="/logs/$logId" params={{ logId }}>View the log</Link>}
+        actions={<Link className="text-link hover:text-link-hover" to="/logs/$logId" params={{ logId }}>View the log</Link>}
       />
     )
   }
@@ -132,18 +134,18 @@ function ContestsForm({ log, registrations, viewerId }: {
   const finished = submitted.filter(submission => submission.contest_end < today)
 
   return (
-    <div className="goal-page">
+    <div>
       <PageHeader
         title="Submit to contests"
         backLink={{ href: `/logs/${log.id}`, label: log.description || `${log.language.name} ${log.activity.name}` }}
       />
-      <Surface className="log-surface">
+      <Surface className={recordSurface}>
         <LogSummary log={log} />
         <form.AppForm>
-          <form.Form className="goal-form" aria-busy={pending}>
-            <fieldset className="goal-form__controls" disabled={disabled}>
-              <fieldset className="paper-choice-field log-contest-choices">
-                <legend className="paper-visually-hidden">Contests</legend>
+          <form.Form className="min-w-0" aria-busy={pending}>
+            <fieldset className={formControls} disabled={disabled}>
+              <fieldset className="m-0 grid gap-2 border-0 p-0">
+                <legend className="sr-only">Contests</legend>
                 {/* As in Webv2: open contests first, then unavailable ones, each naming why on its own row. */}
                 {[...choices].sort((a, b) => Number(a.kind === 'ineligible') - Number(b.kind === 'ineligible')).map(choice => (
                   <form.AppField key={choice.registration.id} name="registrationIds">
@@ -159,7 +161,7 @@ function ContestsForm({ log, registrations, viewerId }: {
                     )}
                   </form.AppField>
                 ))}
-                {eligible.length ? <p className="log-contests-note">Unchecking removes this log’s score from that contest.</p> : null}
+                {eligible.length ? <p className="mb-0 mt-2 text-metadata text-muted">Unchecking removes this log’s score from that contest.</p> : null}
                 {finished.map(submission => (
                   <p key={submission.registration_id}>
                     {submission.title} has finished. Its saved score
@@ -175,18 +177,18 @@ function ContestsForm({ log, registrations, viewerId }: {
                   description={choices.length
                     ? 'This activity already counts in your personal history.'
                     : 'No contest registrations found. You can submit to contests after joining one. This activity already counts in your personal history.'}
-                  actions={<a className="text-link" href={links.contests}>Find a contest to join</a>}
+                  actions={<a className="text-link hover:text-link-hover" href={links.contests}>Find a contest to join</a>}
                 />
               )}
             </fieldset>
 
             {failure ? <SaveFailure failure={failure} /> : null}
-            <div className="paper-form-footer">
-              <div className="paper-form-footer__actions">
+            <div className={formFooter().root()}>
+              <div className={formFooter().actions()}>
                 <Button type="submit" disabled={disabled || !eligible.length}>
                   {pending ? 'Saving…' : 'Save submissions'}
                 </Button>
-                <Link className="text-link" to="/logs/$logId" params={{ logId: log.id }}>Cancel</Link>
+                <Link className="text-link hover:text-link-hover" to="/logs/$logId" params={{ logId: log.id }}>Cancel</Link>
               </div>
             </div>
           </form.Form>
@@ -205,11 +207,19 @@ function LogSummary({ log }: { log: ImmersionLog }) {
   const what = [log.language.name, log.activity.name, formatTracking(log)].filter(Boolean).join(' · ')
 
   return (
-    <section className="log-contests-summary" aria-label="Your log">
-      <p className="log-contests-summary__label">Your log</p>
-      <p className="log-contests-summary__what">{what}</p>
-      {log.description && !nsfw ? <p className="log-contests-summary__description">{log.description}</p> : null}
-      <p className="log-contests-summary__score">{numberFormat.format(log.score)} <small>{pointsUnit(log.score)}</small></p>
+    <section
+      className={[
+        'grid grid-cols-content-end items-baseline gap-x-4 gap-y-0.5 border-b border-rule bg-canvas',
+        '-mx-record-inset -mt-record-inset mb-6 px-record-inset py-4 [&_p]:m-0',
+      ].join(' ')}
+      aria-label="Your log"
+    >
+      <p className="col-span-full text-metadata text-muted">Your log</p>
+      <p className="font-semibold">{what}</p>
+      {log.description && !nsfw ? <p className="col-start-1 text-sm text-muted wrap-anywhere">{log.description}</p> : null}
+      <p className="col-start-2 row-start-2 whitespace-nowrap font-bold tabular-nums">
+        {numberFormat.format(log.score)} <small className="text-metadata font-regular text-muted">{pointsUnit(log.score)}</small>
+      </p>
     </section>
   )
 }
@@ -231,7 +241,7 @@ function SaveFailure({ failure }: { failure: LogFailure }) {
     <div role="alert">
       <p>{failureMessages[failure]}</p>
       {failure === 'signed-out'
-        ? <a className="text-link" href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
+        ? <a className="text-link hover:text-link-hover" href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a>
         : null}
     </div>
   )

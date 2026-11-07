@@ -21,13 +21,13 @@ export function ProfileActivity({ activity, page, date, owner }: {
   return (
     <div className="profile-page">
       <ProfileHeader profile={profile} owner={owner} view="activity" overviewHref={links.profile(profile.id)} />
-      <section className="profile-activity" aria-label="Activity log">
+      <section className="mt-8" aria-label="Activity log">
         {date ? (
-          <Flash className="profile-day" action={<Link className="text-link" to={links.profileUpdates(profile.id)}>Show all updates</Link>}>
+          <Flash className="mb-4" action={<Link className="text-link hover:text-link-hover" to={links.profileUpdates(profile.id)}>Show all updates</Link>}>
             Showing updates on {formatDate(date)}
           </Flash>
         ) : null}
-        {!logs.ok ? <p className="profile-muted">Could not load updates. Try reloading this page.</p> : (
+        {!logs.ok ? <p className="mb-0 mt-2 text-metadata leading-160 text-muted">Could not load updates. Try reloading this page.</p> : (
           <LogEntries
             logs={logs.data.logs}
             total={logs.data.total_size}

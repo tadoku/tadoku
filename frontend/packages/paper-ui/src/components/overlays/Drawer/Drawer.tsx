@@ -6,6 +6,51 @@ import {
 } from "react";
 import { XMarkIcon, iconClassName } from "../../../icons";
 import { buttonClassName } from "../../actions/Button";
+import { surface } from "../../../foundations/recipes";
+import { cn, tv } from "../../../foundations/variants";
+
+const drawer = tv({
+  slots: {
+    backdrop: [
+      "paper-drawer__backdrop fixed inset-0 z-backdrop bg-scrim opacity-full transition-opacity duration-standard",
+      "data-starting-style:opacity-0 data-ending-style:opacity-0 motion-reduce:transition-none",
+      "forced-colors:bg-forced-scrim forced-colors:forced-color-adjust-none",
+    ],
+    viewport: "paper-drawer__viewport pointer-events-none fixed inset-0 z-dialog flex",
+    popup: [
+      "paper-drawer pointer-events-auto flex h-full w-drawer flex-col overflow-hidden",
+      "font-body text-body leading-body text-ink transition-transform duration-standard motion-reduce:transition-none",
+      "forced-colors:border-forced-ink",
+    ],
+    header: [
+      "paper-drawer__header flex flex-none items-start justify-between gap-inline border-b border-rule-subtle p-field-x",
+    ],
+    heading: "paper-drawer__heading min-w-0",
+    title: "paper-drawer__title m-0 font-display text-section leading-section font-bold",
+    description: "paper-drawer__description mb-0 mt-1.5 text-muted",
+    close: "paper-drawer__close w-control flex-none px-0",
+    body: "paper-drawer__body min-h-0 flex-auto overflow-y-auto overscroll-contain p-field-x",
+    footer: "paper-drawer__footer flex flex-none justify-end gap-inline border-t border-rule-subtle p-field-x",
+  },
+  variants: {
+    placement: {
+      start: {
+        viewport: "justify-start",
+        popup: [
+          "border-y-0 border-s-0 data-starting-style:-translate-x-full data-ending-style:-translate-x-full",
+          "rtl:data-starting-style:translate-x-full rtl:data-ending-style:translate-x-full",
+        ],
+      },
+      end: {
+        viewport: "justify-end",
+        popup: [
+          "border-y-0 border-e-0 data-starting-style:translate-x-full data-ending-style:translate-x-full",
+          "rtl:data-starting-style:-translate-x-full rtl:data-ending-style:-translate-x-full",
+        ],
+      },
+    },
+  },
+});
 
 export const DRAWER_PLACEMENTS = ["start", "end"] as const;
 
@@ -48,6 +93,7 @@ export function Drawer({
   onOpenChange,
 }: DrawerProps) {
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
+  const slots = drawer({ placement });
 
   return (
     <Dialog.Root
@@ -65,22 +111,22 @@ export function Drawer({
         }}
       />
       <Dialog.Portal container={portalContainer}>
-        <Dialog.Backdrop className="paper-drawer__backdrop" />
+        <Dialog.Backdrop className={slots.backdrop()} />
         <Dialog.Viewport
-          className="paper-drawer__viewport"
+          className={slots.viewport()}
           data-placement={placement}
         >
           <Dialog.Popup
-            className="paper-drawer paper-surface-raised paper-elevation-showcase"
+            className={cn(surface({ tone: "overlay", elevation: "showcase" }), slots.popup())}
             data-placement={placement}
           >
-            <header className="paper-drawer__header">
-              <div className="paper-drawer__heading">
-                <Dialog.Title className="paper-drawer__title">
+            <header className={slots.header()}>
+              <div className={slots.heading()}>
+                <Dialog.Title className={slots.title()}>
                   {title}
                 </Dialog.Title>
                 {description ? (
-                  <Dialog.Description className="paper-drawer__description">
+                  <Dialog.Description className={slots.description()}>
                     {description}
                   </Dialog.Description>
                 ) : null}
@@ -88,15 +134,15 @@ export function Drawer({
               <Dialog.Close
                 className={buttonClassName({
                   variant: "ghost",
-                  className: "paper-drawer__close",
+                  className: slots.close(),
                 })}
                 aria-label={closeLabel}
               >
                 <XMarkIcon className={iconClassName("prominent")} aria-hidden="true" />
               </Dialog.Close>
             </header>
-            <div className="paper-drawer__body">{children}</div>
-            {footer ? <footer className="paper-drawer__footer">{footer}</footer> : null}
+            <div className={slots.body()}>{children}</div>
+            {footer ? <footer className={slots.footer()}>{footer}</footer> : null}
           </Dialog.Popup>
         </Dialog.Viewport>
       </Dialog.Portal>

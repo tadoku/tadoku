@@ -1,4 +1,22 @@
 import type { HTMLAttributes, ReactNode, Ref } from "react";
+import { typography } from "../../../foundations/recipes";
+import { tv } from "../../../foundations/variants";
+
+const emptyState = tv({
+  slots: {
+    root: "paper-empty-state flex min-w-0 flex-col items-start gap-3",
+    title: "paper-empty-state__title m-0 max-w-full wrap-anywhere",
+    description: "paper-empty-state__description m-0 max-w-measure-description",
+    actions: "paper-empty-state__actions mt-2 flex flex-wrap items-center gap-inline",
+  },
+  variants: {
+    variant: {
+      surface: { root: "paper-empty-state--surface border border-rule bg-paper px-6 py-8" },
+      plain: { root: "paper-empty-state--plain py-6" },
+    },
+    focusable: { true: { title: "focus:outline-none" } },
+  },
+});
 
 export interface EmptyStateProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
   readonly title: ReactNode;
@@ -23,23 +41,23 @@ export function EmptyState({
   ...props
 }: EmptyStateProps) {
   const Heading = `h${headingLevel}` as const;
-  const typeRole =
-    headingLevel === 1 ? "paper-type-page" : headingLevel === 2 ? "paper-type-section" : "paper-type-component";
+  const role = headingLevel === 1 ? "page" : headingLevel === 2 ? "section" : "component";
+  const slots = emptyState({ variant, focusable: Boolean(headingRef) });
 
   return (
     <div
       {...props}
-      className={`paper-empty-state paper-empty-state--${variant}${className ? ` ${className}` : ""}`}
+      className={slots.root({ className })}
     >
       <Heading
         ref={headingRef}
         tabIndex={headingRef ? -1 : undefined}
-        className={`paper-empty-state__title ${typeRole}`}
+        className={slots.title({ className: [`paper-type-${role}`, typography({ role })] })}
       >
         {title}
       </Heading>
-      {description ? <p className="paper-empty-state__description">{description}</p> : null}
-      {actions ? <div className="paper-empty-state__actions">{actions}</div> : null}
+      {description ? <p className={slots.description()}>{description}</p> : null}
+      {actions ? <div className={slots.actions()}>{actions}</div> : null}
     </div>
   );
 }

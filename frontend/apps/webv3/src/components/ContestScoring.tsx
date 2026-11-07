@@ -61,9 +61,10 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
   const locked = new Date().toISOString().slice(0, 10) >= contest.contest_start
 
   return (
-    <div className="scoring-page">
+    <div className="grid min-w-0 max-w-record gap-6">
       <PageHeader
         title="Contest scoring"
+        className="mb-0"
         backLink={{ href: links.contest(contestId), label: contest.title }}
         renderLink={renderLink}
       />
@@ -71,7 +72,7 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
         <Flash variant="information">
           Scoring is locked because this contest has started.{contestRuleSets.length > 0
             ? ' Its rule-set versions are listed below.'
-            : <> It uses the <a className="text-link" href={`${links.guide}#media`}>platform defaults</a>.</>}
+            : <> It uses the <a className="text-link hover:text-link-hover" href={`${links.guide}#media`}>platform defaults</a>.</>}
         </Flash>
       ) : (
         <RuleSetForm
@@ -81,8 +82,8 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
           platformRuleSets={platformRuleSets}
         />
       )}
-      {contestRuleSets.length === 0 && !locked ? <p className="scoring-empty">No contest-specific rule sets yet; this contest scores with the platform defaults.</p> : null}
-      {contestRuleSets.length === 0 ? null : <section className="scoring-versions" aria-labelledby="scoring-versions">
+      {contestRuleSets.length === 0 && !locked ? <p className="m-0">No contest-specific rule sets yet; this contest scores with the platform defaults.</p> : null}
+      {contestRuleSets.length === 0 ? null : <section className="grid min-w-0 gap-4 [&>p]:m-0" aria-labelledby="scoring-versions">
         <SectionHeading level={2} id="scoring-versions" title="Rule-set versions" />
         {contestRuleSets.map(ruleSet => (
           <RuleSetVersion
@@ -106,7 +107,7 @@ function RuleSetVersion({ ruleSet, options, change }: {
   const action = change && (ruleSet.status === 'draft' ? 'publish' : ruleSet.active ? null : 'activate')
 
   return (
-    <Surface as="article" className="scoring-version" aria-labelledby={`version-${ruleSet.id}`}>
+    <Surface as="article" className="scoring-version grid min-w-0 gap-3 p-version wrap-anywhere" aria-labelledby={`version-${ruleSet.id}`}>
       <SectionHeading
         level={3}
         id={`version-${ruleSet.id}`}
@@ -125,7 +126,7 @@ function RuleSetVersion({ ruleSet, options, change }: {
         actions={change && action ? <ConfirmChange change={{ ...change, action }} /> : null}
       />
       {ruleSet.rules.length ? (
-        <ol className="scoring-version__rules">
+        <ol className="m-0 ps-5 leading-170">
           {ruleSet.rules.map(rule => <li key={rule.id ?? rule.priority}>{describeRule(rule, options)}</li>)}
         </ol>
       ) : (

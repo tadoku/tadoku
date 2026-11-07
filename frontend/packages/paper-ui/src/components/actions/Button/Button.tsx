@@ -4,6 +4,7 @@ import {
   type ButtonHTMLAttributes,
   type ReactNode,
 } from "react";
+import { tv } from "../../../foundations/variants";
 
 export const BUTTON_VARIANTS = [
   "default",
@@ -22,21 +23,72 @@ export interface ButtonRecipeOptions {
   readonly className?: string;
 }
 
+export const button = tv({
+  slots: {
+    base: [
+      "paper-button relative inline-flex min-h-control select-none items-center justify-center gap-2",
+      "px-button-x pt-button-top pb-button-bottom text-button font-semibold leading-none text-center no-underline",
+      "rounded-none border border-action border-b-edge border-b-action-edge bg-action text-on-action",
+      "cursor-pointer transition-colors duration-quick motion-reduce:transition-none",
+      "not-disabled:hover:border-action-hover not-disabled:hover:border-b-action-edge not-disabled:hover:bg-action-hover",
+      "not-disabled:active:border-action-active not-disabled:active:border-b-action-edge not-disabled:active:bg-action-active",
+      "not-disabled:active:translate-y-px",
+      "disabled:cursor-default disabled:opacity-disabled aria-disabled:cursor-default aria-disabled:opacity-disabled",
+    ],
+    icon: "paper-button__icon inline-grid size-icon flex-none place-items-center *:size-full",
+    spinner: [
+      "paper-button__spinner inline-grid size-icon flex-none place-items-center",
+      "rounded-full border-edge border-current border-e-transparent animate-spin motion-reduce:animate-none",
+    ],
+    label: "paper-button__label",
+    status: "paper-visually-hidden sr-only",
+  },
+  variants: {
+    variant: {
+      default: { base: "paper-button--default" },
+      outline: {
+        base: [
+          "paper-button--outline border-field-edge bg-paper text-ink",
+          "not-disabled:hover:border-rule-strong not-disabled:hover:bg-neutral-hover",
+          "not-disabled:active:border-rule-strong not-disabled:active:bg-neutral-hover",
+          "data-popup-open:border-rule-strong data-popup-open:bg-neutral-hover",
+        ],
+      },
+      ghost: {
+        base: [
+          "paper-button--ghost border-transparent bg-transparent text-ink",
+          "not-disabled:hover:border-transparent not-disabled:hover:bg-neutral-hover not-disabled:hover:text-ink",
+          "not-disabled:active:border-transparent not-disabled:active:bg-neutral-hover not-disabled:active:text-ink",
+          "data-popup-open:border-transparent data-popup-open:bg-neutral-hover data-popup-open:text-ink",
+        ],
+      },
+      link: {
+        base: [
+          "paper-button--link min-h-auto p-0 border-0 bg-transparent text-link underline underline-offset-link",
+          "not-disabled:hover:bg-transparent not-disabled:active:bg-transparent",
+        ],
+      },
+      destructive: {
+        base: [
+          "paper-button--destructive border-destructive border-b-destructive-edge bg-destructive text-on-destructive",
+          "not-disabled:hover:border-destructive-hover not-disabled:hover:border-b-destructive-edge not-disabled:hover:bg-destructive-hover",
+          "not-disabled:active:border-destructive-hover not-disabled:active:border-b-destructive-edge not-disabled:active:bg-destructive-hover",
+        ],
+      },
+    },
+    fullWidth: { true: { base: "paper-button--full-width w-full" } },
+    loading: { true: { base: "paper-button--loading" } },
+  },
+  defaultVariants: { variant: "default" },
+});
+
 export function buttonClassName({
   variant = "default",
   fullWidth = false,
   loading = false,
   className,
 }: ButtonRecipeOptions = {}): string {
-  return [
-    "paper-button",
-    `paper-button--${variant}`,
-    fullWidth ? "paper-button--full-width" : "",
-    loading ? "paper-button--loading" : "",
-    className ?? "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  return button({ variant, fullWidth, loading }).base({ className });
 }
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -69,6 +121,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 ) {
   const generatedId = useId();
   const loadingStatusId = `paper-button-status-${generatedId.replace(/:/gu, "")}`;
+  const slots = button();
   return (
     <button
       {...props}
@@ -85,20 +138,20 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       }
       className={buttonClassName({ variant, fullWidth, loading, className })}
     >
-      {loading ? <span className="paper-button__spinner" aria-hidden="true" /> : null}
+      {loading ? <span className={slots.spinner()} aria-hidden="true" /> : null}
       {!loading && leadingIcon ? (
-        <span className="paper-button__icon" aria-hidden="true">
+        <span className={slots.icon()} aria-hidden="true">
           {leadingIcon}
         </span>
       ) : null}
-      <span className="paper-button__label">{children}</span>
+      <span className={slots.label()}>{children}</span>
       {!loading && trailingIcon ? (
-        <span className="paper-button__icon" aria-hidden="true">
+        <span className={slots.icon()} aria-hidden="true">
           {trailingIcon}
         </span>
       ) : null}
       {loading ? (
-        <span className="paper-visually-hidden" id={loadingStatusId} role="status">
+        <span className={slots.status()} id={loadingStatusId} role="status">
           {loadingLabel}
         </span>
       ) : null}

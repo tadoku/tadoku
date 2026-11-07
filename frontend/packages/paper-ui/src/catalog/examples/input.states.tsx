@@ -1,4 +1,4 @@
-import { usePaperForm } from 'paper-ui'
+import { stack, usePaperForm } from 'paper-ui'
 
 export default function InputStatesFixture() {
   const methods = usePaperForm({
@@ -6,7 +6,7 @@ export default function InputStatesFixture() {
   })
   return (
     <methods.AppForm>
-      <div className="paper-stack">
+      <div className={stack()}>
         <methods.AppField name="readonly">
           {field => <field.Input label="Language" readOnly />}
         </methods.AppField>

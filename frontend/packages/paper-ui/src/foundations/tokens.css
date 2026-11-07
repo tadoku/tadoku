@@ -102,20 +102,20 @@
   --paper-private-rule-strong: #756d71;
   --paper-private-field-edge: #968d91;
   --paper-private-accent: #a99cf0;
-  --paper-private-accent-edge: #5f52aa;
+  --paper-private-accent-edge: #3e3290;
   --paper-private-accent-soft: #3a3448;
   --paper-private-link-hover: #cbc2f8;
   --paper-private-neutral-action-hover: #353134;
-  --paper-private-action-default: #9b8cf2;
-  --paper-private-action-hover: #aa9ef5;
-  --paper-private-action-active: #8b7be6;
-  --paper-private-action-destructive: #d77171;
-  --paper-private-action-destructive-hover: #e09292;
+  --paper-private-action-default: #6656d4;
+  --paper-private-action-hover: #7262dd;
+  --paper-private-action-active: #5b4bc8;
+  --paper-private-action-destructive: #b84a4a;
+  --paper-private-action-destructive-hover: #c05050;
   --paper-private-information: #70acd0;
   --paper-private-success: #7fb488;
   --paper-private-warning: #ddb66f;
   --paper-private-danger: #d77171;
-  --paper-private-danger-edge: #883434;
+  --paper-private-danger-edge: #7a2b2b;
   --paper-private-shadow: rgb(124 104 224 / 34%);
 
   --paper-color-surface-canvas: var(--paper-private-canvas);
@@ -136,8 +136,8 @@
   --paper-color-rule-destructive-action-edge: var(--paper-private-danger-edge);
   --paper-color-action-destructive: var(--paper-private-action-destructive);
   --paper-color-action-destructive-hover: var(--paper-private-action-destructive-hover);
-  /* Dark destructive fills are light enough to clear 3:1 on every surface, so their label is canvas-dark. */
-  --paper-color-action-destructive-text: var(--paper-private-canvas);
+  /* Filled actions keep a light label in dark mode; the fills stay dark enough for it to clear 4.5:1. */
+  --paper-color-action-destructive-text: var(--paper-private-inverse);
   --paper-color-status-information: var(--paper-private-information);
   --paper-color-status-success: var(--paper-private-success);
   --paper-color-status-warning: var(--paper-private-warning);
@@ -145,13 +145,12 @@
   --paper-color-focus-ring: var(--paper-private-accent);
   --paper-color-focus-offset: var(--paper-private-canvas);
 
-  /* Filled actions use a light violet with canvas-dark text in dark mode, so the fill clears 3:1 on every surface. */
   --paper-color-action-default: var(--paper-private-action-default);
   --paper-color-action-hover: var(--paper-private-action-hover);
   --paper-color-action-active: var(--paper-private-action-active);
   --paper-color-action-soft: var(--paper-private-accent-soft);
   --paper-color-action-neutral-hover: var(--paper-private-neutral-action-hover);
-  --paper-color-action-text: var(--paper-private-canvas);
+  --paper-color-action-text: var(--paper-private-inverse);
 
   --paper-color-chart-1: #9a8bea;
   --paper-color-chart-2: #7fb488;

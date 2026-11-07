@@ -1,5 +1,8 @@
-import { useField } from "../field"
-import { forwardRef, useId, type InputHTMLAttributes } from "react"
+import * as stylex from "@stylexjs/stylex";
+import { forwardRef, useId, type InputHTMLAttributes } from "react";
+import { sx, type StyleXProp } from "../../../foundations/props";
+import { RequiredMark, useField } from "../field";
+import { field as fieldStyles, input } from "../field-styles";
 
 export interface InputProps
   extends Omit<
@@ -8,6 +11,10 @@ export interface InputProps
   > {
   readonly label: string;
   readonly hint?: string;
+  /** Layout for the field's wrapper, such as its grid placement. */
+  readonly xstyle?: StyleXProp;
+  /** Styles for the hint line, such as keeping a stored value's spacing. */
+  readonly hintXstyle?: StyleXProp;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
@@ -19,6 +26,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     readOnly,
     disabled,
     className,
+    xstyle,
+    hintXstyle,
     ...props
   },
   forwardedRef,
@@ -32,23 +41,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   const describedBy = [hintId, errorId, props["aria-describedby"]].filter(Boolean).join(" ") || undefined;
 
   return (
-    <div
-      className={[
-        "paper-field",
-        error ? "paper-field--invalid" : "",
-        disabled ? "paper-field--disabled" : "",
-        className ?? "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
-      <label className="paper-field__label" htmlFor={id}>
+    <div {...sx(className, fieldStyles.root, disabled && fieldStyles.disabled, xstyle)}>
+      <label {...stylex.props(fieldStyles.label)} htmlFor={id}>
         {label}
-        {required ? (
-          <span className="paper-field__required" aria-hidden="true">
-            *
-          </span>
-        ) : null}
+        <RequiredMark required={required} />
       </label>
       <input
         {...props}
@@ -62,16 +58,16 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         disabled={disabled}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
-        className="paper-input"
+        {...stylex.props(input.base, readOnly && input.readOnly, error && input.invalid, disabled && input.disabled)}
         ref={forwardedRef}
       />
       {hint ? (
-        <p className="paper-field__hint" id={hintId}>
+        <p {...stylex.props(fieldStyles.hint, hintXstyle)} id={hintId}>
           {hint}
         </p>
       ) : null}
       {error ? (
-        <p className="paper-field__error" id={errorId} role="alert">
+        <p {...stylex.props(fieldStyles.error)} id={errorId} role="alert">
           {error || "Check this field."}
         </p>
       ) : null}

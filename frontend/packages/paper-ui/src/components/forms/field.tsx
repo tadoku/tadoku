@@ -1,5 +1,7 @@
+import * as stylex from "@stylexjs/stylex";
 import { createFormHookContexts, useStore } from "@tanstack/react-form"
 import type { ReactNode } from "react";
+import { field as styles } from "./field-styles";
 
 export const { fieldContext, formContext, useFieldContext, useFormContext } = createFormHookContexts();
 
@@ -39,6 +41,7 @@ export function FieldFrame({
   hint,
   error,
   required,
+  disabled,
   children,
 }: {
   readonly id: string;
@@ -46,18 +49,37 @@ export function FieldFrame({
   readonly hint?: string;
   readonly error?: string;
   readonly required?: boolean;
+  readonly disabled?: boolean;
   readonly children: ReactNode;
 }) {
   return (
-    <div className={`paper-field${error ? " paper-field--invalid" : ""}`}>
-      <label className="paper-field__label" htmlFor={id} id={`${id}-label`}>
+    <div {...stylex.props(styles.root, disabled && styles.disabled)}>
+      <label {...stylex.props(styles.label)} htmlFor={id} id={`${id}-label`}>
         {label}
-        {required ? <span className="paper-field__required" aria-hidden="true">*</span> : null}
+        <RequiredMark required={required} />
       </label>
       {children}
-      {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
-      {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error}</p> : null}
+      <FieldMessages id={id} hint={hint} error={error} />
     </div>
+  );
+}
+
+export function RequiredMark({ required }: { readonly required?: boolean }) {
+  return required ? <span {...stylex.props(styles.required)} aria-hidden="true">*</span> : null;
+}
+
+/** The hint and error lines under a control, referenced by `describedBy`. */
+export function FieldMessages({ id, hint, error, hintStyle }: {
+  readonly id: string;
+  readonly hint?: string;
+  readonly error?: string;
+  readonly hintStyle?: stylex.StyleXStyles;
+}) {
+  return (
+    <>
+      {hint ? <p {...stylex.props(styles.hint, hintStyle)} id={`${id}-hint`}>{hint}</p> : null}
+      {error ? <p {...stylex.props(styles.error)} id={`${id}-error`} role="alert">{error}</p> : null}
+    </>
   );
 }
 

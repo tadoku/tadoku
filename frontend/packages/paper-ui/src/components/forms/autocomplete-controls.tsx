@@ -1,7 +1,33 @@
+import * as stylex from "@stylexjs/stylex";
 import { Combobox } from "@base-ui/react/combobox";
 import { useId, useMemo, useRef, useState } from "react";
-import { CheckIcon, ChevronDownIcon, XMarkIcon, iconClassName } from "../../icons";
+import { CheckIcon, ChevronDownIcon, XMarkIcon } from "../../icons";
+import { elevation, icon } from "../../foundations/recipes";
 import { FieldFrame, describedBy, useField, type FieldContract } from "./field";
+import { autocompleteStyles as styles } from "./autocomplete-styles";
+import { input } from "./field-styles";
+
+
+
+function ChipRemove({ label }: { readonly label: string }) {
+  return (
+    <Combobox.ChipRemove aria-label={`Remove ${label}`} {...stylex.props(styles.chipRemove)}>
+      <XMarkIcon {...stylex.props(icon.compact)} aria-hidden="true" />
+    </Combobox.ChipRemove>
+  );
+}
+
+function Trigger({ label, disabled, chips }: { readonly label: string; readonly disabled?: boolean; readonly chips?: boolean }) {
+  return (
+    <Combobox.Trigger
+      disabled={disabled}
+      {...stylex.props(chips && stylex.defaultMarker(), styles.trigger, chips && styles.chipsTrigger)}
+      aria-label={`Show ${label.toLocaleLowerCase()} options`}
+    >
+      <ChevronDownIcon {...stylex.props(icon.compact)} aria-hidden="true" />
+    </Combobox.Trigger>
+  );
+}
 
 interface AutocompleteContract<Value> extends FieldContract {
   readonly options: readonly Value[];
@@ -41,19 +67,19 @@ function ComboboxPopup<Value>({
 }) {
   return (
     <Combobox.Portal container={portalContainer}>
-      <Combobox.Positioner className="paper-combobox__positioner" sideOffset={4}>
-        <Combobox.Popup className="paper-combobox__popup paper-elevation-floating">
-          <Combobox.Empty className="paper-combobox__empty">No matching options.</Combobox.Empty>
+      <Combobox.Positioner {...stylex.props(styles.positioner)} sideOffset={4}>
+        <Combobox.Popup {...stylex.props(styles.popup, elevation.floating)}>
+          <Combobox.Empty {...stylex.props(styles.empty)}>No matching options.</Combobox.Empty>
           <Combobox.List>
             {options.map((option, index) => (
               <Combobox.Item
                 key={getId(option)}
                 value={option}
                 index={index}
-                className="paper-combobox__item"
+                {...stylex.props(stylex.defaultMarker(), styles.item)}
               >
-                <Combobox.ItemIndicator className="paper-combobox__indicator" aria-hidden="true">
-                  <CheckIcon className={iconClassName("compact")} />
+                <Combobox.ItemIndicator {...stylex.props(styles.indicator)} aria-hidden="true">
+                  <CheckIcon {...stylex.props(icon.compact)} />
                 </Combobox.ItemIndicator>
                 <span>{format(option)}</span>
               </Combobox.Item>
@@ -102,23 +128,21 @@ export function AutocompleteInput<Value>({
         isItemEqualToValue={(left, right) => getId(left) === getId(right)}
         disabled={disabled}
       >
-        <div className="paper-combobox__input-group">
+        <div {...stylex.props(styles.inputGroup)}>
           <Combobox.Input
             id={id}
             name={field.name}
             onBlur={field.handleBlur}
             aria-required={required || undefined}
             placeholder={placeholder}
-            className="paper-input"
+            {...stylex.props(input.base, styles.inputWithTrigger, Boolean(error) && input.invalid, disabled && input.disabled)}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy(id, hint, error)}
             ref={(node) => {
               if (node && node.ownerDocument.body !== portalContainer) setPortalContainer(node.ownerDocument.body);
             }}
           />
-          <Combobox.Trigger className="paper-combobox__trigger" aria-label={`Show ${label.toLocaleLowerCase()} options`}>
-            <ChevronDownIcon className={iconClassName("compact")} aria-hidden="true" />
-          </Combobox.Trigger>
+          <Trigger label={label} />
         </div>
         <ComboboxPopup options={filtered} getId={getId} format={format} portalContainer={portalContainer} />
       </Combobox.Root>
@@ -169,13 +193,11 @@ export function AutocompleteMultiInput<Value>({
         isItemEqualToValue={(left, right) => getId(left) === getId(right)}
         disabled={disabled}
       >
-        <Combobox.Chips className="paper-combobox__chips">
+        <Combobox.Chips {...stylex.props(styles.chips, Boolean(error) && styles.chipsInvalid)}>
           {values.map((value) => (
-            <Combobox.Chip key={getId(value)} className="paper-combobox__chip">
+            <Combobox.Chip key={getId(value)} {...stylex.props(styles.chip)}>
               {format(value)}
-              <Combobox.ChipRemove aria-label={`Remove ${format(value)}`}>
-                <XMarkIcon className={iconClassName("compact")} aria-hidden="true" />
-              </Combobox.ChipRemove>
+              <ChipRemove label={format(value)} />
             </Combobox.Chip>
           ))}
           <Combobox.Input
@@ -184,7 +206,7 @@ export function AutocompleteMultiInput<Value>({
             onBlur={field.handleBlur}
             aria-required={required || undefined}
             placeholder={atLimit ? "Maximum selections reached" : placeholder}
-            className="paper-combobox__chip-input"
+            {...stylex.props(stylex.defaultMarker(), styles.chipInput)}
             disabled={disabled || atLimit}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy(id, hint, error)}
@@ -192,9 +214,7 @@ export function AutocompleteMultiInput<Value>({
               if (node && node.ownerDocument.body !== portalContainer) setPortalContainer(node.ownerDocument.body);
             }}
           />
-          <Combobox.Trigger disabled={disabled || atLimit} className="paper-combobox__trigger" aria-label={`Show ${label.toLocaleLowerCase()} options`}>
-            <ChevronDownIcon className={iconClassName("compact")} aria-hidden="true" />
-          </Combobox.Trigger>
+          <Trigger label={label} disabled={disabled || atLimit} chips />
         </Combobox.Chips>
         <ComboboxPopup options={filtered} getId={getId} format={format} portalContainer={portalContainer} />
       </Combobox.Root>
@@ -273,13 +293,11 @@ export function TagsInput({
         }}
         disabled={disabled}
       >
-        <Combobox.Chips ref={chipsRef} className="paper-combobox__chips paper-tags-input">
+        <Combobox.Chips ref={chipsRef} {...stylex.props(styles.chips, Boolean(error) && styles.chipsInvalid)}>
           {values.map(value => (
-            <Combobox.Chip key={value} className="paper-combobox__chip">
+            <Combobox.Chip key={value} {...stylex.props(styles.chip)}>
               {value}
-              <Combobox.ChipRemove aria-label={`Remove ${value}`}>
-                <XMarkIcon className={iconClassName("compact")} aria-hidden="true" />
-              </Combobox.ChipRemove>
+              <ChipRemove label={value} />
             </Combobox.Chip>
           ))}
           <Combobox.Input
@@ -306,7 +324,7 @@ export function TagsInput({
             }}
             aria-required={required || undefined}
             placeholder={atLimit ? "Maximum tags reached" : placeholder}
-            className="paper-combobox__chip-input"
+            {...stylex.props(stylex.defaultMarker(), styles.chipInput)}
             disabled={disabled}
             readOnly={atLimit}
             aria-invalid={error ? true : undefined}
@@ -315,17 +333,15 @@ export function TagsInput({
               if (node && node.ownerDocument.body !== portalContainer) setPortalContainer(node.ownerDocument.body);
             }}
           />
-          <Combobox.Trigger disabled={disabled || atLimit} className="paper-combobox__trigger" aria-label={`Show ${label.toLocaleLowerCase()} options`}>
-            <ChevronDownIcon className={iconClassName("compact")} aria-hidden="true" />
-          </Combobox.Trigger>
+          <Trigger label={label} disabled={disabled || atLimit} chips />
         </Combobox.Chips>
         <Combobox.Portal container={portalContainer}>
-          <Combobox.Positioner anchor={chipsRef} align="start" className="paper-combobox__positioner" sideOffset={4}>
-            <Combobox.Popup className="paper-combobox__popup paper-elevation-floating">
-              <Combobox.Empty className="paper-combobox__empty">{alreadySelected ? "This tag is already added." : "Type to add a tag."}</Combobox.Empty>
+          <Combobox.Positioner anchor={chipsRef} align="start" {...stylex.props(styles.positioner)} sideOffset={4}>
+            <Combobox.Popup {...stylex.props(styles.popup, elevation.floating)}>
+              <Combobox.Empty {...stylex.props(styles.empty)}>{alreadySelected ? "This tag is already added." : "Type to add a tag."}</Combobox.Empty>
               <Combobox.List>
                 {items.map((value, index) => (
-                  <Combobox.Item key={value} value={value} index={index} className="paper-combobox__item paper-tags-input__option">
+                  <Combobox.Item key={value} value={value} index={index} {...stylex.props(styles.item, styles.tagOption)}>
                     {canCreate && value === candidate ? `Add “${value}”` : formatOption(value)}
                   </Combobox.Item>
                 ))}

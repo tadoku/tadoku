@@ -1,3 +1,4 @@
+import * as stylex from "@stylexjs/stylex";
 import {
   useId,
   type InputHTMLAttributes,
@@ -5,8 +6,11 @@ import {
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from "react";
-import { ChevronDownIcon, iconClassName } from "../../icons";
-import { FieldFrame, describedBy, useField, type FieldContract, type Option, type OptionGroup } from "./field";
+import { ChevronDownIcon } from "../../icons";
+import { icon } from "../../foundations/recipes";
+import { FieldFrame, FieldMessages, describedBy, useField, type FieldContract, type Option, type OptionGroup } from "./field";
+import { field as fieldStyles, input, select as selectStyles } from "./field-styles";
+import { choice } from "./choice-styles";
 
 export interface TextAreaProps
   extends FieldContract,
@@ -22,7 +26,7 @@ export function TextArea({
   const id = providedId ?? `paper-textarea-${useId().replace(/:/gu, "")}`;
   const { field, error } = useField<string>();
   return (
-    <FieldFrame id={id} label={label} hint={hint} required={required} error={error}>
+    <FieldFrame id={id} label={label} hint={hint} required={required} error={error} disabled={props.disabled}>
       <textarea
         {...props}
         name={field.name}
@@ -33,7 +37,13 @@ export function TextArea({
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(id, hint, error, props["aria-describedby"])}
-        className="paper-input paper-textarea"
+        {...stylex.props(
+          input.base,
+          input.textArea,
+          props.readOnly && input.readOnly,
+          Boolean(error) && input.invalid,
+          props.disabled && input.disabled,
+        )}
       />
     </FieldFrame>
   );
@@ -60,8 +70,8 @@ export function Select({
   const id = providedId ?? `paper-select-${useId().replace(/:/gu, "")}`;
   const { field, error } = useField<string>();
   return (
-    <FieldFrame id={id} label={label} hint={hint} required={required} error={error}>
-      <span className="paper-select__control">
+    <FieldFrame id={id} label={label} hint={hint} required={required} error={error} disabled={props.disabled}>
+      <span {...stylex.props(selectStyles.control)}>
         <select
           {...props}
           name={field.name}
@@ -72,7 +82,7 @@ export function Select({
           required={required}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy(id, hint, error, props["aria-describedby"])}
-          className="paper-input paper-select"
+          {...stylex.props(input.base, input.select, Boolean(error) && input.invalid, props.disabled && input.disabled)}
         >
           {placeholder ? <option value="">{placeholder}</option> : null}
           {groups
@@ -91,10 +101,7 @@ export function Select({
                 </option>
               ))}
         </select>
-        <ChevronDownIcon
-          className={iconClassName("compact", "paper-select__icon")}
-          aria-hidden="true"
-        />
+        <ChevronDownIcon {...stylex.props(icon.compact, selectStyles.icon)} aria-hidden="true" />
       </span>
     </FieldFrame>
   );
@@ -126,18 +133,27 @@ export function Checkbox({
   const selected = field.state.value;
   const option = typeof props.value === "string" ? props.value : undefined;
   const card = variant === "card";
+  const checked = option === undefined ? selected === true : Array.isArray(selected) && selected.includes(option);
   // A card's label element wraps its details too, so the box is named by the label text alone and described by the rest.
   const details = card
     ? [description ? `${id}-description` : undefined, aside ? `${id}-aside` : undefined].filter(Boolean).join(" ")
     : "";
   const external = [details, props["aria-describedby"]].filter(Boolean).join(" ") || undefined;
   return (
-    <fieldset className={`paper-choice-field${error ? " paper-field--invalid" : ""}`}>
-      <label className={card ? "paper-choice paper-choice--card" : "paper-choice"} htmlFor={id}>
+    <fieldset {...stylex.props(fieldStyles.choiceGroup)}>
+      <label
+        {...stylex.props(
+          choice.option,
+          card && choice.card,
+          card && checked && choice.cardChecked,
+          card && props.disabled && choice.cardDisabled,
+        )}
+        htmlFor={id}
+      >
         <input
           {...props}
           name={field.name}
-          checked={option === undefined ? selected === true : Array.isArray(selected) && selected.includes(option)}
+          checked={checked}
           onChange={event => {
             if (option === undefined) {
               field.handleChange(event.currentTarget.checked);
@@ -155,19 +171,24 @@ export function Checkbox({
           aria-invalid={error ? true : undefined}
           aria-labelledby={card ? `${id}-label` : undefined}
           aria-describedby={describedBy(id, hint, error, external)}
+          {...stylex.props(
+            choice.box,
+            card && choice.cardBox,
+            Boolean(error) && choice.boxInvalid,
+            props.disabled && choice.checkboxDisabled,
+          )}
         />
         {card ? (
           <>
-            <span className="paper-choice__body">
-              <span className="paper-choice__label" id={`${id}-label`}>{label}</span>
-              {description ? <span className="paper-choice__description" id={`${id}-description`}>{description}</span> : null}
+            <span {...stylex.props(choice.body)}>
+              <span {...stylex.props(choice.label, props.disabled && choice.labelDisabled)} id={`${id}-label`}>{label}</span>
+              {description ? <span {...stylex.props(choice.detail)} id={`${id}-description`}>{description}</span> : null}
             </span>
-            {aside ? <span className="paper-choice__aside" id={`${id}-aside`}>{aside}</span> : null}
+            {aside ? <span {...stylex.props(choice.detail, choice.aside)} id={`${id}-aside`}>{aside}</span> : null}
           </>
-        ) : <span>{label}</span>}
+        ) : <span {...stylex.props(props.disabled && choice.textDisabled)}>{label}</span>}
       </label>
-      {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
-      {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error}</p> : null}
+      <FieldMessages id={id} hint={hint} error={error} hintStyle={choice.hint} />
     </fieldset>
   );
 }

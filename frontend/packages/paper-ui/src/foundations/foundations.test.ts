@@ -5,55 +5,48 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import { themeCss } from "../tokens/css";
 import { chartPalette, chartSeries } from "./chart-palette";
+import { documentClassName } from "./document";
 
 const foundationsRoot = dirname(fileURLToPath(import.meta.url));
 const assetsRoot = resolve(foundationsRoot, "../assets");
-const readFoundation = (name: string) =>
-  readFileSync(resolve(foundationsRoot, name), "utf8");
 
 describe("Paper visual foundations", () => {
-  it("defines both themes and both density modes through semantic roles", () => {
-    const tokens = readFoundation("tokens.css");
+  it("re-declares themed and density tokens, and what reads them, inside each scope", () => {
+    const css = themeCss();
+    const scope = (selector: string) => css.slice(css.indexOf(`${selector} {`), css.indexOf("}", css.indexOf(`${selector} {`)));
 
-    expect(tokens).toContain('[data-theme="light"]');
-    expect(tokens).toContain('[data-theme="dark"]');
-    expect(tokens).toContain('[data-density="comfortable"]');
-    expect(tokens).toContain('[data-density="compact"]');
-    expect(tokens).toContain("--paper-control-height: 2.75rem");
-    expect(tokens).toContain("--paper-control-height: 2.25rem");
-    expect(tokens).toContain("--paper-color-focus-ring");
-    expect(tokens).toContain("--paper-elevation-floating");
+    expect(scope('[data-theme="dark"]')).toMatch(/--color-ink: #/);
+    expect(scope('[data-theme="dark"]')).toContain("--color-focus-halo: color-mix(in srgb, var(--color-focus) 22%, transparent)");
+    expect(scope('[data-theme="light"]')).toContain("--color-ink:");
+    expect(scope('[data-density="compact"]')).toContain("--spacing-control: 2.25rem");
+    expect(scope('[data-density="compact"]')).toContain("--spacing-select-end:");
+    expect(scope('[data-density="compact"]')).not.toContain("--color-");
+    expect(scope('[data-theme="dark"]')).not.toContain("--spacing-control");
+    expect(css).toContain("@media (width < 48rem)");
   });
 
   it("keeps the global keyboard focus ring and removes it only from script-moved focus", () => {
-    const base = readFoundation("base.css");
-    const rules = [...base.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(([, selector, body]) => ({
-      selector: selector.replace(/\/\*[\s\S]*?\*\//g, "").trim(),
-      body,
-    }));
-    const removesOutline = rules.filter(({ body }) => /outline:\s*none/.test(body));
+    const classes = documentClassName.split(" ");
 
-    expect(rules).toContainEqual(expect.objectContaining({ selector: ":focus-visible" }));
-    expect(rules.find(({ selector }) => selector === ":focus-visible")?.body).toMatch(
-      /outline:\s*var\(--paper-focus-ring-width\) solid var\(--paper-color-focus-ring\)/,
-    );
-    for (const { selector } of removesOutline) {
-      // Compare top-level selectors only: commas inside :is() belong to one selector.
-      for (const part of selector.replace(/\([^)]*\)/g, "()").split(",")) {
-        expect(part.trim()).toMatch(/\[tabindex="-1"\]:focus-visible$/);
-      }
+    expect(classes).toEqual(expect.arrayContaining([
+      "[:where(&_:focus-visible)]:outline-ring",
+      "[:where(&_:focus-visible)]:outline-focus",
+    ]));
+    for (const candidate of classes.filter((name) => name.endsWith(":outline-none"))) {
+      expect(candidate).toMatch(/\[tabindex='-1'\]:focus-visible\)\]:outline-none$/);
     }
   });
 
   it("ships local declarations for every approved real font weight", () => {
-    const fonts = readFoundation("fonts.css");
+    const css = themeCss();
 
-    expect(fonts).not.toMatch(/https?:\/\//);
-    expect(fonts.match(/@font-face/g)).toHaveLength(4);
-    expect(fonts).toContain('font-weight: 400');
-    expect(fonts).toContain('font-weight: 600');
-    expect(fonts.match(/font-weight: 700/g)).toHaveLength(2);
+    expect(css).not.toMatch(/https?:\/\//);
+    expect(css.match(/@font-face/g)).toHaveLength(4);
+    expect(css).toContain("font-weight: 400");
+    expect(css).toContain("font-weight: 600");
+    expect(css.match(/font-weight: 700/g)).toHaveLength(2);
 
     for (const filename of [
       "merriweather-700.woff2",
@@ -61,6 +54,7 @@ describe("Paper visual foundations", () => {
       "open-sans-600.woff2",
       "open-sans-700.woff2",
     ]) {
+      expect(css).toContain(`./assets/fonts/${filename}`);
       const font = readFileSync(resolve(assetsRoot, "fonts", filename));
       expect(font.subarray(0, 4).toString("ascii")).toBe("wOF2");
     }

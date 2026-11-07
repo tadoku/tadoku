@@ -1,3 +1,5 @@
+import { cn } from "../foundations/variants";
+
 // Outline icons are the Paper default for actions and navigation.
 export {
   ArrowDownTrayIcon,
@@ -38,14 +40,14 @@ export {
 } from "@heroicons/react/24/solid";
 
 export const iconSizeClassNames = {
-  compact: "paper-icon-compact",
-  default: "paper-icon-default",
-  prominent: "paper-icon-prominent",
-  emptyState: "paper-icon-empty-state",
+  compact: "paper-icon-compact inline-block flex-none align-middle size-icon-sm",
+  default: "paper-icon-default inline-block flex-none align-middle size-icon",
+  prominent: "paper-icon-prominent inline-block flex-none align-middle size-icon-lg",
+  emptyState: "paper-icon-empty-state inline-block flex-none align-middle size-icon-xl",
 } as const;
 
 export type IconSize = keyof typeof iconSizeClassNames;
 
 export function iconClassName(size: IconSize = "default", className?: string) {
-  return [iconSizeClassNames[size], className].filter(Boolean).join(" ");
+  return cn(iconSizeClassNames[size], className);
 }

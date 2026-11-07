@@ -7,6 +7,65 @@ import {
 } from "react";
 import { XMarkIcon, iconClassName } from "../../icons";
 import { buttonClassName } from "../actions/Button";
+import { accentRail, surface } from "../../foundations/recipes";
+import { cn, tv } from "../../foundations/variants";
+
+const flash = tv({
+  slots: {
+    root: [
+      "paper-flash relative grid items-start gap-3 border border-rule bg-paper py-3.6 pe-4 ps-flash-start",
+      "before:pointer-events-none before:absolute before:-inset-y-px before:-start-px before:w-1",
+      "forced-colors:before:bg-forced-ink forced-colors:before:forced-color-adjust-none",
+    ],
+    icon: "paper-flash__icon grid size-icon place-items-center",
+    content: "paper-flash__content grid min-w-0 gap-0.8 wrap-anywhere",
+    action: "paper-flash__action self-center",
+  },
+  variants: {
+    variant: {
+      information: { root: "paper-flash--information before:bg-information" },
+      success: { root: "paper-flash--success before:bg-success" },
+      warning: { root: "paper-flash--warning before:bg-warning" },
+      danger: { root: "paper-flash--danger before:bg-danger" },
+    },
+    icon: { true: { root: "grid-cols-icon-content-end" }, false: { root: "grid-cols-content-end" } },
+    alone: { true: { content: "col-span-full" } },
+    action: { true: { content: "self-center" } },
+  },
+});
+
+const loading = tv({
+  slots: {
+    root: "paper-loading inline-grid place-items-center",
+    spinner: [
+      "paper-loading__spinner size-icon rounded-full border-edge border-rule border-t-action",
+      "animate-spin motion-reduce:animate-none",
+    ],
+  },
+  variants: {
+    size: {
+      small: { root: "paper-loading--small", spinner: "size-icon-sm" },
+      default: { root: "paper-loading--default" },
+      large: { root: "paper-loading--large", spinner: "size-8 border-rail" },
+    },
+  },
+});
+
+const toast = tv({
+  slots: {
+    viewport: "paper-toast-viewport fixed bottom-4 end-4 z-toast flex w-toast flex-col gap-2 outline-none",
+    root: [
+      "paper-toast grid grid-cols-content-end gap-3 p-3.4",
+      "transition-enter duration-standard motion-reduce:transition-none",
+      "data-starting-style:translate-x-2 data-starting-style:opacity-0",
+      "data-ending-style:translate-x-2 data-ending-style:opacity-0",
+    ],
+    content: "paper-toast__content grid gap-0.8",
+    title: "paper-toast__title m-0 text-body leading-125 font-semibold",
+    description: "m-0",
+    close: "paper-toast__close size-8 cursor-pointer self-start border-0 bg-transparent text-muted",
+  },
+});
 
 export const FLASH_VARIANTS = ["information", "success", "warning", "danger"] as const;
 export type FlashVariant = (typeof FLASH_VARIANTS)[number];
@@ -30,18 +89,19 @@ export function Flash({
   ...props
 }: FlashProps) {
   if (!visible) return null;
+  const slots = flash({ variant, icon: Boolean(icon), alone: !icon && !action, action: Boolean(action) });
   return (
     <div
       {...props}
-      className={`paper-flash paper-flash--${variant}${className ? ` ${className}` : ""}`}
+      className={slots.root({ className })}
       role={variant === "danger" ? "alert" : "status"}
     >
-      {icon ? <span className="paper-flash__icon" aria-hidden="true">{icon}</span> : null}
-      <div className="paper-flash__content">
+      {icon ? <span className={slots.icon()} aria-hidden="true">{icon}</span> : null}
+      <div className={slots.content()}>
         {title ? <strong>{title}</strong> : null}
         <div>{children}</div>
       </div>
-      {action ? <div className="paper-flash__action">{action}</div> : null}
+      {action ? <div className={slots.action()}>{action}</div> : null}
     </div>
   );
 }
@@ -57,10 +117,11 @@ export function Loading({
   className,
   ...props
 }: LoadingProps) {
+  const slots = loading({ size });
   return (
-    <div {...props} className={`paper-loading paper-loading--${size}${className ? ` ${className}` : ""}`} role="status">
-      <span className="paper-loading__spinner" aria-hidden="true" />
-      <span className="paper-visually-hidden">{label}</span>
+    <div {...props} className={slots.root({ className })} role="status">
+      <span className={slots.spinner()} aria-hidden="true" />
+      <span className="paper-visually-hidden sr-only">{label}</span>
     </div>
   );
 }
@@ -76,12 +137,13 @@ export function surfaceClassName({
   accent = false,
   className,
 }: Pick<SurfaceProps, "elevation" | "accent" | "className"> = {}): string {
-  return [
-    "paper-surface-card",
+  return cn(
+    "paper-surface-card p-4",
     `paper-elevation-${elevation}`,
-    accent ? "paper-accent-rail" : "",
-    className ?? "",
-  ].filter(Boolean).join(" ");
+    surface({ elevation, className: "text-inherit" }),
+    accent && ["paper-accent-rail", accentRail({ bordered: true })],
+    className,
+  );
 }
 
 export function Surface({
@@ -112,7 +174,11 @@ export interface ButtonGroupProps {
 
 export function ButtonGroup({ actions, label = "Actions", align = "start" }: ButtonGroupProps) {
   return (
-    <div className={`paper-button-group paper-button-group--${align}`} role="group" aria-label={label}>
+    <div
+      className={cn("paper-button-group flex flex-wrap gap-inline", align === "end" ? "paper-button-group--end justify-end" : "paper-button-group--start")}
+      role="group"
+      aria-label={label}
+    >
       {actions.filter((action) => action.visible !== false).map((action) => {
         const className = buttonClassName({ variant: action.variant });
         return action.href ? (
@@ -187,18 +253,19 @@ export interface ToastManager {
 
 function PaperToastViewport() {
   const manager = Toast.useToastManager();
+  const slots = toast();
   return (
-    <Toast.Viewport className="paper-toast-viewport">
+    <Toast.Viewport className={slots.viewport()}>
       {manager.toasts.map((toast) => (
-        <Toast.Root key={toast.id} toast={toast} className="paper-toast paper-elevation-floating">
-          <Toast.Content className="paper-toast__content">
-            {toast.title ? <Toast.Title className="paper-toast__title">{toast.title}</Toast.Title> : null}
-            {toast.description ? <Toast.Description>{toast.description}</Toast.Description> : null}
+        <Toast.Root key={toast.id} toast={toast} className={cn(surface({ tone: "overlay", elevation: "floating" }), slots.root())}>
+          <Toast.Content className={slots.content()}>
+            {toast.title ? <Toast.Title className={slots.title()}>{toast.title}</Toast.Title> : null}
+            {toast.description ? <Toast.Description className={slots.description()}>{toast.description}</Toast.Description> : null}
           </Toast.Content>
           {toast.actionProps ? <Toast.Action className={buttonClassName({ variant: "outline" })} {...toast.actionProps} /> : null}
           <button
             type="button"
-            className="paper-toast__close"
+            className={slots.close()}
             aria-label="Dismiss notification"
             onClick={() => manager.close(toast.id)}
           >

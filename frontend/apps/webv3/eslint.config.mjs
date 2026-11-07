@@ -2,11 +2,13 @@ import eslint from '@eslint/js'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
+import { paperStyleConfig } from 'paper-ui/eslint'
 
 export default tseslint.config(
   { ignores: ['dist/**', '.output/**', '.tanstack/**', 'src/routeTree.gen.ts'] },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
+  ...paperStyleConfig(['src/**/*.{ts,tsx}']),
   {
     files: ['**/*.{ts,tsx}'],
     plugins: {

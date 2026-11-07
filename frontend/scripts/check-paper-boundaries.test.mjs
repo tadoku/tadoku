@@ -22,13 +22,13 @@ async function check(files) {
 
 test('counts executable imports without treating examples, comments, or prose as imports', async () => {
   const result = await check({
-    'main.ts': 'import "paper-ui/styles.css";',
+    'main.ts': 'import "paper-ui/fonts.css";',
     'examples.tsx': [
-      'const stylesheet = "paper-ui/styles.css";',
-      "const snippet = 'import \"paper-ui/styles.css\";';",
-      'const example = `import { Input } from "ui";\nimport "paper-ui/styles.css";\nimport { Button } from "paper-ui/src/private";`;',
-      '// import "paper-ui/styles.css"; import { Button } from "ui";',
-      '/* import "paper-ui/styles.css"; import Link from "next/link"; */',
+      'const stylesheet = "paper-ui/fonts.css";',
+      "const snippet = 'import \"paper-ui/fonts.css\";';",
+      'const example = `import { Input } from "ui";\nimport "paper-ui/fonts.css";\nimport { Button } from "paper-ui/src/private";`;',
+      '// import "paper-ui/fonts.css"; import { Button } from "ui";',
+      '/* import "paper-ui/fonts.css"; import Link from "next/link"; */',
     ].join('\n'),
   })
   assert.equal(result.status, 0, result.stderr)
@@ -36,20 +36,29 @@ test('counts executable imports without treating examples, comments, or prose as
 
 test('still detects real duplicate stylesheet imports including dynamic and require calls', async () => {
   const result = await check({
-    'main.ts': 'import /* root stylesheet */ "paper-ui/styles.css";',
-    'other.ts': 'import("paper-ui/styles.css"); require("paper-ui/styles.css");',
+    'main.ts': 'import /* root stylesheet */ "paper-ui/fonts.css";',
+    'other.ts': 'import("paper-ui/fonts.css"); require("paper-ui/fonts.css");',
   })
   assert.equal(result.status, 1)
-  assert.match(result.stderr, /styles\.css imported 3 times/)
+  assert.match(result.stderr, /fonts\.css imported 3 times/)
 })
 
 test('still rejects real multiline, re-export, dynamic, and private imports', async () => {
   const result = await check({
-    'main.ts': 'import "paper-ui/styles.css";',
+    'main.ts': 'import "paper-ui/fonts.css";',
     'bad.ts': 'import {\n Input\n} from /* migration mistake */ "ui";\nexport { Link } from "next/link";\nconst menu = import("@headlessui/react");\nconst button = require("paper-ui/src/private");',
   })
   assert.equal(result.status, 1)
   assert.match(result.stderr, /legacy ui import/)
   assert.match(result.stderr, /Next or Headless UI import/)
   assert.match(result.stderr, /private paper-ui source import/)
+})
+
+test('rejects handwritten stylesheets in Paper applications', async () => {
+  const result = await check({
+    'main.ts': 'import "paper-ui/fonts.css";',
+    'page.css': '.page { color: red; }',
+  })
+  assert.equal(result.status, 1)
+  assert.match(result.stderr, /page\.css: handwritten stylesheet/)
 })

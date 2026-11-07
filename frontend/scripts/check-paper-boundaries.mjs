@@ -17,6 +17,8 @@ const legacyOnlyClasses = new Set([
   'table-container',
   'v-stack',
 ])
+// StyleX cannot declare font faces, so Paper's fonts are its one stylesheet; everything else is StyleX.
+const allowedStylesheets = new Set(['packages/paper-ui/src/foundations/fonts.css'])
 const violations = []
 
 async function sourceFiles(directory) {
@@ -85,10 +87,14 @@ async function inspectTree(path, system, requireStyles = false) {
 
   let paperStyleImports = 0
   for (const file of await sourceFiles(path)) {
+    if (system === 'paper' && extname(file) === '.css' && !allowedStylesheets.has(relative(new URL('..', import.meta.url).pathname, file))) {
+      report(file, 'handwritten stylesheet; style Paper code with StyleX and design tokens')
+      continue
+    }
     const source = await readFile(file, 'utf8')
     const modules = moduleSpecifiers(source)
     if (modules.some((name) => name.startsWith('paper-ui/src/'))) report(file, 'private paper-ui source import')
-    paperStyleImports += modules.filter((name) => name === 'paper-ui/styles.css').length
+    paperStyleImports += modules.filter((name) => name === 'paper-ui/fonts.css').length
 
     if (system === 'paper') {
       if (modules.some((name) => name === 'ui' || name.startsWith('ui/'))) report(file, 'legacy ui import in Paper code')
@@ -99,8 +105,8 @@ async function inspectTree(path, system, requireStyles = false) {
       report(file, 'paper-ui import in an unmigrated application')
     }
   }
-  if (requireStyles && paperStyleImports !== 1) report(path, `paper-ui/styles.css imported ${paperStyleImports} times; expected exactly once`)
-  if (paperStyleImports > 1) report(path, `paper-ui/styles.css imported ${paperStyleImports} times`)
+  if (requireStyles && paperStyleImports !== 1) report(path, `paper-ui/fonts.css imported ${paperStyleImports} times; expected exactly once`)
+  if (paperStyleImports > 1) report(path, `paper-ui/fonts.css imported ${paperStyleImports} times`)
 }
 
 for (const [application, system] of Object.entries(config.applications)) {

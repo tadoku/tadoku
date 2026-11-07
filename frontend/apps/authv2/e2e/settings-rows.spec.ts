@@ -99,7 +99,7 @@ for (const javaScriptEnabled of [true, false]) {
         if (state.open) await expect(page.locator('main input:visible')).toHaveCount(1)
         else await expect(page.locator('main input:not([type="hidden"])')).toHaveCount(0)
         // The skip link sits outside the header and main, off screen until it has focus.
-        const filled = page.locator('header, main').locator('.paper-button--default')
+        const filled = page.locator('header, main').locator('button[data-variant="default"]')
         await expect(filled).toHaveCount(state.open ? 1 : 0)
         if (state.open) await expect(filled).toHaveAccessibleName(state.open.save)
 
@@ -153,7 +153,7 @@ for (const javaScriptEnabled of [true, false]) {
           .toEqual({ edit: editor, return_to: destination })
         await expect(row.locator('input:visible')).toBeFocused()
         await page.keyboard.press('Tab')
-        await expect(row.locator('.paper-button--default')).toBeFocused()
+        await expect(row.locator('button[data-variant="default"]')).toBeFocused()
         await page.keyboard.press('Tab')
         await expect(row.getByRole('link', { name: 'Cancel', exact: true })).toBeFocused()
         await page.keyboard.press('Enter')

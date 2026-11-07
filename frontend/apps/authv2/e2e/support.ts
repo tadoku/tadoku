@@ -60,7 +60,7 @@ export function settingRow(page: Page, name: string) {
 
 /** The stored value a collapsed Settings row shows. */
 export function settingValue(page: Page, name: string) {
-  return settingRow(page, name).locator('.settings-row__value')
+  return settingRow(page, name).locator('[data-setting-value]')
 }
 
 /** Opens a collapsed Settings row's editor through its Change link, with or without JavaScript. */

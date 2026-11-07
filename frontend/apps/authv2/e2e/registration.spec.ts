@@ -134,7 +134,7 @@ test('hydrated registration shows each answer and only leaves the form on succes
   for (const failure of failures) {
     await test.step(failure.name, async () => {
       await submit(failure.answer)
-      const shown = failure.field ? page.locator(`#register-${failure.field}-error`) : form.locator('.paper-flash--danger')
+      const shown = failure.field ? page.locator(`#register-${failure.field}-error`) : form.locator('[data-variant="danger"]')
       await expect.soft(shown).toHaveText(failure.message)
       await expect.soft(form.getByRole('button', { name: 'Create account' })).toBeEnabled()
       expect.soft(new URL(page.url()).pathname, 'stays on the form').toBe('/register')
@@ -180,7 +180,7 @@ test('native registration forwards the request and only passes on a successful s
 
       // A native rejection is shown on the form, not on a field: the redirect carries only the error code.
       await page.goto(`/register${location.search}`)
-      await expect.soft(page.locator('form#register .paper-flash--danger')).toHaveText(failure.native ?? failure.message)
+      await expect.soft(page.locator('form#register [data-variant="danger"]')).toHaveText(failure.native ?? failure.message)
       if (failure.name.startsWith('registration budget')) {
         await page.screenshot({ path: testInfo.outputPath('native-429.png'), fullPage: true })
       }

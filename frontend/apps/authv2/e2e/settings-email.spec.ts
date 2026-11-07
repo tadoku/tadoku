@@ -212,7 +212,7 @@ test('native Settings forms send only what the visitor changed', async ({ browse
       expect.soft(location.searchParams.get('form')).toBe('email')
       expect.soft(writes, 'an unchanged address sends nothing').toEqual([])
       await page.goto(`/settings${location.search}`)
-      await expect.soft(settingRow(page, 'Email').locator('.paper-flash--danger')).toHaveText(unchanged)
+      await expect.soft(settingRow(page, 'Email').locator('[data-variant="danger"]')).toHaveText(unchanged)
       await page.screenshot({ path: testInfo.outputPath(`native-${account.name.replaceAll(' ', '-')}.png`), fullPage: true })
 
       await page.goto('/settings')

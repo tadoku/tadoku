@@ -24,7 +24,7 @@ export function ContentUnavailable({ query }: { query: { isFetching: boolean; re
 }
 
 const article = 'min-w-0 max-w-article'
-const postLink = 'text-ink decoration-muted hover:text-link hover:decoration-current'
+const postLink = 'text-inherit no-underline hover:text-link hover:underline'
 
 export function CmsPageArticle({ page }: { page: CmsPage }) {
   return (

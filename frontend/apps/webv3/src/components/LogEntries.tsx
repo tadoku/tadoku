@@ -84,12 +84,12 @@ function Entry({ log, showParticipant, actions, firstOfDay }: {
   const nsfw = log.tags.some(tag => tag.toLowerCase() === 'nsfw')
   const links = useLinks()
   const tracking = formatTracking(log)
+  const participant = showParticipant
+    ? log.user_display_name
+      ? <a className={participantLink} href={links.profile(log.user_id)}>{log.user_display_name}</a>
+      : 'Unknown user'
+    : null
   const meta = [
-    showParticipant
-      ? log.user_display_name
-        ? <a className={participantLink} href={links.profile(log.user_id)}>{log.user_display_name}</a>
-        : 'Unknown user'
-      : null,
     log.language.name,
     <ActivityName activity={log.activity} />,
     tracking || null,
@@ -99,6 +99,7 @@ function Entry({ log, showParticipant, actions, firstOfDay }: {
     <li className={entries.item({ className: firstOfDay ? undefined : entries.sameDay() })}>
       <time dateTime={day} className={entries.date({ className: firstOfDay ? undefined : 'sr-only' })}>{formatDate(day)}</time>
       <div className={entries.body()}>
+        {participant ? <p className="mb-0.5 mt-0 text-sm font-semibold">{participant}</p> : null}
         <Link className={entryLink({ clamp: true, className: 'profile-entry-title' })} to="/logs/$logId" params={{ logId: log.id }}>
           {nsfw || !log.description ? subject : log.description}
         </Link>

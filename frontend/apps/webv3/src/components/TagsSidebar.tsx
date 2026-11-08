@@ -115,8 +115,6 @@ export const TagsSidebar = withPaperForm({
     const common = suggested.filter(item => !item.modifier)
     return (
       <div className="grid gap-4">
-        {group('Score modifiers', suggested.filter(item => item.modifier))}
-        {suggested.some(item => item.modifier) ? <p className="-mt-2 mb-0 text-metadata text-muted">Change how this log scores.</p> : null}
         {compact && common.length ? (
           <details className="group/more">
             <summary
@@ -134,6 +132,8 @@ export const TagsSidebar = withPaperForm({
             {group('Common tags', common, true)}
           </details>
         ) : group('Common tags', common)}
+        {group('Score modifiers', suggested.filter(item => item.modifier))}
+        {suggested.some(item => item.modifier) ? <p className="-mt-2 mb-0 text-metadata text-muted">Change how this log scores.</p> : null}
       </div>
     )
   },

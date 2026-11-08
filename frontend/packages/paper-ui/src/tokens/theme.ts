@@ -95,8 +95,8 @@ const color = {
 
   'heat-future': 'transparent',
   'heat-0': themed(p.graphite[200], p.graphite[650]),
-  'heat-1': themed(p.violet[200], p.violet[450]),
-  'heat-2': themed(p.violet[500], p.violet[375]),
+  'heat-1': themed(p.violet[200], p.violet[550]),
+  'heat-2': themed(p.violet[500], p.violet[400]),
   'heat-3': themed(p.violet[650], p.violet[200]),
   'heat-4': themed(p.violet[850], p.violet[25]),
 

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useLoaderData } from '@tanstack/react-router'
 import { Button, EmptyState, Loading, SectionHeading, StatGrid, Surface, Table, buttonClassName } from 'paper-ui'
 import type { ReactNode } from 'react'
-import { homeQueryOptions, type HomeData } from '../lib/home'
+import { homeQueryOptions, memberDashboardQueries, type HomeData } from '../lib/home'
 import { standingsQuery } from '../lib/leaderboard'
 import { Person, Rank, currentRow, personLink } from './StandingsParts'
 import { formatDate, formatPeriod, numberFormat, place, pointsUnit, scoreFormat } from '../lib/format'
@@ -10,6 +10,8 @@ import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
 import { MemberDashboard, MemberYearTotals } from './MemberDashboard'
 import { viewerQueryOptions, type Viewer } from '../lib/session'
+
+const noMember: Extract<Viewer, { status: 'signed-in' }> = { status: 'signed-in', userId: '', displayName: '', role: 'user' }
 
 const dayNumber = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000) + 1
 
@@ -78,6 +80,8 @@ export function HomePage() {
   const joinable = contest && (phase === 'open' || phase === 'upcoming')
   const { data: viewer } = useQuery(viewerQueryOptions())
   const member = viewer?.status === 'signed-in' ? viewer : null
+  const memberStatistics = useQuery({ ...memberDashboardQueries(member ?? noMember, year)[0], enabled: member !== null }).data
+  const fresh = memberStatistics?.status === 'found' && memberStatistics.activity.ok && memberStatistics.activity.data.total_updates === 0
 
   return (
     <div className="home-page">
@@ -98,7 +102,7 @@ export function HomePage() {
             </div>
           )}
 
-        <Surface as="section" className="min-w-0 p-0 max-tablet:order-last" aria-labelledby="home-board-title">
+        <Surface as="section" className={`min-w-0 p-0 ${member && !fresh ? 'max-tablet:order-last' : ''}`} aria-labelledby="home-board-title">
           <ContestBoard data={data} phase={phase} today={today} retrying={isFetching} retry={() => void refetch()} />
         </Surface>
         {member ? <MemberDashboard viewer={member} year={year} className="col-span-full" /> : null}

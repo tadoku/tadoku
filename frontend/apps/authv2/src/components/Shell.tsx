@@ -20,7 +20,7 @@ export function Shell({ identity, children }: { readonly identity: Identity; rea
       <header
         className={[
           'flex min-h-header-account flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-rule bg-paper',
-          'px-header-x-account py-2 max-sm:flex-nowrap max-sm:gap-3',
+          'px-header-x-account py-2 max-sm:gap-x-3 max-sm:gap-y-1',
         ].join(' ')}
       >
         <a className="inline-flex items-center gap-3.5 text-muted no-underline" href={identity.webUrl}>
@@ -32,7 +32,7 @@ export function Shell({ identity, children }: { readonly identity: Identity; rea
           </span>
           <span className="border-s border-rule ps-3.5 text-sm leading-metadata font-semibold max-sm:hidden">Account</span>
         </a>
-        <a className="ms-auto me-2 text-sm text-link hover:text-link-hover max-sm:hidden" href={identity.webUrl}>Back to Tadoku</a>
+        <a className="ms-auto me-2 text-sm text-link hover:text-link-hover max-sm:ms-0 max-sm:basis-full max-sm:order-last" href={identity.webUrl}>Back to Tadoku</a>
         {account ? (
           <form className="m-0 flex min-w-0 items-center gap-4 max-sm:gap-3" method="post" action="/actions/logout">
             <span className="min-w-0 max-w-account-label truncate text-sm text-ink max-sm:max-w-none">

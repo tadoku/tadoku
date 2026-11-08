@@ -63,7 +63,7 @@ export function ContestsPage({ view, page }: { view: ContestView; page: number }
       />
       {view.collection === 'joined' && scope?.kind === 'participant' ? <JoinedYear userId={scope.userId} year={view.year} /> : null}
       {scope ? (
-        <Contests scope={scope} view={view} page={page} />
+        <Contests scope={scope} view={view} page={page} canCreate={canCreate} />
       ) : viewer?.status === 'anonymous' ? (
         <SignInPrompt joined={collection === 'joined'} />
       ) : (
@@ -100,7 +100,7 @@ function SignInPrompt({ joined }: { joined: boolean }) {
   )
 }
 
-function Contests({ scope, view, page }: { scope: ContestListScope; view: ContestView; page: number }) {
+function Contests({ scope, view, page, canCreate }: { scope: ContestListScope; view: ContestView; page: number; canCreate: boolean }) {
   const { data: viewer } = useQuery(viewerQueryOptions())
   const list = useQuery(contestsQuery(scope, page, viewerKey(viewer)))
   // The route loader read the list; its read time decides each contest's phase on the server and after hydration.
@@ -136,7 +136,8 @@ function Contests({ scope, view, page }: { scope: ContestListScope; view: Contes
       <EmptyState
         headingLevel={2}
         title="You haven’t organized a contest yet"
-        actions={<Link className={buttonClassName()} to="/contests/new">Create contest</Link>}
+        description={canCreate ? undefined : 'Accounts can create contests from one month after joining.'}
+        actions={canCreate ? <Link className={buttonClassName()} to="/contests/new">Create contest</Link> : undefined}
       />
     ) : view.collection === 'joined' ? (
       <EmptyState
@@ -186,7 +187,7 @@ function ContestRow({ contest, names, today }: {
     : null
   // Official rounds are open to every language and activity in practice, and the Official list never names them.
   const restrictions = names && !contest.official
-  const meta = [registration, restrictions ? languages : null, restrictions ? activities : null].filter(Boolean).join(' · ')
+  const meta = [registration, restrictions ? languages : null, restrictions ? activities : null].filter(Boolean)
 
   return (
     <li className="contest-row border-t border-rule py-4 first:border-t-0">
@@ -203,8 +204,9 @@ function ContestRow({ contest, names, today }: {
             {round}{contest.private ? <StatusTag>Unlisted</StatusTag> : null}
           </span>
         </div>
-        <p className={rowText}>
-          {formatPeriod(contest)}{meta ? <span className="contest-row__allows"> · {meta}</span> : null}
+        <p className={`${rowText} flex flex-wrap gap-x-3`}>
+          <span className="whitespace-nowrap">{formatPeriod(contest)}</span>
+          {meta.map((part, index) => <span key={index} className="contest-row__allows whitespace-nowrap">{part}</span>)}
         </p>
       </div>
     </li>

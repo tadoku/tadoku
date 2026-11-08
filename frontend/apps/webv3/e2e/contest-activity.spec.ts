@@ -30,7 +30,7 @@ async function expectLogs(page: Page, expected: Logs, participants: boolean) {
   expect(await titles.evaluateAll(links => links.map(link => link.getAttribute('href'))))
     .toEqual(expected.logs.map(log => `/logs/${log.id}`))
   if (participants) {
-    await expect(page.locator('.profile-entry-meta')).toHaveText(expected.logs.map(log => new RegExp(`^${escape(log.user_display_name ?? 'Unknown user')}`)))
+    await expect(page.locator('.profile-entries > li')).toContainText(expected.logs.map(log => log.user_display_name ?? 'Unknown user'))
   }
   // The range summary appears only beside page links.
   if (expected.total_size > 50) {
@@ -40,7 +40,6 @@ async function expectLogs(page: Page, expected: Logs, participants: boolean) {
   }
 }
 
-const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 /** The page's overall score and each registered language's score agree with the API's contest profile. */
 async function expectScores(page: Page, profile: Profile) {

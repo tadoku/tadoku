@@ -192,16 +192,14 @@ function ContestRow({ contest, names, today }: {
     <li className="contest-row border-t border-rule py-4 first:border-t-0">
       <div className="contest-row__body min-w-0 wrap-anywhere">
         <div
-          className={`contest-row__title grid grid-cols-title-tags items-start justify-start gap-x-2 gap-y-1 ${
-            contest.private ? 'max-sm:grid-cols-single' : ''
-          }`}
+          className="contest-row__title grid grid-cols-title-tags items-start justify-start gap-x-2 gap-y-1 max-sm:grid-cols-single"
         >
           <h2 className={typography({ role: 'component', className: 'm-0 font-body text-base leading-150 font-semibold' })}>
             <a className="text-inherit no-underline hover:text-link hover:underline" href={links.contest(contest.id)}>
               {contest.title}
             </a>
           </h2>
-          <span className={`contest-row__tags mt-0.5 flex flex-wrap gap-x-1.5 gap-y-1 ${contest.private ? 'max-sm:mt-0' : ''}`}>
+          <span className="contest-row__tags mt-0.5 flex flex-wrap gap-x-1.5 gap-y-1 max-sm:mt-0">
             {round}{contest.private ? <StatusTag>Unlisted</StatusTag> : null}
           </span>
         </div>

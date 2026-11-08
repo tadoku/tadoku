@@ -34,7 +34,7 @@ export function Person({ children, you }: { children: ReactNode; you?: boolean }
 }
 
 /** The link on a participant's name: row context marks it, so the underline waits for hover. */
-export const personLink = 'text-ink no-underline wrap-anywhere hover:text-link hover:underline'
+export const personLink = 'text-ink no-underline wrap-break-word hover:text-link hover:underline'
 
 /** The viewer's row: an accent-soft band. */
 export const currentRow = 'bg-action-soft hover:bg-current-row-hover'

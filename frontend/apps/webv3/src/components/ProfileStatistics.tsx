@@ -15,7 +15,7 @@ const muted = 'mb-0 mt-2 text-metadata leading-160 text-muted'
 const sectionTitle = 'font-display text-heading leading-section'
 const columns = [
   'mt-8 grid grid-cols-halves gap-x-12 gap-y-0 max-lg:grid-cols-single',
-  '*:min-w-0 *:border-t *:border-rule *:py-7 [&>:nth-child(3)]:col-span-full [&_h2]:text-heading [&_h2]:leading-section',
+  '*:min-w-0 *:border-t *:border-rule *:py-7 [&>:nth-child(3)]:col-span-full [&>:only-child]:col-span-full [&_h2]:text-heading [&_h2]:leading-section',
 ].join(' ')
 const rows = listRows()
 

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useHydrated } from '@tanstack/react-router'
 import type { ImmersionLogConfigurationOptions, ImmersionScoringRule, ImmersionScoringRuleSet } from 'api-client'
-import { Button, EmptyState, Flash, Modal, PageHeader, SectionHeading, StatusTag, Surface, Table, buttonClassName } from 'paper-ui'
+import { Button, EmptyState, Flash, Modal, PageHeader, SectionHeading, StatusTag, Surface, buttonClassName } from 'paper-ui'
 import { useRef, useState } from 'react'
 import { contestsHref } from '../lib/contests'
 import { useLinks } from '../lib/links'
@@ -135,29 +135,32 @@ function RuleSetVersion({ ruleSet, options, change }: {
   )
 }
 
-/** A version's rules grouped by activity, with one rate and what it applies to per row. */
+/** A version's rules by activity: rates by unit, then modifiers as multipliers, each row a condition and its rate. */
 function RuleTables({ rules, options }: { rules: ImmersionScoringRule[]; options: ImmersionLogConfigurationOptions }) {
-  const groups = new Map<number, ImmersionScoringRule[]>()
-  for (const rule of rules) groups.set(rule.activity_id, [...(groups.get(rule.activity_id) ?? []), rule])
+  const activities = [...new Set(rules.map(rule => rule.activity_id))]
 
   return (
-    <div className="grid gap-5">
-      {[...groups].map(([activityId, group]) => {
+    <div className="grid gap-6">
+      {activities.map(activityId => {
         const activity = options.activities.find(activity => activity.id === activityId)?.name ?? `Activity ${activityId}`
+        const group = rules.filter(rule => rule.activity_id === activityId)
+        const bases = group.filter(rule => !rule.stackable)
+        const units = [...new Set(bases.map(rule => rule.unit_key ?? (rule.score_source === 'duration_minutes' ? 'minute' : '')))]
         return (
-          <section key={activityId} aria-label={`${activity} rules`}>
-            <h4 className="m-0 mb-1 font-body text-base font-semibold">{activity}</h4>
-            <Table
-              caption={`${activity} rules`}
-              captionVisibility="screen-reader"
-              rows={group}
-              getRowKey={rule => rule.id ?? rule.priority}
-              minWidth="0"
-              columns={[
-                { id: 'applies', header: 'Applies to', cell: rule => appliesTo(rule, options) },
-                { id: 'rate', header: 'Rate', align: 'end', width: '11rem', cell: rule => <span className="whitespace-nowrap">{rateText(rule)}</span> },
-              ]}
-            />
+          <section key={activityId} aria-label={`${activity} rules`} className="grid gap-3">
+            <h4 className="m-0 font-body text-base font-semibold">{activity}</h4>
+            {units.map(unit => (
+              <RateRows
+                key={unit}
+                title={unit === 'minute' ? 'Per minute' : `Per ${unitName(unit, options).toLowerCase()}`}
+                rules={bases.filter(rule => (rule.unit_key ?? (rule.score_source === 'duration_minutes' ? 'minute' : '')) === unit)}
+                options={options}
+                rate={rule => rateFormat.format(rule.rate)}
+              />
+            ))}
+            {group.some(rule => rule.stackable)
+              ? <RateRows title="Modifiers" rules={group.filter(rule => rule.stackable)} options={options} rate={rule => `× ${rateFormat.format(rule.rate)}`} />
+              : null}
           </section>
         )
       })}
@@ -165,17 +168,35 @@ function RuleTables({ rules, options }: { rules: ImmersionScoringRule[]; options
   )
 }
 
-const rateFormat = new Intl.NumberFormat('en-GB', { maximumSignificantDigits: 3 })
-
-function rateText(rule: ImmersionScoringRule) {
-  const per = rule.score_source === 'duration_minutes' ? ' per minute' : ''
-  return `${rule.stackable ? '+' : ''}${rateFormat.format(rule.rate)} pt${per}`
+function RateRows({ title, rules, options, rate }: {
+  title: string
+  rules: ImmersionScoringRule[]
+  options: ImmersionLogConfigurationOptions
+  rate: (rule: ImmersionScoringRule) => string
+}) {
+  return (
+    <div>
+      <h5 className="mb-1 mt-0 text-metadata font-semibold text-muted">{title}</h5>
+      <dl className="m-0">
+        {rules.map(rule => (
+          <div key={rule.id ?? rule.priority} className="flex justify-between gap-4 border-b border-rule py-1.5 text-metadata tabular-nums last:border-b-0">
+            <dt>{condition(rule, options)}</dt>
+            <dd className="m-0 whitespace-nowrap font-semibold">{rate(rule)}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  )
 }
 
-function appliesTo(rule: ImmersionScoringRule, options: ImmersionLogConfigurationOptions) {
-  const language = options.languages.find(language => language.code === rule.language_code)?.name
-  const unit = options.units.find(unit => unit.unit_key === rule.unit_key)?.name ?? rule.unit_key?.replaceAll('_', ' ')
-  return [unit, language ?? rule.language_code, rule.tag?.replaceAll('_', ' ')].filter(Boolean).join(' · ') || 'Any'
+const rateFormat = new Intl.NumberFormat('en-GB', { maximumSignificantDigits: 3 })
+
+const unitName = (unitKey: string, options: ImmersionLogConfigurationOptions) =>
+  options.units.find(unit => unit.unit_key === unitKey)?.name ?? unitKey.replaceAll('_', ' ')
+
+function condition(rule: ImmersionScoringRule, options: ImmersionLogConfigurationOptions) {
+  const language = options.languages.find(language => language.code === rule.language_code)?.name ?? rule.language_code
+  return [language, rule.tag?.replaceAll('_', ' ')].filter(Boolean).join(' · ') || 'All languages'
 }
 
 const confirmations = {

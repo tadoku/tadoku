@@ -18,7 +18,7 @@ export function ErrorView() {
     <EmptyState
       headingLevel={1}
       title="This page couldn’t load"
-      description="Check your connection, then try again."
+      description="Try loading this page again."
       actions={<Button onClick={() => void router.invalidate()}>Try again</Button>}
     />
   )

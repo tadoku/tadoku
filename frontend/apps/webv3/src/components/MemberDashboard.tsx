@@ -62,8 +62,7 @@ export function MemberDashboard({ viewer, year, className }: { viewer: SignedIn;
                   variant="plain"
                   headingLevel={3}
                   title="No activity yet"
-                  description="A few pages or minutes are enough."
-                  actions={<a className="text-link hover:text-link-hover" href={links.logs}>Log your first activity</a>}
+                  description="A few pages or minutes are enough to start."
                 />
               )}
             />

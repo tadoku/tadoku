@@ -84,7 +84,7 @@ function YearTotals({ statistics, year }: { statistics: Found; year: number }) {
 
   return (
     <StatGrid
-      className="profile-stats mb-8"
+      className="profile-stats mb-8 max-sm:[&>:first-child]:col-span-full"
       stats={[
         { label: 'Overall score', value: total === undefined ? 'Unavailable' : scoreFormat.format(total), detail: average },
         ...(activity.ok ? [{ label: 'Logs', value: activity.data.total_updates, detail: daysActive(activeDays(activity.data.scores)) }] : []),

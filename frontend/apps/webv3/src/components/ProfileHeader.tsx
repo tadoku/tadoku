@@ -25,7 +25,7 @@ export function ProfileHeader({ profile, owner, view, overviewHref, exportable =
         {owner && exportable ? (
           <p className="m-0 flex items-center gap-1.5 text-sm text-muted max-md:basis-full">
             <ArrowDownTrayIcon className={iconClassName('compact')} aria-hidden="true" />
-            Export logs: <a className="text-link hover:text-link-hover" href={links.logExport('csv')} aria-label="Download CSV">CSV</a> · <a className="text-link hover:text-link-hover" href={links.logExport('json')} aria-label="Download JSON">JSON</a>
+            Export logs: <a className="inline-block px-1 py-2 text-link hover:text-link-hover" href={links.logExport('csv')} aria-label="Download CSV">CSV</a><a className="inline-block px-1 py-2 text-link hover:text-link-hover" href={links.logExport('json')} aria-label="Download JSON">JSON</a>
           </p>
         ) : null}
       </header>

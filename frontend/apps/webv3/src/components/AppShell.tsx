@@ -169,6 +169,7 @@ const logOut = () => (document.getElementById(logoutFormId) as HTMLFormElement).
 function AccountActions({ viewer }: { viewer: Viewer | undefined }) {
   const { login, register } = useAccountUrls()
   const links = useLinks()
+  const onLogForm = useRouterState({ select: state => state.location.pathname === '/logs/new' })
 
   switch (viewer?.status) {
     case undefined:
@@ -184,7 +185,7 @@ function AccountActions({ viewer }: { viewer: Viewer | undefined }) {
     case 'signed-in':
       return <>
         <AccountMenu viewer={viewer} />
-        <a href={links.logs} className={buttonClassName({ className: 'shrink-0 whitespace-nowrap' })}>Log activity</a>
+        <a href={links.logs} className={buttonClassName({ variant: onLogForm ? 'ghost' : undefined, className: 'shrink-0 whitespace-nowrap' })}>Log activity</a>
       </>
   }
 }

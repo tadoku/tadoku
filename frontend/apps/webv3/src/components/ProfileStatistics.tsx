@@ -80,7 +80,7 @@ function YearTotals({ statistics, year }: { statistics: Found; year: number }) {
   const { scores, activity } = statistics
   const total = scores.ok ? scores.data.scores.reduce((sum, score) => sum + score.score, 0) : undefined
   const days = daysCounted(year, statistics.today)
-  const average = total && days ? `${scoreFormat.format(total / days)} per day in ${year}` : undefined
+  const average = total && days ? `${scoreFormat.format(total / days)} per calendar day in ${year}` : undefined
 
   return (
     <StatGrid

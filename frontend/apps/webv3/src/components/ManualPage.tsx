@@ -31,6 +31,7 @@ export function ManualTable({ id, headers, rows, onPaper = false }: { id: string
         {merged.map(row => (
           <section key={row[0]} aria-label={`${row[0]} units`}>
             <h5 className="m-0 mb-1 text-ui font-semibold">{row[0]}</h5>
+            {row === merged[0] ? null : <p className="mb-1 mt-0 text-metadata text-muted">Same as {merged[0][0]}, except:</p>}
             <dl className="m-0">
               {headers.slice(1).map((header, index) => row === merged[0] || row[index + 1] !== merged[0][index + 1] ? (
                 <div key={header} className="flex justify-between gap-4 border-b border-rule py-1.5 text-metadata tabular-nums">
@@ -64,13 +65,14 @@ const sections = [
 /** Webv2's code-owned manual, ported as written. CMS pages render through `CmsPage` instead. */
 export function ManualPage() {
   return (
-    <article className="min-w-0 max-w-article">
-      <PageHeader title="Guide" />
-      <nav aria-label="On this page" className="mb-10 border-y border-rule py-4">
-        <ol className="m-0 list-none gap-x-8 p-0 text-ui leading-175 tablet:columns-2">
+    <div className="grid items-start lg:grid-cols-workspace lg:gap-12">
+      <nav aria-label="On this page" className="mb-10 border-y border-rule py-4 lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1 lg:mb-0 lg:border-y-0 lg:py-0">
+        <ol className="m-0 list-none gap-x-8 p-0 text-ui leading-175 tablet:max-lg:columns-2">
           {sections.map(([id, label]) => <li key={id} className="break-inside-avoid"><a className="inline-block py-1 text-link no-underline hover:text-link-hover hover:underline" href={`#${id}`}>{label}</a></li>)}
         </ol>
       </nav>
+    <article className="min-w-0 max-w-article lg:col-start-1 lg:row-start-1">
+      <PageHeader title="Guide" />
       <div className={prose({ className: 'content-prose' })}>
         <h2 id="signing-up-for-a-contest">Signing up for a contest</h2>
         <p>
@@ -234,5 +236,6 @@ export function ManualPage() {
         </ol>
       </div>
     </article>
+    </div>
   )
 }

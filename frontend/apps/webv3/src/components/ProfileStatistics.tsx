@@ -142,7 +142,7 @@ function Breakdown<T>({ id, title, section, items, empty }: {
               <div className="mb-2 flex justify-between gap-4 text-ui wrap-anywhere">
                 <span>{row.label}</span>
                 <strong className="whitespace-nowrap tabular-nums">
-                  {scoreFormat.format(row.score)} <small className="font-regular text-muted">{pointsUnit(row.score)}</small>
+                  {scoreFormat.format(row.score)} <small className="font-regular text-muted">{pointsUnit(row.score)} · {total ? Math.round(row.score / total * 100) : 0}%</small>
                 </strong>
               </div>
               <span className="block h-2 bg-rule-subtle" aria-hidden="true">

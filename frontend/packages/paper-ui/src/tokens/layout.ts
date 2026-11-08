@@ -146,7 +146,7 @@ export const layoutGridTemplateColumns = {
 } as const
 
 export const layoutText = {
-  hero: { base: 'clamp(2rem, 3.5vw, 2.75rem)', lg: '2.25rem', tablet: 'clamp(1.75rem, 6.75vw, 2.75rem)' } satisfies Responsive,
+  hero: { base: 'clamp(2rem, 3.5vw, 2.75rem)', lg: '2.25rem', tablet: 'clamp(2rem, 8.5vw, 2.75rem)' } satisfies Responsive,
   heading: '1.375rem',
   figure: '1.75rem',
   score: '1.875rem',

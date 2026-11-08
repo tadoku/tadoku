@@ -174,14 +174,24 @@ function RateRows({ title, rules, options, rate }: {
   options: ImmersionLogConfigurationOptions
   rate: (rule: ImmersionScoringRule) => string
 }) {
+  // Languages with the same rate share a row, so the list reads as the handful of rates that exist.
+  const merged = rules.reduce<{ key: string; label: string; value: string }[]>((rows, rule) => {
+    const value = rate(rule)
+    const label = condition(rule, options)
+    const same = !rule.tag ? rows.find(row => row.value === value && !row.label.includes(' · ')) : undefined
+    if (same) same.label += `, ${label}`
+    else rows.push({ key: String(rule.id ?? rule.priority), label, value })
+    return rows
+  }, [])
+
   return (
     <div>
       <h5 className="mb-1 mt-0 text-metadata font-semibold text-muted">{title}</h5>
       <dl className="m-0">
-        {rules.map(rule => (
-          <div key={rule.id ?? rule.priority} className="flex justify-between gap-4 border-b border-rule py-1.5 text-metadata tabular-nums last:border-b-0">
-            <dt>{condition(rule, options)}</dt>
-            <dd className="m-0 whitespace-nowrap font-semibold">{rate(rule)}</dd>
+        {merged.map(({ key, label, value }) => (
+          <div key={key} className="flex justify-between gap-4 border-b border-rule py-1.5 text-metadata tabular-nums last:border-b-0">
+            <dt>{label}</dt>
+            <dd className="m-0 whitespace-nowrap font-semibold">{value}</dd>
           </div>
         ))}
       </dl>

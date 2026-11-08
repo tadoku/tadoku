@@ -25,7 +25,7 @@ export function Person({ children, you }: { children: ReactNode; you?: boolean }
     <span className="standings-person inline-flex flex-wrap items-baseline gap-x-2 gap-y-1">
       {children}
       {you ? (
-        <span className="relative -top-px inline-block rounded-chip bg-action px-2 py-px text-xs leading-150 font-bold tracking-wide text-on-action">
+        <span className="relative -top-px inline-block rounded-chip border border-ink px-1.5 py-px text-xs leading-125 font-semibold text-ink">
           You
         </span>
       ) : null}
@@ -36,5 +36,5 @@ export function Person({ children, you }: { children: ReactNode; you?: boolean }
 /** The link on a participant's name: row context marks it, so the underline waits for hover. */
 export const personLink = 'text-ink no-underline wrap-break-word hover:text-link hover:underline'
 
-/** The viewer's row: an accent-soft band. */
-export const currentRow = 'bg-action-soft hover:bg-current-row-hover'
+/** The viewer's row: a neutral band, so the accent stays with links and actions. */
+export const currentRow = 'bg-neutral-hover hover:bg-raised-hover'

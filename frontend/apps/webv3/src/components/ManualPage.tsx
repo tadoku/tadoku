@@ -68,7 +68,7 @@ export function ManualPage() {
       <PageHeader title="Manual" />
       <nav aria-label="On this page" className="mb-10 border-y border-rule py-4">
         <ol className="m-0 grid list-none gap-x-8 gap-y-1.5 p-0 text-ui leading-150 tablet:grid-cols-halves">
-          {sections.map(([id, label]) => <li key={id}><a className="text-link hover:text-link-hover" href={`#${id}`}>{label}</a></li>)}
+          {sections.map(([id, label]) => <li key={id}><a className="text-link no-underline hover:text-link-hover hover:underline" href={`#${id}`}>{label}</a></li>)}
         </ol>
       </nav>
       <div className={prose({ className: 'content-prose' })}>

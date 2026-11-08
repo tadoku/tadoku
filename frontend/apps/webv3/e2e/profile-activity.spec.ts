@@ -5,7 +5,7 @@ import { accountId, api, branch, expect, logDescription, reader, test, webv3 } f
 // The fixtures' own test.use applies only to the first file that imports them; authenticated runs keep traces off.
 test.use({ trace: 'off', video: 'off', ignoreHTTPSErrors: false })
 
-const pageSize = 50
+const pageSize = 25
 
 type Log = { id: string; created_at: string; description?: string; tags: string[]; language: { name: string }; activity: { name: string } }
 

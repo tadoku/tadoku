@@ -154,7 +154,7 @@ export const radioCard = tv({
       "paper-radio-card grid cursor-pointer grid-cols-mark-label gap-3 border border-field-edge bg-field p-3.4",
       "has-checked:border-b-edge has-checked:border-link",
       "has-focus-visible:relative has-focus-visible:z-lift has-focus-visible:outline-halo has-focus-visible:outline-offset-ring",
-      "has-disabled:cursor-default has-disabled:text-muted",
+      "has-disabled:cursor-default has-disabled:border-rule has-disabled:bg-paper has-disabled:text-muted",
       "forced-colors:has-focus-visible:border-b-forced-highlight forced-colors:has-focus-visible:outline-forced-highlight",
     ],
     input: "mt-1 accent-action focus-visible:outline-none",

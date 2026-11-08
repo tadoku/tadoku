@@ -48,7 +48,7 @@ export const button = tv({
       default: { base: "paper-button--default" },
       outline: {
         base: [
-          "paper-button--outline border-button-edge bg-raised text-ink",
+          "paper-button--outline border-button-edge bg-raised text-ink disabled:bg-transparent aria-disabled:bg-transparent",
           "not-disabled:hover:border-button-edge-hover not-disabled:hover:bg-raised-hover",
           "not-disabled:active:border-button-edge-hover not-disabled:active:bg-raised-hover",
           "data-popup-open:border-button-edge-hover data-popup-open:bg-raised-hover",
@@ -56,7 +56,7 @@ export const button = tv({
       },
       ghost: {
         base: [
-          "paper-button--ghost border-transparent bg-transparent text-ink",
+          "paper-button--ghost border-transparent bg-transparent text-ink disabled:bg-transparent aria-disabled:bg-transparent",
           "not-disabled:hover:border-transparent not-disabled:hover:bg-neutral-hover not-disabled:hover:text-ink",
           "not-disabled:active:border-transparent not-disabled:active:bg-neutral-hover not-disabled:active:text-ink",
           "data-popup-open:border-transparent data-popup-open:bg-neutral-hover data-popup-open:text-ink",

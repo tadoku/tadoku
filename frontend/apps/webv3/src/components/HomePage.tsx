@@ -41,6 +41,7 @@ const hero = [
   'grid grid-cols-halves items-start gap-16 py-2 max-lg:gap-8',
   'max-tablet:grid-cols-single max-tablet:gap-8 max-tablet:pt-0',
 ].join(' ')
+const memberHero = 'grid grid-cols-halves items-start gap-x-16 gap-y-8 py-2 max-lg:gap-x-8 max-tablet:grid-cols-single'
 const status = 'mb-4 mt-0 text-sm font-semibold text-warning'
 const headline = 'm-0 max-w-measure-hero text-balance font-display text-hero leading-120 tracking-hero'
 const lead = 'my-6 max-w-measure-sm text-lead leading-175 text-ink max-tablet:my-5 max-tablet:text-base'
@@ -80,7 +81,7 @@ export function HomePage() {
 
   return (
     <div className="home-page">
-      <section className={hero} aria-labelledby="home-title">
+      <section className={member ? memberHero : hero} aria-labelledby="home-title">
         {member
           ? <MemberPromise member={member} data={data} phase={phase} year={year} />
           : (
@@ -97,12 +98,13 @@ export function HomePage() {
             </div>
           )}
 
-        <Surface as="section" className="min-w-0 p-0" aria-labelledby="home-board-title">
+        <Surface as="section" className="min-w-0 p-0 max-tablet:order-last" aria-labelledby="home-board-title">
           <ContestBoard data={data} phase={phase} today={today} retrying={isFetching} retry={() => void refetch()} />
         </Surface>
+        {member ? <MemberDashboard viewer={member} year={year} className="col-span-full" /> : null}
       </section>
 
-      {member ? <MemberDashboard viewer={member} year={year} /> : (
+      {member ? null : (
         <section className="mt-12 border-t border-rule pt-7 max-tablet:mt-9 max-tablet:pt-6" aria-labelledby="home-how-title">
           <h2 id="home-how-title" className="mb-6 mt-0 font-display text-heading">How Tadoku works</h2>
           <ol className="m-0 grid list-none grid-cols-thirds gap-10 p-0 max-tablet:grid-cols-single max-tablet:gap-6">

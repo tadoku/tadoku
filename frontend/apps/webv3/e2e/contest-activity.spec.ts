@@ -16,7 +16,7 @@ const latest = (request: APIRequestContext) => apiJson<Contest>(request, '/immer
 
 /** One page of a contest's logs, counted from 1, as the API lists them. */
 function contestLogs(request: APIRequestContext, contestId: string, page = 1, userId?: string) {
-  const query = new URLSearchParams({ page_size: '50', page: String(page - 1), include_deleted: 'false', ...(userId ? { user_id: userId } : {}) })
+  const query = new URLSearchParams({ page_size: '25', page: String(page - 1), include_deleted: 'false', ...(userId ? { user_id: userId } : {}) })
   return apiJson<Logs>(request, `/immersion/contests/${contestId}/logs?${query}`)
 }
 
@@ -46,9 +46,14 @@ const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 async function expectScores(page: Page, profile: Profile) {
   const stats = page.locator('.profile-stats')
   const total = profile.scores.reduce((sum, item) => sum + item.score, 0)
-  const values = [score.format(total), ...profile.registration.languages.map(language =>
-    score.format(profile.scores.find(item => item.language_code === language.code)?.score ?? 0))]
-  await expect(stats.locator('.paper-stat-grid__value')).toHaveText(values)
+  await expect(page.locator('.paper-page-header__lead')).toContainText(score.format(total))
+  const languages = profile.registration.languages
+  if (languages.length > 1) {
+    await expect(stats.locator('.paper-stat-grid__value')).toHaveText(languages.map(language =>
+      score.format(profile.scores.find(item => item.language_code === language.code)?.score ?? 0)))
+  } else {
+    await expect(stats).toHaveCount(0)
+  }
 }
 
 test.beforeEach(() => {
@@ -191,7 +196,7 @@ test('an administrator removes a log from a contest with a reason; a participant
   const own = await readerContext.newPage()
   await own.goto(profilePath(contest.id, readerId))
   await expectScores(own, await apiJson<Profile>(readerContext.request, `/immersion/contests/${contest.id}/profile/${readerId}/scores`))
-  await expect(own.locator('.profile-stats')).toContainText(score.format(log.score))
+  await expect(own.locator('main')).toContainText(score.format(log.score))
   await expectLogs(own, await contestLogs(readerContext.request, contest.id, 1, readerId), false)
   await expect(removeButtons(own)).toHaveCount(0)
   await own.goto(updatesPath(contest.id))

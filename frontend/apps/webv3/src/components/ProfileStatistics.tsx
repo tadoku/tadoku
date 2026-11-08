@@ -180,7 +180,7 @@ function ContestHistorySection({ history, userId, year, page }: {
             </li>
           ))}
         </ul>
-      ) : <p className={muted}>Hasn’t participated in any contests in {year}.</p>}
+      ) : <p className={muted}>No contests in {year}.</p>}
       {pages > 1 && page <= pages ? (
         <Pagination className="mt-5" label="Contest pages" totalPages={pages} currentPage={page} getHref={target => `/profile/${userId}/statistics/${year}?contests=${target}`} />
       ) : null}

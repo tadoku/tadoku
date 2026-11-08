@@ -22,7 +22,7 @@ const head = 'mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1
 const headTitle = 'm-0 font-display text-heading leading-section'
 const rows = listRows()
 
-export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: number }) {
+export function MemberDashboard({ viewer, year, className }: { viewer: SignedIn; year: number; className?: string }) {
   const links = useLinks()
   const [statisticsQuery, activityQuery] = memberDashboardQueries(viewer, year)
   const statistics = useQuery(statisticsQuery).data
@@ -37,7 +37,7 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
     : null
 
   return (
-    <div className="mt-12 grid gap-10 *:min-w-0">
+    <div className={`grid gap-10 *:min-w-0 ${className ?? ''}`}>
       {fresh ? null : <section className={band} aria-labelledby="home-year-title">
         <div className={head}>
           <h2 id="home-year-title" className={headTitle}>Daily activity</h2>

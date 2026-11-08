@@ -124,13 +124,13 @@ test('an organizer gets each invalid field focused, then creates a contest and l
   const name = `Webv3 creation check ${unique()}`
   await title.fill(name)
   await page.getByLabel(/^Description/).fill('  Read anything you like.  ')
-  await page.getByLabel('Start date (UTC)').fill(utcDay(20))
-  await page.getByLabel('End date (UTC)').fill(utcDay(10))
-  await page.getByLabel('Sign-up deadline (UTC)').fill(utcDay(15))
+  await page.getByLabel('Start date').fill(utcDay(20))
+  await page.getByLabel('End date').fill(utcDay(10))
+  await page.getByLabel('Sign-up deadline').fill(utcDay(15))
   await createButton(page).click()
-  await expect(page.getByLabel('End date (UTC)')).toBeFocused()
+  await expect(page.getByLabel('End date')).toBeFocused()
   await expect(page.getByText('Choose an end date on or after the start date.')).toBeVisible()
-  await page.getByLabel('End date (UTC)').fill(utcDay(50))
+  await page.getByLabel('End date').fill(utcDay(50))
 
   // Without activities the API refuses the contest.
   const activities = page.getByRole('combobox', { name: 'Allowed activities' })

@@ -7,7 +7,6 @@ import { contestsHref } from '../lib/contests'
 import { useLinks } from '../lib/links'
 import type { LogFailure } from '../lib/logs'
 import { contestScoringQuery, useChangeScoring, type RuleSetChange } from '../lib/scoring'
-import { scoreSources } from '../lib/scoring-draft'
 import { useLoginUrl } from '../lib/session'
 import { renderLink } from './router-link'
 import { RuleSetForm } from './RuleSetForm'
@@ -155,9 +154,8 @@ function RuleTables({ rules, options }: { rules: ImmersionScoringRule[]; options
               getRowKey={rule => rule.id ?? rule.priority}
               minWidth="0"
               columns={[
-                { id: 'source', header: 'Counts', cell: rule => (scoreSources.find(source => source.value === rule.score_source)?.label ?? rule.score_source) },
                 { id: 'applies', header: 'Applies to', cell: rule => appliesTo(rule, options) },
-                { id: 'rate', header: 'Rate', align: 'end', cell: rule => `${rule.stackable ? '+' : ''}× ${rule.rate}` },
+                { id: 'rate', header: 'Rate', align: 'end', width: '11rem', cell: rule => <span className="whitespace-nowrap">{rateText(rule)}</span> },
               ]}
             />
           </section>
@@ -167,10 +165,17 @@ function RuleTables({ rules, options }: { rules: ImmersionScoringRule[]; options
   )
 }
 
+const rateFormat = new Intl.NumberFormat('en-GB', { maximumSignificantDigits: 3 })
+
+function rateText(rule: ImmersionScoringRule) {
+  const per = rule.score_source === 'duration_minutes' ? ' per minute' : ''
+  return `${rule.stackable ? '+' : ''}${rateFormat.format(rule.rate)} pt${per}`
+}
+
 function appliesTo(rule: ImmersionScoringRule, options: ImmersionLogConfigurationOptions) {
   const language = options.languages.find(language => language.code === rule.language_code)?.name
   const unit = options.units.find(unit => unit.unit_key === rule.unit_key)?.name ?? rule.unit_key?.replaceAll('_', ' ')
-  return [unit, language ?? rule.language_code, rule.tag?.replaceAll('_', ' ')].filter(Boolean).join(' · ') || 'Everything'
+  return [unit, language ?? rule.language_code, rule.tag?.replaceAll('_', ' ')].filter(Boolean).join(' · ') || 'Any'
 }
 
 const confirmations = {

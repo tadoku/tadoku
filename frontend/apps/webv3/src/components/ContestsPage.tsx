@@ -52,7 +52,7 @@ export function ContestsPage({ view, page }: { view: ContestView; page: number }
         actions={(
           <>
             {view.collection === 'joined' && scope?.kind === 'participant' ? <JoinedYear userId={scope.userId} year={view.year} /> : null}
-            {canCreate ? <Link className={buttonClassName({ variant: 'outline' })} to={links.newContest}><PlusIcon className={iconClassName('compact')} aria-hidden="true" />Create contest</Link> : null}
+            {canCreate ? <Link className={buttonClassName({ variant: 'outline' })} to={links.newContest}><PlusIcon className={iconClassName('compact')} aria-hidden="true" /><span className="max-sm:sr-only">Create contest</span></Link> : null}
           </>
         )}
       />

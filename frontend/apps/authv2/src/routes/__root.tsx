@@ -2,10 +2,10 @@ import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from '@tanst
 import type { QueryClient } from '@tanstack/react-query'
 import favicon from 'paper-ui/assets/brand/favicon.svg?url'
 import type { ReactNode } from 'react'
-import { Shell, themeBootScript } from '../components/Shell'
+import { Shell } from '../components/Shell'
 import { NotFound, Unavailable } from '../components/StatusViews'
 import { getSession } from '../lib/session'
-import { bodyClassName, documentClassName } from 'paper-ui'
+import { bodyClassName, documentClassName, themeBootScript } from 'paper-ui'
 import '../styles.css'
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({

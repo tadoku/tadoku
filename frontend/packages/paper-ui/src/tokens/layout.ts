@@ -21,7 +21,6 @@ export const layoutSpacing = {
   'brand-sample-mark': 'calc(var(--spacing-brand-sample) * 0.282)',
   'brand-gap': 'calc(var(--spacing-brand) * 0.056)',
   'gutter-account': 'clamp(1rem, 4vw, 2rem)',
-  'header-x-account': 'max(var(--spacing-gutter-account), calc((100% - var(--container-content)) / 2))',
   'main-top-account': 'clamp(2rem, 7vh, 4.5rem)',
   'card-pad': 'clamp(1.5rem, 6vw, 2.25rem)',
   /** The styleguide navbar: a comfortable control plus its rule, also inside compact regions. */
@@ -35,8 +34,6 @@ export const layoutSpacing = {
   /** Webv3 forms and records on a surface. */
   'record-inset': 'clamp(1rem, 4vw, 2rem)',
   version: 'clamp(1rem, 4vw, 1.5rem)',
-  'mark-account': '2.1875rem',
-  'wordmark-account': '7.75rem',
 } as const
 
 export const layoutContainer = {
@@ -85,7 +82,6 @@ export const layoutHeight = {
   'metadata-line': 'var(--leading-metadata)',
   card: '11rem',
   picker: 'min(22rem, 55vh)',
-  'header-account': '3.8125rem',
 } as const
 
 export const layoutGridTemplateColumns = {

@@ -20,6 +20,7 @@ export {
   surface,
   typography,
 } from './foundations/recipes'
+export { chooseTheme, shareTheme, storedTheme, themeBootScript, type ThemeName } from './foundations/theme'
 export { bodyClassName, documentClassName } from './foundations/document'
 export { prose } from './foundations/prose'
 export { formFooter } from './components/forms/styles'

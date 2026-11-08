@@ -73,7 +73,7 @@ export const focusRing = tv({
 export const appFrame = tv({
   slots: {
     root: 'flex min-h-screen flex-col',
-    header: 'relative border-b border-rule bg-paper',
+    header: 'sticky top-0 z-header border-b border-rule bg-paper',
     content: 'mx-auto w-full min-w-0 max-w-frame flex-1 px-gutter pb-frame-bottom pt-frame-top focus:outline-none',
     container: 'mx-auto max-w-content',
   },

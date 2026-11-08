@@ -35,7 +35,10 @@ export const navbar = tv({
       "data-disabled:cursor-default data-disabled:opacity-faded",
     ],
     panel: "paper-navbar__mobile-panel hidden border-t border-rule-subtle p-2",
-    mobileLink: ["paper-navbar__mobile-link w-full", ...barLink, "not-aria-disabled:hover:bg-neutral-hover"],
+    mobileLink: [
+      "paper-navbar__mobile-link w-full", ...barLink, "not-aria-disabled:hover:bg-neutral-hover",
+      "aria-[current=page]:shadow-current-bar-start aria-[current=page]:text-link",
+    ],
     groupTitle: "mx-field-x mb-1 mt-4 text-metadata leading-metadata text-muted uppercase",
     loading: [
       "paper-navbar__loading absolute inset-x-0 -bottom-px h-0.5 overflow-hidden bg-rule-subtle",
@@ -54,7 +57,10 @@ export const navbar = tv({
         brand: "max-lg:shrink-0",
         brandLink: "gap-brand-gap",
         actions: "max-lg:ms-auto max-lg:[&_.paper-button]:min-h-target",
-        panel: "px-0",
+        panel: [
+          "border-t-0 px-gutter pb-3 pt-1 max-lg:absolute max-lg:inset-x-0 max-lg:top-full max-lg:z-header",
+          "max-lg:max-h-modal max-lg:overflow-y-auto max-lg:border-b max-lg:border-rule max-lg:bg-paper",
+        ],
         mobileLink: "max-lg:min-h-target",
       },
     },

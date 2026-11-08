@@ -32,6 +32,7 @@ export function Shell({ identity, children }: { readonly identity: Identity; rea
           </span>
           <span className="border-s border-rule ps-3.5 text-sm leading-metadata font-semibold max-sm:hidden">Account</span>
         </a>
+        <a className="ms-auto me-2 text-sm text-link hover:text-link-hover max-sm:hidden" href={identity.webUrl}>Back to Tadoku</a>
         {account ? (
           <form className="m-0 flex min-w-0 items-center gap-4 max-sm:gap-3" method="post" action="/actions/logout">
             <span className="min-w-0 max-w-account-label truncate text-sm text-ink max-sm:max-w-none">

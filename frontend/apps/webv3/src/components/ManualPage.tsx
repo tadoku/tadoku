@@ -57,6 +57,8 @@ const sections = [
   ['units-listening', 'Listening units'],
   ['units-speaking', 'Speaking units'],
   ['units-study', 'Study units'],
+  ['speeding-up-listening', 'Speeding up listening material'],
+  ['ebooks', 'Ebooks'],
 ] as const
 
 /** Webv2's code-owned manual, ported as written. CMS pages render through `CmsPage` instead. */
@@ -183,7 +185,7 @@ export function ManualPage() {
           </li>
         </ol>
 
-        <h3>Speeding up listening material</h3>
+        <h3 id="speeding-up-listening">Speeding up listening material</h3>
         <p>
           It&apos;s fairly common for advanced learners to change the playback
           speed of audio while listening. In such cases you are allowed to track
@@ -200,7 +202,7 @@ export function ManualPage() {
           <strong>60 minutes</strong> of input.
         </p>
 
-        <h3>Ebooks</h3>
+        <h3 id="ebooks">Ebooks</h3>
 
         <p>
           Tracking pages read of ebooks can be quite tricky. Most of the times

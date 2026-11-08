@@ -42,6 +42,7 @@ function LogDetail() {
 
   const log = result.data
   const owner = viewer?.status === 'signed-in' && viewer.userId === log.user_id
+  const titledByNote = Boolean(log.description) && log.description!.length <= 60 && !log.tags.some(tag => tag.toLowerCase() === 'nsfw')
   const learner = log.user_display_name ?? (owner && viewer?.status === 'signed-in' ? viewer.displayName : undefined)
   return (
     <div>
@@ -49,7 +50,7 @@ function LogDetail() {
         backLink={{ href: links.profileUpdates(log.user_id), label: owner ? 'Your activity' : 'Activity' }}
         renderLink={renderLink}
         className="max-w-record"
-        title={`${log.language.name} ${log.activity.name.toLocaleLowerCase()}`}
+        title={titledByNote ? log.description! : `${log.language.name} ${log.activity.name.toLocaleLowerCase()}`}
         lead={(
           <>
             {log.language.name} · <ActivityName activity={log.activity} />
@@ -61,17 +62,18 @@ function LogDetail() {
       <Surface className="max-w-record p-0 wrap-anywhere">
         <div className="grid gap-6 p-record-inset">
           <StatGrid
+            className="max-sm:grid-cols-halves [&>:last-child]:max-sm:col-span-full"
             stats={[
               ...measure(log),
               { label: 'Score', value: scoreFormat.format(log.score), unit: pointsUnit(log.score) },
               { label: 'Logged', value: formatDate(log.created_at.slice(0, 10)), detail: loggedTime(log.created_at) },
             ]}
           />
-          {log.description || log.tags.length ? (
+          {(log.description && !titledByNote) || log.tags.length ? (
             <DescriptionList
               className="border-t border-rule pt-6"
               items={[
-                ...(log.description ? [{ label: 'Description', value: log.description }] : []),
+                ...(log.description && !titledByNote ? [{ label: 'Description', value: log.description }] : []),
                 ...(log.tags.length ? [{ label: 'Tags', value: log.tags.join(', ') }] : []),
               ]}
             />

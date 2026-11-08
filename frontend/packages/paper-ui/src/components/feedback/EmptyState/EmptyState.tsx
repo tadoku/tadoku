@@ -41,7 +41,7 @@ export function EmptyState({
   ...props
 }: EmptyStateProps) {
   const Heading = `h${headingLevel}` as const;
-  const role = headingLevel === 1 ? "page" : headingLevel === 2 ? "section" : "component";
+  const role = headingLevel === 1 ? "page" : "component";
   const slots = emptyState({ variant, focusable: Boolean(headingRef) });
 
   return (

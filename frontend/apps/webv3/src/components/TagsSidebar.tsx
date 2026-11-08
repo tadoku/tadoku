@@ -93,7 +93,7 @@ export const TagsSidebar = withPaperForm({
     }
     const group = (title: string, items: SuggestedTag[], hideTitle = false) => items.length ? (
       <section aria-label={title}>
-        <h2 className={hideTitle ? 'sr-only' : 'mb-2 mt-0 font-body text-sm leading-150 font-semibold text-muted'}>{title}</h2>
+        <h2 className={hideTitle ? 'sr-only' : 'mb-2 mt-0 font-body text-sm leading-150 font-semibold text-ink'}>{title}</h2>
         <div className="flex flex-wrap gap-2">
           {items.map(({ tag }) => (
             <button
@@ -116,6 +116,7 @@ export const TagsSidebar = withPaperForm({
     return (
       <div className="grid gap-4">
         {group('Score modifiers', suggested.filter(item => item.modifier))}
+        {suggested.some(item => item.modifier) ? <p className="-mt-2 mb-0 text-metadata text-muted">Change how this log scores.</p> : null}
         {compact && common.length ? (
           <details className="group/more">
             <summary

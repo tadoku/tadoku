@@ -24,6 +24,8 @@ export function ActivityCalendar({ userId, year, today, activity, labelledBy, su
 }) {
   const links = useLinks()
   return (
+    <>
+    <p className="mb-2 mt-0 text-metadata text-muted tablet:hidden">Swipe for earlier months.</p>
     <HeatmapScroll latest={year === Number(today.slice(0, 4))} labelledBy={labelledBy}>
       <HeatmapChart
         today={today}
@@ -39,6 +41,7 @@ export function ActivityCalendar({ userId, year, today, activity, labelledBy, su
         }))}
       />
     </HeatmapScroll>
+    </>
   )
 }
 

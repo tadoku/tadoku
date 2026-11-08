@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import { EmptyState, Pagination, entryLink, entryList, listFooter, metaLine } from 'paper-ui'
 import type { ImmersionLog } from 'api-client'
@@ -70,7 +70,7 @@ const footer = listFooter()
 /** Webv2 hides a description tagged NSFW until the reader chooses to see it. */
 const logDay = (log: ImmersionLog) => new Date(log.created_at).toISOString().slice(0, 10)
 
-const participantLink = 'text-ink underline decoration-rule underline-offset-link hover:text-link hover:decoration-current'
+const participantLink = 'text-ink no-underline hover:text-link hover:underline'
 
 /** A day's first entry shows its date; later entries that day keep it for assistive technology only. */
 function Entry({ log, showParticipant, actions, firstOfDay }: {
@@ -102,14 +102,8 @@ function Entry({ log, showParticipant, actions, firstOfDay }: {
         <Link className={entryLink({ clamp: true, className: 'profile-entry-title' })} to="/logs/$logId" params={{ logId: log.id }}>
           {nsfw || !log.description ? subject : log.description}
         </Link>
-        <p className={metaLine({ className: 'profile-entry-meta' })}>
-          {/* Each part stays whole and keeps its separator, so a wrapped line never starts with a dot. */}
-          {meta.map((part, index) => (
-            <Fragment key={index}>
-              <span className="whitespace-nowrap">{part}{index < meta.length - 1 ? ' ·' : null}</span>
-              {index < meta.length - 1 ? ' ' : null}
-            </Fragment>
-          ))}
+        <p className={metaLine({ className: 'profile-entry-meta flex flex-wrap gap-x-3' })}>
+          {meta.map((part, index) => <span key={index} className="whitespace-nowrap">{part}</span>)}
         </p>
         {nsfw && log.description ? (
           <details className="mt-2.5 text-sm">

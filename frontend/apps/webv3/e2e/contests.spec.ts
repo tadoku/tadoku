@@ -161,13 +161,12 @@ test('collection tabs, pages and the signed-out Joined and Organizing prompts wo
   }
 
   await hydrated(page)
-  await page.getByRole('navigation', { name: 'Contest collections' }).getByRole('link', { name: 'Joined' }).click()
-  await expect(page).toHaveURL(new RegExp(`/contests/joined/${new Date().getUTCFullYear()}/1$`))
+  await expect(page.getByRole('navigation', { name: 'Contest collections' }).getByRole('link', { name: 'Joined' })).toHaveCount(0)
+  await page.goto(`/contests/joined/${new Date().getUTCFullYear()}/1`)
   await expect(page.getByRole('heading', { level: 2, name: 'Sign in to see the contests you joined' })).toBeVisible()
 
   // Organizing keeps Webv2's My contests address.
-  await page.getByRole('navigation', { name: 'Contest collections' }).getByRole('link', { name: 'Organizing' }).click()
-  await expect(page).toHaveURL(/\/contests\/my-contests\/1$/)
+  await page.goto('/contests/my-contests/1')
   await expect(page.getByRole('heading', { level: 2, name: 'Sign in to see the contests you organize' })).toBeVisible()
   const login = new URL((await page.locator('main').getByRole('link', { name: 'Log in', exact: true }).getAttribute('href'))!)
   expect(login.pathname).toBe('/login')

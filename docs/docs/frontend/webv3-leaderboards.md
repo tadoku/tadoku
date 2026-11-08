@@ -21,7 +21,7 @@ current UTC year. Pages hold 50 participants.
   reads standings and contests anonymously through the
   generated client; only the registration read forwards the session cookies.
 - `frontend/apps/webv3/src/components/Standings.tsx` renders one page of any
-  scope: tied ranks as `T` with a note only when a tie is shown, gold, silver
+  scope: tied ranks as `T` on one line, scores with one decimal once any row needs it, gold, silver
   and bronze marks on the top three ranks, rows that open the participant's
   profile from anywhere on the row, the signed-in viewer's row, pagination with its participant range when there is more than
   one page, and the empty, failed and past-the-end states. The screen supplies

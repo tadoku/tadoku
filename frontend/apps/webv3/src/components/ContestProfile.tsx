@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router'
 import type { ImmersionContestProfileActivityRow } from 'api-client'
 import { PageHeader, SectionHeading, StatGrid, Table, buttonClassName, type TableColumn } from 'paper-ui'
 import type { ContestProfile as Profile } from '../lib/contest-activity'
-import { formatDate, numberFormat } from '../lib/format'
+import { formatDate, numberFormat, scoreColumn } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { ContestLogs } from './ContestUpdates'
 import { renderLink } from './router-link'
@@ -68,10 +68,12 @@ function DailyScores({ rows, languages, name }: {
   const ordered = [...days.values()].sort((left, right) => left.date.localeCompare(right.date))
   for (const day of ordered) day.cumulative = running += day.total
 
+  const daily = scoreColumn(ordered.map(day => day.total))
+  const totals = scoreColumn(ordered.map(day => day.cumulative))
   const columns: TableColumn<Day>[] = [
     { id: 'day', header: 'Day', rowHeader: true, cell: day => formatDate(day.date) },
-    { id: 'score', header: 'Score', align: 'end', cell: day => numberFormat.format(day.total) },
-    { id: 'cumulative', header: 'Running total', align: 'end', cell: day => numberFormat.format(day.cumulative) },
+    { id: 'score', header: 'Score', align: 'end', cell: day => daily(day.total) },
+    { id: 'cumulative', header: 'Running total', align: 'end', cell: day => totals(day.cumulative) },
     ...(languages.length > 1
       ? languages.map((language): TableColumn<Day> => ({
         id: language.code,
@@ -88,7 +90,7 @@ function DailyScores({ rows, languages, name }: {
       columns={columns}
       rows={[...ordered].reverse()}
       getRowKey={day => day.date}
-      minWidth="36rem"
+      minWidth={languages.length > 1 ? '36rem' : '0'}
       tableClassName={standingsTable}
     />
   )

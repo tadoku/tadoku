@@ -55,7 +55,7 @@ export function ContestsPage({ view, page }: { view: ContestView; page: number }
         className="mt-2"
         label="Contest collections"
         renderLink={renderLink}
-        links={tabs.map(tab => ({
+        links={tabs.filter(tab => viewer?.status !== 'anonymous' || tab.id === 'official' || tab.id === 'community').map(tab => ({
           ...tab,
           href: tab.id === 'joined' ? contestsHref.joined(thisYear()) : contestsHref[tab.id](),
           current: tab.id === collection,

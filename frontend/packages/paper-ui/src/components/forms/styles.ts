@@ -175,7 +175,7 @@ export const compoundField = tv({
   slots: {
     root: [
       "paper-compound-field grid min-h-control grid-cols-content-end border border-field-edge bg-field",
-      "not-has-disabled:hover:border-field-edge-hover",
+      "not-has-disabled:hover:border-field-edge-hover has-disabled:border-rule has-disabled:bg-paper",
       "forced-colors:border-forced-ink forced-colors:bg-forced-canvas",
     ],
     input: "min-h-compound-input border-0 bg-transparent",
@@ -256,7 +256,7 @@ export const combobox = tv({
     label: "col-start-2",
     empty: "paper-combobox__empty px-field-x py-field-y text-muted empty:hidden",
     chips: [
-      "paper-combobox__chips relative flex min-h-control flex-wrap items-center gap-1.4 p-1 pe-combobox-end",
+      "paper-combobox__chips relative flex min-h-control flex-wrap items-center gap-1.4 p-1 pe-combobox-end has-[input:disabled]:bg-paper",
       "border border-field-edge bg-field font-body text-body leading-125",
       "has-[input:focus-visible]:z-lift",
       "has-[input:focus-visible]:outline-halo",

@@ -7,6 +7,39 @@ const contentTable = [
   '[&_:is(th,td):not(:first-child)]:text-end [&_:is(th,td):last-child]:pe-0 max-sm:[&_:is(th,td)]:pe-3',
 ].join(' ')
 
+/** A unit table: rows on wide screens, one block per language on a phone, so no column is hidden. */
+function ManualTable({ id, headers, rows }: { id: string; headers: string[]; rows: string[][] }) {
+  return (
+    <>
+      <div className={`${contentTable} max-sm:hidden`} role="region" tabIndex={0} aria-labelledby={id}>
+        <table>
+          <thead>
+            <tr>{headers.map(header => <th key={header}>{header}</th>)}</tr>
+          </thead>
+          <tbody>
+            {rows.map(row => <tr key={row[0]}>{row.map((cell, index) => <td key={headers[index]}>{cell}</td>)}</tr>)}
+          </tbody>
+        </table>
+      </div>
+      <div className="mb-4 grid gap-5 sm:hidden">
+        {rows.map(row => (
+          <section key={row[0]} aria-label={`${row[0]} units`}>
+            <h5 className="m-0 mb-1 text-ui font-semibold">{row[0]}</h5>
+            <dl className="m-0">
+              {headers.slice(1).map((header, index) => (
+                <div key={header} className="flex justify-between gap-4 border-b border-rule py-1.5 text-metadata tabular-nums">
+                  <dt>{header}</dt>
+                  <dd className="m-0">{row[index + 1]}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ))}
+      </div>
+    </>
+  )
+}
+
 const sections = [
   ['signing-up-for-a-contest', 'Signing up for a contest'],
   ['submitting-updates', 'Submitting updates'],
@@ -78,75 +111,12 @@ export function ManualPage() {
         </p>
 
         <h4 id="units-reading">Reading</h4>
-        <div
-          className={contentTable}
-          role="region"
-          tabIndex={0}
-          aria-labelledby="units-reading"
-        >
-          <table>
-            <thead>
-              <tr>
-                <th>Language</th>
-                <th>Page</th>
-                <th>
-                  2 Column page{' '}
-                  <sup
-                   
-                    title="Only available for Japanese"
-                  >
-                    1
-                  </sup>
-                </th>
-                <th>Comic page</th>
-                <th>Sentence</th>
-                <th>
-                  Character{' '}
-                  <sup
-                   
-                    title="400 characters per page for Japanese, Chinese, and Korean. 1200 characters per page for all other languages."
-                  >
-                    2
-                  </sup>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Japanese</td>
-                <td>1</td>
-                <td>1.6</td>
-                <td>0.2</td>
-                <td>0.05</td>
-                <td>0.0025</td>
-              </tr>
-              <tr>
-                <td>Chinese</td>
-                <td>1</td>
-                <td className="text-muted">N/A</td>
-                <td>0.2</td>
-                <td>0.05</td>
-                <td>0.0025</td>
-              </tr>
-              <tr>
-                <td>Korean</td>
-                <td>1</td>
-                <td className="text-muted">N/A</td>
-                <td>0.2</td>
-                <td>0.05</td>
-                <td>0.0025</td>
-              </tr>
-              <tr>
-                <td>All other languages</td>
-                <td>1</td>
-                <td className="text-muted">N/A</td>
-                <td>0.2</td>
-                <td>0.05</td>
-                <td>0.0008333</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <ManualTable id="units-reading" headers={['Language', 'Page', '2 Column page ¹', 'Comic page', 'Sentence', 'Character ²']} rows={[
+          ['Japanese', '1', '1.6', '0.2', '0.05', '0.0025'],
+          ['Chinese', '1', 'N/A', '0.2', '0.05', '0.0025'],
+          ['Korean', '1', 'N/A', '0.2', '0.05', '0.0025'],
+          ['All other languages', '1', 'N/A', '0.2', '0.05', '0.0008333'],
+        ]} />
         <ol className="mb-6! mt-0! text-metadata leading-metadata text-muted">
           <li>Only available for Japanese</li>
           <li>
@@ -156,49 +126,12 @@ export function ManualPage() {
         </ol>
 
         <h4 id="units-writing">Writing</h4>
-        <div
-          className={contentTable}
-          role="region"
-          tabIndex={0}
-          aria-labelledby="units-writing"
-        >
-          <table>
-            <thead>
-              <tr>
-                <th>Language</th>
-                <th>Page</th>
-                <th>Sentence</th>
-                <th>Character</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Japanese</td>
-                <td>10</td>
-                <td>0.5</td>
-                <td>0.025</td>
-              </tr>
-              <tr>
-                <td>Chinese</td>
-                <td>10</td>
-                <td>0.5</td>
-                <td>0.025</td>
-              </tr>
-              <tr>
-                <td>Korean</td>
-                <td>10</td>
-                <td>0.5</td>
-                <td>0.025</td>
-              </tr>
-              <tr>
-                <td>All other languages</td>
-                <td>10</td>
-                <td>0.5</td>
-                <td>0.0083333</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <ManualTable id="units-writing" headers={['Language', 'Page', 'Sentence', 'Character']} rows={[
+          ['Japanese', '10', '0.5', '0.025'],
+          ['Chinese', '10', '0.5', '0.025'],
+          ['Korean', '10', '0.5', '0.025'],
+          ['All other languages', '10', '0.5', '0.0083333'],
+        ]} />
 
         <h4 id="units-listening">Listening</h4>
 
@@ -210,73 +143,17 @@ export function ManualPage() {
           &quot;listening&quot; to while sleeping would not count.
         </p>
 
-        <div
-          className={contentTable}
-          role="region"
-          tabIndex={0}
-          aria-labelledby="units-listening"
-        >
-          <table>
-            <thead>
-              <tr>
-                <th>Language</th>
-                <th>Minute</th>
-                <th>
-                  Minute (high density){' '}
-                  <sup
-                   
-                    title="Media such as audiobooks which have few breaks"
-                  >
-                    1
-                  </sup>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>All languages</td>
-                <td>0.4</td>
-                <td>0.6</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <ManualTable id="units-listening" headers={['Language', 'Minute', 'Minute (high density) ¹']} rows={[
+          ['All languages', '0.4', '0.6'],
+        ]} />
         <ol className="mb-6! mt-0! text-metadata leading-metadata text-muted">
           <li>Media such as audiobooks which have few breaks</li>
         </ol>
 
         <h4 id="units-speaking">Speaking</h4>
-        <div
-          className={contentTable}
-          role="region"
-          tabIndex={0}
-          aria-labelledby="units-speaking"
-        >
-          <table>
-            <thead>
-              <tr>
-                <th>Language</th>
-                <th>Minute</th>
-                <th>
-                  Minute (high density){' '}
-                  <sup
-                   
-                    title="When you're the only one speaking; such as in speeches or presentations"
-                  >
-                    1
-                  </sup>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>All languages</td>
-                <td>0.5</td>
-                <td>0.7</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <ManualTable id="units-speaking" headers={['Language', 'Minute', 'Minute (high density) ¹']} rows={[
+          ['All languages', '0.5', '0.7'],
+        ]} />
         <ol className="mb-6! mt-0! text-metadata leading-metadata text-muted">
           <li>
             When you&apos;re the only one speaking; such as in speeches or
@@ -285,35 +162,9 @@ export function ManualPage() {
         </ol>
 
         <h4 id="units-study">Study</h4>
-        <div
-          className={contentTable}
-          role="region"
-          tabIndex={0}
-          aria-labelledby="units-study"
-        >
-          <table>
-            <thead>
-              <tr>
-                <th>Language</th>
-                <th>
-                  Minute{' '}
-                  <sup
-                   
-                    title="Can be used for any kind of generic studying such as flashcards, textbooks, tutoring sessions, etc..."
-                  >
-                    1
-                  </sup>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>All languages</td>
-                <td>0.5</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <ManualTable id="units-study" headers={['Language', 'Minute ¹']} rows={[
+          ['All languages', '0.5'],
+        ]} />
         <ol className="mb-6! mt-0! text-metadata leading-metadata text-muted">
           <li>
             Can be used for any kind of generic studying such as flashcards,

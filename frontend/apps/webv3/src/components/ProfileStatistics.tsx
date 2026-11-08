@@ -12,7 +12,7 @@ type Found = Extract<Statistics, { status: 'found' }>
 
 /** A profile's year: its scores, daily activity, activity split and contest history, as Webv2's statistics show them. */
 const muted = 'mb-0 mt-2 text-metadata leading-160 text-muted'
-const sectionTitle = 'text-heading leading-section'
+const sectionTitle = 'font-display text-heading leading-section'
 const columns = [
   'mt-8 grid grid-cols-halves gap-x-12 gap-y-0 max-lg:grid-cols-single',
   '*:min-w-0 *:border-t *:border-rule *:py-7 [&>:nth-child(3)]:col-span-full [&_h2]:text-heading [&_h2]:leading-section',
@@ -146,7 +146,7 @@ function Breakdown<T>({ id, title, section, items, empty }: {
                 </strong>
               </div>
               <span className="block h-2 bg-rule-subtle" aria-hidden="true">
-                <span className={`block h-full min-w-0.5 ${row.fill ?? 'bg-rule-strong'}`} style={{ width: `${total ? row.score / total * 100 : 0}%` }} />
+                <span className={`block h-full min-w-0.5 ${row.fill ?? 'bg-muted'}`} style={{ width: `${total ? row.score / total * 100 : 0}%` }} />
               </span>
             </li>
           ))}

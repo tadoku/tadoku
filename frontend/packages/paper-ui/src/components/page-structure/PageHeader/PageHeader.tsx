@@ -11,7 +11,7 @@ const pageHeader = tv({
       "paper-page-header__back mb-4 inline-flex items-center gap-1 text-sm leading-150 text-link",
       "underline underline-offset-link hover:text-link-hover hover:decoration-hover rtl:*:scale-x-mirror",
     ],
-    main: "paper-page-header__main flex flex-wrap items-baseline justify-between gap-x-6 gap-y-4",
+    main: "paper-page-header__main flex flex-wrap items-baseline justify-between gap-x-6 gap-y-4 lg:flex-nowrap",
     text: "paper-page-header__text flex min-w-0 flex-auto flex-col gap-2",
     heading: "paper-page-header__heading my-page-title-trim flex flex-wrap items-center gap-x-4 gap-y-2",
     title: "paper-page-header__title paper-type-page m-0 min-w-0 wrap-anywhere",

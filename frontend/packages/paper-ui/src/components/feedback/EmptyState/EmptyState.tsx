@@ -41,7 +41,7 @@ export function EmptyState({
   ...props
 }: EmptyStateProps) {
   const Heading = `h${headingLevel}` as const;
-  const role = headingLevel === 1 ? "page" : "section";
+  const role = headingLevel === 1 ? "page" : headingLevel === 2 ? "section" : "component";
   const slots = emptyState({ variant, focusable: Boolean(headingRef) });
 
   return (
@@ -52,7 +52,7 @@ export function EmptyState({
       <Heading
         ref={headingRef}
         tabIndex={headingRef ? -1 : undefined}
-        className={slots.title({ className: [`paper-type-${role}`, typography({ role })] })}
+        className={slots.title({ className: [`paper-type-${role}`, typography({ role }), "font-display"] })}
       >
         {title}
       </Heading>

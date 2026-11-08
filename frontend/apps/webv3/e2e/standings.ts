@@ -6,6 +6,12 @@ export interface Board { entries: Entry[]; total_size: number }
 
 export const score = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 1 })
 
+/** The page's single-decimal score column: one decimal on every row once any row has one. */
+const scoreColumn = (entries: Entry[]) => {
+  const digits = entries.some(entry => Math.round(entry.score * 10) % 10 !== 0) ? 1 : 0
+  return new Intl.NumberFormat('en-GB', { minimumFractionDigits: digits, maximumFractionDigits: digits })
+}
+
 export async function apiJson<T>(request: APIRequestContext, path: string): Promise<T> {
   const response = await request.get(`${api}${path}`)
   expect(response.ok(), `${path} answered ${response.status()}`).toBeTruthy()
@@ -18,12 +24,13 @@ export const board = (request: APIRequestContext, path: string, page = 1) =>
 /** Every API entry is a row with its rank (T for ties), its name linking to `profile` and its score. */
 export async function expectRows(page: Page, entries: Entry[], profile: (userId: string) => string) {
   const rows = page.locator('.standings-table tbody tr')
+  const column = scoreColumn(entries)
   await expect(rows).toHaveCount(entries.length)
   for (const [index, entry] of entries.entries()) {
     const row = rows.nth(index)
     await expect(row.locator('td').first()).toHaveText(`${entry.is_tie ? 'T' : ''}${entry.rank}`)
     await expect(row.getByRole('link', { name: entry.user_display_name, exact: true })).toHaveAttribute('href', profile(entry.user_id))
-    await expect(row.locator('td').last()).toHaveText(score.format(entry.score))
+    await expect(row.locator('td').last()).toHaveText(column.format(entry.score))
   }
 }
 

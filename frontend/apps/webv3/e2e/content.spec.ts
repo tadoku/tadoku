@@ -118,14 +118,10 @@ test('the manual and its navigation are server-rendered and fit a phone', async 
   const community = page.getByRole('contentinfo').getByRole('list', { name: 'Community' })
   // Webv2's footer destinations, in its order, with its community links beside them.
   await expect(footer.getByRole('link')).toHaveText([
-    'Home', 'Leaderboard', 'Contests', 'Blog', 'About Tadoku', 'Guide', 'Rules', 'Questions & help', 'Privacy', 'Contact',
+    'About Tadoku', 'Guide', 'Rules', 'Questions & help', 'Privacy', 'Contact',
   ])
   await expect(community.getByRole('link')).toHaveCount(3)
   for (const [name, href] of [
-    ['Home', '/'],
-    ['Leaderboard', '/leaderboard/latest/1'],
-    ['Contests', '/contests/official/1'],
-    ['Blog', '/blog/1'],
     ['About Tadoku', '/pages/about'],
     ['Guide', '/pages/manual'],
     ['Rules', '/pages/rules'],

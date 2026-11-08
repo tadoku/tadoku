@@ -80,11 +80,9 @@ in the header and leaves public pages readable.
 
 A signed-in account's menu, and its section of the phone menu, holds the
 theme switch, named for the theme it switches to; visitors follow their stored
-or system choice. The footer is an ink band in light mode, as in Webv2, and
-sits on the paper surface in dark mode: the brand, the credit
-line and Tadoku's Discord, GitHub and Twitter beside grouped links to Home,
-Leaderboard, Contests and Blog, About, Guide, Rules and Questions & help, and
-Privacy and Contact. `frontend/apps/webv3/src/components/Announcements.tsx`
+or system choice. The footer sits on the paper surface with a hairline above it: the brand, the
+credit line and Tadoku's Discord, GitHub and Twitter beside grouped links to
+About, Guide, Rules and Questions & help, and Privacy and Contact. `frontend/apps/webv3/src/components/Announcements.tsx`
 shows the CMS's active announcements above each page after hydration, rendering
 their Markdown as the blog does, with Learn more unless the announcement links
 to the current page. A dismissal is stored in the browser under Webv2's

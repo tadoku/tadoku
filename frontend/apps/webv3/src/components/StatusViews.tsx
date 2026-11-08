@@ -1,12 +1,14 @@
 import { Link, useRouter } from '@tanstack/react-router'
-import { Button, EmptyState, Loading, PageHeader } from 'paper-ui'
+import { Button, EmptyState, buttonClassName } from 'paper-ui'
 
 export function NotFoundView() {
   return (
-    <>
-      <PageHeader title="Page not found" />
-      <Link to="/" className="text-link hover:text-link-hover">Return home</Link>
-    </>
+    <EmptyState
+      headingLevel={1}
+      title="Page not found"
+      description="This address doesn’t match a page on Tadoku."
+      actions={<Link to="/" className={buttonClassName()}>Return home</Link>}
+    />
   )
 }
 
@@ -24,9 +26,12 @@ export function ErrorView() {
 
 export function PendingView() {
   return (
-    <div className="flex items-center gap-3 py-16 text-muted" role="status">
-      <Loading size="small" />
-      <span>Loading…</span>
+    <div role="status" aria-label="Loading page" className="grid gap-4 py-2">
+      <div className="h-8 w-1/3 bg-rule-subtle" />
+      <div className="h-4 w-1/2 bg-rule-subtle" />
+      <div className="mt-6 grid gap-3">
+        {[0, 1, 2, 3, 4, 5].map(row => <div key={row} className="h-10 border-b border-rule-subtle" />)}
+      </div>
     </div>
   )
 }

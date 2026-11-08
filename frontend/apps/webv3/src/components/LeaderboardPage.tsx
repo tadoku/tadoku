@@ -5,7 +5,7 @@ import { firstYear, leaderboardHref, standingsQuery, type StandingsScope } from 
 import { useLinks } from '../lib/links'
 import { renderLink } from './router-link'
 import { Standings } from './Standings'
-import { sheet, sheetTabs, standingsAside, standingsHeader, workspace } from './standings-styles'
+import { sheet, sheetTabs, standingsHeader } from './standings-styles'
 
 /** The page title and period tabs every leaderboard shares, around the board for one period. */
 export function LeaderboardFrame({ period, currentYear, actions, children }: {
@@ -44,7 +44,8 @@ export function GlobalLeaderboard({ scope, page }: { scope: Exclude<StandingsSco
 
   return (
     <LeaderboardFrame period={yearly ? 'yearly' : 'all-time'} currentYear={currentYear}>
-      <div className={workspace}>
+      <p className="mb-0 mt-5 text-metadata leading-160 text-muted">Official contests only; community contests don’t count here.</p>
+      <div className="mt-3">
         <div>
           <section className={sheet} aria-label={yearly ? `${scope.year} official standings` : 'All-time official standings'}>
             {yearly ? (
@@ -75,9 +76,6 @@ export function GlobalLeaderboard({ scope, page }: { scope: Exclude<StandingsSco
             />
           </section>
         </div>
-        <aside className={standingsAside}>
-          <p>Official contests only; community contests don’t count here.</p>
-        </aside>
       </div>
     </LeaderboardFrame>
   )

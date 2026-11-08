@@ -69,7 +69,7 @@ export function GoalPage() {
 function GoalSummary({ goal }: { goal: Goal }) {
   const links = useLinks()
   return (
-    <Surface as="section" elevation="floating" accent className="mb-8 px-6 pb-6 pt-5" aria-labelledby="goal-summary-title">
+    <Surface as="section" accent className="mb-8 px-6 pb-6 pt-5" aria-labelledby="goal-summary-title">
       <h2 id="goal-summary-title" className="mb-3 mt-0 font-body text-sm leading-150 text-muted">Your daily goal</h2>
       <p className="m-0 text-balance font-display text-xl leading-145 font-bold">{describeGoal(goal)}</p>
       <p className="mb-0 mt-2 text-base font-semibold tabular-nums">{formatMinutes(goal.minutes * goal.days)} each week</p>

@@ -18,7 +18,7 @@ describe("Paper visual foundations", () => {
     const scope = (selector: string) => css.slice(css.indexOf(`${selector} {`), css.indexOf("}", css.indexOf(`${selector} {`)));
 
     expect(scope('[data-theme="dark"]')).toMatch(/--color-ink: #/);
-    expect(scope('[data-theme="dark"]')).toContain("--color-focus-halo: color-mix(in srgb, var(--color-focus) 12%, transparent)");
+    expect(scope('[data-theme="dark"]')).toContain("--color-focus-halo: var(--color-focus)");
     expect(scope('[data-theme="light"]')).toContain("--color-ink:");
     expect(scope('[data-density="compact"]')).toContain("--spacing-control: 2.25rem");
     expect(scope('[data-density="compact"]')).toContain("--spacing-select-end:");

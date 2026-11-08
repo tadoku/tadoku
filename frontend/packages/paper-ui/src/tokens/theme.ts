@@ -45,10 +45,10 @@ const color = {
   'rule-subtle': themed(p.graphite[200], p.graphite[700]),
   rule: themed(p.graphite[300], p.graphite[600]),
   'rule-strong': themed(p.graphite[650], p.graphite[500]),
-  'field-edge': themed(p.graphite[250], p.graphite[600]),
-  'field-edge-hover': themed(p.graphite[450], p.graphite[500]),
-  /** Outline buttons: quieter than a field's edge in dark mode, where the field edge reads harsh on a button. */
-  'button-edge': themed(p.graphite[450], p.graphite[500]),
+  /** Field edges identify the control, so they hold 3:1 against the field and the surface around it. */
+  'field-edge': themed(p.graphite[380], p.graphite[450]),
+  'field-edge-hover': themed(p.graphite[550], p.graphite[350]),
+  'button-edge': themed(p.graphite[450], p.graphite[450]),
   'button-edge-hover': themed(p.graphite[650], p.graphite[400]),
   /** A filled button's edge: one translucent shade on every side, deeper at the bottom, so corners don't mitre. */
   'button-shade': themed('rgb(28 28 28 / 22%)', 'rgb(0 0 0 / 40%)'),
@@ -71,13 +71,13 @@ const color = {
 
   focus: themed(p.violet[600], p.violet[300]),
   'focus-offset': 'var(--color-canvas)',
-  'focus-halo': mix('focus', 12),
-  'danger-halo': mix('danger', 22),
+  'focus-halo': 'var(--color-focus)',
+  'danger-halo': 'var(--color-danger)',
   shadow: themed(p.shade.ink, p.shade.violet),
 
   'chart-1': themed(p.violet[600], p.violet[350]),
   'chart-2': themed(p.green[600], p.green[300]),
-  'chart-3': themed(p.amber[500], p.amber[300]),
+  'chart-3': themed(p.amber[600], p.amber[300]),
   'chart-4': themed(p.blue[600], p.blue[300]),
   'chart-5': themed(p.red[500], p.red[300]),
   'chart-6': themed(p.violet[625], p.violet[250]),
@@ -348,7 +348,7 @@ const borderWidth = {
   bar: '4px',
 } as const
 
-const outlineWidth = { ring: '2px', halo: '3px' } as const
+const outlineWidth = { ring: '2px', halo: '2px' } as const
 const outlineOffset = { 0: '0', px: '1px', ring: '2px' } as const
 const radius = { chip: '2px', pill: '999px' } as const
 const textDecorationThickness = { hairline: '1px', hover: '2px' } as const

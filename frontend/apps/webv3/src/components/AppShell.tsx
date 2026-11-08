@@ -63,6 +63,7 @@ const logoutFormId = 'app-logout'
 
 export function AppShell({ children }: { children: ReactNode }) {
   const currentPath = useRouterState({ select: state => state.location.pathname })
+  const navigating = useRouterState({ select: state => state.status === 'pending' })
   const links = useLinks()
   const { data: viewer } = useQuery(viewerQueryOptions())
   const navigation: NavbarItem[] = [
@@ -87,6 +88,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </>}
           brandHref="/"
           navigation={navigation}
+          isLoading={navigating}
           currentPath={currentPath}
           renderLink={renderLink}
           actions={<div className={accountActions}><AccountActions viewer={viewer} /></div>}
@@ -94,7 +96,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         />
         {viewer && 'userId' in viewer ? <form id={logoutFormId} method="post" action="/logout" hidden /> : null}
       </header>
-      <main id="main-content" className={frame.content()} tabIndex={-1}>
+      <main id="main-content" className={frame.content()} tabIndex={-1} aria-busy={navigating}>
         <Announcements />
         {viewer?.status === 'banned' ? <Suspended /> : children}
       </main>

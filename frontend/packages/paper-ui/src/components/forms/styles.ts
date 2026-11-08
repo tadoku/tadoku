@@ -176,24 +176,22 @@ export const compoundField = tv({
     root: [
       "paper-compound-field grid min-h-control grid-cols-content-end border border-field-edge bg-field",
       "not-has-disabled:hover:border-field-edge-hover",
-      "has-focus-visible:outline-halo has-focus-visible:outline-offset-0",
       "forced-colors:border-forced-ink forced-colors:bg-forced-canvas",
-      "forced-colors:has-focus-visible:outline-forced-highlight",
     ],
-    input: "min-h-compound-input border-0 bg-transparent focus-visible:outline-none",
+    input: "min-h-compound-input border-0 bg-transparent",
     unit: [
       "paper-compound-field__unit h-compound-unit w-auto min-w-unit-select border-s border-rule",
       "forced-colors:border-s-forced-ink",
     ],
-    select: "h-full min-h-0 border-0 bg-transparent focus-visible:bg-neutral-hover focus-visible:outline-none",
+    select: "h-full min-h-0 border-0 bg-transparent",
   },
   variants: {
     invalid: {
       true: {
-        root: "border-danger has-focus-visible:border-danger has-focus-visible:outline-danger-halo forced-colors:border-forced-mark",
+        root: "border-danger forced-colors:border-forced-mark",
       },
       false: {
-        root: "has-focus-visible:border-focus has-focus-visible:outline-focus-halo",
+        root: "",
       },
     },
   },

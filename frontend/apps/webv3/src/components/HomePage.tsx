@@ -5,7 +5,7 @@ import { Button, EmptyState, IconTile, Loading, SectionHeading, StatGrid, Surfac
 import type { ReactNode } from 'react'
 import { homeQueryOptions, type HomeData } from '../lib/home'
 import { Person, Rank, currentRow, personLink } from './StandingsParts'
-import { formatDate, formatPeriod, numberFormat, pointsUnit } from '../lib/format'
+import { formatDate, formatPeriod, numberFormat, pointsUnit, scoreColumn } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
 import { MemberDashboard, MemberYearTotals } from './MemberDashboard'
@@ -98,7 +98,7 @@ export function HomePage() {
             </div>
           )}
 
-        <Surface as="section" elevation="showcase" className="min-w-0 p-0" aria-labelledby="home-board-title">
+        <Surface as="section" className="min-w-0 p-0" aria-labelledby="home-board-title">
           <ContestBoard data={data} phase={phase} today={today} retrying={isFetching} retry={() => void refetch()} />
         </Surface>
       </section>
@@ -253,6 +253,7 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
   const { summary, standings } = data
   if (!summary || !standings) return unavailable
   const ended = phase === 'ended'
+  const boardScore = scoreColumn(standings.entries.map(entry => entry.score))
   return <>
     {header(
       `${formatPeriod(contest)} · ${ended ? 'Final results' : `Day ${dayNumber(contest.contest_start, today)} of ${length}`}`,
@@ -281,7 +282,7 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
               </Person>
             ),
           },
-          { id: 'score', header: 'Score', align: 'end', headerClassName: 'pe-ledger-inset', cellClassName: 'pe-ledger-inset', cell: row => numberFormat.format(row.score) },
+          { id: 'score', header: 'Score', align: 'end', headerClassName: 'pe-ledger-inset', cellClassName: 'pe-ledger-inset', cell: row => boardScore(row.score) },
         ]}
         rows={standings.entries}
         getRowKey={row => row.user_id}

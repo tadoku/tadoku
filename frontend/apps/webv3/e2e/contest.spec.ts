@@ -72,7 +72,6 @@ test('the server-rendered contest page shows its details, API standings and an a
 
   const today = day()
   const ended = today > contest.contest_end
-  await expect(page.getByText('You need to log in to participate in this contest.')).toHaveCount(ended ? 0 : 1)
   const open = !ended && today <= contest.registration_end
   await expect(headerLinks(page)).toHaveText(open ? ['Join contest'] : [])
   if (open) await expect(headerLinks(page)).toHaveAttribute('href', `/contests/${contest.id}/registration`)

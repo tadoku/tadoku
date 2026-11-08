@@ -4,6 +4,14 @@ import type { ImmersionContest, ImmersionLog } from 'api-client'
 export const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']
 
 export const numberFormat = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 1 })
+
+/** Formats one column of scores: a single decimal on every value once any needs one, so the digits line up. */
+export function scoreColumn(scores: number[]) {
+  const digits = scores.some(score => Math.round(score * 10) % 10 !== 0) ? 1 : 0
+  const format = new Intl.NumberFormat('en-GB', { minimumFractionDigits: digits, maximumFractionDigits: digits })
+  return (score: number) => format.format(score)
+}
+
 export const dayAndMonth = (date: string) => `${Number(date.slice(8, 10))} ${months[Number(date.slice(5, 7)) - 1]}`
 export const formatDate = (date: string) => `${dayAndMonth(date)} ${date.slice(0, 4)}`
 export const formatPeriod = ({ contest_start: start, contest_end: end }: Pick<ImmersionContest, 'contest_start' | 'contest_end'>) =>

@@ -103,7 +103,7 @@ test('an owner pages through their newest-first activity, opens a day from the c
   await expectEntries(page, first)
 
   await page.goto(`/profile/${userId}/updates/99`)
-  await expect(page.getByRole('heading', { name: 'This page is past the end of the updates' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'This page is past the end of the activity' })).toBeVisible()
 
   // A calendar day opens that UTC day's updates natively, with a way back to all of them.
   const today = new Date().toISOString().slice(0, 10)

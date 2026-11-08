@@ -1,3 +1,4 @@
+import { score } from './standings'
 import type { BrowserContext, Page } from '@playwright/test'
 import {
   createLog,
@@ -82,7 +83,7 @@ test('owner submits a saved log to a contest, sees it after reload, then removes
   await page.reload()
   const contests = page.getByRole('region', { name: 'Contests' })
   await expect(contests.getByRole('link', { name: title, exact: true })).toBeVisible()
-  await expect(contests).toContainText(`${submission.score} points`)
+  await expect(contests).toContainText(`${score.format(submission.score ?? 0)} points`)
   await page.screenshot({ path: testInfo.outputPath('detail-submitted.png'), fullPage: true })
 
   await page.goto(`/logs/${id}/contests`)

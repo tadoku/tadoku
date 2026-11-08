@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { buttonClassName, EmptyState, entryLink, listRows, metaLine, StatGrid } from 'paper-ui'
+import { EmptyState, entryLink, listRows, metaLine, StatGrid } from 'paper-ui'
 import { contestsHref } from '../lib/contests'
 import { formatPeriod, pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
@@ -66,7 +66,7 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
                   headingLevel={3}
                   title="No activity yet"
                   description="A few pages or minutes are enough."
-                  actions={<a className={buttonClassName()} href={links.logs}>Log your first activity</a>}
+                  actions={<a className="text-link hover:text-link-hover" href={links.logs}>Log your first activity</a>}
                 />
               )}
             />

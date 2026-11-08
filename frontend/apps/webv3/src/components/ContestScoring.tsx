@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useHydrated } from '@tanstack/react-router'
 import type { ImmersionLogConfigurationOptions, ImmersionScoringRule, ImmersionScoringRuleSet } from 'api-client'
-import { Button, EmptyState, Flash, Modal, PageHeader, SectionHeading, StatusTag, Surface, buttonClassName } from 'paper-ui'
+import { Button, EmptyState, Flash, Modal, PageHeader, SectionHeading, StatusTag, Surface, Table, buttonClassName } from 'paper-ui'
 import { useRef, useState } from 'react'
 import { contestsHref } from '../lib/contests'
 import { useLinks } from '../lib/links'
@@ -129,29 +129,48 @@ function RuleSetVersion({ ruleSet, options, change }: {
           : 'Overrides platform rules with a pinned fallback'}
         actions={change && action ? <ConfirmChange change={{ ...change, action }} /> : null}
       />
-      {ruleSet.rules.length ? (
-        <ol className="m-0 ps-5 leading-170">
-          {ruleSet.rules.map(rule => <li key={rule.id ?? rule.priority}>{describeRule(rule, options)}</li>)}
-        </ol>
-      ) : (
+      {ruleSet.rules.length ? <RuleTables rules={ruleSet.rules} options={options} /> : (
         <p>No rules: every input scores zero.</p>
       )}
     </Surface>
   )
 }
 
-function describeRule(rule: ImmersionScoringRule, options: ImmersionLogConfigurationOptions) {
-  const activity = options.activities.find(activity => activity.id === rule.activity_id)?.name
+/** A version's rules grouped by activity, with one rate and what it applies to per row. */
+function RuleTables({ rules, options }: { rules: ImmersionScoringRule[]; options: ImmersionLogConfigurationOptions }) {
+  const groups = new Map<number, ImmersionScoringRule[]>()
+  for (const rule of rules) groups.set(rule.activity_id, [...(groups.get(rule.activity_id) ?? []), rule])
+
+  return (
+    <div className="grid gap-5">
+      {[...groups].map(([activityId, group]) => {
+        const activity = options.activities.find(activity => activity.id === activityId)?.name ?? `Activity ${activityId}`
+        return (
+          <section key={activityId} aria-label={`${activity} rules`}>
+            <h4 className="m-0 mb-1 font-body text-base font-semibold">{activity}</h4>
+            <Table
+              caption={`${activity} rules`}
+              captionVisibility="screen-reader"
+              rows={group}
+              getRowKey={rule => rule.id ?? rule.priority}
+              minWidth="0"
+              columns={[
+                { id: 'source', header: 'Counts', cell: rule => (scoreSources.find(source => source.value === rule.score_source)?.label ?? rule.score_source) },
+                { id: 'applies', header: 'Applies to', cell: rule => appliesTo(rule, options) },
+                { id: 'rate', header: 'Rate', align: 'end', cell: rule => `${rule.stackable ? '+' : ''}× ${rule.rate}` },
+              ]}
+            />
+          </section>
+        )
+      })}
+    </div>
+  )
+}
+
+function appliesTo(rule: ImmersionScoringRule, options: ImmersionLogConfigurationOptions) {
   const language = options.languages.find(language => language.code === rule.language_code)?.name
-  const source = scoreSources.find(source => source.value === rule.score_source)?.label ?? rule.score_source
-  return [
-    rule.stackable ? 'Modifier' : 'Base',
-    activity ?? `Activity ${rule.activity_id}`,
-    `${source} × ${rule.rate}`,
-    rule.unit_key ? `unit ${rule.unit_key}` : null,
-    rule.language_code ? `language ${language ?? rule.language_code}` : null,
-    rule.tag ? `tag ${rule.tag}` : null,
-  ].filter(Boolean).join(' · ')
+  const unit = options.units.find(unit => unit.unit_key === rule.unit_key)?.name ?? rule.unit_key?.replaceAll('_', ' ')
+  return [unit, language ?? rule.language_code, rule.tag?.replaceAll('_', ' ')].filter(Boolean).join(' · ') || 'Everything'
 }
 
 const confirmations = {

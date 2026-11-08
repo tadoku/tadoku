@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import { homeQueryOptions, type HomeData } from '../lib/home'
 import { standingsQuery } from '../lib/leaderboard'
 import { Person, Rank, currentRow, personLink } from './StandingsParts'
-import { formatDate, formatPeriod, numberFormat, pointsUnit, scoreFormat } from '../lib/format'
+import { formatDate, formatPeriod, numberFormat, place, pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
 import { MemberDashboard, MemberYearTotals } from './MemberDashboard'
@@ -135,9 +135,6 @@ export function HomePage() {
   )
 }
 
-const ordinal = new Intl.PluralRules('en', { type: 'ordinal' })
-const suffix: Record<string, string> = { one: 'st', two: 'nd', few: 'rd', other: 'th' }
-const place = (rank: number) => `${rank}${suffix[ordinal.select(rank)]}`
 
 /** A signed-in learner's hero: where they stand in the current round and the one action that moves it. */
 function MemberPromise({ member, data, phase, year }: {

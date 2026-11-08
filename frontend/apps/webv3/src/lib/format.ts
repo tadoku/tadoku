@@ -24,3 +24,9 @@ export function formatTracking(log: Pick<ImmersionLog, 'amount' | 'unit_name' | 
 
 /** Every score and point total, always to one decimal, for example `12.5` or `12.0`. */
 export const scoreFormat = new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+
+const ordinal = new Intl.PluralRules('en', { type: 'ordinal' })
+const ordinalSuffix: Record<string, string> = { one: 'st', two: 'nd', few: 'rd', other: 'th' }
+
+/** A rank in words, for example `1st`. */
+export const place = (rank: number) => `${rank}${ordinalSuffix[ordinal.select(rank)]}`

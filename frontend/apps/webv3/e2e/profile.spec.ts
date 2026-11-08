@@ -50,7 +50,7 @@ async function expectYear(page: Page, request: APIRequestContext, userId: string
   } else {
     const total = expected.scores.scores.reduce((sum, score) => sum + score.score, 0)
     await expect(stat(page, 'Overall score')).toContainText(scoreFormat.format(total))
-    await expect(stat(page, 'Updates')).toContainText(String(expected.activity.total_updates))
+    await expect(stat(page, 'Logs')).toContainText(String(expected.activity.total_updates))
     await expect(stat(page, 'Languages')).toContainText(String(expected.scores.scores.length))
     const languages = page.getByRole('region', { name: 'Score by language' })
     for (const score of expected.scores.scores) {

@@ -23,11 +23,11 @@ export function ProfileActivity({ activity, page, date, owner }: {
       <ProfileHeader profile={profile} owner={owner} view="activity" overviewHref={links.profile(profile.id)} exportable={!logs.ok || logs.data.total_size > 0} />
       <section className="mt-8" aria-label="Activity log">
         {date ? (
-          <Flash className="mb-4" action={<Link className="text-link hover:text-link-hover" to={links.profileUpdates(profile.id)}>Show all updates</Link>}>
-            Showing updates on {formatDate(date)}
+          <Flash className="mb-4" action={<Link className="text-link hover:text-link-hover" to={links.profileUpdates(profile.id)}>Show all activity</Link>}>
+            Showing activity on {formatDate(date)}
           </Flash>
         ) : null}
-        {!logs.ok ? <p className="mb-0 mt-2 text-metadata leading-160 text-muted">Could not load updates. Try reloading this page.</p> : (
+        {!logs.ok ? <p className="mb-0 mt-2 text-metadata leading-160 text-muted">Could not load activity. Try reloading this page.</p> : (
           <LogEntries
             logs={logs.data.logs}
             total={logs.data.total_size}
@@ -37,10 +37,10 @@ export function ProfileActivity({ activity, page, date, owner }: {
               <EmptyState
                 variant="plain"
                 headingLevel={3}
-                title={date ? `No updates on ${formatDate(date)}` : 'No activity yet'}
+                title={date ? `No activity on ${formatDate(date)}` : 'No activity yet'}
                 description={owner
                   ? 'Start with what you read or listened to today. A few pages or minutes are enough.'
-                  : 'Updates appear here once they have been recorded.'}
+                  : 'Logs appear here once they have been recorded.'}
                 actions={owner ? <a className={buttonClassName()} href={links.logs}>Log activity</a> : null}
               />
             )}

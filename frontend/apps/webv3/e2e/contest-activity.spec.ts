@@ -34,7 +34,7 @@ async function expectLogs(page: Page, expected: Logs, participants: boolean) {
   }
   // The range summary appears only beside page links.
   if (expected.total_size > 50) {
-    await expect(page.locator('.profile-entries-footer > p')).toHaveText(new RegExp(`of ${expected.total_size} updates$`))
+    await expect(page.locator('.profile-entries-footer > p')).toHaveText(new RegExp(`of ${expected.total_size} logs$`))
   } else {
     await expect(page.locator('.profile-entries-footer')).toHaveCount(0)
   }
@@ -63,9 +63,9 @@ test('the server-rendered updates feed lists the API\'s contest logs, pages thro
 
   const response = await page.goto(updatesPath(contest.id))
   expect(response?.status()).toBe(200)
-  await expect(page).toHaveTitle(`Updates · ${contest.title} · Tadoku`)
+  await expect(page).toHaveTitle(`Activity · ${contest.title} · Tadoku`)
   await expect(page.getByRole('heading', { level: 1, name: contest.title })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Updates', exact: true })).toHaveAttribute('aria-current', 'page')
+  await expect(page.getByRole('link', { name: 'Activity', exact: true })).toHaveAttribute('aria-current', 'page')
   await expect(page.getByRole('navigation', { name: 'Contest views' }).getByRole('link', { name: 'Leaderboard', exact: true })).toHaveAttribute('href', `/contests/${contest.id}/leaderboard/1`)
   await expectLogs(page, first, true)
   await expect(removeButtons(page)).toHaveCount(0)
@@ -74,7 +74,7 @@ test('the server-rendered updates feed lists the API\'s contest logs, pages thro
 
   const live = await browser.newPage()
   await live.goto(`/contests/${contest.id}/leaderboard/1`)
-  await live.getByRole('link', { name: 'Updates', exact: true }).click()
+  await live.getByRole('link', { name: 'Activity', exact: true }).click()
   await expect(live).toHaveURL(new RegExp(`${updatesPath(contest.id)}$`))
   if (first.total_size > 50) {
     await live.getByRole('navigation', { name: 'Update pages', exact: true }).getByRole('link', { name: 'Next page' }).click()

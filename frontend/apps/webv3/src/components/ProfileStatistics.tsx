@@ -57,7 +57,7 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
                   activity={activity.data}
                   labelledBy="profile-rhythm-heading"
                 />
-              </>) : <p className={muted}>Could not retrieve updates for {year}.</p>}
+              </>) : <p className={muted}>Could not retrieve activity for {year}.</p>}
             </div>
           </>
         )}
@@ -87,7 +87,7 @@ function YearTotals({ statistics, year }: { statistics: Found; year: number }) {
       className="profile-stats mb-8"
       stats={[
         { label: 'Overall score', value: total === undefined ? 'Unavailable' : scoreFormat.format(total), detail: average },
-        ...(activity.ok ? [{ label: 'Updates', value: activity.data.total_updates, detail: daysActive(activeDays(activity.data.scores)) }] : []),
+        ...(activity.ok ? [{ label: 'Logs', value: activity.data.total_updates, detail: daysActive(activeDays(activity.data.scores)) }] : []),
         ...(scores.ok ? [{ label: 'Languages', value: scores.data.scores.length }] : []),
       ]}
     />

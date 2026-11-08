@@ -84,7 +84,7 @@ function ContestBoardPage({ board, today, view, page }: { board: ContestBoard; t
         renderLink={renderLink}
         links={[
           { id: 'standings', label: 'Leaderboard', href: links.contest(contest.id), current: view === 'standings' },
-          { id: 'updates', label: 'Updates', href: links.contestUpdates(contest.id), current: view === 'updates' },
+          { id: 'updates', label: 'Activity', href: links.contestUpdates(contest.id), current: view === 'updates' },
         ]}
       />
       {view === 'standings' ? (

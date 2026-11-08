@@ -117,7 +117,7 @@ test('an owner pages through their newest-first activity, opens a day from the c
   if (day.total_size > pageSize) {
     await expect(pages.getByRole('link', { name: 'Page 2' })).toHaveAttribute('href', `/profile/${userId}/updates/2?date=${today}`)
   }
-  await page.getByRole('link', { name: 'Show all updates' }).click()
+  await page.getByRole('link', { name: 'Show all activity' }).click()
   await expect(page).toHaveURL(new RegExp(`/profile/${userId}/updates/1$`))
   await expectEntries(page, first)
 
@@ -154,7 +154,7 @@ test('a new account’s activity shows the empty state to its owner and to visit
   const anonymous = await visitor.newPage()
   await anonymous.goto(`/profile/${userId}/updates/1`)
   await expect(anonymous.getByRole('heading', { name: 'No activity yet' })).toBeVisible()
-  await expect(anonymous.getByText('Updates appear here once they have been recorded.')).toBeVisible()
+  await expect(anonymous.getByText('Logs appear here once they have been recorded.')).toBeVisible()
   await expect(anonymous.getByRole('main').getByRole('link', { name: 'Log activity' })).toHaveCount(0)
   await visitor.close()
 })

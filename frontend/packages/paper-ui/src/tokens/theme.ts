@@ -421,7 +421,7 @@ const gridTemplateColumns = {
   'label-check': '1fr auto',
   'item-indicator': '1.25rem 1fr',
   'radio-cards': 'repeat(auto-fit, minmax(12rem, 1fr))',
-  stats: 'repeat(auto-fit, minmax(min(100%, 5.5rem), 1fr))',
+  stats: 'repeat(auto-fit, minmax(min(100%, 4.75rem), 1fr))',
   'facts-inline': 'minmax(6rem, 10rem) minmax(0, 1fr)',
   'tabs-vertical': 'max-content minmax(0, 1fr)',
   filters: 'repeat(auto-fit, minmax(11rem, 1fr))',

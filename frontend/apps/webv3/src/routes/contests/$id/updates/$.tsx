@@ -21,7 +21,7 @@ export const Route = createFileRoute('/contests/$id/updates/$')({
     return { title: board.board.contest.title }
   },
   head: ({ loaderData }) => ({
-    meta: [{ title: loaderData?.title ? `Updates · ${loaderData.title} · Tadoku` : 'Contest updates · Tadoku' }],
+    meta: [{ title: loaderData?.title ? `Activity · ${loaderData.title} · Tadoku` : 'Contest activity · Tadoku' }],
   }),
   notFoundComponent: ContestNotFound,
   component: function ContestUpdatesRoute() {

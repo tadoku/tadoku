@@ -64,7 +64,7 @@ async function expectGone(browser: Browser, page: Page, testInfo: TestInfo, acco
 }
 
 async function expectFreshLoginBanner(page: Page, email: string) {
-  await expect(page.getByRole('heading', { level: 1, name: 'Log in' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Confirm it’s you' })).toBeVisible()
   await expect(page.getByRole('status').filter({ hasText: banner })).toBeVisible()
   await expect(page.getByText('You’re logged in as')).toHaveCount(0)
   await expect(page.getByLabel('Email')).toHaveValue(email)

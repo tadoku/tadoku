@@ -45,7 +45,7 @@ export function GlobalLeaderboard({ scope, page }: { scope: Exclude<StandingsSco
   return (
     <LeaderboardFrame period={yearly ? 'yearly' : 'all-time'} currentYear={currentYear}>
       <p className="mb-0 mt-5 text-metadata leading-160 text-muted">Official contests only; community contests don’t count here.</p>
-      <div className="mt-3">
+      <div className="mt-3 max-w-article">
         <div>
           <section className={sheet} aria-label={yearly ? `${scope.year} official standings` : 'All-time official standings'}>
             {yearly ? (

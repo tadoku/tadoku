@@ -41,14 +41,14 @@ export function ContestLogs({ contest, userId, page, pageHref, showParticipant =
     ? viewer.userId
     : undefined
 
-  if (!logs.data) return <p className={muted} role="status">Loading updates…</p>
+  if (!logs.data) return <p className={muted} role="status">Loading activity…</p>
   if (!logs.data.ok) {
     return (
       <EmptyState
         variant="plain"
         headingLevel={3}
-        title="Could not load updates"
-        description="Try loading the updates again in a moment."
+        title="Could not load activity"
+        description="Try again in a moment."
         actions={<Button variant="outline" loading={logs.isFetching} onClick={() => void logs.refetch()}>Try again</Button>}
       />
     )
@@ -66,7 +66,7 @@ export function ContestLogs({ contest, userId, page, pageHref, showParticipant =
         actions={moderatorId
           ? log => <RemoveFromContest key={moderatorId} log={log} contestId={contest.id} viewerId={moderatorId} onRemoved={() => setRemoved(true)} />
           : undefined}
-        empty={<EmptyState variant="plain" headingLevel={3} title="No updates submitted yet" description="Logs submitted to this contest appear here." />}
+        empty={<EmptyState variant="plain" headingLevel={3} title="No activity yet" description="Logs submitted to this contest appear here." />}
       />
     </>
   )

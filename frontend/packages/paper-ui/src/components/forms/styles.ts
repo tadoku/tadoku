@@ -46,7 +46,7 @@ export const control = tv({
 /** The wrapper that positions a select's chevron. */
 export const selectFrame = tv({
   slots: {
-    root: "paper-select__control relative block w-full",
+    root: "paper-select__control relative block w-full has-[select:disabled]:[&_.paper-select__icon]:text-muted",
     icon: "paper-select__icon pointer-events-none absolute end-field-x top-1/2 z-lift-2 -translate-y-1/2 text-ink",
   },
 });

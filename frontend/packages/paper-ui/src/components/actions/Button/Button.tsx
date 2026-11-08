@@ -33,7 +33,7 @@ export const button = tv({
       "cursor-pointer transition-colors duration-quick motion-reduce:transition-none",
       "not-disabled:hover:bg-action-hover not-disabled:active:bg-action-active",
       "not-disabled:active:translate-y-px",
-      "disabled:cursor-default disabled:opacity-disabled aria-disabled:cursor-default aria-disabled:opacity-disabled",
+      "disabled:cursor-default disabled:bg-rule disabled:text-muted aria-disabled:cursor-default aria-disabled:bg-rule aria-disabled:text-muted",
     ],
     icon: "paper-button__icon inline-grid size-icon flex-none place-items-center *:size-full",
     spinner: [

@@ -68,7 +68,7 @@ test('the server-rendered contest page shows its details, API standings and an a
   await expect(page.getByRole('link', { name: 'Official contests' })).toHaveAttribute('href', '/contests/official/1')
   await expectRows(page, data.entries, userId => `/contests/${contest.id}/profile/${userId}/1`)
   await expectTotal(page, data)
-  await expect(page.getByRole('navigation', { name: 'Contest views' }).getByRole('link', { name: 'Updates' })).toHaveAttribute('href', `/contests/${contest.id}/updates/1`)
+  await expect(page.getByRole('navigation', { name: 'Contest views' }).getByRole('link', { name: 'Activity' })).toHaveAttribute('href', `/contests/${contest.id}/updates/1`)
 
   const today = day()
   const ended = today > contest.contest_end

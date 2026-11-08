@@ -92,9 +92,9 @@ export function Flash({
   const slots = flash({ variant, icon: Boolean(icon), alone: !icon && !action, action: Boolean(action) });
   return (
     <div
+      role={variant === "danger" ? "alert" : "status"}
       {...props}
       className={slots.root({ className })}
-      role={variant === "danger" ? "alert" : "status"}
     >
       {icon ? <span className={slots.icon()} aria-hidden="true">{icon}</span> : null}
       <div className={slots.content()}>

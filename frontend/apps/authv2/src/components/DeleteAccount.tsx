@@ -43,7 +43,7 @@ export function DeleteAccount({ search }: { readonly search: AccountSearch }) {
 
   return (
     <CardPage title="Delete your account">
-      <Flash variant="danger" className="mb-5">You can’t undo this.</Flash>
+      <Flash variant="danger" role="status" className="mb-5">You can’t undo this.</Flash>
       <div className={`${accountConfirmation} mb-7`}>
         <p>Deleting your account removes your sign-in, your logs outside finished contests and your registrations in running contests.</p>
         <p>Finished contests keep your scores as “Deleted participant”. Contests you organize continue under “Deleted organizer”.</p>

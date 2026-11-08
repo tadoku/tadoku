@@ -41,7 +41,7 @@ export function Login({ search }: { readonly search: AccountSearch }) {
       <form.AppForm>
         <form.Form {...formProps} className={accountForm}>
           {reauth ? (
-            <Flash variant={next?.includes('delete-account') ? 'danger' : 'information'} icon={next?.includes('delete-account') ? <ExclamationTriangleIcon className={iconClassName()} /> : <InformationCircleIcon className={iconClassName()} />}>
+            <Flash variant={next?.includes('delete-account') ? 'danger' : 'information'} role="status" icon={next?.includes('delete-account') ? <ExclamationTriangleIcon className={iconClassName()} /> : <InformationCircleIcon className={iconClassName()} />}>
               Enter your password to continue.{next?.includes('delete-account') ? ' Deleting your account can’t be undone.' : ''}
             </Flash>
           ) : <SignedInNotice />}

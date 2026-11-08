@@ -91,7 +91,7 @@ export function AutocompleteInput<Value>({
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const filtered = useFilteredOptions(options, query, format, match, maxResults);
   return (
-    <FieldFrame id={id} label={label} hint={hint} required={required} error={error}>
+    <FieldFrame id={id} label={label} hint={hint} error={error}>
       <Combobox.Root
         items={options}
         filteredItems={filtered}
@@ -157,7 +157,7 @@ export function AutocompleteMultiInput<Value>({
   const filtered = useFilteredOptions(options, query, format, match, maxResults);
   const atLimit = maxSelections !== undefined && values.length >= maxSelections;
   return (
-    <FieldFrame id={id} label={label} hint={hint} required={required} error={error}>
+    <FieldFrame id={id} label={label} hint={hint} error={error}>
       <Combobox.Root
         multiple
         items={options}
@@ -254,7 +254,7 @@ export function TagsInput({
   const items = canCreate ? [...suggestions, candidate] : suggestions;
 
   return (
-    <FieldFrame id={id} label={label} hint={hint} required={required} error={error}>
+    <FieldFrame id={id} label={label} hint={hint} error={error}>
       <Combobox.Root
         multiple
         items={items}

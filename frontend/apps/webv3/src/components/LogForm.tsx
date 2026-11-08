@@ -94,7 +94,7 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
         <PageHeader title="Log activity" />
       )}
       <form.AppForm>
-        <div className="grid min-w-0 items-start gap-6 lg:grid-cols-log lg:gap-12">
+        <div className="min-w-0">
           <form.Form className="grid min-w-0 max-w-panel gap-4" aria-busy={pending}>
             <Surface className={card}>
               <fieldset className={`${formControls} p-record-inset`} disabled={disabled}>
@@ -105,7 +105,7 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
                   {field => <field.Input label="Description (optional)" placeholder="e.g. One Piece volume 45" />}
                 </form.AppField>
                 <TagsField form={form} viewerId={viewerId} />
-                <div className="empty:hidden lg:hidden">
+                <div className="empty:hidden">
                   <TagsSidebar form={form} activityId={activityId} disabled={disabled} compact />
                 </div>
               </fieldset>
@@ -123,9 +123,6 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
               </div>
             </Surface>
           </form.Form>
-          <aside className="hidden lg:sticky lg:top-6 lg:block lg:min-w-0 lg:pt-1" aria-label="Suggested tags">
-            <TagsSidebar form={form} activityId={activityId} disabled={disabled} compact={false} />
-          </aside>
         </div>
       </form.AppForm>
     </div>
@@ -236,7 +233,7 @@ const ChoiceFields = withPaperForm({
           name="languageCode"
           listeners={{ onChange: ({ value }) => selectDependents(value, form.getFieldValue('activityId')) }}
         >
-          {field => <field.Select label="Language" options={[]} groups={languageGroups(options)} />}
+          {field => <field.Select label="Language" placeholder="Choose a language" options={[]} groups={languageGroups(options)} />}
         </form.AppField>
         <form.AppField
           name="activityId"

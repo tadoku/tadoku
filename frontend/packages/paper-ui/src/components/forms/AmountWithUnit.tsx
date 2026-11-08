@@ -24,7 +24,7 @@ export function AmountWithUnit({ label, units, unitsLabel, unitField, hint, requ
   const slots = compoundField({ invalid: Boolean(error) });
   const frame = selectFrame();
   return (
-    <FieldFrame id={id} label={label} hint={hint} required={required} error={error}>
+    <FieldFrame id={id} label={label} hint={hint} error={error}>
       <div className={slots.root()} role="group" aria-labelledby={`${id}-label`}>
         <input
           {...props}

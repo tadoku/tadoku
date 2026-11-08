@@ -11,11 +11,12 @@ const initials = (name: string) => {
 }
 
 /** A profile's identity and its views. Only the profile's own account sees the export of its logs. */
-export function ProfileHeader({ profile, owner, view, overviewHref }: {
+export function ProfileHeader({ profile, owner, view, overviewHref, exportable = true }: {
   profile: ImmersionUserProfile
   owner: boolean
   view: 'overview' | 'activity'
   overviewHref: string
+  exportable?: boolean
 }) {
   const links = useLinks()
 
@@ -34,10 +35,9 @@ export function ProfileHeader({ profile, owner, view, overviewHref }: {
           </span>
           <div className="min-w-0">
             <h1 className={typography({ role: 'page', className: 'mb-2 mt-0 wrap-anywhere' })}>{profile.display_name}</h1>
-            <p className="m-0 text-ui text-muted">Tracking since {profile.created_at.slice(0, 4)}</p>
           </div>
         </div>
-        {owner ? (
+        {owner && exportable ? (
           <p className="m-0 flex items-center gap-1.5 text-sm text-muted max-md:basis-full">
             <ArrowDownTrayIcon className={iconClassName('compact')} aria-hidden="true" />
             Export logs: <a className="text-link hover:text-link-hover" href={links.logExport('csv')} aria-label="Download CSV">CSV</a> · <a className="text-link hover:text-link-hover" href={links.logExport('json')} aria-label="Download JSON">JSON</a>

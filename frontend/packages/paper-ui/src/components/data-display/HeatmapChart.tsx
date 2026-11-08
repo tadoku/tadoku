@@ -239,14 +239,6 @@ export function HeatmapChart({ id, data, year, getHref, today, surface = "paper"
             {label}
           </span>
         ))}
-        {today && today < end.toISODate()! ? (
-          <span className={slots.legendItem()}>
-            <svg width={CELL_WIDTH} height={CELL_HEIGHT} aria-hidden="true">
-              <rect width={CELL_WIDTH} height={CELL_HEIGHT} className={cellClassName(undefined, true)} shapeRendering="crispEdges" data-future="" />
-            </svg>
-            Not yet
-          </span>
-        ) : null}
       </p>
     </>
   );

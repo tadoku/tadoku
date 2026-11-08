@@ -32,7 +32,7 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
 
   return (
     <div className="profile-page">
-      <ProfileHeader profile={profile} owner={owner} view="overview" overviewHref={`/profile/${profile.id}/statistics/${year}`} />
+      <ProfileHeader profile={profile} owner={owner} view="overview" overviewHref={`/profile/${profile.id}/statistics/${year}`} exportable={!empty} />
       <section className="mt-8 border border-rule bg-paper" aria-labelledby="profile-year-heading">
         <h2 id="profile-year-heading" className="sr-only">{name}’s activity in {year}</h2>
         <YearTabs statistics={statistics} year={year} />
@@ -124,7 +124,7 @@ function Breakdown<T>({ id, title, section, items, empty }: {
   id: string
   title: string
   section: Section<T>
-  /** `fill` colours the row's bar, for example by activity; it defaults to the chart accent. */
+  /** `fill` colours the row's bar, for example by activity; it defaults to a neutral. */
   items: (data: T) => { label: string; score: number; fill?: string }[]
   empty: string
 }) {
@@ -144,8 +144,8 @@ function Breakdown<T>({ id, title, section, items, empty }: {
                   {scoreFormat.format(row.score)} <small className="font-regular text-muted">{pointsUnit(row.score)}</small>
                 </strong>
               </div>
-              <span className="block h-2 bg-rule" aria-hidden="true">
-                <span className={`block h-full min-w-0.5 ${row.fill ?? 'bg-heat-3'}`} style={{ width: `${total ? row.score / total * 100 : 0}%` }} />
+              <span className="block h-2 bg-rule-subtle" aria-hidden="true">
+                <span className={`block h-full min-w-0.5 ${row.fill ?? 'bg-rule-strong'}`} style={{ width: `${total ? row.score / total * 100 : 0}%` }} />
               </span>
             </li>
           ))}

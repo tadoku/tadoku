@@ -17,11 +17,16 @@ export function ErrorView() {
       headingLevel={1}
       title="This page couldn’t load"
       description="Check your connection, then try again."
-      actions={<Button variant="outline" onClick={() => void router.invalidate()}>Try again</Button>}
+      actions={<Button onClick={() => void router.invalidate()}>Try again</Button>}
     />
   )
 }
 
 export function PendingView() {
-  return <Loading className="py-16" label="Loading page" />
+  return (
+    <div className="flex items-center gap-3 py-16 text-muted" role="status">
+      <Loading size="small" />
+      <span>Loading…</span>
+    </div>
+  )
 }

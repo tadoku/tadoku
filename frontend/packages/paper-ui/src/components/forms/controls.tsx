@@ -23,7 +23,7 @@ export function TextArea({
   const id = providedId ?? `paper-textarea-${useId().replace(/:/gu, "")}`;
   const { field, error } = useField<string>();
   return (
-    <FieldFrame id={id} label={label} hint={hint} required={required} error={error}>
+    <FieldFrame id={id} label={label} hint={hint} error={error}>
       <textarea
         {...props}
         name={field.name}
@@ -62,7 +62,7 @@ export function Select({
   const { field, error } = useField<string>();
   const frame = selectFrame();
   return (
-    <FieldFrame id={id} label={label} hint={hint} required={required} error={error}>
+    <FieldFrame id={id} label={label} hint={hint} error={error}>
       <span className={frame.root()}>
         <select
           {...props}

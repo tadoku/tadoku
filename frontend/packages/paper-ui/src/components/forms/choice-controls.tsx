@@ -36,7 +36,7 @@ export function RadioSelect({
       aria-invalid={error ? true : undefined}
       disabled={disabled}
     >
-      <legend className={fieldSlots.label({ className: group.legend() })}>{label}{required ? <span className={fieldSlots.required()} aria-hidden="true">*</span> : null}</legend>
+      <legend className={fieldSlots.label({ className: group.legend() })}>{label}</legend>
       <div className={group.list({ className: segmented ? segmentSlots.list() : undefined })}>
         {options.map((option) => (
           <label className={segmented ? segmentSlots.root() : choiceSlots.root()} key={option.value}>
@@ -94,7 +94,7 @@ export function RadioGroup<Value extends string = string>({
       aria-describedby={describedBy(id, hint, error)}
       aria-invalid={error ? true : undefined}
     >
-      <legend className={fieldSlots.label({ className: group.legend() })}>{label}{required ? <span className={fieldSlots.required()} aria-hidden="true">*</span> : null}</legend>
+      <legend className={fieldSlots.label({ className: group.legend() })}>{label}</legend>
       <div className={card.list()}>
         {options.map((option) => (
           <label className={card.root()} key={option.value}>

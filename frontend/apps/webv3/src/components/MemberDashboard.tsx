@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { EmptyState, entryLink, listRows, metaLine, StatGrid } from 'paper-ui'
+import { buttonClassName, EmptyState, entryLink, listRows, metaLine, StatGrid } from 'paper-ui'
 import { contestsHref } from '../lib/contests'
 import { formatPeriod, pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
@@ -31,6 +31,7 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
   if (statistics?.status !== 'found') return null
 
   const { today, activity, contests } = statistics
+  const fresh = activity.ok && activity.data.total_updates === 0
   const logs = recent?.status === 'found' && recent.logs.ok ? recent.logs.data.logs.slice(0, recentCount) : null
   const ordered = contests.ok
     ? [...contests.data.contests].sort((a, b) => Number(a.contest_end < today) - Number(b.contest_end < today)).slice(0, recentCount)
@@ -38,7 +39,7 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
 
   return (
     <div className="mt-12 grid gap-10 *:min-w-0">
-      <section className={band} aria-labelledby="home-year-title">
+      {fresh ? null : <section className={band} aria-labelledby="home-year-title">
         <div className={head}>
           <h2 id="home-year-title" className={headTitle}>Daily activity</h2>
           <a className="text-link hover:text-link-hover" href={links.profile(viewer.userId)}>Your profile</a>
@@ -46,7 +47,7 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
         {activity.ok ? (
           <ActivityCalendar userId={viewer.userId} year={year} today={today} activity={activity.data} labelledBy="home-year-title" surface="canvas" />
         ) : null}
-      </section>
+      </section>}
 
       <div className={`${band} grid grid-cols-halves gap-x-14 gap-y-8 *:min-w-0 max-lg:grid-cols-single`}>
         {logs ? (
@@ -65,7 +66,8 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
                   variant="plain"
                   headingLevel={3}
                   title="No updates yet"
-                  actions={<a className="text-link hover:text-link-hover" href={links.logs}>Log your first activity</a>}
+                  description="A few pages or minutes are enough."
+                  actions={<a className={buttonClassName()} href={links.logs}>Log your first activity</a>}
                 />
               )}
             />
@@ -110,6 +112,7 @@ export function MemberYearTotals({ viewer, year }: { viewer: SignedIn; year: num
   if (statistics?.status !== 'found') return null
 
   const { today, activity, scores } = statistics
+  if (activity.ok && activity.data.total_updates === 0) return null
   const total = scores.ok ? scores.data.scores.reduce((sum, score) => sum + score.score, 0) : undefined
   const todayScore = activity.ok ? activity.data.scores.find(day => day.date === today)?.score ?? 0 : undefined
   return (

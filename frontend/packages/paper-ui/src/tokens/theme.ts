@@ -93,8 +93,8 @@ const color = {
   'activity-study': 'var(--color-chart-4)',
   'activity-other': 'var(--color-muted)',
 
-  'heat-future': themed(p.graphite[175], p.graphite[800]),
-  'heat-0': themed(p.graphite[250], p.graphite[600]),
+  'heat-future': 'transparent',
+  'heat-0': themed(p.graphite[200], p.graphite[700]),
   'heat-1': themed(p.violet[425], p.violet[450]),
   'heat-2': themed(p.violet[500], p.violet[375]),
   'heat-3': themed(p.violet[650], p.violet[200]),
@@ -274,7 +274,7 @@ const text = {
   section: '1.5rem',
   component: '1.125rem',
   body: dense('1rem', '0.875rem'),
-  label: '0.8125rem',
+  label: '0.875rem',
   metadata: '0.875rem',
   button: dense('1em', '0.875rem'),
   em: '1em',
@@ -332,7 +332,7 @@ const fontWeight = {
 const tracking = {
   tight: '-0.04em',
   wide: '0.02em',
-  hero: '-0.045em',
+  hero: '-0.03em',
   caps: '0.08em',
   display: '-0.035em',
   page: '-0.025em',

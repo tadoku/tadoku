@@ -116,7 +116,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         ]}
         groups={[
           { title: 'Get started', links: [
-            { label: 'Home', href: links.home },
             { label: 'Leaderboard', href: links.leaderboard },
             { label: 'Contests', href: links.contests },
             { label: 'Blog', href: links.blog },

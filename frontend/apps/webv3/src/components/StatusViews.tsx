@@ -27,8 +27,8 @@ export function ErrorView() {
 /** A page-shaped placeholder: the destination's title and a few rows with text-shaped blocks. */
 export function PendingView() {
   return (
-    <div role="status" className="grid gap-5 py-2">
-      <p className="m-0 text-metadata text-muted">Loading…</p>
+    <div role="status" className="grid gap-5">
+      <p className="sr-only">Loading…</p>
       <div className="h-8 w-1/3 bg-rule-subtle dark:bg-rule" />
       <div className="mt-2 grid max-w-article gap-1">
         {[0, 1, 2, 3, 4].map(row => (

@@ -100,7 +100,7 @@ function Entry({ log, showParticipant, actions, firstOfDay }: {
       <time dateTime={day} className={entries.date({ className: firstOfDay ? undefined : 'sr-only' })}>{formatDate(day)}</time>
       <div className={entries.body()}>
         {participant ? <p className="mb-0.5 mt-0 text-sm font-semibold">{participant}</p> : null}
-        <Link className={entryLink({ clamp: true, className: 'profile-entry-title' })} to="/logs/$logId" params={{ logId: log.id }}>
+        <Link className={entryLink({ clamp: true, className: `profile-entry-title ${participant ? 'font-regular' : ''}` })} to="/logs/$logId" params={{ logId: log.id }}>
           {nsfw || !log.description ? subject : log.description}
         </Link>
         <p className={metaLine({ className: 'profile-entry-meta flex flex-wrap gap-x-3' })}>

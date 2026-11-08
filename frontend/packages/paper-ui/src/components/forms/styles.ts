@@ -32,7 +32,7 @@ export const control = tv({
     kind: {
       input: "",
       textarea: "paper-textarea min-h-textarea resize-y leading-body",
-      select: "paper-select appearance-none pe-select-end",
+      select: "paper-select appearance-none pe-select-end has-[option[value='']:checked]:text-muted",
     },
     interactive: { true: "not-disabled:hover:border-field-edge-hover" },
     readOnly: { true: "border-b-rule bg-raised" },

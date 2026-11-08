@@ -1,5 +1,5 @@
 import { Button, Flash } from 'paper-ui'
-import { InformationCircleIcon, iconClassName } from 'paper-ui/icons'
+import { ExclamationTriangleIcon, InformationCircleIcon, iconClassName } from 'paper-ui/icons'
 import { continuation, displayNameProblem, emailProblem, passwordProblem, withReturnTo } from '../lib/identity'
 import { navigate, useAccountForm } from '../lib/account-form'
 import type { AccountSearch } from '../lib/search'
@@ -14,7 +14,7 @@ function SignedInNotice() {
   const { session } = useIdentity()
   if (!session.account) return null
   return (
-    <Flash variant="information" icon={<InformationCircleIcon className={iconClassName()} />}>
+    <Flash variant="information" icon={next?.includes('delete-account') ? <ExclamationTriangleIcon className={iconClassName()} /> : <InformationCircleIcon className={iconClassName()} />}>
       You’re logged in as {session.account.display_name}. <a href="/">Go to your account</a>
     </Flash>
   )
@@ -36,7 +36,7 @@ export function Login({ search }: { readonly search: AccountSearch }) {
   return (
     <CardPage
       title={!reauth ? 'Log in' : next?.includes('delete-account') ? 'Confirm account deletion' : 'Confirm it’s you'}
-      footer={reauth ? undefined : <>New to Tadoku? <a href={withReturnTo('/register', next)}>Create an account</a></>}
+      footer={reauth ? (next?.includes('delete-account') ? <a href="/settings">Keep my account</a> : undefined) : <>New to Tadoku? <a href={withReturnTo('/register', next)}>Create an account</a></>}
     >
       <form.AppForm>
         <form.Form {...formProps} className={accountForm}>

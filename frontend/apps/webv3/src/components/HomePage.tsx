@@ -102,7 +102,7 @@ export function HomePage() {
             </div>
           )}
 
-        <Surface as="section" className={`min-w-0 p-0 ${member && !fresh ? 'max-tablet:order-last' : ''}`} aria-labelledby="home-board-title">
+        <Surface as="section" className={`min-w-0 p-0 ${member ? 'max-tablet:order-last' : ''}`} aria-labelledby="home-board-title">
           <ContestBoard data={data} phase={phase} today={today} retrying={isFetching} retry={() => void refetch()} />
         </Surface>
         {member ? <MemberDashboard viewer={member} year={year} className="col-span-full" /> : null}
@@ -160,8 +160,9 @@ function MemberPromise({ member, data, phase, year, fresh }: {
   let title: string
   let summary: string
   if (running && entry) {
-    title = `${place(entry.rank)} place`
-    summary = `${scoreFormat.format(entry.score)} ${pointsUnit(entry.score)} in ${contest.title}.`
+    title = `${entry.is_tie ? 'Tied ' : ''}${place(entry.rank)} place`
+    const field = data?.summary ? ` Out of ${numberFormat.format(data.summary.participant_count)} participants.` : ''
+    summary = `${scoreFormat.format(entry.score)} ${pointsUnit(entry.score)} in ${contest.title}.${field}`
   } else if (running && registered) {
     title = `You’re in ${contest.title}`
     summary = phase === 'upcoming' ? `The round starts ${formatDate(contest.contest_start)}.` : 'Log what you read and listen to.'

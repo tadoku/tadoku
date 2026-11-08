@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useStore } from '@tanstack/react-form'
 import { Link, useHydrated, useNavigate } from '@tanstack/react-router'
-import { Button, cn, formFooter, type Option, type OptionGroup, PageHeader, Surface, usePaperForm, withPaperForm } from 'paper-ui'
+import { Button, buttonClassName, cn, formFooter, type Option, type OptionGroup, PageHeader, Surface, usePaperForm, withPaperForm } from 'paper-ui'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   draftFromLog,
@@ -112,12 +112,12 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
               {failure ? <SaveFailure failure={failure} viewerId={viewerId} editing={editing} /> : null}
               <div className={cn(formFooter().root(), 'mx-record-inset mt-0 pb-record-inset')}>
                 <div className={formFooter().actions()}>
+                  {editing
+                    ? <Link className={buttonClassName({ variant: 'ghost' })} to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
+                    : <Link className={buttonClassName({ variant: 'ghost' })} to="/">Cancel</Link>}
                   <Button type="submit" disabled={disabled} loading={pending} loadingLabel="Saving">
                     {editing ? 'Save' : 'Log activity'}
                   </Button>
-                  {editing
-                    ? <Link className="text-link hover:text-link-hover" to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
-                    : <Link className="text-link hover:text-link-hover" to="/">Cancel</Link>}
                 </div>
                 <ScoreEstimate form={form} options={options} />
               </div>

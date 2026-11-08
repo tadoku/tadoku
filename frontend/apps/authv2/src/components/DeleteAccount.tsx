@@ -1,6 +1,6 @@
 import { useStore } from '@tanstack/react-form'
 import { Link } from '@tanstack/react-router'
-import { Button, buttonClassName } from 'paper-ui'
+import { Button, Flash, buttonClassName } from 'paper-ui'
 import { useSyncExternalStore } from 'react'
 import { navigate, useAccountForm } from '../lib/account-form'
 import { continuation, deleteAccountLogin } from '../lib/identity'
@@ -42,7 +42,8 @@ export function DeleteAccount({ search }: { readonly search: AccountSearch }) {
   const matched = matches(typed, account.email)
 
   return (
-    <CardPage title="Delete your account" lead="You can’t undo this.">
+    <CardPage title="Delete your account">
+      <Flash variant="danger" className="mb-5">You can’t undo this.</Flash>
       <div className={`${accountConfirmation} mb-7`}>
         <p>Deleting your account removes your sign-in, your logs outside finished contests and your registrations in running contests.</p>
         <p>Finished contests keep your scores as “Deleted participant”. Contests you organize continue under “Deleted organizer”.</p>
@@ -63,6 +64,7 @@ export function DeleteAccount({ search }: { readonly search: AccountSearch }) {
                 spellCheck={false}
                 required
                 maxLength={320}
+                hint="Delete my account unlocks once this matches your email."
               />
             )}
           </form.AppField>

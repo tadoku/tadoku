@@ -198,7 +198,7 @@ function ContestRow({ contest, names, today }: {
           }`}
         >
           <h2 className={typography({ role: 'component', className: 'm-0 font-body text-base leading-150 font-semibold' })}>
-            <a className="text-inherit underline decoration-muted decoration-hairline underline-offset-link" href={links.contest(contest.id)}>
+            <a className="text-inherit no-underline hover:text-link hover:underline" href={links.contest(contest.id)}>
               {contest.title}
             </a>
           </h2>
@@ -206,8 +206,9 @@ function ContestRow({ contest, names, today }: {
             {round}{contest.private ? <StatusTag>Unlisted</StatusTag> : null}
           </span>
         </div>
-        <p className={rowText}>{formatPeriod(contest)}</p>
-        {meta ? <p className={`contest-row__allows ${rowText}`}>{meta}</p> : null}
+        <p className={rowText}>
+          {formatPeriod(contest)}{meta ? <span className="contest-row__allows"> · {meta}</span> : null}
+        </p>
       </div>
     </li>
   )

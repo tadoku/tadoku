@@ -185,10 +185,10 @@ function ContestsForm({ log, registrations, viewerId }: {
             {failure ? <SaveFailure failure={failure} /> : null}
             <div className={formFooter().root()}>
               <div className={formFooter().actions()}>
+                <Link className={buttonClassName({ variant: 'ghost' })} to="/logs/$logId" params={{ logId: log.id }}>Cancel</Link>
                 <Button type="submit" disabled={disabled || !eligible.length}>
                   {pending ? 'Saving…' : 'Save submissions'}
                 </Button>
-                <Link className="text-link hover:text-link-hover" to="/logs/$logId" params={{ logId: log.id }}>Cancel</Link>
               </div>
             </div>
           </form.Form>

@@ -53,7 +53,7 @@ function LogDetail() {
         lead={(
           <>
             {log.language.name} · <ActivityName activity={log.activity} />
-            {learner ? <> · Logged by <a className="text-link hover:text-link-hover" href={links.profile(log.user_id)}>{learner}</a></> : null}
+            {learner && !owner ? <> · Logged by <a className="text-link hover:text-link-hover" href={links.profile(log.user_id)}>{learner}</a></> : null}
           </>
         )}
         actions={owner ? <OwnerActions log={log} /> : null}

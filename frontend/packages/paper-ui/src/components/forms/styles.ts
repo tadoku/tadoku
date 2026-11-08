@@ -118,7 +118,7 @@ export const segment = tv({
       "not-has-disabled:not-has-checked:hover:border-field-edge-hover not-has-disabled:not-has-checked:hover:bg-neutral-hover",
       "has-checked:z-lift has-checked:border-link has-checked:bg-action-soft",
       "has-focus-visible:z-lift-2 has-focus-visible:outline-halo has-focus-visible:outline-offset-0",
-      "has-disabled:cursor-default has-disabled:text-muted",
+      "has-disabled:cursor-default has-disabled:border-rule has-disabled:bg-paper has-disabled:text-muted",
       "forced-colors:border-forced-ink forced-colors:bg-forced-canvas forced-colors:text-forced-ink",
       "forced-colors:forced-color-adjust-none",
       "forced-colors:has-checked:border-forced-highlight forced-colors:has-checked:bg-forced-canvas",

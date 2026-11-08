@@ -151,6 +151,7 @@ export function HeatmapChart({ id, data, year, getHref, today, surface = "paper"
     if (!shouldRender) return undefined;
 
     lastMonth += 1;
+    if (today && column.find((cell): cell is CalendarCell => cell !== undefined)!.date.toISODate()! > today) return undefined;
     return DateTime.fromObject({ month: lastMonth }).toFormat("LLL");
   });
 

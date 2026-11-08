@@ -57,7 +57,7 @@ const color = {
   'action-hover': themed(p.violet[700], p.violet[475]),
   'action-active': themed(p.violet[725], p.violet[550]),
   'action-soft': themed(p.violet[50], p.violet[900]),
-  'neutral-hover': themed(p.graphite[175], p.graphite[800]),
+  'neutral-hover': themed(p.graphite[175], p.graphite[700]),
   'raised-hover': themed(p.graphite[175], p.graphite[700]),
   'on-action': p.white,
   destructive: themed(p.red[500], p.red[450]),

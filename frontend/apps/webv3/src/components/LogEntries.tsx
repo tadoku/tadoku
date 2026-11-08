@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import { EmptyState, Pagination, entryLink, entryList, listFooter, metaLine } from 'paper-ui'
 import type { ImmersionLog } from 'api-client'
-import { formatDate, formatTracking, numberFormat, pointsUnit } from '../lib/format'
+import { formatDate, formatTracking, numberFormat, pointsUnit, scoreColumn } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { activityPageSize } from '../lib/profile'
 import { ActivityName } from './ActivityName'
@@ -33,6 +33,7 @@ export function LogEntries({ logs, total, page, pageHref, empty, showParticipant
   }
 
   const first = (page - 1) * activityPageSize + 1
+  const formatScore = scoreColumn(logs.map(log => log.score))
   const pages = Math.ceil(total / activityPageSize)
 
   return (
@@ -48,6 +49,7 @@ export function LogEntries({ logs, total, page, pageHref, empty, showParticipant
           <Entry
             key={log.id}
             log={log}
+            formatScore={formatScore}
             showParticipant={showParticipant}
             actions={actions?.(log)}
             firstOfDay={index === 0 || logDay(logs[index - 1]) !== logDay(log)}
@@ -73,8 +75,9 @@ const logDay = (log: ImmersionLog) => new Date(log.created_at).toISOString().sli
 const participantLink = 'text-ink no-underline hover:text-link hover:underline'
 
 /** A day's first entry shows its date; later entries that day keep it for assistive technology only. */
-function Entry({ log, showParticipant, actions, firstOfDay }: {
+function Entry({ log, formatScore, showParticipant, actions, firstOfDay }: {
   log: ImmersionLog
+  formatScore: (score: number) => string
   showParticipant: boolean
   actions: ReactNode
   firstOfDay: boolean
@@ -114,7 +117,7 @@ function Entry({ log, showParticipant, actions, firstOfDay }: {
       </div>
       {/* Actions sit under the score, so they add no row of their own. */}
       <div className={entries.score({ className: 'grid content-start justify-items-end gap-1' })}>
-        <span>{numberFormat.format(log.score)} <small>{pointsUnit(log.score)}</small></span>
+        <span>{formatScore(log.score)} <small>{pointsUnit(log.score)}</small></span>
         {actions}
       </div>
     </li>

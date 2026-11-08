@@ -38,7 +38,7 @@ const promise: Record<Phase, { headline: ReactNode; lead: string }> = {
 }
 
 const hero = [
-  'grid grid-cols-halves items-start gap-16 py-2 pe-1.25 max-lg:gap-8',
+  'grid grid-cols-halves items-start gap-16 py-2 max-lg:gap-8',
   'max-tablet:grid-cols-single max-tablet:gap-8 max-tablet:pt-0',
 ].join(' ')
 const status = 'mb-4 mt-0 text-sm font-semibold text-warning'

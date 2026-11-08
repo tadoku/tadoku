@@ -4,39 +4,27 @@
  */
 export const palette = {
   white: '#ffffff',
-  /** Warm paper neutrals, light theme. */
-  sand: {
-    50: '#fffefa',
-    100: '#f2efe8',
-    150: '#ebe6dd',
-    200: '#e9e5dc',
-    250: '#e2ddd4',
-    300: '#d3ccc0',
-    400: '#bcb4a8',
-    500: '#857d72',
-  },
-  /** Warm inks, light theme, and the light footer band. */
-  plum: {
-    100: '#ddd6d9',
-    300: '#b4abaf',
-    400: '#9d9498',
-    600: '#5e5659',
-    650: '#4a4245',
-    700: '#393235',
-    900: '#211a1d',
-    950: '#1b1618',
-  },
-  /** Neutral greys, Graphite dark theme. */
+  /** Neutral greys for both themes: light surfaces and inks, and the dark Graphite theme. */
   graphite: {
+    50: '#efefef',
     100: '#e8e8e8',
+    150: '#e2e2e2',
+    175: '#d9d9d9',
+    200: '#d2d2d2',
+    250: '#c5c5c5',
     300: '#aeaeae',
+    350: '#979797',
     400: '#808080',
+    450: '#777777',
     500: '#5f5f5f',
+    550: '#565656',
     600: '#444444',
+    650: '#343434',
     700: '#2c2c2c',
     750: '#252525',
     800: '#232323',
     850: '#1c1c1c',
+    875: '#181818',
     900: '#141414',
   },
   violet: {
@@ -103,9 +91,9 @@ export const palette = {
   bronze: { 100: '#f0d3bd', 300: '#eebc98', 800: '#4a2c1b', 850: '#6b3412' },
   /** Shadow and scrim bases. */
   shade: {
-    plum: 'rgb(33 26 29 / 16%)',
+    ink: 'rgb(28 28 28 / 16%)',
     violet: 'rgb(124 104 224 / 34%)',
-    scrimLight: 'rgb(33 26 29 / 28%)',
+    scrimLight: 'rgb(28 28 28 / 28%)',
     scrimDark: 'rgb(0 0 0 / 38%)',
     forcedScrim: 'rgb(0 0 0 / 50%)',
     violetTint: 'rgb(143 128 232 / 14%)',

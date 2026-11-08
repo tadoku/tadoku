@@ -178,19 +178,20 @@ const columnOf = (rule: ImmersionScoringRule, options: ImmersionLogConfiguration
 
 /** Points per unit: one row per language, falling back to the all-languages rate, with default rows merged. */
 function rateMatrix(rules: ImmersionScoringRule[], options: ImmersionLogConfigurationOptions) {
-  const columns = [...new Set(rules.map(rule => columnOf(rule, options)))]
-  // The API scores with the first matching rule by priority, and a rule without a language matches every language.
+  const columns = [...new Map(rules.map(rule => [columnOf(rule, options), rule])).entries()]
+  // The API scores with the first matching rule by priority; a rule without a unit, language or tag matches any.
   const byPriority = [...rules].sort((left, right) => left.priority - right.priority)
-  const rateFor = (column: string, language: string | undefined) => byPriority.find(rule =>
-    columnOf(rule, options) === column && (!rule.language_code || rule.language_code === language))
-  const cell = (column: string, language: string | undefined) => {
-    const rule = rateFor(column, language)
+  const cell = (column: ImmersionScoringRule, language: string | undefined) => {
+    const rule = byPriority.find(candidate => candidate.score_source === column.score_source
+      && (!candidate.unit_key || candidate.unit_key === column.unit_key)
+      && (!candidate.tag || candidate.tag === column.tag)
+      && (!candidate.language_code || candidate.language_code === language))
     return rule ? rateFormat.format(rule.rate) : '–'
   }
   const languages = [...new Set(rules.map(rule => rule.language_code).filter((code): code is string => Boolean(code)))]
-  const defaults = columns.map(column => cell(column, undefined))
+  const defaults = columns.map(([, column]) => cell(column, undefined))
   const languageRows = languages
-    .map(code => [options.languages.find(language => language.code === code)?.name ?? code, ...columns.map(column => cell(column, code))])
+    .map(code => [options.languages.find(language => language.code === code)?.name ?? code, ...columns.map(([, column]) => cell(column, code))])
     .filter(row => row.slice(1).join() !== defaults.join())
   const rows = [['All languages', ...defaults], ...languageRows].reduce<string[][]>((merged, row) => {
     const same = merged.find(existing => existing.slice(1).join() === row.slice(1).join())
@@ -198,7 +199,7 @@ function rateMatrix(rules: ImmersionScoringRule[], options: ImmersionLogConfigur
     else merged.push([...row])
     return merged
   }, [])
-  return { headers: ['Points per', ...columns], rows }
+  return { headers: ['Points per', ...columns.map(([label]) => label)], rows }
 }
 
 function condition(rule: ImmersionScoringRule, options: ImmersionLogConfigurationOptions) {

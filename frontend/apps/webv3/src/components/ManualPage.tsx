@@ -76,7 +76,7 @@ export function ManualPage() {
       <details className="sticky top-16 z-lift mb-8 border-y border-rule bg-canvas py-3 lg:hidden">
         <summary className="cursor-pointer text-ui font-semibold">On this page</summary>
         <ol className="mb-0 mt-3 list-none columns-1 gap-x-8 p-0 text-ui leading-175 tablet:columns-2">
-          {sections.map(([id, label]) => <li key={id} className="break-inside-avoid"><a className="inline-block py-1 text-link no-underline hover:text-link-hover hover:underline" href={`#${id}`}>{label}</a></li>)}
+          {sections.map(([id, label]) => <li key={id} className="break-inside-avoid"><a className="inline-block py-1 text-link no-underline hover:text-link-hover hover:underline" href={`#${id}`} onClick={event => event.currentTarget.closest('details')?.removeAttribute('open')}>{label}</a></li>)}
         </ol>
       </details>
       <div className={prose({ className: 'content-prose max-lg:[&_:is(h2,h3,h4)]:scroll-mt-32' })}>

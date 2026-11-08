@@ -43,7 +43,7 @@ const hero = [
   'grid grid-cols-halves items-start gap-16 py-2 max-lg:gap-8',
   'max-tablet:grid-cols-single max-tablet:gap-8 max-tablet:pt-0',
 ].join(' ')
-const memberHero = 'grid grid-cols-halves items-start gap-x-16 gap-y-8 py-2 max-lg:gap-x-8 max-tablet:grid-cols-single'
+const memberHero = 'grid grid-cols-halves items-start gap-x-16 py-2 max-lg:gap-x-8 max-tablet:grid-cols-single max-tablet:gap-y-6 tablet:grid-rows-docs'
 const status = 'mb-4 mt-0 text-sm font-semibold text-warning'
 const headline = 'm-0 max-w-measure-hero text-balance font-display text-hero leading-120 tracking-hero'
 const lead = 'my-6 max-w-measure-sm text-lead leading-175 text-ink max-tablet:my-5 max-tablet:text-base'
@@ -87,7 +87,7 @@ export function HomePage() {
     <div className="home-page">
       <section className={member ? memberHero : hero} aria-labelledby="home-title">
         {member
-          ? <MemberPromise member={member} data={data} phase={phase} year={year} fresh={Boolean(fresh)} />
+          ? <MemberPromise member={member} data={data} phase={phase} fresh={Boolean(fresh)} />
           : (
             <div>
               {phase === 'unavailable' && <p className={status}>Contest updates are delayed</p>}
@@ -102,10 +102,16 @@ export function HomePage() {
             </div>
           )}
 
-        <Surface as="section" elevation="showcase" className={`me-1.25 min-w-0 p-0 ${member ? 'max-tablet:order-last' : ''}`} aria-labelledby="home-board-title">
+        <Surface as="section" elevation="showcase" className={`me-1.25 min-w-0 p-0 ${member ? 'tablet:col-start-2 tablet:row-span-2 tablet:row-start-1' : ''}`} aria-labelledby="home-board-title">
           <ContestBoard data={data} phase={phase} today={today} retrying={isFetching} retry={() => void refetch()} />
         </Surface>
-        {member ? <MemberDashboard viewer={member} year={year} className="col-span-full" /> : null}
+        {member ? (
+          <div className="min-w-0 tablet:col-start-1 tablet:row-start-2">
+            <MemberYearTotals viewer={member} year={year} />
+            <MemberContests viewer={member} year={year} />
+          </div>
+        ) : null}
+        {member ? <MemberDashboard viewer={member} year={year} className="col-span-full mt-8" /> : null}
       </section>
 
       {member ? null : (
@@ -143,11 +149,10 @@ export function HomePage() {
 
 
 /** A signed-in learner's hero: where they stand in the current round and the one action that moves it. */
-function MemberPromise({ member, data, phase, year, fresh }: {
+function MemberPromise({ member, data, phase, fresh }: {
   member: Extract<Viewer, { status: 'signed-in' }>
   data: HomeData | undefined
   phase: Phase
-  year: number
   fresh: boolean
 }) {
   const links = useLinks()
@@ -186,8 +191,6 @@ function MemberPromise({ member, data, phase, year, fresh }: {
           {fresh ? <a className="text-link hover:text-link-hover" href={links.logs}>Log your first activity</a> : null}
         </div>
       ) : null}
-      <MemberYearTotals viewer={member} year={year} />
-      <MemberContests viewer={member} year={year} />
     </div>
   )
 }

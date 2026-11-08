@@ -84,7 +84,7 @@ export function MemberYearTotals({ viewer, year }: { viewer: SignedIn; year: num
   const total = scores.ok ? scores.data.scores.reduce((sum, score) => sum + score.score, 0) : undefined
   const todayScore = activity.ok ? activity.data.scores.find(day => day.date === today)?.score ?? 0 : undefined
   return (
-    <section className="mt-9 border-t border-rule pt-6" aria-labelledby="home-totals-title">
+    <section className="mt-9 border-t border-rule pt-6 max-tablet:mt-0" aria-labelledby="home-totals-title">
       <h2 id="home-totals-title" className="mb-4 mt-0 text-ui font-semibold leading-150 text-muted">Your {year}</h2>
       <StatGrid
         className="grid-cols-halves"

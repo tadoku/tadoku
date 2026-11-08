@@ -51,8 +51,7 @@ export function ContestsPage({ view, page }: { view: ContestView; page: number }
         title="Contests"
         actions={(
           <>
-            {view.collection === 'joined' && scope?.kind === 'participant' ? <JoinedYear userId={scope.userId} year={view.year} /> : null}
-            {canCreate ? <Link className={buttonClassName({ variant: 'outline' })} to={links.newContest}><PlusIcon className={iconClassName('compact')} aria-hidden="true" /><span className="max-sm:sr-only">Create contest</span></Link> : null}
+            {canCreate ? <Link className={buttonClassName({ variant: 'outline' })} to={links.newContest}><PlusIcon className={iconClassName('compact')} aria-hidden="true" />Create contest</Link> : null}
           </>
         )}
       />
@@ -67,7 +66,10 @@ export function ContestsPage({ view, page }: { view: ContestView; page: number }
         }))}
       />
       {scope ? (
-        <Contests scope={scope} view={view} page={page} canCreate={canCreate} />
+        <>
+          <Contests scope={scope} view={view} page={page} canCreate={canCreate} />
+          {view.collection === 'joined' && scope.kind === 'participant' ? <JoinedYear userId={scope.userId} year={view.year} /> : null}
+        </>
       ) : viewer?.status === 'anonymous' ? (
         <SignInPrompt joined={collection === 'joined'} />
       ) : (
@@ -86,7 +88,11 @@ export function ContestsPage({ view, page }: { view: ContestView; page: number }
 function JoinedYear({ userId, year }: { userId: string; year: number }) {
   const since = useQuery(accountSinceQuery(userId)).data
   const current = thisYear()
-  return <YearStepper year={year} first={Math.min(since ?? current, current)} current={current} href={contestsHref.joined} label="Year" />
+  return (
+    <div className="-ms-3 mt-4">
+      <YearStepper compact year={year} first={Math.min(since ?? current, current)} current={current} href={contestsHref.joined} label="Year" />
+    </div>
+  )
 }
 
 function SignInPrompt({ joined }: { joined: boolean }) {

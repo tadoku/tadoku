@@ -87,7 +87,7 @@ export function HomePage() {
     <div className="home-page">
       <section className={member ? memberHero : hero} aria-labelledby="home-title">
         {member
-          ? <MemberPromise member={member} data={data} phase={phase} year={year} />
+          ? <MemberPromise member={member} data={data} phase={phase} year={year} fresh={Boolean(fresh)} />
           : (
             <div>
               {phase === 'unavailable' && <p className={status}>Contest updates are delayed</p>}
@@ -143,11 +143,12 @@ export function HomePage() {
 
 
 /** A signed-in learner's hero: where they stand in the current round and the one action that moves it. */
-function MemberPromise({ member, data, phase, year }: {
+function MemberPromise({ member, data, phase, year, fresh }: {
   member: Extract<Viewer, { status: 'signed-in' }>
   data: HomeData | undefined
   phase: Phase
   year: number
+  fresh: boolean
 }) {
   const links = useLinks()
   const contest = data?.latestContest
@@ -181,6 +182,7 @@ function MemberPromise({ member, data, phase, year }: {
       {joinable ? (
         <div className={actions}>
           <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a>
+          {fresh ? <a className="text-link hover:text-link-hover" href={links.logs}>Log your first activity</a> : null}
         </div>
       ) : null}
       <MemberYearTotals viewer={member} year={year} />

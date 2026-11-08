@@ -65,10 +65,10 @@ const sections = [
 export function ManualPage() {
   return (
     <article className="min-w-0 max-w-article">
-      <PageHeader title="Manual" />
+      <PageHeader title="Guide" />
       <nav aria-label="On this page" className="mb-10 border-y border-rule py-4">
         <ol className="m-0 list-none gap-x-8 p-0 text-ui leading-175 tablet:columns-2">
-          {sections.map(([id, label]) => <li key={id} className="break-inside-avoid"><a className="text-link no-underline hover:text-link-hover hover:underline" href={`#${id}`}>{label}</a></li>)}
+          {sections.map(([id, label]) => <li key={id} className="break-inside-avoid"><a className="inline-block py-1 text-link no-underline hover:text-link-hover hover:underline" href={`#${id}`}>{label}</a></li>)}
         </ol>
       </nav>
       <div className={prose({ className: 'content-prose' })}>

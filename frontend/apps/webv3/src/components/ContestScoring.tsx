@@ -189,7 +189,7 @@ function RateRows({ title, rules, options, rate }: {
       <h5 className="mb-1 mt-0 text-metadata font-semibold text-muted">{title}</h5>
       <dl className="m-0">
         {merged.map(({ key, label, value }) => (
-          <div key={key} className="flex justify-between gap-4 border-b border-rule py-1.5 text-metadata tabular-nums last:border-b-0">
+          <div key={key} className="flex justify-between gap-4 border-b border-rule py-2 text-ui tabular-nums last:border-b-0">
             <dt>{label}</dt>
             <dd className="m-0 whitespace-nowrap font-semibold">{value}</dd>
           </div>

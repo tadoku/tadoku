@@ -54,7 +54,7 @@ export function Login({ search }: { readonly search: AccountSearch }) {
           <form.AppField name="password" validators={{ onChange: ({ value }) => value ? undefined : 'Enter your password.' }}>
             {field => <field.Input id={fieldId('password')} label="Password" type="password" autoComplete="current-password" required />}
           </form.AppField>
-          <Button type="submit" fullWidth loading={pending} loadingLabel="Logging in">{reauth ? 'Continue' : 'Log in'}</Button>
+          <Button type="submit" fullWidth loading={pending} loadingLabel="Logging in">{reauth ? (next?.includes('delete-account') ? 'Continue to deletion' : 'Continue') : 'Log in'}</Button>
           <a className="justify-self-center text-sm" href={withReturnTo('/recovery', next)}>Forgot your password?</a>
         </form.Form>
       </form.AppForm>

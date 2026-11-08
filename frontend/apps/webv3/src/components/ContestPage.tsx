@@ -78,7 +78,7 @@ function ContestBoardPage({ board, today, view, page }: { board: ContestBoard; t
         renderLink={renderLink}
         title={contest.title}
         lead={`${formatPeriod(contest)}${phase.registrationOpen ? ` · Registration closes ${formatDate(contest.registration_end)}` : ''}`}
-        classNames={{ lead: 'lg:hidden' }}
+        classNames={{ lead: 'tablet:hidden' }}
         status={<><RoundStatus phase={phase} />{contest.private ? <StatusTag>Unlisted</StatusTag> : null}</>}
         actions={actions}
       />

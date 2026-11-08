@@ -48,7 +48,7 @@ export function MemberDashboard({ viewer, year, className }: { viewer: SignedIn;
         ) : null}
       </section>}
 
-      <div className={`${band} grid grid-cols-halves gap-x-14 gap-y-8 *:min-w-0 max-lg:grid-cols-single`}>
+      <div className={`${band} grid grid-cols-halves gap-x-16 gap-y-8 *:min-w-0 max-lg:grid-cols-single`}>
         {logs ? (
           <section aria-labelledby="home-recent-title">
             <div className={head}>
@@ -120,7 +120,7 @@ export function MemberYearTotals({ viewer, year }: { viewer: SignedIn; year: num
       <StatGrid
         className="grid-cols-halves"
         stats={[
-          ...(total === undefined ? [] : [{ label: 'Points this year', value: scoreFormat.format(total) }]),
+          ...(total === undefined ? [] : [{ label: 'Overall score', value: scoreFormat.format(total) }]),
           ...(todayScore === undefined ? [] : [{ label: 'Today', value: scoreFormat.format(todayScore), unit: pointsUnit(todayScore) }]),
         ]}
       />

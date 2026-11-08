@@ -94,8 +94,8 @@ test('the manual and its navigation are server-rendered and fit a phone', async 
   const response = await page.goto('/pages/manual')
   expect(response?.status()).toBe(200)
 
-  await expect(page).toHaveTitle('Manual · Tadoku')
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Manual')
+  await expect(page).toHaveTitle('Guide · Tadoku')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Guide')
   await expect(page.getByRole('heading', { level: 2, name: 'Signing up for a contest' })).toBeVisible()
   for (const activity of ['Reading', 'Writing', 'Listening', 'Speaking', 'Study']) {
     await expect(page.getByRole('region', { name: activity }).getByRole('table')).toBeVisible()

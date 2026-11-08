@@ -97,8 +97,8 @@ const color = {
   'heat-0': themed(p.graphite[200], p.graphite[650]),
   'heat-1': themed(p.violet[350], p.violet[550]),
   'heat-2': themed(p.violet[525], p.violet[400]),
-  'heat-3': themed(p.violet[725], p.violet[200]),
-  'heat-4': themed(p.violet[850], p.violet[25]),
+  'heat-3': themed(p.violet[700], p.violet[200]),
+  'heat-4': themed(p.violet[950], p.violet[25]),
 
   /** Component colours: tints that one control needs and the semantic set does not name. */
   'table-shade': mix('ink', 35),

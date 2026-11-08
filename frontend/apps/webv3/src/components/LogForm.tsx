@@ -105,14 +105,16 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
                 {/* An edit can't change language or activity; the header states them. */}
                 {editing ? null : <ChoiceFields form={form} options={options} />}
                 <MeasureField form={form} timed={isTimed(options, activityId)} units={units} />
-                <details className={`${formControls} group/details`} open={detailsOpen} onToggle={event => setDetailsOpen(event.currentTarget.open)}>
-                  <summary className="cursor-pointer text-sm font-semibold text-link hover:text-link-hover">Add details</summary>
+                <details className="group/details" open={detailsOpen} onToggle={event => setDetailsOpen(event.currentTarget.open)}>
+                  <summary className="cursor-pointer text-sm font-semibold text-link hover:text-link-hover">{detailsOpen ? 'Details' : 'Add details'}</summary>
+                  <div className={`${formControls} mt-4`}>
                   <form.AppField name="description">
                     {field => <field.TextArea label="Description (optional)" placeholder="e.g. One Piece volume 45" />}
                   </form.AppField>
                   <TagsField form={form} viewerId={viewerId} />
                   <div className="empty:hidden">
                     <TagsSidebar form={form} activityId={activityId} disabled={disabled} compact />
+                  </div>
                   </div>
                 </details>
               </fieldset>

@@ -86,7 +86,7 @@ test('the server-rendered updates feed lists the API\'s contest logs, pages thro
     await expectLogs(live, await contestLogs(request, contest.id, 2), true)
   }
   if (first.total_size > 0) {
-    await live.goto(updatesPath(contest.id, Math.ceil(first.total_size / 50) + 1))
+    await live.goto(updatesPath(contest.id, Math.ceil(first.total_size / 25) + 1))
     await expect(live.getByRole('heading', { name: 'This page is past the end of the activity' })).toBeVisible()
     await live.goto(updatesPath(contest.id))
     const entry = first.logs[0]

@@ -181,7 +181,7 @@ function MemberPromise({ member, data, phase, year, fresh }: {
       {/* Log activity is already the header's action; the hero adds Join only while the member can still join. */}
       {joinable ? (
         <div className={actions}>
-          <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a>
+          <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join contest</a>
           {fresh ? <a className="text-link hover:text-link-hover" href={links.logs}>Log your first activity</a> : null}
         </div>
       ) : null}

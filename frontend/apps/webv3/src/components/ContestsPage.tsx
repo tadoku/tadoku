@@ -136,8 +136,10 @@ function Contests({ scope, view, page, canCreate }: { scope: ContestListScope; v
       <EmptyState
         headingLevel={2}
         title="You haven’t organized a contest yet"
-        description={canCreate ? undefined : 'Accounts can create contests from one month after joining.'}
-        actions={canCreate ? <Link className={buttonClassName()} to="/contests/new">Create contest</Link> : undefined}
+        description={canCreate ? undefined : 'Accounts can create contests from one month after joining. Until then, join one that’s running.'}
+        actions={canCreate
+          ? <Link className={buttonClassName()} to="/contests/new">Create contest</Link>
+          : <Link className={buttonClassName({ variant: 'outline' })} to={contestsHref.community()}>Browse community contests</Link>}
       />
     ) : view.collection === 'joined' ? (
       <EmptyState

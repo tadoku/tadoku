@@ -171,7 +171,7 @@ const unitName = (unitKey: string, options: ImmersionLogConfigurationOptions) =>
 
 const columnOf = (rule: ImmersionScoringRule, options: ImmersionLogConfigurationOptions) => {
   const unit = rule.unit_key ? unitName(rule.unit_key, options) : rule.score_source === 'duration_minutes' ? 'Minute' : 'Amount'
-  return rule.tag ? `${unit} (${rule.tag.replaceAll('_', ' ')})` : unit
+  return rule.tag ? `${rule.tag.replaceAll('_', ' ')} ${unit.toLowerCase()}` : unit
 }
 
 /** Points per unit: one row per language, falling back to the all-languages rate, with default rows merged. */

@@ -13,7 +13,7 @@ const pageHeader = tv({
     ],
     main: "paper-page-header__main flex flex-wrap items-baseline justify-between gap-x-6 gap-y-4 lg:flex-nowrap",
     text: "paper-page-header__text flex min-w-0 flex-auto flex-col gap-2",
-    heading: "paper-page-header__heading my-page-title-trim flex flex-wrap items-center gap-x-4 gap-y-2",
+    heading: "paper-page-header__heading my-page-title-trim flex flex-wrap items-center gap-x-4 gap-y-3",
     title: "paper-page-header__title paper-type-page m-0 min-w-0 wrap-anywhere",
     status: "paper-page-header__status my-page-title-trim flex flex-wrap items-center gap-2",
     lead: "paper-page-header__lead m-0 max-w-measure text-base leading-165 text-muted",

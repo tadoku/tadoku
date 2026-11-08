@@ -17,7 +17,7 @@ export function ManualTable({ id, headers, rows, onPaper = false }: { id: string
   }, [])
   return (
     <>
-      <div className={`${contentTable} max-sm:hidden ${onPaper ? '[background:var(--effect-table-scroll)]' : ''}`} role="region" tabIndex={0} aria-labelledby={id}>
+      <div className={`${contentTable} max-sm:hidden ${onPaper ? 'max-w-full [background:var(--effect-table-scroll)]' : ''}`} role="region" tabIndex={0} aria-labelledby={id}>
         <table>
           <thead>
             <tr>{headers.map(header => <th key={header}>{header}</th>)}</tr>

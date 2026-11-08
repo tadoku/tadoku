@@ -292,7 +292,7 @@ const text = {
   xl: '1.25rem',
   '2xl': '1.5rem',
   '3xl': '2rem',
-  'heat-axis': '9px',
+  'heat-axis': '11px',
   'heat-axis-phone': '12px',
   ...layoutText,
 } satisfies Record<string, TokenValue>
@@ -360,6 +360,7 @@ const shadow = {
   'underline-link': 'inset 0 -1px 0 var(--color-link)',
   'current-bar': 'inset 0 -3px 0 var(--color-link)',
   'current-bar-start': 'inset 3px 0 0 var(--color-link)',
+  'viewer-start': 'inset 3px 0 0 var(--color-ink)',
   'rule-bottom': 'inset 0 -1px 0 var(--color-rule)',
   'rule-start': 'inset 1px 0 0 var(--color-rule)',
   'rail-focus': 'inset 3px 0 0 var(--color-focus)',

@@ -28,6 +28,7 @@ import {
 } from '../lib/logs'
 import { useLoginUrl } from '../lib/session'
 import { scoreFormat } from '../lib/format'
+import { ChevronRightIcon } from 'paper-ui/icons'
 import { TagsSidebar, maxTags } from './TagsSidebar'
 import { formControls } from './form-styles'
 
@@ -106,7 +107,10 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
                 {editing ? null : <ChoiceFields form={form} options={options} />}
                 <MeasureField form={form} timed={isTimed(options, activityId)} units={units} />
                 <details className="group/details" open={detailsOpen} onToggle={event => setDetailsOpen(event.currentTarget.open)}>
-                  <summary className="cursor-pointer text-sm font-semibold text-link hover:text-link-hover">{detailsOpen ? 'Details' : 'Add details'}</summary>
+                  <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 text-sm font-semibold text-muted [&::-webkit-details-marker]:hidden">
+                    <ChevronRightIcon className={`size-2.5 transition-transform duration-quick ${detailsOpen ? 'rotate-quarter' : ''}`} aria-hidden="true" />
+                    Details
+                  </summary>
                   <div className={`${formControls} mt-4`}>
                   <form.AppField name="description">
                     {field => <field.TextArea label="Description (optional)" placeholder="e.g. One Piece volume 45" />}

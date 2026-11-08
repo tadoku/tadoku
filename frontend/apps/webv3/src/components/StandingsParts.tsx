@@ -36,5 +36,5 @@ export function Person({ children, you }: { children: ReactNode; you?: boolean }
 /** The link on a participant's name: row context marks it, so the underline waits for hover. */
 export const personLink = 'text-ink no-underline wrap-break-word hover:text-link hover:underline'
 
-/** The viewer's row: a neutral band, so the accent stays with links and actions. */
-export const currentRow = 'bg-neutral-hover hover:bg-raised-hover'
+/** The viewer's row: an ink rail, distinct from the row hover and clear of the accent. */
+export const currentRow = 'font-semibold shadow-viewer-start hover:bg-neutral-hover'

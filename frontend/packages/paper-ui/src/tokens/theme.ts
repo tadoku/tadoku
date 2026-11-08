@@ -28,10 +28,10 @@ const mix = (color: string, percent: number, base = 'transparent') =>
  * `data-theme`. Colours derived from other tokens are recomputed inside every theme scope.
  */
 const color = {
-  canvas: themed(p.graphite[150], p.graphite[900]),
-  paper: themed(p.graphite[50], p.graphite[850]),
+  canvas: themed(p.graphite[100], p.graphite[900]),
+  paper: themed(p.graphite[25], p.graphite[850]),
   raised: themed(p.white, p.graphite[750]),
-  overlay: themed(p.graphite[50], p.graphite[750]),
+  overlay: themed(p.graphite[25], p.graphite[750]),
   /** Text fields and pickers: a step lighter than the card, on a soft edge. */
   field: themed(p.white, p.graphite[700]),
   scrim: themed(p.shade.scrimLight, p.shade.scrimDark),
@@ -112,16 +112,16 @@ const color = {
   'current-row-hover': mix('ink', 5, 'action-soft'),
   'checkbox-disabled-edge': `color-mix(in srgb, var(--color-field-edge) 85%, var(--color-rule))`,
 
-  /** The site footer: an ink band in light mode, the paper surface in dark mode. */
-  footer: themed(p.graphite[875], 'var(--color-paper)'),
-  'footer-ink': themed(p.graphite[150], 'var(--color-ink)'),
-  'footer-muted': themed(p.graphite[300], 'var(--color-muted)'),
-  'footer-link': themed(p.graphite[175], 'var(--color-ink)'),
-  'footer-label': themed(p.graphite[350], 'var(--color-muted)'),
-  'footer-rule': themed(p.graphite[600], 'var(--color-rule)'),
-  'footer-accent': p.violet[400],
-  'footer-hover': p.violet[150],
-  'footer-tint': p.shade.violetTint,
+  /** The site footer sits on the paper surface and closes the page with a hairline. */
+  footer: 'var(--color-paper)',
+  'footer-ink': 'var(--color-ink)',
+  'footer-muted': 'var(--color-muted)',
+  'footer-link': 'var(--color-ink)',
+  'footer-label': 'var(--color-muted)',
+  'footer-rule': 'var(--color-rule)',
+  'footer-accent': 'var(--color-link)',
+  'footer-hover': 'var(--color-link-hover)',
+  'footer-tint': 'var(--color-tab-hover)',
 
   /** Leaderboard podium marks behind the top three ranks. */
   'podium-1': themed(p.gold[100], p.gold[800]),

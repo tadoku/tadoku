@@ -11,7 +11,7 @@ export function Rank({ rank, children }: { rank: number; children?: ReactNode })
   const medal = rank >= 1 && rank <= 3 ? podium[rank as 1 | 2 | 3] : null
   return (
     <span
-      className={`standings-rank inline-flex h-7 min-w-7 items-center justify-center rounded-full px-1 tabular-nums whitespace-nowrap [&_abbr]:no-underline ${medal ? `font-bold ${medal}` : 'text-muted'}`}
+      className={`standings-rank inline-flex h-7 min-w-7 items-center justify-center rounded-chip px-1 tabular-nums whitespace-nowrap [&_abbr]:no-underline ${medal ? `font-bold ${medal}` : 'text-muted'}`}
       data-podium={medal ? rank : undefined}
     >
       {children ?? rank}
@@ -25,7 +25,7 @@ export function Person({ children, you }: { children: ReactNode; you?: boolean }
     <span className="standings-person inline-flex flex-wrap items-baseline gap-x-2 gap-y-1">
       {children}
       {you ? (
-        <span className="relative -top-px inline-block rounded-pill bg-action px-2 py-px text-xs leading-150 font-bold tracking-wide text-on-action">
+        <span className="relative -top-px inline-block rounded-chip bg-action px-2 py-px text-xs leading-150 font-bold tracking-wide text-on-action">
           You
         </span>
       ) : null}

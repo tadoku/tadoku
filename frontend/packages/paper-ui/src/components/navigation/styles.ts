@@ -49,7 +49,7 @@ export const navbar = tv({
     /** Inside an application frame's header band: the bar keeps to the frame width and its gutter. */
     contained: {
       true: {
-        root: "mx-auto max-w-frame border-0 px-gutter",
+        root: "static mx-auto max-w-frame border-0 px-gutter",
         inner: "px-0 py-2 max-lg:gap-2",
         brand: "max-lg:shrink-0",
         brandLink: "gap-brand-gap",

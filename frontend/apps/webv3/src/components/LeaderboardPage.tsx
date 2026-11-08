@@ -5,7 +5,8 @@ import { firstYear, leaderboardHref, standingsQuery, type StandingsScope } from 
 import { useLinks } from '../lib/links'
 import { renderLink } from './router-link'
 import { Standings } from './Standings'
-import { sheet, sheetTabs, standingsHeader } from './standings-styles'
+import { sheet, standingsHeader } from './standings-styles'
+import { YearStepper } from './YearStepper'
 
 /** The page title and period tabs every leaderboard shares, around the board for one period. */
 export function LeaderboardFrame({ period, currentYear, actions, children }: {
@@ -40,7 +41,6 @@ export function GlobalLeaderboard({ scope, page }: { scope: Exclude<StandingsSco
   const currentYear = new Date(standings.dataUpdatedAt).getUTCFullYear()
   const yearly = scope.kind === 'year'
   const period = yearly ? `in ${scope.year}` : 'of all time'
-  const years = Array.from({ length: currentYear - firstYear + 1 }, (_, index) => currentYear - index)
 
   return (
     <LeaderboardFrame period={yearly ? 'yearly' : 'all-time'} currentYear={currentYear}>
@@ -49,17 +49,10 @@ export function GlobalLeaderboard({ scope, page }: { scope: Exclude<StandingsSco
         <div>
           <section className={sheet} aria-label={yearly ? `${scope.year} official standings` : 'All-time official standings'}>
             {yearly ? (
-              <Tabbar
-                classNames={sheetTabs}
-                label="Year"
-                renderLink={renderLink}
-                links={years.map(year => ({
-                  id: String(year),
-                  label: String(year),
-                  href: leaderboardHref.yearly(year),
-                  current: year === scope.year,
-                }))}
-              />
+              <div className="flex items-center justify-between gap-4 border-b border-rule px-5 py-2 max-md:px-4">
+                <span className="text-metadata text-muted">Year</span>
+                <YearStepper year={scope.year} first={firstYear} current={currentYear} href={year => leaderboardHref.yearly(year)} label="Standings year" />
+              </div>
             ) : null}
             <Standings
               result={standings.data}

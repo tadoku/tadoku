@@ -280,7 +280,7 @@ export const combobox = tv({
       "focus-visible:outline-ring focus-visible:outline-focus focus-visible:outline-offset-0",
     ],
     chipInput: [
-      "paper-combobox__chip-input min-w-chip-input grow basis-16 border-0 bg-transparent outline-none",
+      "paper-combobox__chip-input min-w-chip-input grow basis-36 border-0 bg-transparent outline-none",
       "first:ps-chip-input-start placeholder:text-muted placeholder:opacity-full",
     ],
     option: "paper-tags-input__option block wrap-anywhere",

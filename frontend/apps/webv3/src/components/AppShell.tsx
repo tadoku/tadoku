@@ -96,14 +96,16 @@ export function AppShell({ children }: { children: ReactNode }) {
         />
         {viewer && 'userId' in viewer ? <form id={logoutFormId} method="post" action="/logout" hidden /> : null}
       </header>
-      <main id="main-content" className={frame.content()} tabIndex={-1} aria-busy={navigating}>
+      <main id="main-content" className={cn(frame.content(), 'motion-safe:transition-opacity motion-safe:duration-deliberate aria-busy:opacity-faded')} tabIndex={-1} aria-busy={navigating}>
         <Announcements />
         {viewer?.status === 'banned' ? <Suspended /> : children}
       </main>
       <SiteFooter
         brand={<>
-          <img src={reversedMark} width="32" height="32" alt="" />
-          <img src={reversedWordmark} width="126" height="23" alt="" />
+          <img className="block dark:hidden" src={mark} width="32" height="32" alt="" />
+          <img className="hidden dark:block" src={reversedMark} width="32" height="32" alt="" />
+          <img className="block dark:hidden" src={wordmark} width="126" height="23" alt="" />
+          <img className="hidden dark:block" src={reversedWordmark} width="126" height="23" alt="" />
         </>}
         brandHref={links.home}
         brandLabel="Tadoku home"
@@ -115,11 +117,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           { label: 'Twitter', href: 'https://twitter.com/tadoku_app', icon: <TwitterIcon /> },
         ]}
         groups={[
-          { title: 'Get started', links: [
-            { label: 'Leaderboard', href: links.leaderboard },
-            { label: 'Contests', href: links.contests },
-            { label: 'Blog', href: links.blog },
-          ] },
           { title: 'Learn', links: [
             { label: 'About Tadoku', href: links.page('about') },
             { label: 'Guide', href: links.guide },

@@ -7,11 +7,24 @@ const contentTable = [
   '[&_:is(th,td):not(:first-child)]:text-end [&_:is(th,td):last-child]:pe-0 max-sm:[&_:is(th,td)]:pe-3',
 ].join(' ')
 
+const sections = [
+  ['signing-up-for-a-contest', 'Signing up for a contest'],
+  ['submitting-updates', 'Submitting updates'],
+  ['frequency-of-submitting-updates', 'Frequency of submitting updates'],
+  ['submitting-re-reads', 'Submitting re-reads'],
+  ['media', 'Tracking activities and media'],
+] as const
+
 /** Webv2's code-owned manual, ported as written. CMS pages render through `CmsPage` instead. */
 export function ManualPage() {
   return (
     <article className="min-w-0 max-w-article">
       <PageHeader title="Manual" />
+      <nav aria-label="On this page" className="mb-10 border-y border-rule py-4">
+        <ol className="m-0 grid list-none gap-x-8 gap-y-1.5 p-0 text-ui leading-150 tablet:grid-cols-halves">
+          {sections.map(([id, label]) => <li key={id}><a className="text-link hover:text-link-hover" href={`#${id}`}>{label}</a></li>)}
+        </ol>
+      </nav>
       <div className={prose({ className: 'content-prose' })}>
         <h2 id="signing-up-for-a-contest">Signing up for a contest</h2>
         <p>

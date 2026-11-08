@@ -105,6 +105,7 @@ function YearTabs({ statistics, year }: { statistics: Found; year: number }) {
   const current = Number(statistics.today.slice(0, 4))
   const span = Array.from({ length: current - first + 1 }, (_, index) => current - index)
   const years = span.includes(year) ? span : [...span, year].sort((a, b) => b - a)
+  if (years.length === 1) return null
   return (
     <Tabbar
       classNames={sheetTabs}

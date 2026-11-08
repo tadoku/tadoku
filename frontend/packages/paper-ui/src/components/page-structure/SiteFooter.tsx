@@ -30,14 +30,14 @@ export interface SiteFooterProps {
 const siteFooter = tv({
   slots: {
     root: [
-      "paper-site-footer bg-footer px-gutter pb-14 pt-12 text-footer-ink",
+      "paper-site-footer border-t border-rule bg-footer px-gutter pb-10 pt-8 text-footer-ink max-tablet:pb-7 max-tablet:pt-6",
       "[&_a]:text-inherit [&_a]:no-underline [&_a:hover]:text-footer-hover [&_a:hover]:underline",
       "[&_a:hover]:decoration-hover [&_a:hover]:underline-offset-link [&_:focus-visible]:outline-footer-hover",
       "[&_p_a]:text-footer-ink [&_p_a]:underline [&_p_a]:decoration-footer-accent [&_p_a]:underline-offset-link",
       "[&_p_a:hover]:text-footer-ink",
     ],
     inner: [
-      "mx-auto grid max-w-content grid-cols-content-end gap-x-16 gap-y-10 max-lg:grid-cols-single",
+      "mx-auto grid max-w-content grid-cols-content-end gap-x-16 gap-y-7 max-lg:grid-cols-single",
     ],
     brand: "grid content-start justify-items-start gap-4",
     lockup: "inline-flex items-center gap-2.5 [&:hover]:no-underline",
@@ -49,10 +49,10 @@ const siteFooter = tv({
     ],
     links: [
       "grid grid-cols-footer-links gap-x-10 gap-y-8",
-      "max-tablet:grid-cols-footer-links-narrow max-tablet:gap-x-6 max-tablet:gap-y-7",
+      "max-tablet:grid-cols-halves max-tablet:gap-x-6 max-tablet:gap-y-5",
     ],
     groupTitle: "mb-3.5 mt-0 font-body text-xs leading-140 font-semibold tracking-caps text-footer-label uppercase",
-    groupList: "m-0 grid list-none gap-2 p-0 text-sm leading-150 text-footer-link",
+    groupList: "m-0 grid list-none gap-1.5 p-0 text-sm leading-150 text-footer-link",
   },
 });
 

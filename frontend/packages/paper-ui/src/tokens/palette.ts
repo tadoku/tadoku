@@ -6,6 +6,7 @@ export const palette = {
   white: '#ffffff',
   /** Neutral greys for both themes: light surfaces and inks, and the dark Graphite theme. */
   graphite: {
+    25: '#f4f4f4',
     50: '#efefef',
     100: '#e8e8e8',
     150: '#e2e2e2',

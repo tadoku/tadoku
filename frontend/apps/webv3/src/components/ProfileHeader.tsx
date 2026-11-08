@@ -4,12 +4,6 @@ import type { ImmersionUserProfile } from 'api-client'
 import { renderLink } from './router-link'
 import { useLinks } from '../lib/links'
 
-/** The first letters of the first two words, or the first two letters of a one-word name. */
-const initials = (name: string) => {
-  const words = name.trim().split(/\s+/)
-  return (words.length > 1 ? words[0][0] + words[1][0] : name.trim().slice(0, 2)).toLocaleUpperCase()
-}
-
 /** A profile's identity and its views. Only the profile's own account sees the export of its logs. */
 export function ProfileHeader({ profile, owner, view, overviewHref, exportable = true }: {
   profile: ImmersionUserProfile
@@ -24,15 +18,6 @@ export function ProfileHeader({ profile, owner, view, overviewHref, exportable =
     <>
       <header className="mb-8 mt-2 flex flex-wrap items-center justify-between gap-4 max-md:items-start">
         <div className="flex min-w-0 items-center gap-5">
-          <span
-            className={[
-              'grid h-16 flex-none basis-16 place-items-center border border-rule bg-paper',
-              'font-body text-xl font-semibold tracking-wide max-sm:hidden',
-            ].join(' ')}
-            aria-hidden="true"
-          >
-            {initials(profile.display_name)}
-          </span>
           <div className="min-w-0">
             <h1 className={typography({ role: 'page', className: 'mb-2 mt-0 wrap-anywhere' })}>{profile.display_name}</h1>
           </div>

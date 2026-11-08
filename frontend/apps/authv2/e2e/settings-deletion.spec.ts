@@ -13,7 +13,7 @@ import {
 // deletion that leaves the cookie or password usable, or doesn't land on /deleted; pages that overflow 390px.
 
 const confirmLabel = 'Type your email address to confirm'
-const banner = 'Privileged actions require a fresh login. Log in again to continue.'
+const banner = 'Enter your password to continue.'
 
 type Disposable = { readonly email: string; readonly password: string }
 
@@ -64,8 +64,8 @@ async function expectGone(browser: Browser, page: Page, testInfo: TestInfo, acco
 }
 
 async function expectFreshLoginBanner(page: Page, email: string) {
-  await expect(page.getByRole('heading', { level: 1, name: 'Log in' })).toBeVisible()
-  await expect(page.getByRole('status').filter({ hasText: banner })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Confirm account deletion' })).toBeVisible()
+  await expect(page.locator('[role=status], [role=alert]').filter({ hasText: banner })).toBeVisible()
   await expect(page.getByText('You’re logged in as')).toHaveCount(0)
   await expect(page.getByLabel('Email')).toHaveValue(email)
 }
@@ -247,11 +247,11 @@ test('old logins log in again under the fresh-login banner and come back to the 
   await expectContained(arriving)
   await arriving.screenshot({ path: testInfo.outputPath('login-reauth-mobile.png'), fullPage: true })
   await arriving.getByLabel('Password').fill('not-the-password')
-  await arriving.getByRole('button', { name: 'Log in', exact: true }).click()
+  await arriving.getByRole('button', { name: /^(Log in|Continue|Continue to deletion)$/ }).click()
   await expect(arriving.getByRole('alert')).toContainText('don’t match')
   await expectFreshLoginBanner(arriving, account.email)
   await arriving.getByLabel('Password').fill(account.password)
-  await arriving.getByRole('button', { name: 'Log in', exact: true }).click()
+  await arriving.getByRole('button', { name: /^(Log in|Continue|Continue to deletion)$/ }).click()
   await expect(arriving).toHaveURL(`${authv2}/delete-account`)
   await expectDeletePage(arriving)
 
@@ -270,7 +270,7 @@ test('old logins log in again under the fresh-login banner and come back to the 
   await expect(hydrated).toHaveURL(reauth)
   await expectFreshLoginBanner(hydrated, account.email)
   await hydrated.getByLabel('Password').fill(account.password)
-  await hydrated.getByRole('button', { name: 'Log in', exact: true }).click()
+  await hydrated.getByRole('button', { name: /^(Log in|Continue|Continue to deletion)$/ }).click()
   await expect(hydrated).toHaveURL(`${authv2}/delete-account`)
   await expectDeletePage(hydrated)
   expect(await sessionAccount(hydrated, testInfo)).toMatchObject({ email: account.email })

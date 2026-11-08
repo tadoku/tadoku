@@ -1,12 +1,14 @@
 import { Link, useRouter } from '@tanstack/react-router'
-import { Button, EmptyState, Loading, PageHeader } from 'paper-ui'
+import { Button, EmptyState, buttonClassName } from 'paper-ui'
 
 export function NotFoundView() {
   return (
-    <>
-      <PageHeader title="Page not found" />
-      <Link to="/" className="text-link hover:text-link-hover">Return home</Link>
-    </>
+    <EmptyState
+      headingLevel={1}
+      title="Page not found"
+      description="This address doesn’t match a page on Tadoku."
+      actions={<Link to="/" className={buttonClassName()}>Return home</Link>}
+    />
   )
 }
 
@@ -16,12 +18,26 @@ export function ErrorView() {
     <EmptyState
       headingLevel={1}
       title="This page couldn’t load"
-      description="Check your connection, then try again."
-      actions={<Button variant="outline" onClick={() => void router.invalidate()}>Try again</Button>}
+      description="Try loading this page again."
+      actions={<Button onClick={() => void router.invalidate()}>Try again</Button>}
     />
   )
 }
 
+/** A page-shaped placeholder: the destination's title and a few rows with text-shaped blocks. */
 export function PendingView() {
-  return <Loading className="py-16" label="Loading page" />
+  return (
+    <div role="status" className="grid gap-5">
+      <p className="sr-only">Loading…</p>
+      <div className="h-8 w-1/3 bg-rule-subtle dark:bg-rule" />
+      <div className="mt-2 grid max-w-article gap-1">
+        {[0, 1, 2, 3, 4].map(row => (
+          <div key={row} className="grid gap-2 border-b border-rule-subtle py-4 dark:border-rule">
+            <div className="h-4 w-1/2 bg-rule-subtle dark:bg-rule" />
+            <div className="h-3 w-1/3 bg-rule-subtle dark:bg-rule" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }

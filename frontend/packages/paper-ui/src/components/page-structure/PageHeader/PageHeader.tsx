@@ -8,17 +8,17 @@ const pageHeader = tv({
   slots: {
     root: "paper-page-header mb-8 mt-0 min-w-0",
     back: [
-      "paper-page-header__back mb-4 inline-flex items-center gap-1 text-sm leading-150 text-link",
+      "paper-page-header__back mb-4 inline-flex items-center gap-1 text-sm leading-150 text-link max-md:py-1.5",
       "underline underline-offset-link hover:text-link-hover hover:decoration-hover rtl:*:scale-x-mirror",
     ],
-    main: "paper-page-header__main flex flex-wrap items-baseline justify-between gap-x-6 gap-y-4",
+    main: "paper-page-header__main flex flex-wrap items-baseline justify-between gap-x-6 gap-y-4 lg:flex-nowrap",
     text: "paper-page-header__text flex min-w-0 flex-auto flex-col gap-2",
-    heading: "paper-page-header__heading my-page-title-trim flex flex-wrap items-center gap-x-4 gap-y-2",
+    heading: "paper-page-header__heading my-page-title-trim flex flex-wrap items-center gap-x-4 gap-y-3",
     title: "paper-page-header__title paper-type-page m-0 min-w-0 wrap-anywhere",
     status: "paper-page-header__status my-page-title-trim flex flex-wrap items-center gap-2",
     lead: "paper-page-header__lead m-0 max-w-measure text-base leading-165 text-muted",
     /** One row of controls centres on the title's first line and takes no more room than the heading row. */
-    actions: "paper-page-header__actions my-page-actions-trim flex flex-wrap items-center gap-inline self-start",
+    actions: "paper-page-header__actions my-page-actions-trim flex max-w-full shrink-0 flex-wrap items-center gap-inline self-start whitespace-nowrap max-md:my-0",
   },
 });
 

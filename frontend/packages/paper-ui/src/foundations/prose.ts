@@ -6,10 +6,10 @@ import { tv } from './variants'
  */
 export const prose = tv({
   base: [
-    'paper-prose leading-180 wrap-break-word [&>:first-child]:mt-0',
+    'paper-prose text-lead leading-180 wrap-break-word [&>:first-child]:mt-0',
     '[&_:is(p,ul,ol,blockquote,pre)]:mb-4 [&_:is(p,ul,ol,blockquote,pre)]:mt-0',
     '[&_:is(p,ul,ol,blockquote,pre)]:max-w-measure-prose',
-    '[&_:is(h2,h3,h4)]:scroll-mt-6 [&_:is(h2,h3,h4)]:font-display [&_:is(h2,h3,h4)]:leading-150',
+    '[&_:is(h2,h3,h4)]:scroll-mt-20 [&_:is(h2,h3,h4)]:font-display [&_:is(h2,h3,h4)]:leading-150',
     '[&_h2]:mb-3 [&_h2]:mt-12 [&_h2]:text-heading [&_h2]:leading-section',
     '[&_h3]:mb-2 [&_h3]:mt-8 [&_h3]:text-component',
     '[&_h4]:mb-2 [&_h4]:mt-6 [&_h4]:text-lead',

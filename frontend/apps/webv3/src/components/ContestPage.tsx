@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Button, EmptyState, PageHeader, StatusTag, Tabbar, buttonClassName } from 'paper-ui'
 import { contestsHref } from '../lib/contests'
+import { formatDate, formatPeriod } from '../lib/format'
 import { contestBoardQuery, contestPhase, readDay, type ContestBoard } from '../lib/leaderboard'
 import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
@@ -76,6 +77,8 @@ function ContestBoardPage({ board, today, view, page }: { board: ContestBoard; t
           : { href: contestsHref.community(), label: 'Community contests' }}
         renderLink={renderLink}
         title={contest.title}
+        lead={`${formatPeriod(contest)}${phase.registrationOpen ? ` · Registration closes ${formatDate(contest.registration_end)}` : ''}`}
+        classNames={{ lead: 'tablet:hidden' }}
         status={<><RoundStatus phase={phase} />{contest.private ? <StatusTag>Unlisted</StatusTag> : null}</>}
         actions={actions}
       />
@@ -84,7 +87,7 @@ function ContestBoardPage({ board, today, view, page }: { board: ContestBoard; t
         renderLink={renderLink}
         links={[
           { id: 'standings', label: 'Leaderboard', href: links.contest(contest.id), current: view === 'standings' },
-          { id: 'updates', label: 'Updates', href: links.contestUpdates(contest.id), current: view === 'updates' },
+          { id: 'updates', label: 'Activity', href: links.contestUpdates(contest.id), current: view === 'updates' },
         ]}
       />
       {view === 'standings' ? (

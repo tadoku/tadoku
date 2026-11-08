@@ -49,7 +49,7 @@ function Editor({ viewerId }: { viewerId: string }) {
         <EmptyState
           headingLevel={1}
           title="You can’t create a contest yet"
-          description="Accounts can create contests from one month after joining, up to 12 a year."
+          description="You can create a contest once your account is a month old, and up to 12 a year."
           actions={<a className={buttonClassName({ variant: 'outline' })} href={contestsHref.official()}>Browse contests</a>}
         />
       )

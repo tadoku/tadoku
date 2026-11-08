@@ -12,10 +12,10 @@ type Found = Extract<Statistics, { status: 'found' }>
 
 /** A profile's year: its scores, daily activity, activity split and contest history, as Webv2's statistics show them. */
 const muted = 'mb-0 mt-2 text-metadata leading-160 text-muted'
-const sectionTitle = 'text-heading leading-section'
+const sectionTitle = 'font-display text-heading leading-section'
 const columns = [
   'mt-8 grid grid-cols-halves gap-x-12 gap-y-0 max-lg:grid-cols-single',
-  '*:min-w-0 *:border-t *:border-rule *:py-7 [&>:nth-child(3)]:col-span-full [&_h2]:text-heading [&_h2]:leading-section',
+  '*:min-w-0 *:border-t *:border-rule *:py-7 [&>:nth-child(3)]:col-span-full [&>:only-child]:col-span-full [&_h2]:text-heading [&_h2]:leading-section',
 ].join(' ')
 const rows = listRows()
 
@@ -32,7 +32,7 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
 
   return (
     <div className="profile-page">
-      <ProfileHeader profile={profile} owner={owner} view="overview" overviewHref={`/profile/${profile.id}/statistics/${year}`} />
+      <ProfileHeader profile={profile} owner={owner} view="overview" overviewHref={`/profile/${profile.id}/statistics/${year}`} exportable={!empty} />
       <section className="mt-8 border border-rule bg-paper" aria-labelledby="profile-year-heading">
         <h2 id="profile-year-heading" className="sr-only">{name}’s activity in {year}</h2>
         <YearTabs statistics={statistics} year={year} />
@@ -48,7 +48,7 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
           <>
             <YearTotals statistics={statistics} year={year} />
             <div className="border-t border-rule pt-6">
-              <SectionHeading level={3} id="profile-rhythm-heading" title="Daily activity" classNames={{ title: sectionTitle }} />
+              <SectionHeading level={3} id="profile-rhythm-heading" title={`Daily activity in ${year}`} classNames={{ title: sectionTitle }} />
               {activity.ok ? (<>
                 <ActivityCalendar
                   userId={profile.id}
@@ -57,7 +57,7 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
                   activity={activity.data}
                   labelledBy="profile-rhythm-heading"
                 />
-              </>) : <p className={muted}>Could not retrieve updates for {year}.</p>}
+              </>) : <p className={muted}>Could not retrieve activity for {year}.</p>}
             </div>
           </>
         )}
@@ -80,14 +80,14 @@ function YearTotals({ statistics, year }: { statistics: Found; year: number }) {
   const { scores, activity } = statistics
   const total = scores.ok ? scores.data.scores.reduce((sum, score) => sum + score.score, 0) : undefined
   const days = daysCounted(year, statistics.today)
-  const average = total && days ? `${scoreFormat.format(total / days)} per day` : undefined
+  const average = total && days ? `${scoreFormat.format(total / days)} per calendar day in ${year}` : undefined
 
   return (
     <StatGrid
-      className="profile-stats mb-8"
+      className="profile-stats mb-8 max-sm:[&>:first-child]:col-span-full"
       stats={[
         { label: 'Overall score', value: total === undefined ? 'Unavailable' : scoreFormat.format(total), detail: average },
-        ...(activity.ok ? [{ label: 'Updates', value: activity.data.total_updates, detail: daysActive(activeDays(activity.data.scores)) }] : []),
+        ...(activity.ok ? [{ label: 'Logs', value: activity.data.total_updates, detail: daysActive(activeDays(activity.data.scores)) }] : []),
         ...(scores.ok ? [{ label: 'Languages', value: scores.data.scores.length }] : []),
       ]}
     />
@@ -105,6 +105,7 @@ function YearTabs({ statistics, year }: { statistics: Found; year: number }) {
   const current = Number(statistics.today.slice(0, 4))
   const span = Array.from({ length: current - first + 1 }, (_, index) => current - index)
   const years = span.includes(year) ? span : [...span, year].sort((a, b) => b - a)
+  if (years.length === 1) return null
   return (
     <Tabbar
       classNames={sheetTabs}
@@ -124,7 +125,7 @@ function Breakdown<T>({ id, title, section, items, empty }: {
   id: string
   title: string
   section: Section<T>
-  /** `fill` colours the row's bar, for example by activity; it defaults to the chart accent. */
+  /** `fill` colours the row's bar, for example by activity; it defaults to a neutral. */
   items: (data: T) => { label: string; score: number; fill?: string }[]
   empty: string
 }) {
@@ -141,11 +142,11 @@ function Breakdown<T>({ id, title, section, items, empty }: {
               <div className="mb-2 flex justify-between gap-4 text-ui wrap-anywhere">
                 <span>{row.label}</span>
                 <strong className="whitespace-nowrap tabular-nums">
-                  {scoreFormat.format(row.score)} <small className="font-regular text-muted">{pointsUnit(row.score)}</small>
+                  {scoreFormat.format(row.score)} <small className="font-regular text-muted">{pointsUnit(row.score)} · {total ? Math.round(row.score / total * 100) : 0}%</small>
                 </strong>
               </div>
-              <span className="block h-2 bg-rule" aria-hidden="true">
-                <span className={`block h-full min-w-0.5 ${row.fill ?? 'bg-heat-3'}`} style={{ width: `${total ? row.score / total * 100 : 0}%` }} />
+              <span className="block h-2 bg-rule-subtle" aria-hidden="true">
+                <span className={`block h-full min-w-0.5 ${row.fill ?? 'bg-muted'}`} style={{ width: `${total ? row.score / total * 100 : 0}%` }} />
               </span>
             </li>
           ))}
@@ -179,7 +180,7 @@ function ContestHistorySection({ history, userId, year, page }: {
             </li>
           ))}
         </ul>
-      ) : <p className={muted}>Hasn’t participated in any contests in {year}.</p>}
+      ) : <p className={muted}>No contests in {year}.</p>}
       {pages > 1 && page <= pages ? (
         <Pagination className="mt-5" label="Contest pages" totalPages={pages} currentPage={page} getHref={target => `/profile/${userId}/statistics/${year}?contests=${target}`} />
       ) : null}

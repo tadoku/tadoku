@@ -1,7 +1,7 @@
 import { useStore } from '@tanstack/react-form'
 import { Link, useHydrated, useNavigate } from '@tanstack/react-router'
 import type { ImmersionContestConfigurationOptions } from 'api-client'
-import { Button, formFooter, PageHeader, Surface, usePaperForm } from 'paper-ui'
+import { Button, buttonClassName, formFooter, PageHeader, Surface, usePaperForm } from 'paper-ui'
 import { useMemo, useState } from 'react'
 import { contestDraftSchema, firstContestDraft, isOfficial, toNewContest } from '../lib/contest-form'
 import { contestsHref, useCreateContest } from '../lib/contests'
@@ -76,14 +76,14 @@ export function ContestForm({ options, viewerId, admin }: {
                 <legend>Schedule</legend>
                 <div className={formRow}>
                   <form.AppField name="contestStart">
-                    {field => <field.Input label="Start date (UTC)" type="date" required />}
+                    {field => <field.Input label="Start date" type="date" required />}
                   </form.AppField>
                   <form.AppField name="contestEnd">
-                    {field => <field.Input label="End date (UTC)" type="date" required />}
+                    {field => <field.Input label="End date" type="date" required />}
                   </form.AppField>
                 </div>
                 <form.AppField name="registrationEnd">
-                  {field => <field.Input label="Sign-up deadline (UTC)" type="date" required />}
+                  {field => <field.Input label="Sign-up deadline" hint="Dates are calendar days in UTC." type="date" required />}
                 </form.AppField>
               </fieldset>
 
@@ -132,8 +132,8 @@ export function ContestForm({ options, viewerId, admin }: {
             {failure ? <CreateFailure failure={failure} /> : null}
             <div className={formFooter().root()}>
               <div className={formFooter().actions()}>
+                <Link className={buttonClassName({ variant: 'ghost' })} to="/contests/official/$" params={{ _splat: '1' }}>Cancel</Link>
                 <Button type="submit" disabled={disabled}>{pending ? 'Creating…' : 'Create contest'}</Button>
-                <Link className="text-link hover:text-link-hover" to="/contests/official/$" params={{ _splat: '1' }}>Cancel</Link>
               </div>
             </div>
           </form.Form>

@@ -15,7 +15,6 @@ export const standingsTable = [
   `standings-table tabular-nums ${cardTable}`,
   '[&_td]:px-5 [&_th]:px-5 max-md:[&_td]:px-4 max-md:[&_th]:px-4',
 ].join(' ')
-export const tieNote = 'm-0 border-t border-rule-subtle px-5 py-3 text-metadata text-muted [&_abbr]:no-underline'
 export const standingsPagination = listFooter().root({
   className: 'standings-pagination border-t border-rule px-5 py-3 max-md:px-4',
 })

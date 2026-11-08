@@ -6,7 +6,6 @@ import { formatDate, formatPeriod } from '../lib/format'
 import { latestBoardQuery, leaderboardHref, standingsQuery, contestPhase, readDay, type ContestBoard, type ContestPhase } from '../lib/leaderboard'
 import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
-import { useLoginUrl, viewerQueryOptions } from '../lib/session'
 import { LeaderboardFrame } from './LeaderboardPage'
 import { Standings } from './Standings'
 import { description, sheet, standingsAside, standingsContext, standingsContextTitle, standingsNotice, workspace } from './standings-styles'
@@ -82,18 +81,11 @@ export function ContestBoardBody({ board, phase, page, pageHref, title, status, 
   asideLink?: ReactNode
 }) {
   const links = useLinks()
-  const loginUrl = useLoginUrl()
   const { contest } = board
-  const { data: viewer } = useQuery(viewerQueryOptions())
   const standings = useQuery(standingsQuery({ kind: 'contest', contestId: contest.id }, page))
 
   return (
     <>
-      {viewer?.status === 'anonymous' && !phase.ended ? (
-        <Flash className={standingsNotice} action={<a className="text-link hover:text-link-hover" href={loginUrl}>Log in</a>}>
-          You need to log in to participate in this contest.
-        </Flash>
-      ) : null}
       {phase.ended ? (
         <Flash className={standingsNotice} variant="warning">
           This contest has already ended and does not accept any new participants.
@@ -150,6 +142,7 @@ export function ContestFacts({ contest, phase }: { contest: ImmersionContestView
       : contest.owner_user_display_name ?? 'Unknown user'
   return (
     <DescriptionList
+      className="max-tablet:[&>.paper-description-list__item:nth-child(-n+2)]:hidden"
       items={[
         { label: 'Dates', value: formatPeriod(contest) },
         { label: 'Registration', value: phase.registrationOpen ? `Open until ${formatDate(contest.registration_end)}` : 'Closed to new participants' },

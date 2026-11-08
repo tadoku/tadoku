@@ -11,7 +11,7 @@ export function Rank({ rank, children }: { rank: number; children?: ReactNode })
   const medal = rank >= 1 && rank <= 3 ? podium[rank as 1 | 2 | 3] : null
   return (
     <span
-      className={`standings-rank inline-grid h-7 min-w-7 place-items-center rounded-full px-1 tabular-nums [&_abbr]:no-underline ${medal ? `font-bold ${medal}` : 'text-muted'}`}
+      className={`standings-rank inline-flex h-7 min-w-7 items-center justify-center rounded-chip px-1 tabular-nums whitespace-nowrap [&_abbr]:no-underline ${medal ? `font-bold ${medal}` : 'text-muted'}`}
       data-podium={medal ? rank : undefined}
     >
       {children ?? rank}
@@ -25,7 +25,7 @@ export function Person({ children, you }: { children: ReactNode; you?: boolean }
     <span className="standings-person inline-flex flex-wrap items-baseline gap-x-2 gap-y-1">
       {children}
       {you ? (
-        <span className="relative -top-px inline-block rounded-pill bg-action px-2 py-px text-xs leading-150 font-bold tracking-wide text-on-action">
+        <span className="relative -top-px inline-block rounded-chip bg-action px-2 py-px text-xs leading-150 font-bold tracking-wide text-on-action">
           You
         </span>
       ) : null}
@@ -33,8 +33,8 @@ export function Person({ children, you }: { children: ReactNode; you?: boolean }
   )
 }
 
-/** The link on a participant's name: ink, underlined with a rule until hovered. */
-export const personLink = 'text-ink decoration-rule wrap-anywhere hover:text-link hover:decoration-current'
+/** The link on a participant's name: row context marks it, so the underline waits for hover. */
+export const personLink = 'text-ink no-underline wrap-break-word hover:text-link hover:underline max-lg:underline max-lg:decoration-rule max-lg:underline-offset-link'
 
 /** The viewer's row: an accent-soft band. */
 export const currentRow = 'bg-action-soft hover:bg-current-row-hover'

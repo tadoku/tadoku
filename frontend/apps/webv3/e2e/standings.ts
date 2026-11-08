@@ -4,7 +4,9 @@ import { api, expect } from './logging-fixtures'
 export interface Entry { rank: number; user_id: string; user_display_name: string; score: number; is_tie: boolean }
 export interface Board { entries: Entry[]; total_size: number }
 
-export const score = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 1 })
+export const score = new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+const count = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 0 })
+
 
 export async function apiJson<T>(request: APIRequestContext, path: string): Promise<T> {
   const response = await request.get(`${api}${path}`)
@@ -36,7 +38,7 @@ export async function expectTotal(page: Page, data: Board, pageNumber = 1) {
   const first = (pageNumber - 1) * 50 + 1
   // The range summary appears only beside page links.
   await expect(page.locator('.standings-pagination > p')).toHaveText(data.total_size > 50 || pageNumber > 1
-    ? [`${score.format(first)}–${score.format(first + data.entries.length - 1)} of ${score.format(data.total_size)} participants`]
+    ? [`${count.format(first)}–${count.format(first + data.entries.length - 1)} of ${count.format(data.total_size)} participants`]
     : [])
   await expect(page.getByRole('navigation', { name: 'Standings pages' })).toHaveCount(data.total_size > 50 ? 1 : 0)
 }

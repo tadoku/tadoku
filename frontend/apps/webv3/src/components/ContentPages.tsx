@@ -17,14 +17,14 @@ export function ContentUnavailable({ query }: { query: { isFetching: boolean; re
     <EmptyState
       headingLevel={1}
       title="This page couldn’t load"
-      description="Check your connection, then try again."
+      description="Try loading this page again."
       actions={<Button variant="outline" loading={query.isFetching} onClick={() => void query.refetch()}>Try again</Button>}
     />
   )
 }
 
 const article = 'min-w-0 max-w-article'
-const postLink = 'text-ink decoration-muted hover:text-link hover:decoration-current'
+const postLink = 'text-inherit no-underline hover:text-link hover:underline max-lg:underline max-lg:decoration-rule max-lg:underline-offset-link'
 
 export function CmsPageArticle({ page }: { page: CmsPage }) {
   return (

@@ -208,8 +208,8 @@ function RegistrationForm({ contest, viewerId, previous, options }: {
           {failure ? <SaveFailure failure={failure} registered={previous !== null} /> : null}
           <div className={formFooter().root()}>
             <div className={formFooter().actions()}>
+              <a className={buttonClassName({ variant: 'ghost' })} href={links.contest(contest.id)}>Cancel</a>
               <Button type="submit" disabled={disabled}>{pending ? 'Saving…' : previous ? 'Update registration' : 'Register'}</Button>
-              <a className="text-link hover:text-link-hover" href={links.contest(contest.id)}>Cancel</a>
             </div>
           </div>
         </form.Form>

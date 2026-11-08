@@ -3,7 +3,7 @@ import { tv } from "../../../foundations/variants";
 
 const statGrid = tv({
   slots: {
-    root: "paper-stat-grid m-0 grid min-w-0 grid-cols-stats gap-x-8 gap-y-5",
+    root: "paper-stat-grid m-0 grid min-w-0 grid-cols-stats gap-x-6 gap-y-5 max-sm:gap-x-4",
     item: "paper-stat-grid__item row-span-2 grid min-w-0 grid-rows-subgrid gap-y-1",
     label: "paper-stat-grid__label self-start text-sm leading-150 text-muted wrap-anywhere",
     value: "paper-stat-grid__value m-0 text-section leading-130 font-bold text-ink tabular-nums wrap-anywhere",

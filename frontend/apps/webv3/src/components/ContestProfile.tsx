@@ -1,8 +1,10 @@
+import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import type { ImmersionContestProfileActivityRow } from 'api-client'
 import { PageHeader, SectionHeading, StatGrid, Table, buttonClassName, type TableColumn } from 'paper-ui'
 import type { ContestProfile as Profile } from '../lib/contest-activity'
-import { formatDate, numberFormat } from '../lib/format'
+import { formatDate, place, pointsUnit, scoreFormat } from '../lib/format'
+import { standingsQuery } from '../lib/leaderboard'
 import { useLinks } from '../lib/links'
 import { ContestLogs } from './ContestUpdates'
 import { renderLink } from './router-link'
@@ -17,6 +19,8 @@ export function ContestProfile({ profile, page }: { profile: Found; page: number
   const { contest, user_id: userId, user_display_name: name } = registration
   const byLanguage = new Map(scores.map(score => [score.language_code, score.score]))
   const total = scores.reduce((sum, score) => sum + score.score, 0)
+  const standings = useQuery(standingsQuery({ kind: 'contest', contestId: contest.id }, 1))
+  const rank = standings.data?.ok ? standings.data.data.entries.find(entry => entry.user_id === userId)?.rank : undefined
 
   return (
     <div className="*:max-w-record">
@@ -24,15 +28,15 @@ export function ContestProfile({ profile, page }: { profile: Found; page: number
         backLink={{ href: links.contest(contest.id), label: contest.title }}
         renderLink={renderLink}
         title={name}
+        lead={`${rank ? `${place(rank)} · ` : ''}${scoreFormat.format(total)} ${pointsUnit(total)} in ${contest.title}`}
         actions={<Link className={buttonClassName({ variant: 'outline' })} to={links.profile(userId)}>View profile</Link>}
       />
-      <StatGrid
-        className="profile-stats mb-8 mt-7"
-        stats={[
-          { label: 'Overall score', value: numberFormat.format(total) },
-          ...registration.languages.map(language => ({ label: language.name, value: numberFormat.format(byLanguage.get(language.code) ?? 0) })),
-        ]}
-      />
+      {registration.languages.length > 1 ? (
+        <StatGrid
+          className="profile-stats mb-8 mt-7"
+          stats={registration.languages.map(language => ({ label: language.name, value: scoreFormat.format(byLanguage.get(language.code) ?? 0) }))}
+        />
+      ) : null}
       <section className="mt-8" aria-labelledby="contest-daily-heading">
         <SectionHeading level={2} id="contest-daily-heading" title="Daily scores" />
         {daily.ok
@@ -40,7 +44,7 @@ export function ContestProfile({ profile, page }: { profile: Found; page: number
           : <p className={muted}>Could not load the daily scores. Try reloading this page.</p>}
       </section>
       <section className="mt-8" aria-labelledby="contest-profile-updates">
-        <SectionHeading level={2} id="contest-profile-updates" title="Updates" />
+        <SectionHeading level={2} id="contest-profile-updates" title="Activity" />
         <ContestLogs contest={contest} userId={userId} page={page} pageHref={next => links.contestProfile(contest.id, userId, next)} />
       </section>
     </div>
@@ -70,14 +74,14 @@ function DailyScores({ rows, languages, name }: {
 
   const columns: TableColumn<Day>[] = [
     { id: 'day', header: 'Day', rowHeader: true, cell: day => formatDate(day.date) },
-    { id: 'score', header: 'Score', align: 'end', cell: day => numberFormat.format(day.total) },
-    { id: 'cumulative', header: 'Running total', align: 'end', cell: day => numberFormat.format(day.cumulative) },
+    { id: 'score', header: 'Score', align: 'end', cell: day => scoreFormat.format(day.total) },
+    { id: 'cumulative', header: 'Running total', align: 'end', cell: day => scoreFormat.format(day.cumulative) },
     ...(languages.length > 1
       ? languages.map((language): TableColumn<Day> => ({
         id: language.code,
         header: language.name,
         align: 'end',
-        cell: day => numberFormat.format(day.scores.get(language.code) ?? 0),
+        cell: day => scoreFormat.format(day.scores.get(language.code) ?? 0),
       }))
       : []),
   ]
@@ -88,7 +92,7 @@ function DailyScores({ rows, languages, name }: {
       columns={columns}
       rows={[...ordered].reverse()}
       getRowKey={day => day.date}
-      minWidth="36rem"
+      minWidth={languages.length > 1 ? '36rem' : '0'}
       tableClassName={standingsTable}
     />
   )

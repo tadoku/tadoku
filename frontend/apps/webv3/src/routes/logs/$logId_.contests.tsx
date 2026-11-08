@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { z } from 'zod'
 import { DraftOwnerGate } from '../../components/DraftOwnerGate'
 import { useLinks } from '../../lib/links'
-import { formatTracking, numberFormat, pointsUnit } from '../../lib/format'
+import { formatTracking, pointsUnit, scoreFormat } from '../../lib/format'
 import { contestChoices } from '../../lib/log-draft'
 import {
   logOptionsQuery,
@@ -147,6 +147,7 @@ function ContestsForm({ log, registrations, viewerId }: {
               <fieldset className="m-0 grid gap-2 border-0 p-0">
                 <legend className="sr-only">Contests</legend>
                 {/* As in Webv2: open contests first, then unavailable ones, each naming why on its own row. */}
+                <div className="grid [&>*:not(:first-child)]:-mt-px">
                 {[...choices].sort((a, b) => Number(a.kind === 'ineligible') - Number(b.kind === 'ineligible')).map(choice => (
                   <form.AppField key={choice.registration.id} name="registrationIds">
                     {field => (
@@ -155,13 +156,17 @@ function ContestsForm({ log, registrations, viewerId }: {
                         value={choice.registration.id}
                         label={choice.registration.contest.title}
                         description={`Organized by ${organizer(choice.registration.contest)}`}
-                        aside={choice.kind === 'ineligible' ? choice.reason : `${numberFormat.format(log.score)} ${pointsUnit(log.score)}`}
+                        aside={choice.kind === 'ineligible' ? choice.reason : `${scoreFormat.format(log.score)} ${pointsUnit(log.score)}`}
                         disabled={choice.kind === 'ineligible'}
                       />
                     )}
                   </form.AppField>
                 ))}
+                </div>
                 {eligible.length ? <p className="mb-0 mt-2 text-metadata text-muted">Unchecking removes this log’s score from that contest.</p> : null}
+                {choices.some(choice => choice.kind === 'ineligible')
+                  ? <p className="mb-0 mt-1 text-metadata text-muted">Registered for the wrong language? <a className="text-link hover:text-link-hover" href={links.contests}>Update your registration</a> from its contest page.</p>
+                  : null}
                 {finished.map(submission => (
                   <p key={submission.registration_id}>
                     {submission.title} has finished. Its saved score
@@ -185,10 +190,10 @@ function ContestsForm({ log, registrations, viewerId }: {
             {failure ? <SaveFailure failure={failure} /> : null}
             <div className={formFooter().root()}>
               <div className={formFooter().actions()}>
+                <Link className={buttonClassName({ variant: 'ghost' })} to="/logs/$logId" params={{ logId: log.id }}>Cancel</Link>
                 <Button type="submit" disabled={disabled || !eligible.length}>
                   {pending ? 'Saving…' : 'Save submissions'}
                 </Button>
-                <Link className="text-link hover:text-link-hover" to="/logs/$logId" params={{ logId: log.id }}>Cancel</Link>
               </div>
             </div>
           </form.Form>
@@ -218,7 +223,7 @@ function LogSummary({ log }: { log: ImmersionLog }) {
       <p className="font-semibold">{what}</p>
       {log.description && !nsfw ? <p className="col-start-1 text-sm text-muted wrap-anywhere">{log.description}</p> : null}
       <p className="col-start-2 row-start-2 whitespace-nowrap font-bold tabular-nums">
-        {numberFormat.format(log.score)} <small className="text-metadata font-regular text-muted">{pointsUnit(log.score)}</small>
+        {scoreFormat.format(log.score)} <small className="text-metadata font-regular text-muted">{pointsUnit(log.score)}</small>
       </p>
     </section>
   )

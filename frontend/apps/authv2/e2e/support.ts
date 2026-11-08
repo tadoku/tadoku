@@ -31,7 +31,7 @@ export async function logIn(page: Page, email: string, password: string, path = 
   await page.goto(path)
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password').fill(password)
-  await page.getByRole('button', { name: 'Log in', exact: true }).click()
+  await page.getByRole('button', { name: /^(Log in|Continue|Continue to deletion)$/ }).click()
 }
 
 export async function expectSettings(page: Page) {

@@ -2,12 +2,12 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Button, EmptyState, Pagination, Table, type TableColumn } from 'paper-ui'
 import type { ImmersionLeaderboard, ImmersionLeaderboardEntry } from 'api-client'
-import { numberFormat } from '../lib/format'
+import { numberFormat, scoreFormat } from '../lib/format'
 import { standingsPageSize, type Read } from '../lib/leaderboard'
 import { viewerQueryOptions } from '../lib/session'
 import { renderLink } from './router-link'
 import { Person, Rank, currentRow, personLink } from './StandingsParts'
-import { paginationSummary, sheetEmpty, standingsPagination, standingsTable, tieNote } from './standings-styles'
+import { paginationSummary, sheetEmpty, standingsPagination, standingsTable } from './standings-styles'
 
 interface StandingsProps {
   /** One page of standings; undefined while it loads after a client navigation. */
@@ -74,7 +74,7 @@ export function Standings({ result, page, caption, pageHref, profileHref, empty,
         </Person>
       ),
     },
-    { id: 'score', header: 'Score', align: 'end', width: '7rem', cell: row => numberFormat.format(row.score) },
+    { id: 'score', header: 'Score', align: 'end', width: '7rem', cell: row => scoreFormat.format(row.score) },
   ]
   const first = (page - 1) * standingsPageSize + 1
   const totalPages = Math.max(page, Math.ceil(total / standingsPageSize))
@@ -100,7 +100,6 @@ export function Standings({ result, page, caption, pageHref, profileHref, empty,
           <Pagination totalPages={totalPages} currentPage={page} getHref={pageHref} renderLink={renderLink} label="Standings pages" classNames={{ list: 'max-md:flex-wrap' }} />
         </div>
       ) : null}
-      {entries.some(entry => entry.is_tie) ? <p className={tieNote}><abbr title="Tied rank">T</abbr> marks a tied rank.</p> : null}
     </>
   )
 }

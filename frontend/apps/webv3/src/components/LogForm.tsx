@@ -123,7 +123,7 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
               </div>
             </Surface>
           </form.Form>
-          <aside className="hidden lg:sticky lg:top-6 lg:block lg:min-w-0 lg:pt-1" aria-label="Suggested tags">
+          <aside className="hidden lg:sticky lg:top-20 lg:block lg:min-w-0 lg:pt-1" aria-label="Suggested tags">
             <TagsSidebar form={form} activityId={activityId} disabled={disabled} compact={false} />
           </aside>
         </div>

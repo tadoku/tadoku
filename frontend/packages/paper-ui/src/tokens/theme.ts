@@ -28,10 +28,10 @@ const mix = (color: string, percent: number, base = 'transparent') =>
  * `data-theme`. Colours derived from other tokens are recomputed inside every theme scope.
  */
 const color = {
-  canvas: themed(p.graphite[150], p.graphite[900]),
-  paper: themed(p.graphite[50], p.graphite[850]),
+  canvas: themed(p.graphite[100], p.graphite[900]),
+  paper: themed(p.graphite[25], p.graphite[850]),
   raised: themed(p.white, p.graphite[750]),
-  overlay: themed(p.graphite[50], p.graphite[750]),
+  overlay: themed(p.graphite[25], p.graphite[750]),
   /** Text fields and pickers: a step lighter than the card, on a soft edge. */
   field: themed(p.white, p.graphite[700]),
   scrim: themed(p.shade.scrimLight, p.shade.scrimDark),
@@ -45,10 +45,12 @@ const color = {
   'rule-subtle': themed(p.graphite[200], p.graphite[700]),
   rule: themed(p.graphite[300], p.graphite[600]),
   'rule-strong': themed(p.graphite[650], p.graphite[500]),
-  'field-edge': themed(p.graphite[250], p.graphite[600]),
-  'field-edge-hover': themed(p.graphite[450], p.graphite[500]),
-  /** Outline buttons: quieter than a field's edge in dark mode, where the field edge reads harsh on a button. */
-  'button-edge': themed(p.graphite[450], p.graphite[500]),
+  /** The edge of a surface lifted by a hard offset shadow: the shadow carries the weight, so the line can be soft. */
+  'surface-edge': themed(p.graphite[400], p.graphite[500]),
+  /** Field edges identify the control, so they hold 3:1 against the field and the surface around it. */
+  'field-edge': themed(p.graphite[380], p.graphite[450]),
+  'field-edge-hover': themed(p.graphite[550], p.graphite[350]),
+  'button-edge': themed(p.graphite[450], p.graphite[450]),
   'button-edge-hover': themed(p.graphite[650], p.graphite[400]),
   /** A filled button's edge: one translucent shade on every side, deeper at the bottom, so corners don't mitre. */
   'button-shade': themed('rgb(28 28 28 / 22%)', 'rgb(0 0 0 / 40%)'),
@@ -57,7 +59,7 @@ const color = {
   'action-hover': themed(p.violet[700], p.violet[475]),
   'action-active': themed(p.violet[725], p.violet[550]),
   'action-soft': themed(p.violet[50], p.violet[900]),
-  'neutral-hover': themed(p.graphite[175], p.graphite[800]),
+  'neutral-hover': themed(p.graphite[175], p.graphite[700]),
   'raised-hover': themed(p.graphite[175], p.graphite[700]),
   'on-action': p.white,
   destructive: themed(p.red[500], p.red[450]),
@@ -77,7 +79,7 @@ const color = {
 
   'chart-1': themed(p.violet[600], p.violet[350]),
   'chart-2': themed(p.green[600], p.green[300]),
-  'chart-3': themed(p.amber[500], p.amber[300]),
+  'chart-3': themed(p.amber[600], p.amber[300]),
   'chart-4': themed(p.blue[600], p.blue[300]),
   'chart-5': themed(p.red[500], p.red[300]),
   'chart-6': themed(p.violet[625], p.violet[250]),
@@ -93,12 +95,12 @@ const color = {
   'activity-study': 'var(--color-chart-4)',
   'activity-other': 'var(--color-muted)',
 
-  'heat-future': themed(p.graphite[175], p.graphite[800]),
-  'heat-0': themed(p.graphite[250], p.graphite[600]),
-  'heat-1': themed(p.violet[425], p.violet[450]),
-  'heat-2': themed(p.violet[500], p.violet[375]),
-  'heat-3': themed(p.violet[650], p.violet[200]),
-  'heat-4': themed(p.violet[850], p.violet[25]),
+  'heat-future': themed(p.graphite[150], p.graphite[800]),
+  'heat-0': themed(p.graphite[200], p.graphite[650]),
+  'heat-1': themed(p.violet[350], p.violet[550]),
+  'heat-2': themed(p.violet[525], p.violet[400]),
+  'heat-3': themed(p.violet[700], p.violet[200]),
+  'heat-4': themed(p.violet[950], p.violet[25]),
 
   /** Component colours: tints that one control needs and the semantic set does not name. */
   'table-shade': mix('ink', 35),
@@ -112,16 +114,16 @@ const color = {
   'current-row-hover': mix('ink', 5, 'action-soft'),
   'checkbox-disabled-edge': `color-mix(in srgb, var(--color-field-edge) 85%, var(--color-rule))`,
 
-  /** The site footer: an ink band in light mode, the paper surface in dark mode. */
-  footer: themed(p.graphite[875], 'var(--color-paper)'),
-  'footer-ink': themed(p.graphite[150], 'var(--color-ink)'),
-  'footer-muted': themed(p.graphite[300], 'var(--color-muted)'),
-  'footer-link': themed(p.graphite[175], 'var(--color-ink)'),
-  'footer-label': themed(p.graphite[350], 'var(--color-muted)'),
-  'footer-rule': themed(p.graphite[600], 'var(--color-rule)'),
-  'footer-accent': p.violet[400],
-  'footer-hover': p.violet[150],
-  'footer-tint': p.shade.violetTint,
+  /** The site footer sits on the paper surface and closes the page with a hairline. */
+  footer: 'var(--color-canvas)',
+  'footer-ink': 'var(--color-ink)',
+  'footer-muted': 'var(--color-muted)',
+  'footer-link': 'var(--color-ink)',
+  'footer-label': 'var(--color-muted)',
+  'footer-rule': 'var(--color-rule)',
+  'footer-accent': 'var(--color-link)',
+  'footer-hover': 'var(--color-link-hover)',
+  'footer-tint': 'var(--color-tab-hover)',
 
   /** Leaderboard podium marks behind the top three ranks. */
   'podium-1': themed(p.gold[100], p.gold[800]),
@@ -274,7 +276,7 @@ const text = {
   section: '1.5rem',
   component: '1.125rem',
   body: dense('1rem', '0.875rem'),
-  label: '0.8125rem',
+  label: '0.875rem',
   metadata: '0.875rem',
   button: dense('1em', '0.875rem'),
   em: '1em',
@@ -332,7 +334,7 @@ const fontWeight = {
 const tracking = {
   tight: '-0.04em',
   wide: '0.02em',
-  hero: '-0.045em',
+  hero: '-0.03em',
   caps: '0.08em',
   display: '-0.035em',
   page: '-0.025em',
@@ -421,7 +423,7 @@ const gridTemplateColumns = {
   'label-check': '1fr auto',
   'item-indicator': '1.25rem 1fr',
   'radio-cards': 'repeat(auto-fit, minmax(12rem, 1fr))',
-  stats: 'repeat(auto-fit, minmax(min(100%, 5.5rem), 1fr))',
+  stats: 'repeat(auto-fit, minmax(min(100%, 4.75rem), 1fr))',
   'facts-inline': 'minmax(6rem, 10rem) minmax(0, 1fr)',
   'tabs-vertical': 'max-content minmax(0, 1fr)',
   filters: 'repeat(auto-fit, minmax(11rem, 1fr))',

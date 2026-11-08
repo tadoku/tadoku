@@ -1,15 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
-import { BookOpenIcon, LanguageIcon, TrophyIcon, iconClassName } from 'paper-ui/icons'
 import { useLoaderData } from '@tanstack/react-router'
-import { Button, EmptyState, IconTile, Loading, SectionHeading, StatGrid, Surface, Table, buttonClassName } from 'paper-ui'
+import { Button, EmptyState, Loading, SectionHeading, StatGrid, Surface, Table, buttonClassName } from 'paper-ui'
 import type { ReactNode } from 'react'
-import { homeQueryOptions, type HomeData } from '../lib/home'
+import { homeQueryOptions, memberDashboardQueries, type HomeData } from '../lib/home'
+import { standingsQuery } from '../lib/leaderboard'
 import { Person, Rank, currentRow, personLink } from './StandingsParts'
-import { formatDate, formatPeriod, numberFormat, pointsUnit } from '../lib/format'
+import { formatDate, formatPeriod, numberFormat, place, pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
-import { MemberDashboard, MemberYearTotals } from './MemberDashboard'
+import { MemberContests, MemberDashboard, MemberYearTotals } from './MemberDashboard'
 import { viewerQueryOptions, type Viewer } from '../lib/session'
+
+const noMember: Extract<Viewer, { status: 'signed-in' }> = { status: 'signed-in', userId: '', displayName: '', role: 'user' }
 
 const dayNumber = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000) + 1
 
@@ -38,16 +40,16 @@ const promise: Record<Phase, { headline: ReactNode; lead: string }> = {
 }
 
 const hero = [
-  'grid grid-cols-halves items-start gap-16 py-2 pe-1.25 max-lg:gap-8',
+  'grid grid-cols-halves items-start gap-16 py-2 max-lg:gap-8',
   'max-tablet:grid-cols-single max-tablet:gap-8 max-tablet:pt-0',
 ].join(' ')
+const memberHero = 'grid grid-cols-halves items-start gap-x-16 py-2 max-lg:gap-x-8 max-tablet:grid-cols-single max-tablet:gap-y-6 tablet:grid-rows-docs'
 const status = 'mb-4 mt-0 text-sm font-semibold text-warning'
 const headline = 'm-0 max-w-measure-hero text-balance font-display text-hero leading-120 tracking-hero'
 const lead = 'my-6 max-w-measure-sm text-lead leading-175 text-ink max-tablet:my-5 max-tablet:text-base'
 const actions = 'flex flex-wrap items-center gap-x-5 gap-y-3'
-// The tile spans the title and text rows; the title's top margin centres it on the tile.
-const step = 'grid grid-cols-icon-content content-start gap-x-4'
-const stepTitle = 'mb-2 mt-2.5 text-base leading-150'
+const step = 'grid content-start'
+const stepTitle = 'mb-1 mt-0 text-base leading-150'
 const stepText = 'm-0 max-w-measure-how text-ui leading-170 text-ink'
 const strip = [
   'mt-8 grid max-w-record grid-cols-strip items-center gap-8 border-t border-rule pt-6',
@@ -78,12 +80,14 @@ export function HomePage() {
   const joinable = contest && (phase === 'open' || phase === 'upcoming')
   const { data: viewer } = useQuery(viewerQueryOptions())
   const member = viewer?.status === 'signed-in' ? viewer : null
+  const memberStatistics = useQuery({ ...memberDashboardQueries(member ?? noMember, year)[0], enabled: member !== null }).data
+  const fresh = memberStatistics?.status === 'found' && memberStatistics.activity.ok && memberStatistics.activity.data.total_updates === 0
 
   return (
     <div className="home-page">
-      <section className={hero} aria-labelledby="home-title">
+      <section className={member ? memberHero : hero} aria-labelledby="home-title">
         {member
-          ? <MemberPromise member={member} data={data} phase={phase} year={year} />
+          ? <MemberPromise member={member} data={data} phase={phase} fresh={Boolean(fresh)} />
           : (
             <div>
               {phase === 'unavailable' && <p className={status}>Contest updates are delayed</p>}
@@ -98,25 +102,29 @@ export function HomePage() {
             </div>
           )}
 
-        <Surface as="section" elevation="showcase" className="min-w-0 p-0" aria-labelledby="home-board-title">
+        <Surface as="section" elevation="showcase" className={`me-1.25 min-w-0 p-0 ${member ? 'tablet:col-start-2 tablet:row-span-2 tablet:row-start-1' : ''}`} aria-labelledby="home-board-title">
           <ContestBoard data={data} phase={phase} today={today} retrying={isFetching} retry={() => void refetch()} />
         </Surface>
+        {member ? (
+          <div className="min-w-0 tablet:col-start-1 tablet:row-start-2">
+            <MemberYearTotals viewer={member} year={year} />
+            <MemberContests viewer={member} year={year} />
+          </div>
+        ) : null}
+        {member ? <MemberDashboard viewer={member} year={year} className="col-span-full mt-8" /> : null}
       </section>
 
-      {member ? <MemberDashboard viewer={member} year={year} /> : (
+      {member ? null : (
         <section className="mt-12 border-t border-rule pt-7 max-tablet:mt-9 max-tablet:pt-6" aria-labelledby="home-how-title">
           <h2 id="home-how-title" className="mb-6 mt-0 font-display text-heading">How Tadoku works</h2>
           <ol className="m-0 grid list-none grid-cols-thirds gap-10 p-0 max-tablet:grid-cols-single max-tablet:gap-6">
             <li className={step}>
-              <IconTile className="row-span-2"><LanguageIcon className={iconClassName()} /></IconTile>
               <h3 className={stepTitle}>Choose your language</h3><p className={stepText}>Join an official round or track immersion at your own pace between contests.</p>
             </li>
             <li className={step}>
-              <IconTile className="row-span-2"><BookOpenIcon className={iconClassName()} /></IconTile>
               <h3 className={stepTitle}>Read and listen</h3><p className={stepText}>Books, manga, games, podcasts, video: whatever keeps you engaged.</p>
             </li>
             <li className={step}>
-              <IconTile className="row-span-2"><TrophyIcon className={iconClassName()} /></IconTile>
               <h3 className={stepTitle}>Log your progress</h3><p className={stepText}>Record what you did and see where it counts.</p>
             </li>
           </ol>
@@ -139,32 +147,30 @@ export function HomePage() {
   )
 }
 
-const ordinal = new Intl.PluralRules('en', { type: 'ordinal' })
-const suffix: Record<string, string> = { one: 'st', two: 'nd', few: 'rd', other: 'th' }
-const place = (rank: number) => `${rank}${suffix[ordinal.select(rank)]}`
 
 /** A signed-in learner's hero: where they stand in the current round and the one action that moves it. */
-function MemberPromise({ member, data, phase, year }: {
+function MemberPromise({ member, data, phase, fresh }: {
   member: Extract<Viewer, { status: 'signed-in' }>
   data: HomeData | undefined
   phase: Phase
-  year: number
+  fresh: boolean
 }) {
   const links = useLinks()
   const contest = data?.latestContest
   const running = contest && (phase === 'open' || phase === 'live' || phase === 'upcoming')
-  const entry = running ? data?.standings?.entries.find(row => row.user_id === member.userId) : undefined
   const { registration, registered } = useParticipation(running ? contest.id : '')
+  const entry = useViewerEntry(running ? contest.id : undefined, member.userId, data, registered)
   const joinable = running && registration?.kind === 'not-registered' && (phase === 'open' || phase === 'upcoming')
 
   let title: string
   let summary: string
   if (running && entry) {
-    title = `${place(entry.rank)} place`
-    summary = `${numberFormat.format(entry.score)} ${pointsUnit(entry.score)} in ${contest.title}.`
+    title = `${entry.is_tie ? 'Tied ' : ''}${place(entry.rank)} place`
+    const field = data?.summary ? ` Out of ${numberFormat.format(data.summary.participant_count)} participants.` : ''
+    summary = `${scoreFormat.format(entry.score)} ${pointsUnit(entry.score)} in ${contest.title}.${field}`
   } else if (running && registered) {
     title = `You’re in ${contest.title}`
-    summary = phase === 'upcoming' ? `The round starts ${formatDate(contest.contest_start)}.` : 'Log what you read and listen to; every entry counts towards the round.'
+    summary = phase === 'upcoming' ? `The round starts ${formatDate(contest.contest_start)}.` : 'Log what you read and listen to.'
   } else if (joinable) {
     title = `${contest.title} is open`
     summary = `Registration closes ${formatDate(contest.registration_end)}.`
@@ -181,12 +187,23 @@ function MemberPromise({ member, data, phase, year }: {
       {/* Log activity is already the header's action; the hero adds Join only while the member can still join. */}
       {joinable ? (
         <div className={actions}>
-          <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a>
+          <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join contest</a>
+          {fresh ? <a className="text-link hover:text-link-hover" href={links.logs}>Log your first activity</a> : null}
         </div>
       ) : null}
-      <MemberYearTotals viewer={member} year={year} />
     </div>
   )
+}
+
+/** The viewer's row in the round's standings, from the first standings page once they are registered. */
+function useViewerEntry(contestId: string | undefined, userId: string | undefined, data: HomeData | undefined, registered: boolean) {
+  const standings = useQuery({
+    ...standingsQuery({ kind: 'contest', contestId: contestId ?? '' }, 1),
+    enabled: Boolean(contestId && userId && registered),
+  })
+  const top = data?.standings?.entries.find(row => row.user_id === userId)
+  if (top || !contestId) return top
+  return standings.data?.ok ? standings.data.data.entries.find(row => row.user_id === userId) : undefined
 }
 
 function ContestBoard({ data, phase, today, retrying, retry }: {
@@ -199,6 +216,8 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
   const links = useLinks()
   const { data: viewer } = useQuery(viewerQueryOptions())
   const viewerId = viewer?.status === 'signed-in' ? viewer.userId : undefined
+  const { registered } = useParticipation(data?.latestContest?.id ?? '')
+  const viewerEntry = useViewerEntry(data?.latestContest?.id, viewerId, data, registered)
   if (phase === 'loading') {
     return <>
       <SectionHeading level={2} id="home-board-title" className={ledgerHeader} title="Current contest" />
@@ -253,6 +272,8 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
   const { summary, standings } = data
   if (!summary || !standings) return unavailable
   const ended = phase === 'ended'
+  const you = viewerEntry && !standings.entries.some(row => row.user_id === viewerEntry.user_id) ? viewerEntry : null
+  const rows = you ? [...standings.entries, you] : standings.entries
   return <>
     {header(
       `${formatPeriod(contest)} · ${ended ? 'Final results' : `Day ${dayNumber(contest.contest_start, today)} of ${length}`}`,
@@ -261,7 +282,7 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
     <StatGrid className="px-ledger-inset py-4.5" stats={[
       { label: 'Participants', value: numberFormat.format(summary.participant_count) },
       { label: 'Languages', value: numberFormat.format(summary.language_count) },
-      { label: 'Points logged', value: numberFormat.format(summary.total_score) },
+      { label: 'Points logged', value: scoreFormat.format(summary.total_score) },
     ]} />
     {standings.entries.length ? (
       <Table
@@ -281,9 +302,9 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
               </Person>
             ),
           },
-          { id: 'score', header: 'Score', align: 'end', headerClassName: 'pe-ledger-inset', cellClassName: 'pe-ledger-inset', cell: row => numberFormat.format(row.score) },
+          { id: 'score', header: 'Score', align: 'end', headerClassName: 'pe-ledger-inset', cellClassName: 'pe-ledger-inset', cell: row => scoreFormat.format(row.score) },
         ]}
-        rows={standings.entries}
+        rows={rows}
         getRowKey={row => row.user_id}
         tableClassName={cardTable}
         getRowProps={row => (row.user_id === viewerId ? { 'aria-current': 'true', className: currentRow } : {})}

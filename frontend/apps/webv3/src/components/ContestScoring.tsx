@@ -1,15 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
 import { useHydrated } from '@tanstack/react-router'
 import type { ImmersionLogConfigurationOptions, ImmersionScoringRule, ImmersionScoringRuleSet } from 'api-client'
-import { Button, EmptyState, Flash, Modal, PageHeader, SectionHeading, StatusTag, Surface, buttonClassName } from 'paper-ui'
+import { Button, EmptyState, Flash, Modal, PageHeader, SectionHeading, StatusTag, Surface, buttonClassName, prose } from 'paper-ui'
 import { useRef, useState } from 'react'
 import { contestsHref } from '../lib/contests'
 import { useLinks } from '../lib/links'
 import type { LogFailure } from '../lib/logs'
 import { contestScoringQuery, useChangeScoring, type RuleSetChange } from '../lib/scoring'
-import { scoreSources } from '../lib/scoring-draft'
 import { useLoginUrl } from '../lib/session'
 import { renderLink } from './router-link'
+import { ManualTable } from './ManualPage'
 import { RuleSetForm } from './RuleSetForm'
 import { scoringFailures } from './scoring-failures'
 
@@ -61,7 +61,7 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
   const locked = new Date().toISOString().slice(0, 10) >= contest.contest_start
 
   return (
-    <div className="grid min-w-0 max-w-record gap-6">
+    <div className="grid min-w-0 gap-6">
       <PageHeader
         title="Contest scoring"
         className="mb-0"
@@ -83,6 +83,10 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
         />
       )}
       {contestRuleSets.length === 0 && !locked ? <p className="m-0">No contest-specific rule sets yet; this contest scores with the platform defaults.</p> : null}
+      {locked && contestRuleSets.length === 0 ? <section className="grid min-w-0 gap-4 [&>p]:m-0" aria-labelledby="scoring-platform">
+        <SectionHeading level={2} id="scoring-platform" title="Rules in effect" />
+        {platformRuleSets.filter(ruleSet => ruleSet.active).map(ruleSet => <RuleSetVersion key={ruleSet.id} ruleSet={ruleSet} options={options} change={null} />)}
+      </section> : null}
       {contestRuleSets.length === 0 ? null : <section className="grid min-w-0 gap-4 [&>p]:m-0" aria-labelledby="scoring-versions">
         <SectionHeading level={2} id="scoring-versions" title="Rule-set versions" />
         {contestRuleSets.map(ruleSet => (
@@ -120,34 +124,87 @@ function RuleSetVersion({ ruleSet, options, change }: {
             {ruleSet.active ? <StatusTag tone="success">Active</StatusTag> : null}
           </>
         )}
-        description={ruleSet.mode === 'replace'
+        description={ruleSet.scope === 'platform' ? 'Platform defaults' : ruleSet.mode === 'replace'
           ? 'Replaces platform rules; uncovered inputs score zero'
           : 'Overrides platform rules with a pinned fallback'}
         actions={change && action ? <ConfirmChange change={{ ...change, action }} /> : null}
       />
-      {ruleSet.rules.length ? (
-        <ol className="m-0 ps-5 leading-170">
-          {ruleSet.rules.map(rule => <li key={rule.id ?? rule.priority}>{describeRule(rule, options)}</li>)}
-        </ol>
-      ) : (
+      {ruleSet.rules.length ? <RuleTables rules={ruleSet.rules} options={options} /> : (
         <p>No rules: every input scores zero.</p>
       )}
     </Surface>
   )
 }
 
-function describeRule(rule: ImmersionScoringRule, options: ImmersionLogConfigurationOptions) {
-  const activity = options.activities.find(activity => activity.id === rule.activity_id)?.name
-  const language = options.languages.find(language => language.code === rule.language_code)?.name
-  const source = scoreSources.find(source => source.value === rule.score_source)?.label ?? rule.score_source
-  return [
-    rule.stackable ? 'Modifier' : 'Base',
-    activity ?? `Activity ${rule.activity_id}`,
-    `${source} × ${rule.rate}`,
-    rule.unit_key ? `unit ${rule.unit_key}` : null,
-    rule.language_code ? `language ${language ?? rule.language_code}` : null,
-    rule.tag ? `tag ${rule.tag}` : null,
-  ].filter(Boolean).join(' · ')
+/** A version's rules by activity: languages against units, as the Guide shows them, then multipliers. */
+function RuleTables({ rules, options }: { rules: ImmersionScoringRule[]; options: ImmersionLogConfigurationOptions }) {
+  const activities = [...new Set(rules.map(rule => rule.activity_id))]
+
+  return (
+    <div className="grid gap-6">
+      {activities.map(activityId => {
+        const activity = options.activities.find(activity => activity.id === activityId)?.name ?? `Activity ${activityId}`
+        const group = rules.filter(rule => rule.activity_id === activityId)
+        const id = `rules-${activityId}`
+        const { headers, rows } = rateMatrix(group.filter(rule => !rule.stackable), options)
+        const modifiers = group.filter(rule => rule.stackable)
+        return (
+          <section key={activityId} aria-labelledby={id} className="grid gap-2">
+            <h4 id={id} className="m-0 font-body text-base font-semibold">{activity}</h4>
+            {rows.length ? <div className={prose()}><ManualTable id={id} headers={headers} rows={rows} onPaper /></div> : null}
+            {modifiers.length ? (
+              <p className="m-0 text-metadata text-muted">
+                Multipliers: {modifiers.map(rule => `${condition(rule, options)} × ${rateFormat.format(rule.rate)}`).join(', ')}
+              </p>
+            ) : null}
+          </section>
+        )
+      })}
+    </div>
+  )
+}
+
+const rateFormat = new Intl.NumberFormat('en-GB', { maximumSignificantDigits: 3 })
+
+const unitName = (unitKey: string, options: ImmersionLogConfigurationOptions) =>
+  options.units.find(unit => unit.unit_key === unitKey)?.name ?? unitKey.replaceAll('_', ' ')
+
+const columnOf = (rule: ImmersionScoringRule, options: ImmersionLogConfigurationOptions) => {
+  const unit = rule.unit_key ? unitName(rule.unit_key, options) : rule.score_source === 'duration_minutes' ? 'Minute' : 'Amount'
+  if (!rule.tag) return unit
+  const tag = rule.tag.replaceAll('_', ' ')
+  return `${tag[0].toUpperCase()}${tag.slice(1)} ${unit.toLowerCase()}`
+}
+
+/** Points per unit: one row per language, falling back to the all-languages rate, with default rows merged. */
+function rateMatrix(rules: ImmersionScoringRule[], options: ImmersionLogConfigurationOptions) {
+  const columns = [...new Map(rules.map(rule => [columnOf(rule, options), rule])).entries()]
+  // The API scores with the first matching rule by priority; a rule without a unit, language or tag matches any.
+  const byPriority = [...rules].sort((left, right) => left.priority - right.priority)
+  const cell = (column: ImmersionScoringRule, language: string | undefined) => {
+    const rule = byPriority.find(candidate => candidate.score_source === column.score_source
+      && (!candidate.unit_key || candidate.unit_key === column.unit_key)
+      && (!candidate.tag || candidate.tag === column.tag)
+      && (!candidate.language_code || candidate.language_code === language))
+    return rule ? rateFormat.format(rule.rate) : '–'
+  }
+  const languages = [...new Set(rules.map(rule => rule.language_code).filter((code): code is string => Boolean(code)))]
+  const defaults = columns.map(([, column]) => cell(column, undefined))
+  const languageRows = languages
+    .map(code => [options.languages.find(language => language.code === code)?.name ?? code, ...columns.map(([, column]) => cell(column, code))])
+    .filter(row => row.slice(1).join() !== defaults.join())
+  const rows = [['All languages', ...defaults], ...languageRows].reduce<string[][]>((merged, row) => {
+    const same = merged.find(existing => existing.slice(1).join() === row.slice(1).join())
+    if (same) same[0] += `, ${row[0]}`
+    else merged.push([...row])
+    return merged
+  }, [])
+  return { headers: ['Points per', ...columns.map(([label]) => label)], rows }
+}
+
+function condition(rule: ImmersionScoringRule, options: ImmersionLogConfigurationOptions) {
+  const language = options.languages.find(language => language.code === rule.language_code)?.name ?? rule.language_code
+  return [language, rule.tag?.replaceAll('_', ' ')].filter(Boolean).join(' · ') || 'All languages'
 }
 
 const confirmations = {

@@ -3,11 +3,11 @@ import type { QueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import mark from 'paper-ui/assets/brand/cut-meter.svg?url'
 import reversedMark from 'paper-ui/assets/brand/cut-meter-reversed.svg?url'
-import { AppShell, themeBootScript } from '../components/AppShell'
+import { AppShell } from '../components/AppShell'
 import { ErrorView, NotFoundView, PendingView } from '../components/StatusViews'
 import { getPageUrls } from '../lib/links'
 import { viewerQueryOptions } from '../lib/session'
-import { bodyClassName, documentClassName } from 'paper-ui'
+import { bodyClassName, documentClassName, themeBootScript } from 'paper-ui'
 import '../styles.css'
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({

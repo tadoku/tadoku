@@ -37,7 +37,8 @@ export async function openForm(page: Page) {
 export const savedLogUrl = /\/logs\/[a-f0-9-]{36}$/
 
 /** The saved log's description on its detail page, read from its labelled row. */
-export const logDescription = (page: Page) => page.locator('dt', { hasText: /^Description$/ }).locator('xpath=following-sibling::dd[1]')
+/** The log's note: its page heading when short, or the Description row when long. */
+export const logDescription = (page: Page) => page.locator('main h1, dt:has-text("Description") + dd').last()
 
 /** Where a save of a new log leads an account with ongoing registrations: the contest step, as in Webv2. */
 export const contestStepUrl = /\/logs\/[a-f0-9-]{36}\/contests\?preselect=1$/

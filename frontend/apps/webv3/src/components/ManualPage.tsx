@@ -3,16 +3,83 @@ import { PageHeader, prose } from 'paper-ui'
 const contentTable = [
   'content-table mb-4 mt-0 max-w-content-table overflow-x-auto [background:var(--effect-canvas-table-scroll)]',
   'focus-visible:outline-ring focus-visible:outline-link focus-visible:outline-offset-ring',
-  '[&_td:first-child]:whitespace-nowrap [&_table:has(th:nth-child(4))]:min-w-wide-table',
+  '[&_table:has(th:nth-child(4))]:min-w-wide-table',
   '[&_:is(th,td):not(:first-child)]:text-end [&_:is(th,td):last-child]:pe-0 max-sm:[&_:is(th,td)]:pe-3',
 ].join(' ')
+
+/** A unit table: rows on wide screens; on a phone, one block per language, with later blocks showing only what differs. */
+export function ManualTable({ id, headers, rows, onPaper = false }: { id: string; headers: string[]; rows: string[][]; onPaper?: boolean }) {
+  const merged = rows.reduce<string[][]>((groups, row) => {
+    const same = groups.find(group => group.slice(1).join() === row.slice(1).join())
+    if (same) same[0] += `, ${row[0]}`
+    else groups.push([...row])
+    return groups
+  }, [])
+  return (
+    <>
+      <div className={`${contentTable} max-sm:hidden ${onPaper ? 'max-w-full [background:var(--effect-table-scroll)]' : ''}`} role="region" tabIndex={0} aria-labelledby={id}>
+        <table>
+          <thead>
+            <tr>{headers.map(header => <th key={header}>{header}</th>)}</tr>
+          </thead>
+          <tbody>
+            {rows.map(row => <tr key={row[0]}>{row.map((cell, index) => <td key={headers[index]}>{cell}</td>)}</tr>)}
+          </tbody>
+        </table>
+      </div>
+      <div className="mb-4 grid gap-5 sm:hidden">
+        {merged.map(row => (
+          <section key={row[0]} aria-label={`${row[0]} units`}>
+            <h5 className="m-0 mb-1 text-ui font-semibold">{row[0]}</h5>
+            {row === merged[0] ? null : <p className="mb-1 mt-0 text-metadata text-muted">Same as {merged[0][0]}, except:</p>}
+            <dl className="m-0">
+              {headers.slice(1).map((header, index) => row === merged[0] || row[index + 1] !== merged[0][index + 1] ? (
+                <div key={header} className="flex justify-between gap-4 border-b border-rule py-1.5 text-metadata tabular-nums">
+                  <dt>{header}</dt>
+                  <dd className="m-0">{row[index + 1]}</dd>
+                </div>
+              ) : null)}
+            </dl>
+          </section>
+        ))}
+      </div>
+    </>
+  )
+}
+
+const sections = [
+  ['signing-up-for-a-contest', 'Signing up for a contest'],
+  ['submitting-updates', 'Submitting updates'],
+  ['frequency-of-submitting-updates', 'Frequency of submitting updates'],
+  ['submitting-re-reads', 'Submitting re-reads'],
+  ['media', 'Tracking activities and media'],
+  ['units-reading', 'Reading units'],
+  ['units-writing', 'Writing units'],
+  ['units-listening', 'Listening units'],
+  ['units-speaking', 'Speaking units'],
+  ['units-study', 'Study units'],
+  ['speeding-up-listening', 'Speeding up listening material'],
+  ['ebooks', 'Ebooks'],
+] as const
 
 /** Webv2's code-owned manual, ported as written. CMS pages render through `CmsPage` instead. */
 export function ManualPage() {
   return (
-    <article className="min-w-0 max-w-article">
-      <PageHeader title="Manual" />
-      <div className={prose({ className: 'content-prose' })}>
+    <div className="grid items-start lg:grid-cols-workspace lg:gap-12">
+      <nav aria-label="On this page" className="sticky top-20 col-start-2 row-start-1 max-lg:hidden">
+        <ol className="m-0 list-none gap-x-8 p-0 text-ui leading-175 ">
+          {sections.map(([id, label]) => <li key={id} className="break-inside-avoid"><a className="inline-block py-1 text-link no-underline hover:text-link-hover hover:underline" href={`#${id}`}>{label}</a></li>)}
+        </ol>
+      </nav>
+    <article className="min-w-0 max-w-article lg:col-start-1 lg:row-start-1">
+      <PageHeader title="Guide" />
+      <details className="sticky top-16 z-lift mb-8 border-y border-rule bg-canvas py-3 lg:hidden">
+        <summary className="cursor-pointer text-ui font-semibold">On this page</summary>
+        <ol className="mb-0 mt-3 list-none columns-1 gap-x-8 p-0 text-ui leading-175 tablet:columns-2">
+          {sections.map(([id, label]) => <li key={id} className="break-inside-avoid"><a className="inline-block py-1 text-link no-underline hover:text-link-hover hover:underline" href={`#${id}`} onClick={event => event.currentTarget.closest('details')?.removeAttribute('open')}>{label}</a></li>)}
+        </ol>
+      </details>
+      <div className={prose({ className: 'content-prose max-lg:[&_:is(h2,h3,h4)]:scroll-mt-32' })}>
         <h2 id="signing-up-for-a-contest">Signing up for a contest</h2>
         <p>
           A contest is open for registration before it starts. A contest also has
@@ -65,75 +132,12 @@ export function ManualPage() {
         </p>
 
         <h4 id="units-reading">Reading</h4>
-        <div
-          className={contentTable}
-          role="region"
-          tabIndex={0}
-          aria-labelledby="units-reading"
-        >
-          <table>
-            <thead>
-              <tr>
-                <th>Language</th>
-                <th>Page</th>
-                <th>
-                  2 Column page{' '}
-                  <sup
-                   
-                    title="Only available for Japanese"
-                  >
-                    1
-                  </sup>
-                </th>
-                <th>Comic page</th>
-                <th>Sentence</th>
-                <th>
-                  Character{' '}
-                  <sup
-                   
-                    title="400 characters per page for Japanese, Chinese, and Korean. 1200 characters per page for all other languages."
-                  >
-                    2
-                  </sup>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Japanese</td>
-                <td>1</td>
-                <td>1.6</td>
-                <td>0.2</td>
-                <td>0.05</td>
-                <td>0.0025</td>
-              </tr>
-              <tr>
-                <td>Chinese</td>
-                <td>1</td>
-                <td className="text-muted">N/A</td>
-                <td>0.2</td>
-                <td>0.05</td>
-                <td>0.0025</td>
-              </tr>
-              <tr>
-                <td>Korean</td>
-                <td>1</td>
-                <td className="text-muted">N/A</td>
-                <td>0.2</td>
-                <td>0.05</td>
-                <td>0.0025</td>
-              </tr>
-              <tr>
-                <td>All other languages</td>
-                <td>1</td>
-                <td className="text-muted">N/A</td>
-                <td>0.2</td>
-                <td>0.05</td>
-                <td>0.0008333</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <ManualTable id="units-reading" headers={['Language', 'Page', '2 Column page ¹', 'Comic page', 'Sentence', 'Character ²']} rows={[
+          ['Japanese', '1', '1.6', '0.2', '0.05', '0.0025'],
+          ['Chinese', '1', 'N/A', '0.2', '0.05', '0.0025'],
+          ['Korean', '1', 'N/A', '0.2', '0.05', '0.0025'],
+          ['All other languages', '1', 'N/A', '0.2', '0.05', '0.0008333'],
+        ]} />
         <ol className="mb-6! mt-0! text-metadata leading-metadata text-muted">
           <li>Only available for Japanese</li>
           <li>
@@ -143,49 +147,12 @@ export function ManualPage() {
         </ol>
 
         <h4 id="units-writing">Writing</h4>
-        <div
-          className={contentTable}
-          role="region"
-          tabIndex={0}
-          aria-labelledby="units-writing"
-        >
-          <table>
-            <thead>
-              <tr>
-                <th>Language</th>
-                <th>Page</th>
-                <th>Sentence</th>
-                <th>Character</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Japanese</td>
-                <td>10</td>
-                <td>0.5</td>
-                <td>0.025</td>
-              </tr>
-              <tr>
-                <td>Chinese</td>
-                <td>10</td>
-                <td>0.5</td>
-                <td>0.025</td>
-              </tr>
-              <tr>
-                <td>Korean</td>
-                <td>10</td>
-                <td>0.5</td>
-                <td>0.025</td>
-              </tr>
-              <tr>
-                <td>All other languages</td>
-                <td>10</td>
-                <td>0.5</td>
-                <td>0.0083333</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <ManualTable id="units-writing" headers={['Language', 'Page', 'Sentence', 'Character']} rows={[
+          ['Japanese', '10', '0.5', '0.025'],
+          ['Chinese', '10', '0.5', '0.025'],
+          ['Korean', '10', '0.5', '0.025'],
+          ['All other languages', '10', '0.5', '0.0083333'],
+        ]} />
 
         <h4 id="units-listening">Listening</h4>
 
@@ -197,73 +164,17 @@ export function ManualPage() {
           &quot;listening&quot; to while sleeping would not count.
         </p>
 
-        <div
-          className={contentTable}
-          role="region"
-          tabIndex={0}
-          aria-labelledby="units-listening"
-        >
-          <table>
-            <thead>
-              <tr>
-                <th>Language</th>
-                <th>Minute</th>
-                <th>
-                  Minute (high density){' '}
-                  <sup
-                   
-                    title="Media such as audiobooks which have few breaks"
-                  >
-                    1
-                  </sup>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>All languages</td>
-                <td>0.4</td>
-                <td>0.6</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <ManualTable id="units-listening" headers={['Language', 'Minute', 'Minute (high density) ¹']} rows={[
+          ['All languages', '0.4', '0.6'],
+        ]} />
         <ol className="mb-6! mt-0! text-metadata leading-metadata text-muted">
           <li>Media such as audiobooks which have few breaks</li>
         </ol>
 
         <h4 id="units-speaking">Speaking</h4>
-        <div
-          className={contentTable}
-          role="region"
-          tabIndex={0}
-          aria-labelledby="units-speaking"
-        >
-          <table>
-            <thead>
-              <tr>
-                <th>Language</th>
-                <th>Minute</th>
-                <th>
-                  Minute (high density){' '}
-                  <sup
-                   
-                    title="When you're the only one speaking; such as in speeches or presentations"
-                  >
-                    1
-                  </sup>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>All languages</td>
-                <td>0.5</td>
-                <td>0.7</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <ManualTable id="units-speaking" headers={['Language', 'Minute', 'Minute (high density) ¹']} rows={[
+          ['All languages', '0.5', '0.7'],
+        ]} />
         <ol className="mb-6! mt-0! text-metadata leading-metadata text-muted">
           <li>
             When you&apos;re the only one speaking; such as in speeches or
@@ -272,35 +183,9 @@ export function ManualPage() {
         </ol>
 
         <h4 id="units-study">Study</h4>
-        <div
-          className={contentTable}
-          role="region"
-          tabIndex={0}
-          aria-labelledby="units-study"
-        >
-          <table>
-            <thead>
-              <tr>
-                <th>Language</th>
-                <th>
-                  Minute{' '}
-                  <sup
-                   
-                    title="Can be used for any kind of generic studying such as flashcards, textbooks, tutoring sessions, etc..."
-                  >
-                    1
-                  </sup>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>All languages</td>
-                <td>0.5</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <ManualTable id="units-study" headers={['Language', 'Minute ¹']} rows={[
+          ['All languages', '0.5'],
+        ]} />
         <ol className="mb-6! mt-0! text-metadata leading-metadata text-muted">
           <li>
             Can be used for any kind of generic studying such as flashcards,
@@ -308,7 +193,7 @@ export function ManualPage() {
           </li>
         </ol>
 
-        <h3>Speeding up listening material</h3>
+        <h3 id="speeding-up-listening">Speeding up listening material</h3>
         <p>
           It&apos;s fairly common for advanced learners to change the playback
           speed of audio while listening. In such cases you are allowed to track
@@ -325,7 +210,7 @@ export function ManualPage() {
           <strong>60 minutes</strong> of input.
         </p>
 
-        <h3>Ebooks</h3>
+        <h3 id="ebooks">Ebooks</h3>
 
         <p>
           Tracking pages read of ebooks can be quite tricky. Most of the times
@@ -357,5 +242,6 @@ export function ManualPage() {
         </ol>
       </div>
     </article>
+    </div>
   )
 }

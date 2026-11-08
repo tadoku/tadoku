@@ -1,5 +1,5 @@
 import { Button, Flash } from 'paper-ui'
-import { InformationCircleIcon, iconClassName } from 'paper-ui/icons'
+import { ExclamationTriangleIcon, InformationCircleIcon, iconClassName } from 'paper-ui/icons'
 import { continuation, displayNameProblem, emailProblem, passwordProblem, withReturnTo } from '../lib/identity'
 import { navigate, useAccountForm } from '../lib/account-form'
 import type { AccountSearch } from '../lib/search'
@@ -35,14 +35,14 @@ export function Login({ search }: { readonly search: AccountSearch }) {
 
   return (
     <CardPage
-      title="Log in"
-      footer={<>New to Tadoku? <a href={withReturnTo('/register', next)}>Create an account</a></>}
+      title={!reauth ? 'Log in' : next?.includes('delete-account') ? 'Confirm account deletion' : 'Confirm it’s you'}
+      footer={reauth ? (next?.includes('delete-account') ? <a href="/settings">Keep my account</a> : undefined) : <>New to Tadoku? <a href={withReturnTo('/register', next)}>Create an account</a></>}
     >
       <form.AppForm>
         <form.Form {...formProps} className={accountForm}>
           {reauth ? (
-            <Flash variant="information" icon={<InformationCircleIcon className={iconClassName()} />}>
-              Privileged actions require a fresh login. Log in again to continue.
+            <Flash variant={next?.includes('delete-account') ? 'danger' : 'information'} role="status" icon={next?.includes('delete-account') ? <ExclamationTriangleIcon className={iconClassName()} /> : <InformationCircleIcon className={iconClassName()} />}>
+              Enter your password to continue.{next?.includes('delete-account') ? ' Deleting your account can’t be undone.' : ''}
             </Flash>
           ) : <SignedInNotice />}
           <FormProblem problem={problem} />
@@ -54,7 +54,7 @@ export function Login({ search }: { readonly search: AccountSearch }) {
           <form.AppField name="password" validators={{ onChange: ({ value }) => value ? undefined : 'Enter your password.' }}>
             {field => <field.Input id={fieldId('password')} label="Password" type="password" autoComplete="current-password" required />}
           </form.AppField>
-          <Button type="submit" fullWidth loading={pending} loadingLabel="Logging in">Log in</Button>
+          <Button type="submit" variant={reauth && next?.includes('delete-account') ? 'destructive' : undefined} fullWidth loading={pending} loadingLabel="Logging in">{reauth ? (next?.includes('delete-account') ? 'Continue to deletion' : 'Continue') : 'Log in'}</Button>
           <a className="justify-self-center text-sm" href={withReturnTo('/recovery', next)}>Forgot your password?</a>
         </form.Form>
       </form.AppForm>

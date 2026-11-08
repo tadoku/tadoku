@@ -17,7 +17,7 @@ import {
 test.use({ trace: 'off', video: 'off', ignoreHTTPSErrors: false })
 
 const year = new Date().getUTCFullYear()
-const scoreFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 })
+const scoreFormat = new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
 type Contest = { contest: { id: string; title: string; private: boolean } }
 
@@ -42,7 +42,9 @@ async function apiYear(request: APIRequestContext, userId: string, target: numbe
 /** The page shows the year's totals, breakdowns and contests exactly as the API reports them. */
 async function expectYear(page: Page, request: APIRequestContext, userId: string, target: number) {
   const expected = await apiYear(request, userId, target)
-  await expect(page.getByRole('navigation', { name: 'Profile year' }).locator('[aria-current="page"]')).toHaveText(String(target))
+  // An account with a single year has no year tabs.
+  const yearTabs = page.getByRole('navigation', { name: 'Profile year' })
+  if (await yearTabs.count()) await expect(yearTabs.locator('[aria-current="page"]')).toHaveText(String(target))
 
   if (expected.activity.total_updates === 0) {
     await expect(page.getByRole('heading', { name: `No activity recorded in ${target}` })).toBeVisible()
@@ -50,7 +52,7 @@ async function expectYear(page: Page, request: APIRequestContext, userId: string
   } else {
     const total = expected.scores.scores.reduce((sum, score) => sum + score.score, 0)
     await expect(stat(page, 'Overall score')).toContainText(scoreFormat.format(total))
-    await expect(stat(page, 'Updates')).toContainText(String(expected.activity.total_updates))
+    await expect(stat(page, 'Logs')).toContainText(String(expected.activity.total_updates))
     await expect(stat(page, 'Languages')).toContainText(String(expected.scores.scores.length))
     const languages = page.getByRole('region', { name: 'Score by language' })
     for (const score of expected.scores.scores) {
@@ -134,7 +136,7 @@ test('a year without activity shows the empty state', async ({ page, readerConte
   await page.goto(`/profile/${userId}/statistics/2000`)
   const expected = await expectYear(page, page.request, userId, 2000)
   expect(expected.activity.total_updates).toBe(0)
-  await expect(page.getByText('Hasn’t participated in any contests in 2000.')).toBeVisible()
+  await expect(page.getByText('No contests in 2000.')).toBeVisible()
 })
 
 test('an unknown or malformed profile is not found', async ({ page }) => {

@@ -1,10 +1,10 @@
 import { rootRouteId, useHydrated, useLoaderData, useNavigate, useRouterState } from '@tanstack/react-router'
-import { ActionMenu, Button, EmptyState, Navbar, SiteFooter, SkipLink, appFrame, buttonClassName, cn, navbarStyles, type NavbarItem } from 'paper-ui'
+import { ActionMenu, Button, EmptyState, Navbar, SiteFooter, SkipLink, adoptStoredTheme, appFrame, buttonClassName, chooseTheme, cn, navbarStyles, type NavbarItem, type ThemeName } from 'paper-ui'
 import mark from 'paper-ui/assets/brand/cut-meter.svg?url'
 import reversedMark from 'paper-ui/assets/brand/cut-meter-reversed.svg?url'
 import wordmark from 'paper-ui/assets/brand/wordmark-accent.svg?url'
 import reversedWordmark from 'paper-ui/assets/brand/wordmark-reversed.svg?url'
-import { Fragment, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowRightStartOnRectangleIcon,
@@ -22,30 +22,19 @@ import { useLinks } from '../lib/links'
 import { Announcements } from './Announcements'
 import { renderLink } from './router-link'
 
-const themeKey = 'tadoku-theme'
-
-/** Render in <head> before the body so Paper's [data-theme] is set before first paint. */
-export const themeBootScript = `try{var t=localStorage.getItem('${themeKey}');document.documentElement.dataset.theme=t==='dark'||t==='light'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){}`
-
-type Theme = 'light' | 'dark'
+type Theme = ThemeName
 
 const currentTheme = (): Theme => document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
 
-function setTheme(next: Theme) {
-  document.documentElement.dataset.theme = next
-  try { localStorage.setItem(themeKey, next) } catch { /* Private mode keeps the choice for this page only. */ }
-}
-
-const toggleTheme = () => setTheme(currentTheme() === 'dark' ? 'light' : 'dark')
-
 /** The account menu's appearance item. The menu renders only after hydration, so it reads the theme directly. */
 function useThemeSwitch() {
+  const { accountUrl } = useLoaderData({ from: rootRouteId })
   const [theme, setThemeState] = useState<Theme>(currentTheme)
   const next: Theme = theme === 'dark' ? 'light' : 'dark'
   return {
     label: next === 'dark' ? 'Use dark theme' : 'Use light theme',
     icon: next === 'dark' ? <MoonIcon className={iconClassName('compact')} /> : <SunIcon className={iconClassName('compact')} />,
-    toggle: () => { setTheme(next); setThemeState(next) },
+    toggle: () => { chooseTheme(next, accountUrl); setThemeState(next) },
   }
 }
 
@@ -62,7 +51,11 @@ const mobileButton = cn(mobileLink, 'w-full justify-start')
 const logoutFormId = 'app-logout'
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const { accountUrl } = useLoaderData({ from: rootRouteId })
+  // A choice stored before the shared cookie existed still reaches the account application.
+  useEffect(() => adoptStoredTheme(accountUrl), [accountUrl])
   const currentPath = useRouterState({ select: state => state.location.pathname })
+  const navigating = useRouterState({ select: state => state.status === 'pending' })
   const links = useLinks()
   const { data: viewer } = useQuery(viewerQueryOptions())
   const navigation: NavbarItem[] = [
@@ -87,6 +80,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </>}
           brandHref="/"
           navigation={navigation}
+          isLoading={navigating}
           currentPath={currentPath}
           renderLink={renderLink}
           actions={<div className={accountActions}><AccountActions viewer={viewer} /></div>}
@@ -94,14 +88,16 @@ export function AppShell({ children }: { children: ReactNode }) {
         />
         {viewer && 'userId' in viewer ? <form id={logoutFormId} method="post" action="/logout" hidden /> : null}
       </header>
-      <main id="main-content" className={frame.content()} tabIndex={-1}>
+      <main id="main-content" className={frame.content()} tabIndex={-1} aria-busy={navigating}>
         <Announcements />
         {viewer?.status === 'banned' ? <Suspended /> : children}
       </main>
       <SiteFooter
         brand={<>
-          <img src={reversedMark} width="32" height="32" alt="" />
-          <img src={reversedWordmark} width="126" height="23" alt="" />
+          <img className="block dark:hidden" src={mark} width="32" height="32" alt="" />
+          <img className="hidden dark:block" src={reversedMark} width="32" height="32" alt="" />
+          <img className="block dark:hidden" src={wordmark} width="126" height="23" alt="" />
+          <img className="hidden dark:block" src={reversedWordmark} width="126" height="23" alt="" />
         </>}
         brandHref={links.home}
         brandLabel="Tadoku home"
@@ -113,12 +109,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           { label: 'Twitter', href: 'https://twitter.com/tadoku_app', icon: <TwitterIcon /> },
         ]}
         groups={[
-          { title: 'Get started', links: [
-            { label: 'Home', href: links.home },
-            { label: 'Leaderboard', href: links.leaderboard },
-            { label: 'Contests', href: links.contests },
-            { label: 'Blog', href: links.blog },
-          ] },
           { title: 'Learn', links: [
             { label: 'About Tadoku', href: links.page('about') },
             { label: 'Guide', href: links.guide },
@@ -233,6 +223,7 @@ function AccountMenuOpen({ viewer }: { viewer: SignedIn }) {
 
 function MobileAccount({ viewer, closeMenu }: { viewer: SignedIn; closeMenu: () => void }) {
   const links = useAccountLinks(viewer)
+  const { accountUrl } = useLoaderData({ from: rootRouteId })
   return (
     <section className="mt-3 border-t border-rule-subtle pt-3" aria-label={`${viewer.displayName} account`}>
       <p className="mb-1 mt-0 px-field-x text-sm font-semibold text-muted wrap-anywhere">{viewer.displayName}</p>
@@ -244,14 +235,8 @@ function MobileAccount({ viewer, closeMenu }: { viewer: SignedIn; closeMenu: () 
       {/* Server-rendered, so CSS shows the label for the current theme instead of reading it during render. */}
       <Button
         variant="ghost"
-        className={cn(mobileButton, 'mt-3 border-t border-rule-subtle')}
-        onClick={toggleTheme}
-        leadingIcon={(
-          <>
-            <MoonIcon className={iconClassName('compact', 'dark:hidden')} />
-            <SunIcon className={iconClassName('compact', 'hidden dark:inline')} />
-          </>
-        )}
+        className={mobileButton}
+        onClick={() => chooseTheme(currentTheme() === 'dark' ? 'light' : 'dark', accountUrl)}
       >
         <span className="dark:hidden">Use dark theme</span>
         <span className="hidden dark:inline">Use light theme</span>

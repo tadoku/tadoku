@@ -49,21 +49,27 @@ export function ContestsPage({ view, page }: { view: ContestView; page: number }
       <PageHeader
         className={standingsHeader}
         title="Contests"
-        actions={canCreate ? <Link className={buttonClassName({ variant: 'outline' })} to={links.newContest}><PlusIcon className={iconClassName('compact')} aria-hidden="true" />Create contest</Link> : null}
+        actions={(
+          <>
+            {canCreate ? <Link className={buttonClassName({ variant: 'outline' })} to={links.newContest}><PlusIcon className={iconClassName('compact')} aria-hidden="true" />Create contest</Link> : null}
+          </>
+        )}
       />
       <Tabbar
         className="mt-2"
         label="Contest collections"
         renderLink={renderLink}
-        links={tabs.map(tab => ({
+        links={tabs.filter(tab => viewer?.status !== 'anonymous' || tab.id === 'official' || tab.id === 'community').map(tab => ({
           ...tab,
           href: tab.id === 'joined' ? contestsHref.joined(thisYear()) : contestsHref[tab.id](),
           current: tab.id === collection,
         }))}
       />
-      {view.collection === 'joined' && scope?.kind === 'participant' ? <JoinedYear userId={scope.userId} year={view.year} /> : null}
       {scope ? (
-        <Contests scope={scope} view={view} page={page} />
+        <>
+          <Contests scope={scope} view={view} page={page} canCreate={canCreate} />
+          {view.collection === 'joined' && scope.kind === 'participant' ? <JoinedYear userId={scope.userId} year={view.year} /> : null}
+        </>
       ) : viewer?.status === 'anonymous' ? (
         <SignInPrompt joined={collection === 'joined'} />
       ) : (
@@ -74,7 +80,6 @@ export function ContestsPage({ view, page }: { view: ContestView; page: number }
           actions={<Button variant="outline" loading={viewerQuery.isFetching} onClick={() => void viewerQuery.refetch()}>Try again</Button>}
         />
       )}
-      <p className="mb-0 mt-6 border-t border-rule pt-5 text-metadata text-muted">Contest dates are calendar days in UTC.</p>
     </div>
   )
 }
@@ -85,7 +90,7 @@ function JoinedYear({ userId, year }: { userId: string; year: number }) {
   const current = thisYear()
   return (
     <div className="-ms-3 mt-4">
-      <YearStepper year={year} first={Math.min(since ?? current, current)} current={current} href={contestsHref.joined} label="Year" />
+      <YearStepper compact year={year} first={Math.min(since ?? current, current)} current={current} href={contestsHref.joined} label="Year" />
     </div>
   )
 }
@@ -101,7 +106,7 @@ function SignInPrompt({ joined }: { joined: boolean }) {
   )
 }
 
-function Contests({ scope, view, page }: { scope: ContestListScope; view: ContestView; page: number }) {
+function Contests({ scope, view, page, canCreate }: { scope: ContestListScope; view: ContestView; page: number; canCreate: boolean }) {
   const { data: viewer } = useQuery(viewerQueryOptions())
   const list = useQuery(contestsQuery(scope, page, viewerKey(viewer)))
   // The route loader read the list; its read time decides each contest's phase on the server and after hydration.
@@ -136,13 +141,16 @@ function Contests({ scope, view, page }: { scope: ContestListScope; view: Contes
     ) : view.collection === 'organizing' ? (
       <EmptyState
         headingLevel={2}
-        title="You don’t organize any contests yet"
-        actions={<Link className={buttonClassName({ variant: 'outline' })} to={contestsHref.community()}>Browse community contests</Link>}
+        title="You haven’t organized a contest yet"
+        description={canCreate ? undefined : 'Accounts can create contests from one month after joining. Until then, join one that’s running.'}
+        actions={canCreate
+          ? <Link className={buttonClassName()} to="/contests/new">Create contest</Link>
+          : <Link className={buttonClassName({ variant: 'outline' })} to={contestsHref.community()}>Browse community contests</Link>}
       />
     ) : view.collection === 'joined' ? (
       <EmptyState
         headingLevel={2}
-        title={`You didn’t join any contests in ${view.year}`}
+        title={`You haven’t joined a contest in ${view.year}`}
         actions={<Link className={buttonClassName({ variant: 'outline' })} to={contestsHref.official()}>Browse official contests</Link>}
       />
     ) : <EmptyState headingLevel={2} title="No contests found" description="Contests appear here once they’re scheduled." />
@@ -187,27 +195,31 @@ function ContestRow({ contest, names, today }: {
     : null
   // Official rounds are open to every language and activity in practice, and the Official list never names them.
   const restrictions = names && !contest.official
-  const meta = [registration, restrictions ? languages : null, restrictions ? activities : null].filter(Boolean).join(' · ')
+  const meta = [registration, restrictions ? languages : null, restrictions ? activities : null].filter(Boolean)
 
   return (
     <li className="contest-row border-t border-rule py-4 first:border-t-0">
-      <div className="contest-row__body min-w-0 wrap-anywhere">
+      <div className="contest-row__body min-w-0 wrap-anywhere lg:grid lg:grid-cols-content-end lg:items-baseline lg:gap-x-8">
         <div
-          className={`contest-row__title grid grid-cols-title-tags items-start justify-start gap-x-2 gap-y-1 ${
-            contest.private ? 'max-sm:grid-cols-single' : ''
-          }`}
+          className="contest-row__title grid grid-cols-title-tags items-start justify-start gap-x-2 gap-y-1 max-sm:grid-cols-single"
         >
           <h2 className={typography({ role: 'component', className: 'm-0 font-body text-base leading-150 font-semibold' })}>
-            <a className="text-inherit underline decoration-muted decoration-hairline underline-offset-link" href={links.contest(contest.id)}>
+            <a className="text-inherit no-underline hover:text-link hover:underline max-lg:underline max-lg:decoration-rule max-lg:underline-offset-link" href={links.contest(contest.id)}>
               {contest.title}
             </a>
           </h2>
-          <span className={`contest-row__tags mt-0.5 flex flex-wrap gap-x-1.5 gap-y-1 ${contest.private ? 'max-sm:mt-0' : ''}`}>
+          <span className="contest-row__tags mt-0.5 flex flex-wrap gap-x-1.5 gap-y-1 max-sm:mt-0">
             {round}{contest.private ? <StatusTag>Unlisted</StatusTag> : null}
           </span>
         </div>
-        <p className={rowText}>{formatPeriod(contest)}</p>
-        {meta ? <p className={`contest-row__allows ${rowText}`}>{meta}</p> : null}
+        <div className="lg:text-end">
+          <p className={`${rowText} lg:mt-0`}>{formatPeriod(contest)}</p>
+          {meta.length ? (
+            <p className={`${rowText} mt-0 flex flex-wrap gap-x-3 lg:justify-end`}>
+              {meta.map((part, index) => <span key={index} className="contest-row__allows whitespace-nowrap">{part}</span>)}
+            </p>
+          ) : null}
+        </div>
       </div>
     </li>
   )

@@ -4,6 +4,8 @@ import type { ImmersionContest, ImmersionLog } from 'api-client'
 export const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']
 
 export const numberFormat = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 1 })
+
+
 export const dayAndMonth = (date: string) => `${Number(date.slice(8, 10))} ${months[Number(date.slice(5, 7)) - 1]}`
 export const formatDate = (date: string) => `${dayAndMonth(date)} ${date.slice(0, 4)}`
 export const formatPeriod = ({ contest_start: start, contest_end: end }: Pick<ImmersionContest, 'contest_start' | 'contest_end'>) =>
@@ -20,5 +22,11 @@ export function formatTracking(log: Pick<ImmersionLog, 'amount' | 'unit_name' | 
   return values.join(' · ')
 }
 
-/** A score or point total with at most one decimal, for example `12.5`. */
-export const scoreFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 })
+/** Every score and point total, always to one decimal, for example `12.5` or `12.0`. */
+export const scoreFormat = new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+
+const ordinal = new Intl.PluralRules('en', { type: 'ordinal' })
+const ordinalSuffix: Record<string, string> = { one: 'st', two: 'nd', few: 'rd', other: 'th' }
+
+/** A rank in words, for example `1st`. */
+export const place = (rank: number) => `${rank}${ordinalSuffix[ordinal.select(rank)]}`

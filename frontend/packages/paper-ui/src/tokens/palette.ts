@@ -6,6 +6,7 @@ export const palette = {
   white: '#ffffff',
   /** Neutral greys for both themes: light surfaces and inks, and the dark Graphite theme. */
   graphite: {
+    25: '#f4f4f4',
     50: '#efefef',
     100: '#e8e8e8',
     150: '#e2e2e2',
@@ -14,6 +15,7 @@ export const palette = {
     250: '#c5c5c5',
     300: '#aeaeae',
     350: '#979797',
+    380: '#8a8a8a',
     400: '#808080',
     450: '#777777',
     500: '#5f5f5f',
@@ -54,6 +56,7 @@ export const palette = {
     800: '#35277f',
     850: '#33277c',
     900: '#383646',
+    950: '#261c66',
   },
   red: {
     300: '#d77171',
@@ -66,7 +69,7 @@ export const palette = {
   },
   green: {
     300: '#7fb488',
-    600: '#3f7048',
+    600: '#3a6842',
   },
   amber: {
     300: '#ddb66f',
@@ -75,11 +78,11 @@ export const palette = {
   },
   blue: {
     300: '#70acd0',
-    600: '#2f6f8f',
+    600: '#2a6583',
   },
   teal: {
     300: '#83aaa3',
-    600: '#55716d',
+    600: '#4b6662',
   },
   rose: {
     300: '#c58e9b',

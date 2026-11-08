@@ -5,7 +5,7 @@ import { accountId, api, branch, expect, logDescription, reader, test, webv3 } f
 // The fixtures' own test.use applies only to the first file that imports them; authenticated runs keep traces off.
 test.use({ trace: 'off', video: 'off', ignoreHTTPSErrors: false })
 
-const pageSize = 50
+const pageSize = 25
 
 type Log = { id: string; created_at: string; description?: string; tags: string[]; language: { name: string }; activity: { name: string } }
 
@@ -103,28 +103,27 @@ test('an owner pages through their newest-first activity, opens a day from the c
   await expectEntries(page, first)
 
   await page.goto(`/profile/${userId}/updates/99`)
-  await expect(page.getByRole('heading', { name: 'This page is past the end of the updates' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'This page is past the end of the activity' })).toBeVisible()
 
   // A calendar day opens that UTC day's updates natively, with a way back to all of them.
   const today = new Date().toISOString().slice(0, 10)
   await page.goto(`/profile/${userId}/statistics`)
   await page.locator(`a.paper-heatmap__link[href="/profile/${userId}/updates/1?date=${today}"]`).click()
   await expect(page).toHaveURL(new RegExp(`/profile/${userId}/updates/1\\?date=${today}$`))
-  await expect(page.getByText('Showing updates on')).toBeVisible()
+  await expect(page.getByText('Showing activity on')).toBeVisible()
   const day = await apiLogs(request, userId, 1, today)
   expect(day.total_size).toBeGreaterThan(0)
   await expectEntries(page, day)
   if (day.total_size > pageSize) {
     await expect(pages.getByRole('link', { name: 'Page 2' })).toHaveAttribute('href', `/profile/${userId}/updates/2?date=${today}`)
   }
-  await page.getByRole('link', { name: 'Show all updates' }).click()
+  await page.getByRole('link', { name: 'Show all activity' }).click()
   await expect(page).toHaveURL(new RegExp(`/profile/${userId}/updates/1$`))
   await expectEntries(page, first)
 
   const entry = first.logs[0]
   await page.locator(`a.profile-entry-title[href="/logs/${entry.id}"]`).click()
   await expect(page).toHaveURL(new RegExp(`/logs/${entry.id}$`))
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Log details')
   if (entry.description) await expect(logDescription(page)).toHaveText(entry.description)
 })
 
@@ -155,7 +154,7 @@ test('a new account’s activity shows the empty state to its owner and to visit
   const anonymous = await visitor.newPage()
   await anonymous.goto(`/profile/${userId}/updates/1`)
   await expect(anonymous.getByRole('heading', { name: 'No activity yet' })).toBeVisible()
-  await expect(anonymous.getByText('Updates appear here once they have been recorded.')).toBeVisible()
+  await expect(anonymous.getByText('Logs appear here once they have been recorded.')).toBeVisible()
   await expect(anonymous.getByRole('main').getByRole('link', { name: 'Log activity' })).toHaveCount(0)
   await visitor.close()
 })

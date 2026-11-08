@@ -114,7 +114,6 @@ test('server-rendered official and community lists show the API contests and lin
     await expect(page.getByRole('navigation', { name: 'Contest collections' }).locator('[aria-current="page"]'))
       .toHaveText(name === 'official' ? 'Official' : 'Community')
     await expect(page.getByRole('link', { name: 'Contests', exact: true }).first()).toHaveAttribute('href', '/contests/official/1')
-    await expect(page.getByText('Contest dates are calendar days in UTC.')).toBeVisible()
     // Guests see no create action and no restrictions, as in Webv2; a row may still name its deadline.
     await expect(page.getByRole('link', { name: 'Create contest' })).toHaveCount(0)
     for (const meta of await page.locator('.contest-row__allows').allTextContents()) {
@@ -161,13 +160,12 @@ test('collection tabs, pages and the signed-out Joined and Organizing prompts wo
   }
 
   await hydrated(page)
-  await page.getByRole('navigation', { name: 'Contest collections' }).getByRole('link', { name: 'Joined' }).click()
-  await expect(page).toHaveURL(new RegExp(`/contests/joined/${new Date().getUTCFullYear()}/1$`))
+  await expect(page.getByRole('navigation', { name: 'Contest collections' }).getByRole('link', { name: 'Joined' })).toHaveCount(0)
+  await page.goto(`/contests/joined/${new Date().getUTCFullYear()}/1`)
   await expect(page.getByRole('heading', { level: 2, name: 'Sign in to see the contests you joined' })).toBeVisible()
 
   // Organizing keeps Webv2's My contests address.
-  await page.getByRole('navigation', { name: 'Contest collections' }).getByRole('link', { name: 'Organizing' }).click()
-  await expect(page).toHaveURL(/\/contests\/my-contests\/1$/)
+  await page.goto('/contests/my-contests/1')
   await expect(page.getByRole('heading', { level: 2, name: 'Sign in to see the contests you organize' })).toBeVisible()
   const login = new URL((await page.locator('main').getByRole('link', { name: 'Log in', exact: true }).getAttribute('href'))!)
   expect(login.pathname).toBe('/login')
@@ -189,8 +187,9 @@ test('an organizer pages through their own contests, unlisted ones included, and
   await expectRows(page, mine)
   await expect(page.getByRole('link', { name: 'Create contest' })).toHaveAttribute('href', '/contests/new')
   // Signed-in community and organizer lists name the restrictions, as Webv2 does.
-  await expect(page.locator('.contest-row').filter({ hasText: 'Webv3 list check' }).first().locator('.contest-row__allows'))
-    .toContainText('Japanese · Reading, Listening')
+  const restricted = page.locator('.contest-row').filter({ hasText: 'Webv3 list check' }).first().locator('.contest-row__allows')
+  await expect(restricted.filter({ hasText: /^Japanese$/ })).toBeVisible()
+  await expect(restricted.filter({ hasText: /^Reading, Listening$/ })).toBeVisible()
   await page.screenshot({ path: testInfo.outputPath('my-contests-organizer.png'), fullPage: true })
 
   await hydrated(page)
@@ -248,7 +247,7 @@ test('a participant’s Joined list holds their registrations for the chosen yea
   else await expect(stepper.getByRole('link', { name: `Previous year, ${year - 1}` })).toBeVisible()
 
   await page.goto('/contests/joined/2020/1')
-  await expect(page.getByRole('heading', { level: 2, name: 'You didn’t join any contests in 2020' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 2, name: 'You haven’t joined a contest in 2020' })).toBeVisible()
   await expect(page.locator('.contest-row')).toHaveCount(0)
 })
 

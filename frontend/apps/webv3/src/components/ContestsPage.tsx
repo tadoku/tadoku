@@ -204,10 +204,12 @@ function ContestRow({ contest, names, today }: {
             {round}{contest.private ? <StatusTag>Unlisted</StatusTag> : null}
           </span>
         </div>
-        <p className={`${rowText} flex flex-wrap gap-x-3`}>
-          <span className="whitespace-nowrap">{formatPeriod(contest)}</span>
-          {meta.map((part, index) => <span key={index} className="contest-row__allows whitespace-nowrap">{part}</span>)}
-        </p>
+        <p className={rowText}>{formatPeriod(contest)}</p>
+        {meta.length ? (
+          <p className={`${rowText} mt-0 flex flex-wrap gap-x-3`}>
+            {meta.map((part, index) => <span key={index} className="contest-row__allows whitespace-nowrap">{part}</span>)}
+          </p>
+        ) : null}
       </div>
     </li>
   )

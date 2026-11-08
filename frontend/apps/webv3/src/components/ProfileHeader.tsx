@@ -16,7 +16,7 @@ export function ProfileHeader({ profile, owner, view, overviewHref, exportable =
 
   return (
     <>
-      <header className="mb-8 mt-2 flex flex-wrap items-center justify-between gap-4 max-md:items-start">
+      <header className="mb-5 mt-1 flex flex-wrap items-center justify-between gap-4 max-md:items-start">
         <div className="flex min-w-0 items-center gap-5">
           <div className="min-w-0">
             <h1 className={typography({ role: 'page', className: 'mb-2 mt-0 wrap-anywhere' })}>{profile.display_name}</h1>

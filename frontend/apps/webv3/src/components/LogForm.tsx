@@ -109,7 +109,7 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
                 <details className="group/details" open={detailsOpen} onToggle={event => setDetailsOpen(event.currentTarget.open)}>
                   <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 text-sm font-semibold text-muted [&::-webkit-details-marker]:hidden">
                     <ChevronRightIcon className={`size-2.5 transition-transform duration-quick ${detailsOpen ? 'rotate-quarter' : ''}`} aria-hidden="true" />
-                    Details
+                    Description and tags
                   </summary>
                   <div className={`${formControls} mt-4`}>
                   <form.AppField name="description">

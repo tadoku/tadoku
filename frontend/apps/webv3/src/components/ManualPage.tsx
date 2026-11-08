@@ -7,7 +7,7 @@ const contentTable = [
   '[&_:is(th,td):not(:first-child)]:text-end [&_:is(th,td):last-child]:pe-0 max-sm:[&_:is(th,td)]:pe-3',
 ].join(' ')
 
-/** A unit table: rows on wide screens, one block per language on a phone, so no column is hidden. */
+/** A unit table: rows on wide screens; on a phone, one block per language, with later blocks showing only what differs. */
 export function ManualTable({ id, headers, rows, onPaper = false }: { id: string; headers: string[]; rows: string[][]; onPaper?: boolean }) {
   const merged = rows.reduce<string[][]>((groups, row) => {
     const same = groups.find(group => group.slice(1).join() === row.slice(1).join())
@@ -32,12 +32,12 @@ export function ManualTable({ id, headers, rows, onPaper = false }: { id: string
           <section key={row[0]} aria-label={`${row[0]} units`}>
             <h5 className="m-0 mb-1 text-ui font-semibold">{row[0]}</h5>
             <dl className="m-0">
-              {headers.slice(1).map((header, index) => (
+              {headers.slice(1).map((header, index) => row === merged[0] || row[index + 1] !== merged[0][index + 1] ? (
                 <div key={header} className="flex justify-between gap-4 border-b border-rule py-1.5 text-metadata tabular-nums">
                   <dt>{header}</dt>
                   <dd className="m-0">{row[index + 1]}</dd>
                 </div>
-              ))}
+              ) : null)}
             </dl>
           </section>
         ))}

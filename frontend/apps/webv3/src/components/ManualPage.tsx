@@ -79,7 +79,7 @@ export function ManualPage() {
           {sections.map(([id, label]) => <li key={id} className="break-inside-avoid"><a className="inline-block py-1 text-link no-underline hover:text-link-hover hover:underline" href={`#${id}`}>{label}</a></li>)}
         </ol>
       </details>
-      <div className={prose({ className: 'content-prose' })}>
+      <div className={prose({ className: 'content-prose max-lg:[&_:is(h2,h3,h4)]:scroll-mt-32' })}>
         <h2 id="signing-up-for-a-contest">Signing up for a contest</h2>
         <p>
           A contest is open for registration before it starts. A contest also has

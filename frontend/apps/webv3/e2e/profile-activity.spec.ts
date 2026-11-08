@@ -110,7 +110,7 @@ test('an owner pages through their newest-first activity, opens a day from the c
   await page.goto(`/profile/${userId}/statistics`)
   await page.locator(`a.paper-heatmap__link[href="/profile/${userId}/updates/1?date=${today}"]`).click()
   await expect(page).toHaveURL(new RegExp(`/profile/${userId}/updates/1\\?date=${today}$`))
-  await expect(page.getByText('Showing updates on')).toBeVisible()
+  await expect(page.getByText('Showing activity on')).toBeVisible()
   const day = await apiLogs(request, userId, 1, today)
   expect(day.total_size).toBeGreaterThan(0)
   await expectEntries(page, day)

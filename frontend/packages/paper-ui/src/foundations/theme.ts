@@ -32,12 +32,11 @@ export function chooseTheme(theme: ThemeName, otherOrigin: string) {
   shareTheme(theme, otherOrigin)
 }
 
-/** The theme this browser stored for this application, if any. */
-export function storedTheme(): ThemeName | null {
+/** Shares a theme stored before the cookie existed. An existing cookie is newer, so it is left alone. */
+export function adoptStoredTheme(otherOrigin: string) {
+  if (document.cookie.split('; ').some(cookie => cookie.startsWith(`${key}=`))) return
   try {
     const value = localStorage.getItem(key)
-    return value === 'dark' || value === 'light' ? value : null
-  } catch {
-    return null
-  }
+    if (value === 'dark' || value === 'light') shareTheme(value, otherOrigin)
+  } catch { /* Private mode has nothing stored to share. */ }
 }

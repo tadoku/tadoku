@@ -179,9 +179,10 @@ const columnOf = (rule: ImmersionScoringRule, options: ImmersionLogConfiguration
 /** Points per unit: one row per language, falling back to the all-languages rate, with default rows merged. */
 function rateMatrix(rules: ImmersionScoringRule[], options: ImmersionLogConfigurationOptions) {
   const columns = [...new Set(rules.map(rule => columnOf(rule, options)))]
-  const rateFor = (column: string, language: string | undefined) =>
-    rules.find(rule => columnOf(rule, options) === column && rule.language_code === language)
-    ?? rules.find(rule => columnOf(rule, options) === column && !rule.language_code)
+  // The API scores with the first matching rule by priority, and a rule without a language matches every language.
+  const byPriority = [...rules].sort((left, right) => left.priority - right.priority)
+  const rateFor = (column: string, language: string | undefined) => byPriority.find(rule =>
+    columnOf(rule, options) === column && (!rule.language_code || rule.language_code === language))
   const cell = (column: string, language: string | undefined) => {
     const rule = rateFor(column, language)
     return rule ? rateFormat.format(rule.rate) : '–'

@@ -1,5 +1,5 @@
 import { rootRouteId, useHydrated, useLoaderData, useNavigate, useRouterState } from '@tanstack/react-router'
-import { ActionMenu, Button, EmptyState, Navbar, SiteFooter, SkipLink, appFrame, buttonClassName, chooseTheme, cn, navbarStyles, shareTheme, storedTheme, type NavbarItem, type ThemeName } from 'paper-ui'
+import { ActionMenu, Button, EmptyState, Navbar, SiteFooter, SkipLink, adoptStoredTheme, appFrame, buttonClassName, chooseTheme, cn, navbarStyles, type NavbarItem, type ThemeName } from 'paper-ui'
 import mark from 'paper-ui/assets/brand/cut-meter.svg?url'
 import reversedMark from 'paper-ui/assets/brand/cut-meter-reversed.svg?url'
 import wordmark from 'paper-ui/assets/brand/wordmark-accent.svg?url'
@@ -53,10 +53,7 @@ const logoutFormId = 'app-logout'
 export function AppShell({ children }: { children: ReactNode }) {
   const { accountUrl } = useLoaderData({ from: rootRouteId })
   // A choice stored before the shared cookie existed still reaches the account application.
-  useEffect(() => {
-    const stored = storedTheme()
-    if (stored) shareTheme(stored, accountUrl)
-  }, [accountUrl])
+  useEffect(() => adoptStoredTheme(accountUrl), [accountUrl])
   const currentPath = useRouterState({ select: state => state.location.pathname })
   const navigating = useRouterState({ select: state => state.status === 'pending' })
   const links = useLinks()

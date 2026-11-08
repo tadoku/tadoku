@@ -152,7 +152,7 @@ function RuleTables({ rules, options }: { rules: ImmersionScoringRule[]; options
             {units.map(unit => (
               <RateRows
                 key={unit}
-                title={unit === 'minute' ? 'Per minute' : `Per ${unitName(unit, options).toLowerCase()}`}
+                title={unit === 'minute' ? 'Points per minute' : `Points per ${unitName(unit, options).toLowerCase()}`}
                 rules={bases.filter(rule => (rule.unit_key ?? (rule.score_source === 'duration_minutes' ? 'minute' : '')) === unit)}
                 options={options}
                 rate={rule => rateFormat.format(rule.rate)}

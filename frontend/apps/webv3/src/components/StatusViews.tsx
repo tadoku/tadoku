@@ -24,15 +24,20 @@ export function ErrorView() {
   )
 }
 
+/** A page-shaped placeholder: the destination's title and a few rows with text-shaped blocks. */
 export function PendingView() {
   return (
-    <div role="status" className="grid gap-4 py-2">
+    <div role="status" className="grid gap-5 py-2">
+      <p className="m-0 text-metadata text-muted">Loading…</p>
       <div className="h-8 w-1/3 bg-rule-subtle dark:bg-rule" />
-      <div className="h-4 w-1/2 bg-rule-subtle dark:bg-rule" />
-      <div className="mt-6 grid gap-3">
-        {[0, 1, 2, 3, 4, 5].map(row => <div key={row} className="h-10 border-b border-rule-subtle dark:border-rule" />)}
+      <div className="mt-2 grid max-w-article gap-1">
+        {[0, 1, 2, 3, 4].map(row => (
+          <div key={row} className="grid gap-2 border-b border-rule-subtle py-4 dark:border-rule">
+            <div className="h-4 w-1/2 bg-rule-subtle dark:bg-rule" />
+            <div className="h-3 w-1/3 bg-rule-subtle dark:bg-rule" />
+          </div>
+        ))}
       </div>
-      <p className="m-0 text-metadata text-ink">Loading…</p>
     </div>
   )
 }

@@ -67,8 +67,8 @@ export function ManualPage() {
     <article className="min-w-0 max-w-article">
       <PageHeader title="Manual" />
       <nav aria-label="On this page" className="mb-10 border-y border-rule py-4">
-        <ol className="m-0 grid list-none gap-x-8 gap-y-1.5 p-0 text-ui leading-150 tablet:grid-cols-halves">
-          {sections.map(([id, label]) => <li key={id}><a className="text-link no-underline hover:text-link-hover hover:underline" href={`#${id}`}>{label}</a></li>)}
+        <ol className="m-0 list-none gap-x-8 p-0 text-ui leading-175 tablet:columns-2">
+          {sections.map(([id, label]) => <li key={id} className="break-inside-avoid"><a className="text-link no-underline hover:text-link-hover hover:underline" href={`#${id}`}>{label}</a></li>)}
         </ol>
       </nav>
       <div className={prose({ className: 'content-prose' })}>

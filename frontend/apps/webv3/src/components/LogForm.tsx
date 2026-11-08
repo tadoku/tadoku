@@ -51,6 +51,9 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
   const saveLog = useSaveLog()
   const updateLog = useUpdateLog()
   const [failure, setFailure] = useState<LogFailure | null>(null)
+  // Details stay open on wide screens and while editing; on a phone they fold away behind one tap.
+  const [detailsToggled, setDetailsOpen] = useState<boolean | null>(null)
+  const detailsOpen = detailsToggled ?? (target.kind === 'edit' || !hydrated || matchMedia('(min-width: 64rem)').matches)
   const schema = useMemo(() => logDraftSchema(options), [options])
   const [defaultValues] = useState(() => target.kind === 'edit' ? draftFromLog(options, target.log) : firstDraft(options, target.amount))
   const form = usePaperForm({
@@ -102,13 +105,16 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
                 {/* An edit can't change language or activity; the header states them. */}
                 {editing ? null : <ChoiceFields form={form} options={options} />}
                 <MeasureField form={form} timed={isTimed(options, activityId)} units={units} />
-                <form.AppField name="description">
-                  {field => <field.TextArea label="Description (optional)" placeholder="e.g. One Piece volume 45" />}
-                </form.AppField>
-                <TagsField form={form} viewerId={viewerId} />
-                <div className="empty:hidden">
-                  <TagsSidebar form={form} activityId={activityId} disabled={disabled} compact />
-                </div>
+                <details className={`${formControls} group/details`} open={detailsOpen} onToggle={event => setDetailsOpen(event.currentTarget.open)}>
+                  <summary className="cursor-pointer text-sm font-semibold text-link hover:text-link-hover">Add details</summary>
+                  <form.AppField name="description">
+                    {field => <field.TextArea label="Description (optional)" placeholder="e.g. One Piece volume 45" />}
+                  </form.AppField>
+                  <TagsField form={form} viewerId={viewerId} />
+                  <div className="empty:hidden">
+                    <TagsSidebar form={form} activityId={activityId} disabled={disabled} compact />
+                  </div>
+                </details>
               </fieldset>
               {failure ? <SaveFailure failure={failure} viewerId={viewerId} editing={editing} /> : null}
               <div className={cn(formFooter().root(), 'mx-record-inset mt-0 pb-record-inset')}>
@@ -283,7 +289,7 @@ const ScoreEstimate = withPaperForm({
 
     const score = input !== undefined && data?.ok ? data.data.platform.score : undefined
     return (
-      <p className="log-form__estimate m-0 tabular-nums max-sm:basis-full" aria-live="polite">
+      <p className="log-form__estimate m-0 text-lead tabular-nums max-sm:basis-full" aria-live="polite">
         Estimated score: <strong className="data-pending:font-regular data-pending:text-muted" data-pending={score === undefined ? '' : undefined}>{score === undefined ? '—' : score ? scoreFormat.format(score) : 'N/A'}</strong>
       </p>
     )

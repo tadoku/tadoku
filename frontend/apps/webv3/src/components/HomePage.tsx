@@ -8,7 +8,7 @@ import { Person, Rank, currentRow, personLink } from './StandingsParts'
 import { formatDate, formatPeriod, numberFormat, place, pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
-import { MemberDashboard, MemberYearTotals } from './MemberDashboard'
+import { MemberContests, MemberDashboard, MemberYearTotals } from './MemberDashboard'
 import { viewerQueryOptions, type Viewer } from '../lib/session'
 
 const noMember: Extract<Viewer, { status: 'signed-in' }> = { status: 'signed-in', userId: '', displayName: '', role: 'user' }
@@ -186,6 +186,7 @@ function MemberPromise({ member, data, phase, year, fresh }: {
         </div>
       ) : null}
       <MemberYearTotals viewer={member} year={year} />
+      <MemberContests viewer={member} year={year} />
     </div>
   )
 }

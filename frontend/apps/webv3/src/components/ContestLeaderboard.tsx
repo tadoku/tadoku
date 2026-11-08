@@ -142,6 +142,7 @@ export function ContestFacts({ contest, phase }: { contest: ImmersionContestView
       : contest.owner_user_display_name ?? 'Unknown user'
   return (
     <DescriptionList
+      className="max-tablet:[&>.paper-description-list__item:nth-child(-n+2)]:hidden"
       items={[
         { label: 'Dates', value: formatPeriod(contest) },
         { label: 'Registration', value: phase.registrationOpen ? `Open until ${formatDate(contest.registration_end)}` : 'Closed to new participants' },

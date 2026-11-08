@@ -29,12 +29,9 @@ export function MemberDashboard({ viewer, year, className }: { viewer: SignedIn;
   const recent = useQuery(activityQuery).data
   if (statistics?.status !== 'found') return null
 
-  const { today, activity, contests } = statistics
+  const { today, activity } = statistics
   const fresh = activity.ok && activity.data.total_updates === 0
   const logs = recent?.status === 'found' && recent.logs.ok ? recent.logs.data.logs.slice(0, recentCount) : null
-  const ordered = contests.ok
-    ? [...contests.data.contests].sort((a, b) => Number(a.contest_end < today) - Number(b.contest_end < today)).slice(0, recentCount)
-    : null
 
   return (
     <div className={`grid gap-10 *:min-w-0 ${className ?? ''}`}>
@@ -48,7 +45,7 @@ export function MemberDashboard({ viewer, year, className }: { viewer: SignedIn;
         ) : null}
       </section>}
 
-      <div className={`${band} grid grid-cols-halves gap-x-16 gap-y-8 *:min-w-0 max-lg:grid-cols-single`}>
+      <div className={`${band} *:min-w-0`}>
         {logs ? (
           <section aria-labelledby="home-recent-title">
             <div className={head}>
@@ -70,33 +67,6 @@ export function MemberDashboard({ viewer, year, className }: { viewer: SignedIn;
                 />
               )}
             />
-          </section>
-        ) : null}
-        {ordered ? (
-          <section aria-labelledby="home-contests-title">
-            <div className={head}>
-              <h2 id="home-contests-title" className={headTitle}>Your contests</h2>
-              {ordered.length ? <Link className="text-link hover:text-link-hover" to={contestsHref.joined(year)}>All joined</Link> : null}
-            </div>
-            {ordered.length ? (
-              <ul className={rows.root()}>
-                {ordered.map(contest => (
-                  <li key={contest.id} className={rows.item()}>
-                    <a className={entryLink({ className: 'profile-entry-title' })} href={links.contestProfile(contest.id, viewer.userId)}>{contest.title}</a>
-                    <span className={metaLine({ className: 'profile-entry-meta' })}>
-                      {[formatPeriod(contest), ...contest.languages, contest.contest_end < today ? 'Ended' : null].filter(Boolean).join(' · ')}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyState
-                variant="plain"
-                headingLevel={3}
-                title={`You haven’t joined a contest in ${year}`}
-                actions={<Link className="text-link hover:text-link-hover" to={contestsHref.official()}>Browse official contests</Link>}
-              />
-            )}
           </section>
         ) : null}
       </div>
@@ -124,6 +94,49 @@ export function MemberYearTotals({ viewer, year }: { viewer: SignedIn; year: num
           ...(todayScore === undefined ? [] : [{ label: 'Today', value: scoreFormat.format(todayScore), unit: pointsUnit(todayScore) }]),
         ]}
       />
+    </section>
+  )
+}
+
+/** This year's contests, unfinished ones first, for the home hero's left column. */
+export function MemberContests({ viewer, year }: { viewer: SignedIn; year: number }) {
+  const links = useLinks()
+  const [statisticsQuery] = memberDashboardQueries(viewer, year)
+  const statistics = useQuery(statisticsQuery).data
+  if (statistics?.status !== 'found') return null
+
+  const { today, contests } = statistics
+  const ordered = contests.ok
+    ? [...contests.data.contests].sort((a, b) => Number(a.contest_end < today) - Number(b.contest_end < today)).slice(0, recentCount)
+    : null
+  if (!ordered) return null
+
+  return (
+    <section aria-labelledby="home-contests-title" className="mt-8">
+
+            <div className={head}>
+              <h2 id="home-contests-title" className={headTitle}>Your contests</h2>
+              {ordered.length ? <Link className="text-link hover:text-link-hover" to={contestsHref.joined(year)}>All joined</Link> : null}
+            </div>
+            {ordered.length ? (
+              <ul className={rows.root()}>
+                {ordered.map(contest => (
+                  <li key={contest.id} className={rows.item()}>
+                    <a className={entryLink({ className: 'profile-entry-title' })} href={links.contestProfile(contest.id, viewer.userId)}>{contest.title}</a>
+                    <span className={metaLine({ className: 'profile-entry-meta' })}>
+                      {[formatPeriod(contest), ...contest.languages, contest.contest_end < today ? 'Ended' : null].filter(Boolean).join(' · ')}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState
+                variant="plain"
+                headingLevel={3}
+                title={`You haven’t joined a contest in ${year}`}
+                actions={<Link className="text-link hover:text-link-hover" to={contestsHref.official()}>Browse official contests</Link>}
+              />
+            )}
     </section>
   )
 }

@@ -92,7 +92,7 @@ export const choice = tv({
           "border border-field-edge bg-field px-4 py-3 max-sm:grid-cols-icon-content",
           "not-has-disabled:hover:bg-neutral-hover",
           "has-checked:border-link has-checked:bg-action-soft has-checked:shadow-underline-link",
-          "has-disabled:cursor-default has-disabled:border-rule",
+          "has-disabled:cursor-default has-disabled:border-rule has-disabled:bg-paper",
         ],
         input: "m-0",
       },

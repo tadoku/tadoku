@@ -45,6 +45,8 @@ const color = {
   'rule-subtle': themed(p.graphite[200], p.graphite[700]),
   rule: themed(p.graphite[300], p.graphite[600]),
   'rule-strong': themed(p.graphite[650], p.graphite[500]),
+  /** The edge of a surface lifted by a hard offset shadow: the shadow carries the weight, so the line can be soft. */
+  'surface-edge': themed(p.graphite[400], p.graphite[500]),
   /** Field edges identify the control, so they hold 3:1 against the field and the surface around it. */
   'field-edge': themed(p.graphite[380], p.graphite[450]),
   'field-edge-hover': themed(p.graphite[550], p.graphite[350]),

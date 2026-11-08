@@ -33,8 +33,8 @@ export const surface = tv({
     tone: { paper: 'bg-paper', raised: 'bg-raised', overlay: 'bg-overlay' },
     elevation: {
       flat: 'shadow-none',
-      floating: 'border-rule-strong shadow-floating',
-      showcase: 'border-rule-strong shadow-showcase',
+      floating: 'border-surface-edge shadow-floating',
+      showcase: 'border-surface-edge shadow-showcase',
     },
   },
   defaultVariants: { tone: 'paper', elevation: 'flat' },

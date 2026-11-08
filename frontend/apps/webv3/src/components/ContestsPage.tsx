@@ -49,7 +49,12 @@ export function ContestsPage({ view, page }: { view: ContestView; page: number }
       <PageHeader
         className={standingsHeader}
         title="Contests"
-        actions={canCreate ? <Link className={buttonClassName({ variant: 'outline' })} to={links.newContest}><PlusIcon className={iconClassName('compact')} aria-hidden="true" />Create contest</Link> : null}
+        actions={(
+          <>
+            {view.collection === 'joined' && scope?.kind === 'participant' ? <JoinedYear userId={scope.userId} year={view.year} /> : null}
+            {canCreate ? <Link className={buttonClassName({ variant: 'outline' })} to={links.newContest}><PlusIcon className={iconClassName('compact')} aria-hidden="true" />Create contest</Link> : null}
+          </>
+        )}
       />
       <Tabbar
         className="mt-2"
@@ -61,7 +66,6 @@ export function ContestsPage({ view, page }: { view: ContestView; page: number }
           current: tab.id === collection,
         }))}
       />
-      {view.collection === 'joined' && scope?.kind === 'participant' ? <JoinedYear userId={scope.userId} year={view.year} /> : null}
       {scope ? (
         <Contests scope={scope} view={view} page={page} canCreate={canCreate} />
       ) : viewer?.status === 'anonymous' ? (
@@ -82,11 +86,7 @@ export function ContestsPage({ view, page }: { view: ContestView; page: number }
 function JoinedYear({ userId, year }: { userId: string; year: number }) {
   const since = useQuery(accountSinceQuery(userId)).data
   const current = thisYear()
-  return (
-    <div className="-ms-3 mt-4">
-      <YearStepper year={year} first={Math.min(since ?? current, current)} current={current} href={contestsHref.joined} label="Year" />
-    </div>
-  )
+  return <YearStepper year={year} first={Math.min(since ?? current, current)} current={current} href={contestsHref.joined} label="Year" />
 }
 
 function SignInPrompt({ joined }: { joined: boolean }) {

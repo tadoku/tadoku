@@ -97,7 +97,7 @@ export const tabbar = tv({
     list: "paper-tabbar__list m-0 list-none p-0",
     link: [
       "paper-tabbar__link relative flex min-h-control cursor-pointer items-center gap-inline whitespace-nowrap",
-      "border-0 bg-transparent px-field-x font-semibold text-muted no-underline",
+      "border-0 bg-transparent px-field-x font-semibold text-muted no-underline max-sm:px-2",
       "not-aria-disabled:not-aria-[current=page]:hover:bg-tab-hover",
       "not-aria-disabled:not-aria-[current=page]:hover:text-ink",
       "aria-[current=page]:text-ink aria-disabled:cursor-default aria-disabled:opacity-faded",

@@ -50,7 +50,7 @@ const levelFills = {
 
 function cellClassName(level: string | undefined, future: boolean) {
   const fill = level && level in levelFills ? levelFills[level as keyof typeof levelFills] : "fill-transparent";
-  return slots.cell({ className: future ? "fill-heat-future" : fill });
+  return slots.cell({ className: future ? "fill-transparent stroke-rule-subtle" : fill });
 }
 
 export interface HeatmapChartDatum {

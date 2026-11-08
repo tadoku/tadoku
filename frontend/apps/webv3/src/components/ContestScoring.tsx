@@ -124,7 +124,7 @@ function RuleSetVersion({ ruleSet, options, change }: {
             {ruleSet.active ? <StatusTag tone="success">Active</StatusTag> : null}
           </>
         )}
-        description={ruleSet.mode === 'replace'
+        description={ruleSet.scope === 'platform' ? 'Platform defaults' : ruleSet.mode === 'replace'
           ? 'Replaces platform rules; uncovered inputs score zero'
           : 'Overrides platform rules with a pinned fallback'}
         actions={change && action ? <ConfirmChange change={{ ...change, action }} /> : null}

@@ -42,7 +42,6 @@ function LogDetail() {
 
   const log = result.data
   const owner = viewer?.status === 'signed-in' && viewer.userId === log.user_id
-  const nsfw = log.tags.some(tag => tag.toLowerCase() === 'nsfw')
   const learner = log.user_display_name ?? (owner && viewer?.status === 'signed-in' ? viewer.displayName : undefined)
   return (
     <div>
@@ -50,7 +49,7 @@ function LogDetail() {
         backLink={{ href: links.profileUpdates(log.user_id), label: owner ? 'Your activity' : 'Activity' }}
         renderLink={renderLink}
         className="max-w-record"
-        title={!nsfw && log.description ? log.description : `${log.language.name} ${log.activity.name.toLocaleLowerCase()}`}
+        title={`${log.language.name} ${log.activity.name.toLocaleLowerCase()}`}
         lead={(
           <>
             {log.language.name} · <ActivityName activity={log.activity} />
@@ -68,11 +67,11 @@ function LogDetail() {
               { label: 'Logged', value: formatDate(log.created_at.slice(0, 10)), detail: loggedTime(log.created_at) },
             ]}
           />
-          {(nsfw && log.description) || log.tags.length ? (
+          {log.description || log.tags.length ? (
             <DescriptionList
               className="border-t border-rule pt-6"
               items={[
-                ...(nsfw && log.description ? [{ label: 'Description', value: log.description }] : []),
+                ...(log.description ? [{ label: 'Description', value: log.description }] : []),
                 ...(log.tags.length ? [{ label: 'Tags', value: log.tags.join(', ') }] : []),
               ]}
             />

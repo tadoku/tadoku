@@ -141,7 +141,7 @@ function Contests({ scope, view, page }: { scope: ContestListScope; view: Contes
     ) : view.collection === 'joined' ? (
       <EmptyState
         headingLevel={2}
-        title={`You didn’t join any contests in ${view.year}`}
+        title={`You haven’t joined a contest in ${view.year}`}
         actions={<Link className={buttonClassName({ variant: 'outline' })} to={contestsHref.official()}>Browse official contests</Link>}
       />
     ) : <EmptyState headingLevel={2} title="No contests found" description="Contests appear here once they’re scheduled." />

@@ -52,6 +52,11 @@ const sections = [
   ['frequency-of-submitting-updates', 'Frequency of submitting updates'],
   ['submitting-re-reads', 'Submitting re-reads'],
   ['media', 'Tracking activities and media'],
+  ['units-reading', 'Reading units'],
+  ['units-writing', 'Writing units'],
+  ['units-listening', 'Listening units'],
+  ['units-speaking', 'Speaking units'],
+  ['units-study', 'Study units'],
 ] as const
 
 /** Webv2's code-owned manual, ported as written. CMS pages render through `CmsPage` instead. */

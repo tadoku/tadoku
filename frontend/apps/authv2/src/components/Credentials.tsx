@@ -35,7 +35,7 @@ export function Login({ search }: { readonly search: AccountSearch }) {
 
   return (
     <CardPage
-      title={reauth ? 'Confirm it’s you' : 'Log in'}
+      title={!reauth ? 'Log in' : next?.includes('delete-account') ? 'Confirm account deletion' : 'Confirm it’s you'}
       footer={reauth ? undefined : <>New to Tadoku? <a href={withReturnTo('/register', next)}>Create an account</a></>}
     >
       <form.AppForm>

@@ -27,6 +27,7 @@ import {
   type LogOptions,
 } from '../lib/logs'
 import { useLoginUrl } from '../lib/session'
+import { scoreFormat } from '../lib/format'
 import { TagsSidebar, maxTags } from './TagsSidebar'
 import { formControls } from './form-styles'
 
@@ -102,7 +103,7 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
                 {editing ? null : <ChoiceFields form={form} options={options} />}
                 <MeasureField form={form} timed={isTimed(options, activityId)} units={units} />
                 <form.AppField name="description">
-                  {field => <field.Input label="Description (optional)" placeholder="e.g. One Piece volume 45" />}
+                  {field => <field.TextArea label="Description (optional)" placeholder="e.g. One Piece volume 45" />}
                 </form.AppField>
                 <TagsField form={form} viewerId={viewerId} />
                 <div className="empty:hidden">
@@ -261,7 +262,6 @@ const ChoiceFields = withPaperForm({
   },
 })
 
-const estimateFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 })
 
 /**
  * The API's estimate of the draft's score, requested once the draft is valid and has stopped changing for 300 ms. An
@@ -284,7 +284,7 @@ const ScoreEstimate = withPaperForm({
     const score = input !== undefined && data?.ok ? data.data.platform.score : undefined
     return (
       <p className="log-form__estimate m-0 tabular-nums max-sm:basis-full" aria-live="polite">
-        Estimated score: <strong className="data-pending:font-regular data-pending:text-muted" data-pending={score === undefined ? '' : undefined}>{score === undefined ? '—' : score ? estimateFormat.format(score) : 'N/A'}</strong>
+        Estimated score: <strong className="data-pending:font-regular data-pending:text-muted" data-pending={score === undefined ? '' : undefined}>{score === undefined ? '—' : score ? scoreFormat.format(score) : 'N/A'}</strong>
       </p>
     )
   },

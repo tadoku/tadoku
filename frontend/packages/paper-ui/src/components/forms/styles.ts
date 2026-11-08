@@ -72,7 +72,7 @@ export const choice = tv({
       "focus-visible:outline-ring focus-visible:outline-offset-ring focus-visible:inset-ring",
       "forced-colors:focus-visible:outline-halo forced-colors:focus-visible:outline-forced-highlight",
       "forced-colors:focus-visible:outline-offset-0",
-      "[&[type=checkbox]:disabled]:rounded-chip [&[type=checkbox]:disabled]:outline",
+      "[&[type=checkbox]:disabled]:rounded-chip [&[type=checkbox]:disabled]:opacity-faded [&[type=checkbox]:disabled]:outline",
       "[&[type=checkbox]:disabled]:outline-checkbox-disabled-edge [&[type=checkbox]:disabled]:-outline-offset-px",
     ],
     text: "peer-disabled:cursor-default peer-disabled:text-muted",

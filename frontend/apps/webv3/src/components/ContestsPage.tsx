@@ -191,7 +191,7 @@ function ContestRow({ contest, names, today }: {
 
   return (
     <li className="contest-row border-t border-rule py-4 first:border-t-0">
-      <div className="contest-row__body min-w-0 wrap-anywhere">
+      <div className="contest-row__body min-w-0 wrap-anywhere md:grid md:grid-cols-content-end md:items-baseline md:gap-x-8">
         <div
           className="contest-row__title grid grid-cols-title-tags items-start justify-start gap-x-2 gap-y-1 max-sm:grid-cols-single"
         >
@@ -204,12 +204,14 @@ function ContestRow({ contest, names, today }: {
             {round}{contest.private ? <StatusTag>Unlisted</StatusTag> : null}
           </span>
         </div>
-        <p className={rowText}>{formatPeriod(contest)}</p>
-        {meta.length ? (
-          <p className={`${rowText} mt-0 flex flex-wrap gap-x-3`}>
-            {meta.map((part, index) => <span key={index} className="contest-row__allows whitespace-nowrap">{part}</span>)}
-          </p>
-        ) : null}
+        <div className="md:text-end">
+          <p className={`${rowText} md:mt-0`}>{formatPeriod(contest)}</p>
+          {meta.length ? (
+            <p className={`${rowText} mt-0 flex flex-wrap gap-x-3 md:justify-end`}>
+              {meta.map((part, index) => <span key={index} className="contest-row__allows whitespace-nowrap">{part}</span>)}
+            </p>
+          ) : null}
+        </div>
       </div>
     </li>
   )

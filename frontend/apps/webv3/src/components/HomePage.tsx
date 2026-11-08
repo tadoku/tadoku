@@ -102,7 +102,7 @@ export function HomePage() {
             </div>
           )}
 
-        <Surface as="section" className={`min-w-0 p-0 ${member ? 'max-tablet:order-last' : ''}`} aria-labelledby="home-board-title">
+        <Surface as="section" elevation="showcase" className={`me-1.25 min-w-0 p-0 ${member ? 'max-tablet:order-last' : ''}`} aria-labelledby="home-board-title">
           <ContestBoard data={data} phase={phase} today={today} retrying={isFetching} retry={() => void refetch()} />
         </Surface>
         {member ? <MemberDashboard viewer={member} year={year} className="col-span-full" /> : null}
@@ -304,7 +304,7 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
         rows={rows}
         getRowKey={row => row.user_id}
         tableClassName={cardTable}
-        getRowProps={row => (row.user_id === viewerId ? { 'aria-current': 'true', className: `${currentRow} ${row === you ? 'border-t-edge border-rule-strong' : ''}` } : {})}
+        getRowProps={row => (row.user_id === viewerId ? { 'aria-current': 'true', className: currentRow } : {})}
       />
     ) : (
       <EmptyState

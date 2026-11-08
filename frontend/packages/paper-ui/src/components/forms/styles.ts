@@ -3,6 +3,7 @@ import { tv } from "../../foundations/variants";
 /** A labelled field: label, control, hint and error. */
 export const field = tv({
   slots: {
+    required: "paper-field__required ms-1 text-danger",
     root: "paper-field grid w-full min-w-0 content-start gap-1.4",
     label: "paper-field__label text-label leading-label font-semibold text-ink",
     hint: "paper-field__hint m-0 text-metadata leading-metadata text-muted",
@@ -23,16 +24,15 @@ export const control = tv({
     "font-body text-body leading-125 text-ink",
     "[&::-webkit-datetime-edit-fields-wrapper]:p-0 placeholder:text-muted placeholder:opacity-full",
     "focus-visible:relative focus-visible:z-lift focus-visible:border-focus",
-    "focus-visible:outline-halo focus-visible:outline-focus-halo focus-visible:outline-offset-ring",
+    "focus-visible:outline-halo focus-visible:outline-focus-halo focus-visible:outline-offset-0",
     "forced-colors:focus-visible:border-b-forced-highlight forced-colors:focus-visible:outline-forced-highlight",
     "disabled:cursor-default disabled:border-rule disabled:bg-paper disabled:text-muted disabled:placeholder:opacity-faded",
-    "[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
   ],
   variants: {
     kind: {
       input: "",
       textarea: "paper-textarea min-h-textarea resize-y leading-body",
-      select: "paper-select appearance-none pe-select-end has-[option[value='']:checked]:text-muted",
+      select: "paper-select appearance-none pe-select-end",
     },
     interactive: { true: "not-disabled:hover:border-field-edge-hover" },
     readOnly: { true: "border-b-rule bg-raised" },
@@ -117,7 +117,7 @@ export const segment = tv({
       "text-body leading-125 font-semibold text-ink",
       "not-has-disabled:not-has-checked:hover:border-field-edge-hover not-has-disabled:not-has-checked:hover:bg-neutral-hover",
       "has-checked:z-lift has-checked:border-link has-checked:bg-action-soft",
-      "has-focus-visible:z-lift-2 has-focus-visible:outline-halo has-focus-visible:outline-offset-ring",
+      "has-focus-visible:z-lift-2 has-focus-visible:outline-halo has-focus-visible:outline-offset-0",
       "has-disabled:cursor-default has-disabled:border-rule has-disabled:bg-paper has-disabled:text-muted",
       "forced-colors:border-forced-ink forced-colors:bg-forced-canvas forced-colors:text-forced-ink",
       "forced-colors:forced-color-adjust-none",
@@ -153,7 +153,7 @@ export const radioCard = tv({
     root: [
       "paper-radio-card grid cursor-pointer grid-cols-mark-label gap-3 border border-field-edge bg-field p-3.4",
       "has-checked:border-b-edge has-checked:border-link",
-      "has-focus-visible:relative has-focus-visible:z-lift has-focus-visible:outline-halo has-focus-visible:outline-offset-ring",
+      "has-focus-visible:relative has-focus-visible:z-lift has-focus-visible:outline-halo has-focus-visible:outline-offset-0",
       "has-disabled:cursor-default has-disabled:border-rule has-disabled:bg-paper has-disabled:text-muted",
       "forced-colors:has-focus-visible:border-b-forced-highlight forced-colors:has-focus-visible:outline-forced-highlight",
     ],
@@ -176,22 +176,24 @@ export const compoundField = tv({
     root: [
       "paper-compound-field grid min-h-control grid-cols-content-end border border-field-edge bg-field",
       "not-has-disabled:hover:border-field-edge-hover has-disabled:border-rule has-disabled:bg-paper",
+      "has-focus-visible:outline-halo has-focus-visible:outline-offset-0",
       "forced-colors:border-forced-ink forced-colors:bg-forced-canvas",
+      "forced-colors:has-focus-visible:outline-forced-highlight",
     ],
-    input: "min-h-compound-input border-0 bg-transparent",
+    input: "min-h-compound-input border-0 bg-transparent focus-visible:outline-none",
     unit: [
       "paper-compound-field__unit h-compound-unit w-auto min-w-unit-select border-s border-rule",
       "forced-colors:border-s-forced-ink",
     ],
-    select: "h-full min-h-0 border-0 bg-transparent",
+    select: "h-full min-h-0 border-0 bg-transparent focus-visible:bg-neutral-hover focus-visible:outline-none",
   },
   variants: {
     invalid: {
       true: {
-        root: "border-danger forced-colors:border-forced-mark",
+        root: "border-danger has-focus-visible:border-danger has-focus-visible:outline-danger-halo forced-colors:border-forced-mark",
       },
       false: {
-        root: "",
+        root: "has-focus-visible:border-focus has-focus-visible:outline-focus-halo",
       },
     },
   },
@@ -260,10 +262,10 @@ export const combobox = tv({
       "border border-field-edge bg-field font-body text-body leading-125",
       "has-[input:focus-visible]:z-lift",
       "has-[input:focus-visible]:outline-halo",
-      "has-[input:focus-visible]:outline-offset-ring",
+      "has-[input:focus-visible]:outline-offset-0",
       "has-[>button:focus-visible]:z-lift",
       "has-[>button:focus-visible]:outline-halo",
-      "has-[>button:focus-visible]:outline-offset-ring",
+      "has-[>button:focus-visible]:outline-offset-0",
       "forced-colors:has-[input:focus-visible]:border-b-forced-highlight",
       "forced-colors:has-[input:focus-visible]:outline-forced-highlight",
       "forced-colors:has-[>button:focus-visible]:border-b-forced-highlight",

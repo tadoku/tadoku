@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useStore } from '@tanstack/react-form'
 import { Link, useHydrated, useNavigate } from '@tanstack/react-router'
-import { Button, buttonClassName, cn, formFooter, type Option, type OptionGroup, PageHeader, Surface, usePaperForm, withPaperForm } from 'paper-ui'
+import { Button, cn, formFooter, type Option, type OptionGroup, PageHeader, Surface, usePaperForm, withPaperForm } from 'paper-ui'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   draftFromLog,
@@ -27,8 +27,6 @@ import {
   type LogOptions,
 } from '../lib/logs'
 import { useLoginUrl } from '../lib/session'
-import { scoreFormat } from '../lib/format'
-import { ChevronRightIcon } from 'paper-ui/icons'
 import { TagsSidebar, maxTags } from './TagsSidebar'
 import { formControls } from './form-styles'
 
@@ -52,9 +50,6 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
   const saveLog = useSaveLog()
   const updateLog = useUpdateLog()
   const [failure, setFailure] = useState<LogFailure | null>(null)
-  // Details stay open on wide screens and while editing; on a phone they fold away behind one tap.
-  const [detailsToggled, setDetailsOpen] = useState<boolean | null>(null)
-  const detailsOpen = detailsToggled ?? (target.kind === 'edit' || !hydrated || matchMedia('(min-width: 64rem)').matches)
   const schema = useMemo(() => logDraftSchema(options), [options])
   const [defaultValues] = useState(() => target.kind === 'edit' ? draftFromLog(options, target.log) : firstDraft(options, target.amount))
   const form = usePaperForm({
@@ -99,43 +94,38 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
         <PageHeader title="Log activity" />
       )}
       <form.AppForm>
-        <div className="min-w-0">
+        <div className="grid min-w-0 items-start gap-6 lg:grid-cols-log lg:gap-12">
           <form.Form className="grid min-w-0 max-w-panel gap-4" aria-busy={pending}>
             <Surface className={card}>
               <fieldset className={`${formControls} p-record-inset`} disabled={disabled}>
                 {/* An edit can't change language or activity; the header states them. */}
                 {editing ? null : <ChoiceFields form={form} options={options} />}
                 <MeasureField form={form} timed={isTimed(options, activityId)} units={units} />
-                <details className="group/details" open={detailsOpen} onToggle={event => setDetailsOpen(event.currentTarget.open)}>
-                  <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 text-sm font-semibold text-muted [&::-webkit-details-marker]:hidden">
-                    <ChevronRightIcon className={`size-2.5 transition-transform duration-quick ${detailsOpen ? 'rotate-quarter' : ''}`} aria-hidden="true" />
-                    Description, tags and scoring
-                  </summary>
-                  <div className={`${formControls} mt-4`}>
-                  <form.AppField name="description">
-                    {field => <field.TextArea label="Description (optional)" placeholder="e.g. One Piece volume 45" />}
-                  </form.AppField>
-                  <TagsField form={form} viewerId={viewerId} />
-                  <div className="empty:hidden">
-                    <TagsSidebar form={form} activityId={activityId} disabled={disabled} compact />
-                  </div>
-                  </div>
-                </details>
+                <form.AppField name="description">
+                  {field => <field.Input label="Description (optional)" placeholder="e.g. One Piece volume 45" />}
+                </form.AppField>
+                <TagsField form={form} viewerId={viewerId} />
+                <div className="empty:hidden lg:hidden">
+                  <TagsSidebar form={form} activityId={activityId} disabled={disabled} compact />
+                </div>
               </fieldset>
               {failure ? <SaveFailure failure={failure} viewerId={viewerId} editing={editing} /> : null}
               <div className={cn(formFooter().root(), 'mx-record-inset mt-0 pb-record-inset')}>
                 <div className={formFooter().actions()}>
-                  {editing
-                    ? <Link className={buttonClassName({ variant: 'ghost' })} to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
-                    : <Link className={buttonClassName({ variant: 'ghost' })} to="/">Cancel</Link>}
                   <Button type="submit" disabled={disabled} loading={pending} loadingLabel="Saving">
                     {editing ? 'Save' : 'Log activity'}
                   </Button>
+                  {editing
+                    ? <Link className="text-link hover:text-link-hover" to="/logs/$logId" params={{ logId: editing.id }}>Cancel</Link>
+                    : <Link className="text-link hover:text-link-hover" to="/">Cancel</Link>}
                 </div>
                 <ScoreEstimate form={form} options={options} />
               </div>
             </Surface>
           </form.Form>
+          <aside className="hidden lg:sticky lg:top-6 lg:block lg:min-w-0 lg:pt-1" aria-label="Suggested tags">
+            <TagsSidebar form={form} activityId={activityId} disabled={disabled} compact={false} />
+          </aside>
         </div>
       </form.AppForm>
     </div>
@@ -246,7 +236,7 @@ const ChoiceFields = withPaperForm({
           name="languageCode"
           listeners={{ onChange: ({ value }) => selectDependents(value, form.getFieldValue('activityId')) }}
         >
-          {field => <field.Select label="Language" placeholder="Choose a language" options={[]} groups={languageGroups(options)} />}
+          {field => <field.Select label="Language" options={[]} groups={languageGroups(options)} />}
         </form.AppField>
         <form.AppField
           name="activityId"
@@ -274,6 +264,7 @@ const ChoiceFields = withPaperForm({
   },
 })
 
+const estimateFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 })
 
 /**
  * The API's estimate of the draft's score, requested once the draft is valid and has stopped changing for 300 ms. An
@@ -295,8 +286,8 @@ const ScoreEstimate = withPaperForm({
 
     const score = input !== undefined && data?.ok ? data.data.platform.score : undefined
     return (
-      <p className="log-form__estimate m-0 text-lead tabular-nums max-sm:basis-full" aria-live="polite">
-        Estimated score: <strong className="data-pending:font-regular data-pending:text-muted" data-pending={score === undefined ? '' : undefined}>{score === undefined ? '—' : score ? scoreFormat.format(score) : 'N/A'}</strong>
+      <p className="log-form__estimate m-0 tabular-nums max-sm:basis-full" aria-live="polite">
+        Estimated score: <strong className="data-pending:font-regular data-pending:text-muted" data-pending={score === undefined ? '' : undefined}>{score === undefined ? '—' : score ? estimateFormat.format(score) : 'N/A'}</strong>
       </p>
     )
   },

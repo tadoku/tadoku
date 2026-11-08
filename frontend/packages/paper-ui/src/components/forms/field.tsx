@@ -39,12 +39,14 @@ export function FieldFrame({
   label,
   hint,
   error,
+  required,
   children,
 }: {
   readonly id: string;
   readonly label: string;
   readonly hint?: string;
   readonly error?: string;
+  readonly required?: boolean;
   readonly children: ReactNode;
 }) {
   const slots = fieldStyles({ invalid: Boolean(error) });
@@ -52,6 +54,7 @@ export function FieldFrame({
     <div className={slots.root()}>
       <label className={slots.label()} htmlFor={id} id={`${id}-label`}>
         {label}
+        {required ? <span className={slots.required()} aria-hidden="true">*</span> : null}
       </label>
       {children}
       {hint ? <p className={slots.hint()} id={`${id}-hint`}>{hint}</p> : null}

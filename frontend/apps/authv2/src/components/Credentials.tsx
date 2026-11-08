@@ -14,7 +14,7 @@ function SignedInNotice() {
   const { session } = useIdentity()
   if (!session.account) return null
   return (
-    <Flash variant="information" icon={next?.includes('delete-account') ? <ExclamationTriangleIcon className={iconClassName()} /> : <InformationCircleIcon className={iconClassName()} />}>
+    <Flash variant="information" icon={<InformationCircleIcon className={iconClassName()} />}>
       You’re logged in as {session.account.display_name}. <a href="/">Go to your account</a>
     </Flash>
   )
@@ -41,7 +41,7 @@ export function Login({ search }: { readonly search: AccountSearch }) {
       <form.AppForm>
         <form.Form {...formProps} className={accountForm}>
           {reauth ? (
-            <Flash variant={next?.includes('delete-account') ? 'danger' : 'information'} icon={<InformationCircleIcon className={iconClassName()} />}>
+            <Flash variant={next?.includes('delete-account') ? 'danger' : 'information'} icon={next?.includes('delete-account') ? <ExclamationTriangleIcon className={iconClassName()} /> : <InformationCircleIcon className={iconClassName()} />}>
               Enter your password to continue.{next?.includes('delete-account') ? ' Deleting your account can’t be undone.' : ''}
             </Flash>
           ) : <SignedInNotice />}

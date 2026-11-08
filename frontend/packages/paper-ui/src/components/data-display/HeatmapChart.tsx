@@ -50,7 +50,7 @@ const levelFills = {
 
 function cellClassName(level: string | undefined, future: boolean) {
   const fill = level && level in levelFills ? levelFills[level as keyof typeof levelFills] : "fill-transparent";
-  return slots.cell({ className: future ? "fill-transparent stroke-rule-subtle" : fill });
+  return slots.cell({ className: future ? "fill-heat-future" : fill });
 }
 
 export interface HeatmapChartDatum {
@@ -151,7 +151,6 @@ export function HeatmapChart({ id, data, year, getHref, today, surface = "paper"
     if (!shouldRender) return undefined;
 
     lastMonth += 1;
-    if (today && column.find((cell): cell is CalendarCell => cell !== undefined)!.date.toISODate()! > today) return undefined;
     return DateTime.fromObject({ month: lastMonth }).toFormat("LLL");
   });
 
@@ -240,6 +239,14 @@ export function HeatmapChart({ id, data, year, getHref, today, surface = "paper"
             {label}
           </span>
         ))}
+        {today && today < end.toISODate()! ? (
+          <span className={slots.legendItem()}>
+            <svg width={CELL_WIDTH} height={CELL_HEIGHT} aria-hidden="true">
+              <rect width={CELL_WIDTH} height={CELL_HEIGHT} className={cellClassName(undefined, true)} shapeRendering="crispEdges" data-future="" />
+            </svg>
+            Not yet
+          </span>
+        ) : null}
       </p>
     </>
   );

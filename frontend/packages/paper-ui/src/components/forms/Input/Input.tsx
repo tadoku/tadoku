@@ -37,6 +37,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     <div className={slots.root({ className })}>
       <label className={slots.label()} htmlFor={id}>
         {label}
+        {required ? (
+          <span className={slots.required()} aria-hidden="true">
+            *
+          </span>
+        ) : null}
       </label>
       <input
         {...props}

@@ -71,8 +71,8 @@ const color = {
 
   focus: themed(p.violet[600], p.violet[300]),
   'focus-offset': 'var(--color-canvas)',
-  'focus-halo': 'var(--color-focus)',
-  'danger-halo': 'var(--color-danger)',
+  'focus-halo': mix('focus', 12),
+  'danger-halo': mix('danger', 22),
   shadow: themed(p.shade.ink, p.shade.violet),
 
   'chart-1': themed(p.violet[600], p.violet[350]),
@@ -93,7 +93,7 @@ const color = {
   'activity-study': 'var(--color-chart-4)',
   'activity-other': 'var(--color-muted)',
 
-  'heat-future': 'transparent',
+  'heat-future': themed(p.graphite[150], p.graphite[800]),
   'heat-0': themed(p.graphite[200], p.graphite[650]),
   'heat-1': themed(p.violet[350], p.violet[550]),
   'heat-2': themed(p.violet[525], p.violet[400]),
@@ -348,7 +348,7 @@ const borderWidth = {
   bar: '4px',
 } as const
 
-const outlineWidth = { ring: '2px', halo: '2px' } as const
+const outlineWidth = { ring: '2px', halo: '3px' } as const
 const outlineOffset = { 0: '0', px: '1px', ring: '2px' } as const
 const radius = { chip: '2px', pill: '999px' } as const
 const textDecorationThickness = { hairline: '1px', hover: '2px' } as const
@@ -360,7 +360,6 @@ const shadow = {
   'underline-link': 'inset 0 -1px 0 var(--color-link)',
   'current-bar': 'inset 0 -3px 0 var(--color-link)',
   'current-bar-start': 'inset 3px 0 0 var(--color-link)',
-  'viewer-start': 'inset 3px 0 0 var(--color-ink)',
   'rule-bottom': 'inset 0 -1px 0 var(--color-rule)',
   'rule-start': 'inset 1px 0 0 var(--color-rule)',
   'rail-focus': 'inset 3px 0 0 var(--color-focus)',

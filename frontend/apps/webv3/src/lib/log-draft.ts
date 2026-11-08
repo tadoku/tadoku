@@ -103,7 +103,7 @@ export type LastLogged = { languageCode: string | null; activityId: string | nul
 export function firstDraft(options: LogOptions, amount = Number.NaN, last?: LastLogged): LogDraft {
   const { languages, activities, user_language_codes: ownLanguages = [] } = options.configuration
   const offered = (code: string | null | undefined) => languages.some(language => language.code === code)
-  const languageCode = (offered(last?.languageCode) ? last?.languageCode : ownLanguages.find(offered)) ?? ''
+  const languageCode = (offered(last?.languageCode) ? last?.languageCode : ownLanguages.find(offered)) ?? languages[0].code
   const remembered = activities.find(activity => String(activity.id) === last?.activityId)
   const activityId = String((remembered ?? activities[0]).id)
   const timed = isTimed(options, activityId)

@@ -4,7 +4,7 @@ import { normalizeTag, parseTags, type LogDraft } from '../lib/log-draft'
 import { CheckIcon, ChevronRightIcon } from 'paper-ui/icons'
 
 const tagButton = [
-  'min-h-9 cursor-pointer border border-field-edge bg-field px-2.5 py-1 text-fine text-ink max-lg:min-h-target',
+  'min-h-8 cursor-pointer border border-field-edge bg-field px-2.5 py-1 text-fine text-ink',
   'not-disabled:hover:border-field-edge-hover not-disabled:hover:bg-neutral-hover focus-visible:outline-ring focus-visible:outline-focus',
   'focus-visible:outline-offset-ring disabled:cursor-default disabled:opacity-faded',
 ].join(' ')
@@ -12,17 +12,6 @@ const tagButton = [
 type SuggestedTag = { tag: string; modifier?: true }
 
 // Webv2's per-activity lists, by activity ID. Modifier tags change the score.
-const modifierMeaning: Record<string, string> = {
-  manga: 'Manga and comic pages score less than novel pages.',
-  comic: 'Manga and comic pages score less than novel pages.',
-  two_column: 'Two-column pages score more than single-column pages.',
-  dense: 'Dense material scores more per minute.',
-}
-
-/** What the activity's score modifiers do, one sentence each. */
-const modifierHelp = (suggested: SuggestedTag[]) =>
-  [...new Set(suggested.filter(item => item.modifier).map(item => modifierMeaning[item.tag]).filter(Boolean))].join(' ')
-
 const activityTags: Partial<Record<string, SuggestedTag[]>> = {
   // Reading
   1: [
@@ -104,7 +93,7 @@ export const TagsSidebar = withPaperForm({
     }
     const group = (title: string, items: SuggestedTag[], hideTitle = false) => items.length ? (
       <section aria-label={title}>
-        <h2 className={hideTitle ? 'sr-only' : 'mb-2 mt-0 font-body text-sm leading-150 font-semibold text-ink'}>{title}</h2>
+        <h2 className={hideTitle ? 'sr-only' : 'mb-2 mt-0 font-body text-sm leading-150 font-semibold text-muted'}>{title}</h2>
         <div className="flex flex-wrap gap-2">
           {items.map(({ tag }) => (
             <button
@@ -126,6 +115,7 @@ export const TagsSidebar = withPaperForm({
     const common = suggested.filter(item => !item.modifier)
     return (
       <div className="grid gap-4">
+        {group('Score modifiers', suggested.filter(item => item.modifier))}
         {compact && common.length ? (
           <details className="group/more">
             <summary
@@ -143,8 +133,6 @@ export const TagsSidebar = withPaperForm({
             {group('Common tags', common, true)}
           </details>
         ) : group('Common tags', common)}
-        {group('Score modifiers', suggested.filter(item => item.modifier))}
-        {modifierHelp(suggested) ? <p className="-mt-2 mb-0 text-metadata text-muted">{modifierHelp(suggested)}</p> : null}
       </div>
     )
   },

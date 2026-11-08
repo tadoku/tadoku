@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router'
 import type { ImmersionContestProfileActivityRow } from 'api-client'
 import { PageHeader, SectionHeading, StatGrid, Table, buttonClassName, type TableColumn } from 'paper-ui'
 import type { ContestProfile as Profile } from '../lib/contest-activity'
-import { formatDate, numberFormat, scoreColumn } from '../lib/format'
+import { formatDate, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { ContestLogs } from './ContestUpdates'
 import { renderLink } from './router-link'
@@ -29,8 +29,8 @@ export function ContestProfile({ profile, page }: { profile: Found; page: number
       <StatGrid
         className="profile-stats mb-8 mt-7"
         stats={[
-          { label: 'Overall score', value: numberFormat.format(total) },
-          ...registration.languages.map(language => ({ label: language.name, value: numberFormat.format(byLanguage.get(language.code) ?? 0) })),
+          { label: 'Overall score', value: scoreFormat.format(total) },
+          ...registration.languages.map(language => ({ label: language.name, value: scoreFormat.format(byLanguage.get(language.code) ?? 0) })),
         ]}
       />
       <section className="mt-8" aria-labelledby="contest-daily-heading">
@@ -68,18 +68,16 @@ function DailyScores({ rows, languages, name }: {
   const ordered = [...days.values()].sort((left, right) => left.date.localeCompare(right.date))
   for (const day of ordered) day.cumulative = running += day.total
 
-  const daily = scoreColumn(ordered.map(day => day.total))
-  const totals = scoreColumn(ordered.map(day => day.cumulative))
   const columns: TableColumn<Day>[] = [
     { id: 'day', header: 'Day', rowHeader: true, cell: day => formatDate(day.date) },
-    { id: 'score', header: 'Score', align: 'end', cell: day => daily(day.total) },
-    { id: 'cumulative', header: 'Running total', align: 'end', cell: day => totals(day.cumulative) },
+    { id: 'score', header: 'Score', align: 'end', cell: day => scoreFormat.format(day.total) },
+    { id: 'cumulative', header: 'Running total', align: 'end', cell: day => scoreFormat.format(day.cumulative) },
     ...(languages.length > 1
       ? languages.map((language): TableColumn<Day> => ({
         id: language.code,
         header: language.name,
         align: 'end',
-        cell: day => numberFormat.format(day.scores.get(language.code) ?? 0),
+        cell: day => scoreFormat.format(day.scores.get(language.code) ?? 0),
       }))
       : []),
   ]

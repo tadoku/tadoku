@@ -4,7 +4,7 @@ import { Link, createFileRoute, notFound, useHydrated } from '@tanstack/react-ro
 import { Button, buttonClassName, DescriptionList, EmptyState, entryLink, Modal, PageHeader, SectionHeading, StatGrid, Surface } from 'paper-ui'
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
-import { formatDate, pointsUnit } from '../../lib/format'
+import { formatDate, pointsUnit, scoreFormat } from '../../lib/format'
 import { useLinks } from '../../lib/links'
 import { logQuery, useDeleteLog, type ImmersionLog, type LogFailure } from '../../lib/logs'
 import { viewerKey, viewerQueryOptions } from '../../lib/session'
@@ -42,6 +42,7 @@ function LogDetail() {
 
   const log = result.data
   const owner = viewer?.status === 'signed-in' && viewer.userId === log.user_id
+  const nsfw = log.tags.some(tag => tag.toLowerCase() === 'nsfw')
   const learner = log.user_display_name ?? (owner && viewer?.status === 'signed-in' ? viewer.displayName : undefined)
   return (
     <div>
@@ -49,7 +50,7 @@ function LogDetail() {
         backLink={{ href: links.profileUpdates(log.user_id), label: owner ? 'Your activity' : 'Activity' }}
         renderLink={renderLink}
         className="max-w-record"
-        title="Log details"
+        title={!nsfw && log.description ? log.description : `${log.language.name} ${log.activity.name.toLocaleLowerCase()}`}
         lead={(
           <>
             {log.language.name} · <ActivityName activity={log.activity} />
@@ -67,11 +68,11 @@ function LogDetail() {
               { label: 'Logged', value: formatDate(log.created_at.slice(0, 10)), detail: loggedTime(log.created_at) },
             ]}
           />
-          {log.description || log.tags.length ? (
+          {(nsfw && log.description) || log.tags.length ? (
             <DescriptionList
               className="border-t border-rule pt-6"
               items={[
-                ...(log.description ? [{ label: 'Description', value: log.description }] : []),
+                ...(nsfw && log.description ? [{ label: 'Description', value: log.description }] : []),
                 ...(log.tags.length ? [{ label: 'Tags', value: log.tags.join(', ') }] : []),
               ]}
             />
@@ -199,12 +200,12 @@ function useFocusPageHeading() {
   }, [hydrated])
 }
 
-const scoreFormat = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 2 })
+const amountFormat = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 2 })
 
 /** A timed log's duration; an amount log's amount and any time spent, for example "18 pages". */
 function measure(log: ImmersionLog) {
   const unit = log.unit_name ? ` ${log.unit_name.toLowerCase()}${log.amount === 1 ? '' : 's'}` : ''
-  const amount = { label: 'Amount', value: `${scoreFormat.format(log.amount)}${unit}` }
+  const amount = { label: 'Amount', value: `${amountFormat.format(log.amount)}${unit}` }
   if (!log.duration_seconds) return [amount]
 
   const duration = { label: 'Duration', value: `${log.duration_seconds / 60} min` }

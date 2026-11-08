@@ -25,7 +25,7 @@ export const control = tv({
     "focus-visible:relative focus-visible:z-lift focus-visible:border-focus",
     "focus-visible:outline-halo focus-visible:outline-focus-halo focus-visible:outline-offset-ring",
     "forced-colors:focus-visible:border-b-forced-highlight forced-colors:focus-visible:outline-forced-highlight",
-    "disabled:cursor-default disabled:border-rule disabled:bg-paper disabled:text-muted",
+    "disabled:cursor-default disabled:border-rule disabled:bg-paper disabled:text-muted disabled:placeholder:opacity-faded",
     "[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
   ],
   variants: {

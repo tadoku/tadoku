@@ -52,8 +52,8 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
         {logs ? (
           <section aria-labelledby="home-recent-title">
             <div className={head}>
-              <h2 id="home-recent-title" className={headTitle}>Recent updates</h2>
-              {logs.length ? <Link className="text-link hover:text-link-hover" to={links.profileUpdates(viewer.userId)}>All updates</Link> : null}
+              <h2 id="home-recent-title" className={headTitle}>Recent activity</h2>
+              {logs.length ? <Link className="text-link hover:text-link-hover" to={links.profileUpdates(viewer.userId)}>All activity</Link> : null}
             </div>
             <LogEntries
               logs={logs}
@@ -64,7 +64,7 @@ export function MemberDashboard({ viewer, year }: { viewer: SignedIn; year: numb
                 <EmptyState
                   variant="plain"
                   headingLevel={3}
-                  title="No updates yet"
+                  title="No activity yet"
                   description="A few pages or minutes are enough."
                   actions={<a className={buttonClassName()} href={links.logs}>Log your first activity</a>}
                 />

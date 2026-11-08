@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { z } from 'zod'
 import { DraftOwnerGate } from '../../components/DraftOwnerGate'
 import { useLinks } from '../../lib/links'
-import { formatTracking, numberFormat, pointsUnit } from '../../lib/format'
+import { formatTracking, pointsUnit, scoreFormat } from '../../lib/format'
 import { contestChoices } from '../../lib/log-draft'
 import {
   logOptionsQuery,
@@ -155,7 +155,7 @@ function ContestsForm({ log, registrations, viewerId }: {
                         value={choice.registration.id}
                         label={choice.registration.contest.title}
                         description={`Organized by ${organizer(choice.registration.contest)}`}
-                        aside={choice.kind === 'ineligible' ? choice.reason : `${numberFormat.format(log.score)} ${pointsUnit(log.score)}`}
+                        aside={choice.kind === 'ineligible' ? choice.reason : `${scoreFormat.format(log.score)} ${pointsUnit(log.score)}`}
                         disabled={choice.kind === 'ineligible'}
                       />
                     )}
@@ -221,7 +221,7 @@ function LogSummary({ log }: { log: ImmersionLog }) {
       <p className="font-semibold">{what}</p>
       {log.description && !nsfw ? <p className="col-start-1 text-sm text-muted wrap-anywhere">{log.description}</p> : null}
       <p className="col-start-2 row-start-2 whitespace-nowrap font-bold tabular-nums">
-        {numberFormat.format(log.score)} <small className="text-metadata font-regular text-muted">{pointsUnit(log.score)}</small>
+        {scoreFormat.format(log.score)} <small className="text-metadata font-regular text-muted">{pointsUnit(log.score)}</small>
       </p>
     </section>
   )

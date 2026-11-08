@@ -32,7 +32,7 @@ export function PendingView() {
       <div className="mt-6 grid gap-3">
         {[0, 1, 2, 3, 4, 5].map(row => <div key={row} className="h-10 border-b border-rule" />)}
       </div>
-      <p className="m-0 text-metadata text-muted">Loading…</p>
+      <p className="m-0 text-metadata text-ink">Loading…</p>
     </div>
   )
 }

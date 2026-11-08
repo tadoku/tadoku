@@ -35,14 +35,14 @@ export function Login({ search }: { readonly search: AccountSearch }) {
 
   return (
     <CardPage
-      title="Log in"
-      footer={<>New to Tadoku? <a href={withReturnTo('/register', next)}>Create an account</a></>}
+      title={reauth ? 'Confirm it’s you' : 'Log in'}
+      footer={reauth ? undefined : <>New to Tadoku? <a href={withReturnTo('/register', next)}>Create an account</a></>}
     >
       <form.AppForm>
         <form.Form {...formProps} className={accountForm}>
           {reauth ? (
             <Flash variant="information" icon={<InformationCircleIcon className={iconClassName()} />}>
-              Privileged actions require a fresh login. Log in again to continue.
+              Enter your password to continue.
             </Flash>
           ) : <SignedInNotice />}
           <FormProblem problem={problem} />

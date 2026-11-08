@@ -96,7 +96,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         />
         {viewer && 'userId' in viewer ? <form id={logoutFormId} method="post" action="/logout" hidden /> : null}
       </header>
-      <main id="main-content" className={cn(frame.content(), 'motion-safe:transition-opacity motion-safe:duration-deliberate aria-busy:opacity-faded')} tabIndex={-1} aria-busy={navigating}>
+      <main id="main-content" className={frame.content()} tabIndex={-1} aria-busy={navigating}>
         <Announcements />
         {viewer?.status === 'banned' ? <Suspended /> : children}
       </main>

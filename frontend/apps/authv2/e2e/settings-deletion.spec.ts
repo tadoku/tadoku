@@ -13,7 +13,7 @@ import {
 // deletion that leaves the cookie or password usable, or doesn't land on /deleted; pages that overflow 390px.
 
 const confirmLabel = 'Type your email address to confirm'
-const banner = 'Privileged actions require a fresh login. Log in again to continue.'
+const banner = 'Enter your password to continue.'
 
 type Disposable = { readonly email: string; readonly password: string }
 

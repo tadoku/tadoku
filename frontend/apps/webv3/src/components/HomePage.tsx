@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import { homeQueryOptions, type HomeData } from '../lib/home'
 import { standingsQuery } from '../lib/leaderboard'
 import { Person, Rank, currentRow, personLink } from './StandingsParts'
-import { formatDate, formatPeriod, numberFormat, pointsUnit, scoreColumn } from '../lib/format'
+import { formatDate, formatPeriod, numberFormat, pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
 import { MemberDashboard, MemberYearTotals } from './MemberDashboard'
@@ -157,7 +157,7 @@ function MemberPromise({ member, data, phase, year }: {
   let summary: string
   if (running && entry) {
     title = `${place(entry.rank)} place`
-    summary = `${numberFormat.format(entry.score)} ${pointsUnit(entry.score)} in ${contest.title}.`
+    summary = `${scoreFormat.format(entry.score)} ${pointsUnit(entry.score)} in ${contest.title}.`
   } else if (running && registered) {
     title = `You’re in ${contest.title}`
     summary = phase === 'upcoming' ? `The round starts ${formatDate(contest.contest_start)}.` : 'Log what you read and listen to.'
@@ -264,7 +264,6 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
   const ended = phase === 'ended'
   const you = viewerEntry && !standings.entries.some(row => row.user_id === viewerEntry.user_id) ? viewerEntry : null
   const rows = you ? [...standings.entries, you] : standings.entries
-  const boardScore = scoreColumn(rows.map(entry => entry.score))
   return <>
     {header(
       `${formatPeriod(contest)} · ${ended ? 'Final results' : `Day ${dayNumber(contest.contest_start, today)} of ${length}`}`,
@@ -273,7 +272,7 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
     <StatGrid className="px-ledger-inset py-4.5" stats={[
       { label: 'Participants', value: numberFormat.format(summary.participant_count) },
       { label: 'Languages', value: numberFormat.format(summary.language_count) },
-      { label: 'Points logged', value: numberFormat.format(summary.total_score) },
+      { label: 'Points logged', value: scoreFormat.format(summary.total_score) },
     ]} />
     {standings.entries.length ? (
       <Table
@@ -293,7 +292,7 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
               </Person>
             ),
           },
-          { id: 'score', header: 'Score', align: 'end', headerClassName: 'pe-ledger-inset', cellClassName: 'pe-ledger-inset', cell: row => boardScore(row.score) },
+          { id: 'score', header: 'Score', align: 'end', headerClassName: 'pe-ledger-inset', cellClassName: 'pe-ledger-inset', cell: row => scoreFormat.format(row.score) },
         ]}
         rows={rows}
         getRowKey={row => row.user_id}

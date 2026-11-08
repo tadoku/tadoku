@@ -35,7 +35,7 @@ export function EmptyState({
   headingLevel,
   description,
   actions,
-  variant = "surface",
+  variant = headingLevel === 1 ? "surface" : "plain",
   headingRef,
   className,
   ...props

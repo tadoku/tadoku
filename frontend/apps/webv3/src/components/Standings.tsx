@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Button, EmptyState, Pagination, Table, type TableColumn } from 'paper-ui'
 import type { ImmersionLeaderboard, ImmersionLeaderboardEntry } from 'api-client'
-import { numberFormat, scoreColumn } from '../lib/format'
+import { numberFormat, scoreFormat } from '../lib/format'
 import { standingsPageSize, type Read } from '../lib/leaderboard'
 import { viewerQueryOptions } from '../lib/session'
 import { renderLink } from './router-link'
@@ -55,7 +55,6 @@ export function Standings({ result, page, caption, pageHref, profileHref, empty,
     ) : <EmptyState variant="plain" className={sheetEmpty} headingLevel={3} {...empty} />
   }
 
-  const score = scoreColumn(entries.map(entry => entry.score))
   const columns: TableColumn<ImmersionLeaderboardEntry>[] = [
     {
       id: 'rank',
@@ -75,7 +74,7 @@ export function Standings({ result, page, caption, pageHref, profileHref, empty,
         </Person>
       ),
     },
-    { id: 'score', header: 'Score', align: 'end', width: '7rem', cell: row => score(row.score) },
+    { id: 'score', header: 'Score', align: 'end', width: '7rem', cell: row => scoreFormat.format(row.score) },
   ]
   const first = (page - 1) * standingsPageSize + 1
   const totalPages = Math.max(page, Math.ceil(total / standingsPageSize))

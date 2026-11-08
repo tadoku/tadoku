@@ -30,11 +30,11 @@ async function expectLogs(page: Page, expected: Logs, participants: boolean) {
   expect(await titles.evaluateAll(links => links.map(link => link.getAttribute('href'))))
     .toEqual(expected.logs.map(log => `/logs/${log.id}`))
   if (participants) {
-    await expect(page.locator('.profile-entry-meta')).toHaveText(expected.logs.map(log => new RegExp(`^${escape(log.user_display_name ?? 'Unknown user')} · `)))
+    await expect(page.locator('.profile-entry-meta')).toHaveText(expected.logs.map(log => new RegExp(`^${escape(log.user_display_name ?? 'Unknown user')}`)))
   }
   // The range summary appears only beside page links.
   if (expected.total_size > 50) {
-    await expect(page.locator('.profile-entries-footer > p')).toHaveText(new RegExp(`of ${score.format(expected.total_size)} updates$`))
+    await expect(page.locator('.profile-entries-footer > p')).toHaveText(new RegExp(`of ${expected.total_size} updates$`))
   } else {
     await expect(page.locator('.profile-entries-footer')).toHaveCount(0)
   }

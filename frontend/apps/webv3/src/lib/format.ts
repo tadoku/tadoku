@@ -5,12 +5,6 @@ export const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', '
 
 export const numberFormat = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 1 })
 
-/** Formats one column of scores: a single decimal on every value once any needs one, so the digits line up. */
-export function scoreColumn(scores: number[]) {
-  const digits = scores.some(score => Math.round(score * 10) % 10 !== 0) ? 1 : 0
-  const format = new Intl.NumberFormat('en-GB', { minimumFractionDigits: digits, maximumFractionDigits: digits })
-  return (score: number) => format.format(score)
-}
 
 export const dayAndMonth = (date: string) => `${Number(date.slice(8, 10))} ${months[Number(date.slice(5, 7)) - 1]}`
 export const formatDate = (date: string) => `${dayAndMonth(date)} ${date.slice(0, 4)}`
@@ -28,5 +22,5 @@ export function formatTracking(log: Pick<ImmersionLog, 'amount' | 'unit_name' | 
   return values.join(' · ')
 }
 
-/** A score or point total with at most one decimal, for example `12.5`. */
-export const scoreFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 })
+/** Every score and point total, always to one decimal, for example `12.5` or `12.0`. */
+export const scoreFormat = new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })

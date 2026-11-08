@@ -3,7 +3,7 @@ import { tv } from "../../foundations/variants";
 /** A record's title link in a list: ink with a quiet underline that takes the link colour on hover and focus. */
 export const entryLink = tv({
   base: [
-    "font-semibold leading-150 text-ink no-underline decoration-hairline underline-offset-link wrap-anywhere",
+    "font-semibold leading-150 text-ink no-underline decoration-hairline underline-offset-link wrap-anywhere max-lg:underline max-lg:decoration-rule",
     "hover:text-link hover:underline focus-visible:text-link focus-visible:underline",
   ],
   variants: {

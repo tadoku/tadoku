@@ -12,6 +12,17 @@ const tagButton = [
 type SuggestedTag = { tag: string; modifier?: true }
 
 // Webv2's per-activity lists, by activity ID. Modifier tags change the score.
+const modifierMeaning: Record<string, string> = {
+  manga: 'Manga and comic pages score less than novel pages.',
+  comic: 'Manga and comic pages score less than novel pages.',
+  two_column: 'Two-column pages score more than single-column pages.',
+  dense: 'Dense material scores more per minute.',
+}
+
+/** What the activity's score modifiers do, one sentence each. */
+const modifierHelp = (suggested: SuggestedTag[]) =>
+  [...new Set(suggested.filter(item => item.modifier).map(item => modifierMeaning[item.tag]).filter(Boolean))].join(' ')
+
 const activityTags: Partial<Record<string, SuggestedTag[]>> = {
   // Reading
   1: [
@@ -133,7 +144,7 @@ export const TagsSidebar = withPaperForm({
           </details>
         ) : group('Common tags', common)}
         {group('Score modifiers', suggested.filter(item => item.modifier))}
-        {suggested.some(item => item.modifier) ? <p className="-mt-2 mb-0 text-metadata text-muted">Change how this log scores.</p> : null}
+        {modifierHelp(suggested) ? <p className="-mt-2 mb-0 text-metadata text-muted">{modifierHelp(suggested)}</p> : null}
       </div>
     )
   },

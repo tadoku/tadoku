@@ -191,12 +191,12 @@ function ContestRow({ contest, names, today }: {
 
   return (
     <li className="contest-row border-t border-rule py-4 first:border-t-0">
-      <div className="contest-row__body min-w-0 wrap-anywhere md:grid md:grid-cols-content-end md:items-baseline md:gap-x-8">
+      <div className="contest-row__body min-w-0 wrap-anywhere lg:grid lg:grid-cols-content-end lg:items-baseline lg:gap-x-8">
         <div
           className="contest-row__title grid grid-cols-title-tags items-start justify-start gap-x-2 gap-y-1 max-sm:grid-cols-single"
         >
           <h2 className={typography({ role: 'component', className: 'm-0 font-body text-base leading-150 font-semibold' })}>
-            <a className="text-inherit no-underline hover:text-link hover:underline" href={links.contest(contest.id)}>
+            <a className="text-inherit no-underline hover:text-link hover:underline max-lg:underline max-lg:decoration-rule max-lg:underline-offset-link" href={links.contest(contest.id)}>
               {contest.title}
             </a>
           </h2>
@@ -204,10 +204,10 @@ function ContestRow({ contest, names, today }: {
             {round}{contest.private ? <StatusTag>Unlisted</StatusTag> : null}
           </span>
         </div>
-        <div className="md:text-end">
-          <p className={`${rowText} md:mt-0`}>{formatPeriod(contest)}</p>
+        <div className="lg:text-end">
+          <p className={`${rowText} lg:mt-0`}>{formatPeriod(contest)}</p>
           {meta.length ? (
-            <p className={`${rowText} mt-0 flex flex-wrap gap-x-3 md:justify-end`}>
+            <p className={`${rowText} mt-0 flex flex-wrap gap-x-3 lg:justify-end`}>
               {meta.map((part, index) => <span key={index} className="contest-row__allows whitespace-nowrap">{part}</span>)}
             </p>
           ) : null}

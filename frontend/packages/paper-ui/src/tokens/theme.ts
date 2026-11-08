@@ -292,7 +292,7 @@ const text = {
   xl: '1.25rem',
   '2xl': '1.5rem',
   '3xl': '2rem',
-  'heat-axis': '11px',
+  'heat-axis': '9px',
   'heat-axis-phone': '12px',
   ...layoutText,
 } satisfies Record<string, TokenValue>

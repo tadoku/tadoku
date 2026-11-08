@@ -5,7 +5,6 @@ import { contestsHref } from '../lib/contests'
 import { formatPeriod, pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { memberDashboardQueries } from '../lib/home'
-import { activeDays } from '../lib/profile'
 import type { Viewer } from '../lib/session'
 import { ActivityCalendar } from './ActivityCalendar'
 import { LogEntries } from './LogEntries'
@@ -117,16 +116,12 @@ export function MemberYearTotals({ viewer, year }: { viewer: SignedIn; year: num
   const todayScore = activity.ok ? activity.data.scores.find(day => day.date === today)?.score ?? 0 : undefined
   return (
     <section className="mt-9 border-t border-rule pt-6" aria-labelledby="home-totals-title">
-      <h2 id="home-totals-title" className="mb-4 mt-0 text-ui font-semibold leading-150 text-muted">Your {year} so far</h2>
+      <h2 id="home-totals-title" className="mb-4 mt-0 text-ui font-semibold leading-150 text-muted">Your {year}</h2>
       <StatGrid
         className="grid-cols-halves"
         stats={[
           ...(total === undefined ? [] : [{ label: 'Points this year', value: scoreFormat.format(total) }]),
           ...(todayScore === undefined ? [] : [{ label: 'Today', value: scoreFormat.format(todayScore), unit: pointsUnit(todayScore) }]),
-          ...(activity.ok ? [
-            { label: 'Updates', value: activity.data.total_updates },
-            { label: 'Active days', value: activeDays(activity.data.scores) },
-          ] : []),
         ]}
       />
     </section>

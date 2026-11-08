@@ -160,7 +160,7 @@ function MemberPromise({ member, data, phase, year }: {
     summary = `${numberFormat.format(entry.score)} ${pointsUnit(entry.score)} in ${contest.title}.`
   } else if (running && registered) {
     title = `You’re in ${contest.title}`
-    summary = phase === 'upcoming' ? `The round starts ${formatDate(contest.contest_start)}.` : 'Log what you read and listen to; every entry counts towards the round.'
+    summary = phase === 'upcoming' ? `The round starts ${formatDate(contest.contest_start)}.` : 'Log what you read and listen to.'
   } else if (joinable) {
     title = `${contest.title} is open`
     summary = `Registration closes ${formatDate(contest.registration_end)}.`

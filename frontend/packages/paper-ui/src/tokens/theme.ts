@@ -113,7 +113,7 @@ const color = {
   'checkbox-disabled-edge': `color-mix(in srgb, var(--color-field-edge) 85%, var(--color-rule))`,
 
   /** The site footer sits on the paper surface and closes the page with a hairline. */
-  footer: 'var(--color-paper)',
+  footer: 'var(--color-canvas)',
   'footer-ink': 'var(--color-ink)',
   'footer-muted': 'var(--color-muted)',
   'footer-link': 'var(--color-ink)',

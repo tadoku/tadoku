@@ -154,7 +154,6 @@ function Contests({ scope, view, page }: { scope: ContestListScope; view: Contes
       <ul className="mb-0 mt-2 list-none p-0" aria-label={view.collection === 'joined' ? `Contests joined in ${view.year}` : `${tabs.find(tab => tab.id === view.collection)?.label} contests`}>
         {contests.map(contest => <ContestRow key={contest.id} contest={contest} names={names} today={today} />)}
       </ul>
-      <p className="mb-0 mt-5 text-metadata text-muted">Contest dates are calendar days in UTC.</p>
       {totalPages > 1 ? (
         <div className={listFooter().root({ className: 'contests-pagination border-t border-rule pt-3' })}>
           <p className={listFooter().summary()}>{numberFormat.format(first)}–{numberFormat.format(first + contests.length - 1)} of {numberFormat.format(total)} contests</p>

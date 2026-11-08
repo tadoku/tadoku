@@ -9,6 +9,12 @@ const contentTable = [
 
 /** A unit table: rows on wide screens, one block per language on a phone, so no column is hidden. */
 function ManualTable({ id, headers, rows }: { id: string; headers: string[]; rows: string[][] }) {
+  const merged = rows.reduce<string[][]>((groups, row) => {
+    const same = groups.find(group => group.slice(1).join() === row.slice(1).join())
+    if (same) same[0] += `, ${row[0]}`
+    else groups.push([...row])
+    return groups
+  }, [])
   return (
     <>
       <div className={`${contentTable} max-sm:hidden`} role="region" tabIndex={0} aria-labelledby={id}>
@@ -22,7 +28,7 @@ function ManualTable({ id, headers, rows }: { id: string; headers: string[]; row
         </table>
       </div>
       <div className="mb-4 grid gap-5 sm:hidden">
-        {rows.map(row => (
+        {merged.map(row => (
           <section key={row[0]} aria-label={`${row[0]} units`}>
             <h5 className="m-0 mb-1 text-ui font-semibold">{row[0]}</h5>
             <dl className="m-0">

@@ -162,6 +162,9 @@ function ContestsForm({ log, registrations, viewerId }: {
                   </form.AppField>
                 ))}
                 {eligible.length ? <p className="mb-0 mt-2 text-metadata text-muted">Unchecking removes this log’s score from that contest.</p> : null}
+                {choices.some(choice => choice.kind === 'ineligible')
+                  ? <p className="mb-0 mt-1 text-metadata text-muted">Registered for the wrong language? <a className="text-link hover:text-link-hover" href={links.contests}>Update your registration</a> from its contest page.</p>
+                  : null}
                 {finished.map(submission => (
                   <p key={submission.registration_id}>
                     {submission.title} has finished. Its saved score

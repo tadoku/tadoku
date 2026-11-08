@@ -114,7 +114,6 @@ test('server-rendered official and community lists show the API contests and lin
     await expect(page.getByRole('navigation', { name: 'Contest collections' }).locator('[aria-current="page"]'))
       .toHaveText(name === 'official' ? 'Official' : 'Community')
     await expect(page.getByRole('link', { name: 'Contests', exact: true }).first()).toHaveAttribute('href', '/contests/official/1')
-    await expect(page.getByText('Contest dates are calendar days in UTC.')).toBeVisible()
     // Guests see no create action and no restrictions, as in Webv2; a row may still name its deadline.
     await expect(page.getByRole('link', { name: 'Create contest' })).toHaveCount(0)
     for (const meta of await page.locator('.contest-row__allows').allTextContents()) {

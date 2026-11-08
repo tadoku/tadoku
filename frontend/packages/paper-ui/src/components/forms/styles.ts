@@ -23,7 +23,7 @@ export const control = tv({
     "font-body text-body leading-125 text-ink",
     "[&::-webkit-datetime-edit-fields-wrapper]:p-0 placeholder:text-muted placeholder:opacity-full",
     "focus-visible:relative focus-visible:z-lift focus-visible:border-focus",
-    "focus-visible:outline-halo focus-visible:outline-focus-halo focus-visible:outline-offset-0",
+    "focus-visible:outline-halo focus-visible:outline-focus-halo focus-visible:outline-offset-ring",
     "forced-colors:focus-visible:border-b-forced-highlight forced-colors:focus-visible:outline-forced-highlight",
     "disabled:cursor-default disabled:border-rule disabled:bg-paper disabled:text-muted",
     "[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
@@ -47,7 +47,7 @@ export const control = tv({
 export const selectFrame = tv({
   slots: {
     root: "paper-select__control relative block w-full",
-    icon: "paper-select__icon pointer-events-none absolute end-field-x top-1/2 z-lift-2 -translate-y-1/2 text-muted",
+    icon: "paper-select__icon pointer-events-none absolute end-field-x top-1/2 z-lift-2 -translate-y-1/2 text-ink",
   },
 });
 
@@ -117,7 +117,7 @@ export const segment = tv({
       "text-body leading-125 font-semibold text-ink",
       "not-has-disabled:not-has-checked:hover:border-field-edge-hover not-has-disabled:not-has-checked:hover:bg-neutral-hover",
       "has-checked:z-lift has-checked:border-link has-checked:bg-action-soft",
-      "has-focus-visible:z-lift-2 has-focus-visible:outline-halo has-focus-visible:outline-offset-0",
+      "has-focus-visible:z-lift-2 has-focus-visible:outline-halo has-focus-visible:outline-offset-ring",
       "has-disabled:cursor-default has-disabled:border-rule has-disabled:bg-paper has-disabled:text-muted",
       "forced-colors:border-forced-ink forced-colors:bg-forced-canvas forced-colors:text-forced-ink",
       "forced-colors:forced-color-adjust-none",
@@ -153,7 +153,7 @@ export const radioCard = tv({
     root: [
       "paper-radio-card grid cursor-pointer grid-cols-mark-label gap-3 border border-field-edge bg-field p-3.4",
       "has-checked:border-b-edge has-checked:border-link",
-      "has-focus-visible:relative has-focus-visible:z-lift has-focus-visible:outline-halo has-focus-visible:outline-offset-0",
+      "has-focus-visible:relative has-focus-visible:z-lift has-focus-visible:outline-halo has-focus-visible:outline-offset-ring",
       "has-disabled:cursor-default has-disabled:text-muted",
       "forced-colors:has-focus-visible:border-b-forced-highlight forced-colors:has-focus-visible:outline-forced-highlight",
     ],
@@ -256,14 +256,14 @@ export const combobox = tv({
     label: "col-start-2",
     empty: "paper-combobox__empty px-field-x py-field-y text-muted empty:hidden",
     chips: [
-      "paper-combobox__chips relative flex min-h-control flex-wrap items-center gap-1.4 p-1 pe-combobox-end has-[input:disabled]:bg-paper",
+      "paper-combobox__chips relative flex min-h-control flex-wrap items-center gap-1.4 p-1 pe-combobox-end has-[input:disabled]:border-rule has-[input:disabled]:bg-paper",
       "border border-field-edge bg-field font-body text-body leading-125",
       "has-[input:focus-visible]:z-lift",
       "has-[input:focus-visible]:outline-halo",
-      "has-[input:focus-visible]:outline-offset-0",
+      "has-[input:focus-visible]:outline-offset-ring",
       "has-[>button:focus-visible]:z-lift",
       "has-[>button:focus-visible]:outline-halo",
-      "has-[>button:focus-visible]:outline-offset-0",
+      "has-[>button:focus-visible]:outline-offset-ring",
       "forced-colors:has-[input:focus-visible]:border-b-forced-highlight",
       "forced-colors:has-[input:focus-visible]:outline-forced-highlight",
       "forced-colors:has-[>button:focus-visible]:border-b-forced-highlight",
@@ -275,9 +275,9 @@ export const combobox = tv({
       "py-0.5 ps-2 pe-0.5 text-metadata leading-150 font-medium text-ink wrap-anywhere",
     ],
     chipRemove: [
-      "inline-grid min-h-chip-target min-w-chip-target shrink-0 cursor-pointer place-items-center rounded-chip",
-      "border-0 bg-transparent p-0 text-muted hover:bg-chip-remove-hover hover:text-ink",
-      "focus-visible:outline-ring focus-visible:outline-focus focus-visible:outline-offset-0",
+      "inline-grid min-h-chip-target min-w-chip-target max-tablet:min-h-8 max-tablet:min-w-8 shrink-0 cursor-pointer place-items-center rounded-chip",
+      "border-0 bg-transparent p-0 text-ink hover:bg-chip-remove-hover",
+      "focus-visible:outline-ring focus-visible:outline-focus focus-visible:outline-offset-ring",
     ],
     chipInput: [
       "paper-combobox__chip-input min-w-chip-input grow basis-36 border-0 bg-transparent outline-none",

@@ -18,7 +18,7 @@ const pageHeader = tv({
     status: "paper-page-header__status my-page-title-trim flex flex-wrap items-center gap-2",
     lead: "paper-page-header__lead m-0 max-w-measure text-base leading-165 text-muted",
     /** One row of controls centres on the title's first line and takes no more room than the heading row. */
-    actions: "paper-page-header__actions my-page-actions-trim flex flex-wrap items-center gap-inline self-start max-md:my-0",
+    actions: "paper-page-header__actions my-page-actions-trim flex shrink-0 flex-wrap items-center gap-inline self-start whitespace-nowrap max-md:my-0",
   },
 });
 

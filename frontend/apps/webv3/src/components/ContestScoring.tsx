@@ -83,6 +83,10 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
         />
       )}
       {contestRuleSets.length === 0 && !locked ? <p className="m-0">No contest-specific rule sets yet; this contest scores with the platform defaults.</p> : null}
+      {locked && contestRuleSets.length === 0 ? <section className="grid min-w-0 gap-4 [&>p]:m-0" aria-labelledby="scoring-platform">
+        <SectionHeading level={2} id="scoring-platform" title="Rules in effect" />
+        {platformRuleSets.filter(ruleSet => ruleSet.active).map(ruleSet => <RuleSetVersion key={ruleSet.id} ruleSet={ruleSet} options={options} change={null} />)}
+      </section> : null}
       {contestRuleSets.length === 0 ? null : <section className="grid min-w-0 gap-4 [&>p]:m-0" aria-labelledby="scoring-versions">
         <SectionHeading level={2} id="scoring-versions" title="Rule-set versions" />
         {contestRuleSets.map(ruleSet => (

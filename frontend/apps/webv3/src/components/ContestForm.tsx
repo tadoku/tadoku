@@ -76,14 +76,14 @@ export function ContestForm({ options, viewerId, admin }: {
                 <legend>Schedule</legend>
                 <div className={formRow}>
                   <form.AppField name="contestStart">
-                    {field => <field.Input label="Start date (UTC)" type="date" required />}
+                    {field => <field.Input label="Start date" type="date" required />}
                   </form.AppField>
                   <form.AppField name="contestEnd">
-                    {field => <field.Input label="End date (UTC)" type="date" required />}
+                    {field => <field.Input label="End date" type="date" required />}
                   </form.AppField>
                 </div>
                 <form.AppField name="registrationEnd">
-                  {field => <field.Input label="Sign-up deadline (UTC)" type="date" required />}
+                  {field => <field.Input label="Sign-up deadline" hint="Dates are calendar days in UTC." type="date" required />}
                 </form.AppField>
               </fieldset>
 

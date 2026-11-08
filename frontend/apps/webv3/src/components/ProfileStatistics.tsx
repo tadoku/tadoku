@@ -48,7 +48,7 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
           <>
             <YearTotals statistics={statistics} year={year} />
             <div className="border-t border-rule pt-6">
-              <SectionHeading level={3} id="profile-rhythm-heading" title="Daily activity" classNames={{ title: sectionTitle }} />
+              <SectionHeading level={3} id="profile-rhythm-heading" title={`Daily activity in ${year}`} classNames={{ title: sectionTitle }} />
               {activity.ok ? (<>
                 <ActivityCalendar
                   userId={profile.id}
@@ -80,7 +80,7 @@ function YearTotals({ statistics, year }: { statistics: Found; year: number }) {
   const { scores, activity } = statistics
   const total = scores.ok ? scores.data.scores.reduce((sum, score) => sum + score.score, 0) : undefined
   const days = daysCounted(year, statistics.today)
-  const average = total && days ? `${scoreFormat.format(total / days)} per day` : undefined
+  const average = total && days ? `${scoreFormat.format(total / days)} per day in ${year}` : undefined
 
   return (
     <StatGrid

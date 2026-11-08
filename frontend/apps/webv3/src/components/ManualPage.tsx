@@ -3,12 +3,12 @@ import { PageHeader, prose } from 'paper-ui'
 const contentTable = [
   'content-table mb-4 mt-0 max-w-content-table overflow-x-auto [background:var(--effect-canvas-table-scroll)]',
   'focus-visible:outline-ring focus-visible:outline-link focus-visible:outline-offset-ring',
-  '[&_td:first-child]:whitespace-nowrap [&_table:has(th:nth-child(4))]:min-w-wide-table',
+  '[&_table:has(th:nth-child(4))]:min-w-wide-table',
   '[&_:is(th,td):not(:first-child)]:text-end [&_:is(th,td):last-child]:pe-0 max-sm:[&_:is(th,td)]:pe-3',
 ].join(' ')
 
 /** A unit table: rows on wide screens, one block per language on a phone, so no column is hidden. */
-function ManualTable({ id, headers, rows }: { id: string; headers: string[]; rows: string[][] }) {
+export function ManualTable({ id, headers, rows, onPaper = false }: { id: string; headers: string[]; rows: string[][]; onPaper?: boolean }) {
   const merged = rows.reduce<string[][]>((groups, row) => {
     const same = groups.find(group => group.slice(1).join() === row.slice(1).join())
     if (same) same[0] += `, ${row[0]}`
@@ -17,7 +17,7 @@ function ManualTable({ id, headers, rows }: { id: string; headers: string[]; row
   }, [])
   return (
     <>
-      <div className={`${contentTable} max-sm:hidden`} role="region" tabIndex={0} aria-labelledby={id}>
+      <div className={`${contentTable} max-sm:hidden ${onPaper ? '[background:var(--effect-table-scroll)]' : ''}`} role="region" tabIndex={0} aria-labelledby={id}>
         <table>
           <thead>
             <tr>{headers.map(header => <th key={header}>{header}</th>)}</tr>

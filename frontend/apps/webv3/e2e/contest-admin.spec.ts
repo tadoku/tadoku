@@ -251,10 +251,8 @@ test('an administrator drafts, publishes and activates a contest rule set', asyn
   ])
   await expect(version.getByRole('heading', { level: 3 })).toHaveText(`Version ${draft.version}`)
   await expect(version.locator('.paper-status-tag')).toHaveText(['Draft'])
-  const ruleRows = version.locator('dl > div')
-  await expect(ruleRows).toHaveCount(2)
-  await expect(ruleRows.nth(0)).toContainText('2.5')
-  await expect(ruleRows.nth(1)).toContainText('webv3 podcast')
+  await expect(version).toContainText('2.5')
+  await expect(version).toContainText('webv3 podcast')
 
   await version.getByRole('button', { name: 'Publish' }).click()
   const dialog = page.getByRole('dialog', { name: 'Publish this version?' })

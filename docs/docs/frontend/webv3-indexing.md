@@ -63,7 +63,9 @@ page's text, a post's Markdown or a contest's description.
 
 Private and action pages, such as forms, a learner's own lists, logs and log
 out, add `noindex` from the same module, so they stay out of search results on
-the web host too.
+the web host too. So do a private contest's standings, activity and participant
+profiles, which anyone with the URL can open. `sharingMeta` cuts every
+description to 160 characters.
 
 ## Checks
 

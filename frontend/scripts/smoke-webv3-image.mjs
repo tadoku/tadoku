@@ -203,15 +203,18 @@ try {
     ['alice.next.tadoku.dev.lab', 'https://alice.tadoku.dev.lab'],
     ['bob.next.tadoku.dev.lab', 'https://bob.tadoku.dev.lab'],
   ]))
-  const misconfigured = docker('run', '-d', '--label', 'tadoku.check=webv3-config', '-e', 'TADOKU_API_URL=ftp://tadoku.app', image)
-  try {
-    const exit = await run('docker', ['wait', misconfigured], { timeout: 15_000 })
-      .catch(() => assert.fail('A bad TADOKU_API_URL did not stop the container'))
-    assert.notEqual(exit.stdout.trim(), '0', 'A bad TADOKU_API_URL exited successfully')
-    const logs = await run('docker', ['logs', misconfigured])
-    assert.match(logs.stdout + logs.stderr, /TADOKU_API_URL/, 'The startup error does not name the variable')
-  } finally {
-    docker('rm', '-f', misconfigured)
+  // A directory is not a CA file, so it must stop the container as a bad URL does.
+  for (const [name, value] of [['TADOKU_API_URL', 'ftp://tadoku.app'], ['NODE_EXTRA_CA_CERTS', '/app']]) {
+    const misconfigured = docker('run', '-d', '--label', 'tadoku.check=webv3-config', '-e', `${name}=${value}`, image)
+    try {
+      const exit = await run('docker', ['wait', misconfigured], { timeout: 15_000 })
+        .catch(() => assert.fail(`A bad ${name} did not stop the container`))
+      assert.notEqual(exit.stdout.trim(), '0', `A bad ${name} exited successfully`)
+      const logs = await run('docker', ['logs', misconfigured])
+      assert.match(logs.stdout + logs.stderr, new RegExp(`cannot start: .*${name}`), 'The startup error does not name the variable')
+    } finally {
+      docker('rm', '-f', misconfigured)
+    }
   }
   // A page still waiting on the API past srvx's default 5-second shutdown timeout finishes during docker stop.
   const draining = docker('run', '-d', '--label', 'tadoku.check=webv3-drain', '--add-host', 'host.docker.internal:host-gateway',

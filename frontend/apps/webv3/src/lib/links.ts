@@ -37,6 +37,8 @@ function createLinks(base: string) {
       `/profile/${encodeURIComponent(id)}/updates/1${date ? `?date=${date}` : ''}`,
     contestProfile: (contestId: string, userId: string, page = 1) =>
       `/contests/${encodeURIComponent(contestId)}/profile/${encodeURIComponent(userId)}/${page}`,
+    /** A learner's Gravatar, proxied by the API gateway on the public web origin; 404 when they have none. */
+    avatar: (userId: string) => new URL(`/api/internal/immersion/users/${encodeURIComponent(userId)}/avatar`, base).href,
     /** The signed-in account's own logs as a download, from the API gateway on the public web origin. */
     logExport: (format: 'csv' | 'json') => new URL(`/api/internal/immersion/logs/export?format=${format}`, base).href,
   }

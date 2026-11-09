@@ -347,6 +347,7 @@ export const phaseTwoDocuments = [
       props: [
   { "name": "iconOnly", "type": "boolean", "defaultValue": "false", "description": "Show a named icon instead of text and chevron, with a 44px target in both densities. Defaults to an ellipsis; use triggerIcon for a recognizable account or context icon. Give label the full action context." },
   { "name": "triggerIcon", "type": "ReactNode", "description": "Optional decorative replacement for the default trigger icon. Paper supplies its size and hides it from assistive technology; label supplies the accessible name." },
+  { "name": "heading", "type": "string", "description": "Optional label above the items that names what they act on, such as the signed-in account beside an icon-only account trigger. It labels the items as a group for assistive technology." },
   {
     "name": "label",
     "type": "string",

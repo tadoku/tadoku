@@ -172,6 +172,15 @@ describe("ActionMenu", () => {
     expect(trigger).toHaveFocus();
   });
 
+  it("labels its items with a heading, such as the account's name", async () => {
+    const user = userEvent.setup();
+    const items = [{ id: "profile", label: "Profile", onSelect: vi.fn() }];
+    render(<ActionMenu label="Account menu" heading="Anton" iconOnly items={items} />);
+    await user.click(screen.getByRole("button", { name: "Account menu" }));
+    const item = await screen.findByRole("menuitem", { name: "Profile" });
+    expect(screen.getByRole("group", { name: "Anton" })).toContainElement(item);
+  });
+
   it("uses the curated chevron and offers a named icon-only trigger", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();

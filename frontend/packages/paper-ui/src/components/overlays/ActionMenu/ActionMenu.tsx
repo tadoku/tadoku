@@ -25,6 +25,10 @@ const actionMenu = tv({
       "data-highlighted:text-inverse",
     ],
     icon: "paper-action-menu__icon grid size-icon place-items-center *:size-full",
+    heading: [
+      "paper-action-menu__heading mb-1 border-b border-rule-subtle px-field-x pb-2 pt-1",
+      "text-sm font-semibold text-muted wrap-anywhere",
+    ],
   },
 });
 
@@ -49,6 +53,8 @@ export interface ActionMenuProps {
   readonly iconOnly?: boolean;
   /** Replace the default trigger icon; the menu label remains its accessible name. */
   readonly triggerIcon?: ReactNode;
+  /** A label above the items that names what they act on, such as the signed-in account. */
+  readonly heading?: string;
 }
 
 export function ActionMenu({
@@ -58,8 +64,25 @@ export function ActionMenu({
   defaultOpen,
   iconOnly = false,
   triggerIcon,
+  heading,
 }: ActionMenuProps) {
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
+  const menuItems = items.map((item) => (
+    <Menu.Item
+      key={item.id}
+      className={slots.item({ className: item.destructive ? slots.destructive() : undefined })}
+      disabled={item.disabled}
+      label={item.label}
+      onClick={item.onSelect}
+    >
+      {item.icon ? (
+        <span className={slots.icon()} aria-hidden="true">
+          {item.icon}
+        </span>
+      ) : null}
+      <span>{item.label}</span>
+    </Menu.Item>
+  ));
 
   return (
     <Menu.Root defaultOpen={defaultOpen}>
@@ -85,22 +108,12 @@ export function ActionMenu({
           align="end"
         >
           <Menu.Popup className={popupClassName}>
-            {items.map((item) => (
-              <Menu.Item
-                key={item.id}
-                className={slots.item({ className: item.destructive ? slots.destructive() : undefined })}
-                disabled={item.disabled}
-                label={item.label}
-                onClick={item.onSelect}
-              >
-                {item.icon ? (
-                  <span className={slots.icon()} aria-hidden="true">
-                    {item.icon}
-                  </span>
-                ) : null}
-                <span>{item.label}</span>
-              </Menu.Item>
-            ))}
+            {heading ? (
+              <Menu.Group>
+                <Menu.GroupLabel className={slots.heading()}>{heading}</Menu.GroupLabel>
+                {menuItems}
+              </Menu.Group>
+            ) : menuItems}
           </Menu.Popup>
         </Menu.Positioner>
       </Menu.Portal>

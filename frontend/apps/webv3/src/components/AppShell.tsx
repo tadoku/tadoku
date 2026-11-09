@@ -8,7 +8,6 @@ import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowRightStartOnRectangleIcon,
-  ChevronDownIcon,
   Cog6ToothIcon,
   MoonIcon,
   ShieldCheckIcon,
@@ -20,6 +19,7 @@ import { DiscordIcon, GitHubIcon, TwitterIcon } from './BrandIcons'
 import { useAccountUrls, viewerQueryOptions, type Viewer } from '../lib/session'
 import { useLinks } from '../lib/links'
 import { Announcements } from './Announcements'
+import { Avatar } from './Avatar'
 import { renderLink } from './router-link'
 
 type Theme = ThemeName
@@ -84,6 +84,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           currentPath={currentPath}
           renderLink={renderLink}
           actions={<div className={accountActions}><AccountActions viewer={viewer} /></div>}
+          // A long account name truncates further rather than squeezing the fixed-width brand.
+          classNames={{ brand: 'shrink-0', actions: 'min-w-0' }}
           mobileFooter={viewer?.status === 'signed-in' ? closeMenu => <MobileAccount viewer={viewer} closeMenu={closeMenu} /> : undefined}
         />
         {viewer && 'userId' in viewer ? <form id={logoutFormId} method="post" action="/logout" hidden /> : null}
@@ -184,14 +186,25 @@ function AccountActions({ viewer }: { viewer: Viewer | undefined }) {
 function AccountMenu({ viewer }: { viewer: SignedIn }) {
   const hydrated = useHydrated()
   return (
-    <span className="max-lg:hidden [&_.paper-button>span]:max-w-measure-label [&_.paper-button>span]:truncate">
+    // The avatar is the trigger: no button fill behind the circle; its edge darkens on hover and while the menu is open.
+    <span
+      className={cn(
+        'flex max-lg:hidden [&_[aria-haspopup=menu]]:no-underline [&_[aria-haspopup=menu]>span]:size-8',
+        '[&_[aria-haspopup=menu]:hover>span>span]:border-rule-strong [&_[data-popup-open]>span>span]:border-rule-strong',
+      )}
+    >
       {hydrated
         ? <AccountMenuOpen viewer={viewer} />
         : (
           // The menu's trigger as server HTML renders it, disabled until it can open.
-          <button type="button" className={buttonClassName({ variant: 'ghost', className: 'disabled:cursor-progress disabled:opacity-full' })} disabled>
-            <span>{viewer.displayName}</span>
-            <ChevronDownIcon className={iconClassName('compact')} aria-hidden="true" />
+          <button
+            type="button"
+            className={buttonClassName({ variant: 'link', className: 'w-target min-h-target min-w-target shrink-0 p-0 no-underline disabled:cursor-progress disabled:opacity-full' })}
+            aria-label={viewer.displayName}
+            title={viewer.displayName}
+            disabled
+          >
+            <span className="grid size-8 place-items-center" aria-hidden="true"><Avatar userId={viewer.userId} name={viewer.displayName} size="nav" /></span>
           </button>
         )}
     </span>
@@ -211,7 +224,10 @@ function AccountMenuOpen({ viewer }: { viewer: SignedIn }) {
   return (
     <ActionMenu
       label={viewer.displayName}
-      triggerVariant="ghost"
+      heading={viewer.displayName}
+      iconOnly
+      triggerIcon={<Avatar userId={viewer.userId} name={viewer.displayName} size="nav" />}
+      triggerVariant="link"
       items={[
         ...items,
         { id: 'theme', label: theme.label, icon: theme.icon, onSelect: theme.toggle },
@@ -226,7 +242,10 @@ function MobileAccount({ viewer, closeMenu }: { viewer: SignedIn; closeMenu: () 
   const { accountUrl } = useLoaderData({ from: rootRouteId })
   return (
     <section className="mt-3 border-t border-rule-subtle pt-3" aria-label={`${viewer.displayName} account`}>
-      <p className="mb-1 mt-0 px-field-x text-sm font-semibold text-muted wrap-anywhere">{viewer.displayName}</p>
+      <p className="mb-1 mt-0 flex items-center gap-2 px-field-x text-sm font-semibold text-muted wrap-anywhere">
+        <Avatar userId={viewer.userId} name={viewer.displayName} size="md" />
+        {viewer.displayName}
+      </p>
       {links.map(link => (
         <Fragment key={link.id}>
           {renderLink({ href: link.href, className: mobileLink, onClick: closeMenu, children: link.label })}

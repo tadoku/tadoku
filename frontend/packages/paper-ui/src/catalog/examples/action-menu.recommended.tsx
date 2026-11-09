@@ -49,6 +49,11 @@ export default function ActionMenuFixture() {
         <ActionMenu label="Anton account menu" iconOnly triggerIcon={<UserCircleIcon />} triggerVariant="ghost"
           items={[{ id: 'profile', label: 'My profile', onSelect: () => setResult('My profile selected') }]} />
       </div>
+      <p>A heading names what the items act on, such as the account behind an icon-only trigger.</p>
+      <div className={cluster()}>
+        <ActionMenu label="Account menu" heading="Anton" iconOnly triggerIcon={<UserCircleIcon />} triggerVariant="ghost"
+          items={[{ id: 'profile', label: 'My profile', onSelect: () => setResult('My profile selected') }]} />
+      </div>
       <p role="status">{result}</p>
       <p>Duplication is unavailable for this archived example.</p>
     </div>

@@ -6,6 +6,7 @@ import { formatDate, formatTracking, numberFormat, pointsUnit, scoreFormat } fro
 import { useLinks } from '../lib/links'
 import { activityPageSize } from '../lib/profile'
 import { ActivityName } from './ActivityName'
+import { Avatar } from './Avatar'
 import { renderLink } from './router-link'
 
 /** A page of logs, newest first, each opening its detail page, with its count, pagination and empty states. */
@@ -86,7 +87,12 @@ function Entry({ log, showParticipant, actions, firstOfDay }: {
   const tracking = formatTracking(log)
   const participant = showParticipant
     ? log.user_display_name
-      ? <a className={participantLink} href={links.profile(log.user_id)}>{log.user_display_name}</a>
+      ? (
+        <>
+          <Avatar userId={log.user_id} name={log.user_display_name} size="sm" className="me-1.5" />
+          <a className={participantLink} href={links.profile(log.user_id)}>{log.user_display_name}</a>
+        </>
+      )
       : 'Unknown user'
     : null
   const meta = [

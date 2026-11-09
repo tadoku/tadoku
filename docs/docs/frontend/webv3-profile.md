@@ -33,8 +33,9 @@ weekday labels pinned and opens the current year with today in view. A date fiel
 activity too, so a day never depends on hitting its small cell. Only the profile's own account sees the CSV
 and JSON export links, which download its logs from the export operation
 through Webv2's API path.
-`frontend/apps/webv3/src/components/ProfileHeader.tsx` renders the name and the
-Overview and Activity views.
+`frontend/apps/webv3/src/components/ProfileHeader.tsx` renders the learner's
+[avatar](webv3.md#avatars), hidden on phones, their name and the Overview and
+Activity views.
 
 `profile.spec.ts` creates a log through the form, compares each total, breakdown
 and contest with the API for two years, switches years with the year tabs,

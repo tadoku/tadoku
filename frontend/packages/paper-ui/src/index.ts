@@ -124,6 +124,7 @@ export {
   type StatGridProps,
 } from './components/data-display/StatGrid'
 export { IconTile } from './components/data-display/IconTile'
+export { Spoiler, type SpoilerProps } from './components/data-display/Spoiler'
 export { entryLink, entryList, listFooter, listRows, metaLine } from './components/data-display/lists'
 export { Modal, type ModalProps } from './components/overlays/Modal'
 export {

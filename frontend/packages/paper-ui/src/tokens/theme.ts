@@ -375,7 +375,7 @@ const translate = { offscreen: '180%' } as const
 const transitionProperty = { enter: 'opacity, transform', inset: 'inset-inline-start' } as const
 const ease = { out: 'ease-out' } as const
 const gridTemplateRows = { docs: 'auto 1fr' } as const
-const blur = { scrim: '0.375rem' } as const
+const blur = { scrim: '0.375rem', spoiler: '0.75rem' } as const
 
 const zIndex = {
   lift: '1',

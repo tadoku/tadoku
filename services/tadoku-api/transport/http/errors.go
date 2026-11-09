@@ -36,8 +36,6 @@ func writeResponseError(w stdhttp.ResponseWriter, request *stdhttp.Request, err 
 	case strings.HasPrefix(request.URL.Path, "/identity/") &&
 		(errx.KindOf(err) == errx.InvalidInput || errx.KindOf(err) == errx.Unauthorized):
 		writeJSON(w, errorStatus(request.Context(), err), map[string]string{"message": err.Error()})
-	case errx.KindOf(err) == errx.NotImplemented:
-		writeJSON(w, stdhttp.StatusNotImplemented, map[string]string{"message": "not implemented"})
 	case errors.Is(err, api.ErrAccountDeletionInProgress):
 		writeJSON(w, stdhttp.StatusConflict, openapi.ImmersionAccountDeletionInProgress{
 			Error: openapi.ImmersionErrorResponseErrorAccountDeletionInProgress,
@@ -70,8 +68,6 @@ func errorStatus(ctx context.Context, err error) int {
 	switch errx.KindOf(err) {
 	case errx.Internal:
 		return stdhttp.StatusInternalServerError
-	case errx.NotImplemented:
-		return stdhttp.StatusNotImplemented
 	case errx.Throttled:
 		return stdhttp.StatusTooManyRequests
 	case errx.InvalidInput:

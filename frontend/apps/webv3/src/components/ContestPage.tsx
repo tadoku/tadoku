@@ -10,6 +10,7 @@ import { useParticipation } from '../lib/registration'
 import { viewerKey, viewerQueryOptions } from '../lib/session'
 import { ContestBoardBody, RoundStatus } from './ContestLeaderboard'
 import { ContestUpdates } from './ContestUpdates'
+import { PendingView } from './StatusViews'
 import { AppLink, renderLink } from './router-link'
 import { standingsHeader } from './standings-styles'
 
@@ -20,6 +21,7 @@ export function ContestPage({ contestId, view, page }: { contestId: string; view
   const { data: viewer } = useQuery(viewerQueryOptions())
   const board = useQuery(contestBoardQuery(contestId, viewerKey(viewer)))
 
+  if (board.isPending) return <PendingView />
   if (board.data?.kind === 'board') {
     return <ContestBoardPage board={board.data.board} today={readDay(board.dataUpdatedAt)} view={view} page={page} />
   }

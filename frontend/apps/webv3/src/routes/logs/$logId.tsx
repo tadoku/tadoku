@@ -12,6 +12,7 @@ import { ActivityName } from '../../components/ActivityName'
 import { Avatar } from '../../components/Avatar'
 import { LogDescription } from '../../components/LogDescription'
 import { AppLink, renderLink } from '../../components/router-link'
+import { PendingView } from '../../components/StatusViews'
 import { pageUnavailable } from '../../lib/page-status'
 
 export const Route = createFileRoute('/logs/$logId')({
@@ -29,8 +30,9 @@ function LogDetail() {
   const { logId } = Route.useParams()
   const links = useLinks()
   const { data: viewer } = useQuery(viewerQueryOptions())
-  const { data: result } = useQuery(logQuery(logId, viewerKey(viewer)))
+  const { data: result, isPending } = useQuery(logQuery(logId, viewerKey(viewer)))
 
+  if (isPending) return <PendingView />
   if (!result?.ok) {
     const forbidden = result?.ok === false && result.reason === 'forbidden'
     return (

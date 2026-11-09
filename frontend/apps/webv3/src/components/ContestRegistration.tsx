@@ -16,6 +16,7 @@ import { useLoginUrl, viewerKey, viewerQueryOptions } from '../lib/session'
 import { ContestFacts } from './ContestLeaderboard'
 import { ContestNotFound } from './ContestPage'
 import { AppLink, renderLink } from './router-link'
+import { PendingView } from './StatusViews'
 import { description, recordSurface, standingsAside, standingsHeader, workspace } from './standings-styles'
 import { formControls } from './form-styles'
 
@@ -52,6 +53,7 @@ export function ContestRegistrationPage({ contestId }: { contestId: string }) {
       )
   }
 
+  if (board.isPending) return <PendingView />
   if (board.data?.kind === 'none') return <ContestNotFound />
   if (board.data?.kind !== 'board') {
     return (

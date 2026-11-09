@@ -17,6 +17,15 @@ calling the API; use it for readiness and liveness rather than the homepage.
 `https://tadoku.app/api/internal`; a runtime environment override selects another
 Tadoku API. `TADOKU_WEB_URL` is also read at runtime and defaults in the image to
 `https://tadoku.app`. Development deployments override both variables.
+`frontend/apps/webv3/server/plugins/runtime-env.ts` checks these URLs, `PORT`,
+`HOST`, `SERVER_SHUTDOWN_TIMEOUT` and any `NODE_EXTRA_CA_CERTS` file before the
+server listens. A bad value makes the process exit with status 1 and a stderr
+line naming the variable, so a misconfigured pod never becomes ready.
+On `SIGTERM` the server stops accepting connections and finishes in-flight
+requests for up to `SERVER_SHUTDOWN_TIMEOUT` seconds, 15 in the image, which is
+longer than the 8-second upstream deadline. Because it stops accepting at once,
+the Deployment needs a `preStop` delay so the edge removes the pod before it
+receives `SIGTERM`.
 The [production config contract](../develop/ci-workflows.md#production-config-contract)
 fails CI when these variables, the canonical hosts or `/healthz` are renamed or removed.
 Never pass credentials as build arguments. Supply any private CA certificate and
@@ -34,6 +43,9 @@ The smoke command starts its own labeled container and synthetic GET-only API, i
 uses nullable language lists by default (`WEBV3_LANGUAGE_FIXTURE=array` selects
 nonempty lists), checks server rendering, built assets, non-root/read-only operation and the
 existing browser journeys, then disconnects the API and checks health again.
+It also checks that a container with a bad `TADOKU_API_URL` exits non-zero
+naming the variable, and that `docker stop` lets a page waiting 6.5 seconds on
+the API finish.
 It also requests the guide, `/pages/manual`, concurrently with canonical and branch Host headers
 in production and development runtime modes, checking that account links stay
 with their matching origins, native links stay on the requested host and

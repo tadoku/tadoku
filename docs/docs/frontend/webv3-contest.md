@@ -43,8 +43,11 @@ with its link can view and join it.
 
 The page shows only the actions Webv2 allows the viewer: Join contest while
 registration is open and the viewer hasn't joined, Update registration until the
-contest ends for participants, and Scoring rules for administrators. Logging
-uses the header's Log activity action. Anonymous visitors see a login prompt; joining
+contest ends for participants, and Scoring rules for administrators. Join contest
+is the page's only button. The other two are items in a Contest options menu
+(an icon-only "⋯" trigger), which is left out when it would be empty. On phones the
+trigger sits at the end of the back link's row, so the title keeps the full width.
+Logging uses the header's Log activity action. Anonymous visitors see a login prompt; joining
 sends them to log in and back to the registration. Suspended accounts get no join
 action. Scoring rules opens the native [scoring page](webv3-contest-admin.md),
 participant rows open their contest profile and the organizer opens their Webv3

@@ -196,7 +196,11 @@ test('an administrator drafts, publishes and activates a contest rule set', asyn
 
   await page.goto(`/contests/${contest.id}/leaderboard/1`)
   await hydrated(page)
-  await page.getByRole('link', { name: 'Scoring rules' }).click()
+  await expect(page.locator('.standings-header .paper-page-header__actions').getByRole('link')).toHaveText(['Join contest'])
+  await page.getByRole('button', { name: 'Contest options' }).click()
+  await expect(page.getByRole('menuitem')).toHaveText(['Scoring rules'])
+  await page.screenshot({ path: testInfo.outputPath('contest-admin-menu.png') })
+  await page.getByRole('menuitem', { name: 'Scoring rules' }).click()
   await expect(page).toHaveURL(new RegExp(`/contests/${contest.id}/scoring$`))
   await expect(page.getByRole('heading', { level: 1, name: 'Contest scoring' })).toBeVisible()
   await expect(page).toHaveTitle('Contest scoring · Tadoku')
@@ -299,7 +303,8 @@ test('a started contest’s scoring is locked, and only administrators reach sco
   const visitor = await readerContext.newPage()
   await visitor.goto(`/contests/${started.id}/leaderboard/1`)
   await expect(visitor.getByRole('heading', { level: 1, name: started.title })).toBeVisible()
-  await expect(visitor.getByRole('link', { name: 'Scoring rules' })).toHaveCount(0)
+  await hydrated(visitor)
+  await expect(visitor.getByRole('button', { name: 'Contest options' })).toHaveCount(0)
   for (const id of [started.id, own.contests[0]?.id].filter(Boolean)) {
     await visitor.goto(`/contests/${id}/scoring`)
     await expect(visitor.getByRole('heading', { level: 1, name: 'This feature is not yet available.' })).toBeVisible()

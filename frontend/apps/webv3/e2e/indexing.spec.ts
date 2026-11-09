@@ -1,6 +1,6 @@
 import { get } from 'node:http'
 import type { APIRequestContext, Page } from '@playwright/test'
-import { api, expect, test, webv3 } from './logging-fixtures'
+import { accountId, admin, api, expect, test, webv3 } from './logging-fixtures'
 
 const base = new URL(webv3 || 'http://127.0.0.1:5183')
 /** The web host this deployment's pages belong on: `next.` dropped from a Webv3 host, or `WEBV3_WEB_URL`. */
@@ -97,6 +97,34 @@ test('blog posts, CMS pages, contests and profiles describe themselves to search
 
 test('private and action pages are not indexed', async ({ page }) => {
   for (const path of ['/logs/new', '/contests/new', '/contests/joined/1', '/contests/my-contests/1']) {
+    await page.goto(path)
+    await expect(meta(page, 'robots'), path).toHaveAttribute('content', 'noindex')
+  }
+})
+
+test('a private contest’s standings, activity and participant profiles are not indexed', async ({ adminContext }) => {
+  test.skip(!api || !admin.email, 'Set TADOKU_API_URL and the Dev Admin fixture account')
+  const day = (offset: number) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10)
+  const created = await adminContext.request.post(`${api}/immersion/contests`, {
+    data: {
+      title: `Webv3 private indexing check ${Date.now().toString(36)}`,
+      description: 'Created by the Webv3 indexing journey.',
+      contest_start: day(0),
+      contest_end: day(30),
+      registration_end: day(14),
+      private: true,
+      official: false,
+      language_code_allow_list: null,
+      activity_type_id_allow_list: [1],
+    },
+  })
+  expect(created.ok(), `contest creation answered ${created.status()}`).toBe(true)
+  const { id } = await created.json() as { id: string }
+  const joined = await adminContext.request.post(`${api}/immersion/contests/${id}/registration`, { data: { language_codes: ['jpn'] } })
+  expect(joined.ok(), `registration answered ${joined.status()}`).toBe(true)
+
+  const page = await adminContext.newPage()
+  for (const path of [`/contests/${id}/leaderboard/1`, `/contests/${id}/updates/1`, `/contests/${id}/profile/${await accountId(adminContext)}`]) {
     await page.goto(path)
     await expect(meta(page, 'robots'), path).toHaveAttribute('content', 'noindex')
   }

@@ -87,6 +87,43 @@ async function ensureOrganizerPages(context: BrowserContext) {
   return userId
 }
 
+/** One page of the signed-in user's registrations, shaped like a contest list. */
+async function joinedPage(request: APIRequestContext, page: number): Promise<Contests> {
+  const response = await request.get(`${api}/immersion/contests/registrations?page_size=${pageSize}&page=${page - 1}`)
+  expect(response.ok(), `registration list answered ${response.status()}`).toBeTruthy()
+  const joined = await response.json() as { registrations: { contest: Contest }[]; total_size: number }
+  return { contests: joined.registrations.map(registration => registration.contest), total_size: joined.total_size }
+}
+
+/**
+ * Gives Dev Reader more than one page of registrations in the selected tenant. The added contests run from December
+ * into January over the next few years, so the list crosses year boundaries without touching today's contests.
+ */
+async function ensureJoinedPages(readerContext: BrowserContext, adminContext: BrowserContext) {
+  const year = new Date().getUTCFullYear()
+  const { total_size: joined } = await joinedPage(readerContext.request, 1)
+  for (let index = joined; index < pageSize + 2; index++) {
+    const start = year + 1 + index % 4
+    const created = await adminContext.request.post(`${api}/immersion/contests`, {
+      data: {
+        title: `Webv3 joined check ${index + 1}`,
+        description: 'Created by the Webv3 Joined list journey.',
+        contest_start: `${start}-12-01`,
+        contest_end: `${start + 1}-01-31`,
+        registration_end: `${start}-12-01`,
+        private: false,
+        official: false,
+        language_code_allow_list: ['jpn'],
+        activity_type_id_allow_list: [1, 2],
+      },
+    })
+    expect(created.ok(), `contest creation answered ${created.status()}`).toBeTruthy()
+    const { id } = await created.json() as { id: string }
+    const registered = await readerContext.request.post(`${api}/immersion/contests/${id}/registration`, { data: { language_codes: ['jpn'] } })
+    expect(registered.ok(), `registration answered ${registered.status()}`).toBeTruthy()
+  }
+}
+
 test.beforeEach(() => {
   test.skip(!webv3 || !api, 'Set WEBV3_BASE_URL and TADOKU_API_URL')
 })
@@ -222,12 +259,14 @@ test('a participant sees their unlisted contest in Organizing and Community, whi
   expect(anonymous.contests.map(contest => contest.id)).not.toContain(unlisted[0].id)
 })
 
-test('a participant’s Joined list holds every registration across years, newest contest first', async ({ readerContext }) => {
-  test.skip(!reader.email || !reader.password, 'Set E2E_READER_EMAIL and E2E_READER_PASSWORD')
-  const response = await readerContext.request.get(`${api}/immersion/contests/registrations?page_size=${pageSize}&page=0`)
-  expect(response.ok()).toBeTruthy()
-  const joined = await response.json() as { registrations: { contest: Contest }[]; total_size: number }
-  expect(joined.total_size, 'Dev Reader joined the seeded round').toBeGreaterThan(0)
+test('a participant’s Joined list pages through every registration, newest contest first across years', async ({ readerContext, adminContext }, testInfo) => {
+  test.skip(!reader.email || !reader.password || !admin.email || !admin.password, 'Set E2E_READER_EMAIL, E2E_READER_PASSWORD, E2E_SECOND_EMAIL and E2E_SECOND_PASSWORD')
+  await ensureJoinedPages(readerContext, adminContext)
+  const first = await joinedPage(readerContext.request, 1)
+  const second = await joinedPage(readerContext.request, 2)
+  const years = new Set([...first.contests, ...second.contests].map(contest => contest.contest_start.slice(0, 4)))
+  expect(years.size, 'the first two pages span several start years').toBeGreaterThan(1)
+  expect(first.contests.at(-1)!.contest_start >= second.contests[0].contest_start, 'page two continues newest first').toBe(true)
 
   const page = await readerContext.newPage()
   await page.goto('/contests/official/1')
@@ -235,13 +274,14 @@ test('a participant’s Joined list holds every registration across years, newes
   await page.getByRole('navigation', { name: 'Contest collections' }).getByRole('link', { name: 'Joined' }).click()
   await expect(page).toHaveURL(/\/contests\/joined\/1$/)
   await expect(page).toHaveTitle('Contests you joined · Tadoku')
-  await expectRows(page, { contests: joined.registrations.map(registration => registration.contest), total_size: joined.total_size })
   await expect(page.getByRole('group', { name: 'Year' })).toHaveCount(0)
+  await expectRows(page, first)
+  await page.screenshot({ path: testInfo.outputPath('joined-page-1.png'), fullPage: true })
 
-  // Addresses from when the list went year by year land on its first page.
-  await page.goto('/contests/joined/2020/1')
-  await expect(page).toHaveURL(/\/contests\/joined\/1$/)
-  await expect(page.locator('.contest-row')).toHaveCount(joined.registrations.length)
+  await page.getByRole('navigation', { name: 'Contest pages', exact: true }).getByRole('link', { name: 'Next page' }).click()
+  await expect(page).toHaveURL(/\/contests\/joined\/2$/)
+  await expectRows(page, second, 2)
+  await page.screenshot({ path: testInfo.outputPath('joined-page-2.png'), fullPage: true })
 })
 
 test('contest lists stay within mobile and desktop viewports', async ({ page }, testInfo) => {

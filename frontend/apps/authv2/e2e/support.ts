@@ -97,3 +97,16 @@ export async function firstWrite(page: Page, action: () => Promise<void>) {
   await action()
   return request
 }
+
+/** A 1×1 PNG, served for avatars so loading one logs no error. */
+export const avatarImage = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+  'base64',
+)
+
+/** Answers the browser's avatar requests to the web host's API inside the test. */
+export async function stubAvatars(page: Page) {
+  await page.route('https://tadoku.dev.lab/api/internal/immersion/users/*/avatar*', route => route.fulfill({
+    status: 200, contentType: 'image/png', body: avatarImage,
+  }))
+}

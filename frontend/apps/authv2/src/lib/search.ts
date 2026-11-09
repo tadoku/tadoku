@@ -4,6 +4,9 @@ const settingsEditors = ['display-name', 'email', 'password'] as const
 
 export type SettingsEditor = (typeof settingsEditors)[number]
 
+/** A Settings row a save can confirm: an editor, or the avatar's fetch. */
+export type SettingsSaved = SettingsEditor | 'avatar'
+
 export type AccountSearch = {
   readonly return_to?: string
   /** Set by a native submission that the identity API rejected, with the form that sent it. */
@@ -12,7 +15,9 @@ export type AccountSearch = {
   /** The Settings editor a Change link opened. */
   readonly edit?: SettingsEditor
   /** Set by a Settings save that succeeded. */
-  readonly saved?: SettingsEditor
+  readonly saved?: SettingsSaved
+  /** Set by a native avatar fetch: a fresh query for the avatar image, so the browser can't show a cached one. */
+  readonly fetched?: string
   /** Set by a native recovery request. */
   readonly sent?: true
   /** Asks a signed-in visitor at /login for a fresh login before a privileged action; 1 keeps the URL `reauth=1`. */
@@ -26,14 +31,15 @@ export function accountSearch(search: Record<string, unknown>): AccountSearch {
     error: isCode(search.error) ? search.error : undefined,
     form: typeof search.form === 'string' && isOperation(search.form) ? search.form : undefined,
     edit: settingsEditors.find(value => value === search.edit),
-    saved: settingsEditors.find(value => value === search.saved),
+    saved: search.saved === 'avatar' ? 'avatar' : settingsEditors.find(value => value === search.saved),
+    fetched: /^\d+$/.test(String(search.fetched)) ? String(search.fetched) : undefined,
     sent: [true, 1, '1'].includes(search.sent as never) ? true : undefined,
     reauth: [true, 1, '1'].includes(search.reauth as never) ? 1 : undefined,
   }
 }
 
 export type SettingsView =
-  | { readonly state: 'summary'; readonly saved?: SettingsEditor }
+  | { readonly state: 'summary'; readonly saved?: SettingsSaved }
   | { readonly state: 'editing'; readonly editor: SettingsEditor; readonly error?: Code }
 
 /** The error's form wins over `edit`; `saved` only applies when nothing is open. */

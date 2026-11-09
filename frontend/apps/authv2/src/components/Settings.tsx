@@ -1,18 +1,18 @@
 import { Link, useLocation, useRouter } from '@tanstack/react-router'
 import { Button, PageHeader, Surface, buttonClassName } from 'paper-ui'
 import { ArrowLeftIcon, iconClassName } from 'paper-ui/icons'
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   continuation, displayNameProblem, emailProblem, passwordProblem, problemFor, withReturnTo, type Code,
 } from '../lib/identity'
 import { navigate, useAccountForm } from '../lib/account-form'
-import { settingsView, type AccountSearch, type SettingsEditor, type SettingsView } from '../lib/search'
+import { settingsView, type AccountSearch, type SettingsEditor, type SettingsSaved, type SettingsView } from '../lib/search'
 import { useIdentity } from '../lib/session'
 import { FormProblem, ReturnTo } from './AccountForm'
 import { passwordHint } from './Credentials'
 import { accountForm, accountFormActions } from '../styles'
 
-type Account = { readonly email: string; readonly display_name: string }
+type Account = { readonly id: string; readonly email: string; readonly display_name: string }
 
 type EditorProps = {
   readonly account: Account
@@ -36,7 +36,7 @@ const confirmations: Record<SettingsEditor, string> = {
  */
 function useShowSaved(next: string | undefined) {
   const router = useRouter()
-  return (saved: SettingsEditor) => router.navigate({
+  return (saved: SettingsSaved) => router.navigate({
     to: '.',
     search: { return_to: next, saved },
     replace: true,
@@ -112,6 +112,89 @@ function SettingRow({ editor, label, value, view, next, children }: {
           </Link>
         </>
       )}
+    </section>
+  )
+}
+
+/** The first letters of the first two words, or the first two letters of a one-word name. */
+function initials(name: string) {
+  const words = name.trim().split(/\s+/)
+  return (words.length > 1 ? words[0][0] + words[1][0] : name.trim().slice(0, 2)).toLocaleUpperCase()
+}
+
+/**
+ * The account's Gravatar, which the API fetches and caches for a day, and a button that fetches it again now. A
+ * hydrated fetch also reloads the browser's cached copy, so other Tadoku pages show the new image too.
+ */
+function AvatarRow({ account, saved, fetched, error, next, reauthenticate }: {
+  readonly account: Account
+  readonly saved: boolean
+  /** A native fetch's token, which gives the image a URL the browser hasn't cached. */
+  readonly fetched?: string
+  readonly error?: Code
+  readonly next?: string
+  readonly reauthenticate: string
+}) {
+  const { api } = useIdentity()
+  const showSaved = useShowSaved(next)
+  const [fetchedAt, setFetchedAt] = useState<number>()
+  const url = `${api}/immersion/users/${encodeURIComponent(account.id)}/avatar`
+  const { form, formProps, pending, problem } = useAccountForm({
+    operation: 'avatar',
+    id: 'avatar',
+    defaultValues: {},
+    nativeError: error,
+    reauthenticate,
+    onSuccess: async () => {
+      // CSS images are no-cors requests with credentials; matching them replaces the same cache entry.
+      await fetch(url, { cache: 'reload', mode: 'no-cors', credentials: 'include' }).catch(() => undefined)
+      setFetchedAt(Date.now())
+      return showSaved('avatar')
+    },
+  })
+  const version = fetchedAt ?? (saved ? fetched : undefined)
+  const shown = version ? `${url}?v=${version}` : url
+
+  return (
+    <section className={settingRow} aria-labelledby="avatar-label">
+      <h3 id="avatar-label" className="m-0 font-body text-metadata leading-metadata font-regular text-muted max-tablet:col-span-full">
+        Avatar
+      </h3>
+      <div className="flex min-w-0 items-start gap-4">
+        <span
+          className={[
+            'relative inline-grid size-16 flex-none place-items-center overflow-hidden rounded-pill border border-rule',
+            'bg-paper font-body text-xl leading-none font-semibold tracking-wide',
+          ].join(' ')}
+          aria-hidden="true"
+        >
+          {initials(account.display_name)}
+          {/* A background, unlike an img, draws nothing when it fails, so the initials stay. */}
+          <span className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url("${shown}")` }} />
+        </span>
+        <div className="grid min-w-0 gap-2">
+          <p id="avatar-hint" className="m-0 text-fine leading-150 text-muted">
+            From your email’s <a className="text-current underline" href="https://gravatar.com">Gravatar</a>. Changes
+            show up within a day.
+          </p>
+          {saved ? <p id="avatar-saved" className={settingNote} role="status">Fetched your latest avatar.</p> : null}
+          <FormProblem problem={problem} reauthenticate={reauthenticate} />
+        </div>
+      </div>
+      <form.AppForm>
+        <form.Form {...formProps}>
+          <ReturnTo value={next} />
+          <Button
+            variant="outline"
+            type="submit"
+            loading={pending}
+            loadingLabel="Fetching"
+            aria-describedby={saved ? 'avatar-hint avatar-saved' : 'avatar-hint'}
+          >
+            Fetch latest<span className="sr-only"> avatar</span>
+          </Button>
+        </form.Form>
+      </form.AppForm>
     </section>
   )
 }
@@ -268,6 +351,14 @@ export function Settings({ search }: { readonly search: AccountSearch }) {
       />
       {search.form === 'logout' && search.error ? <div className="mb-5"><FormProblem problem={problemFor(search.error, 'logout')} /></div> : null}
       <SettingsGroup title="Profile">
+        <AvatarRow
+          account={account}
+          saved={view.state === 'summary' && view.saved === 'avatar'}
+          fetched={search.fetched}
+          error={search.form === 'avatar' ? search.error : undefined}
+          next={next}
+          reauthenticate={editor.reauthenticate}
+        />
         <SettingRow
           {...row}
           editor="display-name"

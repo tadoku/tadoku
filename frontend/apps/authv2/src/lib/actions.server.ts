@@ -32,6 +32,8 @@ function success(operation: Operation, next: string | undefined) {
       return next ?? '/'
     case 'recover':
       return withReturnTo('/recovery?sent=1', next)
+    case 'avatar':
+      return withReturnTo(`/?saved=avatar&fetched=${Date.now()}`, next)
     case 'display-name':
     case 'email':
       return withReturnTo(`/?saved=${operation}`, next)

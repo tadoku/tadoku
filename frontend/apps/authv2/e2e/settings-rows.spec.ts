@@ -1,6 +1,6 @@
 import { createServer } from 'node:http'
 import { test, expect, type Locator } from '@playwright/test'
-import { expectContained, settingRow, waitForHydration } from './support'
+import { expectContained, settingRow, stubAvatars, waitForHydration } from './support'
 
 // Failure modes: an editor that can't be opened or cancelled without JavaScript; two editors open at once, or an
 // input at rest; Change or Cancel links that drop return_to or keep a stale error or confirmation; a native error
@@ -35,8 +35,9 @@ test.afterAll(async () => {
   if (enabled) await new Promise<void>((resolve, reject) => fixture.close(error => error ? reject(error) : resolve()))
 })
 
-test.beforeEach(() => {
+test.beforeEach(async ({ page }) => {
   test.skip(!enabled, 'needs the local settings fixture')
+  await stubAvatars(page)
 })
 
 test.use({ actionTimeout: 10_000 })
@@ -152,9 +153,12 @@ for (const javaScriptEnabled of [true, false]) {
         await expect.poll(() => Object.fromEntries(new URL(page.url()).searchParams))
           .toEqual({ edit: editor, return_to: destination })
         await expect(row.locator('input:visible')).toBeFocused()
+        // The quiet Cancel comes before the primary action.
+        await page.keyboard.press('Tab')
+        await expect(row.getByRole('link', { name: 'Cancel', exact: true })).toBeFocused()
         await page.keyboard.press('Tab')
         await expect(row.locator('.paper-button--default')).toBeFocused()
-        await page.keyboard.press('Tab')
+        await page.keyboard.press('Shift+Tab')
         await expect(row.getByRole('link', { name: 'Cancel', exact: true })).toBeFocused()
         await page.keyboard.press('Enter')
         await expect.poll(() => Object.fromEntries(new URL(page.url()).searchParams)).toEqual({ return_to: destination })

@@ -1,6 +1,6 @@
 import { createServer } from 'node:http'
 import { test, expect, type Page, type Route } from '@playwright/test'
-import { openSetting, settingRow, settingValue, waitForHydration } from './support'
+import { openSetting, settingRow, settingValue, stubAvatars, waitForHydration } from './support'
 
 // Settings for imported addresses the API sends exactly as stored because net/mail can't read them. Email inputs
 // drop line breaks and surrounding ASCII whitespace from such an address, so the input can't hold it unchanged.
@@ -69,8 +69,9 @@ test.afterAll(async () => {
   if (enabled) await new Promise<void>((resolve, reject) => fixture.close(error => error ? reject(error) : resolve()))
 })
 
-test.beforeEach(() => {
+test.beforeEach(async ({ page }) => {
   test.skip(!enabled, 'needs the local settings fixture')
+  await stubAvatars(page)
 })
 
 test.use({ actionTimeout: 10_000 })

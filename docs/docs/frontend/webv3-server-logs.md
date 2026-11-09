@@ -98,8 +98,9 @@ failed. A request whose calls have finished keeps rendering.
 `publicReadRequest` answers a public read from memory for ten seconds when the
 incoming request carries no `tadoku_session` or `tadoku_session_<tenant>` cookie.
 The latest official contest, standings pages, CMS pages and blog reads use it. A
-request with any such cookie, even an empty one, always reads the API; signed-out
-visitors can see those reads up to ten seconds old.
+request with any such cookie, even an empty one, always reads the API. A
+signed-out page can start from a read up to ten seconds old, which the browser
+then keeps for its query's own stale time.
 
 An entry is keyed by the absolute API URL, whose host selects the tenant, so a
 tenant only reads its own entries. Only a 200 answer that passed response

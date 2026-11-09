@@ -40,7 +40,9 @@ pnpm --filter webv3 exec playwright install chromium
 PLAYWRIGHT_OUTPUT_DIR=/tmp/webv3-evidence node scripts/smoke-webv3-image.mjs webv3:check
 ```
 
-The smoke command starts its own labeled container and synthetic GET-only API, including one contest with its logs and one standings learner's profile year and contest profile,
+The smoke command starts its own labeled container and synthetic GET-only API
+(`frontend/scripts/smoke-webv3-fixture.mjs`), including one contest with its
+logs and one standings learner's profile year and contest profile,
 uses nullable language lists by default (`WEBV3_LANGUAGE_FIXTURE=array` selects
 nonempty lists), checks server rendering, built assets, non-root/read-only operation and the
 existing browser journeys, then disconnects the API and checks health again.

@@ -225,9 +225,10 @@ func (s *Service) create(ctx context.Context, mutation logMutation) (MutationRes
 	return result, nil
 }
 
+// Update changes current's language only when it has no contest submissions, ongoing or ended.
 func (s *Service) Update(
 	ctx context.Context,
-	id uuid.UUID,
+	current *Log,
 	now time.Time,
 	description *string,
 	scored logscore.Result,
@@ -235,9 +236,13 @@ func (s *Service) Update(
 	if err := validateDescription(description); err != nil {
 		return MutationResult{}, err
 	}
+	if scored.LanguageCode != current.LanguageCode && len(current.Registrations) > 0 {
+		return MutationResult{}, errx.NewInvalidInputError("a log submitted to a contest cannot change language")
+	}
 
 	mutation := logMutation{
-		ID:               id,
+		ID:               current.ID,
+		LanguageCode:     scored.LanguageCode,
 		Description:      description,
 		Tags:             scored.Tags,
 		Tracking:         scored.Tracking,

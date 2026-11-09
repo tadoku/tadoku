@@ -52,9 +52,9 @@ test('owner edits a saved log, sees the estimate and the persisted change after 
   await page.getByRole('link', { name: 'Edit log', exact: true }).click()
   await expect(page).toHaveURL(`${webv3}/logs/${id}/edit`)
   await expect(saveChanges(page)).toBeEnabled({ timeout: 15_000 })
-  // Language and activity can't change on an edit, so the form states them instead of offering controls.
+  // The activity can't change on an edit, so the form states it instead of offering a control.
   await expect(page.locator('.paper-page-header__lead')).toHaveText(`${before.language.name} · ${before.activity.name}`)
-  await expect(page.getByLabel('Language', { exact: true })).toHaveCount(0)
+  await expect(page.getByLabel('Activity', { exact: true })).toHaveCount(0)
   await expect(amountInput(page)).toHaveValue('5')
   await expect(page.getByLabel('Unit', { exact: true })).toHaveValue(before.unit_key)
   await expect(page.getByRole('group', { name: 'Contests' })).toHaveCount(0)
@@ -94,6 +94,61 @@ test('owner edits a saved log, sees the estimate and the persisted change after 
   expect(after.registrations.map((registration: { contest_id: string }) => registration.contest_id))
     .toEqual(before.registrations.map((registration: { contest_id: string }) => registration.contest_id))
   await testInfo.attach('edited-record', { body: JSON.stringify({ before, after }, null, 2), contentType: 'application/json' })
+})
+
+test('owner changes the language of a log submitted to no contest', async ({ page, readerContext }, testInfo) => {
+  test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
+  const id = await createReadingLog(page, `edit-language-${Date.now()}`)
+  const before = await (await readRecord(readerContext, id)).json()
+  expect(before.registrations ?? []).toEqual([])
+
+  await page.goto(`/logs/${id}/edit`)
+  await expect(saveChanges(page)).toBeEnabled({ timeout: 15_000 })
+  const language = page.getByLabel('Language', { exact: true })
+  await expect(language).toHaveValue(before.language.code)
+  const options = await language.locator('option').evaluateAll(nodes => nodes.map(node => (node as HTMLOptionElement).value))
+  const target = options.find(code => code !== before.language.code)!
+  // Every language offers Reading's units, so the chosen unit and its amount keep their meaning.
+  const unit = page.getByLabel('Unit', { exact: true })
+  await unit.selectOption('sentences')
+  await language.selectOption(target)
+  await expect(unit).toHaveValue('sentences')
+  await page.screenshot({ path: testInfo.outputPath('edit-language.png'), fullPage: true })
+  await saveChanges(page).click()
+  await expect(page).toHaveURL(`${webv3}/logs/${id}`)
+
+  const after = await (await readRecord(readerContext, id)).json()
+  expect(after.language.code).toBe(target)
+  expect(after).toMatchObject({ id, amount: before.amount, unit_key: 'sentences', activity: before.activity, description: before.description })
+  await testInfo.attach('language-change', { body: JSON.stringify({ before, after }, null, 2), contentType: 'application/json' })
+})
+
+test('a log submitted to a contest keeps its language: the edit form offers no language control', async ({ page, readerContext }) => {
+  test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
+  await openForm(page)
+  // Japanese is registered in the seeded contests.
+  await page.getByLabel('Language', { exact: true }).selectOption('jpn')
+  await page.getByLabel('Activity', { exact: true }).selectOption({ label: 'Reading' })
+  await fillDraft(page, '6', `edit-attached-${Date.now()}`)
+  const id = await createLog(page)
+  await page.goto(`/logs/${id}/contests?preselect=1`)
+  const save = page.getByRole('button', { name: 'Save submissions', exact: true })
+  await expect(save).toBeEnabled({ timeout: 15_000 })
+  await save.click()
+  await expect(page).toHaveURL(`${webv3}/logs/${id}`)
+  const before = await (await readRecord(readerContext, id)).json()
+  expect(before.registrations.length).toBeGreaterThan(0)
+
+  await page.goto(`/logs/${id}/edit`)
+  await expect(saveChanges(page)).toBeEnabled({ timeout: 15_000 })
+  await expect(page.getByLabel('Language', { exact: true })).toHaveCount(0)
+  await expect(page.locator('.paper-page-header__lead')).toHaveText(`Japanese · ${before.activity.name}`)
+
+  const refused = await readerContext.request.put(`${api}/immersion/logs/${id}`, {
+    data: { language_code: 'eng', amount: before.amount, unit_key: before.unit_key, tags: [] },
+  })
+  expect(refused.status()).toBe(400)
+  expect((await (await readRecord(readerContext, id)).json()).language.code).toBe('jpn')
 })
 
 test('editing only the description keeps a saved tag that holds a comma', async ({ page, readerContext }) => {

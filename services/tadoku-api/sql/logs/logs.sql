@@ -381,6 +381,7 @@ values (sqlc.arg('log_id'), sqlc.arg('user_id'), sqlc.arg('tag'));
 
 -- name: UpdateLog :exec
 update logs set
+  language_code = sqlc.arg('language_code'),
   unit_key = sqlc.arg('unit_key'), amount = sqlc.arg('amount'),
   modifier = sqlc.arg('modifier'), duration_seconds = sqlc.arg('duration_seconds'),
   computed_score = sqlc.arg('computed_score'), score_rule_set_id = sqlc.arg('score_rule_set_id'),

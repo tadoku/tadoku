@@ -24,6 +24,7 @@ type LogCreateParameters struct {
 
 type LogUpdateParameters struct {
 	ID              uuid.UUID
+	LanguageCode    *string
 	UnitKey         *string
 	Amount          *float32
 	DurationSeconds *int32
@@ -114,10 +115,18 @@ func (a *Application) UpdateLog(ctx context.Context, p LogUpdateParameters) (*Lo
 			return err
 		}
 
+		languageCode := current.LanguageCode
+		if p.LanguageCode != nil && *p.LanguageCode != current.LanguageCode {
+			if err := a.languages.RequireExistingLanguages(ctx, []string{*p.LanguageCode}); err != nil {
+				return err
+			}
+			languageCode = *p.LanguageCode
+		}
+
 		input := logscore.Input{
 			UnitKey:         p.UnitKey,
 			ActivityID:      current.Activity.ID,
-			LanguageCode:    current.LanguageCode,
+			LanguageCode:    languageCode,
 			Amount:          p.Amount,
 			DurationSeconds: p.DurationSeconds,
 			Tags:            p.Tags,
@@ -127,7 +136,7 @@ func (a *Application) UpdateLog(ctx context.Context, p LogUpdateParameters) (*Lo
 		if err != nil {
 			return err
 		}
-		result, err := a.logs.Update(ctx, p.ID, now, p.Description, scored)
+		result, err := a.logs.Update(ctx, current, now, p.Description, scored)
 		if err != nil {
 			return err
 		}

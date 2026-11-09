@@ -2038,6 +2038,10 @@ export type ImmersionLogFindByIdResponse = ImmersionLogFindByIdResponses[keyof I
 
 export type ImmersionLogUpdateData = {
     body: {
+        /**
+         * New language for the log. Omit to keep the current language. Only a log without contest submissions, ongoing or ended, can change language; otherwise a different language returns 400.
+         */
+        language_code?: string;
         amount?: number;
         unit_key?: string;
         duration_seconds?: number;

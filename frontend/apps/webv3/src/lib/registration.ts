@@ -70,8 +70,9 @@ export const contestLanguagesQuery = () => queryOptions({
 
 /**
  * Registers the account that opened the form, or changes its languages. A save refreshes what the registration
- * changes: the registration itself, the contest's standings, summary and the account's place and profile in it, the
- * Joined list, the account's contest history and the contests the activity forms offer.
+ * changes: the registration itself, the standings, the contest's summary and logs, places in it and the account's
+ * profile in it, logs a dropped language detached, the Joined list, the account's contest history and the contests the
+ * activity forms offer.
  */
 export function useSaveRegistration() {
   const queryClient = useQueryClient()
@@ -85,9 +86,12 @@ export function useSaveRegistration() {
       await Promise.all([
         // Read again now, so the contest page the form returns to shows the saved registration.
         queryClient.invalidateQueries({ queryKey: ['registration', contestId], refetchType: 'all' }),
-        queryClient.invalidateQueries({ queryKey: ['standings', { kind: 'contest', contestId }] }),
+        // Dropping a language detaches its logs, which can move points on any board and change other participants' ranks.
+        queryClient.invalidateQueries({ queryKey: ['standings'] }),
+        queryClient.invalidateQueries({ queryKey: ['contest-logs', contestId] }),
+        queryClient.invalidateQueries({ queryKey: ['log'] }),
         queryClient.invalidateQueries({ queryKey: ['home-board', contestId] }),
-        queryClient.invalidateQueries({ queryKey: ['contest-entry', contestId, viewerId] }),
+        queryClient.invalidateQueries({ queryKey: ['contest-entry', contestId] }),
         queryClient.invalidateQueries({ queryKey: ['contest-profile', contestId, viewerId] }),
         queryClient.invalidateQueries({ queryKey: ['contests', { kind: 'joined' }] }),
         queryClient.invalidateQueries({ queryKey: ['profile-statistics', viewerId] }),

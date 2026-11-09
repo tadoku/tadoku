@@ -47,10 +47,29 @@ call's operation. It covers upstream calls only: a request whose calls have
 finished keeps rendering.
 
 The same middleware records an SSR error for a response of status 500 or above
-and for a rejected request, unless the client has aborted it. An error thrown
-while a page streams keeps its response status and reaches only the framework's
-log. The framework writes its own unstructured errors to stderr, thrown messages
-included, so that stream is not covered by this contract.
+and for a rejected request, unless the client has aborted it. An error React
+recovers from while rendering, such as one thrown by a page component, keeps the
+response's status, usually 200, and is recorded as an SSR error with its class in
+`error_type`. A request records at most one SSR error, so a render error and the
+500 it causes are one line. The framework also writes its own unstructured
+errors to stderr, thrown messages included; that stream is not covered by this
+contract.
+
+## Querying
+
+Production and its production branches run on the `lke-prod` cluster, whose pod
+logs reach the homelab Loki with each JSON line in the record's `body`.
+Development-cluster logs, dev-cli branches included, do not reach it. Webv3's
+records for the canonical deployment:
+
+```logql
+{k8s_cluster_name="lke-prod", service_namespace="tdk-prod-frontend-webv3", service_name="frontend-webv3"}
+  |~ "upstream_failure|ssr_error"
+  | json body="body" | line_format "{{.body}}" | json
+```
+
+Tadoku API's lines use `service_namespace="tdk-prod-tadoku-api"` and
+`service_name="tadoku-api"` with the same parsing.
 
 ## Request deadline
 

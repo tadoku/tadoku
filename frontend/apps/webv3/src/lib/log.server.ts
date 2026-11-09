@@ -22,7 +22,7 @@ export type SsrError =
   | { kind: 'response'; status: number }
   | { kind: 'thrown'; errorName: string }
 
-type RequestLog = { requestId: string; host: string | undefined }
+type RequestLog = { requestId: string; host: string | undefined; ssrErrorRecorded: boolean }
 
 const requestLog = new AsyncLocalStorage<RequestLog>()
 const requestIdPattern = /^[A-Za-z0-9_-]{1,128}$/
@@ -49,11 +49,32 @@ function upstreamHost(host: string | null) {
   }
 }
 
+/**
+ * TanStack Router reports an error React recovered from while rendering, inside a Suspense boundary, only as
+ * `console.error('Error in renderTo…:', error)`, and the response keeps its status. Records it as an SSR error.
+ */
+function recordRenderErrors() {
+  const frameworkError = console.error
+  console.error = (...args: unknown[]) => {
+    if (requestLog.getStore() && typeof args[0] === 'string' && /^Error in renderTo[A-Za-z]+:$/.test(args[0])) {
+      recordSsrError({ kind: 'thrown', errorName: args[1] instanceof Error ? args[1].name : 'unknown' })
+    }
+    frameworkError(...args)
+  }
+}
+
+let renderErrorsRecorded = false
+
 /** Runs one request with the ID and host that every record made during it carries. */
 export function withRequestLog<T>(request: Request, run: () => T): T {
+  if (!renderErrorsRecorded) {
+    renderErrorsRecorded = true
+    recordRenderErrors()
+  }
+
   const ingressId = request.headers.get('x-request-id')
   const requestId = ingressId && requestIdPattern.test(ingressId) ? ingressId : randomUUID()
-  return requestLog.run({ requestId, host: upstreamHost(request.headers.get('host')) }, run)
+  return requestLog.run({ requestId, host: upstreamHost(request.headers.get('host')), ssrErrorRecorded: false }, run)
 }
 
 /** Keeps field names in step with Tadoku API's slog JSON handler, so one Loki query covers both. */
@@ -95,7 +116,12 @@ export function recordUpstreamFailure({ operation, durationMs, failure }: Upstre
   })
 }
 
+/** Records at most one SSR error per request: a render error and the 500 it causes are one failure. */
 export function recordSsrError(error: SsrError) {
+  const request = requestLog.getStore()
+  if (request?.ssrErrorRecorded) return
+  if (request) request.ssrErrorRecorded = true
+
   if (error.kind === 'response') {
     write('ssr_error', 'server rendering failed', { status: error.status })
     return

@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto'
-import { mkdir, open, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, test as base, type Browser, type BrowserContext, type Cookie, type Page, type Request } from '@playwright/test'
@@ -141,49 +141,21 @@ async function signedIn(browser: Browser, cookies: Cookie[]) {
 
 const sessions = join(tmpdir(), 'tadoku-webv3-e2e-sessions')
 
-/** Runs `work` while holding `<file>.lock`, which other workers and runs wait for; a lock older than two minutes is stale. */
-async function locked<T>(file: string, work: () => Promise<T>) {
-  const lock = `${file}.lock`
-  for (let wait = 100; ; wait = Math.min(wait * 2, 2_000)) {
-    try {
-      await (await open(lock, 'wx')).close()
-      break
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
-      const since = await stat(lock).then(lockStat => Date.now() - lockStat.mtimeMs, () => 0)
-      if (since > 120_000) await rm(lock, { force: true })
-      else await new Promise(resolve => setTimeout(resolve, wait))
-    }
-  }
-  try {
-    return await work()
-  } finally {
-    await rm(lock, { force: true })
-  }
-}
-
-/**
- * The account's session on this host, kept on disk so later workers and runs reuse it while the API still accepts it.
- * Only one process at a time signs an account in; the others wait and reuse its session.
- */
+/** The account's session on this host, kept on disk so later workers and runs reuse it while the API still accepts it. */
 async function storedSession(browser: Browser, account: Account) {
   if (!webv3 || !account.email || !account.password) return []
   const file = join(sessions, `${createHash('sha256').update(`${webv3}\n${account.email}`).digest('hex').slice(0, 16)}.json`)
-  const read = () => readFile(file, 'utf8').then(text => JSON.parse(text) as Cookie[], () => [])
-  const stored = await read()
+  const stored = await readFile(file, 'utf8').then(text => JSON.parse(text) as Cookie[], () => [])
   if (await signedIn(browser, stored)) return stored
 
+  const cookies = await session(browser, account)
   await mkdir(sessions, { recursive: true, mode: 0o700 })
-  return locked(file, async () => {
-    const current = await read()
-    if (await signedIn(browser, current)) return current
-
-    const cookies = await session(browser, account)
-    const temporary = `${file}.${process.pid}.${randomUUID()}.tmp`
-    await writeFile(temporary, JSON.stringify(cookies), { mode: 0o600 })
-    await rename(temporary, file)
-    return cookies
-  })
+  // ponytail: no lock, so two runs that start together on one machine each sign in once and the last rename wins;
+  // add a cross-process lock if the suite ever runs with several workers.
+  const temporary = `${file}.${process.pid}.${randomUUID()}.tmp`
+  await writeFile(temporary, JSON.stringify(cookies), { mode: 0o600 })
+  await rename(temporary, file)
+  return cookies
 }
 
 /** Registers an account in the selected tenant; registration starts its session without spending a login. */
@@ -221,9 +193,8 @@ export const test = base.extend<{
   trace: ['off', { scope: 'worker' }],
   video: ['off', { scope: 'worker' }],
   ignoreHTTPSErrors: false,
-  // Setup may wait for another worker's sign-in to finish.
-  readerCookies: [async ({ browser }, provide) => provide(await storedSession(browser, reader)), { scope: 'worker', timeout: 120_000 }],
-  adminCookies: [async ({ browser }, provide) => provide(await storedSession(browser, admin)), { scope: 'worker', timeout: 120_000 }],
+  readerCookies: [async ({ browser }, provide) => provide(await storedSession(browser, reader)), { scope: 'worker' }],
+  adminCookies: [async ({ browser }, provide) => provide(await storedSession(browser, admin)), { scope: 'worker' }],
   // Cached per worker process; a test-scoped fixture can skip where the environment has no credentials.
   loginLearner: async ({ browser }, provide) => {
     base.skip(!credentialed, 'Set the credentialed development environment')

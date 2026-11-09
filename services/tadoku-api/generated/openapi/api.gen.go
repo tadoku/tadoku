@@ -1492,6 +1492,11 @@ type ImmersionLogUpdateJSONBody struct {
 	Description     *string  `json:"description,omitempty"`
 	DurationSeconds *int32   `json:"duration_seconds,omitempty"`
 
+	// LanguageCode New language for the log. Omit to keep the current language. Only a log without contest submissions, ongoing or ended, can change language; otherwise a different language returns 400.
+	//
+	// Example: jpn
+	LanguageCode *string `json:"language_code,omitempty"`
+
 	// Tags Example: ["book","fiction"]
 	Tags    []string `json:"tags"`
 	UnitKey *string  `json:"unit_key,omitempty"`

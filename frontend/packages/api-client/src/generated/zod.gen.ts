@@ -988,6 +988,7 @@ export const zImmersionLogFindByIdPath = z.object({
 export const zImmersionLogFindByIdResponse = zImmersionLog;
 
 export const zImmersionLogUpdateBody = z.object({
+    language_code: z.string().optional(),
     amount: z.number().optional(),
     unit_key: z.string().optional(),
     duration_seconds: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),

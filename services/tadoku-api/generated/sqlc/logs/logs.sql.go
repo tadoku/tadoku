@@ -1086,16 +1086,18 @@ func (q *Queries) SoftDeleteLog(ctx context.Context, arg SoftDeleteLogParams) er
 
 const updateLog = `-- name: UpdateLog :exec
 update logs set
-  unit_key = $1, amount = $2,
-  modifier = $3, duration_seconds = $4,
-  computed_score = $5, score_rule_set_id = $6,
-  score_rule_ids = $7, score_rates = $8,
-  score_source = $9, description = $10,
-  updated_at = $11
-where id = $12 and deleted_at is null and frozen_at is null
+  language_code = $1,
+  unit_key = $2, amount = $3,
+  modifier = $4, duration_seconds = $5,
+  computed_score = $6, score_rule_set_id = $7,
+  score_rule_ids = $8, score_rates = $9,
+  score_source = $10, description = $11,
+  updated_at = $12
+where id = $13 and deleted_at is null and frozen_at is null
 `
 
 type UpdateLogParams struct {
+	LanguageCode    string
 	UnitKey         pgtype.Text
 	Amount          pgtype.Float4
 	Modifier        pgtype.Float4
@@ -1112,6 +1114,7 @@ type UpdateLogParams struct {
 
 func (q *Queries) UpdateLog(ctx context.Context, arg UpdateLogParams) error {
 	_, err := q.db.Exec(ctx, updateLog,
+		arg.LanguageCode,
 		arg.UnitKey,
 		arg.Amount,
 		arg.Modifier,

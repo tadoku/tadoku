@@ -109,6 +109,7 @@ func (r *LogsRepository) UpdateLog(ctx context.Context, mutation logMutation) er
 	}
 	p := trackingParams(mutation.Tracking)
 	return queries.New(executor).UpdateLog(ctx, queries.UpdateLogParams{
+		LanguageCode:    mutation.LanguageCode,
 		UnitKey:         p.unitKey,
 		Amount:          p.amount,
 		Modifier:        p.modifier,

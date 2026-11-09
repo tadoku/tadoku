@@ -1835,6 +1835,13 @@ paths:
               required:
                 - tags
               properties:
+                language_code:
+                  description: >-
+                    New language for the log. Omit to keep the current language.
+                    Only a log without contest submissions, ongoing or ended, can
+                    change language; otherwise a different language returns 400.
+                  type: string
+                  example: jpn
                 amount:
                   type: number
                   format: float

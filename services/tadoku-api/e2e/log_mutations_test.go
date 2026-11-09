@@ -69,6 +69,8 @@ func TestImmersionLogUpdate(t *testing.T) {
 	}{
 		{description: []string{"owner", "duration", "disabled"}, want: http.StatusOK},
 		{description: []string{"admin", "amount", "disabled"}, want: http.StatusOK},
+		{description: []string{"owner", "language", "detached"}, want: http.StatusOK},
+		{description: []string{"attached", "same", "language"}, want: http.StatusOK},
 		{description: []string{"authoritative", "ongoing", "and", "ended"}, want: http.StatusOK, scoringEngineEnabled: true},
 		{description: []string{"authoritative", "exact", "contest", "end"}, want: http.StatusOK, scoringEngineEnabled: true, at: time.Date(2026, 9, 12, 0, 0, 0, 0, time.UTC)},
 		{description: []string{"authoritative", "ended", "today", "only"}, want: http.StatusOK, scoringEngineEnabled: true},
@@ -79,6 +81,8 @@ func TestImmersionLogUpdate(t *testing.T) {
 		{description: []string{"frozen", "after", "invalid", "tags"}, want: http.StatusBadRequest},
 		{description: []string{"description", "too", "long"}, want: http.StatusBadRequest},
 		{description: []string{"retired", "unit", "key"}, want: http.StatusBadRequest},
+		{description: []string{"language", "attached"}, want: http.StatusBadRequest},
+		{description: []string{"unknown", "language", "detached"}, want: http.StatusBadRequest},
 		{description: []string{"frozen"}, want: http.StatusConflict},
 		{description: []string{"account", "deletion", "locked"}, want: http.StatusConflict},
 		{description: []string{"missing"}, want: http.StatusNotFound},

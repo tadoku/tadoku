@@ -36,6 +36,7 @@ func (s *server) ImmersionLogUpdate(ctx context.Context, request openapi.Immersi
 	body := request.Body
 	updated, err := s.application.UpdateLog(ctx, api.LogUpdateParameters{
 		ID:              request.Id,
+		LanguageCode:    body.LanguageCode,
 		UnitKey:         body.UnitKey,
 		Amount:          body.Amount,
 		DurationSeconds: body.DurationSeconds,

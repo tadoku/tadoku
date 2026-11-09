@@ -40,7 +40,10 @@ object become `*`.
 `withRequestLog` in `frontend/apps/webv3/src/start.ts` gives every Start request an
 ID through `AsyncLocalStorage`, which records read without callers passing it. A
 well-formed ingress `X-Request-ID` of 1 to 128 letters, digits, `_` or `-` is
-kept; anything else is replaced with a generated ID. Records made outside a Start
+kept; anything else is replaced with a generated ID. Every upstream call sends
+the request's ID to Tadoku API as `X-Request-Id`, which the API logs as its
+`correlation_id` (`services/tadoku-api/transport/http/observability.go`), so
+both services' lines for one request share it. Records made outside a Start
 request, such as from a Nitro route in `frontend/apps/webv3/server/routes/`, have
 no `correlation_id` or `host`.
 

@@ -51,10 +51,13 @@ export const newLogSchema = z.object({
 
 export type NewLog = z.infer<typeof newLogSchema>
 
-/** A change to a saved log. Its language, activity and contest submissions stay as they are. */
+/**
+ * A change to a saved log. Its activity and contest submissions stay as they are; `languageCode` is sent only for a
+ * log submitted to no contest, because the API refuses to change the language of one that is.
+ */
 export const logUpdateSchema = newLogSchema
   .pick({ viewerId: true, measure: true, description: true, tags: true })
-  .extend({ logId: z.guid() })
+  .extend({ logId: z.guid(), languageCode: newLogSchema.shape.languageCode.optional() })
 
 export type LogUpdate = z.infer<typeof logUpdateSchema>
 
@@ -151,7 +154,13 @@ export function toNewLog(draft: LogDraft, options: LogOptions, viewerId: string)
 
 export function toLogUpdate(draft: LogDraft, options: LogOptions, viewerId: string, log: ImmersionLog): LogUpdate {
   const { measure, tags } = toScorePreview(draft, options)
-  return { viewerId, logId: log.id, measure, description: draft.description.trim(), tags }
+  const languageCode = languageEditable(log) ? draft.languageCode : undefined
+  return { viewerId, logId: log.id, languageCode, measure, description: draft.description.trim(), tags }
+}
+
+/** Whether an edit may change the log's language: only while it is submitted to no contest, ongoing or ended. */
+export function languageEditable(log: ImmersionLog) {
+  return !log.registrations?.length
 }
 
 /** The estimate request for a draft that passes `logDraftSchema`. */

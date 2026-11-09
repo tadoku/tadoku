@@ -153,7 +153,7 @@ test('without browser storage the form starts from its defaults and still saves'
   expect(errors).toEqual([])
 })
 
-test('edit keeps language and activity fixed, uses the same tags and sidebar and returns to the log', async ({ page, readerContext }, testInfo) => {
+test('edit keeps the activity fixed, uses the same tags and sidebar and returns to the log', async ({ page, readerContext }, testInfo) => {
   test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
   await openForm(page)
   await activity(page).selectOption({ label: 'Reading' })
@@ -165,9 +165,10 @@ test('edit keeps language and activity fixed, uses the same tags and sidebar and
   await page.goto(`/logs/${id}/edit`)
   const save = page.getByRole('button', { name: 'Save', exact: true })
   await expect(save).toBeEnabled({ timeout: 15_000 })
-  // An edit can't change language or activity, so the header states them and the form offers no controls for them.
+  // An edit can't change the activity, so the header states it and the form offers no control for it. This log is
+  // submitted to no contest, so its language can still change.
   await expect(page.locator('.paper-page-header__lead')).toHaveText(/ · /)
-  await expect(language(page)).toHaveCount(0)
+  await expect(language(page)).toHaveCount(1)
   await expect(activity(page)).toHaveCount(0)
   await expect(chip(page, 'book')).toBeVisible()
   await expect(page.getByRole('link', { name: 'Cancel', exact: true })).toHaveAttribute('href', `/logs/${id}`)

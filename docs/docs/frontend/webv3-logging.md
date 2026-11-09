@@ -14,7 +14,8 @@ form follows Webv2's: the language list starts with the languages the viewer
 used before, then lists every language. Language and activity determine the
 amount and unit input; Time spent, in minutes, is required for timed activities
 and optional for the others. Changing the activity clears the quantity, because
-activities count in different units. A missing unit is reported on the amount
+activities count in different units. Changing the language keeps the unit when
+the new language offers it, so the quantity keeps its meaning. A missing unit is reported on the amount
 field, which shows one error for the amount and its unit. The description is one
 line. As in Webv2, `/logs/new?amount=<n>` prefills a positive whole amount; any
 other value is ignored. Cancel returns home, and Log activity saves.
@@ -86,9 +87,11 @@ then the description and tags as labelled rows; the record's ID is not shown. It
 Edit log and Delete log; visitors see neither.
 `/logs/$logId/edit` shows the edit form only to the log's owner; another account
 sees that the record is someone else's, and an anonymous visitor is asked to
-sign in. It uses the same tags and tag sidebar, shows language and activity
-read-only and keeps contest submissions as they are; Cancel and Save return to
-the log. The measure,
+sign in. It uses the same tags and tag sidebar, shows the activity read-only
+and keeps contest submissions as they are; Cancel and Save return to the log.
+A log submitted to no contest, ongoing or ended, offers its language; once
+submitted, the language is read-only because the API refuses to change it. The
+language, measure,
 time spent, description and tags change through the update operation, which
 rescores the log's submissions to unfinished contests and leaves finished
 contests' scores unchanged. Timed logs saved with their minutes as an amount are

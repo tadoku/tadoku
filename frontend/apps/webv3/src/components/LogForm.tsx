@@ -7,6 +7,7 @@ import {
   draftFromLog,
   firstDraft,
   isTimed,
+  languageEditable,
   logDraftSchema,
   toLogUpdate,
   toNewLog,
@@ -30,7 +31,7 @@ import { useLoginUrl } from '../lib/session'
 import { TagsSidebar, maxTags } from './TagsSidebar'
 import { formControls } from './form-styles'
 
-/** A new activity, or a change to a saved one, whose language, activity and contest submissions stay fixed. */
+/** A new activity, or a change to a saved one, whose activity and contest submissions stay fixed. */
 export type LogFormTarget = { kind: 'new'; amount?: number } | { kind: 'edit'; log: ImmersionLog }
 
 /**
@@ -98,8 +99,8 @@ export function LogForm({ options, viewerId, target }: { options: LogOptions; vi
           <form.Form className="grid min-w-0 max-w-panel gap-4" aria-busy={pending}>
             <Surface className={card}>
               <fieldset className={`${formControls} p-record-inset`} disabled={disabled}>
-                {/* An edit can't change language or activity; the header states them. */}
-                {editing ? null : <ChoiceFields form={form} options={options} />}
+                {/* An edit can't change the activity, nor the language once submitted to a contest; the header states them. */}
+                <ChoiceFields form={form} options={options} showLanguage={!editing || languageEditable(editing)} showActivity={!editing} />
                 <MeasureField form={form} timed={isTimed(options, activityId)} units={units} />
                 <form.AppField name="description">
                   {field => <field.Input label="Description (optional)" placeholder="e.g. One Piece volume 45" />}
@@ -221,24 +222,33 @@ const MeasureField = withPaperForm({
   },
 })
 
-/** A new log's language and activity. Changing either selects their first unit again. */
+/**
+ * The log's language and activity, each when it may change. A language change keeps the unit when the new language
+ * offers it; otherwise, and after an activity change, the first unit is selected again.
+ */
 const ChoiceFields = withPaperForm({
   defaultValues: {} as LogDraft,
-  props: { options: {} as LogOptions },
-  render: function ChoiceFields({ form, options }) {
+  props: { options: {} as LogOptions, showLanguage: true, showActivity: true },
+  render: function ChoiceFields({ form, options, showLanguage, showActivity }) {
     const selectDependents = (language: string, activity: string) => {
       form.setFieldValue('unitKey', unitFor(options, language, activity))
     }
 
     return (
       <>
-        <form.AppField
+        {showLanguage ? <form.AppField
           name="languageCode"
-          listeners={{ onChange: ({ value }) => selectDependents(value, form.getFieldValue('activityId')) }}
+          listeners={{
+            onChange: ({ value }) => {
+              const activityId = form.getFieldValue('activityId')
+              const unitKey = form.getFieldValue('unitKey')
+              if (!unitsFor(options, value, activityId).some(unit => unit.unit_key === unitKey)) selectDependents(value, activityId)
+            },
+          }}
         >
           {field => <field.Select label="Language" options={[]} groups={languageGroups(options)} />}
-        </form.AppField>
-        <form.AppField
+        </form.AppField> : null}
+        {showActivity ? <form.AppField
           name="activityId"
           listeners={{
             onChange: ({ value }) => {
@@ -258,7 +268,7 @@ const ChoiceFields = withPaperForm({
               }))}
             />
           )}
-        </form.AppField>
+        </form.AppField> : null}
       </>
     )
   },

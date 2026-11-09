@@ -107,7 +107,10 @@ export async function saveLog(log: NewLog): Promise<LogResult<ImmersionLog>> {
   }))
 }
 
-/** Updates a log's measure, description and tags. The API rescores its submissions to unfinished contests. */
+/**
+ * Updates a log's measure, description, tags and, for a log submitted to no contest, its language. The API rescores its
+ * submissions to unfinished contests.
+ */
 export async function updateLog(change: LogUpdate): Promise<LogResult<ImmersionLog>> {
   const session = await draftOwnerCookie(change.viewerId)
   if (!session.ok) return session
@@ -115,7 +118,12 @@ export async function updateLog(change: LogUpdate): Promise<LogResult<ImmersionL
   return answer(immersionLogUpdate({
     ...sessionRequest(session.data),
     path: { id: change.logId },
-    body: { ...measureBody(change.measure), description: change.description, tags: change.tags },
+    body: {
+      language_code: change.languageCode,
+      ...measureBody(change.measure),
+      description: change.description,
+      tags: change.tags,
+    },
   }))
 }
 

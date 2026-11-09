@@ -301,6 +301,16 @@ test('scoring versions describe their own fallback, name a modifier’s unit and
   await expect(page.getByText('Inputs these rules do not cover score zero.', { exact: true })).toBeVisible()
   await behavior.selectOption('override')
   await expect(page.getByText('Inputs these rules do not cover score with the pinned platform version.', { exact: true })).toBeVisible()
+
+  // Without rules, an override still falls back to its pinned version; only a replacement scores zero.
+  const drafted = page.locator('.scoring-rule')
+  for (let count = await drafted.count(); count > 0; count--) await drafted.last().getByRole('button', { name: 'Remove', exact: true }).click()
+  await expect(drafted).toHaveCount(0)
+  const zero = page.getByText('This replacing rule set will score every input as zero.', { exact: true })
+  await expect(page.getByText('With no rules, this version scores every input with its pinned platform version.', { exact: true })).toBeVisible()
+  await expect(zero).toHaveCount(0)
+  await behavior.selectOption('replace')
+  await expect(zero).toBeVisible()
 })
 
 test('a started contest’s scoring is locked, and only administrators reach scoring', async ({ adminContext, readerContext }, testInfo) => {

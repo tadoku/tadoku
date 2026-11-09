@@ -90,12 +90,14 @@ administrator when the draft started. Their pages name another learner's log in 
 and the learner's personal record, and leave out the advice to join a contest
 or change a registration, which concerns the viewer's own contests.
 
-The detail page's heading is the log's description when it has at most 60
-characters and no NSFW tag, and otherwise its language and activity, such as
-Japanese reading. Its lead names the language, the activity
-and who logged it, linked to their profile. It shows the measure, rounded and pluralized as the lists show it, the score, and
-the UTC day and time, both read from the creation instant,
-then the description and tags as labelled rows; the record's ID is not shown. It offers its owner
+The detail page's heading is the log's description when it is nonempty, has at
+most 60 characters and has no NSFW tag, and otherwise its language and activity,
+such as Japanese reading. Its lead names the language and the activity; on
+another learner's log with a known display name, it also names who logged it,
+linked to their profile. It shows the measure, rounded and pluralized as the
+lists show it, the score, and the UTC day and time, both read from the creation
+instant. Labelled rows then show the description, unless it is empty or already
+the heading, and the tags, unless there are none; the record's ID is not shown. It offers its owner
 and administrators Edit log and Delete log; other visitors see neither.
 
 A log tagged `nsfw`, in any case, never shows its description as a title or a

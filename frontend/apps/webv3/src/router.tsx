@@ -1,5 +1,6 @@
 import { QueryClient } from '@tanstack/react-query'
 import { createRouter } from '@tanstack/react-router'
+import { getGlobalStartContext } from '@tanstack/react-start'
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
 import { routeAnnouncerId } from './components/AppShell'
 import { ErrorView, PendingView } from './components/StatusViews'
@@ -22,6 +23,7 @@ export function getRouter() {
     defaultPendingComponent: PendingView,
     defaultPendingMs: 400,
     scrollRestoration: true,
+    ssr: { nonce: cspNonce() },
   })
 
   setupRouterSsrQueryIntegration({ router, queryClient })
@@ -29,6 +31,18 @@ export function getRouter() {
     if (fromLocation && pathChanged) requestAnimationFrame(() => setTimeout(arrive))
   })
   return router
+}
+
+/**
+ * The request's CSP nonce from `start.ts`, on the server. The browser reads it back from the page's `csp-nonce` meta tag.
+ * The router can be created before the request middleware runs, such as for a server function's redirect.
+ */
+function cspNonce() {
+  try {
+    return getGlobalStartContext()?.cspNonce
+  } catch {
+    return undefined
+  }
 }
 
 /**

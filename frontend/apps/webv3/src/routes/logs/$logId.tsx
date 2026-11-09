@@ -14,9 +14,10 @@ import { LogDescription } from '../../components/LogDescription'
 import { AppLink, renderLink } from '../../components/router-link'
 import { PendingView } from '../../components/StatusViews'
 import { pageUnavailable } from '../../lib/page-status'
+import { noindex } from '../../lib/page-meta'
 
 export const Route = createFileRoute('/logs/$logId')({
-  head: () => ({ meta: [{ title: 'Activity · Tadoku' }] }),
+  head: () => ({ meta: [{ title: 'Activity · Tadoku' }, noindex] }),
   loader: async ({ context, params }) => {
     if (!z.guid().safeParse(params.logId).success) throw notFound()
     const [viewer, result] = await ensureViewerData(context.queryClient, key => logQuery(params.logId, key))

@@ -9,12 +9,13 @@ import { getPageUrls } from '../../../lib/links'
 import { pageUnavailable } from '../../../lib/page-status'
 import { contestScoringQuery } from '../../../lib/scoring'
 import { useLoginUrl, viewerQueryOptions } from '../../../lib/session'
+import { noindex } from '../../../lib/page-meta'
 
 const isContestId = (id: string) => z.guid().safeParse(id).success
 
 /** Contest scoring is an administrator tool, as in Webv2. Anonymous visitors are sent to log in. */
 export const Route = createFileRoute('/contests/$id/scoring')({
-  head: () => ({ meta: [{ title: 'Contest scoring · Tadoku' }] }),
+  head: () => ({ meta: [{ title: 'Contest scoring · Tadoku' }, noindex] }),
   loader: async ({ context, params, location }) => {
     if (!isContestId(params.id)) throw notFound()
     const viewer = await context.queryClient.ensureQueryData(viewerQueryOptions())

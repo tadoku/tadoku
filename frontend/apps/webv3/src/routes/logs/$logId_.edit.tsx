@@ -9,9 +9,10 @@ import { draftFromLog, logDraftSchema, toScorePreview } from '../../lib/log-draf
 import { logOptionsQuery, logQuery, scorePreviewQuery } from '../../lib/logs'
 import { useLoginUrl, viewerQueryOptions } from '../../lib/session'
 import { pageUnavailable } from '../../lib/page-status'
+import { noindex } from '../../lib/page-meta'
 
 export const Route = createFileRoute('/logs/$logId_/edit')({
-  head: () => ({ meta: [{ title: 'Edit log · Tadoku' }] }),
+  head: () => ({ meta: [{ title: 'Edit log · Tadoku' }, noindex] }),
   loader: async ({ context, params }) => {
     if (!z.guid().safeParse(params.logId).success) throw notFound()
     const viewer = await context.queryClient.ensureQueryData(viewerQueryOptions())

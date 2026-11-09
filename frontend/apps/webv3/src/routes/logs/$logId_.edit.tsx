@@ -4,6 +4,7 @@ import { Button, EmptyState, buttonClassName } from 'paper-ui'
 import { z } from 'zod'
 import { DraftOwnerGate } from '../../components/DraftOwnerGate'
 import { LogForm } from '../../components/LogForm'
+import { PendingView } from '../../components/StatusViews'
 import { logOptionsQuery, logQuery } from '../../lib/logs'
 import { useLoginUrl, viewerQueryOptions } from '../../lib/session'
 
@@ -41,7 +42,7 @@ function EditDraft({ viewerId, admin }: { viewerId: string; admin: boolean }) {
   const log = logResult.data
   const options = optionsResult.data
 
-  if (logResult.isPending || optionsResult.isPending) return null
+  if (logResult.isPending || optionsResult.isPending) return <PendingView />
   if (log?.ok && log.data.user_id !== viewerId && !admin) {
     return (
       <EmptyState

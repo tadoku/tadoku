@@ -60,6 +60,39 @@ def main():
         assert result.returncode == 1 and 'server/routes/healthz.ts' in result.stderr, result.stderr
         checks.append('removed probe route fails')
 
+    dockerfile = 'frontend/apps/webv3/Dockerfile'
+    urls = 'frontend/apps/webv3/src/lib/urls.server.ts'
+    flags = 'k8s/dev/base/flipt/features.yaml'
+    mutations = [
+        ('prefixed env name', dockerfile, ' HOST=', ' APP_HOST='),
+        ('prefixed env name', dockerfile, ' PORT=', ' APP_PORT='),
+        ('extended host', dockerfile, 'TADOKU_WEB_URL=https://tadoku.app ', 'TADOKU_WEB_URL=https://tadoku.app.example '),
+        ('prefixed host', urls, '`next.${web.host}`', '`preview-next.${web.host}`'),
+        (
+            'renamed env read kept in a comment',
+            urls,
+            'process.env.TADOKU_API_URL ',
+            '/* formerly process.env.TADOKU_API_URL */ process.env.TADOKU_API_URL_V2 ',
+        ),
+        (
+            'renamed segment kept in a comment',
+            flags,
+            '  - key: release-webv3-access\n',
+            '  # - key: release-webv3-access\n  - key: release-webv3-beta\n',
+        ),
+    ]
+    for name, file, old, new in mutations:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            copy_tree(root)
+            path = root / file
+            text = path.read_text()
+            assert old in text, f'{name}: {old!r} not in {file}'
+            path.write_text(text.replace(old, new, 1))
+            result = run(root)
+            assert result.returncode == 1 and file in result.stderr, f'{name} passed: {result.stdout}'
+        checks.append(f'{name} fails')
+
     print('PASS:', '; '.join(checks))
 
 

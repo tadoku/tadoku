@@ -12,8 +12,8 @@ The paths match Webv2's. `/pages/manual` is the manual, `/pages/$slug` is any
 other CMS page, such as `about`, `faq`, `contact` or `privacy`, `/blog` lists
 posts with an optional trailing page number such as `/blog/2`, and
 `/blog/posts/$slug` is one post. The navigation's Guide link opens the manual,
-and the footer links About, the manual, questions (`faq`), the blog, contact and
-privacy on the same host.
+and the footer links About, the manual, the rules, questions (`faq`), privacy and
+contact on the same host, in Webv2's order; the blog is in the main navigation.
 
 - `frontend/apps/webv3/src/components/ManualPage.tsx` holds the manual. Its
   text is application code ported from Webv2; change it there.

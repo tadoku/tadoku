@@ -90,7 +90,9 @@ administrator when the draft started. Their pages name another learner's log in 
 and the learner's personal record, and leave out the advice to join a contest
 or change a registration, which concerns the viewer's own contests.
 
-The detail page is titled Log details. Its lead names the language, the activity
+The detail page's heading is the log's description when it has at most 60
+characters and no NSFW tag, and otherwise its language and activity, such as
+Japanese reading. Its lead names the language, the activity
 and who logged it, linked to their profile. It shows the measure, rounded and pluralized as the lists show it, the score, and
 the UTC day and time, both read from the creation instant,
 then the description and tags as labelled rows; the record's ID is not shown. It offers its owner

@@ -55,6 +55,22 @@ response's status, usually 200, and is recorded as an SSR error with its class i
 errors to stderr, thrown messages included; that stream is not covered by this
 contract.
 
+## Querying
+
+Production and its production branches run on the `lke-prod` cluster, whose pod
+logs reach the homelab Loki with each JSON line in the record's `body`.
+Development-cluster logs, dev-cli branches included, do not reach it. Webv3's
+records for the canonical deployment:
+
+```logql
+{k8s_cluster_name="lke-prod", service_namespace="tdk-prod-frontend-webv3", service_name="frontend-webv3"}
+  |~ "upstream_failure|ssr_error"
+  | json body="body" | line_format "{{.body}}" | json
+```
+
+Tadoku API's lines use `service_namespace="tdk-prod-tadoku-api"` and
+`service_name="tadoku-api"` with the same parsing.
+
 ## Request deadline
 
 Every GET request has an overall deadline for its upstream calls, set in

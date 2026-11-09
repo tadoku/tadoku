@@ -325,3 +325,7 @@ account to remain signed in. After logout it checks that the API no longer
 accepts the old session cookie. Set
 `TADOKU_API_URL` to the branch's public API root for that check. Authenticated
 tests disable traces and videos and retain no browser storage.
+
+## Server logs
+
+Server failures are recorded as [structured JSON lines](webv3-server-logs.md).

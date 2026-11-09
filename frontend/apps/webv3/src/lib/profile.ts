@@ -10,7 +10,7 @@ import type {
 import { z } from 'zod'
 
 export const contestPageSize = 50
-/** Profile and contest log lists both show 50 logs per page, as in Webv2. */
+/** Profile and contest log lists both show 25 logs per page. */
 export const activityPageSize = 25
 export const recentLogCount = 5
 

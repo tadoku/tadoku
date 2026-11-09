@@ -60,7 +60,10 @@ can draft a version that overrides platform rules with a pinned published
 platform version or replaces them. A draft holds ordered rules that match an
 activity and optionally a unit, language and tag, and score the amount or the
 minutes at a rate; stackable modifiers multiply the matching base rule. Rules are
-sent with priorities in their order. Each version lists its rules and status;
+sent with priorities in their order. The form and each version say where
+inputs their rules don't cover go: an override's to its pinned version, a
+replacement's to zero. Each version lists its rules, with each modifier's unit,
+language and tag, and its status;
 a draft can be published, which makes it immutable, and a published version can
 be activated for new contest submissions, each after confirmation. From the
 contest's first UTC day the page shows that scoring is locked, and the API refuses

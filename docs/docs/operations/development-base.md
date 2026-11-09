@@ -313,7 +313,7 @@ failure. It needs no cluster credentials.
   connection to the public API, and give the browser only public API URLs.
   Loopback fixtures stand in for Oathkeeper and the API. Webv3 additionally proves non-root, read-only Nitro
   startup, Lab CA loading, SSR and compiled assets on canonical and branch
-  hosts, a host-scoped account login, a same-host guide link on `/plan`, a
+  hosts, a host-scoped account login, a same-host guide link on the guide page, a
   same-host activity link on the outage homepage and healthy probes during an
   API outage.
   Authv2, built from the tested revision, proves its non-root image, Lab CA and

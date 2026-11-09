@@ -214,7 +214,7 @@ Authv2 uses `/` for Settings, `/login`, `/register` and `/recovery` on `account.
 
 ## Webv3 account bridge
 
-Use `dev url --owner <owner> --host next.tadoku.dev.lab '/plan?source=next#entry'`.
+Use `dev url --owner <owner> --host next.tadoku.dev.lab '/pages/manual?source=next#entry'`.
 Anonymous HTML shows Log in with path and search; hydration adds the fragment.
 Sign in through authv2 on the sibling account host, confirm the exact return and
 display name, reload, then open the account menu: a learner sees Profile,

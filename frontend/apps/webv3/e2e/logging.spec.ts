@@ -22,7 +22,7 @@ import {
 test('the activity form asks an anonymous visitor to sign in, and guests get no header Log activity', async ({ page }) => {
   test.skip(!webv3, 'Set WEBV3_BASE_URL')
   // As in Webv2, guests get Log in and Sign up in the header instead.
-  await page.goto('/plan')
+  await page.goto('/pages/manual')
   await expect(page.getByRole('banner').getByRole('link', { name: 'Sign up', exact: true })).toBeVisible()
   await expect(page.getByRole('banner').getByRole('link', { name: 'Log activity', exact: true })).toHaveCount(0)
 

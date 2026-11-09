@@ -20,9 +20,7 @@ calendar, their five newest logs and this year's contests, unfinished ones
 first, ordered within the first page of the year's registrations. The next
 round is its own read with its own failure state, and their place comes from
 the leaderboard entry at any rank. The home route's loader prefetches all of
-this, so it renders on the server. `/plan`
-demonstrates a validated immersion goal kept in the current browser; no page
-links to it. It does not sync the goal to a Tadoku account. [Native activity logging](webv3-logging.md), including a saved log's contest submissions, uses the existing account session and API.
+this, so it renders on the server. [Native activity logging](webv3-logging.md), including a saved log's contest submissions, uses the existing account session and API.
 The latest official, yearly and all-time [leaderboards](webv3-leaderboards.md)
 read their standings from the API, and the Official, Community, Joined and Organizing
 [contest lists](webv3-contests.md) list contests as the visitor sees them.
@@ -50,10 +48,7 @@ legacy applications keep their existing compatibility.
   host. Only the account and admin applications, the log export download and
   external sites leave it.
 - `frontend/apps/webv3/src/components/` owns the Paper screen composition,
-  navigation, appearance and local goal interactions.
-- The goal form uses `usePaperForm` and bound Paper controls through TanStack
-  Form's composition contexts. Its Zod validators own numeric bounds and errors.
-  Saving and storage failures remain application-owned effects.
+  navigation and appearance interactions.
 
 Numbers use one locale, `en-US`, through `frontend/apps/webv3/src/lib/format.ts`,
 with English plurals that follow the number as shown, such as `1 page`,
@@ -69,7 +64,7 @@ fields and malformed list members remain invalid. Missing contests,
 standings and future rounds have explicit interface states; no sample scores or
 invented schedule replace unavailable API data.
 
-The appearance toggle and local goal controls stay disabled until hydration
+The appearance toggle stays disabled until hydration
 completes and their browser handlers can respond. Ordinary links work in the
 server-rendered HTML, and so do the mobile and account menus: before hydration
 Paper's mobile menu trigger is a link that opens its panel through `:target`,
@@ -244,7 +239,7 @@ The smoke command starts its own labeled container and synthetic GET-only API, i
 uses nullable language lists by default (`WEBV3_LANGUAGE_FIXTURE=array` selects
 nonempty lists), checks server rendering, built assets, non-root/read-only operation and the
 existing browser journeys, then disconnects the API and checks health again.
-It also requests `/plan` concurrently with canonical and branch Host headers
+It also requests the guide, `/pages/manual`, concurrently with canonical and branch Host headers
 in production and development runtime modes, checking that account links stay
 with their matching origins, native links stay on the requested host and
 forwarded-host or branch headers cannot override the request Host. A second container verifies development runtime

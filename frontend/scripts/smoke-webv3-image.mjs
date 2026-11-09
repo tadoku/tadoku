@@ -129,7 +129,7 @@ async function waitForHealth(base) {
 async function checkRuntimeLinks(base, cases) {
   return Promise.all([...cases, ...cases].map(async ([host, origin]) => {
     const response = await new Promise((resolve, reject) => {
-      const request = get(`${base}/plan`, {
+      const request = get(`${base}/pages/manual`, {
         headers: { Host: host, 'X-Forwarded-Host': 'attacker.invalid', 'X-Dev-Branch': 'attacker' },
         timeout: 15_000,
       }, response => {
@@ -139,10 +139,10 @@ async function checkRuntimeLinks(base, cases) {
         response.on('end', () => resolve({ status: response.statusCode, headers: response.headers, html }))
         response.on('error', reject)
       })
-      request.on('timeout', () => request.destroy(new Error(`Goal SSR timed out for ${host}`)))
+      request.on('timeout', () => request.destroy(new Error(`Guide SSR timed out for ${host}`)))
       request.on('error', reject)
     })
-    assert.equal(response.status, 200, `Goal SSR failed for ${host}`)
+    assert.equal(response.status, 200, `Guide SSR failed for ${host}`)
     assert.equal(response.headers['cache-control'], 'private, no-store')
     assert(response.headers.vary.toLowerCase().includes('cookie'))
     const auth = origin.includes('.preview.tadoku.app')
@@ -150,11 +150,11 @@ async function checkRuntimeLinks(base, cases) {
       : origin === 'https://tadoku.app' || origin === 'https://tadoku.dev.lab'
         ? origin.replace('https://', 'https://account.')
         : origin.replace('.tadoku.dev.lab', '.account.tadoku.dev.lab')
-    const login = `${auth}/login?return_to=${encodeURIComponent(`https://${host}/plan`)}`
+    const login = `${auth}/login?return_to=${encodeURIComponent(`https://${host}/pages/manual`)}`
     const html = response.html
     assert(html.includes(`href="${login}"`), `Wrong login return for ${host}`)
     await writeFile(`${artifacts}/links-${host}.html`, html)
-    const register = `${auth}/register?return_to=${encodeURIComponent(`https://${host}/plan`)}`
+    const register = `${auth}/register?return_to=${encodeURIComponent(`https://${host}/pages/manual`)}`
     assert(html.includes(`href="${register}"`), `Wrong sign-up return for ${host}`)
     assert(html.includes(`href="/pages/manual"`), `Wrong guide link for ${host}`)
     for (const [, href] of html.matchAll(/href="(https:\/\/[^" ]+)"/g)) {
@@ -201,7 +201,7 @@ try {
   const refused = await fetch(`${base}/logout`, { method: 'POST', headers: { Origin: 'https://evil.tadoku.app', 'Sec-Fetch-Site': 'same-site' }, redirect: 'manual' })
   assert.equal(refused.status, 403)
   // The synthetic API has no identity routes, so a session cookie meets an unavailable identity service.
-  const outage = await fetch(`${base}/plan`, { headers: { Cookie: 'tadoku_session=fixture' }, signal: AbortSignal.timeout(15_000) })
+  const outage = await fetch(`${base}/pages/manual`, { headers: { Cookie: 'tadoku_session=fixture' }, signal: AbortSignal.timeout(15_000) })
   const outageHtml = await outage.text()
   assert.equal(outage.status, 200)
   assert(outageHtml.includes('Account service unavailable'), 'Identity outage did not render the unavailable account state')

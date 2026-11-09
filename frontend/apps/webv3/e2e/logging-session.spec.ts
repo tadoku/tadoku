@@ -125,7 +125,7 @@ test('a draft cannot be saved under an account switched in another tab', async (
   await fillDraft(page, '11', description)
 
   const other = await context.newPage()
-  await other.goto(`${webv3}/plan`)
+  await other.goto(`${webv3}/pages/manual`)
   await logOut(other, loginLearner)
   await signIn(other, admin)
   const adminId = await accountId(context)

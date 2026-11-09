@@ -73,6 +73,34 @@ jobs:
     runs-on: tadoku-ci
     timeout-minutes: 5
     steps:
+      # Before Notify, so a Notify outage cannot hide a red run from the auto-revert alert. Contract:
+      # antonve/homelab docs/runbooks/tadoku-web-alerts.md#canary-signal-contract
+      - name: Publish green or red to the alert gauges
+        if: needs.canary.result == 'success' || needs.canary.result == 'failure'
+        env:
+          RESULT: ${{ needs.canary.result }}
+        run: |
+          if test "$RESULT" = success; then value=1; else value=0; fi
+          seconds=$(date +%s)
+          jq --null-input --compact-output \
+            --arg nanos "${seconds}000000000" \
+            --argjson seconds "$seconds" \
+            --argjson value "$value" \
+            '{resourceMetrics: [{
+              resource: {attributes: [
+                {key: "service.name", value: {stringValue: "webv3-production-canary"}},
+                {key: "service.namespace", value: {stringValue: "tadoku"}},
+                {key: "deployment.environment.name", value: {stringValue: "production"}}
+              ]},
+              scopeMetrics: [{metrics: [
+                {name: "tadoku_webv3_canary_success", gauge: {dataPoints: [{timeUnixNano: $nanos, asDouble: $value}]}},
+                {name: "tadoku_webv3_canary_last_run_timestamp_seconds",
+                  gauge: {dataPoints: [{timeUnixNano: $nanos, asDouble: $seconds}]}}
+              ]}]
+            }]}' |
+            curl --fail-with-body --silent --show-error --max-time 10 --retry 2 --retry-all-errors \
+              --header 'Content-Type: application/json' --data @- \
+              http://alloy.monitoring.svc.cluster.local:4318/v1/metrics
       - name: Publish green or red to Notify
         env:
           RESULT: ${{ needs.canary.result }}

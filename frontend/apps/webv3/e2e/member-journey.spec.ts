@@ -17,6 +17,8 @@ test('a member walks home, contest, standings, profile, logging and the saved lo
   for (const heading of [`Your ${new Date().getUTCFullYear()}`, 'Recent activity', 'Your contests']) {
     await expect(page.getByRole('heading', { level: 2, name: heading, exact: true })).toBeVisible()
   }
+  // Dev Reader joined this year's seeded round, so the contests carry the link to everything they joined.
+  await expect(page.getByRole('link', { name: 'All joined', exact: true })).toHaveAttribute('href', '/contests/joined/1')
   await shot('1-home')
 
   // The appearance switch is the account menu's; the choice survives a reload.

@@ -11,8 +11,7 @@ Read this when you change a Webv3 contest list.
 The tabs are Official, Community, Joined and Organizing. `/contests/official`,
 `/contests/user-contests` and, for Organizing, `/contests/my-contests` keep
 Webv2's paths, including an optional trailing page number such as
-`/contests/official/2`. Joined is new to Webv3 at `/contests/joined/<year>/<page>`;
-a year that isn't a number shows the current year. A missing or unreadable page
+`/contests/official/2`. Joined is new to Webv3 at `/contests/joined/<page>`. A missing or unreadable page
 is page 1, as on the [leaderboards](webv3-leaderboards.md). Pages hold 25
 contests in the API's order, newest first.
 
@@ -29,9 +28,7 @@ The API decides which unlisted contests a list includes: a signed-in account's
 own, and every one for administrators. Lists are therefore read as the visitor
 and cached per viewer; a rejected session cookie falls back to the public list.
 Organizing lists the community contests the signed-in account organizes; Joined
-lists the contests it registered for in the chosen year, read from the yearly
-registrations the API keeps. A year stepper below the
-list moves between the year the account joined Tadoku and the current year. Both ask anonymous
+lists every contest it registered for, across all years, newest contest first. Both ask anonymous
 visitors to log in. As in Webv2, Community, Joined and Organizing name each
 community contest's languages and activities for signed-in visitors only, and
 the create action, which opens Webv3's [contest form](webv3-contest-admin.md),
@@ -51,5 +48,6 @@ with the API, follows tabs and page links, checks the signed-out prompt and
 containment at 390px and 1280px. With the Dev Admin credentials it gives that
 account more than one page of community contests in the selected tenant, then
 pages through its Organizing list; with Dev Reader it checks that the seeded
-unlisted contest appears for its owner only, and that Joined matches the
-account's registrations for the current year.
+unlisted contest appears for its owner only. With both accounts it gives Dev Reader more than one page of
+registrations, in contests Dev Admin creates over the next few years, then pages through Joined and checks it against the
+account's registrations.

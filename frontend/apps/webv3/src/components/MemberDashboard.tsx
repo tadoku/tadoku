@@ -115,7 +115,7 @@ export function MemberContests({ viewer, year }: { viewer: SignedIn; year: numbe
 
             <div className={head}>
               <h2 id="home-contests-title" className={headTitle}>Your contests</h2>
-              {ordered.length ? <Link className="text-link hover:text-link-hover" to={contestsHref.joined(year)}>All joined</Link> : null}
+              {ordered.length ? <Link className="text-link hover:text-link-hover" to={contestsHref.joined()}>All joined</Link> : null}
             </div>
             {ordered.length ? (
               <ul className={rows.root()}>

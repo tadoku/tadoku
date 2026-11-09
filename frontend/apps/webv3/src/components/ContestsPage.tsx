@@ -3,7 +3,6 @@ import { PlusIcon, iconClassName } from 'paper-ui/icons'
 import { Link } from '@tanstack/react-router'
 import { Button, buttonClassName, EmptyState, listFooter, PageHeader, Pagination, StatusTag, Tabbar, typography } from 'paper-ui'
 import {
-  accountSinceQuery,
   canCreateContestQuery,
   contestScope,
   contestsHref,
@@ -19,7 +18,6 @@ import { formatDate, formatPeriod, numberFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { useLoginUrl, viewerKey, viewerQueryOptions } from '../lib/session'
 import { renderLink } from './router-link'
-import { YearStepper } from './YearStepper'
 import { standingsHeader } from './standings-styles'
 
 const tabs: { id: ContestCollection; label: string }[] = [
@@ -29,11 +27,9 @@ const tabs: { id: ContestCollection; label: string }[] = [
   { id: 'organizing', label: 'Organizing' },
 ]
 
-const thisYear = () => new Date().getUTCFullYear()
-
 /**
- * One page of the official or community contests, the contests the viewer joined in a year, or the ones they
- * organize, with the collection tabs and create action.
+ * One page of the official or community contests, the contests the viewer joined, or the ones they organize, with the
+ * collection tabs and create action.
  */
 export function ContestsPage({ view, page }: { view: ContestView; page: number }) {
   const { collection } = view
@@ -61,15 +57,12 @@ export function ContestsPage({ view, page }: { view: ContestView; page: number }
         renderLink={renderLink}
         links={tabs.filter(tab => viewer?.status !== 'anonymous' || tab.id === 'official' || tab.id === 'community').map(tab => ({
           ...tab,
-          href: tab.id === 'joined' ? contestsHref.joined(thisYear()) : contestsHref[tab.id](),
+          href: contestsHref[tab.id](),
           current: tab.id === collection,
         }))}
       />
       {scope ? (
-        <>
-          <Contests scope={scope} view={view} page={page} canCreate={canCreate} />
-          {view.collection === 'joined' && scope.kind === 'participant' ? <JoinedYear userId={scope.userId} year={view.year} /> : null}
-        </>
+        <Contests scope={scope} view={view} page={page} canCreate={canCreate} />
       ) : viewer?.status === 'anonymous' ? (
         <SignInPrompt joined={collection === 'joined'} />
       ) : (
@@ -80,17 +73,6 @@ export function ContestsPage({ view, page }: { view: ContestView; page: number }
           actions={<Button variant="outline" loading={viewerQuery.isFetching} onClick={() => void viewerQuery.refetch()}>Try again</Button>}
         />
       )}
-    </div>
-  )
-}
-
-/** The Joined list's year, stepping between the year the account joined Tadoku and this year. */
-function JoinedYear({ userId, year }: { userId: string; year: number }) {
-  const since = useQuery(accountSinceQuery(userId)).data
-  const current = thisYear()
-  return (
-    <div className="-ms-3 mt-4">
-      <YearStepper compact year={year} first={Math.min(since ?? current, current)} current={current} href={contestsHref.joined} label="Year" />
     </div>
   )
 }
@@ -150,7 +132,7 @@ function Contests({ scope, view, page, canCreate }: { scope: ContestListScope; v
     ) : view.collection === 'joined' ? (
       <EmptyState
         headingLevel={2}
-        title={`You haven’t joined a contest in ${view.year}`}
+        title="You haven’t joined a contest yet"
         actions={<Link className={buttonClassName({ variant: 'outline' })} to={contestsHref.official()}>Browse official contests</Link>}
       />
     ) : <EmptyState headingLevel={2} title="No contests found" description="Contests appear here once they’re scheduled." />
@@ -160,7 +142,7 @@ function Contests({ scope, view, page, canCreate }: { scope: ContestListScope; v
   const totalPages = Math.max(page, Math.ceil(total / contestsPageSize))
   return (
     <>
-      <ul className="mb-0 mt-2 list-none p-0" aria-label={view.collection === 'joined' ? `Contests joined in ${view.year}` : `${tabs.find(tab => tab.id === view.collection)?.label} contests`}>
+      <ul className="mb-0 mt-2 list-none p-0" aria-label={view.collection === 'joined' ? 'Contests you joined' : `${tabs.find(tab => tab.id === view.collection)?.label} contests`}>
         {contests.map(contest => <ContestRow key={contest.id} contest={contest} names={names} today={today} />)}
       </ul>
       {totalPages > 1 ? (

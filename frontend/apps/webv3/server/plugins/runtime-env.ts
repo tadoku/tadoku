@@ -1,4 +1,4 @@
-import { accessSync, constants } from 'node:fs'
+import { accessSync, constants, statSync } from 'node:fs'
 import { isIP } from 'node:net'
 import { definePlugin } from 'nitro'
 import { runtimeOrigins } from '../../src/lib/urls.server'
@@ -23,11 +23,14 @@ function runtimeEnvErrors() {
     errors.push('SERVER_SHUTDOWN_TIMEOUT must be a whole number of seconds')
   }
   if (NODE_EXTRA_CA_CERTS) {
+    let readableFile = false
     try {
       accessSync(NODE_EXTRA_CA_CERTS, constants.R_OK)
+      readableFile = statSync(NODE_EXTRA_CA_CERTS).isFile()
     } catch {
-      errors.push('NODE_EXTRA_CA_CERTS must name a readable file')
+      // A missing or unreadable path is reported below.
     }
+    if (!readableFile) errors.push('NODE_EXTRA_CA_CERTS must name a readable file')
   }
   return errors
 }

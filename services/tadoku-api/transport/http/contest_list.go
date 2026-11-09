@@ -27,6 +27,9 @@ func (s *server) ImmersionContestList(
 	if request.Params.UserId != nil {
 		parameters.UserID = request.Params.UserId
 	}
+	if request.Params.Upcoming != nil {
+		parameters.Upcoming = *request.Params.Upcoming
+	}
 
 	result, err := s.application.ListContests(ctx, parameters)
 	if err != nil {

@@ -1,0 +1,70 @@
+---
+id: contest-fetch-leaderboard-entry
+title: "Fetches one participant's entry on a contest leaderboard"
+description: "Reads the contest's unfiltered standings, at any rank. A participant's rank is one more than the number of participants with a higher score, and `is_tie` reports that another participant has the same score. Every registered participant is ranked, with a score of 0 before their first log."
+sidebar_label: "Fetches one participant's entry on a contest leaderboard"
+hide_title: true
+hide_table_of_contents: true
+api: eJztVU2P2zYQ/SvEXNoCrGUs0otui8ApFk17SNLTYrEZSyNrdiWSIUduDEH/vRjK8gd221yKnHqSTc7Hm3lvhiPUlKrIQdg7KOEDYZ2MtGQq74SS/JDM4BruhCLVJgm6mt0uWYNi0B1MRPe8MrcmYBSuOKBTFz01nIx3ZHofyUiLLod1Q7+laHxz6ZHMXyytQdPyrqVoUuUjWYOuNp85PQrTZxMp+CiKLWf2ooYXMUyLM/CEPc0RVmazp3gwkXac5gIuHXjGSbVd0mcvxbY2W2pm3MTRNByTmM7vVmDBB4qo7bqroYRjm96RVO17wpri1mOsN07iASwI7hKU94tZggcLASP2JBT1ZgSHPUEJXIMFVg4CSgsWIn0ZOFINpcSBLKSqpR6hHEEOQT2SRHY7sND42KNACcPANUyTPQUdEsXH/zDygzqn4F2ipPY367V+rjWUhqqilJqhM6degZ1b4ETtMYSOq3xRPCV1Gl+C8NsnquQK7j0oYWAv6sq/ak6hw8Njrlrr8VG/s3Ryy6MiEZ5R5yDnROyEdhRhOsf9ditey/yKF33FPnR69ORbp24zuLPpPBCXCZrOo6jpEf/Zdut9R+iUYhCWHPeF6KZJr2/Wb14yo+OhsFX6zovBq3nwjZGW0zL5iuDNa1HUs/GDy1345TUFdGdMJhLWpkHuKEsTepLW6+TsSMnNkiyhWAakGLmeiosAxXgkZVJmKe6XuRliByW0IiGVRSFY++dhhSEUGLhQTqPDruC+p5hUaKDqTVQNkeXwUdU2q6Hy/pnpdlAcp05j4N/osMzNbAJ2Gas52WOipJFzWewan/2PtJzy/oyBwULHFbmUyTwG+f3uk+r3qoodSztsV5XvjwUtn23nt0WP7Ir3d283f3zcaO/3cwYo4Wa1Xq31KPgkPbqLNHkz0byKr5c0qVyMdwYXys1F38FekzqeB/j/V+Lbr8RRR0JfpQgdcp79TPZ41PzFo2ChzMvsuv3lso0eLLQ+ibqM4xYT/Rm7adLjLwPFA5T3Dxb2GBm3qr37EWpO+ruGssEu0b9Q+eOH43b9yfwT6mUknM7DHrtB/4GFZzrM75Y+ON8x49KW6WGy0OaW5aLn29uqoiAXfi8eG90Dpy306+YTTNPfcmMjCA==
+sidebar_class_name: "get api-method"
+info_path: api/immersion/immersion-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+import Translate from "@docusaurus/Translate";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Fetches one participant's entry on a contest leaderboard"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/contests/{id}/leaderboard/{user_id}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Reads the contest's unfiltered standings, at any rank. A participant's rank is one more than the number of participants with a higher score, and `is_tie` reports that another participant has the same score. Every registered participant is ranked, with a score of 0 before their first log.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+>
+  <Translate id="theme.openapi.request.title">Request</Translate>
+</Heading>
+
+<ParamsDetails
+  {...require("./contest-fetch-leaderboard-entry.ParamsDetails.json")}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  {...require("./contest-fetch-leaderboard-entry.RequestSchema.json")}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  {...require("./contest-fetch-leaderboard-entry.StatusCodes.json")}
+>
+  
+</StatusCodes>
+
+
+      

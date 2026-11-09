@@ -9,6 +9,8 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
+var ErrEntryNotFound = errx.NewNotFoundError("leaderboard entry not found")
+
 // A board names one unfiltered leaderboard: the same name keys its leaderboard_versions row and its cache keys.
 type board string
 
@@ -45,6 +47,11 @@ func (r Request) offset() int32 {
 type ContestRequest struct {
 	Request
 	ContestID uuid.UUID
+}
+
+type ContestEntryRequest struct {
+	ContestID uuid.UUID
+	UserID    uuid.UUID
 }
 
 type YearlyRequest struct {

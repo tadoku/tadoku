@@ -772,7 +772,8 @@ export const zImmersionContestListQuery = z.object({
     page: z.int().optional(),
     include_deleted: z.boolean().optional(),
     official: z.boolean().optional(),
-    user_id: z.string().guid().optional()
+    user_id: z.string().guid().optional(),
+    upcoming: z.boolean().optional()
 });
 
 /**
@@ -1145,6 +1146,16 @@ export const zImmersionFetchLeaderboardGlobalQuery = z.object({
  * successful operation
  */
 export const zImmersionFetchLeaderboardGlobalResponse = zImmersionLeaderboard;
+
+export const zImmersionContestFetchLeaderboardEntryPath = z.object({
+    id: z.string().guid(),
+    user_id: z.string().guid()
+});
+
+export const zImmersionContestFetchLeaderboardEntryResponse = z.union([
+    zImmersionLeaderboardEntry,
+    z.void()
+]);
 
 /**
  * successful operation

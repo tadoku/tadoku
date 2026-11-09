@@ -36,6 +36,11 @@ func TestListContests(t *testing.T) {
 		{description: []string{"offset", "overflow"}, want: http.StatusOK},
 		{description: []string{"maximum", "page"}, want: http.StatusOK},
 		{description: []string{"explicit", "zero", "page", "size"}, want: http.StatusOK},
+		{description: []string{"upcoming", "soonest", "first"}, want: http.StatusOK},
+		{description: []string{"upcoming", "second", "page"}, want: http.StatusOK},
+		{description: []string{"upcoming", "none"}, want: http.StatusOK},
+		{description: []string{"upcoming", "false", "keeps", "created", "order"}, want: http.StatusOK},
+		{description: []string{"malformed", "upcoming"}, want: http.StatusBadRequest},
 	}
 
 	for _, test := range tests {

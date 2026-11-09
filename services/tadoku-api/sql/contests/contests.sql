@@ -20,6 +20,7 @@ with matches as materialized (
     (sqlc.arg(include_deleted)::boolean or contests.deleted_at is null)
     and (owner_user_id = sqlc.narg(user_id)::uuid or sqlc.narg(user_id)::uuid is null)
     and official = sqlc.arg(official)
+    and (contest_start > sqlc.narg(starts_after)::date or sqlc.narg(starts_after)::date is null)
     and (
       "private" = false
       or sqlc.arg(include_private)::boolean
@@ -47,7 +48,7 @@ with matches as materialized (
     matches.deleted_at
   from matches
   inner join users on users.id = matches.owner_user_id
-  order by matches.created_at desc
+  order by case when sqlc.narg(starts_after)::date is not null then matches.contest_start end asc, matches.created_at desc
   limit sqlc.arg(page_size)
   offset sqlc.arg(start_from)
 ), total as (
@@ -73,7 +74,7 @@ select
   total.total_size
 from total
 left join page on true
-order by page.created_at desc;
+order by case when sqlc.narg(starts_after)::date is not null then page.contest_start end asc, page.created_at desc;
 
 -- name: CountContestsCreatedByUserForYear :one
 select count(id)

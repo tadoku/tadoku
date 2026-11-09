@@ -61,6 +61,7 @@ export const successResponses: Readonly<Record<string, Readonly<Record<number, b
   'GET /immersion/users/{userId}/activity-split/{year}': { 200: true },
   'GET /immersion/leaderboard/yearly/{year}': { 200: true },
   'GET /immersion/leaderboard/global': { 200: true },
+  'GET /immersion/contests/{id}/leaderboard/{user_id}': { 200: true, 204: false },
   'GET /immersion/scoring/rule-sets': { 200: true },
   'POST /immersion/scoring/rule-sets': { 200: true },
   'GET /immersion/contests/{id}/scoring/rule-sets': { 200: true },

@@ -330,6 +330,10 @@ func (s *Service) ListContests(
 		parameters.PageSize = 100
 	}
 	parameters.IncludeDeleted = parameters.IncludeDeleted && actorIsAdmin
+	if parameters.Upcoming {
+		latestStarted := contestwindow.LatestStartedContestStart(timex.Now(ctx))
+		parameters.startsAfter = &latestStarted
+	}
 
 	items, total, err := s.contests.ListContests(ctx, parameters, newListVisibility(actorID, actorIsAdmin))
 	if err != nil {

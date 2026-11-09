@@ -106,6 +106,12 @@ const sidebar: SidebarsConfig = {
           label: "Read a current log in a contest",
           className: "api-method get",
         },
+        {
+          type: "doc",
+          id: "api/immersion/contest-fetch-leaderboard-entry",
+          label: "Fetches one participant's entry on a contest leaderboard",
+          className: "api-method get",
+        },
       ],
     },
     {

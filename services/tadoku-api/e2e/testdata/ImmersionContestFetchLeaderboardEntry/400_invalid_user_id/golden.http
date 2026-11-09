@@ -1,0 +1,6 @@
+>>> GET /immersion/contests/f4444444-4444-4444-8444-444444444444/leaderboard/not-a-uuid
+HTTP/1.1 400 Bad Request
+Content-Length: 51
+Content-Type: application/json; charset=UTF-8
+
+{"message":"Invalid format for parameter user_id"}

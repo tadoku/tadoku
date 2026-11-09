@@ -449,20 +449,21 @@ with matches as materialized (
     contests.deleted_at
   from contests
   where
-    ($1::boolean or contests.deleted_at is null)
-    and (owner_user_id = $2::uuid or $2::uuid is null)
-    and official = $3
+    ($2::boolean or contests.deleted_at is null)
+    and (owner_user_id = $3::uuid or $3::uuid is null)
+    and official = $4
+    and (contest_start > $1::date or $1::date is null)
     and (
       "private" = false
-      or $4::boolean
-      or owner_user_id = $5::uuid
+      or $5::boolean
+      or owner_user_id = $6::uuid
     )
 ), page as (
   select
     matches.id,
     matches.owner_user_id,
     case
-      when users.deleted_at is not null then $6::varchar
+      when users.deleted_at is not null then $7::varchar
       else users.display_name
     end::varchar as owner_user_display_name,
     matches."private",
@@ -479,9 +480,9 @@ with matches as materialized (
     matches.deleted_at
   from matches
   inner join users on users.id = matches.owner_user_id
-  order by matches.created_at desc
-  limit $8
-  offset $7
+  order by case when $1::date is not null then matches.contest_start end asc, matches.created_at desc
+  limit $9
+  offset $8
 ), total as (
   select count(*) as total_size
   from matches
@@ -505,10 +506,11 @@ select
   total.total_size
 from total
 left join page on true
-order by page.created_at desc
+order by case when $1::date is not null then page.contest_start end asc, page.created_at desc
 `
 
 type ListContestsParams struct {
+	StartsAfter          pgtype.Date
 	IncludeDeleted       bool
 	UserID               pgtype.UUID
 	Official             bool
@@ -540,6 +542,7 @@ type ListContestsRow struct {
 
 func (q *Queries) ListContests(ctx context.Context, arg ListContestsParams) ([]ListContestsRow, error) {
 	rows, err := q.db.Query(ctx, listContests,
+		arg.StartsAfter,
 		arg.IncludeDeleted,
 		arg.UserID,
 		arg.Official,

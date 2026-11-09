@@ -122,6 +122,45 @@ func TestImmersionContestFetchLeaderboard(t *testing.T) {
 	}
 }
 
+func TestImmersionContestFetchLeaderboardEntry(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		description []string
+		want        int
+		cache       string
+		cacheKey    string
+	}{
+		{description: []string{"rank", "below", "fifty"}, want: http.StatusOK, cache: "miss_then_hit"},
+		{description: []string{"tie", "below", "fifty"}, want: http.StatusOK, cache: "miss_then_hit"},
+		{description: []string{"registered", "without", "logs"}, want: http.StatusOK, cache: "miss_then_hit"},
+		{
+			description: []string{"cache", "hit", "tie"},
+			want:        http.StatusOK,
+			cache:       "hit_tie",
+			cacheKey:    "leaderboard:contest:f1111111-1111-4111-8111-111111111111",
+		},
+		{description: []string{"not", "registered"}, want: http.StatusNoContent, cache: "miss_then_hit"},
+		{description: []string{"withdrawn", "registration"}, want: http.StatusNoContent, cache: "miss_then_hit"},
+		{
+			description: []string{"missing", "contest"},
+			want:        http.StatusNotFound,
+			cache:       "miss_then_miss",
+			cacheKey:    "leaderboard:contest:f9999999-9999-4999-8999-999999999999",
+		},
+		{description: []string{"invalid", "id"}, want: http.StatusBadRequest},
+		{description: []string{"invalid", "user", "id"}, want: http.StatusBadRequest},
+	}
+	for _, test := range tests {
+		name := APITestName("ImmersionContestFetchLeaderboardEntry", test.want, test.description...)
+		cacheKey := test.cacheKey
+		if cacheKey == "" {
+			cacheKey = "leaderboard:contest:f4444444-4444-4444-8444-444444444444"
+		}
+		runLeaderboardCase(t, name, test.want, test.cache, cacheKey)
+	}
+}
+
 // runLeaderboardCase runs the case in its own fixtureScenario, in parallel with other scenario cases, with cache
 // describing the primary tenant's cacheKey before and after the request.
 func runLeaderboardCase(t *testing.T, name string, want int, cache, cacheKey string) {
@@ -236,6 +275,12 @@ func verifyRebuiltLeaderboardCache(t *testing.T, tenantKey, key string) {
 			"33333333-3333-4333-8333-333333333333": 20,
 			"66666666-6666-4666-8666-666666666666": 0,
 		}
+	case "leaderboard:contest:f4444444-4444-4444-8444-444444444444":
+		want["80000000-0000-4000-8000-000000000061"] = 0
+		for i := 1; i <= 60; i++ {
+			want[fmt.Sprintf("80000000-0000-4000-8000-%012d", i)] = float64(61 - i)
+		}
+		want["80000000-0000-4000-8000-000000000059"] = 3
 	case "leaderboard:contest:f3333333-3333-4333-8333-333333333333":
 		want = map[string]float64{
 			"11111111-1111-4111-8111-111111111111": 10,

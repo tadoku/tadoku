@@ -254,8 +254,11 @@ type ListParameters struct {
 	UserID         *uuid.UUID
 	Official       bool
 	IncludeDeleted bool
+	Upcoming       bool
 	PageSize       int
 	Page           int
+
+	startsAfter *time.Time
 }
 
 func (p ListParameters) Validate() error {

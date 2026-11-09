@@ -957,6 +957,13 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: upcoming
+          in: query
+          required: false
+          allowEmptyValue: true
+          description: Returns only contests that have not started, the soonest first.
+          schema:
+            type: boolean
       responses:
         "200":
           description: successful operation
@@ -2385,6 +2392,46 @@ paths:
       x-tadoku-exposure: public
       x-legacy-path: /leaderboard/global
       x-legacy-operation-id: fetchLeaderboardGlobal
+  "/immersion/contests/{id}/leaderboard/{user_id}":
+    get:
+      summary: Fetches one participant's entry on a contest leaderboard
+      description: >-
+        Reads the contest's unfiltered standings, at any rank. A participant's rank is one more than the number of
+        participants with a higher score, and `is_tie` reports that another participant has the same score. Every
+        registered participant is ranked, with a score of 0 before their first log.
+      operationId: ImmersionContestFetchLeaderboardEntry
+      tags:
+        - contests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLeaderboardEntry"
+        "204":
+          description: the user is not a participant of this contest
+        "404":
+          description: not found
+        "500":
+          description: leaderboard read failed
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/{id}/leaderboard/{user_id}
+      x-legacy-operation-id: contestFetchLeaderboardEntry
   /immersion/scoring/rule-sets:
     get:
       summary: Lists platform scoring rule-set versions

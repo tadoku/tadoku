@@ -236,10 +236,13 @@ test('published content an administrator adds appears, sanitized and paginated, 
   const first = await posts(context.request)
   expect(first.total_size).toBeGreaterThan(pageSize)
 
-  await page.goto('/blog/1')
-  await expectBlogPage(page, first, 1)
-  await page.goto('/blog/2')
-  await expectBlogPage(page, await posts(context.request, 2), 2)
+  // Signed-out blog reads can be seconds old, and `ensureContent` may just have published.
+  await expect(async () => {
+    await page.goto('/blog/1')
+    await expectBlogPage(page, first, 1)
+    await page.goto('/blog/2')
+    await expectBlogPage(page, await posts(context.request, 2), 2)
+  }).toPass({ timeout: 25_000 })
   await expect(page.getByText('Webv3 draft post')).toHaveCount(0)
 
   for (const draft of ['/blog/posts/webv3-e2e-draft-post', '/pages/webv3-e2e-draft-page']) {

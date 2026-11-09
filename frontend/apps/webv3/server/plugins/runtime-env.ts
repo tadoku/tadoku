@@ -1,6 +1,7 @@
 import { accessSync, constants, statSync } from 'node:fs'
 import { isIP } from 'node:net'
 import { definePlugin } from 'nitro'
+import { recordStartup } from '../../src/lib/log.server'
 import { runtimeOrigins } from '../../src/lib/urls.server'
 
 /** Checks every runtime variable before the server listens, so a bad value stops the container instead of failing pages. */
@@ -37,7 +38,10 @@ function runtimeEnvErrors() {
 
 export default definePlugin(() => {
   const errors = runtimeEnvErrors()
-  if (errors.length === 0) return
+  if (errors.length === 0) {
+    recordStartup()
+    return
+  }
 
   process.stderr.write(`Webv3 cannot start: ${errors.join('; ')}\n`)
   process.exit(1)

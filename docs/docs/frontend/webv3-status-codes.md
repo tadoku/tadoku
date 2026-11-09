@@ -12,6 +12,7 @@ unavailable data, or when you read Webv3's 5xx responses.
 | Situation | Status | Renders |
 | --- | --- | --- |
 | Unknown path | 404 | The not-found page |
+| A path that does not decode, such as `/pages/%FF` or a lone `%` | 400 | A plain-text `Bad Request` from `frontend/apps/webv3/server/plugins/malformed-path.ts` |
 | A page for one resource, such as a contest, profile, log, blog post or CMS page, whose main read finds nothing | 404 | The route's not-found view |
 | That page's main read fails | 503 | The error page, with Try again |
 | A list, the home page, or a section beside a page's main read fails | 200 | That section's own failure state |

@@ -82,11 +82,12 @@ function write(
   event: string,
   msg: string,
   fields: { operation?: ApiOperation; status?: number; latency?: number; error_type?: string; issue_paths?: string[] },
+  level: 'ERROR' | 'INFO' = 'ERROR',
 ) {
   const request = requestLog.getStore()
   const entry = {
     time: new Date().toISOString(),
-    level: 'ERROR',
+    level,
     msg,
     event,
     correlation_id: request?.requestId,
@@ -157,4 +158,9 @@ export function recordSsrError(error: SsrError) {
   write('ssr_error', 'server rendering failed', {
     error_type: reportedErrorNames.has(error.errorName) ? error.errorName : 'other',
   })
+}
+
+/** The one INFO line: the server passed its startup checks and is about to listen, which marks every rollout in the logs. */
+export function recordStartup() {
+  write('startup', 'server started', {}, 'INFO')
 }

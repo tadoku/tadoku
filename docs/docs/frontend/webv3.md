@@ -273,6 +273,11 @@ accepts the old session cookie. Set
 `TADOKU_API_URL` to the branch's public API root for that check. Authenticated
 tests disable traces and videos and retain no browser storage.
 
+## Headers, indexing and sharing
+
+[Headers, indexing and sharing](webv3-indexing.md) covers the security headers
+and report-only CSP, canonical URLs, robots and link-preview metadata.
+
 ## Server logs
 
 Server failures are recorded as [structured JSON lines](webv3-server-logs.md).

@@ -31,3 +31,7 @@ func (a *Application) roleNames(ctx context.Context, userIDs []uuid.UUID) (map[u
 func (a *Application) FindProfile(ctx context.Context, userID uuid.UUID) (*profile.PublicProfile, error) {
 	return a.profile.FindProfile(ctx, userID)
 }
+
+func (a *Application) FindAvatar(ctx context.Context, userID uuid.UUID) (profile.Avatar, error) {
+	return a.avatars.Find(ctx, userID)
+}

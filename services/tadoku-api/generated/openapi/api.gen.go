@@ -1893,6 +1893,9 @@ type ServerInterface interface {
 	// ImmersionProfileYearlyActivityByUserID Fetches a activity summary of a user for a given year
 	// (GET /immersion/users/{userId}/activity/{year})
 	ImmersionProfileYearlyActivityByUserID(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID, year int)
+	// ImmersionProfileAvatarByUserID Fetches the Gravatar avatar of a user
+	// (GET /immersion/users/{userId}/avatar)
+	ImmersionProfileAvatarByUserID(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID)
 	// ImmersionProfileYearlyContestRegistrationsByUserID Fetches the contest registrations of a user for a given year
 	// (GET /immersion/users/{userId}/contest-registrations/{year})
 	ImmersionProfileYearlyContestRegistrationsByUserID(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID, year int, params ImmersionProfileYearlyContestRegistrationsByUserIDParams)
@@ -4305,6 +4308,32 @@ func (siw *ServerInterfaceWrapper) ImmersionProfileYearlyActivityByUserID(w http
 	handler.ServeHTTP(w, r)
 }
 
+// ImmersionProfileAvatarByUserID operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionProfileAvatarByUserID(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "userId" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "userId", r.PathValue("userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "userId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionProfileAvatarByUserID(w, r, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ImmersionProfileYearlyContestRegistrationsByUserID operation middleware
 func (siw *ServerInterfaceWrapper) ImmersionProfileYearlyContestRegistrationsByUserID(w http.ResponseWriter, r *http.Request) {
 
@@ -4766,6 +4795,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/logs/configuration-options", wrapper.ImmersionLogGetConfigurations)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/logs/tag-suggestions", wrapper.ImmersionLogTagSuggestions)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{userId}/profile", wrapper.ImmersionProfileFindByUserID)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{userId}/avatar", wrapper.ImmersionProfileAvatarByUserID)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{userId}/activity/{year}", wrapper.ImmersionProfileYearlyActivityByUserID)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{userId}/scores/{year}", wrapper.ImmersionProfileYearlyScoresByUserID)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{user_id}/logs", wrapper.ImmersionProfileListLogs)
@@ -8528,6 +8558,75 @@ func (response ImmersionProfileYearlyActivityByUserID500Response) VisitImmersion
 	return nil
 }
 
+type ImmersionProfileAvatarByUserIDRequestObject struct {
+	UserId openapi_types.UUID `json:"userId"`
+}
+
+type ImmersionProfileAvatarByUserIDResponseObject interface {
+	VisitImmersionProfileAvatarByUserIDResponse(w http.ResponseWriter) error
+}
+
+type ImmersionProfileAvatarByUserID200ResponseHeaders struct {
+	CacheControl        string
+	XContentTypeOptions string
+}
+
+type ImmersionProfileAvatarByUserID200ImageResponse struct {
+	Body          io.Reader
+	Headers       ImmersionProfileAvatarByUserID200ResponseHeaders
+	ContentType   string
+	ContentLength int64
+}
+
+func (response ImmersionProfileAvatarByUserID200ImageResponse) VisitImmersionProfileAvatarByUserIDResponse(w http.ResponseWriter) error {
+
+	w.Header().Set("Content-Type", response.ContentType)
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.Header().Set("Cache-Control", fmt.Sprint(response.Headers.CacheControl))
+	w.Header().Set("X-Content-Type-Options", fmt.Sprint(response.Headers.XContentTypeOptions))
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ImmersionProfileAvatarByUserID400Response struct {
+}
+
+func (response ImmersionProfileAvatarByUserID400Response) VisitImmersionProfileAvatarByUserIDResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type ImmersionProfileAvatarByUserID404Response struct {
+}
+
+func (response ImmersionProfileAvatarByUserID404Response) VisitImmersionProfileAvatarByUserIDResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ImmersionProfileAvatarByUserID503Response struct {
+}
+
+func (response ImmersionProfileAvatarByUserID503Response) VisitImmersionProfileAvatarByUserIDResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type ImmersionProfileAvatarByUserID504Response struct {
+}
+
+func (response ImmersionProfileAvatarByUserID504Response) VisitImmersionProfileAvatarByUserIDResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
 type ImmersionProfileYearlyContestRegistrationsByUserIDRequestObject struct {
 	UserId openapi_types.UUID `json:"userId"`
 	Year   int                `json:"year"`
@@ -9010,6 +9109,9 @@ type StrictServerInterface interface {
 	// ImmersionProfileYearlyActivityByUserID Fetches a activity summary of a user for a given year
 	// (GET /immersion/users/{userId}/activity/{year})
 	ImmersionProfileYearlyActivityByUserID(ctx context.Context, request ImmersionProfileYearlyActivityByUserIDRequestObject) (ImmersionProfileYearlyActivityByUserIDResponseObject, error)
+	// ImmersionProfileAvatarByUserID Fetches the Gravatar avatar of a user
+	// (GET /immersion/users/{userId}/avatar)
+	ImmersionProfileAvatarByUserID(ctx context.Context, request ImmersionProfileAvatarByUserIDRequestObject) (ImmersionProfileAvatarByUserIDResponseObject, error)
 	// ImmersionProfileYearlyContestRegistrationsByUserID Fetches the contest registrations of a user for a given year
 	// (GET /immersion/users/{userId}/contest-registrations/{year})
 	ImmersionProfileYearlyContestRegistrationsByUserID(ctx context.Context, request ImmersionProfileYearlyContestRegistrationsByUserIDRequestObject) (ImmersionProfileYearlyContestRegistrationsByUserIDResponseObject, error)
@@ -11163,6 +11265,32 @@ func (sh *strictHandler) ImmersionProfileYearlyActivityByUserID(w http.ResponseW
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ImmersionProfileYearlyActivityByUserIDResponseObject); ok {
 		if err := validResponse.VisitImmersionProfileYearlyActivityByUserIDResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionProfileAvatarByUserID operation middleware
+func (sh *strictHandler) ImmersionProfileAvatarByUserID(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID) {
+	var request ImmersionProfileAvatarByUserIDRequestObject
+
+	request.UserId = userId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionProfileAvatarByUserID(ctx, request.(ImmersionProfileAvatarByUserIDRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionProfileAvatarByUserID")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionProfileAvatarByUserIDResponseObject); ok {
+		if err := validResponse.VisitImmersionProfileAvatarByUserIDResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

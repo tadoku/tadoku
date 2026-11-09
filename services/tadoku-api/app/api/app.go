@@ -39,6 +39,7 @@ type Application struct {
 	pages            *pages.Service
 	posts            *posts.Service
 	profile          *profile.Service
+	avatars          *profile.Avatars
 	scoring          *scoring.Service
 	featureFlags     *featureflags.Evaluator
 	db               *pgxpool.Pool
@@ -64,6 +65,7 @@ type Dependencies struct {
 	Pages            *pages.Service
 	Posts            *posts.Service
 	Profile          *profile.Service
+	Avatars          *profile.Avatars
 	Scoring          *scoring.Service
 	FeatureFlags     *featureflags.Evaluator
 	DB               *pgxpool.Pool
@@ -90,6 +92,7 @@ func New(deps Dependencies) *Application {
 		pages:            deps.Pages,
 		posts:            deps.Posts,
 		profile:          deps.Profile,
+		avatars:          deps.Avatars,
 		scoring:          deps.Scoring,
 		featureFlags:     deps.FeatureFlags,
 		db:               deps.DB,

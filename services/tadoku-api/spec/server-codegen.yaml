@@ -48,6 +48,7 @@ output-options:
     - ImmersionLanguageCreate
     - ImmersionLanguageUpdate
     - ImmersionProfileFindByUserID
+    - ImmersionProfileAvatarByUserID
     - ImmersionProfileYearlyActivityByUserID
     - ImmersionProfileYearlyScoresByUserID
     - ImmersionProfileYearlyActivitySplitByUserID

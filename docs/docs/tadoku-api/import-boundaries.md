@@ -82,7 +82,7 @@ graph. Each allowed package covers only its own targets, not subpackages, and
   startup here means `cmd/tadoku-api` and `cmd/tadoku-tenant`:
 
 - Only `features/leaderboard`, `features/identity` (login throttling),
-  `services/tadoku-api/infra/valkey`, startup, E2E
+  `features/profile` (avatar cache), `services/tadoku-api/infra/valkey`, startup, E2E
   and the `app/tenantlifecycle:tenantlifecycle_test` target may depend directly
   on `valkey-go`.
 

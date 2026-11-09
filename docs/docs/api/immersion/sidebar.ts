@@ -198,6 +198,12 @@ const sidebar: SidebarsConfig = {
         },
         {
           type: "doc",
+          id: "api/immersion/profile-avatar-by-user-id",
+          label: "Fetches the Gravatar avatar of a user",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
           id: "api/immersion/profile-yearly-activity-by-user-id",
           label: "Fetches a activity summary of a user for a given year",
           className: "api-method get",

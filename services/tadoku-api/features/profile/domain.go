@@ -44,3 +44,10 @@ type PublicProfile struct {
 	DisplayName string
 	CreatedAt   time.Time
 }
+
+var ErrAvatarNotFound = errx.NewNotFoundError("avatar not found")
+
+type Avatar struct {
+	ContentType string
+	Image       []byte
+}

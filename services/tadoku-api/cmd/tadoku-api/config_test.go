@@ -58,6 +58,9 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	if cfg.ServiceAccountTokenPath != "/var/run/secrets/tokens/token" {
 		t.Errorf("service account token path=%q", cfg.ServiceAccountTokenPath)
 	}
+	if cfg.GravatarURL != "https://gravatar.com" {
+		t.Errorf("Gravatar URL=%q", cfg.GravatarURL)
+	}
 	if cfg.FliptEnabled ||
 		cfg.FliptURL != "http://oathkeeper-proxy.default:4455/flipt" ||
 		cfg.FliptEnvironment != "local" ||
@@ -75,6 +78,7 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	}{
 		"API_OATHKEEPER_URL": {validURL: "http://oathkeeper.test", field: "OathkeeperURL"},
 		"API_FLIPT_URL":      {validURL: "http://flipt.test/evaluation", field: "FliptURL"},
+		"API_GRAVATAR_URL":   {validURL: "http://gravatar.test", field: "GravatarURL"},
 	} {
 		for _, invalidURL := range []string{"not-a-url", "http://:4455", "http://user:secret@gateway.test", "http://gateway.test?route=1", "http://gateway.test#fragment"} {
 			t.Setenv(variable, invalidURL)
@@ -90,6 +94,9 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	}
 	if canonicalFlipt.OathkeeperURL != "http://oathkeeper.test" || canonicalFlipt.FliptURL != "http://flipt.test/evaluation" {
 		t.Errorf("canonical Flipt URLs: %+v", canonicalFlipt)
+	}
+	if canonicalFlipt.GravatarURL != "http://gravatar.test" {
+		t.Errorf("canonical Gravatar URL=%q", canonicalFlipt.GravatarURL)
 	}
 	for variable, field := range map[string]string{
 		"API_FLIPT_ENVIRONMENT": "FliptEnvironment",

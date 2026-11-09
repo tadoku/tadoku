@@ -2214,6 +2214,46 @@ export type ImmersionProfileFindByUserIdResponses = {
 
 export type ImmersionProfileFindByUserIdResponse = ImmersionProfileFindByUserIdResponses[keyof ImmersionProfileFindByUserIdResponses];
 
+export type ImmersionProfileAvatarByUserIdData = {
+    body?: never;
+    path: {
+        /**
+         * ID of the user whose avatar to return
+         */
+        userId: string;
+    };
+    query?: never;
+    url: '/immersion/users/{userId}/avatar';
+};
+
+export type ImmersionProfileAvatarByUserIdErrors = {
+    /**
+     * Invalid user ID.
+     */
+    400: unknown;
+    /**
+     * The user does not exist or has no Gravatar image.
+     */
+    404: unknown;
+    /**
+     * Gravatar failed or returned an unusable image.
+     */
+    503: unknown;
+    /**
+     * Gravatar did not respond in time.
+     */
+    504: unknown;
+};
+
+export type ImmersionProfileAvatarByUserIdResponses = {
+    /**
+     * The avatar image, as JPEG, PNG, GIF or WebP.
+     */
+    200: Blob | File;
+};
+
+export type ImmersionProfileAvatarByUserIdResponse = ImmersionProfileAvatarByUserIdResponses[keyof ImmersionProfileAvatarByUserIdResponses];
+
 export type ImmersionProfileYearlyActivityByUserIdData = {
     body?: never;
     path: {

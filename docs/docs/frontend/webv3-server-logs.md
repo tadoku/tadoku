@@ -8,8 +8,11 @@ description: The structured JSON log lines Webv3's server writes for upstream fa
 Read this when you record a failure on Webv3's server or query its logs.
 
 `frontend/apps/webv3/src/lib/log.server.ts` records upstream failures and server
-rendering errors. Each event writes one JSON line to stdout at level `ERROR`,
-using the field names of Tadoku API's `log/slog` JSON handler
+rendering errors, plus one startup marker. Each failure writes one JSON line to
+stdout at level `ERROR`. Once per boot, after the startup checks in
+`frontend/apps/webv3/server/plugins/runtime-env.ts` pass, the server writes one
+`INFO` line with `event` `startup` and `msg` `server started`, and no other
+fields, so every rollout leaves a line. All lines use the field names of Tadoku API's `log/slog` JSON handler
 (`services/tadoku-api/cmd/tadoku-api/main.go`,
 `services/tadoku-api/transport/http/observability.go`,
 `services/tadoku-api/infra/observability/scoring.go`), so one Loki query reads
@@ -18,7 +21,7 @@ both.
 | Field | Value |
 | --- | --- |
 | `time`, `level`, `msg` | As slog writes them; `msg` is a fixed string per event |
-| `event` | `upstream_failure` or `ssr_error` |
+| `event` | `upstream_failure`, `ssr_error` or `startup` |
 | `correlation_id` | The request's ID |
 | `host` | The API gateway host this request reads from |
 | `operation` | The generated API operation that failed |

@@ -5,7 +5,8 @@ import { z } from 'zod'
 import { DraftOwnerGate } from '../../components/DraftOwnerGate'
 import { LogForm } from '../../components/LogForm'
 import { PendingView } from '../../components/StatusViews'
-import { logOptionsQuery, logQuery } from '../../lib/logs'
+import { draftFromLog, logDraftSchema, toScorePreview } from '../../lib/log-draft'
+import { logOptionsQuery, logQuery, scorePreviewQuery } from '../../lib/logs'
 import { useLoginUrl, viewerQueryOptions } from '../../lib/session'
 import { pageUnavailable } from '../../lib/page-status'
 
@@ -16,12 +17,18 @@ export const Route = createFileRoute('/logs/$logId_/edit')({
     const viewer = await context.queryClient.ensureQueryData(viewerQueryOptions())
     if (viewer.status !== 'signed-in') return
 
-    const [log] = await Promise.all([
+    const [log, options] = await Promise.all([
       context.queryClient.ensureQueryData(logQuery(params.logId, viewer.userId)),
       context.queryClient.ensureQueryData(logOptionsQuery(viewer.userId)),
     ])
     if (!log.ok && log.reason === 'not-found') throw notFound()
     if (!log.ok && log.reason === 'unavailable') pageUnavailable(context.queryClient, logQuery(params.logId, viewer.userId))
+    if (!log.ok || !options.ok) return
+
+    const draft = draftFromLog(options.data, log.data)
+    if (logDraftSchema(options.data).safeParse(draft).success) {
+      await context.queryClient.prefetchQuery(scorePreviewQuery(toScorePreview(draft, options.data)))
+    }
   },
   component: EditLog,
 })

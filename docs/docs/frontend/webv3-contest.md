@@ -103,6 +103,10 @@ log's submissions are read again.
 `frontend/apps/webv3/e2e/rank.spec.ts` checks that a participant below the first
 standings page sees their rank on the home page and their participant page.
 
+`frontend/apps/webv3/e2e/viewer-change.spec.ts` signs in from another tab and
+switches accounts, then checks that the contest, registration and log pages show
+their loading state while the new viewer's data loads, never their error state.
+
 `frontend/apps/webv3/e2e/contest.spec.ts` compares the server-rendered page with
 the API, follows page segments, checks unknown contests, the anonymous login
 redirect and containment at 390px and 1280px. With the Dev Reader and Dev Admin

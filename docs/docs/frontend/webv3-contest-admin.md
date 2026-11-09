@@ -86,5 +86,5 @@ Reader the refusal after using up its yearly allowance in the selected tenant,
 drafts, publishes and activates a rule set and compares it with the API, checks a
 started contest's lock, and that Dev Reader cannot reach scoring, even for its
 own contest, and that only administrators see the contest page's Scoring rules
-link. Pages are checked at 390px. The anonymous checks also run in the
+menu item. Pages are checked at 390px. The anonymous checks also run in the
 production container smoke.

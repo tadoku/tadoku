@@ -50,6 +50,12 @@ async function chooseLanguage(page: Page, name: string) {
 }
 
 const headerLinks = (page: Page) => page.locator('.standings-header .paper-page-header__actions').getByRole('link')
+const contestOptions = (page: Page) => page.locator('.standings-header').getByRole('button', { name: 'Contest options' })
+
+async function contestMenu(page: Page) {
+  await contestOptions(page).click()
+  return page.getByRole('menuitem')
+}
 
 test.beforeEach(() => {
   test.skip(!webv3 || !api, 'Set WEBV3_BASE_URL and TADOKU_API_URL')
@@ -75,6 +81,7 @@ test('the server-rendered contest page shows its details, API standings and an a
   const open = !ended && today <= contest.registration_end
   await expect(headerLinks(page)).toHaveText(open ? ['Join contest'] : [])
   if (open) await expect(headerLinks(page)).toHaveAttribute('href', `/contests/${contest.id}/registration`)
+  await expect(contestOptions(page)).toHaveCount(0)
   await page.screenshot({ path: testInfo.outputPath('contest-anonymous.png'), fullPage: true })
   await context.close()
 })
@@ -139,14 +146,25 @@ test('a signed-in learner joins an open contest, sees it on the contest page and
   await chooseLanguage(page, 'Japanese')
   await page.getByRole('button', { name: 'Register' }).click()
   await expect(page).toHaveURL(new RegExp(`${contestPath(contest.id)}$`))
-  await expect(headerLinks(page)).toHaveText(['Update registration'])
+  await expect(headerLinks(page)).toHaveText([])
+  await expect(await contestMenu(page)).toHaveText(['Update registration'])
+  await page.keyboard.press('Escape')
   expect(await registeredLanguages(readerContext, contest.id)).toEqual(['Japanese'])
 
+  // On a phone the menu sits on the back link's row, so the title keeps the full width.
+  await page.setViewportSize({ width: 390, height: 844 })
   await page.reload()
-  await expect(headerLinks(page)).toHaveText(['Update registration'])
-  await page.screenshot({ path: testInfo.outputPath('contest-registered.png'), fullPage: true })
-
-  await headerLinks(page).getByText('Update registration').click()
+  await expect(headerLinks(page)).toHaveText([])
+  const options = await contestOptions(page).boundingBox()
+  const back = await page.getByRole('link', { name: 'Community contests' }).boundingBox()
+  const title = await page.getByRole('heading', { level: 1 }).boundingBox()
+  expect(options!.y + options!.height).toBeLessThanOrEqual(title!.y)
+  expect(Math.abs(options!.y + options!.height / 2 - (back!.y + back!.height / 2))).toBeLessThan(4)
+  expect(await fitsViewport(page)).toBe(true)
+  await expect(await contestMenu(page)).toHaveText(['Update registration'])
+  await page.screenshot({ path: testInfo.outputPath('contest-registered-390.png'), fullPage: true })
+  await page.getByRole('menuitem', { name: 'Update registration' }).click()
+  await page.setViewportSize({ width: 1280, height: 720 })
   await expect(page.getByRole('heading', { level: 1, name: 'Update registration' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Update registration' })).toBeEnabled()
   await chooseLanguage(page, 'Spanish')

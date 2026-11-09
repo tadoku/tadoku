@@ -10,6 +10,7 @@ import { Avatar } from './Avatar'
 import { LeaderboardFrame } from './LeaderboardPage'
 import { Standings } from './Standings'
 import { description, sheet, standingsAside, standingsContext, standingsContextTitle, standingsNotice, workspace } from './standings-styles'
+import { AppLink } from './router-link'
 
 export function RoundStatus({ phase }: { phase: ContestPhase }) {
   if (phase.ended) return <StatusTag>Ended</StatusTag>
@@ -51,7 +52,7 @@ function LatestBoard({ board, today, page }: { board: ContestBoard; today: strin
   const { viewer, registered } = useParticipation(contest.id)
 
   const actions = phase.registrationOpen && !registered && viewer?.status !== 'banned'
-    ? <a className={buttonClassName()} href={links.joinContest(contest.id)}>Join contest</a>
+    ? <AppLink className={buttonClassName()} href={links.joinContest(contest.id)}>Join contest</AppLink>
     : null
 
   return (
@@ -63,7 +64,7 @@ function LatestBoard({ board, today, page }: { board: ContestBoard; today: strin
         pageHref={leaderboardHref.latest}
         title={contest.title}
         status={<RoundStatus phase={phase} />}
-        asideLink={<a className="text-link hover:text-link-hover" href={links.contest(contest.id)}>Contest details</a>}
+        asideLink={<AppLink className="text-link hover:text-link-hover" href={links.contest(contest.id)}>Contest details</AppLink>}
       />
     </LeaderboardFrame>
   )
@@ -142,7 +143,7 @@ export function ContestFacts({ contest, phase }: { contest: ImmersionContestView
       ? (
         <span>
           <Avatar userId={contest.owner_user_id} name={contest.owner_user_display_name ?? '?'} size="sm" className="me-1.5" />
-          <a className="text-link hover:text-link-hover" href={links.profile(contest.owner_user_id)}>{contest.owner_user_display_name ?? 'Unknown user'}</a>
+          <AppLink className="text-link hover:text-link-hover" href={links.profile(contest.owner_user_id)}>{contest.owner_user_display_name ?? 'Unknown user'}</AppLink>
         </span>
       )
       : contest.owner_user_display_name ?? 'Unknown user'

@@ -10,7 +10,7 @@ import { useParticipation } from '../lib/registration'
 import { viewerKey, viewerQueryOptions } from '../lib/session'
 import { ContestBoardBody, RoundStatus } from './ContestLeaderboard'
 import { ContestUpdates } from './ContestUpdates'
-import { renderLink } from './router-link'
+import { AppLink, renderLink } from './router-link'
 import { standingsHeader } from './standings-styles'
 
 export type ContestView = 'standings' | 'updates'
@@ -66,7 +66,7 @@ function ContestBoardPage({ board, today, view, page }: { board: ContestBoard; t
   const actions = join || options.length > 0
     ? (
       <>
-        {join ? <a className={buttonClassName()} href={links.joinContest(contest.id)}>Join contest</a> : null}
+        {join ? <AppLink className={buttonClassName()} href={links.joinContest(contest.id)}>Join contest</AppLink> : null}
         {options.length > 0 ? <ContestOptions options={options} /> : null}
       </>
     )

@@ -8,7 +8,7 @@ import { useLinks } from '../lib/links'
 import type { LogFailure } from '../lib/logs'
 import { contestScoringQuery, useChangeScoring, type RuleSetChange } from '../lib/scoring'
 import { useLoginUrl } from '../lib/session'
-import { renderLink } from './router-link'
+import { AppLink, renderLink } from './router-link'
 import { ManualTable } from './ManualPage'
 import { RuleSetForm } from './RuleSetForm'
 import { scoringFailures } from './scoring-failures'
@@ -31,7 +31,7 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
             headingLevel={1}
             title="Contest not found"
             description="This contest does not exist or has been removed."
-            actions={<a className={buttonClassName({ variant: 'outline' })} href={contestsHref.official()}>Browse contests</a>}
+            actions={<AppLink className={buttonClassName({ variant: 'outline' })} href={contestsHref.official()}>Browse contests</AppLink>}
           />
         )
       case 'signed-out':
@@ -72,7 +72,7 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
         <Flash variant="information">
           Scoring is locked because this contest has started.{contestRuleSets.length > 0
             ? ' Its rule-set versions are listed below.'
-            : <> It uses the <a className="text-link hover:text-link-hover" href={`${links.guide}#media`}>platform defaults</a>.</>}
+            : <> It uses the <AppLink className="text-link hover:text-link-hover" href={`${links.guide}#media`}>platform defaults</AppLink>.</>}
         </Flash>
       ) : (
         <RuleSetForm

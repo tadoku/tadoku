@@ -5,6 +5,7 @@ import { useLinks } from '../lib/links'
 import type { ProfileActivity as Activity } from '../lib/profile'
 import { LogEntries } from './LogEntries'
 import { ProfileHeader } from './ProfileHeader'
+import { AppLink } from './router-link'
 
 type Found = Extract<Activity, { status: 'found' }>
 
@@ -41,7 +42,7 @@ export function ProfileActivity({ activity, page, date, owner }: {
                 description={owner
                   ? 'Start with what you read or listened to today. A few pages or minutes are enough.'
                   : 'Logs appear here once they have been recorded.'}
-                actions={owner ? <a className={buttonClassName()} href={links.logs}>Log activity</a> : null}
+                actions={owner ? <AppLink className={buttonClassName()} href={links.logs}>Log activity</AppLink> : null}
               />
             )}
           />

@@ -20,6 +20,7 @@ import {
 import { useLoginUrl, viewerQueryOptions } from '../../lib/session'
 import { recordSurface } from '../../components/standings-styles'
 import { formControls } from '../../components/form-styles'
+import { AppLink } from '../../components/router-link'
 
 export const Route = createFileRoute('/logs/$logId_/contests')({
   head: () => ({ meta: [{ title: 'Submit to contests · Tadoku' }] }),
@@ -166,7 +167,7 @@ function ContestsForm({ log, registrations, viewerId }: {
                 </div>
                 {eligible.length ? <p className="mb-0 mt-2 text-metadata text-muted">Unchecking removes this log’s score from that contest.</p> : null}
                 {choices.some(choice => choice.kind === 'ineligible')
-                  ? <p className="mb-0 mt-1 text-metadata text-muted">Registered for the wrong language? <a className="text-link hover:text-link-hover" href={links.contests}>Update your registration</a> from its contest page.</p>
+                  ? <p className="mb-0 mt-1 text-metadata text-muted">Registered for the wrong language? <AppLink className="text-link hover:text-link-hover" href={links.contests}>Update your registration</AppLink> from its contest page.</p>
                   : null}
                 {finished.map(submission => (
                   <p key={submission.registration_id}>
@@ -183,7 +184,7 @@ function ContestsForm({ log, registrations, viewerId }: {
                   description={choices.length
                     ? 'This activity already counts in your personal history.'
                     : 'No contest registrations found. You can submit to contests after joining one. This activity already counts in your personal history.'}
-                  actions={<a className="text-link hover:text-link-hover" href={links.contests}>Find a contest to join</a>}
+                  actions={<AppLink className="text-link hover:text-link-hover" href={links.contests}>Find a contest to join</AppLink>}
                 />
               )}
             </fieldset>

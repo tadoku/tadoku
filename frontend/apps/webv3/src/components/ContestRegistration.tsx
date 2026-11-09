@@ -15,7 +15,7 @@ import {
 import { useLoginUrl, viewerKey, viewerQueryOptions } from '../lib/session'
 import { ContestFacts } from './ContestLeaderboard'
 import { ContestNotFound } from './ContestPage'
-import { renderLink } from './router-link'
+import { AppLink, renderLink } from './router-link'
 import { description, recordSurface, standingsAside, standingsHeader, workspace } from './standings-styles'
 import { formControls } from './form-styles'
 
@@ -126,7 +126,7 @@ function RegistrationState({ contest, viewerId, phase }: { contest: ImmersionCon
       <>
         <Flash variant="danger">{closed}</Flash>
         {previous ? <p className="my-4">Your languages: {previous.map(language => language.name).join(', ')}.</p> : null}
-        <p className="my-4"><a className="text-link hover:text-link-hover" href={links.contest(contest.id)}>Back to the contest</a></p>
+        <p className="my-4"><AppLink className="text-link hover:text-link-hover" href={links.contest(contest.id)}>Back to the contest</AppLink></p>
       </>
     )
   }
@@ -208,7 +208,7 @@ function RegistrationForm({ contest, viewerId, previous, options }: {
           {failure ? <SaveFailure failure={failure} registered={previous !== null} /> : null}
           <div className={formFooter().root()}>
             <div className={formFooter().actions()}>
-              <a className={buttonClassName({ variant: 'ghost' })} href={links.contest(contest.id)}>Cancel</a>
+              <AppLink className={buttonClassName({ variant: 'ghost' })} href={links.contest(contest.id)}>Cancel</AppLink>
               <Button type="submit" disabled={disabled}>{pending ? 'Saving…' : previous ? 'Update registration' : 'Register'}</Button>
             </div>
           </div>

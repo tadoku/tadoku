@@ -5,7 +5,7 @@ import { useLinks } from '../lib/links'
 import { activeDays, contestPageSize, type ContestHistory, type ProfileStatistics as Statistics, type Section } from '../lib/profile'
 import { ActivityCalendar } from './ActivityCalendar'
 import { ProfileHeader } from './ProfileHeader'
-import { renderLink } from './router-link'
+import { AppLink, renderLink } from './router-link'
 import { sheetTabs } from './standings-styles'
 
 type Found = Extract<Statistics, { status: 'found' }>
@@ -42,7 +42,7 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
             variant="plain"
             headingLevel={3}
             title={`No activity recorded in ${year}`}
-            actions={owner ? <a className={buttonClassName()} href={links.logs}>Log activity</a> : null}
+            actions={owner ? <AppLink className={buttonClassName()} href={links.logs}>Log activity</AppLink> : null}
           />
         ) : (
           <>
@@ -173,7 +173,7 @@ function ContestHistorySection({ history, userId, year, page }: {
           {history.data.contests.map(contest => (
             <li key={contest.id} className={rows.item()}>
               <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                <a className={entryLink({ className: 'profile-entry-title' })} href={links.contestProfile(contest.id, userId)}>{contest.title}</a>
+                <AppLink className={entryLink({ className: 'profile-entry-title' })} href={links.contestProfile(contest.id, userId)}>{contest.title}</AppLink>
                 {contest.private ? <StatusTag>Unlisted</StatusTag> : null}
               </span>
               <span className={metaLine({ className: 'profile-entry-meta' })}>{[formatPeriod(contest), ...contest.languages].join(' · ')}</span>

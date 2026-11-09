@@ -10,6 +10,7 @@ import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
 import { MemberContests, MemberDashboard, MemberYearTotals } from './MemberDashboard'
 import { viewerQueryOptions, type Viewer } from '../lib/session'
+import { AppLink } from './router-link'
 
 const noMember: Extract<Viewer, { status: 'signed-in' }> = { status: 'signed-in', userId: '', displayName: '', role: 'user' }
 
@@ -95,8 +96,8 @@ export function HomePage() {
               <p className={lead}>{promise[phase].lead}</p>
               <div className={actions}>
                 {joinable
-                  ? <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</a>
-                  : <a href={links.logs} className={buttonClassName()}>Log activity</a>}
+                  ? <AppLink href={links.joinContest(contest.id)} className={buttonClassName()}>Join {contest.title}</AppLink>
+                  : <AppLink href={links.logs} className={buttonClassName()}>Log activity</AppLink>}
               </div>
               {joinable && <p className="mb-0 mt-4 text-metadata leading-160 text-muted">Free to join. Registration closes {formatDate(contest.registration_end)}.</p>}
             </div>
@@ -139,7 +140,7 @@ export function HomePage() {
             <p className={`${stripText} text-lead font-semibold text-ink`}>{data?.nextContest ? formatPeriod(data.nextContest) : 'Not announced yet'}</p>
           </div>
           {data?.nextContest && <p className={`${stripText} text-sm text-muted`}>Registration closes {formatDate(data.nextContest.registration_end)}.</p>}
-          <a className={stripLink} href={links.contests}>See all contests</a>
+          <AppLink className={stripLink} href={links.contests}>See all contests</AppLink>
         </section>
       )}
 
@@ -187,8 +188,8 @@ function MemberPromise({ member, data, phase, fresh }: {
       {/* Log activity is already the header's action; the hero adds Join only while the member can still join. */}
       {joinable ? (
         <div className={actions}>
-          <a href={links.joinContest(contest.id)} className={buttonClassName()}>Join contest</a>
-          {fresh ? <a className="text-link hover:text-link-hover" href={links.logs}>Log your first activity</a> : null}
+          <AppLink href={links.joinContest(contest.id)} className={buttonClassName()}>Join contest</AppLink>
+          {fresh ? <AppLink className="text-link hover:text-link-hover" href={links.logs}>Log your first activity</AppLink> : null}
         </div>
       ) : null}
     </div>
@@ -245,7 +246,7 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
         headingLevel={3}
         title="No official round right now"
         description="Keep logging at your own pace. The next round will appear here once it’s scheduled."
-        actions={<a href={links.contests} className="text-link hover:text-link-hover">Browse contests</a>}
+        actions={<AppLink href={links.contests} className="text-link hover:text-link-hover">Browse contests</AppLink>}
       />
     </>
   }
@@ -258,7 +259,7 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
   if (phase === 'upcoming') {
     const activities = contest.allowed_activities.map(({ name }, index) => index ? name.toLowerCase() : name).join(' & ')
     return <>
-      {header(formatPeriod(contest), <a href={links.contest(contest.id)} className="text-link hover:text-link-hover">Contest details</a>)}
+      {header(formatPeriod(contest), <AppLink href={links.contest(contest.id)} className="text-link hover:text-link-hover">Contest details</AppLink>)}
       <StatGrid className="px-ledger-inset py-4.5" stats={[{ label: 'Length', value: `${length} days` }, ...(activities ? [{ label: 'Activities', value: activities }] : [])]} />
       <div className={message}>
         <p className="grid gap-1">
@@ -277,7 +278,7 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
   return <>
     {header(
       `${formatPeriod(contest)} · ${ended ? 'Final results' : `Day ${dayNumber(contest.contest_start, today)} of ${length}`}`,
-      <a href={links.contest(contest.id)} className="text-link hover:text-link-hover">{ended ? 'See final board' : 'Full leaderboard'}</a>,
+      <AppLink href={links.contest(contest.id)} className="text-link hover:text-link-hover">{ended ? 'See final board' : 'Full leaderboard'}</AppLink>,
     )}
     <StatGrid className="px-ledger-inset py-4.5" stats={[
       { label: 'Participants', value: numberFormat.format(summary.participant_count) },
@@ -298,7 +299,7 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
             rowHeader: true,
             cell: row => (
               <Person you={row.user_id === viewerId}>
-                <a className={`home-person-link ${personLink}`} href={links.profile(row.user_id)}>{row.user_display_name}</a>
+                <AppLink className={`home-person-link ${personLink}`} href={links.profile(row.user_id)}>{row.user_display_name}</AppLink>
               </Person>
             ),
           },

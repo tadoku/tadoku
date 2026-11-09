@@ -1,0 +1,27 @@
+{
+  "entries": [
+    {"item": "webv3 env TADOKU_WEB_URL", "file": "frontend/apps/webv3/src/lib/urls.server.ts", "text": "process.env.TADOKU_WEB_URL"},
+    {"item": "webv3 env TADOKU_WEB_URL", "file": "frontend/apps/webv3/Dockerfile", "text": "TADOKU_WEB_URL=https://tadoku.app"},
+    {"item": "webv3 env TADOKU_API_URL", "file": "frontend/apps/webv3/src/lib/urls.server.ts", "text": "process.env.TADOKU_API_URL"},
+    {"item": "webv3 env TADOKU_API_URL", "file": "frontend/apps/webv3/Dockerfile", "text": "TADOKU_API_URL=https://tadoku.app/api/internal"},
+    {"item": "webv3 env HOST and PORT (read by Nitro's node-server runtime)", "file": "frontend/apps/webv3/vite.config.ts", "text": "preset: 'node-server'"},
+    {"item": "webv3 env HOST", "file": "frontend/apps/webv3/Dockerfile", "text": "HOST=0.0.0.0"},
+    {"item": "webv3 env PORT", "file": "frontend/apps/webv3/Dockerfile", "text": "PORT=3000"},
+    {"item": "webv3 env NODE_ENV", "file": "frontend/apps/webv3/Dockerfile", "text": "NODE_ENV=production"},
+    {"item": "Ingress host next.tadoku.app (webv3)", "file": "frontend/apps/webv3/src/lib/urls.server.ts", "text": "next.${web.host}"},
+    {"item": "Ingress host next.tadoku.app (webv3)", "file": "services/tadoku-api/features/identity/identity_values.go", "text": "host == \"next.\"+parent"},
+    {"item": "Ingress host tadoku.app (webv2)", "file": "frontend/apps/webv2/next.config.js", "text": "process.env.NEXT_PUBLIC_HOME_URL ?? 'https://tadoku.app'"},
+    {"item": "Ingress host tadoku.app (webv2)", "file": "services/tadoku-api/features/identity/identity_values.go", "text": "[]string{\"tadoku.app\", \"tadoku.dev.lab\"}"},
+    {"item": "Probe path /healthz (webv3)", "file": "frontend/apps/webv3/server/routes/healthz.ts", "text": "export default defineHandler"},
+    {"item": "Probe path /api/health (webv2)", "file": "frontend/apps/webv2/pages/api/health.tsx", "text": "res.status(200)"},
+    {"item": "Auth cookie domain tadoku.app", "file": "services/tadoku-api/cmd/tadoku-api/config.go", "text": "envconfig:\"identity_cookie_domain\" default:\"tadoku.app\""},
+    {"item": "Auth cookie domain tadoku.app", "file": "services/tadoku-api/cmd/tadoku-api/config.go", "text": "cfg.IdentityCookieDomain != \"tadoku.app\""},
+    {"item": "Flipt flag release-webv3", "file": "feature-flags.contract.json", "text": "\"release-webv3\""},
+    {"item": "Flipt flag release-webv3", "file": "services/tadoku-api/internal/featureflags/registry.go", "text": "\"release-webv3\""},
+    {"item": "Flipt flag release-webv3", "file": "services/tadoku-api/spec/openapi/schemas/immersion.yaml", "text": "release-webv3:"},
+    {"item": "Flipt flag release-webv3", "file": "frontend/apps/webv2/app/feature-flags/registry.ts", "text": "'release-webv3'"},
+    {"item": "Flipt flag release-webv3", "file": "k8s/dev/base/flipt/features.yaml", "text": "- key: release-webv3"},
+    {"item": "Flipt segment release-webv3-access", "file": "k8s/dev/base/flipt/features.yaml", "text": "- key: release-webv3-access"},
+    {"item": "Flipt segment release-webv3-access", "file": "k8s/dev/base/flipt/features.yaml", "text": "- release-webv3-access"}
+  ]
+}

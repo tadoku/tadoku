@@ -237,6 +237,8 @@ calling the API; use it for readiness and liveness rather than the homepage.
 `https://tadoku.app/api/internal`; a runtime environment override selects another
 Tadoku API. `TADOKU_WEB_URL` is also read at runtime and defaults in the image to
 `https://tadoku.app`. Development deployments override both variables.
+The [production config contract](../develop/ci-workflows.md#production-config-contract)
+fails CI when these variables, the canonical hosts or `/healthz` are renamed or removed.
 Never pass credentials as build arguments. Supply any private CA certificate and
 `NODE_EXTRA_CA_CERTS` at runtime when the upstream requires it.
 

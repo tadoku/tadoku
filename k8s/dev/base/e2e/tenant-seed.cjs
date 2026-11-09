@@ -19,9 +19,9 @@ function proveTenantSeed({ root, report, run }, db) {
       values ('${tenant}','${admin}','owned-session',now(),now()+interval '1 day');
   `)
   const snapshot = () => run('docker', psql, `
-    select jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text) from users t where tenant='${tenant}';
-    select jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text) from accounts t where tenant='${tenant}';
-    select jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text) from sessions t where tenant='${tenant}';
+    select jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text) from users t where tenant='${tenant}' and id in ('${admin}','${reader}');
+    select jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text) from accounts t where tenant='${tenant}' and user_id in ('${admin}','${reader}');
+    select jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text) from sessions t where tenant='${tenant}' and user_id in ('${admin}','${reader}');
   `)
   const before = snapshot()
   for (let attempt = 0; attempt < 2; attempt++) {

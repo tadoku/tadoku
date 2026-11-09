@@ -17,7 +17,7 @@ import {
 import { formatDate, formatPeriod, numberFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { useLoginUrl, viewerKey, viewerQueryOptions } from '../lib/session'
-import { renderLink } from './router-link'
+import { AppLink, renderLink } from './router-link'
 import { standingsHeader } from './standings-styles'
 
 const tabs: { id: ContestCollection; label: string }[] = [
@@ -186,9 +186,9 @@ function ContestRow({ contest, names, today }: {
           className="contest-row__title grid grid-cols-title-tags items-start justify-start gap-x-2 gap-y-1 max-sm:grid-cols-single"
         >
           <h2 className={typography({ role: 'component', className: 'm-0 font-body text-base leading-150 font-semibold' })}>
-            <a className="text-inherit no-underline hover:text-link hover:underline max-lg:underline max-lg:decoration-rule max-lg:underline-offset-link" href={links.contest(contest.id)}>
+            <AppLink className="text-inherit no-underline hover:text-link hover:underline max-lg:underline max-lg:decoration-rule max-lg:underline-offset-link" href={links.contest(contest.id)}>
               {contest.title}
-            </a>
+            </AppLink>
           </h2>
           <span className="contest-row__tags mt-0.5 flex flex-wrap gap-x-1.5 gap-y-1 max-sm:mt-0">
             {round}{contest.private ? <StatusTag>Unlisted</StatusTag> : null}

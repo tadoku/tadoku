@@ -8,7 +8,7 @@ import { activityPageSize } from '../lib/profile'
 import { ActivityName } from './ActivityName'
 import { Avatar } from './Avatar'
 import { LogDescription } from './LogDescription'
-import { renderLink } from './router-link'
+import { AppLink, renderLink } from './router-link'
 
 /** A page of logs, newest first, each opening its detail page, with its count, pagination and empty states. */
 export function LogEntries({ logs, total, page, pageHref, empty, showParticipant = false, actions }: {
@@ -88,7 +88,7 @@ function Entry({ log, showParticipant, actions, firstOfDay }: {
       ? (
         <>
           <Avatar userId={log.user_id} name={log.user_display_name} size="sm" className="me-1.5" />
-          <a className={participantLink} href={links.profile(log.user_id)}>{log.user_display_name}</a>
+          <AppLink className={participantLink} href={links.profile(log.user_id)}>{log.user_display_name}</AppLink>
         </>
       )
       : 'Unknown user'

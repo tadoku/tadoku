@@ -1,5 +1,6 @@
 import type { ImmersionUserActivity } from 'api-client'
-import { HeatmapChart, focusRing } from 'paper-ui'
+import { useNavigate } from '@tanstack/react-router'
+import { Button, HeatmapChart, focusRing, usePaperForm } from 'paper-ui'
 import { useEffect, useRef, type ReactNode } from 'react'
 import { pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
@@ -41,7 +42,32 @@ export function ActivityCalendar({ userId, year, today, activity, labelledBy, su
         }))}
       />
     </HeatmapScroll>
+    <DayField userId={userId} year={year} />
     </>
+  )
+}
+
+/**
+ * Opens any day's activity, so a day never depends on hitting its small cell. Before the page hydrates the form's GET
+ * submit reaches the same address.
+ */
+function DayField({ userId, year }: { userId: string; year: number }) {
+  const links = useLinks()
+  const navigate = useNavigate()
+  const form = usePaperForm({
+    defaultValues: { date: '' },
+    onSubmit: ({ value }) => navigate({ href: links.profileUpdates(userId, value.date) }),
+  })
+
+  return (
+    <form.AppForm>
+      <form.Form className="mt-3 flex flex-wrap items-end gap-2" method="get" action={links.profileUpdates(userId)}>
+        <form.AppField name="date" validators={{ onSubmit: ({ value }) => (value ? undefined : 'Choose a day.') }}>
+          {field => <field.Input label="Open a day" type="date" min={`${year}-01-01`} max={`${year}-12-31`} required />}
+        </form.AppField>
+        <Button type="submit" variant="outline">Open day</Button>
+      </form.Form>
+    </form.AppForm>
   )
 }
 

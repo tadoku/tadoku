@@ -5,7 +5,7 @@ import type { ImmersionLeaderboard, ImmersionLeaderboardEntry } from 'api-client
 import { numberFormat, scoreFormat } from '../lib/format'
 import { standingsPageSize, type Read } from '../lib/leaderboard'
 import { viewerQueryOptions } from '../lib/session'
-import { renderLink } from './router-link'
+import { AppLink, renderLink } from './router-link'
 import { Person, Rank, currentRow, personLink } from './StandingsParts'
 import { paginationSummary, sheetEmpty, standingsPagination, standingsTable } from './standings-styles'
 
@@ -70,7 +70,7 @@ export function Standings({ result, page, caption, pageHref, profileHref, empty,
       rowHeader: true,
       cell: row => (
         <Person you={row.user_id === viewerId}>
-          <a className={personLink} href={profileHref(row.user_id)}>{row.user_display_name}</a>
+          <AppLink className={personLink} href={profileHref(row.user_id)}>{row.user_display_name}</AppLink>
         </Person>
       ),
     },

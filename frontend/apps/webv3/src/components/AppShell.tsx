@@ -1,5 +1,5 @@
 import { rootRouteId, useHydrated, useLoaderData, useNavigate, useRouterState } from '@tanstack/react-router'
-import { ActionMenu, Button, EmptyState, Navbar, SiteFooter, SkipLink, adoptStoredTheme, appFrame, buttonClassName, chooseTheme, cn, navbarStyles, type NavbarItem, type ThemeName } from 'paper-ui'
+import { ActionMenu, Button, EmptyState, Navbar, SiteFooter, SkipLink, adoptStoredTheme, appFrame, buttonClassName, chooseTheme, cn, navbarStyles, surface, type NavbarItem, type ThemeName } from 'paper-ui'
 import mark from 'paper-ui/assets/brand/cut-meter.svg?url'
 import reversedMark from 'paper-ui/assets/brand/cut-meter-reversed.svg?url'
 import wordmark from 'paper-ui/assets/brand/wordmark-accent.svg?url'
@@ -20,7 +20,7 @@ import { useAccountUrls, viewerQueryOptions, type Viewer } from '../lib/session'
 import { useLinks } from '../lib/links'
 import { Announcements } from './Announcements'
 import { Avatar } from './Avatar'
-import { renderLink } from './router-link'
+import { AppLink, renderLink } from './router-link'
 
 type Theme = ThemeName
 
@@ -49,6 +49,9 @@ const accountActions = [
 const mobileLink = navbarStyles({ contained: true }).mobileLink()
 const mobileButton = cn(mobileLink, 'w-full justify-start')
 const logoutFormId = 'app-logout'
+
+/** The live region `router.tsx` fills with the page title after each client navigation. */
+export const routeAnnouncerId = 'route-announcer'
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { accountUrl } = useLoaderData({ from: rootRouteId })
@@ -90,6 +93,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         />
         {viewer && 'userId' in viewer ? <form id={logoutFormId} method="post" action="/logout" hidden /> : null}
       </header>
+      <p id={routeAnnouncerId} role="status" className="sr-only" />
       <main id="main-content" className={frame.content()} tabIndex={-1} aria-busy={navigating}>
         <Announcements />
         {viewer?.status === 'banned' ? <Suspended /> : children}
@@ -178,7 +182,7 @@ function AccountActions({ viewer }: { viewer: Viewer | undefined }) {
     case 'signed-in':
       return <>
         <AccountMenu viewer={viewer} />
-        <a href={links.logs} className={buttonClassName({ className: 'shrink-0 whitespace-nowrap' })}>Log activity</a>
+        <AppLink href={links.logs} className={buttonClassName({ className: 'shrink-0 whitespace-nowrap' })}>Log activity</AppLink>
       </>
   }
 }
@@ -193,21 +197,32 @@ function AccountMenu({ viewer }: { viewer: SignedIn }) {
         '[&_[aria-haspopup=menu]:hover>span>span]:border-rule-strong [&_[data-popup-open]>span>span]:border-rule-strong',
       )}
     >
-      {hydrated
-        ? <AccountMenuOpen viewer={viewer} />
-        : (
-          // The menu's trigger as server HTML renders it, disabled until it can open.
-          <button
-            type="button"
-            className={buttonClassName({ variant: 'link', className: 'w-target min-h-target min-w-target shrink-0 p-0 no-underline disabled:cursor-progress disabled:opacity-full' })}
-            aria-label={viewer.displayName}
-            title={viewer.displayName}
-            disabled
-          >
-            <span className="grid size-8 place-items-center" aria-hidden="true"><Avatar userId={viewer.userId} name={viewer.displayName} size="nav" /></span>
-          </button>
-        )}
+      {hydrated ? <AccountMenuOpen viewer={viewer} /> : <AccountMenuFallback viewer={viewer} />}
     </span>
+  )
+}
+
+const fallbackItem = [
+  'flex min-h-control w-full cursor-pointer items-center gap-inline border-0 bg-transparent px-field-x py-field-y',
+  'text-start text-ink no-underline hover:bg-neutral-hover',
+].join(' ')
+
+/** The account menu in server HTML: a disclosure that opens without JavaScript, until the page hydrates. */
+function AccountMenuFallback({ viewer }: { viewer: SignedIn }) {
+  return (
+    <details className="relative">
+      <summary
+        className={buttonClassName({ variant: 'link', className: 'w-target min-h-target min-w-target shrink-0 list-none p-0 no-underline [&::-webkit-details-marker]:hidden' })}
+        aria-label={viewer.displayName}
+        title={viewer.displayName}
+      >
+        <span className="grid size-8 place-items-center" aria-hidden="true"><Avatar userId={viewer.userId} name={viewer.displayName} size="nav" /></span>
+      </summary>
+      <div className={cn(surface({ tone: 'overlay', elevation: 'floating' }), 'absolute end-0 top-full z-menu grid min-w-menu py-1.4')}>
+        {useAccountLinks(viewer).map(link => <a key={link.id} className={fallbackItem} href={link.href}>{link.label}</a>)}
+        <button type="submit" form={logoutFormId} className={fallbackItem}>Log out</button>
+      </div>
+    </details>
   )
 }
 

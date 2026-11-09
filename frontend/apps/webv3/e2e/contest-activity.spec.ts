@@ -27,7 +27,8 @@ const removeButtons = (page: Page) => page.getByRole('button', { name: 'Remove f
 async function expectLogs(page: Page, expected: Logs, participants: boolean) {
   const titles = page.locator('.profile-entries > li a.profile-entry-title')
   await expect(titles).toHaveCount(expected.logs.length)
-  expect(await titles.evaluateAll(links => links.map(link => link.getAttribute('href'))))
+  // Retried: after a client navigation the URL changes before the new page's rows replace the old ones.
+  await expect.poll(() => titles.evaluateAll(links => links.map(link => link.getAttribute('href'))))
     .toEqual(expected.logs.map(log => `/logs/${log.id}`))
   if (participants) {
     await expect(page.locator('.profile-entries > li')).toContainText(expected.logs.map(log => log.user_display_name ?? 'Unknown user'))

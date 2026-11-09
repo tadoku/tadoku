@@ -8,6 +8,7 @@ import { memberDashboardQueries } from '../lib/home'
 import type { Viewer } from '../lib/session'
 import { ActivityCalendar } from './ActivityCalendar'
 import { LogEntries } from './LogEntries'
+import { AppLink } from './router-link'
 
 type SignedIn = Extract<Viewer, { status: 'signed-in' }>
 
@@ -38,7 +39,7 @@ export function MemberDashboard({ viewer, year, className }: { viewer: SignedIn;
       {fresh ? null : <section className={band} aria-labelledby="home-year-title">
         <div className={head}>
           <h2 id="home-year-title" className={headTitle}>Daily activity</h2>
-          <a className="text-link hover:text-link-hover" href={links.profile(viewer.userId)}>Your profile</a>
+          <AppLink className="text-link hover:text-link-hover" href={links.profile(viewer.userId)}>Your profile</AppLink>
         </div>
         {activity.ok ? (
           <ActivityCalendar userId={viewer.userId} year={year} today={today} activity={activity.data} labelledBy="home-year-title" surface="canvas" />
@@ -121,7 +122,7 @@ export function MemberContests({ viewer, year }: { viewer: SignedIn; year: numbe
               <ul className={rows.root()}>
                 {ordered.map(contest => (
                   <li key={contest.id} className={rows.item()}>
-                    <a className={entryLink({ className: 'profile-entry-title' })} href={links.contestProfile(contest.id, viewer.userId)}>{contest.title}</a>
+                    <AppLink className={entryLink({ className: 'profile-entry-title' })} href={links.contestProfile(contest.id, viewer.userId)}>{contest.title}</AppLink>
                     <span className={metaLine({ className: 'profile-entry-meta' })}>
                       {[formatPeriod(contest), ...contest.languages, contest.contest_end < today ? 'Ended' : null].filter(Boolean).join(' · ')}
                     </span>

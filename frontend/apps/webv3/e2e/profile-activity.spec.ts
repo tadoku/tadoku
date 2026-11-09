@@ -23,7 +23,8 @@ async function apiLogs(request: APIRequestContext, userId: string, page: number,
 async function expectEntries(page: Page, expected: { logs: Log[] }) {
   const titles = page.locator('.profile-entries > li a.profile-entry-title')
   await expect(titles).toHaveCount(expected.logs.length)
-  expect(await titles.evaluateAll(links => links.map(link => link.getAttribute('href'))))
+  // Retried: after a client navigation the URL changes before the new page's rows replace the old ones.
+  await expect.poll(() => titles.evaluateAll(links => links.map(link => link.getAttribute('href'))))
     .toEqual(expected.logs.map(log => `/logs/${log.id}`))
   await expect(titles).toHaveText(expected.logs.map(log => {
     const nsfw = log.tags.some(tag => tag.toLowerCase() === 'nsfw')

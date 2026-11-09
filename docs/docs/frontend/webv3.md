@@ -59,9 +59,11 @@ fields and malformed list members remain invalid. Missing contests,
 standings and future rounds have explicit interface states; no sample scores or
 invented schedule replace unavailable API data.
 
-The mobile menu, appearance toggle and local goal controls stay disabled until
-hydration completes and their browser handlers can respond. Ordinary links work
-in the server-rendered HTML.
+The appearance toggle and local goal controls stay disabled until hydration
+completes and their browser handlers can respond. Ordinary links work in the
+server-rendered HTML, and so do the mobile and account menus: before hydration
+Paper's mobile menu trigger is a link that opens its panel through `:target`,
+and the account menu is a native disclosure with its pages and Log out.
 
 ## Navigation and shell
 
@@ -75,7 +77,22 @@ opens under a heading with that name, then Profile,
 Admin for administrators, Account settings and Log out; at narrow widths the
 menu's entries join the mobile navigation. Admin opens the sibling admin host
 and Account settings opens authv2's `/settings` with the current page as
-`return_to`. The menu trigger stays disabled until hydration.
+`return_to`. Before hydration the menu is a native disclosure, so it opens
+without JavaScript; the appearance switch joins it after hydration.
+
+Links to Webv3 pages go through the router: Paper components take
+`renderLink`, and screens use `AppLink`, both from
+`frontend/apps/webv3/src/components/router-link.tsx`, which keep the path's
+query and fragment and leave other origins as plain links. A few links that
+must start a fresh document, such as a new draft for another account, stay
+plain. After a client navigation that changes the path,
+`frontend/apps/webv3/src/router.tsx`
+focuses the new page's `h1`, or `main` without one, and announces the page
+title through the shell's status region; the first load leaves focus to the
+browser. `navigation.spec.ts` covers a home → contest → profile → leaderboard
+journey without a document load, that focus and announcement, the profile's
+date field, and both menus without JavaScript.
+
 A suspended account sees the suspended screen, with a Discord contact link and
 Log out, in place of every page. An unavailable account service names itself
 in the header and leaves public pages readable.

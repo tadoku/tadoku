@@ -32,7 +32,7 @@ export function ProfileStatistics({ statistics, year, page, owner }: {
 
   return (
     <div className="profile-page">
-      <ProfileHeader profile={profile} owner={owner} view="overview" overviewHref={`/profile/${profile.id}/statistics/${year}`} exportable={!empty} />
+      <ProfileHeader profile={profile} owner={owner} view="overview" overviewHref={`/profile/${profile.id}/statistics/${year}`} />
       <section className="mt-8 border border-rule bg-paper" aria-labelledby="profile-year-heading">
         <h2 id="profile-year-heading" className="sr-only">{name}’s activity in {year}</h2>
         <YearTabs statistics={statistics} year={year} />

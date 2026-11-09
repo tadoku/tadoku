@@ -32,7 +32,7 @@ narrow screens the calendar scrolls within its labelled region, keeps its
 weekday labels pinned and opens the current year with today in view. A date field below the calendar, Open a day, opens any day's
 activity too, so a day never depends on hitting its small cell; before
 hydration it submits as a plain GET form to the same address. Only the profile's own account sees the CSV
-and JSON export links, which download its logs from the export operation
+and JSON export links, on every year and day it views, which download its logs from the export operation
 through Webv2's API path.
 `frontend/apps/webv3/src/components/ProfileHeader.tsx` renders the learner's
 [avatar](webv3.md#avatars), hidden on phones, their name and the Overview and

@@ -139,6 +139,16 @@ test('a year without activity shows the empty state', async ({ page, readerConte
   await expect(page.getByText('No contests in 2000.')).toBeVisible()
 })
 
+test('the owner can export every log from a year or a day without any', async ({ page, readerContext }) => {
+  test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
+  const userId = await accountId(readerContext)
+  for (const path of [`/profile/${userId}/statistics/2000`, `/profile/${userId}/updates/1?date=2000-01-01`]) {
+    await page.goto(path)
+    await expect(page.getByRole('link', { name: 'Download CSV' }), path).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Download JSON' }), path).toBeVisible()
+  }
+})
+
 test('an unknown or malformed profile is not found', async ({ page }) => {
   test.skip(!webv3 || !api, 'Set development URLs')
   const unknown = randomUUID()

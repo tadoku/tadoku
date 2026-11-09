@@ -5,13 +5,12 @@ import { Avatar } from './Avatar'
 import { renderLink } from './router-link'
 import { useLinks } from '../lib/links'
 
-/** A profile's identity and its views. Only the profile's own account sees the export of its logs. */
-export function ProfileHeader({ profile, owner, view, overviewHref, exportable = true }: {
+/** A profile's identity and its views. Only the profile's own account sees the export, which holds every log it has. */
+export function ProfileHeader({ profile, owner, view, overviewHref }: {
   profile: ImmersionUserProfile
   owner: boolean
   view: 'overview' | 'activity'
   overviewHref: string
-  exportable?: boolean
 }) {
   const links = useLinks()
 
@@ -24,7 +23,7 @@ export function ProfileHeader({ profile, owner, view, overviewHref, exportable =
             <h1 className={typography({ role: 'page', className: 'mb-2 mt-0 wrap-anywhere' })}>{profile.display_name}</h1>
           </div>
         </div>
-        {owner && exportable ? (
+        {owner ? (
           <p className="m-0 flex items-center gap-1.5 text-sm text-muted max-md:basis-full">
             <ArrowDownTrayIcon className={iconClassName('compact')} aria-hidden="true" />
             Export logs: <a className="inline-block px-1 py-2 text-link hover:text-link-hover" href={links.logExport('csv')} aria-label="Download CSV">CSV</a><a className="inline-block px-1 py-2 text-link hover:text-link-hover" href={links.logExport('json')} aria-label="Download JSON">JSON</a>

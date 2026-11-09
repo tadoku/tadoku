@@ -1,0 +1,3 @@
+GET /immersion/users/22222222-2222-4222-8222-222222222222/avatar HTTP/1.1
+Host: api.test
+

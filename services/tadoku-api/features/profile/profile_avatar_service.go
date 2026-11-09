@@ -39,3 +39,19 @@ func (a *Avatars) Find(ctx context.Context, userID uuid.UUID) (Avatar, error) {
 	}
 	return *avatar, nil
 }
+
+// Refresh fetches the user's Gravatar past the cache and caches the result, image or absence. A failed fetch leaves
+// the cached avatar in place.
+func (a *Avatars) Refresh(ctx context.Context, userID uuid.UUID) error {
+	account, err := a.identities.FindAccount(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	avatar, err := a.gravatar.fetch(ctx, account.Email)
+	if err != nil {
+		return err
+	}
+	a.cache.put(ctx, userID, avatar)
+	return nil
+}

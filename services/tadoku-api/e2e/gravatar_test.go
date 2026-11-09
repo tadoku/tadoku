@@ -28,6 +28,12 @@ var gravatarAvatars = map[string]gravatarAvatar{
 	"svg@example.test":       {status: http.StatusOK, contentType: "image/svg+xml", body: []byte("<svg/>")},
 	"oversized@example.test": {status: http.StatusOK, contentType: "image/png", body: bytes.Repeat([]byte("a"), 256<<10+1)},
 	"slow@example.test":      {hang: true},
+
+	"refresh@example.test":        {status: http.StatusOK, contentType: "image/png", body: []byte("refreshed avatar")},
+	"refresh-error@example.test":  {status: http.StatusInternalServerError},
+	"refresh-slow@example.test":   {hang: true},
+	"journey-avatar@example.test": {status: http.StatusOK, contentType: "image/webp", body: []byte("fresh avatar")},
+	"journey-error@example.test":  {status: http.StatusInternalServerError},
 }
 
 // gravatarFixture serves gravatarAvatars by email hash, answers 404 for any other hash and 400 for a request that

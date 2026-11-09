@@ -23,21 +23,20 @@ export function Shell({ identity, children }: { readonly identity: Identity; rea
             <img className={`${brandMark} hidden dark:block`} src={reversedMark} width="40" height="40" alt="" />
             <img className={`${brandWordmark} dark:hidden`} src={wordmark} width="158" height="29" alt="Tadoku" />
             <img className={`${brandWordmark} hidden dark:block`} src={reversedWordmark} width="158" height="29" alt="Tadoku" />
+            <span className="ms-2 border-s border-rule ps-3 text-sm leading-metadata font-semibold text-muted max-sm:hidden">
+              Account
+            </span>
           </>}
           brandHref={identity.webUrl}
-          navigation={[
-            { type: 'link', id: 'home', label: 'Home', href: `${identity.webUrl}/` },
-            { type: 'link', id: 'leaderboard', label: 'Leaderboard', href: `${identity.webUrl}/leaderboard/latest/1` },
-            { type: 'link', id: 'contests', label: 'Contests', href: `${identity.webUrl}/contests/official/1` },
-            { type: 'link', id: 'blog', label: 'Blog', href: `${identity.webUrl}/blog/1` },
-            { type: 'link', id: 'guide', label: 'Guide', href: `${identity.webUrl}/pages/manual` },
-          ]}
+          navigation={[]}
+          mobileNavigation={false}
           actions={account ? (
-            <form className="ms-4 flex min-w-0 items-center gap-3" method="post" action="/actions/logout">
-              <span className="min-w-0 max-w-account-label truncate font-semibold text-ink max-lg:hidden">{account.display_name}</span>
+            <form className="flex min-w-0 items-center gap-3" method="post" action="/actions/logout">
+              <span className="min-w-0 max-w-account-label truncate text-ink">{account.display_name}</span>
               <Button variant="ghost" type="submit" className="shrink-0 whitespace-nowrap">Log out</Button>
             </form>
           ) : undefined}
+          classNames={{ brand: 'shrink-0', actions: 'min-w-0' }}
         />
       </header>
       <main

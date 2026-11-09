@@ -51,8 +51,12 @@ public error code shown as a form message; passwords and account values never
 enter URLs. Native logins reach the API from the authv2 server, so the API's
 per-address throttle counts them under that server's address.
 
-Settings shows two groups of read-only rows: Profile holds the display name,
-and Sign-in and security holds the email address and password. Below the
+The header is the account header: the Tadoku brand, linking to the Tadoku
+home page, beside an **Account** label, and for a signed-in visitor their
+display name and **Log out**. It has no site navigation.
+
+Settings shows two groups of read-only rows: Profile holds the avatar and the
+display name, and Sign-in and security holds the email address and password. Below the
 groups, one plain, muted **Delete account** link opens `/delete-account` with
 the trusted `return_to`; Settings has no other delete control. Each row shows
 its stored value and a **Change** link. The `edit` query parameter
@@ -64,6 +68,17 @@ row's confirmation only while no editor is open. **Change** and the editor's
 **Cancel** are links that keep the path and the trusted `return_to`, so they
 work without JavaScript and only one editor is open at a time. The open editor
 focuses its input and has the page's only filled button.
+
+The Avatar row shows the account's Gravatar from
+`GET /immersion/users/{userId}/avatar` over the display name's initials, says
+it comes from Gravatar for the account's email, and has a **Fetch latest**
+button instead of **Change**. Like the editors' forms, it posts to
+`/actions/avatar` without JavaScript and calls
+`POST /immersion/profile/avatar/refresh` from the browser once hydrated; both
+land on `?saved=avatar`. A hydrated fetch also reloads the browser's cached
+copy of the plain avatar URL, so other Tadoku pages show the new image. A
+native fetch adds a fresh `fetched` token, which the row puts on the image URL
+so the browser can't show a cached copy. Its failures show in the Avatar row.
 
 Each form sends only its own field. A hydrated save navigates to the same
 `?saved=<operation>` URL that a native save redirects to. That navigation reads

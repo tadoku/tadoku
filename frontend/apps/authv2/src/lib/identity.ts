@@ -6,6 +6,7 @@ import {
   identityProfileUpdate,
   identityRecoveryCreate,
   identityRegistrationCreate,
+  immersionProfileAvatarRefresh,
   zIdentityErrorResponse,
   type IdentityErrorResponse,
 } from 'api-client'
@@ -29,7 +30,7 @@ type Request = Transport & {
 }
 type Send = (request: Request, values: Values) => Promise<{ error?: unknown; response?: Response }>
 
-/** The generated identity operation behind each account form, sent with only that form's fields. */
+/** The generated API operation behind each account form, sent with only that form's fields. */
 export const operations = {
   login: {
     page: '/login',
@@ -57,6 +58,10 @@ export const operations = {
   password: {
     page: '/',
     send: (request, v) => identityPasswordUpdate({ ...request, body: { password: v.password } }),
+  },
+  avatar: {
+    page: '/',
+    send: request => immersionProfileAvatarRefresh(request),
   },
   logout: {
     page: '/',

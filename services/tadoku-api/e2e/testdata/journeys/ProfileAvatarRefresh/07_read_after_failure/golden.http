@@ -1,0 +1,8 @@
+>>> GET /immersion/users/22222222-2222-4222-8222-222222222222/avatar
+HTTP/1.1 200 OK
+Content-Length: 12
+Cache-Control: public, max-age=86400
+Content-Type: image/png
+X-Content-Type-Options: nosniff
+
+stale avatar

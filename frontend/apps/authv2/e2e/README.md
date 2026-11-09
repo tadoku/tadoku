@@ -112,7 +112,8 @@ The Settings fixtures use the same server. Run:
 ```sh
 AUTHV2_SETTINGS_FIXTURE=true \
   PLAYWRIGHT_OUTPUT_DIR=/workspace/.scratch/authv2-smoke \
-  pnpm --filter authv2 exec playwright test e2e/settings-email.spec.ts e2e/settings-rows.spec.ts
+  pnpm --filter authv2 exec playwright test e2e/settings-email.spec.ts e2e/settings-rows.spec.ts \
+    e2e/settings-avatar.spec.ts
 ```
 
 `settings-email.spec.ts` serves the session bytes the API writes for an
@@ -136,6 +137,17 @@ shows. Change and Cancel must keep the path and `return_to` and drop any error
 or confirmation; errors and confirmations stay in their own row, and every
 state fits 1280px and 390px viewports. A keyboard pass moves through the
 Change links, opens each editor and cancels it.
+
+`settings-avatar.spec.ts` checks the account header (brand, Account, display
+name and Log out, without site navigation) at 1280px and 390px, and the Avatar
+row: the signed-in account's avatar URL, the Gravatar instructions and Fetch
+latest. Hydrated, Fetch latest must call the refresh operation, land on
+`?saved=avatar` keeping `return_to`, reload the plain avatar URL and show a new
+image URL; a `503` shows in the row. Without JavaScript, the replayed native
+form must reach the fixture's refresh route once with the visitor's cookie and
+redirect to the same confirmation, a second fetch must give the image a new
+URL, and `503` and `401` answers must show in the Avatar row only. Every test
+stubs avatar images in the browser.
 
 `AUTHV2_BASE_URL` defaults to `http://127.0.0.1:5184`.
 `PLAYWRIGHT_OUTPUT_DIR` defaults to a temporary directory. Reports and mobile

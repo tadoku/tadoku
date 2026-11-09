@@ -1875,6 +1875,9 @@ type ServerInterface interface {
 	// ImmersionLogContestRegistrationUpdate Updates the contest registrations for a log
 	// (PUT /immersion/logs/{id}/contest-registrations)
 	ImmersionLogContestRegistrationUpdate(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ImmersionProfileAvatarRefresh Refreshes your cached Gravatar avatar
+	// (POST /immersion/profile/avatar/refresh)
+	ImmersionProfileAvatarRefresh(w http.ResponseWriter, r *http.Request)
 	// ImmersionScoringRuleSetListPlatform Lists platform scoring rule-set versions
 	// (GET /immersion/scoring/rule-sets)
 	ImmersionScoringRuleSetListPlatform(w http.ResponseWriter, r *http.Request)
@@ -4158,6 +4161,20 @@ func (siw *ServerInterfaceWrapper) ImmersionLogContestRegistrationUpdate(w http.
 	handler.ServeHTTP(w, r)
 }
 
+// ImmersionProfileAvatarRefresh operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionProfileAvatarRefresh(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionProfileAvatarRefresh(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ImmersionScoringRuleSetListPlatform operation middleware
 func (siw *ServerInterfaceWrapper) ImmersionScoringRuleSetListPlatform(w http.ResponseWriter, r *http.Request) {
 
@@ -4796,6 +4813,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/logs/tag-suggestions", wrapper.ImmersionLogTagSuggestions)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{userId}/profile", wrapper.ImmersionProfileFindByUserID)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{userId}/avatar", wrapper.ImmersionProfileAvatarByUserID)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/profile/avatar/refresh", wrapper.ImmersionProfileAvatarRefresh)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{userId}/activity/{year}", wrapper.ImmersionProfileYearlyActivityByUserID)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{userId}/scores/{year}", wrapper.ImmersionProfileYearlyScoresByUserID)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{user_id}/logs", wrapper.ImmersionProfileListLogs)
@@ -8367,6 +8385,45 @@ func (response ImmersionLogContestRegistrationUpdate500Response) VisitImmersionL
 	return nil
 }
 
+type ImmersionProfileAvatarRefreshRequestObject struct {
+}
+
+type ImmersionProfileAvatarRefreshResponseObject interface {
+	VisitImmersionProfileAvatarRefreshResponse(w http.ResponseWriter) error
+}
+
+type ImmersionProfileAvatarRefresh204Response struct {
+}
+
+func (response ImmersionProfileAvatarRefresh204Response) VisitImmersionProfileAvatarRefreshResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ImmersionProfileAvatarRefresh401Response struct {
+}
+
+func (response ImmersionProfileAvatarRefresh401Response) VisitImmersionProfileAvatarRefreshResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type ImmersionProfileAvatarRefresh503Response struct {
+}
+
+func (response ImmersionProfileAvatarRefresh503Response) VisitImmersionProfileAvatarRefreshResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type ImmersionProfileAvatarRefresh504Response struct {
+}
+
+func (response ImmersionProfileAvatarRefresh504Response) VisitImmersionProfileAvatarRefreshResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
 type ImmersionScoringRuleSetListPlatformRequestObject struct {
 }
 
@@ -9091,6 +9148,9 @@ type StrictServerInterface interface {
 	// ImmersionLogContestRegistrationUpdate Updates the contest registrations for a log
 	// (PUT /immersion/logs/{id}/contest-registrations)
 	ImmersionLogContestRegistrationUpdate(ctx context.Context, request ImmersionLogContestRegistrationUpdateRequestObject) (ImmersionLogContestRegistrationUpdateResponseObject, error)
+	// ImmersionProfileAvatarRefresh Refreshes your cached Gravatar avatar
+	// (POST /immersion/profile/avatar/refresh)
+	ImmersionProfileAvatarRefresh(ctx context.Context, request ImmersionProfileAvatarRefreshRequestObject) (ImmersionProfileAvatarRefreshResponseObject, error)
 	// ImmersionScoringRuleSetListPlatform Lists platform scoring rule-set versions
 	// (GET /immersion/scoring/rule-sets)
 	ImmersionScoringRuleSetListPlatform(ctx context.Context, request ImmersionScoringRuleSetListPlatformRequestObject) (ImmersionScoringRuleSetListPlatformResponseObject, error)
@@ -11104,6 +11164,30 @@ func (sh *strictHandler) ImmersionLogContestRegistrationUpdate(w http.ResponseWr
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ImmersionLogContestRegistrationUpdateResponseObject); ok {
 		if err := validResponse.VisitImmersionLogContestRegistrationUpdateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionProfileAvatarRefresh operation middleware
+func (sh *strictHandler) ImmersionProfileAvatarRefresh(w http.ResponseWriter, r *http.Request) {
+	var request ImmersionProfileAvatarRefreshRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionProfileAvatarRefresh(ctx, request.(ImmersionProfileAvatarRefreshRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionProfileAvatarRefresh")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionProfileAvatarRefreshResponseObject); ok {
+		if err := validResponse.VisitImmersionProfileAvatarRefreshResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

@@ -161,7 +161,7 @@ test('collection tabs, pages and the signed-out Joined and Organizing prompts wo
 
   await hydrated(page)
   await expect(page.getByRole('navigation', { name: 'Contest collections' }).getByRole('link', { name: 'Joined' })).toHaveCount(0)
-  await page.goto(`/contests/joined/${new Date().getUTCFullYear()}/1`)
+  await page.goto('/contests/joined/1')
   await expect(page.getByRole('heading', { level: 2, name: 'Sign in to see the contests you joined' })).toBeVisible()
 
   // Organizing keeps Webv2's My contests address.
@@ -222,11 +222,9 @@ test('a participant sees their unlisted contest in Organizing and Community, whi
   expect(anonymous.contests.map(contest => contest.id)).not.toContain(unlisted[0].id)
 })
 
-test('a participant’s Joined list holds their registrations for the chosen year, newest first', async ({ readerContext }) => {
+test('a participant’s Joined list holds every registration across years, newest contest first', async ({ readerContext }) => {
   test.skip(!reader.email || !reader.password, 'Set E2E_READER_EMAIL and E2E_READER_PASSWORD')
-  const userId = await accountId(readerContext)
-  const year = new Date().getUTCFullYear()
-  const response = await readerContext.request.get(`${api}/immersion/users/${userId}/contest-registrations/${year}?page_size=${pageSize}&page=0`)
+  const response = await readerContext.request.get(`${api}/immersion/contests/registrations?page_size=${pageSize}&page=0`)
   expect(response.ok()).toBeTruthy()
   const joined = await response.json() as { registrations: { contest: Contest }[]; total_size: number }
   expect(joined.total_size, 'Dev Reader joined the seeded round').toBeGreaterThan(0)
@@ -235,20 +233,15 @@ test('a participant’s Joined list holds their registrations for the chosen yea
   await page.goto('/contests/official/1')
   await hydrated(page)
   await page.getByRole('navigation', { name: 'Contest collections' }).getByRole('link', { name: 'Joined' }).click()
-  await expect(page).toHaveURL(new RegExp(`/contests/joined/${year}/1$`))
+  await expect(page).toHaveURL(/\/contests\/joined\/1$/)
+  await expect(page).toHaveTitle('Contests you joined · Tadoku')
   await expectRows(page, { contests: joined.registrations.map(registration => registration.contest), total_size: joined.total_size })
+  await expect(page.getByRole('group', { name: 'Year' })).toHaveCount(0)
 
-  // The year steps from the year the account joined Tadoku to this one; Dev Reader joined this year.
-  const profile = await (await readerContext.request.get(`${api}/immersion/users/${userId}/profile`)).json() as { created_at: string }
-  const since = Number(profile.created_at.slice(0, 4))
-  const stepper = page.getByRole('group', { name: 'Year' })
-  await expect(stepper).toContainText(String(year))
-  if (since === year) await expect(stepper.getByRole('button', { name: 'Previous year' })).toBeDisabled()
-  else await expect(stepper.getByRole('link', { name: `Previous year, ${year - 1}` })).toBeVisible()
-
+  // Addresses from when the list went year by year land on its first page.
   await page.goto('/contests/joined/2020/1')
-  await expect(page.getByRole('heading', { level: 2, name: 'You haven’t joined a contest in 2020' })).toBeVisible()
-  await expect(page.locator('.contest-row')).toHaveCount(0)
+  await expect(page).toHaveURL(/\/contests\/joined\/1$/)
+  await expect(page.locator('.contest-row')).toHaveCount(joined.registrations.length)
 })
 
 test('contest lists stay within mobile and desktop viewports', async ({ page }, testInfo) => {

@@ -1,6 +1,6 @@
 ---
 title: Webv3 server logs
-description: The structured JSON log lines Webv3's server writes for upstream failures and rendering errors, their fields and what they can never contain.
+description: The structured JSON log lines Webv3's server writes for upstream failures and rendering errors, their fields, what they can never contain and the request deadline that records timeouts.
 ---
 
 # Webv3 server logs
@@ -51,3 +51,11 @@ and for a rejected request, unless the client has aborted it. An error thrown
 while a page streams keeps its response status and reaches only the framework's
 log. The framework writes its own unstructured errors to stderr, thrown messages
 included, so that stream is not covered by this contract.
+
+## Request deadline
+
+Every GET request has an overall deadline for its upstream calls, set in
+`frontend/apps/webv3/src/lib/session.server.ts`. Upstream calls still running at
+the deadline are aborted, each is recorded as an upstream failure with
+`error_type` `timeout`, and the page renders with those sections marked as
+failed.

@@ -12,7 +12,7 @@ export interface AppUrls {
 const labelPattern = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/
 
 function branchMapper(config: Record<string, unknown>, host?: string) {
-  const bases = ['homeUrl', 'accountUrl', 'adminUrl']
+  const bases = ['homeUrl', 'accountUrl', 'adminUrl', ...('webv3Url' in config ? ['webv3Url'] : [])]
   const urls = Object.fromEntries(bases.map(key => {
     if (typeof config[key] !== 'string') throw new Error(`Missing ${key}`)
     const url = new URL(config[key] as string)
@@ -22,7 +22,7 @@ function branchMapper(config: Record<string, unknown>, host?: string) {
   const hostname = host?.toLowerCase().replace(/:\d+$/, '')
   const baseHosts = bases.map(key => urls[key].hostname)
   const branchHosts = baseHosts.map(base =>
-    ['tadoku.app', 'account.tadoku.app', 'admin.tadoku.app'].includes(base)
+    ['tadoku.app', 'account.tadoku.app', 'admin.tadoku.app', 'next.tadoku.app'].includes(base)
       ? base.replace('tadoku.app', 'preview.tadoku.app')
       : base,
   )
@@ -48,17 +48,22 @@ function branchMapper(config: Record<string, unknown>, host?: string) {
   return { branch, prefix }
 }
 
+function siblingOrigin(homeUrl: string, label: string) {
+  const url = new URL(homeUrl)
+  url.hostname = `${label}.${url.hostname}`
+  return url.origin
+}
+
 /** `accountUrl` is always the `account.` sibling of `homeUrl`, where the account app is served. */
 export function resolveAppUrls(config: Record<string, unknown>, host?: string): AppUrls {
   if (typeof config.homeUrl !== 'string') throw new Error('Missing homeUrl')
-  const account = new URL(config.homeUrl)
-  account.hostname = `account.${account.hostname}`
-  const { branch, prefix } = branchMapper({ ...config, accountUrl: account.origin }, host)
+  const accountUrl = siblingOrigin(config.homeUrl, 'account')
+  const { branch, prefix } = branchMapper({ ...config, accountUrl }, host)
   if (typeof config.apiEndpoint !== 'string') throw new Error('Missing apiEndpoint')
   return {
     ...(branch ? { branch } : {}),
     homeUrl: prefix(config.homeUrl),
-    accountUrl: prefix(account.origin),
+    accountUrl: prefix(accountUrl),
     adminUrl: prefix(config.adminUrl as string),
     apiEndpoint: prefix(config.apiEndpoint),
   }
@@ -80,6 +85,14 @@ export function serverApiEndpointForHost(host?: string): string {
       ?? serverRuntimeConfig?.apiEndpoint
       ?? publicRuntimeConfig.apiEndpoint,
   }, host).apiEndpoint
+}
+
+/** The Webv3 origin for a request to `host`: `WEBV3_URL`, or the `next.` sibling of the home URL. Server only. */
+export function webv3OriginForHost(host?: string): string {
+  const { publicRuntimeConfig: config } = getConfig()
+  const webv3Url = process.env.WEBV3_URL ?? siblingOrigin(config.homeUrl, 'next')
+  const accountUrl = siblingOrigin(config.homeUrl, 'account')
+  return new URL(branchMapper({ ...config, accountUrl, webv3Url }, host).prefix(webv3Url)).origin
 }
 
 const AppUrlsContext = createContext<AppUrls | undefined>(undefined)

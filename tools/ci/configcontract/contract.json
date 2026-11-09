@@ -14,6 +14,8 @@
     {"item": "Ingress host tadoku.app (webv2)", "file": "services/tadoku-api/features/identity/identity_values.go", "text": "[]string{\"tadoku.app\", \"tadoku.dev.lab\"}"},
     {"item": "Probe path /healthz (webv3)", "file": "frontend/apps/webv3/server/routes/healthz.ts", "text": "export default defineHandler"},
     {"item": "Probe path /api/health (webv2)", "file": "frontend/apps/webv2/pages/api/health.tsx", "text": "res.status(200)"},
+    {"item": "webv2 redirect target WEBV3_URL", "file": "frontend/packages/ui/app-urls.tsx", "text": "process.env.WEBV3_URL"},
+    {"item": "webv2 redirect target next.tadoku.app", "file": "frontend/packages/ui/app-urls.tsx", "text": "siblingOrigin(config.homeUrl, 'next')"},
     {"item": "Auth cookie domain tadoku.app", "file": "services/tadoku-api/cmd/tadoku-api/config.go", "text": "envconfig:\"identity_cookie_domain\" default:\"tadoku.app\""},
     {"item": "Auth cookie domain tadoku.app", "file": "services/tadoku-api/cmd/tadoku-api/config.go", "text": "cfg.IdentityCookieDomain != \"tadoku.app\""},
     {"item": "Flipt flag release-webv3", "file": "feature-flags.contract.json", "text": "\"release-webv3\""},

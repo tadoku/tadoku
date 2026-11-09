@@ -54,6 +54,15 @@ function runtimeUrl(name: string, value: string) {
   return url
 }
 
+/** Whether `host` is the web host its pages belong on; every other host, such as `next.` or a branch's, is not indexed. */
+export function isWebHost(host: string | null | undefined) {
+  try {
+    return !!host && new URL(urlsForHost(host).webUrl).host === host.toLowerCase()
+  } catch {
+    return false
+  }
+}
+
 /** The branch a `<branch>.next.<domain>` host selects, if it is one. */
 function branchName(host: string, domain: string) {
   const hostname = host.toLowerCase().replace(/:\d+$/, '')

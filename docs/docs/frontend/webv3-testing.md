@@ -81,5 +81,11 @@ repeatable straight away on the same tenant: a test that adds a login with a
 fixture account or a registration on every run must keep two consecutive runs
 within both budgets. Delete that directory to force new sign-ins.
 
+`frontend/apps/webv3/e2e/mutation-freshness.spec.ts` checks that a page visited
+before a save, an administrator's edit, a registration or a moderation removal
+shows the change when reached again through the router, with no document load.
+Its assertions don't wait for the server: the API serves every board as of the
+writes committed before the read, so only the browser's cache can be stale.
+
 `pnpm --filter webv3 build` creates a local Node build in `.output`. This is a build
 check; it does not publish or deploy the application.

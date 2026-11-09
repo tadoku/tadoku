@@ -71,21 +71,24 @@ export const contestProfileQuery = (input: z.infer<typeof profileInput>) => quer
 })
 
 /**
- * Removes a log from a contest. A removal refreshes what it changes: the contest's logs, board, standings and
- * participant profiles. A failed request is `unavailable`: the log may or may not have been removed.
+ * Removes a log from a contest. A removal refreshes what it changes: the contest's logs, summary, participant profiles
+ * and places, the log's submissions and the standings, every board because leaving an official contest also takes the
+ * log off the yearly and all-time ones. A failed request is `unavailable`: the log may or may not have been removed.
  */
 export function useDetachLog() {
   const queryClient = useQueryClient()
 
   return async (detach: Detach): Promise<LogResult<null>> => {
     const result = await postDetach({ data: detach }).catch((): LogResult<null> => ({ ok: false, reason: 'unavailable' }))
-    const { contestId } = detach
+    const { contestId, logId } = detach
     if (result.ok) {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['contest-logs', contestId] }),
-        queryClient.invalidateQueries({ queryKey: ['contest-board', contestId] }),
-        queryClient.invalidateQueries({ queryKey: ['standings', { kind: 'contest', contestId }] }),
+        queryClient.invalidateQueries({ queryKey: ['standings'] }),
         queryClient.invalidateQueries({ queryKey: ['contest-profile', contestId] }),
+        queryClient.invalidateQueries({ queryKey: ['contest-entry', contestId] }),
+        queryClient.invalidateQueries({ queryKey: ['home-board', contestId] }),
+        queryClient.invalidateQueries({ queryKey: ['log', logId] }),
       ])
     } else if (result.reason === 'switched' || result.reason === 'signed-out') {
       await queryClient.invalidateQueries({ queryKey: viewerQueryOptions().queryKey })

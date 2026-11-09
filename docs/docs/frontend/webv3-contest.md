@@ -19,9 +19,9 @@ An unknown or malformed contest ID answers 404 with a not-found page.
   as the visitor because administrators can also open deleted contests, and the
   contest's phase on the UTC day the board was read.
 - `frontend/apps/webv3/src/lib/registration.ts` owns the viewer's registration,
-  the language options and `useSaveRegistration()`, which refreshes the
-  registration, the contest's board and standings and the activity form's
-  contests after a save. `frontend/apps/webv3/src/lib/registration.server.ts`
+  the language options and `useSaveRegistration()`, which refreshes every read
+  a save changes, by query-key prefix, including the Joined list and the
+  account's contest history. `frontend/apps/webv3/src/lib/registration.server.ts`
   calls the API with the visitor's session cookies.
 - `frontend/apps/webv3/src/components/ContestPage.tsx` composes the page header
   and actions around the board that
@@ -86,7 +86,8 @@ in both lists. It asks for a reason of up to 1,000 characters before it sends
 `ImmersionContestModerationDetachLog`, which enforces the same permission. A
 removal is refused before the API call when the session ended or another account
 signed in since the page opened. The log stays in the learner's personal record;
-the contest's logs, board, standings and participant profiles are read again.
+the contest's logs, participant profiles and places, the standings and the
+log's submissions are read again.
 
 - `frontend/apps/webv3/src/lib/contest-activity.ts` owns the contest log and
   participant queries and `useDetachLog()`;

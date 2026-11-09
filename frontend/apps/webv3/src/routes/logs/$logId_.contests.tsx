@@ -5,6 +5,7 @@ import { Button, buttonClassName, EmptyState, formFooter, PageHeader, Surface, u
 import { useState } from 'react'
 import { z } from 'zod'
 import { DraftOwnerGate } from '../../components/DraftOwnerGate'
+import { PendingView } from '../../components/StatusViews'
 import { LogDescription } from '../../components/LogDescription'
 import { useLinks } from '../../lib/links'
 import { formatTracking, logName, pointsUnit, scoreFormat, utcToday } from '../../lib/format'
@@ -66,7 +67,7 @@ function ContestsDraft({ viewerId, admin }: { viewerId: string; admin: boolean }
   const loginUrl = useLoginUrl()
   const registrations = registrationsResult.data
 
-  if (logResult.isPending) return null
+  if (logResult.isPending) return <PendingView />
   if (log?.ok && !allowed) {
     return (
       <EmptyState
@@ -77,7 +78,7 @@ function ContestsDraft({ viewerId, admin }: { viewerId: string; admin: boolean }
       />
     )
   }
-  if (log?.ok && registrationsResult.isPending) return null
+  if (log?.ok && registrationsResult.isPending) return <PendingView />
   if (log?.ok && registrations?.ok) {
     return <ContestsForm log={log.data} registrations={registrations.data} viewerId={viewerId} />
   }

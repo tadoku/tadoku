@@ -28,7 +28,7 @@ those pages while their display window is active.
 
 Generate its selected link with `dev url --owner <owner> --host next.tadoku.dev.lab '/'`.
 The homepage reads its branch's official contest and standings through the matching
-branch API gateway; `/plan` saves only a local browser goal. Check in the server
+branch API gateway. Check in the server
 HTML and after hydration that the main navigation (Home, Leaderboard, Contests,
 Blog, Guide) and the footer (Webv2's destinations plus GitHub, Discord and Twitter)
 stay on the `next.` host, and that Log in, Sign up and the account menu's Account

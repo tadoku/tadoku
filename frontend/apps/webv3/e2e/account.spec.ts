@@ -16,7 +16,7 @@ async function sessionCookie(context: BrowserContext) {
 
 test('anonymous login return is SSR stable and includes the fragment after hydration', async ({ browser, page }) => {
   test.skip(!base, 'Set WEBV3_BASE_URL')
-  const destination = `${base}/plan?source=next&note=reading%20%26%20listening#entry`
+  const destination = `${base}/pages/manual?source=next&note=reading%20%26%20listening#entry`
   const context = await browser.newContext({ javaScriptEnabled: false })
   const ssr = await context.newPage()
   const response = await ssr.goto(destination)
@@ -36,7 +36,7 @@ test('anonymous login return is SSR stable and includes the fragment after hydra
 
 test('login, exact return, SSR reload, foreign-origin refusal and logout invalidate the session', async ({ page, context, playwright, loginLearner }, testInfo) => {
   const { name } = loginLearner
-  const destination = `${base}/plan?source=next&note=reading%20%26%20listening#entry`
+  const destination = `${base}/pages/manual?source=next&note=reading%20%26%20listening#entry`
   await page.goto(destination)
   await expect.poll(async () => new URL((await page.getByRole('link', { name: 'Log in', exact: true }).getAttribute('href'))!).searchParams.get('return_to')).toBe(destination)
   await page.getByRole('link', { name: 'Log in', exact: true }).click()
@@ -91,7 +91,7 @@ test('login, exact return, SSR reload, foreign-origin refusal and logout invalid
 })
 
 test('an expired session cookie renders anonymous', async ({ context, page, loginLearner }) => {
-  await page.goto('/plan')
+  await page.goto('/pages/manual')
   await page.getByRole('link', { name: 'Log in', exact: true }).click()
   await authenticate(page, loginLearner)
   await expect(page.getByRole('button', { name: loginLearner.name, exact: true })).toBeVisible()
@@ -108,13 +108,13 @@ test('thirty interleaved requests isolate two identities and anonymous HTML', as
   const contexts = [learner, adminContext, anonymous]
   try {
     const page = await learner.newPage()
-    await page.goto(`${base}/plan`)
+    await page.goto(`${base}/pages/manual`)
     await page.getByRole('link', { name: 'Log in', exact: true }).click()
     await authenticate(page, loginLearner)
-    await expect(page).toHaveURL(`${base}/plan`)
+    await expect(page).toHaveURL(`${base}/pages/manual`)
     await Promise.all(Array.from({ length: 30 }, async (_, index) => {
       const kind = index % 3
-      const response = await contexts[kind].request.get(`${base}/plan`)
+      const response = await contexts[kind].request.get(`${base}/pages/manual`)
       expect(response.status()).toBe(200)
       expect(response.headers()['cache-control']).toContain('no-store')
       const html = await response.text()

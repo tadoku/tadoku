@@ -96,14 +96,14 @@ function proveFrontends({ evidence, prefix, containers, report, run }, docs) {
             }
             if (!health?.ok || await health.text() !== 'ok\n') throw new Error('Native Nitro server did not become healthy');
             for (const [host, product] of [['next.tadoku.dev.lab', 'tadoku.dev.lab'], ['proof-0123abcd.next.tadoku.dev.lab', 'proof-0123abcd.tadoku.dev.lab']]) {
-              const response = await readHtml('/plan', host);
+              const response = await readHtml('/pages/manual', host);
               if (response.status !== 200) throw new Error('Webv3 SSR failed for ' + host);
               const html = response.html;
               // Guide stays on Webv3; the account login proves Host still selects the matching lab sibling.
-              // Guests no longer get a header Log activity link, so /plan SSR has no /logs/new after that parity change.
+              // Guests no longer get a header Log activity link, so the guide's SSR has no /logs/new after that parity change.
               const account = product === 'tadoku.dev.lab' ? 'account.tadoku.dev.lab' : product.replace('.tadoku.dev.lab', '.account.tadoku.dev.lab');
-              const login = 'https://' + account + '/login?return_to=' + encodeURIComponent('https://' + host + '/plan');
-              if (!html.includes('Set a daily goal') || !html.includes('href="' + login + '"') || /href="https:\/\/tadoku\.app/.test(html)) throw new Error('Webv3 SSR development product links are incorrect for ' + host);
+              const login = 'https://' + account + '/login?return_to=' + encodeURIComponent('https://' + host + '/pages/manual');
+              if (!html.includes('<title>Guide · Tadoku</title>') || !html.includes('href="' + login + '"') || /href="https:\/\/tadoku\.app/.test(html)) throw new Error('Webv3 SSR development product links are incorrect for ' + host);
               if (!html.includes('href="/pages/manual"') || /href="https?:\/\/[^"]*\/pages\/manual"/.test(html)) throw new Error('Webv3 SSR guide link must stay on the Webv3 host for ' + host);
               const assets = [...html.matchAll(/(?:src|href)="([^" ]+\.(?:js|css)(?:\?[^" ]*)?)"/g)].map(m => m[1]);
               if (!assets.length) throw new Error('Webv3 SSR has no compiled assets');

@@ -40,49 +40,8 @@ test('hydrates without errors and keeps the homepage within mobile and desktop v
   expect(failures).toEqual([])
 })
 
-test('validates and saves an editable local immersion goal without sending writes', async ({ page }, testInfo) => {
-  const writes: string[] = []
-  page.on('request', request => {
-    if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method())) writes.push(`${request.method()} ${new URL(request.url()).pathname}`)
-  })
-  await page.goto('/plan')
-  const minutes = page.getByRole('spinbutton', { name: /minutes/i })
-  const days = page.getByRole('spinbutton', { name: /days/i })
-  const save = page.getByRole('button', { name: /save.*goal/i })
-  await minutes.fill('-1')
-  await days.fill('8')
-  await days.blur()
-  await expect(page.getByRole('alert')).toHaveCount(0)
-  await save.click()
-  await expect(page.getByRole('alert').first()).toBeVisible()
-  await expect(minutes).toHaveAttribute('aria-invalid', 'true')
-  await minutes.fill('30')
-  await days.fill('5')
-  await save.click()
-  await expect(page.getByRole('status').filter({ hasText: /saved/i })).toBeVisible()
-  await page.screenshot({ path: testInfo.outputPath('goal-saved.png'), fullPage: true })
-  await page.reload()
-  await expect(minutes).toHaveValue('30')
-  await expect(days).toHaveValue('5')
-  await minutes.fill('45')
-  await save.click()
-  await page.reload()
-  await expect(minutes).toHaveValue('45')
-  expect(writes).toEqual([])
-})
-
-test('reports unavailable browser storage without claiming the goal was saved', async ({ page }) => {
-  await page.addInitScript(() => {
-    Storage.prototype.setItem = () => { throw new DOMException('Storage is unavailable', 'QuotaExceededError') }
-  })
-  await page.goto('/plan')
-  await page.getByRole('spinbutton', { name: /minutes/i }).fill('30')
-  await page.getByRole('spinbutton', { name: /days/i }).fill('5')
-  await page.getByRole('button', { name: /save.*goal/i }).click()
-  // Scoped to the form: announcements are statuses too.
-  const status = page.locator('main form').getByRole('status')
-  await expect(status).toContainText(/allow saving/i)
-  await expect(status).not.toContainText('Goal saved')
+test('the retired local goal page is not found', async ({ page }) => {
+  expect((await page.goto('/plan'))?.status()).toBe(404)
 })
 
 test('returns a useful not-found page for an unknown route', async ({ page }) => {

@@ -131,15 +131,26 @@ function RuleSetVersion({ ruleSet, options, change }: {
           : 'Overrides platform rules with a pinned fallback'}
         actions={change && action ? <ConfirmChange change={{ ...change, action }} /> : null}
       />
-      {ruleSet.rules.length ? <RuleTables rules={ruleSet.rules} options={options} /> : (
-        <p>No rules: every input scores zero.</p>
+      {ruleSet.rules.length ? <RuleTables ruleSetId={ruleSet.id} rules={ruleSet.rules} options={options} /> : (
+        <p>
+          {ruleSet.mode === 'override'
+            ? 'No rules yet. Inputs this version does not cover score with its pinned platform version.'
+            : 'No rules: every input scores zero.'}
+        </p>
       )}
     </Surface>
   )
 }
 
-/** A version's rules by activity: languages against units, as the Guide shows them, then multipliers. */
-function RuleTables({ rules, options }: { rules: ImmersionScoringRule[]; options: ImmersionLogConfigurationOptions }) {
+/**
+ * A version's rules by activity: languages against units, as the Guide shows them, then multipliers. Heading IDs name
+ * the version, so several versions on one page keep them unique.
+ */
+function RuleTables({ ruleSetId, rules, options }: {
+  ruleSetId: string
+  rules: ImmersionScoringRule[]
+  options: ImmersionLogConfigurationOptions
+}) {
   const activities = [...new Set(rules.map(rule => rule.activity_id))]
 
   return (
@@ -147,7 +158,7 @@ function RuleTables({ rules, options }: { rules: ImmersionScoringRule[]; options
       {activities.map(activityId => {
         const activity = options.activities.find(activity => activity.id === activityId)?.name ?? `Activity ${activityId}`
         const group = rules.filter(rule => rule.activity_id === activityId)
-        const id = `rules-${activityId}`
+        const id = `rules-${ruleSetId}-${activityId}`
         const { headers, rows } = rateMatrix(group.filter(rule => !rule.stackable), options)
         const modifiers = group.filter(rule => rule.stackable)
         return (
@@ -204,9 +215,11 @@ function rateMatrix(rules: ImmersionScoringRule[], options: ImmersionLogConfigur
   return { headers: ['Points per', ...columns.map(([label]) => label)], rows }
 }
 
+/** What a modifier matches: its unit, language and tag, for example `Page · Japanese · manga`. */
 function condition(rule: ImmersionScoringRule, options: ImmersionLogConfigurationOptions) {
   const language = options.languages.find(language => language.code === rule.language_code)?.name ?? rule.language_code
-  return [language, rule.tag?.replaceAll('_', ' ')].filter(Boolean).join(' · ') || 'All languages'
+  const unit = rule.unit_key ? unitName(rule.unit_key, options) : undefined
+  return [unit, language, rule.tag?.replaceAll('_', ' ')].filter(Boolean).join(' · ') || 'All languages'
 }
 
 const confirmations = {

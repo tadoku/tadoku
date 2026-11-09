@@ -1,9 +1,9 @@
 import { Link } from '@tanstack/react-router'
 import { Button, EmptyState, PageHeader, Pagination, prose } from 'paper-ui'
-import ReactMarkdown from 'react-markdown'
+import ReactMarkdown, { type Components } from 'react-markdown'
 import rehypeSanitize from 'rehype-sanitize'
 import remarkGfm from 'remark-gfm'
-import { blogHref, blogPageSize, type BlogPage, type BlogPost, type CmsPage } from '../lib/content'
+import { blogHref, blogPageSize, type BlogPage, type BlogPost, type CmsPage, type SanitizedHtml } from '../lib/content'
 import { formatDate } from '../lib/format'
 import { renderLink } from './router-link'
 
@@ -26,11 +26,24 @@ export function ContentUnavailable({ query }: { query: { isFetching: boolean; re
 const article = 'min-w-0 max-w-article'
 const postLink = 'text-inherit no-underline hover:text-link hover:underline max-lg:underline max-lg:decoration-rule max-lg:underline-offset-link'
 
+/**
+ * Content images load as they near the viewport and decode off the main thread. A CMS image keeps the width and height
+ * its author set, which reserve its space; prose scales both down to the column.
+ */
+const lazyImages = (html: SanitizedHtml) => html.replace(/<img\b/gi, '<img loading="lazy" decoding="async"')
+
+const markdownComponents: Components = {
+  img: ({ node, ...props }) => {
+    void node
+    return <img {...props} loading="lazy" decoding="async" />
+  },
+}
+
 export function CmsPageArticle({ page }: { page: CmsPage }) {
   return (
     <article className={article}>
       <PageHeader title={page.title} className="mb-8" />
-      <div className={prose({ className: 'content-prose' })} dangerouslySetInnerHTML={{ __html: page.html }} />
+      <div className={prose({ className: 'content-prose' })} dangerouslySetInnerHTML={{ __html: lazyImages(page.html) }} />
     </article>
   )
 }
@@ -48,7 +61,9 @@ export function BlogPostArticle({ post }: { post: BlogPost }) {
       />
       <div className={prose({ className: 'content-prose' })}>
         {/* As in Webv2: Markdown without raw HTML, through rehype-sanitize's default schema. */}
-        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{post.content}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]} components={markdownComponents}>
+          {post.content}
+        </ReactMarkdown>
       </div>
     </article>
   )

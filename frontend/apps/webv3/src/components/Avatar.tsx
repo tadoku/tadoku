@@ -1,4 +1,5 @@
 import { cn } from 'paper-ui'
+import { useState } from 'react'
 import { useLinks } from '../lib/links'
 
 /** The first letters of the first two words, or the first two letters of a one-word name. */
@@ -6,6 +7,9 @@ const initials = (name: string) => {
   const words = name.trim().split(/\s+/)
   return (words.length > 1 ? words[0][0] + words[1][0] : name.trim().slice(0, 2)).toUpperCase()
 }
+
+/** Each size's rendered width and height in CSS pixels, matching its `size-*` class, for the image's dimensions. */
+const pixels = { sm: 20, md: 24, nav: 32, lg: 64 } as const
 
 const sizes = {
   /** Inline in a line of text: centred between its lowercase and capital letters. */
@@ -37,8 +41,33 @@ export function Avatar({ userId, name, size, className }: {
       aria-hidden="true"
     >
       {size === 'sm' ? initials(name).slice(0, 1) : initials(name)}
-      {/* A background, unlike an img, draws nothing when it fails, even before hydration. */}
-      <span className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url("${links.avatar(userId)}")` }} />
+      <AvatarImage src={links.avatar(userId)} pixels={pixels[size]} />
     </span>
+  )
+}
+
+/**
+ * The Gravatar over the initials, loaded lazily. It stays invisible until it has loaded, so a learner without one, or a
+ * failed load, shows the initials rather than a broken image; without JavaScript the initials always show.
+ */
+function AvatarImage({ src, pixels }: { src: string; pixels: number }) {
+  const [loaded, setLoaded] = useState(false)
+  // An image that finished before hydration fired its load event before React listened.
+  const seen = (image: HTMLImageElement | null) => {
+    if (image?.complete && image.naturalWidth > 0) setLoaded(true)
+  }
+
+  return (
+    <img
+      ref={seen}
+      className={cn('absolute inset-0 size-full object-cover', !loaded && 'invisible')}
+      src={src}
+      alt=""
+      width={pixels}
+      height={pixels}
+      loading="lazy"
+      decoding="async"
+      onLoad={() => setLoaded(true)}
+    />
   )
 }

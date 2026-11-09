@@ -266,6 +266,53 @@ test('an administrator drafts, publishes and activates a contest rule set', asyn
   await fitsWidth(page, 'scoring', testInfo.outputPath('scoring-390.png'))
 })
 
+test('scoring versions describe their own fallback, name a modifier’s unit and keep heading IDs unique', async ({ adminContext }) => {
+  test.skip(!api || !admin.email || !admin.password, 'Set TADOKU_API_URL, E2E_SECOND_EMAIL and E2E_SECOND_PASSWORD')
+  const contest = await postContest(adminContext.request, utcDay(30), utcDay(60))
+  const platform = (await ruleSets(adminContext.request, '/immersion/scoring/rule-sets')).filter(ruleSet => ruleSet.status === 'published')
+  const fallback = platform.find(ruleSet => ruleSet.active) ?? platform[0]
+  test.skip(!fallback, 'No published platform rule set to fall back to')
+  const reading = [
+    { priority: 0, stackable: false, activity_id: 1, unit_key: 'pages', score_source: 'amount', rate: 1 },
+    { priority: 10, stackable: true, activity_id: 1, unit_key: 'pages', tag: 'webv3_bonus', score_source: 'amount', rate: 2 },
+  ]
+  // Two versions with the same activity would repeat its heading ID unless IDs name their version.
+  for (const data of [{ mode: 'override', fallback_rule_set_id: fallback.id, rules: [] }, { mode: 'replace', rules: reading }, { mode: 'replace', rules: reading }]) {
+    const created = await adminContext.request.post(`${api}/immersion/contests/${contest.id}/scoring/rule-sets`, { data })
+    expect(created.ok(), `rule-set creation answered ${created.status()}`).toBeTruthy()
+  }
+
+  const page = await adminContext.newPage()
+  await page.goto(`/contests/${contest.id}/scoring`)
+  const versions = page.locator('.scoring-version')
+  await expect(versions).toHaveCount(3)
+  const overriding = versions.filter({ hasText: 'pinned fallback' })
+  await expect(overriding).toContainText('Inputs this version does not cover score with its pinned platform version.')
+  await expect(overriding).not.toContainText('every input scores zero')
+  await expect(versions.filter({ hasText: 'Replaces platform rules' }).first()).toContainText('Multipliers: Page · webv3 bonus × 2')
+  expect(await page.evaluate(() => {
+    const ids = [...document.querySelectorAll('[id]')].map(element => element.id)
+    return ids.filter((id, index) => ids.indexOf(id) !== index)
+  })).toEqual([])
+
+  await hydrated(page)
+  const behavior = page.getByLabel('Contest behavior', { exact: true })
+  await behavior.selectOption('replace')
+  await expect(page.getByText('Inputs these rules do not cover score zero.', { exact: true })).toBeVisible()
+  await behavior.selectOption('override')
+  await expect(page.getByText('Inputs these rules do not cover score with the pinned platform version.', { exact: true })).toBeVisible()
+
+  // Without rules, an override still falls back to its pinned version; only a replacement scores zero.
+  const drafted = page.locator('.scoring-rule')
+  for (let count = await drafted.count(); count > 0; count--) await drafted.last().getByRole('button', { name: 'Remove', exact: true }).click()
+  await expect(drafted).toHaveCount(0)
+  const zero = page.getByText('This replacing rule set will score every input as zero.', { exact: true })
+  await expect(page.getByText('With no rules, this version scores every input with its pinned platform version.', { exact: true })).toBeVisible()
+  await expect(zero).toHaveCount(0)
+  await behavior.selectOption('replace')
+  await expect(zero).toBeVisible()
+})
+
 test('a started contest’s scoring is locked, and only administrators reach scoring', async ({ adminContext, readerContext }, testInfo) => {
   test.skip(
     !api || !admin.email || !admin.password || !reader.email || !reader.password,

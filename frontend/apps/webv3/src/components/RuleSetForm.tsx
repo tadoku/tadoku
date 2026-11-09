@@ -49,7 +49,9 @@ export function RuleSetForm({ contestId, viewerId, options, platformRuleSets }: 
       <SectionHeading
         level={2}
         title="New rule-set version"
-        description="Uncovered inputs score zero. Override mode falls back to the pinned platform version; replace mode does not."
+        description={mode === 'override'
+          ? 'Inputs these rules do not cover score with the pinned platform version.'
+          : 'Inputs these rules do not cover score zero.'}
       />
       <form.AppForm>
         <form.Form className="min-w-0" aria-busy={pending}>
@@ -83,7 +85,13 @@ export function RuleSetForm({ contestId, viewerId, options, platformRuleSets }: 
               {rules => (
                 <fieldset className={formGroup}>
                   <legend>Ordered rules</legend>
-                  {rules.state.value.length === 0 ? <p>This replacing rule set will score every input as zero.</p> : null}
+                  {rules.state.value.length === 0 ? (
+                    <p>
+                      {mode === 'override'
+                        ? 'With no rules, this version scores every input with its pinned platform version.'
+                        : 'This replacing rule set will score every input as zero.'}
+                    </p>
+                  ) : null}
                   {rules.state.value.map((_, index) => (
                     <RuleFields
                       key={index}

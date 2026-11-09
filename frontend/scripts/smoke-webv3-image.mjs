@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict'
-import { spawn, execFileSync } from 'node:child_process'
+import { spawn, execFile, execFileSync } from 'node:child_process'
 import { createServer, get } from 'node:http'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
+import { promisify } from 'node:util'
 
 const image = process.argv[2]
 assert(image, 'Usage: node scripts/smoke-webv3-image.mjs <image>')
@@ -55,7 +56,10 @@ const announcement = {
   starts_at: '2020-01-01T00:00:00Z', ends_at: '2099-12-31T00:00:00Z',
 }
 const writes = []
-const fixture = createServer((request, response) => {
+// Every fixture answer waits this long, so a check can hold a page request open.
+let fixtureDelayMs = 0
+const fixture = createServer((request, response) => setTimeout(() => answer(request, response), fixtureDelayMs))
+function answer(request, response) {
   if (request.method !== 'GET') {
     writes.push(`${request.method} ${request.url}`)
     response.writeHead(405).end()
@@ -112,10 +116,11 @@ const fixture = createServer((request, response) => {
   }
   if (!data) { response.writeHead(404).end(); return }
   response.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify(data))
-})
+}
 await new Promise(resolve => fixture.listen(0, '0.0.0.0', resolve))
 const apiPort = fixture.address().port
 const docker = (...args) => execFileSync('docker', args, { encoding: 'utf8' }).trim()
+const run = promisify(execFile)
 async function waitForHealth(base) {
   for (let attempt = 0; attempt < 60; attempt++) {
     try {
@@ -198,6 +203,34 @@ try {
     ['alice.next.tadoku.dev.lab', 'https://alice.tadoku.dev.lab'],
     ['bob.next.tadoku.dev.lab', 'https://bob.tadoku.dev.lab'],
   ]))
+  const misconfigured = docker('run', '-d', '--label', 'tadoku.check=webv3-config', '-e', 'TADOKU_API_URL=ftp://tadoku.app', image)
+  try {
+    const exit = await run('docker', ['wait', misconfigured], { timeout: 15_000 })
+      .catch(() => assert.fail('A bad TADOKU_API_URL did not stop the container'))
+    assert.notEqual(exit.stdout.trim(), '0', 'A bad TADOKU_API_URL exited successfully')
+    const logs = await run('docker', ['logs', misconfigured])
+    assert.match(logs.stdout + logs.stderr, /TADOKU_API_URL/, 'The startup error does not name the variable')
+  } finally {
+    docker('rm', '-f', misconfigured)
+  }
+  // A page still waiting on the API past srvx's default 5-second shutdown timeout finishes during docker stop.
+  const draining = docker('run', '-d', '--label', 'tadoku.check=webv3-drain', '--add-host', 'host.docker.internal:host-gateway',
+    '-p', '127.0.0.1::3000', '-e', `TADOKU_API_URL=http://host.docker.internal:${apiPort}`, image)
+  try {
+    const drainBase = `http://127.0.0.1:${JSON.parse(docker('inspect', draining))[0].NetworkSettings.Ports['3000/tcp'][0].HostPort}`
+    await waitForHealth(drainBase)
+    fixtureDelayMs = 6_500
+    const page = fetch(drainBase, { signal: AbortSignal.timeout(20_000) })
+      .then(async response => [response.status, await response.text()], () => [])
+    await new Promise(resolve => setTimeout(resolve, 1_000))
+    await run('docker', ['stop', '-t', '20', draining])
+    const [status, drainedHtml] = await page
+    assert.equal(status, 200, 'docker stop dropped an in-flight page request')
+    assert(drainedHtml.includes(contest.title), 'The drained page lost its API data')
+  } finally {
+    fixtureDelayMs = 0
+    docker('rm', '-f', draining)
+  }
   const refused = await fetch(`${base}/logout`, { method: 'POST', headers: { Origin: 'https://evil.tadoku.app', 'Sec-Fetch-Site': 'same-site' }, redirect: 'manual' })
   assert.equal(refused.status, 403)
   // The synthetic API has no identity routes, so a session cookie meets an unavailable identity service.

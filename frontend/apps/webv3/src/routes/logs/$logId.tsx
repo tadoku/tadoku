@@ -7,7 +7,7 @@ import { z } from 'zod'
 import { formatAmount, formatDate, formatMinutes, isNsfw, numberFormat, pointsUnit, scoreFormat } from '../../lib/format'
 import { useLinks } from '../../lib/links'
 import { logQuery, useDeleteLog, type ImmersionLog, type LogFailure } from '../../lib/logs'
-import { viewerKey, viewerQueryOptions } from '../../lib/session'
+import { ensureViewerData, viewerKey, viewerQueryOptions } from '../../lib/session'
 import { ActivityName } from '../../components/ActivityName'
 import { Avatar } from '../../components/Avatar'
 import { LogDescription } from '../../components/LogDescription'
@@ -17,8 +17,7 @@ export const Route = createFileRoute('/logs/$logId')({
   head: () => ({ meta: [{ title: 'Activity · Tadoku' }] }),
   loader: async ({ context, params }) => {
     if (!z.guid().safeParse(params.logId).success) throw notFound()
-    const viewer = await context.queryClient.ensureQueryData(viewerQueryOptions())
-    const result = await context.queryClient.ensureQueryData(logQuery(params.logId, viewerKey(viewer)))
+    const [, result] = await ensureViewerData(context.queryClient, key => logQuery(params.logId, key))
     if (!result.ok && result.reason === 'not-found') throw notFound()
   },
   component: LogDetail,

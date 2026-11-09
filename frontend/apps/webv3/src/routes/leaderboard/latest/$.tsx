@@ -7,15 +7,16 @@ import { viewerKey, viewerQueryOptions } from '../../../lib/session'
 export const Route = createFileRoute('/leaderboard/latest/$')({
   head: () => ({ meta: [{ title: 'Latest leaderboard · Tadoku' }] }),
   loader: async ({ context: { queryClient }, params }) => {
-    const [latest, viewer] = await Promise.all([
-      queryClient.ensureQueryData(latestBoardQuery()),
-      queryClient.ensureQueryData(viewerQueryOptions()),
-    ])
-    if (latest.kind !== 'board') return
-    const contestId = latest.board.contest.id
+    const viewerRead = queryClient.ensureQueryData(viewerQueryOptions())
+    const contestRead = queryClient.ensureQueryData(latestBoardQuery())
+      .then(latest => (latest.kind === 'board' ? latest.board.contest.id : null))
     await Promise.all([
-      queryClient.ensureQueryData(standingsQuery({ kind: 'contest', contestId }, pageNumber(params._splat))),
-      viewer.status === 'signed-in' ? queryClient.ensureQueryData(registrationQuery(contestId, viewerKey(viewer))) : null,
+      contestRead.then(contestId => (contestId
+        ? queryClient.ensureQueryData(standingsQuery({ kind: 'contest', contestId }, pageNumber(params._splat)))
+        : null)),
+      Promise.all([viewerRead, contestRead]).then(([viewer, contestId]) => (viewer.status === 'signed-in' && contestId
+        ? queryClient.ensureQueryData(registrationQuery(contestId, viewerKey(viewer)))
+        : null)),
     ])
   },
   component: function LatestRoute() {

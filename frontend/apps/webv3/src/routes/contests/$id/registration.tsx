@@ -4,18 +4,17 @@ import { ContestRegistrationPage } from '../../../components/ContestRegistration
 import { ContestNotFound } from '../../../components/ContestPage'
 import { contestBoardQuery } from '../../../lib/leaderboard'
 import { contestLanguagesQuery, registrationQuery } from '../../../lib/registration'
-import { loginHref, viewerKey, viewerQueryOptions } from '../../../lib/session'
+import { ensureViewerData, loginHref } from '../../../lib/session'
 
 export const Route = createFileRoute('/contests/$id/registration')({
   loader: async ({ context: { queryClient }, params, location, parentMatchPromise }) => {
     if (!z.guid().safeParse(params.id).success) throw notFound()
-    const viewer = await queryClient.ensureQueryData(viewerQueryOptions())
+    const [viewer, board] = await ensureViewerData(queryClient, key => contestBoardQuery(params.id, key))
     // As in Webv2, registration needs an account: anonymous visitors log in and return here.
     if (viewer.status === 'anonymous') {
       const { accountUrl, pageUrl } = (await parentMatchPromise).loaderData!
       throw redirect({ href: loginHref(accountUrl, new URL(location.href, pageUrl).href) })
     }
-    const board = await queryClient.ensureQueryData(contestBoardQuery(params.id, viewerKey(viewer)))
     if (board.kind === 'none') throw notFound()
     if (board.kind === 'unavailable' || viewer.status !== 'signed-in') return { title: undefined }
 

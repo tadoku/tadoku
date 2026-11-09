@@ -4,21 +4,21 @@ import { ContestNotFound, ContestPage } from '../../../../components/ContestPage
 import { contestLogsQuery } from '../../../../lib/contest-activity'
 import { contestBoardQuery, pageNumber } from '../../../../lib/leaderboard'
 import { registrationQuery } from '../../../../lib/registration'
-import { viewerKey, viewerQueryOptions } from '../../../../lib/session'
+import { ensureViewerData, viewerKey } from '../../../../lib/session'
 
 export const Route = createFileRoute('/contests/$id/updates/$')({
   loader: async ({ context: { queryClient }, params }) => {
     if (!z.guid().safeParse(params.id).success) throw notFound()
-    const viewer = await queryClient.ensureQueryData(viewerQueryOptions())
-    const board = await queryClient.ensureQueryData(contestBoardQuery(params.id, viewerKey(viewer)))
-    if (board.kind === 'none') throw notFound()
-    if (board.kind === 'unavailable') return { title: undefined }
-
-    await Promise.all([
+    const boardRead = ensureViewerData(queryClient, key => contestBoardQuery(params.id, key))
+    const [[, board]] = await Promise.all([
+      boardRead,
       queryClient.ensureQueryData(contestLogsQuery({ contestId: params.id, page: pageNumber(params._splat) })),
-      viewer.status === 'signed-in' ? queryClient.ensureQueryData(registrationQuery(params.id, viewerKey(viewer))) : null,
+      boardRead.then(([viewer]) => (viewer.status === 'signed-in'
+        ? queryClient.ensureQueryData(registrationQuery(params.id, viewerKey(viewer)))
+        : null)),
     ])
-    return { title: board.board.contest.title }
+    if (board.kind === 'none') throw notFound()
+    return { title: board.kind === 'board' ? board.board.contest.title : undefined }
   },
   head: ({ loaderData }) => ({
     meta: [{ title: loaderData?.title ? `Activity · ${loaderData.title} · Tadoku` : 'Contest activity · Tadoku' }],

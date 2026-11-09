@@ -5,15 +5,14 @@ import { z } from 'zod'
 import { ProfileStatistics } from '../../../../components/ProfileStatistics'
 import { PendingView } from '../../../../components/StatusViews'
 import { profileStatisticsQuery } from '../../../../lib/profile'
-import { viewerKey, viewerQueryOptions } from '../../../../lib/session'
+import { ensureViewerData, viewerKey, viewerQueryOptions } from '../../../../lib/session'
 
 export const Route = createFileRoute('/profile/$id/statistics/{-$year}')({
   validateSearch: z.object({ contests: z.number().int().min(1).optional().catch(undefined) }),
   loaderDeps: ({ search }) => ({ page: search.contests ?? 1 }),
   loader: async ({ context, params, deps }) => {
     const input = statisticsInput(params, deps.page, new Date().getUTCFullYear())
-    const viewer = await context.queryClient.ensureQueryData(viewerQueryOptions())
-    const result = await context.queryClient.ensureQueryData(profileStatisticsQuery(input, viewerKey(viewer)))
+    const [, result] = await ensureViewerData(context.queryClient, key => profileStatisticsQuery(input, key))
     if (result.status === 'not-found') throw notFound()
     return { name: result.status === 'found' ? result.profile.display_name : undefined, year: input.year }
   },

@@ -6,7 +6,7 @@ import { newContestSchema, type NewContest } from './contest-form'
 import type { Identified } from './home'
 import type { Read } from './leaderboard'
 import type { LogResult } from './logs'
-import { viewerKey, viewerQueryOptions, type Viewer } from './session'
+import { ensureViewerData, viewerKey, viewerQueryOptions, type Viewer } from './session'
 
 /**
  * Which contests a list holds. An organizer's list holds the community contests one account created; the joined list
@@ -97,8 +97,12 @@ export function contestScope(view: ContestView, viewer: Viewer | undefined): Con
 
 /** Prefetches a view's page and, for signed-in viewers, whether they may create contests. */
 export async function loadContests(queryClient: QueryClient, view: ContestView, page: number) {
-  const viewer = await queryClient.ensureQueryData(viewerQueryOptions())
-  const scope = contestScope(view, viewer)
+  // Official and community lists don't depend on who is looking, so they start before the viewer is known.
+  const publicScope = contestScope(view, undefined)
+  const viewer = publicScope
+    ? (await ensureViewerData(queryClient, key => contestsQuery(publicScope, page, key)))[0]
+    : await queryClient.ensureQueryData(viewerQueryOptions())
+  const scope = publicScope ? null : contestScope(view, viewer)
   await Promise.all([
     scope ? queryClient.ensureQueryData(contestsQuery(scope, page, viewerKey(viewer))) : null,
     viewer.status === 'signed-in' ? queryClient.ensureQueryData(canCreateContestQuery(viewerKey(viewer))) : null,

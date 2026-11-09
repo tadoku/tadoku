@@ -4,7 +4,7 @@ import { useLinks } from '../lib/links'
 /** The first letters of the first two words, or the first two letters of a one-word name. */
 const initials = (name: string) => {
   const words = name.trim().split(/\s+/)
-  return (words.length > 1 ? words[0][0] + words[1][0] : name.trim().slice(0, 2)).toLocaleUpperCase()
+  return (words.length > 1 ? words[0][0] + words[1][0] : name.trim().slice(0, 2)).toUpperCase()
 }
 
 const sizes = {

@@ -4,6 +4,7 @@ import type { ImmersionLogConfigurationOptions, ImmersionScoringRule, ImmersionS
 import { Button, EmptyState, Flash, Modal, PageHeader, SectionHeading, StatusTag, Surface, buttonClassName, prose } from 'paper-ui'
 import { useRef, useState } from 'react'
 import { contestsHref } from '../lib/contests'
+import { numberLocale } from '../lib/format'
 import { useLinks } from '../lib/links'
 import type { LogFailure } from '../lib/logs'
 import { contestScoringQuery, useChangeScoring, type RuleSetChange } from '../lib/scoring'
@@ -17,7 +18,8 @@ import { scoringFailures } from './scoring-failures'
  * A contest's scoring rule-set versions for an administrator, who can draft, publish and activate versions until the
  * contest's first UTC day.
  */
-export function ContestScoring({ contestId, viewerId }: { contestId: string; viewerId: string }) {
+/** `today` is the UTC date from the route's loader, so the server and the browser lock the same rule sets. */
+export function ContestScoring({ contestId, viewerId, today }: { contestId: string; viewerId: string; today: string }) {
   const links = useLinks()
   const loginUrl = useLoginUrl()
   const scoringQuery = useQuery(contestScoringQuery(contestId, viewerId))
@@ -58,7 +60,7 @@ export function ContestScoring({ contestId, viewerId }: { contestId: string; vie
   }
 
   const { contest, options, platformRuleSets, contestRuleSets } = result.data
-  const locked = new Date().toISOString().slice(0, 10) >= contest.contest_start
+  const locked = today >= contest.contest_start
 
   return (
     <div className="grid min-w-0 gap-6">
@@ -164,7 +166,7 @@ function RuleTables({ rules, options }: { rules: ImmersionScoringRule[]; options
   )
 }
 
-const rateFormat = new Intl.NumberFormat('en-GB', { maximumSignificantDigits: 3 })
+const rateFormat = new Intl.NumberFormat(numberLocale, { maximumSignificantDigits: 3 })
 
 const unitName = (unitKey: string, options: ImmersionLogConfigurationOptions) =>
   options.units.find(unit => unit.unit_key === unitKey)?.name ?? unitKey.replaceAll('_', ' ')

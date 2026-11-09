@@ -76,6 +76,8 @@ test('an administrator edits another learner\'s log and changes one contest subm
   const contests = moderator.getByRole('checkbox', { disabled: false })
   await expect(contests).toHaveCount(registrationIds.length)
   for (const contest of await contests.all()) await expect(contest).toBeChecked()
+  // The summary speaks about the learner's log, not the administrator's.
+  await expect(moderator.getByRole('region', { name: 'This log', exact: true })).toBeVisible()
   await moderator.screenshot({ path: testInfo.outputPath('admin-contests.png'), fullPage: true })
 
   await contests.last().uncheck()

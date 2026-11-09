@@ -4,7 +4,7 @@ import { Link, createFileRoute, notFound, useHydrated } from '@tanstack/react-ro
 import { Button, buttonClassName, DescriptionList, EmptyState, entryLink, Modal, PageHeader, SectionHeading, StatGrid, Surface } from 'paper-ui'
 import { useRef, useState } from 'react'
 import { z } from 'zod'
-import { formatDate, isNsfw, pointsUnit, scoreFormat } from '../../lib/format'
+import { formatAmount, formatDate, formatMinutes, isNsfw, numberFormat, pointsUnit, scoreFormat } from '../../lib/format'
 import { useLinks } from '../../lib/links'
 import { logQuery, useDeleteLog, type ImmersionLog, type LogFailure } from '../../lib/logs'
 import { viewerKey, viewerQueryOptions } from '../../lib/session'
@@ -54,7 +54,7 @@ function LogDetail() {
         backLink={{ href: links.profileUpdates(log.user_id), label: owner ? 'Your activity' : 'Activity' }}
         renderLink={renderLink}
         className="max-w-record"
-        title={titledByNote ? log.description! : `${log.language.name} ${log.activity.name.toLocaleLowerCase()}`}
+        title={titledByNote ? log.description! : `${log.language.name} ${log.activity.name.toLowerCase()}`}
         lead={(
           <>
             {log.language.name} · <ActivityName activity={log.activity} />
@@ -78,7 +78,7 @@ function LogDetail() {
             stats={[
               ...measure(log),
               { label: 'Score', value: scoreFormat.format(log.score), unit: pointsUnit(log.score) },
-              { label: 'Logged', value: formatDate(log.created_at.slice(0, 10)), detail: loggedTime(log.created_at) },
+              { label: 'Logged', ...logged(log.created_at) },
             ]}
           />
           {(log.description && !titledByNote) || log.tags.length ? (
@@ -91,7 +91,7 @@ function LogDetail() {
             />
           ) : null}
         </div>
-        <LogContests log={log} manager={manager} />
+        <LogContests log={log} manager={manager} owner={owner} />
       </Surface>
     </div>
   )
@@ -167,7 +167,7 @@ const deleteFailures: Partial<Record<LogFailure, string>> = {
 }
 
 /** Contest submissions are private: only the log's owner and administrators see them and the way to manage them. */
-function LogContests({ log, manager }: { log: ImmersionLog; manager: boolean }) {
+function LogContests({ log, manager, owner }: { log: ImmersionLog; manager: boolean; owner: boolean }) {
   return (
     <section className="border-t border-rule px-record-inset pb-record-inset pt-6" aria-labelledby="log-contests">
       <SectionHeading
@@ -176,12 +176,13 @@ function LogContests({ log, manager }: { log: ImmersionLog; manager: boolean }) 
         title="Contests"
         actions={manager ? <Link className="text-link hover:text-link-hover" to="/logs/$logId/contests" params={{ logId: log.id }}>Manage contest submissions</Link> : null}
       />
-      {manager ? <OwnContests log={log} /> : <p className="m-0 text-muted">Contest submissions are visible to the log&apos;s owner.</p>}
+      {manager ? <OwnContests log={log} owner={owner} /> : <p className="m-0 text-muted">Contest submissions are visible to the log&apos;s owner.</p>}
     </section>
   )
 }
 
-function OwnContests({ log }: { log: ImmersionLog }) {
+/** The log's submissions; an administrator viewing another learner's log reads them in the third person. */
+function OwnContests({ log, owner }: { log: ImmersionLog; owner: boolean }) {
   const links = useLinks()
   const registrations = log.registrations ?? []
 
@@ -199,22 +200,23 @@ function OwnContests({ log }: { log: ImmersionLog }) {
         </li>
       ))}
     </ul>
-  ) : <p className="m-0 text-muted">Saved to your personal record only.</p>
+  ) : <p className="m-0 text-muted">{owner ? 'Saved to your personal record only.' : 'Saved to the learner\'s personal record only.'}</p>
 }
 
-const amountFormat = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 2 })
-
-/** A timed log's duration; an amount log's amount and any time spent, for example "18 pages". */
+/** A timed log's duration; an amount log's amount and any time spent, rounded as the lists show them. */
 function measure(log: ImmersionLog) {
-  const unit = log.unit_name ? ` ${log.unit_name.toLowerCase()}${log.amount === 1 ? '' : 's'}` : ''
-  const amount = { label: 'Amount', value: `${amountFormat.format(log.amount)}${unit}` }
+  const amount = {
+    label: 'Amount',
+    value: log.unit_name ? formatAmount(log.amount, log.unit_name) : numberFormat.format(log.amount),
+  }
   if (!log.duration_seconds) return [amount]
 
-  const duration = { label: 'Duration', value: `${log.duration_seconds / 60} min` }
+  const duration = { label: 'Duration', value: formatMinutes(log.duration_seconds) }
   return log.activity.input_type === 'time_primary' ? [duration] : [amount, duration]
 }
 
-/** For example "06:19 UTC". */
-function loggedTime(iso: string) {
-  return `${new Date(iso).toISOString().slice(11, 16)} UTC`
+/** The UTC day and time a log was created, read from one instant, for example `9 Nov 2026` and `06:19 UTC`. */
+function logged(createdAt: string) {
+  const instant = new Date(createdAt).toISOString()
+  return { value: formatDate(instant.slice(0, 10)), detail: `${instant.slice(11, 16)} UTC` }
 }

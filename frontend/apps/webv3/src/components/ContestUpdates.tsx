@@ -17,7 +17,7 @@ type Contest = ImmersionContestView & { id: string }
 export function ContestUpdates({ contest, page }: { contest: Contest; page: number }) {
   const links = useLinks()
   return (
-    <section className="mt-6" aria-label="Updates">
+    <section className="mt-6" aria-label="Activity">
       <ContestLogs contest={contest} page={page} pageHref={next => links.contestUpdates(contest.id, next)} showParticipant />
     </section>
   )

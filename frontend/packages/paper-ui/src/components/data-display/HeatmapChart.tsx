@@ -154,7 +154,7 @@ export function HeatmapChart({ id, data, year, getHref, today, surface = "paper"
     if (!shouldRender) return undefined;
 
     lastMonth += 1;
-    return DateTime.fromObject({ month: lastMonth }).toFormat("LLL");
+    return DateTime.fromObject({ month: lastMonth }, { locale: "en-US" }).toFormat("LLL");
   });
 
   const tooltipLayerId = `paper-heatmap-tooltip-${id}`;

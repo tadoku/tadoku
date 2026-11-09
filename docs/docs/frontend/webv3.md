@@ -15,8 +15,8 @@ external sites. Its homepage follows the Paper playground composition and reads 
 standings and next scheduled round from the configured Tadoku API. Guests see
 the introduction and how Tadoku works; a signed-in learner sees their place and
 points in the current round, or whether they have joined it, with the year's
-points, today's points, updates and active days beside it. Below come the activity
-calendar, their five newest updates and this year's contests, unfinished ones
+points, today's points, logs and active days beside it. Below come the activity
+calendar, their five newest logs and this year's contests, unfinished ones
 first. The home route's loader reads those from the profile statistics and
 activity queries for signed-in viewers, so they render on the server. `/plan`
 demonstrates a validated immersion goal kept in the current browser; no page
@@ -24,7 +24,7 @@ links to it. It does not sync the goal to a Tadoku account. [Native activity log
 The latest official, yearly and all-time [leaderboards](webv3-leaderboards.md)
 read their standings from the API, and the Official, Community, Joined and Organizing
 [contest lists](webv3-contests.md) list contests as the visitor sees them.
-Each [contest page](webv3-contest.md) shows its standings, its updates and the
+Each [contest page](webv3-contest.md) shows its standings, its activity and the
 viewer's actions and opens each participant's contest profile. Signed-in learners
 join contests and change their languages there, and organizers and administrators
 remove logs from a contest. Permitted accounts [create contests](webv3-contest-admin.md),
@@ -52,6 +52,14 @@ legacy applications keep their existing compatibility.
 - The goal form uses `usePaperForm` and bound Paper controls through TanStack
   Form's composition contexts. Its Zod validators own numeric bounds and errors.
   Saving and storage failures remain application-owned effects.
+
+Numbers use one locale, `en-US`, through `frontend/apps/webv3/src/lib/format.ts`,
+with English plurals that follow the number as shown, such as `1 page`,
+`2.3 pages` and `1.0 points`. Dates are formatted by hand, or pinned to `en-US`
+and UTC, and screens read today's date and the current year from their loader's
+data rather than the clock while rendering, so server HTML and hydration match
+in every browser locale. The UI calls the list of logs "activity" and one entry
+a "log".
 
 Server responses are parsed before the screen uses them. Production API null
 language lists mean unrestricted languages and normalize to empty lists; missing

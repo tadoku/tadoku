@@ -7,7 +7,7 @@ import { z } from 'zod'
 import { DraftOwnerGate } from '../../components/DraftOwnerGate'
 import { LogDescription } from '../../components/LogDescription'
 import { useLinks } from '../../lib/links'
-import { formatTracking, logName, pointsUnit, scoreFormat } from '../../lib/format'
+import { formatTracking, logName, pointsUnit, scoreFormat, utcToday } from '../../lib/format'
 import { contestChoices } from '../../lib/log-draft'
 import {
   logQuery,
@@ -29,14 +29,16 @@ export const Route = createFileRoute('/logs/$logId_/contests')({
   validateSearch: z.object({ preselect: z.coerce.number().optional().catch(undefined) }),
   loader: async ({ context, params }) => {
     if (!z.guid().safeParse(params.logId).success) throw notFound()
+    const today = utcToday()
     const viewer = await context.queryClient.ensureQueryData(viewerQueryOptions())
-    if (viewer.status !== 'signed-in') return
+    if (viewer.status !== 'signed-in') return { today }
 
     const log = await context.queryClient.ensureQueryData(logQuery(params.logId, viewer.userId))
     if (!log.ok && log.reason === 'not-found') throw notFound()
     if (log.ok && (log.data.user_id === viewer.userId || viewer.role === 'admin')) {
       await context.queryClient.ensureQueryData(ownerRegistrationsQuery(viewer.userId, log.data.user_id))
     }
+    return { today }
   },
   component: LogContests,
 })
@@ -113,7 +115,9 @@ function ContestsForm({ log, registrations, viewerId }: {
   const updateLogContests = useUpdateLogContests()
   const links = useLinks()
   const [failure, setFailure] = useState<LogFailure | null>(null)
-  const [today] = useState(() => new Date().toISOString().slice(0, 10))
+  const { today } = Route.useLoaderData()
+  // An administrator choosing for another learner reads about the learner's record, not their own.
+  const owner = log.user_id === viewerId
   const choices = contestChoices(log, registrations, today)
   const eligible = choices.filter(choice => choice.kind === 'eligible').map(choice => choice.registration.id)
   const submitted = log.registrations ?? []
@@ -148,7 +152,7 @@ function ContestsForm({ log, registrations, viewerId }: {
         backLink={{ href: `/logs/${log.id}`, label: logName(log) }}
       />
       <Surface className={recordSurface}>
-        <LogSummary log={log} />
+        <LogSummary log={log} owner={owner} />
         <form.AppForm>
           <form.Form className="min-w-0" aria-busy={pending}>
             <fieldset className={formControls} disabled={disabled}>
@@ -172,7 +176,7 @@ function ContestsForm({ log, registrations, viewerId }: {
                 ))}
                 </div>
                 {eligible.length ? <p className="mb-0 mt-2 text-metadata text-muted">Unchecking removes this log’s score from that contest.</p> : null}
-                {choices.some(choice => choice.kind === 'ineligible')
+                {owner && choices.some(choice => choice.kind === 'ineligible')
                   ? <p className="mb-0 mt-1 text-metadata text-muted">Registered for the wrong language? <AppLink className="text-link hover:text-link-hover" href={links.contests}>Update your registration</AppLink> from its contest page.</p>
                   : null}
                 {finished.map(submission => (
@@ -187,10 +191,12 @@ function ContestsForm({ log, registrations, viewerId }: {
                   variant="plain"
                   headingLevel={2}
                   title="No eligible contests"
-                  description={choices.length
-                    ? 'This activity already counts in your personal history.'
-                    : 'No contest registrations found. You can submit to contests after joining one. This activity already counts in your personal history.'}
-                  actions={<AppLink className="text-link hover:text-link-hover" href={links.contests}>Find a contest to join</AppLink>}
+                  description={!owner
+                    ? 'This activity already counts in the learner\'s personal history.'
+                    : choices.length
+                      ? 'This activity already counts in your personal history.'
+                      : 'No contest registrations found. You can submit to contests after joining one. This activity already counts in your personal history.'}
+                  actions={owner ? <AppLink className="text-link hover:text-link-hover" href={links.contests}>Find a contest to join</AppLink> : null}
                 />
               )}
             </fieldset>
@@ -218,7 +224,7 @@ const organizer = (contest: Registration['contest']) => {
 }
 
 /** The log being submitted, as Webv2 shows it above the contests: what, how much and its score. */
-function LogSummary({ log }: { log: ImmersionLog }) {
+function LogSummary({ log, owner }: { log: ImmersionLog; owner: boolean }) {
   const what = [log.language.name, log.activity.name, formatTracking(log)].filter(Boolean).join(' · ')
 
   return (
@@ -227,9 +233,9 @@ function LogSummary({ log }: { log: ImmersionLog }) {
         'grid grid-cols-content-end items-baseline gap-x-4 gap-y-0.5 border-b border-rule bg-canvas',
         '-mx-record-inset -mt-record-inset mb-6 px-record-inset py-4 [&_p]:m-0',
       ].join(' ')}
-      aria-label="Your log"
+      aria-label={owner ? 'Your log' : 'This log'}
     >
-      <p className="col-span-full text-metadata text-muted">Your log</p>
+      <p className="col-span-full text-metadata text-muted">{owner ? 'Your log' : 'This log'}</p>
       <p className="font-semibold">{what}</p>
       {log.description ? <p className="col-start-1 text-sm text-muted wrap-anywhere"><LogDescription log={{ ...log, description: log.description }} /></p> : null}
       <p className="col-start-2 row-start-2 whitespace-nowrap font-bold tabular-nums">

@@ -3,6 +3,7 @@ import { createFileRoute, redirect } from '@tanstack/react-router'
 import { Button, EmptyState, buttonClassName } from 'paper-ui'
 import { z } from 'zod'
 import { ContestScoring } from '../../../components/ContestScoring'
+import { utcToday } from '../../../lib/format'
 import { getPageUrls } from '../../../lib/links'
 import { contestScoringQuery } from '../../../lib/scoring'
 import { useLoginUrl, viewerQueryOptions } from '../../../lib/session'
@@ -22,19 +23,21 @@ export const Route = createFileRoute('/contests/$id/scoring')({
     if (viewer.status === 'signed-in' && viewer.role === 'admin' && isContestId(params.id)) {
       await context.queryClient.ensureQueryData(contestScoringQuery(params.id, viewer.userId))
     }
+    return { today: utcToday() }
   },
   component: Scoring,
 })
 
 function Scoring() {
   const { id } = Route.useParams()
+  const { today } = Route.useLoaderData()
   const viewerQuery = useQuery(viewerQueryOptions())
   const loginUrl = useLoginUrl()
   const viewer = viewerQuery.data
 
   if (viewer?.status === 'signed-in' && viewer.role === 'admin') {
     return isContestId(id)
-      ? <ContestScoring key={viewer.userId} contestId={id} viewerId={viewer.userId} />
+      ? <ContestScoring key={viewer.userId} contestId={id} viewerId={viewer.userId} today={today} />
       : <EmptyState headingLevel={1} title="Contest not found" description="This contest does not exist." />
   }
   switch (viewer?.status) {

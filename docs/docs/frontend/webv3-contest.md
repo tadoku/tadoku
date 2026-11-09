@@ -1,12 +1,12 @@
 ---
 title: Webv3 contest page and registration
-description: Webv3's contest page with its standings, updates and viewer actions, participant contest profiles, log moderation, the registration form, their deadlines, permissions, failure states and checks.
+description: Webv3's contest page with its standings, activity and viewer actions, participant contest profiles, log moderation, the registration form, their deadlines, permissions, failure states and checks.
 sidebar_position: 3
 ---
 
 # Webv3 contest page and registration
 
-Read this when you change a Webv3 contest page, its updates or participant
+Read this when you change a Webv3 contest page, its activity or participant
 profiles, log moderation or contest registration.
 
 `/contests/$id/leaderboard` is a contest's main page, with an optional trailing
@@ -26,7 +26,7 @@ An unknown or malformed contest ID answers 404 with a not-found page.
 - `frontend/apps/webv3/src/components/ContestPage.tsx` composes the page header
   and actions around the board that
   `frontend/apps/webv3/src/components/ContestLeaderboard.tsx` shares with the
-  latest official leaderboard: notices, standings and conditions; the Updates
+  latest official leaderboard: notices, standings and conditions; the Activity
   tab lists the contest's logs.
   The selected Leaderboard tab names the standings, so the contest page shows no
   separate standings heading. `frontend/apps/webv3/src/components/ContestRegistration.tsx` holds the
@@ -62,9 +62,9 @@ explains that registration has closed instead of offering the form; an API
 refusal after the deadline shows Webv2's message and keeps the form. A saved
 registration returns to the contest page.
 
-## Updates and participant profiles
+## Activity and participant profiles
 
-The Leaderboard and Updates tabs share the page header and actions.
+The Leaderboard and Activity tabs share the page header and actions.
 `/contests/$id/updates` lists every participant's contest logs as Webv2's updates
 page does: newest first, 50 per page, without deleted logs, each naming its
 learner beside their [avatar](webv3.md#avatars) and opening its
@@ -107,7 +107,7 @@ Reader, changes its languages and checks a refused registration after the
 deadline.
 
 `frontend/apps/webv3/e2e/contest-activity.spec.ts` compares the server-rendered
-updates and a standings participant's contest profile with the API, pages through
+activity and a standings participant's contest profile with the API, pages through
 them, opens a log, checks not-found addresses and a 390px layout. With both
 fixture credentials it submits a Dev Reader log to a contest Dev Admin creates,
 checks that Dev Reader sees no moderation action, and removes the log as Dev

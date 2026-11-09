@@ -16,7 +16,7 @@ import {
   unitsFor,
   type LogDraft,
 } from '../lib/log-draft'
-import { logName } from '../lib/format'
+import { logName, numberFormat } from '../lib/format'
 import { readLastLogged, rememberLastLogged } from '../lib/log-preferences'
 import { useLinks } from '../lib/links'
 import {
@@ -275,7 +275,6 @@ const ChoiceFields = withPaperForm({
   },
 })
 
-const estimateFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 })
 
 /**
  * The API's estimate of the draft's score, requested once the draft is valid and has stopped changing for 300 ms. An
@@ -298,7 +297,7 @@ const ScoreEstimate = withPaperForm({
     const score = input !== undefined && data?.ok ? data.data.platform.score : undefined
     return (
       <p className="log-form__estimate m-0 tabular-nums max-sm:basis-full" aria-live="polite">
-        Estimated score: <strong className="data-pending:font-regular data-pending:text-muted" data-pending={score === undefined ? '' : undefined}>{score === undefined ? '—' : score ? estimateFormat.format(score) : 'N/A'}</strong>
+        Estimated score: <strong className="data-pending:font-regular data-pending:text-muted" data-pending={score === undefined ? '' : undefined}>{score === undefined ? '—' : score ? numberFormat.format(score) : 'N/A'}</strong>
       </p>
     )
   },

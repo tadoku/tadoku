@@ -77,6 +77,7 @@ console output; they include assertion output and fixture cleanup errors.
 | `verify-standalone-migrations.yaml` | Every PR | Fails when migration SQL files change together with other files, unless the PR has the `migration-move` label |
 | `verify-docs.yaml` | Every PR | Runs `docs/scripts/docs-check.test.mjs`, so removing code that the docs still name fails |
 | `verify-dev-base.yaml` | PRs and `main` pushes touching development manifests, migration inputs or its workflow | Runs `k8s/dev/base/e2e.cjs` against real published images with disposable Docker fixtures, checks profiles and owner/runtime separation, and uploads its report and logs |
+| `verify-config-contract.yaml` | Every PR | Runs the [production config contract](#production-config-contract) self-check and checker |
 | `verify-file-sizes.yaml` | Every PR | Runs `./tools/ci/check_file_sizes.sh`, which fails when a handwritten text file is over 20,000 bytes; see [Splitting a long file](../architecture/module-design.md#splitting-a-long-file) |
 | `verify-http-error-mapping.yaml` | Every PR | Rejects literal 5xx responses in `services/tadoku-api/transport/http/`; `services/tadoku-api/transport/http/errors.go` maps errors to statuses |
 | `build-frontend-webv2.yaml` | Pushes touching webv2, `ui` or the lockfile | Builds webv2; publishes its image from `main` |
@@ -97,3 +98,40 @@ without a production release. Main publication updates the commit tag, `latest`
 and `prod`. Development follows `latest` and production follows `prod`, so merging
 frontend source to `main` releases each affected frontend to production, as it
 does for the backend images.
+
+## Production config contract
+
+Production manifests depend on names and paths that this repository defines:
+runtime environment variables, ingress hosts, probe paths, the auth cookie
+domain and feature flag keys.
+`tools/ci/configcontract/contract.json` lists each item with the files that
+consume it and the text that must appear there.
+`tools/ci/configcontract/check.py` fails and names the item and file when that
+text or file is missing. The text must not be part of a longer name: a key does
+not match a longer key, `HOST=` does not match `APP_HOST=` and `tadoku.app` does
+not match `tadoku.app.example`. When an entry's text ends in punctuation, such
+as a template literal, include its closing delimiter so a suffix cannot extend
+it. Matching searches the raw file text, comments and strings included. It
+catches a missing file and an ordinary rename but does not prove the consumer is
+still active, so when you rename a consumer, also update comments that quote its
+old name. An equivalent rewrite of the consuming code, such as
+`process.env['X']` for `process.env.X`, fails until its entry is updated.
+`verify-config-contract.yaml` runs it on every pull request, so it can be a
+required check.
+
+```sh
+python3 tools/ci/configcontract/check.py
+python3 tools/ci/configcontract/self_check.py
+```
+
+When you add, rename or remove an item that production depends on, change the
+production configuration and the contract in step: add one entry line per file
+that consumes the item, pointing at the code that reads or serves it rather
+than at a copy of the value. Renaming an item breaks the deployed manifests
+until they are updated to match.
+
+The production manifests live outside this repository and are not checked here:
+the Webv3 and Webv2 Deployments' environment values and probes, the HTTPRoute
+hostnames, the Tadoku API's `API_IDENTITY_COOKIE_DOMAIN` (production relies on
+its default) and the production Flipt flag and segment state. Webv3's optional
+runtime `NODE_EXTRA_CA_CERTS` is read by Node itself and is not in the contract.

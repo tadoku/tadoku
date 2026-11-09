@@ -1,0 +1,22 @@
+name: verify-config-contract
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify production config contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Prove the checker catches a renamed or removed item
+        run: python3 tools/ci/configcontract/self_check.py
+
+      - name: Reject removed or renamed production config items
+        run: python3 tools/ci/configcontract/check.py

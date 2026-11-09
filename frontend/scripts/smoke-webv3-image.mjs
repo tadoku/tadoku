@@ -4,7 +4,7 @@ import { get } from 'node:http'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { promisify } from 'node:util'
-import { apiPort, contest, fixture, fixtureOptions, writes } from './smoke-webv3-fixture.mjs'
+import { apiPort, contest, fixture, fixtureOptions, requestIds, writes } from './smoke-webv3-fixture.mjs'
 
 const image = process.argv[2]
 assert(image, 'Usage: node scripts/smoke-webv3-image.mjs <image>')
@@ -131,6 +131,22 @@ try {
   } finally {
     fixtureOptions.delayMs = 0
     docker('rm', '-f', draining)
+  }
+  // Upstream calls carry the request's ID, so webv3's failure lines and Tadoku API's lines join on correlation_id.
+  // An unsafe ingress ID is replaced, never forwarded.
+  for (const ingress of ['smoke-forwarded', 'not safe!']) {
+    requestIds.length = 0
+    fixtureOptions.status = 500
+    try {
+      await fetch(base, { headers: { 'X-Request-ID': ingress }, signal: AbortSignal.timeout(15_000) })
+    } finally {
+      fixtureOptions.status = 0
+    }
+    const [id] = requestIds
+    assert(typeof id === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(id) && requestIds.every(each => each === id), `Upstream calls carried ${requestIds}`)
+    assert.equal(id === ingress, ingress === 'smoke-forwarded', `Ingress ID ${ingress} was forwarded as ${id}`)
+    const lines = docker('logs', container).split('\n').filter(line => line.includes(`"correlation_id":"${id}"`))
+    assert(lines.some(line => JSON.parse(line).event === 'upstream_failure'), `No failure line carries ${id}`)
   }
   const refused = await fetch(`${base}/logout`, { method: 'POST', headers: { Origin: 'https://evil.tadoku.app', 'Sec-Fetch-Site': 'same-site' }, redirect: 'manual' })
   assert.equal(refused.status, 403)

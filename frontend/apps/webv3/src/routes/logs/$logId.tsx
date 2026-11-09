@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { PencilSquareIcon, TrashIcon, iconClassName } from 'paper-ui/icons'
 import { Link, createFileRoute, notFound, useHydrated } from '@tanstack/react-router'
 import { Button, buttonClassName, DescriptionList, EmptyState, entryLink, Modal, PageHeader, SectionHeading, StatGrid, Surface } from 'paper-ui'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { z } from 'zod'
 import { formatDate, isNsfw, pointsUnit, scoreFormat } from '../../lib/format'
 import { useLinks } from '../../lib/links'
@@ -11,7 +11,7 @@ import { viewerKey, viewerQueryOptions } from '../../lib/session'
 import { ActivityName } from '../../components/ActivityName'
 import { Avatar } from '../../components/Avatar'
 import { LogDescription } from '../../components/LogDescription'
-import { renderLink } from '../../components/router-link'
+import { AppLink, renderLink } from '../../components/router-link'
 
 export const Route = createFileRoute('/logs/$logId')({
   head: () => ({ meta: [{ title: 'Activity · Tadoku' }] }),
@@ -29,7 +29,6 @@ function LogDetail() {
   const links = useLinks()
   const { data: viewer } = useQuery(viewerQueryOptions())
   const { data: result } = useQuery(logQuery(logId, viewerKey(viewer)))
-  useFocusPageHeading()
 
   if (!result?.ok) {
     const forbidden = result?.ok === false && result.reason === 'forbidden'
@@ -61,7 +60,7 @@ function LogDetail() {
                 {' · Logged by '}
                 <span className="whitespace-nowrap">
                   <Avatar userId={log.user_id} name={learner} size="sm" className="me-1.5" />
-                  <a className="text-link hover:text-link-hover" href={links.profile(log.user_id)}>{learner}</a>
+                  <AppLink className="text-link hover:text-link-hover" href={links.profile(log.user_id)}>{learner}</AppLink>
                 </span>
               </>
             ) : null}
@@ -187,7 +186,7 @@ function OwnContests({ log }: { log: ImmersionLog }) {
     <ul className="m-0 list-none p-0">
       {registrations.map(registration => (
         <li key={registration.contest_id} className="flex items-baseline justify-between gap-4 py-3 [&+&]:border-t [&+&]:border-rule">
-          <a className={entryLink({ className: 'profile-entry-title' })} href={links.contest(registration.contest_id)}>{registration.title}</a>
+          <AppLink className={entryLink({ className: 'profile-entry-title' })} href={links.contest(registration.contest_id)}>{registration.title}</AppLink>
           {registration.score !== undefined ? (
             <span className="whitespace-nowrap font-bold tabular-nums">
               {scoreFormat.format(registration.score)}{' '}
@@ -198,17 +197,6 @@ function OwnContests({ log }: { log: ImmersionLog }) {
       ))}
     </ul>
   ) : <p className="m-0 text-muted">Saved to your personal record only.</p>
-}
-
-/** Moves focus to the page title once the page is interactive, so keyboard users land on the record they opened. */
-function useFocusPageHeading() {
-  const hydrated = useHydrated()
-  useEffect(() => {
-    if (!hydrated) return
-    const heading = document.querySelector<HTMLElement>('h1')
-    heading?.setAttribute('tabindex', '-1')
-    heading?.focus()
-  }, [hydrated])
 }
 
 const amountFormat = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 2 })

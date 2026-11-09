@@ -113,11 +113,11 @@ test('preserves the dark theme and opens the blog through mobile navigation', as
   await page.screenshot({ path: testInfo.outputPath('blog-dark-mobile.png'), fullPage: true })
 })
 
-test('keeps client-only mobile controls disabled before hydration', async ({ browser }, testInfo) => {
+test('offers the mobile menu as a link before hydration', async ({ browser }, testInfo) => {
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 900 } })
   const page = await context.newPage()
   await page.goto(testInfo.project.use.baseURL || 'http://127.0.0.1:5183')
-  await expect(page.getByRole('button', { name: 'Open menu', exact: true })).toBeDisabled()
+  await expect(page.getByRole('link', { name: 'Open menu', exact: true })).toBeVisible()
   await page.screenshot({ path: testInfo.outputPath('homepage-before-hydration.png'), fullPage: true })
   await context.close()
 })

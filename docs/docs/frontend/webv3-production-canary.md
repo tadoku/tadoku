@@ -37,8 +37,8 @@ Once enabled, missing secrets fail the run rather than skipping the journey.
 
 ## No writes
 
-The journey signs in once, in its own browser context, and then refuses every
-request that is not a read. A refused request fails the run, so the account's
+From its first request, the journey refuses every request that is not a read,
+except the login POST. A refused request fails the run, so the account's
 activity and every standing stay unchanged. Signing in creates one session per
 run; sessions expire on their own.
 

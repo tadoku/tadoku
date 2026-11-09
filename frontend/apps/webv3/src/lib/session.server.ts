@@ -31,12 +31,14 @@ function requestDeadline() {
   return deadline
 }
 
-/** Records the operation a request's deadline cut off, once for each upstream call it aborted. */
+/** Reads the whole response, so a deadline during the body is recorded too, once for each upstream call it aborted. */
 function reportingDeadline(operation: ApiOperation, deadline: AbortSignal): typeof fetch {
   const started = performance.now()
   return async (input, init) => {
     try {
-      return await fetch(input, init)
+      const response = await fetch(input, init)
+      const body = await response.arrayBuffer()
+      return new Response(body.byteLength ? body : null, response)
     } catch (error) {
       if (deadline.aborted) {
         recordUpstreamFailure({

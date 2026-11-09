@@ -63,7 +63,7 @@ export interface HeatmapChartProps {
   readonly data: readonly HeatmapChartDatum[];
   readonly year: number;
   readonly id: string;
-  /** Makes each day with activity a link, for example to that day's records. */
+  /** Makes each day in `data` a link, including one whose value is 0, for example to that day's records. */
   readonly getHref?: (date: string) => string;
   /** The current ISO day; later days are drawn as not yet happened rather than as empty. */
   readonly today?: string;
@@ -77,6 +77,8 @@ interface CalendarCell {
   readonly date: DateTime;
   readonly value: number;
   readonly tooltip?: string;
+  /** The day has a datum, so it links even when its value is 0. */
+  readonly logged: boolean;
 }
 
 interface TooltipRect {
@@ -139,6 +141,7 @@ export function HeatmapChart({ id, data, year, getHref, today, surface = "paper"
       date,
       value: values.get(isoDate) ?? 0,
       tooltip: tooltips.get(isoDate),
+      logged: values.has(isoDate),
     };
     if (date.weekday === 7) columnIndex += 1;
   }
@@ -274,10 +277,10 @@ function Cell({
   const x = OFFSET.x + CELL_WIDTH * column + CELL_GAP * column;
   const y = OFFSET.y + CELL_HEIGHT * row + CELL_GAP * row;
   const isoDate = cell?.date.toISODate() ?? undefined;
-  const tooltip = cell && cell.value !== 0 ? cell.tooltip : undefined;
+  const tooltip = cell?.logged ? cell.tooltip : undefined;
   const tooltipId = `${tooltipLayerId}-${column}-${row}`;
   const level = getCellDepth(cell?.value);
-  const href = cell && isoDate && cell.value !== 0 ? getHref?.(isoDate) : undefined;
+  const href = cell?.logged && isoDate ? getHref?.(isoDate) : undefined;
   const future = Boolean(today && isoDate && isoDate > today);
   const label = cell ? (future ? `${isoDate}: not yet` : (cell.tooltip ?? `${isoDate}: ${cell.value}`)) : undefined;
   const showTooltip = tooltip ? () => setTooltipVisible(true) : undefined;

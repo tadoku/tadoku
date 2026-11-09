@@ -2,6 +2,9 @@ import { tv } from "../../foundations/variants";
 
 export const navigationIcon = "paper-navigation__icon grid size-icon flex-none place-items-center *:size-full";
 
+const mobileTrigger =
+  "hidden size-target min-h-target min-w-target flex-none cursor-pointer place-items-center border-0 bg-transparent p-0 text-ink max-lg:grid";
+
 const barLink = [
   "inline-flex min-h-control cursor-pointer items-center gap-inline border-0 bg-transparent px-field-x",
   "font-semibold text-ink no-underline aria-disabled:cursor-default aria-disabled:opacity-faded",
@@ -18,10 +21,9 @@ export const navbar = tv({
     link: ["paper-navbar__link", ...barLink, "not-aria-disabled:hover:bg-neutral-hover"],
     trigger: ["paper-navbar__dropdown-trigger", ...barLink, "hover:bg-neutral-hover"],
     actions: "paper-navbar__actions flex items-center gap-inline",
-    mobileTrigger: [
-      "paper-navbar__mobile-trigger hidden size-target min-h-target min-w-target flex-none cursor-pointer",
-      "place-items-center border-0 bg-transparent p-0 text-ink disabled:cursor-progress max-lg:grid",
-    ],
+    mobileTrigger: ["paper-navbar__mobile-trigger disabled:cursor-progress", mobileTrigger],
+    /** Before hydration: a link to the panel, which `:target` opens without JavaScript. */
+    mobileFallback: ["paper-navbar__mobile-fallback", mobileTrigger],
     positioner: "paper-navbar__positioner z-popover outline-none",
     dropdown: [
       "paper-navbar__dropdown min-w-menu origin-(--transform-origin) py-1.4",
@@ -48,6 +50,7 @@ export const navbar = tv({
   },
   variants: {
     open: { true: { panel: "max-lg:block" } },
+    fallback: { true: { panel: "max-lg:target:block" } },
     alone: { true: { actions: "ms-auto" } },
     /** Inside an application frame's header band: the bar keeps to the frame width and its gutter. */
     contained: {

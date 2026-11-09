@@ -149,7 +149,8 @@ export function Navbar({
   const slots = navbar({ contained });
   const menuId = `paper-navbar-${useId().replace(/:/gu, "")}`;
   const [mobileOpen, setMobileOpen] = useState(false);
-  // False in server HTML and while hydrating it, where React would drop the trigger's clicks; true for client renders.
+  // False in server HTML and while hydrating it, where React would drop the trigger's clicks and a link opens the panel
+  // instead; true for client renders.
   const hydrated = useSyncExternalStore(noSubscription, () => true, () => false);
   const mobileTriggerRef = useRef<HTMLButtonElement>(null);
 
@@ -196,7 +197,16 @@ export function Navbar({
         {actions ? (
           <div className={navbar({ contained, alone: navigation.length === 0 }).actions({ className: classNames.actions })}>{actions}</div>
         ) : null}
-        {mobileNavigation ? (
+        {mobileNavigation && !hydrated ? (
+          <a
+            href={`#${menuId}`}
+            className={slots.mobileFallback({ className: classNames.mobileTrigger })}
+            aria-label={`Open ${menuLabel.toLocaleLowerCase()}`}
+          >
+            <Bars3Icon className={iconClassName("prominent")} aria-hidden="true" />
+          </a>
+        ) : null}
+        {mobileNavigation && hydrated ? (
           <button
             ref={mobileTriggerRef}
             type="button"
@@ -204,7 +214,6 @@ export function Navbar({
             aria-controls={menuId}
             aria-expanded={mobileOpen}
             aria-label={mobileOpen ? `Close ${menuLabel.toLocaleLowerCase()}` : `Open ${menuLabel.toLocaleLowerCase()}`}
-            disabled={!hydrated}
             onClick={() => setMobileOpen((open) => !open)}
           >
             {mobileOpen ? (
@@ -218,9 +227,10 @@ export function Navbar({
       {mobileNavigation ? (
         <div
           id={menuId}
-          className={navbar({ contained, open: mobileOpen }).panel({ className: classNames.panel })}
+          className={navbar({ contained, open: mobileOpen, fallback: !hydrated }).panel({ className: classNames.panel })}
           data-open={mobileOpen ? "true" : "false"}
-          hidden={!mobileOpen}
+          // Paper hides [hidden] with !important, so the server panel relies on its classes, which :target overrides.
+          hidden={hydrated ? !mobileOpen : undefined}
         >
           {navigation.map((item) =>
           item.type === "link" ? (

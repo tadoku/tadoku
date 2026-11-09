@@ -131,6 +131,37 @@ func (s *Service) ListYearlyRegistrations(
 	return result, nil
 }
 
+// ListMyRegistrations lists every registration of userID, including private contests, so callers must pass
+// the authenticated actor's own ID.
+func (s *Service) ListMyRegistrations(
+	ctx context.Context,
+	userID uuid.UUID,
+	parameters MyRegistrationsParameters,
+	languages []domainlanguages.Language,
+) (*RegistrationList, error) {
+	if err := parameters.Validate(); err != nil {
+		return nil, err
+	}
+
+	if parameters.PageSize == 0 || parameters.PageSize > myRegistrationsMaxPageSize {
+		parameters.PageSize = myRegistrationsMaxPageSize
+	}
+
+	registrations, total, err := s.contests.ListMyRegistrations(ctx, userID, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := hydrateRegistrations(registrations, languages)
+	if err != nil {
+		return nil, err
+	}
+	result.TotalSize = total
+	result.NextPageToken = nextPageToken(parameters.PageSize, parameters.Page, total)
+
+	return result, nil
+}
+
 func hydrateRegistrations(registrations []Registration, languages []domainlanguages.Language) (*RegistrationList, error) {
 	if err := hydrateRegistrationActivities(registrations); err != nil {
 		return nil, err

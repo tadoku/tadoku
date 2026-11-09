@@ -38,6 +38,7 @@ output-options:
     - ImmersionContestRegistrationUpsert
     - ImmersionProfileYearlyContestRegistrationsByUserID
     - ImmersionContestFindOngoingRegistrations
+    - ImmersionContestListRegistrations
     - ImmersionContestGetConfigurations
     - ImmersionContestFetchSummary
     - ImmersionLogGetConfigurations

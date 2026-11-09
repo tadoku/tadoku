@@ -314,6 +314,21 @@ func (p YearlyRegistrationsParameters) offset() int32 {
 	return pageOffset(p.PageSize, p.Page)
 }
 
+const myRegistrationsMaxPageSize = 50
+
+type MyRegistrationsParameters struct {
+	PageSize int
+	Page     int
+}
+
+func (p MyRegistrationsParameters) Validate() error {
+	return validatePage(p.PageSize, p.Page)
+}
+
+func (p MyRegistrationsParameters) offset() int32 {
+	return pageOffset(p.PageSize, p.Page)
+}
+
 func validatePage(pageSize, page int) error {
 	if pageSize < 0 {
 		return errx.NewInvalidInputError("page_size must not be negative")

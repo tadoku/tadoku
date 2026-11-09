@@ -41,6 +41,27 @@ func (s *server) ImmersionContestFindOngoingRegistrations(
 	return openapi.ImmersionContestFindOngoingRegistrations200JSONResponse(registrationListResponse(registrations)), nil
 }
 
+func (s *server) ImmersionContestListRegistrations(
+	ctx context.Context,
+	request openapi.ImmersionContestListRegistrationsRequestObject,
+) (openapi.ImmersionContestListRegistrationsResponseObject, error) {
+	var parameters api.ListMyContestRegistrationsParameters
+	if request.Params.PageSize != nil {
+		parameters.PageSize = *request.Params.PageSize
+	}
+	if request.Params.Page != nil {
+		parameters.Page = *request.Params.Page
+	}
+
+	registrations, err := s.application.ListMyContestRegistrations(ctx, parameters)
+	if err != nil {
+		s.logOperationError(ctx, "list my contest registrations", err)
+		return nil, err
+	}
+
+	return openapi.ImmersionContestListRegistrations200JSONResponse(registrationListResponse(registrations)), nil
+}
+
 func (s *server) ImmersionProfileYearlyContestRegistrationsByUserID(
 	ctx context.Context,
 	request openapi.ImmersionProfileYearlyContestRegistrationsByUserIDRequestObject,

@@ -1383,6 +1383,12 @@ type ImmersionContestListParams struct {
 	UserId         *openapi_types.UUID `form:"user_id,omitempty" json:"user_id,omitempty"`
 }
 
+// ImmersionContestListRegistrationsParams defines parameters for ImmersionContestListRegistrations.
+type ImmersionContestListRegistrationsParams struct {
+	PageSize *int `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page     *int `form:"page,omitempty" json:"page,omitempty"`
+}
+
 // ImmersionContestListEventsParams defines parameters for ImmersionContestListEvents.
 type ImmersionContestListEventsParams struct {
 	// Cursor A retained event UUID, 0 for the beginning, or now for the latest visible event.
@@ -1777,6 +1783,9 @@ type ServerInterface interface {
 	// ImmersionContestFindOngoingRegistrations Fetches all the ongoing contest registrations of the logged in user, always in a single page
 	// (GET /immersion/contests/ongoing-registrations)
 	ImmersionContestFindOngoingRegistrations(w http.ResponseWriter, r *http.Request)
+	// ImmersionContestListRegistrations Fetches every contest registration of the logged in user, across all years
+	// (GET /immersion/contests/registrations)
+	ImmersionContestListRegistrations(w http.ResponseWriter, r *http.Request, params ImmersionContestListRegistrationsParams)
 	// ImmersionContestFindByID Fetches a contest by id
 	// (GET /immersion/contests/{id})
 	ImmersionContestFindByID(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
@@ -3140,6 +3149,52 @@ func (siw *ServerInterfaceWrapper) ImmersionContestFindOngoingRegistrations(w ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ImmersionContestFindOngoingRegistrations(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImmersionContestListRegistrations operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionContestListRegistrations(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ImmersionContestListRegistrationsParams
+
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page_size", r.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page_size"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_size", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionContestListRegistrations(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4693,6 +4748,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/profile/{user_id}/activity", wrapper.ImmersionContestProfileFetchActivity)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/ongoing-registrations", wrapper.ImmersionContestFindOngoingRegistrations)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/configuration-options", wrapper.ImmersionContestGetConfigurations)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/registrations", wrapper.ImmersionContestListRegistrations)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/events", wrapper.ImmersionContestListEvents)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/logs/{logId}", wrapper.ImmersionContestFindLog)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/logs", wrapper.ImmersionLogCreate)
@@ -6952,6 +7008,53 @@ func (response ImmersionContestFindOngoingRegistrations401Response) VisitImmersi
 	return nil
 }
 
+type ImmersionContestListRegistrationsRequestObject struct {
+	Params ImmersionContestListRegistrationsParams
+}
+
+type ImmersionContestListRegistrationsResponseObject interface {
+	VisitImmersionContestListRegistrationsResponse(w http.ResponseWriter) error
+}
+
+type ImmersionContestListRegistrations200JSONResponse struct {
+	// NextPageToken is empty if there's no next page
+	//
+	// Example: 3
+	NextPageToken string                         `json:"next_page_token"`
+	Registrations []ImmersionContestRegistration `json:"registrations"`
+
+	// TotalSize Example: 100
+	TotalSize int `json:"total_size"`
+}
+
+func (response ImmersionContestListRegistrations200JSONResponse) VisitImmersionContestListRegistrationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionContestListRegistrations400Response struct {
+}
+
+func (response ImmersionContestListRegistrations400Response) VisitImmersionContestListRegistrationsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type ImmersionContestListRegistrations401Response struct {
+}
+
+func (response ImmersionContestListRegistrations401Response) VisitImmersionContestListRegistrationsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
 type ImmersionContestFindByIDRequestObject struct {
 	Id openapi_types.UUID `json:"id"`
 }
@@ -8797,6 +8900,9 @@ type StrictServerInterface interface {
 	// ImmersionContestFindOngoingRegistrations Fetches all the ongoing contest registrations of the logged in user, always in a single page
 	// (GET /immersion/contests/ongoing-registrations)
 	ImmersionContestFindOngoingRegistrations(ctx context.Context, request ImmersionContestFindOngoingRegistrationsRequestObject) (ImmersionContestFindOngoingRegistrationsResponseObject, error)
+	// ImmersionContestListRegistrations Fetches every contest registration of the logged in user, across all years
+	// (GET /immersion/contests/registrations)
+	ImmersionContestListRegistrations(ctx context.Context, request ImmersionContestListRegistrationsRequestObject) (ImmersionContestListRegistrationsResponseObject, error)
 	// ImmersionContestFindByID Fetches a contest by id
 	// (GET /immersion/contests/{id})
 	ImmersionContestFindByID(ctx context.Context, request ImmersionContestFindByIDRequestObject) (ImmersionContestFindByIDResponseObject, error)
@@ -10075,6 +10181,32 @@ func (sh *strictHandler) ImmersionContestFindOngoingRegistrations(w http.Respons
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ImmersionContestFindOngoingRegistrationsResponseObject); ok {
 		if err := validResponse.VisitImmersionContestFindOngoingRegistrationsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionContestListRegistrations operation middleware
+func (sh *strictHandler) ImmersionContestListRegistrations(w http.ResponseWriter, r *http.Request, params ImmersionContestListRegistrationsParams) {
+	var request ImmersionContestListRegistrationsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionContestListRegistrations(ctx, request.(ImmersionContestListRegistrationsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionContestListRegistrations")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionContestListRegistrationsResponseObject); ok {
+		if err := validResponse.VisitImmersionContestListRegistrationsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

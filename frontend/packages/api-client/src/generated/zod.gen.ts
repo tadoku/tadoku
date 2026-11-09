@@ -898,6 +898,18 @@ export const zImmersionContestFindOngoingRegistrationsResponse = zImmersionConte
  */
 export const zImmersionContestGetConfigurationsResponse = zImmersionContestConfigurationOptions;
 
+export const zImmersionContestListRegistrationsQuery = z.object({
+    page_size: z.int().optional(),
+    page: z.int().optional()
+});
+
+/**
+ * successful operation
+ */
+export const zImmersionContestListRegistrationsResponse = zImmersionContestRegistrations.and(z.object({
+    registrations: z.array(zImmersionContestRegistration).max(50).optional()
+}));
+
 export const zImmersionContestListEventsPath = z.object({
     id: z.string().guid()
 });

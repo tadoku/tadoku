@@ -39,6 +39,7 @@ export const successResponses: Readonly<Record<string, Readonly<Record<number, b
   'GET /immersion/contests/{id}/profile/{user_id}/activity': { 200: true },
   'GET /immersion/contests/ongoing-registrations': { 200: true },
   'GET /immersion/contests/configuration-options': { 200: true },
+  'GET /immersion/contests/registrations': { 200: true },
   'GET /immersion/contests/{id}/events': { 200: true },
   'GET /immersion/contests/{id}/logs/{logId}': { 200: true },
   'POST /immersion/logs': { 200: true },

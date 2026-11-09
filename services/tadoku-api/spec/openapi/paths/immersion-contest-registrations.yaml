@@ -1,0 +1,49 @@
+paths:
+  /immersion/contests/registrations:
+    get:
+      summary: Fetches every contest registration of the logged in user, across all years
+      description: >-
+        Includes private and deleted contests and excludes withdrawn
+        registrations. Ordered by contest start descending, then by
+        registration ID ascending. Results are paginated with a zero-based
+        `page`; `page_size` defaults to 50, and 0 or values above 50 are
+        treated as 50.
+      operationId: ImmersionContestListRegistrations
+      tags:
+        - contests
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ImmersionContestRegistrations"
+                  - type: object
+                    properties:
+                      registrations:
+                        type: array
+                        maxItems: 50
+                        items:
+                          $ref: "#/components/schemas/ImmersionContestRegistration"
+        "400":
+          description: invalid page or page_size
+        "401":
+          description: unauthorized
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/registrations
+      x-legacy-operation-id: contestListRegistrations

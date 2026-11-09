@@ -82,6 +82,7 @@ var operationAccess = map[string]accessLevel{
 	"ImmersionContestFindByID":                 accessPublic,
 	"ImmersionContestFindOngoingRegistrations": accessAuthenticated,
 	"ImmersionContestFindRegistration":         accessAuthenticated,
+	"ImmersionContestListRegistrations":        accessAuthenticated,
 	"ImmersionContestFindLatestOfficial":       accessPublic,
 	"ImmersionContestFetchSummary":             accessPublic,
 	"ImmersionContestGetConfigurations":        accessPublic,
@@ -141,6 +142,7 @@ var operationFixtures = map[string]string{
 	"ImmersionContestCreatePermissionCheck":    "ContestCreatePermissionCheck",
 	"ImmersionContestFindOngoingRegistrations": "FindOngoingContestRegistrations",
 	"ImmersionContestFindRegistration":         "FindContestRegistration",
+	"ImmersionContestListRegistrations":        "ListMyContestRegistrations",
 	"ImmersionContestRegistrationUpsert":       "UpsertContestRegistration",
 
 	"ImmersionLogGetConfigurations":         "ImmersionLogGetConfigurations",

@@ -30,9 +30,9 @@ both.
 `recordUpstreamFailure` and `recordSsrError` accept only their typed shapes and copy
 named fields, so an event cannot carry cookies, tokens, request bodies, URLs, error
 messages, Zod messages or received values. `operation` is a compile-time literal.
-Zod path segments that are not shaped like a schema field become `*`; a one-word
-record key cannot be told from a field name, so issues from a schema that keys a
-record by user data must not be reported.
+A Zod path segment is kept only when it is a field name declared by an object
+schema the API client exports, so a record key and a field of an inline nested
+object become `*`.
 
 `withRequestLog` in `frontend/apps/webv3/src/start.ts` gives every Start request an
 ID through `AsyncLocalStorage`, which records read without callers passing it. A

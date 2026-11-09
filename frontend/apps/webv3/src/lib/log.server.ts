@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { randomUUID } from 'node:crypto'
-import type * as ApiClient from 'api-client'
+import * as ApiClient from 'api-client'
+import { z } from 'zod'
 import { urlsForHost } from './urls.server'
 
 /** The name of a generated API operation: a compile-time literal, so caller data cannot become one. */
@@ -25,8 +26,10 @@ type RequestLog = { requestId: string; host: string | undefined }
 
 const requestLog = new AsyncLocalStorage<RequestLog>()
 const requestIdPattern = /^[A-Za-z0-9_-]{1,128}$/
-const issuePathSegmentPattern = /^[A-Za-z_][A-Za-z0-9_]{0,63}$/
 const maxIssuePaths = 20
+const schemaFields = new Set(
+  Object.values(ApiClient).flatMap(schema => (schema instanceof z.ZodObject ? Object.keys(schema.shape) : [])),
+)
 const reportedErrorNames = new Set([
   'Error',
   'RangeError',
@@ -72,14 +75,11 @@ function write(
   process.stdout.write(`${JSON.stringify(entry)}\n`)
 }
 
-/**
- * A segment Zod took from a record key is response data, so anything not shaped like a schema field is masked.
- * A one-word key cannot be told from a field name: do not report issues from a schema that keys a record by user data.
- */
+/** A segment Zod took from a record key is response data, so only field names the API schemas declare are kept. */
 function issuePath(path: readonly PropertyKey[]) {
   return path.map(segment => {
     if (typeof segment === 'number') return String(segment)
-    return typeof segment === 'string' && issuePathSegmentPattern.test(segment) ? segment : '*'
+    return typeof segment === 'string' && schemaFields.has(segment) ? segment : '*'
   }).join('.') || '$'
 }
 

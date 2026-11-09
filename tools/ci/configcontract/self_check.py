@@ -26,6 +26,17 @@ def copy_tree(destination):
         shutil.copyfile(ROOT / name, target)
 
 
+def run_mutated(name, file, old, new, appended):
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        copy_tree(root)
+        path = root / file
+        text = path.read_text()
+        assert old in text, f'{name}: {old!r} not in {file}'
+        path.write_text(text.replace(old, new, 1) + appended)
+        return run(root)
+
+
 def main():
     result = run(ROOT)
     assert result.returncode == 0, result.stdout + result.stderr
@@ -80,18 +91,36 @@ def main():
             '  - key: release-webv3-access\n',
             '  # - key: release-webv3-access\n  - key: release-webv3-beta\n',
         ),
+        (
+            'renamed env read kept in a line comment without a space',
+            urls,
+            'process.env.TADOKU_API_URL ',
+            'process.env.TADOKU_API_URL_V2 ',
+            '\nvoid 0;// formerly process.env.TADOKU_API_URL\n',
+        ),
+        (
+            'renamed Go flag key kept in a line comment without a space',
+            'services/tadoku-api/internal/featureflags/registry.go',
+            '"release-webv3",',
+            '"release-webv3-next",',
+            '\nvar _ = 0// formerly "release-webv3"\n',
+        ),
+        ('extended host template', urls, '`next.${web.host}`', '`next.${web.host}.example`'),
+        ('env name extended with $', urls, 'process.env.TADOKU_API_URL ', 'process.env.TADOKU_API_URL$ '),
     ]
-    for name, file, old, new in mutations:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            copy_tree(root)
-            path = root / file
-            text = path.read_text()
-            assert old in text, f'{name}: {old!r} not in {file}'
-            path.write_text(text.replace(old, new, 1))
-            result = run(root)
-            assert result.returncode == 1 and file in result.stderr, f'{name} passed: {result.stdout}'
+    harmless = [
+        ('block comment opener in a string', urls, '  const api = ', "  void '/*'\n  const api = "),
+        ('line comment opener in a string', urls, '  const api = ', "  void ' // '; const api = "),
+        ('hash in a Dockerfile value', dockerfile, 'ENV NODE_ENV=', 'ENV NOTE=" # " NODE_ENV='),
+    ]
+    for name, file, old, new, *appended in mutations:
+        result = run_mutated(name, file, old, new, ''.join(appended))
+        assert result.returncode == 1 and file in result.stderr, f'{name} passed: {result.stdout}'
         checks.append(f'{name} fails')
+    for name, file, old, new in harmless:
+        result = run_mutated(name, file, old, new, '')
+        assert result.returncode == 0, f'{name} failed: {result.stderr}'
+        checks.append(f'{name} passes')
 
     print('PASS:', '; '.join(checks))
 

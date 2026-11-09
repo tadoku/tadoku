@@ -109,10 +109,12 @@ consume it and the text that must appear there. `tools/ci/configcontract/check.p
 fails and names the item and file when that text or file is missing. Text in
 comments does not count, and the text must not be part of a longer name: a key
 does not match a longer key, `HOST=` does not match `APP_HOST=` and `tadoku.app`
-does not match `tadoku.app.example`. Matching is textual, so an equivalent
-rewrite of the consuming code, such as `process.env['X']` for `process.env.X`,
-fails until its entry is updated. `verify-config-contract.yaml` runs it on every pull request, so it
-can be a required check.
+does not match `tadoku.app.example`. When an entry's text ends in punctuation,
+such as a template literal, include its closing delimiter so a suffix cannot
+extend it. Matching is textual, so an equivalent rewrite of the consuming code,
+such as `process.env['X']` for `process.env.X`, fails until its entry is
+updated. `verify-config-contract.yaml` runs it on every pull request, so it can
+be a required check.
 
 ```sh
 python3 tools/ci/configcontract/check.py

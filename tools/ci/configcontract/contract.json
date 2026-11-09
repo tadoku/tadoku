@@ -8,7 +8,7 @@
     {"item": "webv3 env HOST", "file": "frontend/apps/webv3/Dockerfile", "text": "HOST=0.0.0.0"},
     {"item": "webv3 env PORT", "file": "frontend/apps/webv3/Dockerfile", "text": "PORT=3000"},
     {"item": "webv3 env NODE_ENV", "file": "frontend/apps/webv3/Dockerfile", "text": "NODE_ENV=production"},
-    {"item": "Ingress host next.tadoku.app (webv3)", "file": "frontend/apps/webv3/src/lib/urls.server.ts", "text": "next.${web.host}"},
+    {"item": "Ingress host next.tadoku.app (webv3)", "file": "frontend/apps/webv3/src/lib/urls.server.ts", "text": "`next.${web.host}`"},
     {"item": "Ingress host next.tadoku.app (webv3)", "file": "services/tadoku-api/features/identity/identity_values.go", "text": "host == \"next.\"+parent"},
     {"item": "Ingress host tadoku.app (webv2)", "file": "frontend/apps/webv2/next.config.js", "text": "process.env.NEXT_PUBLIC_HOME_URL ?? 'https://tadoku.app'"},
     {"item": "Ingress host tadoku.app (webv2)", "file": "services/tadoku-api/features/identity/identity_values.go", "text": "[]string{\"tadoku.app\", \"tadoku.dev.lab\"}"},

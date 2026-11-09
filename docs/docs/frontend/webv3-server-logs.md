@@ -1,6 +1,6 @@
 ---
 title: Webv3 server logs
-description: The structured JSON log lines Webv3's server writes for upstream failures and rendering errors, their fields, what they can never contain and the request deadline that records timeouts.
+description: The structured JSON log lines Webv3's server writes for upstream failures and rendering errors, their fields, which statuses count as failures, what they can never contain and the request deadline.
 ---
 
 # Webv3 server logs
@@ -41,10 +41,24 @@ kept; anything else is replaced with a generated ID. Records made outside a Star
 request, such as from a Nitro route in `frontend/apps/webv3/server/routes/`, have
 no `correlation_id` or `host`.
 
-A GET request's deadline, set in `frontend/apps/webv3/src/lib/session.server.ts`,
-records one `timeout` upstream failure for each call it aborts, naming that
-call's operation. It covers upstream calls only: a request whose calls have
-finished keeps rendering.
+## Upstream failures
+
+Every API call the server makes takes its options from `sessionRequest` or
+`publicReadRequest` in `frontend/apps/webv3/src/lib/session.server.ts`, which name
+the operation. `log.server.ts` registers one error interceptor on the generated
+client, which sees each failed call once, so adapters record nothing themselves.
+
+| Outcome | Recorded as |
+| --- | --- |
+| Deadline or per-call timeout, including during the body | `timeout` |
+| Connection failure, or a body cut off while reading | `network` |
+| Any error status other than those below, such as 429 or any 5xx | `http_status` |
+| A success that fails Zod validation, is not JSON, or has a status or body the contract doesn't document | `invalid_response` |
+
+Statuses 400, 401, 403, 404 and 409 are not recorded: adapters turn them into an
+answer the page explains, such as invalid input, a rejected session that
+`readAsVisitor` retries signed out, a refusal, a missing item or an account being
+deleted. A documented success such as 204 never reaches the interceptor.
 
 The same middleware records an SSR error for a response of status 500 or above
 and for a rejected request, unless the client has aborted it. An error React
@@ -75,6 +89,6 @@ Tadoku API's lines use `service_namespace="tdk-prod-tadoku-api"` and
 
 Every GET request has an overall deadline for its upstream calls, set in
 `frontend/apps/webv3/src/lib/session.server.ts`. Upstream calls still running at
-the deadline are aborted, each is recorded as an upstream failure with
+the deadline are aborted, each is recorded as one upstream failure with
 `error_type` `timeout`, and the page renders with those sections marked as
-failed.
+failed. A request whose calls have finished keeps rendering.

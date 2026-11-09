@@ -1,6 +1,6 @@
 import { getRequest, getRequestHeader } from '@tanstack/react-start/server'
 import { authzRoleGet, identitySessionGet } from 'api-client'
-import { recordUpstreamFailure, type ApiOperation } from './log.server'
+import { upstreamCall, type ApiOperation } from './log.server'
 import type { Viewer } from './session'
 import { requestUrls } from './urls.server'
 
@@ -31,27 +31,6 @@ function requestDeadline() {
   return deadline
 }
 
-/** Reads the whole response, so a deadline during the body is recorded too, once for each upstream call it aborted. */
-function reportingDeadline(operation: ApiOperation, deadline: AbortSignal): typeof fetch {
-  const started = performance.now()
-  return async (input, init) => {
-    try {
-      const response = await fetch(input, init)
-      const body = await response.arrayBuffer()
-      return new Response(body.byteLength ? body : null, response)
-    } catch (error) {
-      if (deadline.aborted) {
-        recordUpstreamFailure({
-          operation,
-          durationMs: performance.now() - started,
-          failure: { kind: 'transport', error: 'timeout' },
-        })
-      }
-      throw error
-    }
-  }
-}
-
 /**
  * Options for a generated API operation that the server sends for this request, with the visitor's session if given.
  * Pass `apiUrl` outside a Start request, where the request's deadline and URLs are unavailable.
@@ -65,7 +44,7 @@ export function sessionRequest(operation: ApiOperation, cookie?: string, apiUrl?
     cache: 'no-store' as const,
     redirect: 'error' as const,
     signal: deadline ? AbortSignal.any([timeout, deadline]) : timeout,
-    ...(deadline ? { fetch: reportingDeadline(operation, deadline) } : {}),
+    ...upstreamCall(operation),
   }
 }
 

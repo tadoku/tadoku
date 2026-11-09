@@ -9,7 +9,7 @@ export type ApiOperation = {
   [Name in keyof typeof ApiClient]: (typeof ApiClient)[Name] extends (options: never) => unknown ? Name : never
 }[keyof typeof ApiClient]
 
-export type UpstreamFailure = {
+type UpstreamFailure = {
   operation: ApiOperation
   durationMs: number
   failure:
@@ -104,7 +104,7 @@ function issuePath(path: readonly PropertyKey[]) {
   }).join('.') || '$'
 }
 
-export function recordUpstreamFailure({ operation, durationMs, failure }: UpstreamFailure) {
+function recordUpstreamFailure({ operation, durationMs, failure }: UpstreamFailure) {
   write('upstream_failure', 'upstream request failed', {
     operation,
     latency: Math.round(durationMs * 1_000_000),
@@ -115,6 +115,33 @@ export function recordUpstreamFailure({ operation, durationMs, failure }: Upstre
       : undefined,
   })
 }
+
+/** The statuses adapters turn into an answer the page explains, so they are refusals rather than upstream failures. */
+const answeredStatuses = new Set([400, 401, 403, 404, 409])
+
+type UpstreamCall = { operation: ApiOperation; startedAt: number }
+
+/** Request options that name the operation a failed call is recorded under. */
+export const upstreamCall = (operation: ApiOperation): { meta: UpstreamCall } => ({
+  meta: { operation, startedAt: performance.now() },
+})
+
+function upstreamFailure(error: unknown, response: Response | undefined): UpstreamFailure['failure'] | undefined {
+  if (error instanceof Error && error.name === 'TimeoutError') return { kind: 'transport', error: 'timeout' }
+  if (!response || error instanceof TypeError) return { kind: 'transport', error: 'network' }
+  if (!response.ok) return answeredStatuses.has(response.status) ? undefined : { kind: 'http_status', status: response.status }
+  return { kind: 'invalid_response', status: response.status, issues: error instanceof z.ZodError ? error.issues : [] }
+}
+
+// The generated client runs this once per failed call, for every operation. Development reloads this module, so the
+// previous registration goes first or each failure would be recorded twice.
+ApiClient.client.interceptors.error.clear()
+ApiClient.client.interceptors.error.use((error, response, _request, options) => {
+  const call = (options as { meta?: UpstreamCall }).meta
+  const failure = call && upstreamFailure(error, response)
+  if (failure) recordUpstreamFailure({ operation: call.operation, durationMs: performance.now() - call.startedAt, failure })
+  return error
+})
 
 /** Records at most one SSR error per request: a render error and the 500 it causes are one failure. */
 export function recordSsrError(error: SsrError) {

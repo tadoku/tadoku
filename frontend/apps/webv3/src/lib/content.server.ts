@@ -36,18 +36,18 @@ function post({ slug, title, content, published_at: publishedAt }: ContentPost):
 
 export function readPage(slug: string): Promise<Content<CmsPage>> {
   return find(
-    contentPageFindBySlug({ ...sessionRequest(), path: { namespace, slug } }),
+    contentPageFindBySlug({ ...sessionRequest('contentPageFindBySlug'), path: { namespace, slug } }),
     page => page.html === undefined ? undefined : { title: page.title, html: purify.sanitize(page.html) as SanitizedHtml },
   )
 }
 
 export function readPost(slug: string): Promise<Content<BlogPost>> {
-  return find(contentPostFindBySlug({ ...sessionRequest(), path: { namespace, slug } }), post)
+  return find(contentPostFindBySlug({ ...sessionRequest('contentPostFindBySlug'), path: { namespace, slug } }), post)
 }
 
 export async function readPosts(page: number): Promise<Read<BlogPage>> {
   const { data } = await contentPostList({
-    ...sessionRequest(),
+    ...sessionRequest('contentPostList'),
     path: { namespace },
     query: { page_size: blogPageSize, page: page - 1 },
   }).catch(() => ({ data: undefined }))
@@ -61,7 +61,7 @@ export async function readPosts(page: number): Promise<Read<BlogPage>> {
 
 /** The announcements running now; an unavailable list shows none, as in Webv2. */
 export async function readAnnouncements(): Promise<Announcement[]> {
-  const { data } = await contentAnnouncementListActive({ ...sessionRequest(), path: { namespace } })
+  const { data } = await contentAnnouncementListActive({ ...sessionRequest('contentAnnouncementListActive'), path: { namespace } })
     .catch(() => ({ data: undefined }))
   return (data?.announcements ?? []).flatMap(({ id, content, style, href }) =>
     id ? [{ id, content, tone: tones[style], href: href || undefined }] : [])

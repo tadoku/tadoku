@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { urlsForHost } from './urls.server'
 
 /** The name of a generated API operation: a compile-time literal, so caller data cannot become one. */
-type ApiOperation = {
+export type ApiOperation = {
   [Name in keyof typeof ApiClient]: (typeof ApiClient)[Name] extends (options: never) => unknown ? Name : never
 }[keyof typeof ApiClient]
 

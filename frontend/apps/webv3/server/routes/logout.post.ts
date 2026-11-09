@@ -16,7 +16,7 @@ export default defineHandler(async event => {
   const cookie = sessionCookie(request.headers.get('cookie') || '')
   if (cookie) {
     // The identity API accepts logout only from an app Origin on its allowlist; send the origin checked above.
-    const options = sessionRequest(cookie, urls.apiUrl)
+    const options = sessionRequest('identityLogout', cookie, urls.apiUrl)
     const { error, response } = await identityLogout({
       ...options,
       headers: { ...options.headers, Origin: urls.appOrigin },

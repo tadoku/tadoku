@@ -17,7 +17,7 @@ const failed = { data: undefined, response: undefined }
 /** Contest logs are public, so they are read anonymously. */
 export async function readContestLogs({ contestId, userId, page }: { contestId: string; userId?: string; page: number }): Promise<Read<ImmersionLogs>> {
   const { data } = await immersionContestListLogs({
-    ...sessionRequest(),
+    ...sessionRequest('immersionContestListLogs'),
     path: { id: contestId },
     query: { page_size: activityPageSize, page: page - 1, include_deleted: false, ...(userId ? { user_id: userId } : {}) },
   }).catch(() => failed)
@@ -28,8 +28,8 @@ export async function readContestLogs({ contestId, userId, page }: { contestId: 
 export async function readContestProfile(contestId: string, userId: string): Promise<ContestProfile> {
   const path = { id: contestId, user_id: userId }
   const [scores, daily] = await Promise.all([
-    immersionContestProfileFetchScores({ ...sessionRequest(), path }).catch(() => failed),
-    immersionContestProfileFetchActivity({ ...sessionRequest(), path }).catch(() => failed),
+    immersionContestProfileFetchScores({ ...sessionRequest('immersionContestProfileFetchScores'), path }).catch(() => failed),
+    immersionContestProfileFetchActivity({ ...sessionRequest('immersionContestProfileFetchActivity'), path }).catch(() => failed),
   ])
 
   if (scores.response?.status === 404) return { status: 'not-found' }
@@ -50,7 +50,7 @@ export async function detachLog({ viewerId, contestId, logId, reason }: Detach):
   if (!session.ok) return session
 
   const { error, response } = await immersionContestModerationDetachLog({
-    ...sessionRequest(session.data),
+    ...sessionRequest('immersionContestModerationDetachLog', session.data),
     path: { id: contestId, log_id: logId },
     body: { reason },
   }).catch(() => ({ error: undefined, response: undefined }))

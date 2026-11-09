@@ -6,7 +6,7 @@ import {
 } from 'api-client'
 import type { Read } from './leaderboard'
 import type { RegistrationFailure, RegistrationRead, RegistrationResult, RegistrationSave } from './registration'
-import { readViewer, sessionCookie, sessionRequest } from './session.server'
+import { readAccount, readViewer, sessionCookie, sessionRequest } from './session.server'
 
 const failed = { data: undefined, error: undefined, response: undefined }
 
@@ -15,14 +15,14 @@ export async function readRegistration(contestId: string): Promise<RegistrationR
   const cookie = sessionCookie()
   if (!cookie) return { kind: 'unavailable' }
 
-  const { data, response } = await immersionContestFindRegistration({ ...sessionRequest(cookie), path: { id: contestId } })
+  const { data, response } = await immersionContestFindRegistration({ ...sessionRequest('immersionContestFindRegistration', cookie), path: { id: contestId } })
     .catch(() => failed)
   if (response?.status === 204) return { kind: 'not-registered' }
   return data ? { kind: 'registered', languages: data.languages } : { kind: 'unavailable' }
 }
 
 export async function readContestLanguages(): Promise<Read<ImmersionLanguage[]>> {
-  const { data } = await immersionContestGetConfigurations(sessionRequest(sessionCookie())).catch(() => failed)
+  const { data } = await immersionContestGetConfigurations(sessionRequest('immersionContestGetConfigurations', sessionCookie())).catch(() => failed)
   return data?.languages.length ? { ok: true, data: data.languages } : { ok: false }
 }
 
@@ -39,19 +39,21 @@ export async function saveRegistration(save: RegistrationSave): Promise<Registra
   const cookie = sessionCookie()
   if (!cookie) return { ok: false, reason: 'signed-out' }
 
-  const viewer = await readViewer().catch(() => ({ status: 'unavailable' as const }))
-  switch (viewer.status) {
+  const account = await readAccount(cookie).catch(() => ({ status: 'unavailable' as const }))
+  switch (account.status) {
     case 'anonymous': return { ok: false, reason: 'signed-out' }
     case 'unavailable': return { ok: false, reason: 'account-unavailable' }
-    case 'banned': return { ok: false, reason: 'suspended' }
   }
-  if (viewer.userId !== save.viewerId) return { ok: false, reason: 'switched' }
+  if (account.userId !== save.viewerId) return { ok: false, reason: 'switched' }
 
   const { error, response } = await immersionContestRegistrationUpsert({
-    ...sessionRequest(cookie),
+    ...sessionRequest('immersionContestRegistrationUpsert', cookie),
     path: { id: save.contestId },
     body: { language_codes: save.languageCodes },
   }).catch(() => failed)
   if (response?.status === 200 && error === undefined) return { ok: true }
+
+  // The API answers a banned account and a closed contest with the same 403, so only a refusal costs a role read.
+  if (response?.status === 403 && (await readViewer()).status === 'banned') return { ok: false, reason: 'suspended' }
   return { ok: false, reason: (response && failures[response.status]) || 'unavailable' }
 }

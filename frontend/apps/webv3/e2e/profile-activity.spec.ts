@@ -127,18 +127,10 @@ test('an owner pages through their newest-first activity, opens a day from the c
   if (entry.description) await expect(logDescription(page)).toHaveText(entry.description)
 })
 
-test('a new account’s activity shows the empty state to its owner and to visitors', async ({ browser }, testInfo) => {
+test('a new account’s activity shows the empty state to its owner and to visitors', async ({ browser, learner }, testInfo) => {
   test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
-  // A fresh account in the branch tenant has no logs. Registration has its own budget, separate from logins.
-  const owner = await browser.newContext({ baseURL: webv3 })
-  const email = `webv3-activity-${randomUUID()}@example.com`
-  const accountOrigin = webv3!.replace('.next.', '.account.').replace(/\/$/, '')
-  const registered = await owner.request.post(`${api}/identity/registration`, {
-    headers: { Origin: accountOrigin },
-    data: { email, display_name: 'Empty Activity', password: `Pw-${randomUUID()}` },
-  })
-  expect(registered.status()).toBe(201)
-  const userId = await accountId(owner)
+  const owner = learner.context
+  const userId = learner.id
   expect((await apiLogs(owner.request, userId, 1)).total_size).toBe(0)
 
   const page = await owner.newPage()
@@ -148,7 +140,6 @@ test('a new account’s activity shows the empty state to its owner and to visit
   await expect(page.locator('.profile-entries')).toHaveCount(0)
   await expect(page.getByRole('navigation', { name: 'Update pages', exact: true })).toHaveCount(0)
   await page.screenshot({ path: testInfo.outputPath('owner-empty.png'), fullPage: true })
-  await owner.close()
 
   const visitor = await browser.newContext({ baseURL: webv3 })
   const anonymous = await visitor.newPage()

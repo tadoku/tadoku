@@ -117,16 +117,16 @@ test('branch-only suspension rejects an open draft and renders the suspended acc
   }
 })
 
-test('a draft cannot be saved under an account switched in another tab', async ({ page, context }, testInfo) => {
-  test.skip(!webv3 || !api || !reader.email || !admin.email, 'Set both development fixture identities')
+test('a draft cannot be saved under an account switched in another tab', async ({ page, context, loginLearner }, testInfo) => {
+  test.skip(!admin.email, 'Set E2E_SECOND_EMAIL and E2E_SECOND_PASSWORD')
   const description = `account-switch-${Date.now()}`
-  await signIn(page)
-  const readerId = await accountId(context)
+  await signIn(page, loginLearner)
+  const learnerId = await accountId(context)
   await fillDraft(page, '11', description)
 
   const other = await context.newPage()
   await other.goto(`${webv3}/plan`)
-  await logOut(other)
+  await logOut(other, loginLearner)
   await signIn(other, admin)
   const adminId = await accountId(context)
 
@@ -135,7 +135,7 @@ test('a draft cannot be saved under an account switched in another tab', async (
   await expect(page.getByRole('alert')).toContainText('different account. Nothing was saved')
   await expectDraftKept(page, '11', description)
   await expect(header(page).getByRole('button', { name: 'Dev Admin', exact: true })).toBeVisible()
-  for (const userId of [readerId, adminId]) {
+  for (const userId of [learnerId, adminId]) {
     expect(await logsDescribed(context, userId, description)).toHaveLength(0)
   }
   await page.screenshot({ path: testInfo.outputPath('account-switch-blocked.png'), fullPage: true })
@@ -156,8 +156,8 @@ test('public activity detail still loads with an expired session cookie and has 
 })
 
 for (const change of ['expiry', 'account switch']) {
-  test(`an anonymously opened form keeps its first signed-in draft after ${change}`, async ({ page, context }, testInfo) => {
-    test.skip(!webv3 || !api || !reader.email || !admin.email, 'Set both development fixture identities')
+  test(`an anonymously opened form keeps its first signed-in draft after ${change}`, async ({ page, context, loginLearner }, testInfo) => {
+    test.skip(!admin.email, 'Set E2E_SECOND_EMAIL and E2E_SECOND_PASSWORD')
     const description = `anonymous-entry-${change}-${Date.now()}`
     const refocusAfterViewerGoesStale = async () => {
       await page.clock.fastForward(31_000)
@@ -170,14 +170,14 @@ for (const change of ['expiry', 'account switch']) {
     await page.goto('/logs/new')
     await expect(page.getByRole('heading', { name: 'Sign in to log activity' })).toBeVisible()
     const other = await context.newPage()
-    await signIn(other)
+    await signIn(other, loginLearner)
     await refocusAfterViewerGoesStale()
     await expect(saveButton(page)).toBeEnabled()
     await fillDraft(page, '13', description)
 
     // End or switch the session in the other tab.
     await other.bringToFront()
-    await logOut(other)
+    await logOut(other, loginLearner)
     if (change === 'account switch') await signIn(other, admin)
     await page.bringToFront()
     if (change === 'expiry') {

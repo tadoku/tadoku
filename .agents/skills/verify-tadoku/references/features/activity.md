@@ -116,8 +116,8 @@ and `/logs/<id>/contests?preselect=1` selects every eligible contest for a log n
 yet submitted anywhere.
 
 Run the Webv3 `logging.spec.ts`, `logging-form.spec.ts`, `logging-edit.spec.ts`, `logging-contests.spec.ts` and `logging-session.spec.ts` with the
-documented fixture environment and Lab CA. Native login admits ten logins per
-account in 15 minutes, so wait that long before repeating a complete run. It verifies invalid-field focus, real amount/time writes, tag chips, suggestions and the sidebar, remembered choices, the contest step after saving,
+documented fixture environment and Lab CA. The fixtures keep the Dev Reader and Dev Admin
+sessions between runs, so a complete run can be repeated straight away. It verifies invalid-field focus, real amount/time writes, tag chips, suggestions and the sidebar, remembered choices, the contest step after saving,
 reload, duplicate-submit prevention, keyboard layouts and expired-session draft
 recovery, server-function CSRF refusal, non-owner mutation refusal and cross-tenant
 isolation. Switch accounts in another tab before saving: the old draft must

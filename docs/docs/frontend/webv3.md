@@ -187,45 +187,8 @@ canonical `account.tadoku.app` and `admin.tadoku.app` hosts.
 
 ## Checks
 
-From `frontend/`, with Node 22 and the development server running:
-
-```sh
-pnpm --filter webv3 typecheck
-pnpm --filter webv3 lint
-pnpm --filter webv3 build
-pnpm check:paper-boundaries
-NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/lab-root-ca.crt pnpm --filter webv3 test:e2e
-```
-
-The browser suite in `frontend/apps/webv3/e2e/home.spec.ts` checks configured read-only
-data in server-rendered HTML, hydration and mobile containment, local goal
-validation/editing/persistence without network writes, unavailable browser
-storage, theme persistence, mobile navigation and unknown routes.
-`frontend/apps/webv3/e2e/leaderboard.spec.ts` compares each leaderboard's server-rendered
-rows, scope and profile links with the API, follows page, year and period links,
-checks a signed-in participant's row and contest action, and checks containment
-at 390px and 1280px. It needs `TADOKU_API_URL` and the Dev Reader credentials
-described under [native activity logging](webv3-logging.md), and signs in once.
-`frontend/apps/webv3/e2e/contests.spec.ts` covers the
-[contest lists](webv3-contests.md), `frontend/apps/webv3/e2e/contest.spec.ts`
-the [contest page and registration](webv3-contest.md) and
-`frontend/apps/webv3/e2e/contest-activity.spec.ts` its updates, participant
-profiles and moderation; their signed-in journeys use both fixture accounts and
-create community contests in the selected tenant.
-`frontend/apps/webv3/e2e/contest-admin.spec.ts` covers
-[contest creation and scoring](webv3-contest-admin.md) and writes contests and
-rule sets in the selected tenant.
-These suites require reachable contest and standings data and Chromium installed through
-Playwright. It preserves HTML reports and screenshots outside the source tree.
-`frontend/apps/webv3/e2e/member-journey.spec.ts` signs in, walks from the
-homepage through the current contest's standings, a participant's contest and
-main profiles and the activity form to the saved log, and fails if any
-navigation leaves the Webv3 host; it writes one log in the selected tenant.
-`WEBV3_BASE_URL` selects the running server; `PLAYWRIGHT_OUTPUT_DIR` selects the
-artifact directory, defaulting to a temporary directory.
-
-`pnpm --filter webv3 build` creates a local Node build in `.output`. This is a build
-check; it does not publish or deploy the application.
+[Webv3 checks and browser tests](webv3-testing.md) lists the checks, the
+browser suite and the fixture accounts its specs use.
 
 ## Production container and CI
 

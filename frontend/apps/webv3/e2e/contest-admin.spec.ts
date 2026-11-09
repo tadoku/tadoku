@@ -1,4 +1,4 @@
-import type { APIRequestContext, BrowserContext, Page } from '@playwright/test'
+import type { APIRequestContext, Page } from '@playwright/test'
 import { accountId, admin, api, expect, reader, test, webv3 } from './logging-fixtures'
 
 interface Contest {
@@ -63,17 +63,6 @@ async function ruleSets(request: APIRequestContext, path: string) {
   const response = await request.get(`${api}${path}`)
   expect(response.ok(), `${path} answered ${response.status()}`).toBeTruthy()
   return (await response.json() as { rule_sets: RuleSet[] }).rule_sets
-}
-
-/** Exhausts Dev Reader's yearly contest allowance in the selected tenant unless the API already refuses it. */
-async function ensureCreationRefused(context: BrowserContext) {
-  for (let attempt = 0; attempt < 13; attempt++) {
-    const permission = await context.request.get(`${api}/immersion/contests/create-permissions`)
-    if (permission.status() === 403) return
-    expect(permission.status()).toBe(200)
-    await postContest(context.request, utcDay(30), utcDay(40), `Webv3 allowance check ${unique()}`)
-  }
-  throw new Error('The API kept allowing Dev Reader to create contests')
 }
 
 test('anonymous visitors are asked to log in to create a contest and sent to log in for scoring', async ({ page }, testInfo) => {
@@ -173,10 +162,10 @@ test('an organizer gets each invalid field focused, then creates a contest and l
   expect(failures).toEqual([])
 })
 
-test('an account the API refuses sees why instead of the contest form', async ({ readerContext }, testInfo) => {
-  test.skip(!api || !reader.email || !reader.password, 'Set TADOKU_API_URL, E2E_READER_EMAIL and E2E_READER_PASSWORD')
-  await ensureCreationRefused(readerContext)
-  const page = await readerContext.newPage()
+test('an account the API refuses to let create contests sees the refusal instead of the contest form', async ({ learner }, testInfo) => {
+  test.skip(!api || !webv3, 'Set TADOKU_API_URL and WEBV3_BASE_URL')
+  expect((await learner.context.request.get(`${api}/immersion/contests/create-permissions`)).status()).toBe(403)
+  const page = await learner.context.newPage()
 
   await page.goto('/contests/new')
   await expect(page.getByRole('heading', { level: 1, name: 'You can’t create a contest yet' })).toBeVisible()

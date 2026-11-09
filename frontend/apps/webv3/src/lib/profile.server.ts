@@ -5,16 +5,18 @@ import {
   immersionProfileYearlyActivitySplitByUserId,
   immersionProfileYearlyContestRegistrationsByUserId,
   immersionProfileYearlyScoresByUserId,
+  type ImmersionLogs,
 } from 'api-client'
 import {
   activityPageSize,
   contestPageSize,
+  recentLogCount,
   type ContestHistory,
   type ProfileActivity,
   type ProfileStatistics,
   type Section,
 } from './profile'
-import { sessionCookie, sessionRequest } from './session.server'
+import { readAsVisitor, sessionRequest } from './session.server'
 
 /** A generated operation's validated answer; any refusal, failure or malformed answer leaves the section unavailable. */
 async function section<T>(request: Promise<{ data?: T }>): Promise<Section<T>> {
@@ -27,16 +29,12 @@ async function section<T>(request: Promise<{ data?: T }>): Promise<Section<T>> {
  * visitor's session. A rejected session cookie falls back to the public history.
  */
 async function readContestHistory(userId: string, year: number, page: number): Promise<Section<ContestHistory>> {
-  const cookie = sessionCookie()
-  const read = (cookie?: string) => immersionProfileYearlyContestRegistrationsByUserId({
-    ...sessionRequest(cookie),
+  const answer = await readAsVisitor(cookie => immersionProfileYearlyContestRegistrationsByUserId({
+    ...sessionRequest('immersionProfileYearlyContestRegistrationsByUserId', cookie),
     path: { userId, year },
     query: { page_size: contestPageSize, page: page - 1 },
-  })
-
-  let answer = await read(cookie).catch(() => undefined)
-  if (cookie && answer?.response?.status === 401) answer = await read().catch(() => undefined)
-  const data = answer?.data
+  }).catch(() => ({ data: undefined, response: undefined })))
+  const data = answer.data
   if (!data) return { ok: false }
 
   const contests = []
@@ -58,10 +56,10 @@ async function readContestHistory(userId: string, year: number, page: number): P
 export async function readProfileStatistics(userId: string, year: number, page: number): Promise<ProfileStatistics> {
   const path = { userId, year }
   const [profile, activity, scores, split, contests] = await Promise.all([
-    immersionProfileFindByUserId({ ...sessionRequest(), path: { userId } }).catch(() => undefined),
-    section(immersionProfileYearlyActivityByUserId({ ...sessionRequest(), path })),
-    section(immersionProfileYearlyScoresByUserId({ ...sessionRequest(), path })),
-    section(immersionProfileYearlyActivitySplitByUserId({ ...sessionRequest(), path })),
+    immersionProfileFindByUserId({ ...sessionRequest('immersionProfileFindByUserId'), path: { userId } }).catch(() => undefined),
+    section(immersionProfileYearlyActivityByUserId({ ...sessionRequest('immersionProfileYearlyActivityByUserId'), path })),
+    section(immersionProfileYearlyScoresByUserId({ ...sessionRequest('immersionProfileYearlyScoresByUserId'), path })),
+    section(immersionProfileYearlyActivitySplitByUserId({ ...sessionRequest('immersionProfileYearlyActivitySplitByUserId'), path })),
     readContestHistory(userId, year, page),
   ])
 
@@ -78,11 +76,20 @@ export async function readProfileStatistics(userId: string, year: number, page: 
   }
 }
 
+/** The newest logs for the home page, without the profile the page's statistics already read. */
+export function readRecentLogs(userId: string): Promise<Section<ImmersionLogs>> {
+  return section(immersionProfileListLogs({
+    ...sessionRequest('immersionProfileListLogs'),
+    path: { user_id: userId },
+    query: { page_size: recentLogCount, page: 0, include_deleted: false },
+  }))
+}
+
 export async function readProfileActivity(userId: string, page: number, date?: string): Promise<ProfileActivity> {
   const [profile, logs] = await Promise.all([
-    immersionProfileFindByUserId({ ...sessionRequest(), path: { userId } }).catch(() => undefined),
+    immersionProfileFindByUserId({ ...sessionRequest('immersionProfileFindByUserId'), path: { userId } }).catch(() => undefined),
     section(immersionProfileListLogs({
-      ...sessionRequest(),
+      ...sessionRequest('immersionProfileListLogs'),
       path: { user_id: userId },
       query: { page_size: activityPageSize, page: page - 1, include_deleted: false, ...(date ? { date } : {}) },
     })),

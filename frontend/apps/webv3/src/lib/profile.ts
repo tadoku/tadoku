@@ -12,6 +12,7 @@ import { z } from 'zod'
 export const contestPageSize = 50
 /** Profile and contest log lists both show 50 logs per page, as in Webv2. */
 export const activityPageSize = 25
+export const recentLogCount = 5
 
 /** One independently loaded part of a profile year; Webv2 reports each part's failure on its own. */
 export type Section<T> = { ok: true; data: T } | { ok: false }
@@ -75,6 +76,21 @@ const getProfileActivity = createServerFn({ method: 'GET' })
     const { readProfileActivity } = await import('./profile.server')
     return readProfileActivity(data.userId, data.page, data.date)
   })
+
+const getRecentLogs = createServerFn({ method: 'GET' })
+  .inputValidator(z.guid())
+  .handler(async ({ data }) => {
+    const { readRecentLogs } = await import('./profile.server')
+    return readRecentLogs(data)
+  })
+
+/** The learner's newest logs, as the home page's recent activity shows them. */
+export const recentLogsQuery = (userId: string) => queryOptions({
+  queryKey: ['recent-logs', userId],
+  queryFn: () => getRecentLogs({ data: userId }),
+  retry: false,
+  staleTime: 30_000,
+})
 
 export const profileActivityQuery = (input: z.infer<typeof activityInput>) => queryOptions({
   queryKey: ['profile-activity', input.userId, input.page, input.date],

@@ -17,12 +17,11 @@ export async function readContestScoring(contestId: string): Promise<LogResult<C
   const cookie = sessionCookie()
   if (!cookie) return { ok: false, reason: 'signed-out' }
 
-  const request = sessionRequest(cookie)
   const [contest, options, platform, ruleSets] = await Promise.all([
-    answer(immersionContestFindById({ ...request, path: { id: contestId } })),
-    answer(immersionLogGetConfigurations(request)),
-    answer(immersionScoringRuleSetListPlatform(request)),
-    answer(immersionScoringRuleSetListContest({ ...request, path: { id: contestId } })),
+    answer(immersionContestFindById({ ...sessionRequest('immersionContestFindById', cookie), path: { id: contestId } })),
+    answer(immersionLogGetConfigurations(sessionRequest('immersionLogGetConfigurations', cookie))),
+    answer(immersionScoringRuleSetListPlatform(sessionRequest('immersionScoringRuleSetListPlatform', cookie))),
+    answer(immersionScoringRuleSetListContest({ ...sessionRequest('immersionScoringRuleSetListContest', cookie), path: { id: contestId } })),
   ])
   if (!contest.ok) return contest
   if (!options.ok) return options
@@ -46,7 +45,7 @@ export async function saveRuleSet(draft: NewRuleSet): Promise<LogResult<null>> {
 
   const { configuration } = draft
   const result = await answer(immersionScoringRuleSetCreateContest({
-    ...sessionRequest(session.data),
+    ...sessionRequest('immersionScoringRuleSetCreateContest', session.data),
     path: { id: draft.contestId },
     body: {
       mode: configuration.mode,
@@ -70,9 +69,9 @@ export async function updateRuleSet(change: RuleSetChange): Promise<LogResult<nu
   const session = await draftOwnerCookie(change.viewerId, { admin: true })
   if (!session.ok) return session
 
-  const request = { ...sessionRequest(session.data), path: { id: change.ruleSetId } }
+  const path = { id: change.ruleSetId }
   const result = change.action === 'publish'
-    ? await answer(immersionScoringRuleSetPublish(request))
-    : await answer(immersionScoringRuleSetActivate(request))
+    ? await answer(immersionScoringRuleSetPublish({ ...sessionRequest('immersionScoringRuleSetPublish', session.data), path }))
+    : await answer(immersionScoringRuleSetActivate({ ...sessionRequest('immersionScoringRuleSetActivate', session.data), path }))
   return result.ok ? { ok: true, data: null } : result
 }

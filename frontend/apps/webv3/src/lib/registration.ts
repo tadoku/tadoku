@@ -94,12 +94,15 @@ export function useSaveRegistration() {
   }
 }
 
-/** The viewer and whether they have joined the contest. A registration that can't be read counts as not joined, as in Webv2. */
-export function useParticipation(contestId: string) {
+/**
+ * The viewer and whether they have joined the contest, when there is one. A registration that can't be read counts as
+ * not joined, as in Webv2.
+ */
+export function useParticipation(contestId: string | undefined) {
   const { data: viewer } = useQuery(viewerQueryOptions())
   const registration = useQuery({
-    ...registrationQuery(contestId, viewerKey(viewer)),
-    enabled: viewer?.status === 'signed-in',
+    ...registrationQuery(contestId ?? '', viewerKey(viewer)),
+    enabled: contestId !== undefined && viewer?.status === 'signed-in',
   })
   return { viewer, registration: registration.data, registered: registration.data?.kind === 'registered' }
 }

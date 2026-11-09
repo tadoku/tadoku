@@ -14,18 +14,13 @@ import type { Identified } from './home'
 import type { Read } from './leaderboard'
 import type { LogResult } from './logs'
 import { answer, draftOwnerCookie } from './logs.server'
-import { sessionCookie, sessionRequest } from './session.server'
+import { readAsVisitor, sessionCookie, sessionRequest } from './session.server'
 
 const failed = { data: undefined, response: undefined }
 
-/**
- * Reads a list as the visitor, whose session decides which private contests it includes. A rejected session cookie
- * falls back to the public list.
- */
-async function listContests(query: NonNullable<Parameters<typeof immersionContestList>[0]>['query'], cookie?: string) {
-  const list = (session?: string) => immersionContestList({ ...sessionRequest(session), query }).catch(() => failed)
-  const result = await list(cookie)
-  return result.response?.status === 401 && cookie ? list() : result
+/** Reads a list as the visitor, whose session decides which private contests it includes. */
+function listContests(query: NonNullable<Parameters<typeof immersionContestList>[0]>['query']) {
+  return readAsVisitor(cookie => immersionContestList({ ...sessionRequest('immersionContestList', cookie), query }).catch(() => failed))
 }
 
 const identified = (contest: ImmersionContest): contest is Identified<ImmersionContest> => contest.id !== undefined
@@ -41,9 +36,9 @@ export async function readContests(scope: ContestListScope, page: number): Promi
     ...(scope.kind === 'organizer' ? { user_id: scope.userId } : {}),
   }
   const [list, options] = await Promise.all([
-    listContests(query, cookie),
+    listContests(query),
     scope.kind !== 'official' && cookie
-      ? immersionContestGetConfigurations(sessionRequest(cookie)).catch(() => failed)
+      ? immersionContestGetConfigurations(sessionRequest('immersionContestGetConfigurations', cookie)).catch(() => failed)
       : failed,
   ])
 
@@ -64,7 +59,7 @@ export async function readContests(scope: ContestListScope, page: number): Promi
  */
 async function readJoinedContests(page: number): Promise<Read<ContestList>> {
   const result = await immersionContestListRegistrations({
-    ...sessionRequest(sessionCookie()),
+    ...sessionRequest('immersionContestListRegistrations', sessionCookie()),
     query: { page_size: contestsPageSize, page: page - 1 },
   }).catch(() => failed)
   const views = result.data?.registrations.map(registration => registration.contest)
@@ -88,7 +83,7 @@ async function readJoinedContests(page: number): Promise<Read<ContestList>> {
 export async function readCanCreateContest(): Promise<boolean> {
   const cookie = sessionCookie()
   if (!cookie) return false
-  const { response } = await immersionContestCreatePermissionCheck(sessionRequest(cookie)).catch(() => failed)
+  const { response } = await immersionContestCreatePermissionCheck(sessionRequest('immersionContestCreatePermissionCheck', cookie)).catch(() => failed)
   return response?.status === 200
 }
 
@@ -97,8 +92,8 @@ export async function readContestEditor(): Promise<ContestEditor> {
   if (!cookie) return { kind: 'signed-out' }
 
   const [permission, options] = await Promise.all([
-    immersionContestCreatePermissionCheck(sessionRequest(cookie)).catch(() => failed),
-    immersionContestGetConfigurations(sessionRequest(cookie)).catch(() => failed),
+    immersionContestCreatePermissionCheck(sessionRequest('immersionContestCreatePermissionCheck', cookie)).catch(() => failed),
+    immersionContestGetConfigurations(sessionRequest('immersionContestGetConfigurations', cookie)).catch(() => failed),
   ])
   switch (permission.response?.status) {
     case 200: return options.data?.activities.length ? { kind: 'allowed', options: options.data } : { kind: 'unavailable' }
@@ -115,7 +110,7 @@ export async function saveContest(contest: NewContest): Promise<LogResult<string
 
   const { kind } = contest
   const result = await answer(immersionContestCreate({
-    ...sessionRequest(session.data),
+    ...sessionRequest('immersionContestCreate', session.data),
     body: {
       title: contest.title,
       description: contest.description,

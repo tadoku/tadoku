@@ -4,7 +4,7 @@ import type { ImmersionContestProfileActivityRow } from 'api-client'
 import { PageHeader, SectionHeading, StatGrid, Table, buttonClassName, type TableColumn } from 'paper-ui'
 import type { ContestProfile as Profile } from '../lib/contest-activity'
 import { formatDate, place, pointsUnit, scoreFormat } from '../lib/format'
-import { standingsQuery } from '../lib/leaderboard'
+import { contestEntryQuery } from '../lib/leaderboard'
 import { useLinks } from '../lib/links'
 import { ContestLogs } from './ContestUpdates'
 import { renderLink } from './router-link'
@@ -19,8 +19,8 @@ export function ContestProfile({ profile, page }: { profile: Found; page: number
   const { contest, user_id: userId, user_display_name: name } = registration
   const byLanguage = new Map(scores.map(score => [score.language_code, score.score]))
   const total = scores.reduce((sum, score) => sum + score.score, 0)
-  const standings = useQuery(standingsQuery({ kind: 'contest', contestId: contest.id }, 1))
-  const rank = standings.data?.ok ? standings.data.data.entries.find(entry => entry.user_id === userId)?.rank : undefined
+  const entry = useQuery(contestEntryQuery(contest.id, userId)).data
+  const rank = entry?.ok ? entry.data?.rank : undefined
 
   return (
     <div className="*:max-w-record">

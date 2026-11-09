@@ -15,7 +15,7 @@ import {
 } from 'api-client'
 import type { LogContestsUpdate, LogUpdate, NewLog, ScorePreviewInput } from './log-draft'
 import type { ImmersionLog, LogFailure, LogOptions, LogResult, OwnerRegistrations, Registration } from './logs'
-import { readViewer, sessionCookie, sessionRequest } from './session.server'
+import { readAccount, readAsVisitor, readViewer, sessionCookie, sessionRequest } from './session.server'
 
 export const logFailures: Partial<Record<number, LogFailure>> = {
   400: 'invalid',
@@ -39,8 +39,8 @@ export async function readLogOptions(): Promise<LogResult<LogOptions>> {
   if (!cookie) return { ok: false, reason: 'signed-out' }
 
   const [configuration, registrations] = await Promise.all([
-    answer(immersionLogGetConfigurations(sessionRequest(cookie))),
-    answer(immersionContestFindOngoingRegistrations(sessionRequest(cookie))),
+    answer(immersionLogGetConfigurations(sessionRequest('immersionLogGetConfigurations', cookie))),
+    answer(immersionContestFindOngoingRegistrations(sessionRequest('immersionContestFindOngoingRegistrations', cookie))),
   ])
   if (!configuration.ok) return configuration
   if (!registrations.ok) return registrations
@@ -66,7 +66,7 @@ export async function readOwnerRegistrations({ viewerId, ownerId }: OwnerRegistr
   const cookie = sessionCookie()
   if (!cookie) return { ok: false, reason: 'signed-out' }
   if (viewerId === ownerId) {
-    const own = await answer(immersionContestFindOngoingRegistrations(sessionRequest(cookie)))
+    const own = await answer(immersionContestFindOngoingRegistrations(sessionRequest('immersionContestFindOngoingRegistrations', cookie)))
     if (!own.ok) return own
     return own.data.registrations.every(identified) ? { ok: true, data: own.data.registrations } : { ok: false, reason: 'unavailable' }
   }
@@ -77,7 +77,7 @@ export async function readOwnerRegistrations({ viewerId, ownerId }: OwnerRegistr
   for (const contestYear of [year, year - 1]) {
     for (let page = 0; ; page++) {
       const result = await answer(immersionProfileYearlyContestRegistrationsByUserId({
-        ...sessionRequest(cookie),
+        ...sessionRequest('immersionProfileYearlyContestRegistrationsByUserId', cookie),
         path: { userId: ownerId, year: contestYear },
         query: { page_size: yearlyPageSize, page },
       }))
@@ -94,15 +94,9 @@ export async function readOwnerRegistrations({ viewerId, ownerId }: OwnerRegistr
 
 const yearlyPageSize = 50
 
-/** Reads a log as the visitor. A rejected session cookie falls back to the public view of the log. */
-export async function readLog(id: string): Promise<LogResult<ImmersionLog>> {
-  const cookie = sessionCookie()
-  const result = await answer(immersionLogFindById({ ...sessionRequest(cookie), path: { id } }))
-
-  if (!result.ok && result.reason === 'signed-out' && cookie) {
-    return answer(immersionLogFindById({ ...sessionRequest(), path: { id } }))
-  }
-  return result
+/** Reads a log as the visitor. */
+export function readLog(id: string): Promise<LogResult<ImmersionLog>> {
+  return answer(readAsVisitor(cookie => immersionLogFindById({ ...sessionRequest('immersionLogFindById', cookie), path: { id } })))
 }
 
 /**
@@ -114,14 +108,15 @@ export async function draftOwnerCookie(viewerId: string, { admin = false } = {})
   const cookie = sessionCookie()
   if (!cookie) return { ok: false, reason: 'signed-out' }
 
-  const viewer = await readViewer()
+  // Only administrator access needs the role: the API itself refuses every write from a banned account.
+  const viewer = admin ? await readViewer() : await readAccount(cookie)
   switch (viewer.status) {
     case 'anonymous': return { ok: false, reason: 'signed-out' }
     case 'unavailable': return { ok: false, reason: 'account-unavailable' }
     case 'banned': return { ok: false, reason: 'forbidden' }
   }
   if (viewer.userId !== viewerId) return { ok: false, reason: 'switched' }
-  if (admin && viewer.role !== 'admin') return { ok: false, reason: 'forbidden' }
+  if (admin && !(viewer.status === 'signed-in' && viewer.role === 'admin')) return { ok: false, reason: 'forbidden' }
   return { ok: true, data: cookie }
 }
 
@@ -136,7 +131,7 @@ export async function saveLog(log: NewLog): Promise<LogResult<ImmersionLog>> {
   if (!session.ok) return session
 
   return answer(immersionLogCreate({
-    ...sessionRequest(session.data),
+    ...sessionRequest('immersionLogCreate', session.data),
     body: {
       language_code: log.languageCode,
       activity_id: log.activityId,
@@ -156,7 +151,7 @@ export async function updateLog(change: LogUpdate): Promise<LogResult<ImmersionL
   if (!session.ok) return session
 
   return answer(immersionLogUpdate({
-    ...sessionRequest(session.data),
+    ...sessionRequest('immersionLogUpdate', session.data),
     path: { id: change.logId },
     body: {
       language_code: change.languageCode,
@@ -176,7 +171,7 @@ export async function updateLogContests(change: LogContestsUpdate): Promise<LogR
   if (!session.ok) return session
 
   return answer(immersionLogContestRegistrationUpdate({
-    ...sessionRequest(session.data),
+    ...sessionRequest('immersionLogContestRegistrationUpdate', session.data),
     path: { id: change.logId },
     body: { registration_ids: change.registrationIds },
   }))
@@ -187,13 +182,13 @@ export async function deleteLog({ viewerId, logId }: { viewerId: string; logId: 
   const session = await draftOwnerCookie(viewerId)
   if (!session.ok) return session
 
-  const result = await answer(immersionLogDeleteById({ ...sessionRequest(session.data), path: { id: logId } }))
+  const result = await answer(immersionLogDeleteById({ ...sessionRequest('immersionLogDeleteById', session.data), path: { id: logId } }))
   return result.ok || result.reason === 'not-found' ? { ok: true, data: null } : result
 }
 
 export async function readScorePreview(input: ScorePreviewInput): Promise<LogResult<ImmersionScorePreview>> {
   return answer(immersionScorePreview({
-    ...sessionRequest(sessionCookie()),
+    ...sessionRequest('immersionScorePreview', sessionCookie()),
     body: {
       language_code: input.languageCode,
       activity_id: input.activityId,
@@ -208,5 +203,5 @@ export async function readTagSuggestions(query: string): Promise<LogResult<Immer
   const cookie = sessionCookie()
   if (!cookie) return { ok: false, reason: 'signed-out' }
 
-  return answer(immersionLogTagSuggestions({ ...sessionRequest(cookie), query: { query } }))
+  return answer(immersionLogTagSuggestions({ ...sessionRequest('immersionLogTagSuggestions', cookie), query: { query } }))
 }

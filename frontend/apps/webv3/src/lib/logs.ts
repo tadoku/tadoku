@@ -1,4 +1,4 @@
-import { keepPreviousData, queryOptions, skipToken, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, queryOptions, skipToken, useQueryClient, type QueryClient, type QueryKey } from '@tanstack/react-query'
 import { createServerFn } from '@tanstack/react-start'
 import type {
   ImmersionContestRegistration,
@@ -144,25 +144,44 @@ export const logQuery = (id: string, viewerKey: string) => queryOptions({
   staleTime: 30_000,
 })
 
+/** What a log's owner sees of their own record, whoever changed the log: an administrator's edit changes the owner's. */
+const ownerReads = (ownerId: string): QueryKey[] => [
+  ['profile-statistics', ownerId],
+  ['profile-activity', ownerId],
+  ['recent-logs', ownerId],
+  ['tag-suggestions', ownerId],
+  ['log-options', ownerId],
+]
+
 /**
- * Saves a log. A saved log is cached for its detail page; a refusal because another account signed in refreshes the
- * viewer. A failed request is reported as `unavailable`, because the log may or may not have been saved.
+ * What a log's contest scores feed, in every contest: a mutation doesn't know all the contests a log was or is
+ * submitted to, and a log in an official contest also counts on the yearly and all-time standings.
+ */
+const contestReads: QueryKey[] = [['standings'], ['contest-logs'], ['contest-profile'], ['contest-entry'], ['home-board']]
+
+/**
+ * Saves a log, which is personal until the contest step submits it. A saved log is cached for its detail page and the
+ * reads it changes are refreshed when next shown; a refusal because another account signed in refreshes the viewer. A
+ * failed request is reported as `unavailable`, because the log may or may not have been saved.
  */
 export function useSaveLog() {
-  const settle = useSettle()
+  const settle = useSettle(log => ownerReads(log.user_id))
   return async (log: NewLog) => settle(log.viewerId, await createLog({ data: log }).catch(unconfirmed<ImmersionLog>))
 }
 
-/** Updates a log like `useSaveLog` saves one. */
+/** Updates a log like `useSaveLog` saves one. The API rescores its submissions to unfinished contests. */
 export function useUpdateLog() {
-  const settle = useSettle()
+  const settle = useSettle(log => [...ownerReads(log.user_id), ...contestReads])
   return async (change: LogUpdate) =>
     settle(change.viewerId, await changeLog({ data: change }).catch(unconfirmed<ImmersionLog>))
 }
 
-/** Changes a log's contest submissions like `useSaveLog` saves a log. Repeating the same change is safe. */
+/**
+ * Changes a log's contest submissions like `useSaveLog` saves a log, leaving its owner's profile totals as they were.
+ * Repeating the same change is safe.
+ */
 export function useUpdateLogContests() {
-  const settle = useSettle()
+  const settle = useSettle(() => contestReads)
   return async (change: LogContestsUpdate) =>
     settle(change.viewerId, await changeLogContests({ data: change }).catch(unconfirmed<ImmersionLog>))
 }
@@ -171,9 +190,11 @@ export function useUpdateLogContests() {
 export function useDeleteLog() {
   const queryClient = useQueryClient()
 
-  return async (viewerId: string, logId: string) => {
-    const result = await removeLog({ data: { viewerId, logId } }).catch(unconfirmed<null>)
-    if (!result.ok && result.reason === 'switched') {
+  return async (viewerId: string, log: Pick<ImmersionLog, 'id' | 'user_id'>) => {
+    const result = await removeLog({ data: { viewerId, logId: log.id } }).catch(unconfirmed<null>)
+    if (result.ok) {
+      await markStale(queryClient, [['log', log.id], ...ownerReads(log.user_id), ...contestReads])
+    } else if (result.reason === 'switched') {
       await queryClient.invalidateQueries({ queryKey: viewerQueryOptions().queryKey })
     }
     return result
@@ -182,12 +203,17 @@ export function useDeleteLog() {
 
 const unconfirmed = <T>(): LogResult<T> => ({ ok: false, reason: 'unavailable' })
 
-function useSettle() {
+/** Leaves each read to refetch when next shown: a mutation ends on a page that shows none of them. */
+const markStale = (queryClient: QueryClient, keys: QueryKey[]) =>
+  Promise.all(keys.map(queryKey => queryClient.invalidateQueries({ queryKey, refetchType: 'none' })))
+
+function useSettle(changedReads: (log: ImmersionLog) => QueryKey[]) {
   const queryClient = useQueryClient()
 
   return async (viewerId: string, result: LogResult<ImmersionLog>) => {
     if (result.ok) {
       queryClient.setQueryData(logQuery(result.data.id, viewerId).queryKey, result)
+      await markStale(queryClient, changedReads(result.data))
     } else if (result.reason === 'switched') {
       await queryClient.invalidateQueries({ queryKey: viewerQueryOptions().queryKey })
     }

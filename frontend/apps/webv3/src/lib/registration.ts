@@ -70,7 +70,9 @@ export const contestLanguagesQuery = () => queryOptions({
 
 /**
  * Registers the account that opened the form, or changes its languages. A save refreshes what the registration
- * changes: the registration itself, the contest's board and standings and the activity form's contests.
+ * changes: the registration itself, the standings, the contest's summary and logs, places in it and the account's
+ * profile in it, logs a dropped language detached, the Joined list, the account's contest history and the contests the
+ * activity forms offer.
  */
 export function useSaveRegistration() {
   const queryClient = useQueryClient()
@@ -80,12 +82,21 @@ export function useSaveRegistration() {
       .catch((): RegistrationResult => ({ ok: false, reason: 'unavailable' }))
 
     if (result.ok) {
+      const { contestId, viewerId } = save
       await Promise.all([
         // Read again now, so the contest page the form returns to shows the saved registration.
-        queryClient.invalidateQueries({ queryKey: ['registration', save.contestId], refetchType: 'all' }),
-        queryClient.invalidateQueries({ queryKey: ['contest-board', save.contestId], refetchType: 'all' }),
-        queryClient.invalidateQueries({ queryKey: ['standings', { kind: 'contest', contestId: save.contestId }] }),
-        queryClient.invalidateQueries({ queryKey: ['log-options'] }),
+        queryClient.invalidateQueries({ queryKey: ['registration', contestId], refetchType: 'all' }),
+        // Dropping a language detaches its logs, which can move points on any board and change other participants' ranks.
+        queryClient.invalidateQueries({ queryKey: ['standings'] }),
+        queryClient.invalidateQueries({ queryKey: ['contest-logs', contestId] }),
+        queryClient.invalidateQueries({ queryKey: ['log'] }),
+        queryClient.invalidateQueries({ queryKey: ['home-board', contestId] }),
+        queryClient.invalidateQueries({ queryKey: ['contest-entry', contestId] }),
+        queryClient.invalidateQueries({ queryKey: ['contest-profile', contestId, viewerId] }),
+        queryClient.invalidateQueries({ queryKey: ['contests', { kind: 'joined' }] }),
+        queryClient.invalidateQueries({ queryKey: ['profile-statistics', viewerId] }),
+        queryClient.invalidateQueries({ queryKey: ['log-options', viewerId] }),
+        queryClient.invalidateQueries({ queryKey: ['owner-registrations', viewerId, viewerId] }),
       ])
     } else if (result.reason === 'switched' || result.reason === 'signed-out') {
       await queryClient.invalidateQueries({ queryKey: ['viewer'] })

@@ -55,8 +55,13 @@ The draft has three owners:
   `frontend/apps/webv3/src/components/TagsSidebar.tsx` holds Webv2's
   per-activity tag lists.
 - `frontend/apps/webv3/src/lib/logs.ts` owns the server functions, their query
-  keys and `useSaveLog()`, `useUpdateLog()` and `useDeleteLog()`, which cache a
-  saved log for its detail page and refresh the viewer after an account switch.
+  keys and `useSaveLog()`, `useUpdateLog()`, `useUpdateLogContests()` and
+  `useDeleteLog()`, which cache a saved log for its detail page and refresh the
+  viewer after an account switch. Each marks the reads its change affects as
+  stale by query-key prefix, keyed by the log's owner rather than the account
+  making the change, so the next page to show one reads it again without a
+  reload. Another browser's cache can't be reached this way: it catches up when
+  its copy goes stale.
 
 `frontend/apps/webv3/src/components/DraftOwnerGate.tsx` fixes the account that
 owns a page's draft, for both forms.

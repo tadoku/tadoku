@@ -109,7 +109,7 @@ function OwnerActions({ log, viewerId }: { log: ImmersionLog; viewerId: string }
   const confirm = async () => {
     setPending(true)
     setFailure(null)
-    const result = await deleteLog(viewerId, log.id)
+    const result = await deleteLog(viewerId, log)
     if (result.ok) {
       window.location.assign(links.profile(log.user_id))
       return

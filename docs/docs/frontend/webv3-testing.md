@@ -19,41 +19,28 @@ pnpm check:paper-boundaries
 NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/lab-root-ca.crt pnpm --filter webv3 test:e2e
 ```
 
-The browser suite in `frontend/apps/webv3/e2e/home.spec.ts` checks configured read-only
-data in server-rendered HTML, hydration and mobile containment, local goal
-validation/editing/persistence without network writes, unavailable browser
-storage, theme persistence, mobile navigation and unknown routes.
-`frontend/apps/webv3/e2e/leaderboard.spec.ts` compares each leaderboard's server-rendered
-rows, scope and profile links with the API, follows page, year and period links,
-checks a signed-in participant's row and contest action, and checks containment
-at 390px and 1280px. It needs `TADOKU_API_URL` and the Dev Reader credentials
-described under [native activity logging](webv3-logging.md), and uses the shared
-Dev Reader session.
-`frontend/apps/webv3/e2e/contests.spec.ts` covers the
-[contest lists](webv3-contests.md), `frontend/apps/webv3/e2e/contest.spec.ts`
-the [contest page and registration](webv3-contest.md) and
-`frontend/apps/webv3/e2e/contest-activity.spec.ts` its updates, participant
-profiles and moderation; their signed-in journeys use both fixture accounts and
-create community contests in the selected tenant.
-`frontend/apps/webv3/e2e/contest-admin.spec.ts` covers
-[contest creation and scoring](webv3-contest-admin.md) and writes contests and
-rule sets in the selected tenant.
-These suites require reachable contest and standings data and Chromium installed through
-Playwright. It preserves HTML reports and screenshots outside the source tree.
-`frontend/apps/webv3/e2e/member-journey.spec.ts` signs in, walks from the
-homepage through the current contest's standings, a participant's contest and
-main profiles and the activity form to the saved log, and fails if any
-navigation leaves the Webv3 host; it writes one log in the selected tenant.
-`WEBV3_BASE_URL` selects the running server; `PLAYWRIGHT_OUTPUT_DIR` selects the
-artifact directory, defaulting to a temporary directory.
+The browser suite lives in `frontend/apps/webv3/e2e/`, one spec per feature
+area; each feature page's checks section says what its spec covers. A spec
+reads `WEBV3_BASE_URL` for the server under test and `TADOKU_API_URL` to compare
+pages with the API, and skips what its environment cannot run rather than
+failing. Specs that write create their own data in the selected tenant and never
+assume it is empty. Browser tests cover what the pages show for each API answer;
+the API's golden cases in `services/tadoku-api/e2e/testdata/` own the rules
+behind those answers, such as contest creation's account age and yearly quota.
+The suite needs Chromium installed through Playwright. `PLAYWRIGHT_OUTPUT_DIR`
+selects where reports and screenshots go, defaulting to a temporary directory
+outside the source tree.
 
 ## Credentialed runs and fixture accounts
 
-Tests that need an account run against a deployed branch with its own tenant:
-a dev-cli branch, whose `tenant` hook seeds Dev Reader and Dev Admin into
-`tadoku/<route>` (see [Branch tenants](../develop/development-data.md#branch-tenants)).
-Pull-request deploys create no fixture accounts and no administrator, so they
-cannot run this suite. Run it from `frontend/` with the branch's hosts:
+Tests that need an account run against a development-cluster deployment of the
+pull request's branch with its own tenant: a dev-cli branch, whose `tenant` hook
+seeds Dev Reader and Dev Admin into `tadoku/<route>` (see
+[Branch tenants](../develop/development-data.md#branch-tenants)). Pull-request
+deploys create no fixture accounts and no administrator; to run the credentialed
+suite there, Dev Reader and Dev Admin must first exist in the branch tenant and
+their credentials be supplied through the variables below. Run it from
+`frontend/` with the branch's hosts:
 
 | Variable | Value |
 | --- | --- |
@@ -75,9 +62,8 @@ registering themselves:
   test ends.
 - `learner` is a newly registered, signed-in account for one test, with its ID
   and credentials. Use it when the test needs an untouched account or leaves
-  state a rerun would trip over, such as a used-up allowance. The API refuses
-  contest creation to accounts younger than a month, so a learner cannot
-  create contests.
+  state a rerun would trip over. The API refuses contest creation to accounts
+  younger than a month, so a learner cannot create contests.
 - `loginLearner` is one newly registered account per worker, given as
   credentials. Use it with `signIn`, `authenticate` and `logOut` when the test
   is about signing in, signing out or switching accounts.

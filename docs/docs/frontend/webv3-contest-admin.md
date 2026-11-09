@@ -81,10 +81,11 @@ changes.
 `frontend/apps/webv3/e2e/contest-admin.spec.ts` checks the anonymous prompt and
 scoring redirect, then, with both fixture accounts, creates a contest through the
 form after each invalid field is focused, compares it with the API and finds it
-in Organizing on returning there, shows a newly registered learner the refusal,
-using up its yearly allowance first if the API still allows it,
-drafts, publishes and activates a rule set and compares it with the API, checks a
+in Organizing on returning there, shows a newly registered learner the refusal
+screen instead of the form, drafts, publishes and activates a rule set and compares it with the API, checks a
 started contest's lock, and that Dev Reader cannot reach scoring, even for its
 own contest, and that only administrators see the contest page's Scoring rules
 menu item. Pages are checked at 390px. The anonymous checks also run in the
-production container smoke.
+production container smoke. The browser test covers only the refusal screen; the API golden cases in
+`services/tadoku-api/e2e/testdata/ContestCreatePermissionCheck/` own the account
+age and yearly quota rules.

@@ -266,7 +266,7 @@ try {
   const exitCode = await new Promise((resolve, reject) => {
     const child = spawn('pnpm', ['--filter', 'webv3', 'test:e2e'], {
       stdio: 'inherit', env: { ...process.env, WEBV3_BASE_URL: base,
-        TADOKU_API_URL: `http://127.0.0.1:${apiPort}`, PLAYWRIGHT_OUTPUT_DIR: artifacts },
+        TADOKU_API_URL: `http://127.0.0.1:${apiPort}`, WEBV3_WEB_URL: 'https://tadoku.app', PLAYWRIGHT_OUTPUT_DIR: artifacts },
     })
     child.once('error', reject)
     child.once('exit', resolve)

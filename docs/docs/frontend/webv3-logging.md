@@ -86,10 +86,12 @@ offers them Edit log, Delete log and the contest submissions, and the edit and
 contest pages admit them. The pages decide this from the viewer's role, and the
 API, which accepts a change from the log's owner or an administrator, stays the
 authority. `DraftOwnerGate` records whether the draft's account was an
-administrator when the draft started.
+administrator when the draft started. Their pages name another learner's log in the third person, such as This log
+and the learner's personal record.
 
 The detail page is titled Log details. Its lead names the language, the activity
-and who logged it, linked to their profile. It shows the measure, score and date,
+and who logged it, linked to their profile. It shows the measure, rounded and pluralized as the lists show it, the score, and
+the UTC day and time, both read from the creation instant,
 then the description and tags as labelled rows; the record's ID is not shown. It offers its owner
 and administrators Edit log and Delete log; other visitors see neither.
 

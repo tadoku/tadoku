@@ -9,12 +9,12 @@ sidebar_position: 3
 Read this when you change a Webv3 profile page or its data.
 
 `/profile/$id/statistics/{-$year}` shows a learner's year as Webv2's statistics
-page does: overall score with the per-day average over UTC calendar days, updates
+page does: overall score with the per-day average over UTC calendar days, logs
 and active days, score by language and by activity, the daily activity calendar
 and contest history. Without a year segment it shows the current UTC year. The
 year tabs run from the current year back to the profile's first year; an unknown
 or malformed ID or year is not found. The parts are read together but fail on their own, so a failed part
-reports itself while the rest of the year shows. A year without updates shows an
+reports itself while the rest of the year shows. A year without logs shows an
 empty state, and contest history remains visible.
 
 `frontend/apps/webv3/src/lib/profile.ts` owns the server function, its result

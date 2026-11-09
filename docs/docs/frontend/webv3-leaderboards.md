@@ -39,7 +39,7 @@ standings region carries the scope as its accessible name. The contest's
 phase follows the UTC day the board was read, as on the homepage. Yearly and
 all-time participants link to their Webv3 [profile statistics](webv3-profile.md);
 the latest contest's participants open their native
-[contest profile](webv3-contest.md#updates-and-participant-profiles). Contest
+[contest profile](webv3-contest.md#activity-and-participant-profiles). Contest
 details and Join contest open the native [contest page and registration](webv3-contest.md). When no official contest
 exists, the latest board says so; the API's 404 is not an error. Name search,
 "Find my row" and a separate personal position are not available.

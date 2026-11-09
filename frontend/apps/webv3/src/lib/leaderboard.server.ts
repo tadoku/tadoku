@@ -11,7 +11,7 @@ import {
 } from 'api-client'
 import type { BoardRead, Read, StandingsScope } from './leaderboard'
 import { standingsPageSize } from './leaderboard'
-import { readAsVisitor, sessionRequest } from './session.server'
+import { publicReadRequest, readAsVisitor, sessionRequest } from './session.server'
 
 async function read<T>(request: Promise<{ data?: T }>): Promise<Read<T>> {
   const { data } = await request.catch(() => ({ data: undefined }))
@@ -23,11 +23,11 @@ export function readStandings(scope: StandingsScope, page: number): Promise<Read
   const query = { page_size: standingsPageSize, page: page - 1 }
   switch (scope.kind) {
     case 'contest':
-      return read(immersionContestFetchLeaderboard({ ...sessionRequest('immersionContestFetchLeaderboard'), path: { id: scope.contestId }, query }))
+      return read(immersionContestFetchLeaderboard({ ...publicReadRequest('immersionContestFetchLeaderboard'), path: { id: scope.contestId }, query }))
     case 'year':
-      return read(immersionFetchLeaderboardForYear({ ...sessionRequest('immersionFetchLeaderboardForYear'), path: { year: scope.year }, query }))
+      return read(immersionFetchLeaderboardForYear({ ...publicReadRequest('immersionFetchLeaderboardForYear'), path: { year: scope.year }, query }))
     case 'all-time':
-      return read(immersionFetchLeaderboardGlobal({ ...sessionRequest('immersionFetchLeaderboardGlobal'), query }))
+      return read(immersionFetchLeaderboardGlobal({ ...publicReadRequest('immersionFetchLeaderboardGlobal'), query }))
     default: {
       const exhaustive: never = scope
       return exhaustive
@@ -38,7 +38,7 @@ export function readStandings(scope: StandingsScope, page: number): Promise<Read
 const failed = { data: undefined, response: undefined }
 
 export async function readLatestBoard(): Promise<BoardRead> {
-  return readBoard(await immersionContestFindLatestOfficial(sessionRequest('immersionContestFindLatestOfficial')).catch(() => failed))
+  return readBoard(await immersionContestFindLatestOfficial(publicReadRequest('immersionContestFindLatestOfficial')).catch(() => failed))
 }
 
 /** Reads the contest as the visitor, whose role decides whether a deleted contest is found. */

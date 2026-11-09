@@ -10,7 +10,7 @@ import { JSDOM } from 'jsdom'
 import type { Announcement, BlogPage, BlogPost, CmsPage, Content, SanitizedHtml } from './content'
 import { blogPageSize } from './content'
 import type { Read } from './leaderboard'
-import { sessionRequest } from './session.server'
+import { publicReadRequest, sessionRequest } from './session.server'
 
 const namespace = 'tadoku'
 
@@ -36,18 +36,18 @@ function post({ slug, title, content, published_at: publishedAt }: ContentPost):
 
 export function readPage(slug: string): Promise<Content<CmsPage>> {
   return find(
-    contentPageFindBySlug({ ...sessionRequest('contentPageFindBySlug'), path: { namespace, slug } }),
+    contentPageFindBySlug({ ...publicReadRequest('contentPageFindBySlug'), path: { namespace, slug } }),
     page => page.html === undefined ? undefined : { title: page.title, html: purify.sanitize(page.html) as SanitizedHtml },
   )
 }
 
 export function readPost(slug: string): Promise<Content<BlogPost>> {
-  return find(contentPostFindBySlug({ ...sessionRequest('contentPostFindBySlug'), path: { namespace, slug } }), post)
+  return find(contentPostFindBySlug({ ...publicReadRequest('contentPostFindBySlug'), path: { namespace, slug } }), post)
 }
 
 export async function readPosts(page: number): Promise<Read<BlogPage>> {
   const { data } = await contentPostList({
-    ...sessionRequest('contentPostList'),
+    ...publicReadRequest('contentPostList'),
     path: { namespace },
     query: { page_size: blogPageSize, page: page - 1 },
   }).catch(() => ({ data: undefined }))

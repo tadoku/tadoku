@@ -48,6 +48,49 @@ export function sessionRequest(operation: ApiOperation, cookie?: string, apiUrl?
   }
 }
 
+const publicReadTtlMs = 10_000
+const publicReadCapacity = 500
+
+// ponytail: one process, so replicas don't share entries and a restart empties it; use a shared store if the API's
+// load from signed-out reads across replicas ever matters.
+const publicReads = new Map<string, { body: string; expiresAt: number }>()
+
+function rememberPublicRead(url: string, body: string) {
+  if (publicReads.size >= publicReadCapacity) publicReads.delete(publicReads.keys().next().value!)
+  publicReads.set(url, { body, expiresAt: Date.now() + publicReadTtlMs })
+}
+
+/**
+ * Options for a public read that a visitor with no session cookie may be answered from memory for a moment. Entries are
+ * keyed by the absolute API URL: its host is what selects the tenant, so one tenant can never read another's entry.
+ * Only a 200 that passed response validation is kept, which is why `fetch` waits for `responseTransformer` to store it.
+ */
+export function publicReadRequest(operation: ApiOperation) {
+  const request = sessionRequest(operation)
+  if (sessionCookie()) return request
+
+  let remember = () => {}
+  return {
+    ...request,
+    fetch: (async (input, init) => {
+      const url = input instanceof Request ? input.url : String(input)
+      const cached = publicReads.get(url)
+      if (cached && cached.expiresAt > Date.now()) return new Response(cached.body, { status: 200 })
+
+      const response = await fetch(input, init)
+      if (response.status === 200) {
+        const body = await response.clone().text()
+        remember = () => rememberPublicRead(url, body)
+      }
+      return response
+    }) satisfies typeof fetch,
+    responseTransformer: async (data: unknown) => {
+      remember()
+      return data
+    },
+  }
+}
+
 /** Reads with the visitor's session, or signed out when the API rejects that session. */
 export async function readAsVisitor<R extends { response?: Response }>(read: (cookie?: string) => Promise<R>): Promise<R> {
   const cookie = sessionCookie()

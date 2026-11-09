@@ -1,6 +1,6 @@
 ---
 title: Webv3 server logs
-description: The structured JSON log lines Webv3's server writes for upstream failures and rendering errors, their fields, which statuses count as failures, what they can never contain and the request deadline.
+description: The structured JSON log lines Webv3's server writes for upstream failures and rendering errors, their fields, which statuses count as failures, what they can never contain, the request deadline and the signed-out read cache.
 ---
 
 # Webv3 server logs
@@ -92,3 +92,16 @@ Every GET request has an overall deadline for its upstream calls, set in
 the deadline are aborted, each is recorded as one upstream failure with
 `error_type` `timeout`, and the page renders with those sections marked as
 failed. A request whose calls have finished keeps rendering.
+
+## Signed-out read cache
+
+`publicReadRequest` answers a public read from memory for ten seconds when the
+incoming request carries no `tadoku_session` or `tadoku_session_<tenant>` cookie.
+The latest official contest, standings pages, CMS pages and blog reads use it. A
+request with any such cookie, even an empty one, always reads the API; signed-out
+visitors can see those reads up to ten seconds old.
+
+An entry is keyed by the absolute API URL, whose host selects the tenant, so a
+tenant only reads its own entries. Only a 200 answer that passed response
+validation is stored, at most 500 entries with the oldest evicted first. The cache
+lives in one process, so replicas don't share it and a restart empties it.

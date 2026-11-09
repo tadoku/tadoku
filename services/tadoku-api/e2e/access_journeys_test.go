@@ -1,48 +1,11 @@
 package e2e_test
 
 import (
-	"bytes"
 	"context"
-	"io"
-	"log/slog"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
-
-	transport "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 )
-
-// Test safety: the audit service reports an unrecorded change through the
-// default logger, so these journeys swap it for a buffer and restore it.
-func captureDefaultLogs(t *testing.T) *bytes.Buffer {
-	t.Helper()
-
-	var logs bytes.Buffer
-	previous := slog.Default()
-	slog.SetDefault(slog.New(slog.NewTextHandler(&logs, nil)))
-	t.Cleanup(func() { slog.SetDefault(previous) })
-
-	return &logs
-}
-
-func auditUnavailableHandler(t *testing.T) *transport.Router {
-	t.Helper()
-
-	closedPool := openClosedPool(t, api.db.AppPool.Config().ConnString())
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	router, _, err := newTestRouterWithLogger(
-		t.Context(),
-		api.db.AppPool,
-		closedPool,
-		logger,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return router
-}
 
 // Test safety: the trigger changes the suite database's schema, so the cleanup
 // drops it before the next test writes to the table.
@@ -68,16 +31,6 @@ func failInserts(t *testing.T, table string) {
 		create trigger fail_insert before insert on `+table+` for each row execute function fail_insert()`)
 	if err != nil {
 		t.Fatal(err)
-	}
-}
-
-func requireLogged(t *testing.T, logs *bytes.Buffer, fragments ...string) {
-	t.Helper()
-
-	for _, fragment := range fragments {
-		if !strings.Contains(logs.String(), fragment) {
-			t.Errorf("logs do not contain %q:\n%s", fragment, logs.String())
-		}
 	}
 }
 

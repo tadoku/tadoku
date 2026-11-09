@@ -2,7 +2,7 @@ import { QueryClient } from '@tanstack/react-query'
 import { createRouter } from '@tanstack/react-router'
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
 import { routeAnnouncerId } from './components/AppShell'
-import { PendingView } from './components/StatusViews'
+import { ErrorView, PendingView } from './components/StatusViews'
 import { routeTree } from './routeTree.gen'
 
 export function getRouter() {
@@ -18,6 +18,7 @@ export function getRouter() {
     routeTree,
     context: { queryClient },
     defaultPreload: 'intent',
+    defaultErrorComponent: ErrorView,
     defaultPendingComponent: PendingView,
     defaultPendingMs: 400,
     scrollRestoration: true,

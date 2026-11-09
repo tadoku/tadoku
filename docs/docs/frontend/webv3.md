@@ -131,7 +131,8 @@ without JavaScript. The avatar is decorative and hidden
 from assistive technology; the name beside it carries the meaning.
 
 `/contests` redirects permanently to `/contests/official`, as Webv2 does.
-Unknown paths render the not-found page with a link home and status 404.
+Unknown paths render the not-found page with a link home and status 404; see
+[status codes and failure pages](webv3-status-codes.md).
 
 ## Local development
 

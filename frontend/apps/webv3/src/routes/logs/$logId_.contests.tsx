@@ -22,6 +22,7 @@ import { useLoginUrl, viewerQueryOptions } from '../../lib/session'
 import { recordSurface } from '../../components/standings-styles'
 import { formControls } from '../../components/form-styles'
 import { AppLink } from '../../components/router-link'
+import { pageUnavailable } from '../../lib/page-status'
 
 export const Route = createFileRoute('/logs/$logId_/contests')({
   head: () => ({ meta: [{ title: 'Submit to contests · Tadoku' }] }),
@@ -36,6 +37,7 @@ export const Route = createFileRoute('/logs/$logId_/contests')({
 
     const log = await context.queryClient.ensureQueryData(logQuery(params.logId, viewer.userId))
     if (!log.ok && log.reason === 'not-found') throw notFound()
+    if (!log.ok && log.reason === 'unavailable') pageUnavailable(context.queryClient, logQuery(params.logId, viewer.userId))
     if (log.ok && (log.data.user_id === viewer.userId || viewer.role === 'admin')) {
       await context.queryClient.ensureQueryData(ownerRegistrationsQuery(viewer.userId, log.data.user_id))
     }

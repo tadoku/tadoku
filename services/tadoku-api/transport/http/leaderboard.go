@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"errors"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
@@ -17,6 +18,25 @@ func (s *server) ImmersionContestFetchLeaderboard(ctx context.Context, request o
 		return nil, err
 	}
 	return openapi.ImmersionContestFetchLeaderboard200JSONResponse(responseLeaderboard(result)), nil
+}
+
+func (s *server) ImmersionContestFetchLeaderboardEntry(
+	ctx context.Context,
+	request openapi.ImmersionContestFetchLeaderboardEntryRequestObject,
+) (openapi.ImmersionContestFetchLeaderboardEntryResponseObject, error) {
+	entry, err := s.application.FetchContestLeaderboardEntry(ctx, api.ContestLeaderboardEntryRequest{
+		ContestID: request.Id,
+		UserID:    request.UserId,
+	})
+	if errors.Is(err, api.ErrLeaderboardEntryNotFound) {
+		return openapi.ImmersionContestFetchLeaderboardEntry204Response{}, nil
+	}
+	if err != nil {
+		s.logOperationError(ctx, "fetch contest leaderboard entry", err)
+		return nil, err
+	}
+
+	return openapi.ImmersionContestFetchLeaderboardEntry200JSONResponse(responseLeaderboardEntry(*entry)), nil
 }
 
 func (s *server) ImmersionFetchLeaderboardForYear(ctx context.Context, request openapi.ImmersionFetchLeaderboardForYearRequestObject) (openapi.ImmersionFetchLeaderboardForYearResponseObject, error) {
@@ -58,13 +78,17 @@ func responseLeaderboard(result *api.Leaderboard) openapi.ImmersionLeaderboard {
 		NextPageToken: result.NextPageToken,
 	}
 	for i, entry := range result.Entries {
-		response.Entries[i] = openapi.ImmersionLeaderboardEntry{
-			Rank:            entry.Rank,
-			UserId:          entry.UserID,
-			UserDisplayName: entry.UserDisplayName,
-			Score:           entry.Score,
-			IsTie:           entry.IsTie,
-		}
+		response.Entries[i] = responseLeaderboardEntry(entry)
 	}
 	return response
+}
+
+func responseLeaderboardEntry(entry api.LeaderboardEntry) openapi.ImmersionLeaderboardEntry {
+	return openapi.ImmersionLeaderboardEntry{
+		Rank:            entry.Rank,
+		UserId:          entry.UserID,
+		UserDisplayName: entry.UserDisplayName,
+		Score:           entry.Score,
+		IsTie:           entry.IsTie,
+	}
 }

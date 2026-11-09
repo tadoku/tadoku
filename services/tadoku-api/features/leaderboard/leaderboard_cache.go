@@ -43,6 +43,26 @@ end
 return reply
 `)
 
+var memberScript = valkeygo.NewLuaScript(`
+local size = redis.call('ZCARD', KEYS[1])
+if redis.call('GET', KEYS[2]) ~= 'version:' .. ARGV[1] .. ':' .. size then
+  return false
+end
+local index = redis.call('ZREVRANK', KEYS[1], ARGV[2])
+if not index then
+  return {0, size, 0, 0}
+end
+local value = redis.call('ZSCORE', KEYS[1], ARGV[2])
+return {
+  index,
+  size,
+  redis.call('ZCOUNT', KEYS[1], '(' .. value, '+inf'),
+  redis.call('ZCOUNT', KEYS[1], value, '+inf'),
+  ARGV[2],
+  value,
+}
+`)
+
 type Cache struct {
 	client           valkeygo.Client
 	operationTimeout time.Duration
@@ -122,6 +142,32 @@ func (c *Cache) fetchPage(ctx context.Context, key string, version, start int64,
 	board, err := parsePage(reply, int(start))
 	if err != nil {
 		return nil, false, fmt.Errorf("parse leaderboard page %s: %w", key, err)
+	}
+	return board, true, nil
+}
+
+// fetchMember reports a miss exactly as fetchPage does; the page it returns holds only userID, or nothing when userID
+// is not on the board.
+func (c *Cache) fetchMember(ctx context.Context, key string, version int64, userID uuid.UUID) (*page, bool, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.operationTimeout)
+	defer cancel()
+
+	args := []string{strconv.FormatInt(version, 10), userID.String()}
+	reply, err := memberScript.Exec(ctx, c.client, []string{key, key + ":last_updated"}, args).ToArray()
+	if valkeygo.IsValkeyNil(err) {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, false, fmt.Errorf("fetch leaderboard member %s: %w", key, err)
+	}
+
+	index, err := reply[0].AsInt64()
+	if err != nil {
+		return nil, false, fmt.Errorf("parse leaderboard member %s: %w", key, err)
+	}
+	board, err := parsePage(reply[1:], int(index))
+	if err != nil {
+		return nil, false, fmt.Errorf("parse leaderboard member %s: %w", key, err)
 	}
 	return board, true, nil
 }

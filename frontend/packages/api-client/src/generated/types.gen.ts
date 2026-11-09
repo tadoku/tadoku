@@ -2530,6 +2530,40 @@ export type ImmersionFetchLeaderboardGlobalResponses = {
 
 export type ImmersionFetchLeaderboardGlobalResponse = ImmersionFetchLeaderboardGlobalResponses[keyof ImmersionFetchLeaderboardGlobalResponses];
 
+export type ImmersionContestFetchLeaderboardEntryData = {
+    body?: never;
+    path: {
+        id: string;
+        user_id: string;
+    };
+    query?: never;
+    url: '/immersion/contests/{id}/leaderboard/{user_id}';
+};
+
+export type ImmersionContestFetchLeaderboardEntryErrors = {
+    /**
+     * not found
+     */
+    404: unknown;
+    /**
+     * leaderboard read failed
+     */
+    500: unknown;
+};
+
+export type ImmersionContestFetchLeaderboardEntryResponses = {
+    /**
+     * successful operation
+     */
+    200: ImmersionLeaderboardEntry;
+    /**
+     * the user is not a participant of this contest
+     */
+    204: void;
+};
+
+export type ImmersionContestFetchLeaderboardEntryResponse = ImmersionContestFetchLeaderboardEntryResponses[keyof ImmersionContestFetchLeaderboardEntryResponses];
+
 export type ImmersionScoringRuleSetListPlatformData = {
     body?: never;
     path?: never;

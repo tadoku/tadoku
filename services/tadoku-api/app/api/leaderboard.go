@@ -11,7 +11,11 @@ import (
 type LeaderboardRequest = leaderboard.Request
 type ContestLeaderboardRequest = leaderboard.ContestRequest
 type YearlyLeaderboardRequest = leaderboard.YearlyRequest
+type ContestLeaderboardEntryRequest = leaderboard.ContestEntryRequest
 type Leaderboard = leaderboard.Leaderboard
+type LeaderboardEntry = leaderboard.Entry
+
+var ErrLeaderboardEntryNotFound = leaderboard.ErrEntryNotFound
 
 func (a *Application) FetchContestLeaderboard(ctx context.Context, request ContestLeaderboardRequest) (*Leaderboard, error) {
 	board, err := a.leaderboard.FetchContest(ctx, request)
@@ -19,6 +23,22 @@ func (a *Application) FetchContestLeaderboard(ctx context.Context, request Conte
 		return nil, err
 	}
 	return a.hydrateLeaderboard(ctx, board)
+}
+
+func (a *Application) FetchContestLeaderboardEntry(
+	ctx context.Context,
+	request ContestLeaderboardEntryRequest,
+) (*LeaderboardEntry, error) {
+	entry, err := a.leaderboard.FetchContestEntry(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	board, err := a.hydrateLeaderboard(ctx, &Leaderboard{Entries: []LeaderboardEntry{*entry}})
+	if err != nil {
+		return nil, err
+	}
+	return &board.Entries[0], nil
 }
 
 func (a *Application) FetchYearlyLeaderboard(ctx context.Context, request YearlyLeaderboardRequest) (*Leaderboard, error) {

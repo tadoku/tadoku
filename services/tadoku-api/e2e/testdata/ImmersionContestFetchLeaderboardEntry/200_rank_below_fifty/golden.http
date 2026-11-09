@@ -1,0 +1,6 @@
+>>> GET /immersion/contests/f4444444-4444-4444-8444-444444444444/leaderboard/80000000-0000-4000-8000-000000000057
+HTTP/1.1 200 OK
+Content-Length: 118
+Content-Type: application/json; charset=UTF-8
+
+{"is_tie":false,"rank":57,"score":4,"user_display_name":"Reader 57","user_id":"80000000-0000-4000-8000-000000000057"}

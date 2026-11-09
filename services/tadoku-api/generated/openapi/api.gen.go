@@ -1803,6 +1803,9 @@ type ServerInterface interface {
 	// ImmersionContestFetchLeaderboard Fetches the leaderboard for a contest
 	// (GET /immersion/contests/{id}/leaderboard)
 	ImmersionContestFetchLeaderboard(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params ImmersionContestFetchLeaderboardParams)
+	// ImmersionContestFetchLeaderboardEntry Fetches one participant's entry on a contest leaderboard
+	// (GET /immersion/contests/{id}/leaderboard/{user_id})
+	ImmersionContestFetchLeaderboardEntry(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, userId openapi_types.UUID)
 	// ImmersionContestListLogs Lists the logs attached to a contest
 	// (GET /immersion/contests/{id}/logs)
 	ImmersionContestListLogs(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params ImmersionContestListLogsParams)
@@ -3393,6 +3396,41 @@ func (siw *ServerInterfaceWrapper) ImmersionContestFetchLeaderboard(w http.Respo
 	handler.ServeHTTP(w, r)
 }
 
+// ImmersionContestFetchLeaderboardEntry operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionContestFetchLeaderboardEntry(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "user_id" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", r.PathValue("user_id"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionContestFetchLeaderboardEntry(w, r, id, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ImmersionContestListLogs operation middleware
 func (siw *ServerInterfaceWrapper) ImmersionContestListLogs(w http.ResponseWriter, r *http.Request) {
 
@@ -4837,6 +4875,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{userId}/activity-split/{year}", wrapper.ImmersionProfileYearlyActivitySplitByUserID)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/leaderboard/yearly/{year}", wrapper.ImmersionFetchLeaderboardForYear)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/leaderboard/global", wrapper.ImmersionFetchLeaderboardGlobal)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/leaderboard/{user_id}", wrapper.ImmersionContestFetchLeaderboardEntry)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/scoring/rule-sets", wrapper.ImmersionScoringRuleSetListPlatform)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/scoring/rule-sets", wrapper.ImmersionScoringRuleSetCreatePlatform)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/scoring/rule-sets", wrapper.ImmersionScoringRuleSetListContest)
@@ -7242,6 +7281,53 @@ func (response ImmersionContestFetchLeaderboard500Response) VisitImmersionContes
 	return nil
 }
 
+type ImmersionContestFetchLeaderboardEntryRequestObject struct {
+	Id     openapi_types.UUID `json:"id"`
+	UserId openapi_types.UUID `json:"user_id"`
+}
+
+type ImmersionContestFetchLeaderboardEntryResponseObject interface {
+	VisitImmersionContestFetchLeaderboardEntryResponse(w http.ResponseWriter) error
+}
+
+type ImmersionContestFetchLeaderboardEntry200JSONResponse ImmersionLeaderboardEntry
+
+func (response ImmersionContestFetchLeaderboardEntry200JSONResponse) VisitImmersionContestFetchLeaderboardEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionContestFetchLeaderboardEntry204Response struct {
+}
+
+func (response ImmersionContestFetchLeaderboardEntry204Response) VisitImmersionContestFetchLeaderboardEntryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ImmersionContestFetchLeaderboardEntry404Response struct {
+}
+
+func (response ImmersionContestFetchLeaderboardEntry404Response) VisitImmersionContestFetchLeaderboardEntryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ImmersionContestFetchLeaderboardEntry500Response struct {
+}
+
+func (response ImmersionContestFetchLeaderboardEntry500Response) VisitImmersionContestFetchLeaderboardEntryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
 type ImmersionContestListLogsRequestObject struct {
 	Id     openapi_types.UUID `json:"id"`
 	Params ImmersionContestListLogsParams
@@ -9089,6 +9175,9 @@ type StrictServerInterface interface {
 	// ImmersionContestFetchLeaderboard Fetches the leaderboard for a contest
 	// (GET /immersion/contests/{id}/leaderboard)
 	ImmersionContestFetchLeaderboard(ctx context.Context, request ImmersionContestFetchLeaderboardRequestObject) (ImmersionContestFetchLeaderboardResponseObject, error)
+	// ImmersionContestFetchLeaderboardEntry Fetches one participant's entry on a contest leaderboard
+	// (GET /immersion/contests/{id}/leaderboard/{user_id})
+	ImmersionContestFetchLeaderboardEntry(ctx context.Context, request ImmersionContestFetchLeaderboardEntryRequestObject) (ImmersionContestFetchLeaderboardEntryResponseObject, error)
 	// ImmersionContestListLogs Lists the logs attached to a contest
 	// (GET /immersion/contests/{id}/logs)
 	ImmersionContestListLogs(ctx context.Context, request ImmersionContestListLogsRequestObject) (ImmersionContestListLogsResponseObject, error)
@@ -10470,6 +10559,33 @@ func (sh *strictHandler) ImmersionContestFetchLeaderboard(w http.ResponseWriter,
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ImmersionContestFetchLeaderboardResponseObject); ok {
 		if err := validResponse.VisitImmersionContestFetchLeaderboardResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionContestFetchLeaderboardEntry operation middleware
+func (sh *strictHandler) ImmersionContestFetchLeaderboardEntry(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, userId openapi_types.UUID) {
+	var request ImmersionContestFetchLeaderboardEntryRequestObject
+
+	request.Id = id
+	request.UserId = userId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionContestFetchLeaderboardEntry(ctx, request.(ImmersionContestFetchLeaderboardEntryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionContestFetchLeaderboardEntry")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionContestFetchLeaderboardEntryResponseObject); ok {
+		if err := validResponse.VisitImmersionContestFetchLeaderboardEntryResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

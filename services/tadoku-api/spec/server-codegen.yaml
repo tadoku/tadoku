@@ -65,6 +65,7 @@ output-options:
 
 
     - ImmersionContestFetchLeaderboard
+    - ImmersionContestFetchLeaderboardEntry
     - ImmersionFetchLeaderboardForYear
     - ImmersionFetchLeaderboardGlobal
     - ImmersionScorePreview

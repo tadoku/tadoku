@@ -73,8 +73,9 @@ test('webv2 sends an account with release-webv3 to the same page on Webv3 and no
       await tab.goto('/')
       await hydrated(tab)
       await tab.getByRole('banner').locator('[aria-haspopup="menu"]').click()
-      const settings = await tab.getByRole('menuitem', { name: 'Account settings', exact: true }).getAttribute('href')
-      expect(decodeURIComponent(settings!)).toContain(`return_to=${webv3}/`)
+      await tab.getByRole('menuitem', { name: 'Account settings', exact: true }).click()
+      await tab.waitForURL(`${account}/settings**`)
+      expect(new URL(tab.url()).searchParams.get('return_to')).toBe(`${webv3}/`)
       await tab.close()
 
       const anonymous = await guest.newPage()

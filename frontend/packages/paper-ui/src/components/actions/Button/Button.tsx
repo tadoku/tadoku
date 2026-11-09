@@ -65,6 +65,7 @@ export const button = tv({
       link: {
         base: [
           "paper-button--link min-h-auto p-0 border-0 bg-transparent text-link underline underline-offset-link",
+          "disabled:bg-transparent aria-disabled:bg-transparent",
           "not-disabled:hover:bg-transparent not-disabled:active:bg-transparent",
         ],
       },

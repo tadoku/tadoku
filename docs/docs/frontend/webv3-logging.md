@@ -148,14 +148,10 @@ and `E2E_READER_PASSWORD` for the documented development fixture. Ownership,
 suspension and account-switch cases also use `E2E_SECOND_EMAIL` and
 `E2E_SECOND_PASSWORD` for Dev Admin; the suspension case first checks that the
 administrator reaches the selected branch and restores the Reader role there.
-The identity API admits ten logins per account in 15 minutes, counting
-successful ones. `frontend/apps/webv3/e2e/logging-fixtures.ts` therefore shares
-one real session per account, held in memory, across journeys where login is
-incidental. The logging files and the account E2E together sign in with Dev
-Reader eight times and Dev Admin five times, so wait 15 minutes after the last
-login before repeating a complete run. A failed test restarts the Playwright
-worker, whose shared sessions then sign in again, and rejected attempts count
-towards the limit too. Set `NODE_EXTRA_CA_CERTS` to the trusted Lab CA
+Journeys get their accounts from the shared fixtures, which keep both
+accounts' sessions across runs and sign in through authv2 with a newly
+registered learner; [Credentialed runs and fixture accounts](webv3-testing.md#credentialed-runs-and-fixture-accounts)
+describes them and the login budget. Set `NODE_EXTRA_CA_CERTS` to the trusted Lab CA
 and `PLAYWRIGHT_OUTPUT_DIR` outside the checkout. Authenticated runs disable
 traces and videos; browser-boundary delay and abort cases cover repeated submits
 and transport errors without mocking the API's successful writes.

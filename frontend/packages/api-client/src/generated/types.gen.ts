@@ -1300,6 +1300,10 @@ export type ImmersionContestListData = {
         include_deleted?: boolean;
         official?: boolean;
         user_id?: string;
+        /**
+         * Returns only contests that have not started, the soonest first.
+         */
+        upcoming?: boolean;
     };
     url: '/immersion/contests';
 };

@@ -957,6 +957,13 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: upcoming
+          in: query
+          required: false
+          allowEmptyValue: true
+          description: Returns only contests that have not started, the soonest first.
+          schema:
+            type: boolean
       responses:
         "200":
           description: successful operation

@@ -1381,6 +1381,9 @@ type ImmersionContestListParams struct {
 	IncludeDeleted *bool               `form:"include_deleted,omitempty" json:"include_deleted,omitempty"`
 	Official       *bool               `form:"official,omitempty" json:"official,omitempty"`
 	UserId         *openapi_types.UUID `form:"user_id,omitempty" json:"user_id,omitempty"`
+
+	// Upcoming Returns only contests that have not started, the soonest first.
+	Upcoming *bool `form:"upcoming,omitempty" json:"upcoming,omitempty"`
 }
 
 // ImmersionContestListRegistrationsParams defines parameters for ImmersionContestListRegistrations.
@@ -3084,6 +3087,19 @@ func (siw *ServerInterfaceWrapper) ImmersionContestList(w http.ResponseWriter, r
 			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "user_id"})
 		} else {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "upcoming" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "upcoming", r.URL.Query(), &params.Upcoming, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "upcoming"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "upcoming", Err: err})
 		}
 		return
 	}

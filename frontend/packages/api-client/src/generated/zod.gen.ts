@@ -772,7 +772,8 @@ export const zImmersionContestListQuery = z.object({
     page: z.int().optional(),
     include_deleted: z.boolean().optional(),
     official: z.boolean().optional(),
-    user_id: z.string().guid().optional()
+    user_id: z.string().guid().optional(),
+    upcoming: z.boolean().optional()
 });
 
 /**

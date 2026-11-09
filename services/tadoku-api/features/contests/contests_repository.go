@@ -325,6 +325,7 @@ func (r *ContestsRepository) ListContests(
 		IncludeDeleted:       parameters.IncludeDeleted,
 		UserID:               postgres.NullableUUID(parameters.UserID),
 		Official:             parameters.Official,
+		StartsAfter:          postgres.NullableDate(parameters.startsAfter),
 		DeletedOrganizerName: deleteduser.OrganizerName,
 		IncludePrivate:       includePrivate,
 		PrivateOwnerID:       privateOwnerID,

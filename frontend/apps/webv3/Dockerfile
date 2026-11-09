@@ -14,7 +14,8 @@ RUN pnpm --filter paper-ui build && pnpm --filter webv3 build
 
 FROM docker.io/node:22-bookworm-slim@sha256:5ec23b7c622b00547753bc6ffd78085dd868a68aeb41c8e0a1418f033e13d96d AS release
 LABEL org.opencontainers.image.source="https://github.com/tadoku/tadoku"
-ENV NODE_ENV=production HOST=0.0.0.0 PORT=3000 TADOKU_WEB_URL=https://tadoku.app TADOKU_API_URL=https://tadoku.app/api/internal
+# srvx drains in-flight requests on SIGTERM for this many seconds; keep it above the 8-second upstream deadline.
+ENV NODE_ENV=production HOST=0.0.0.0 PORT=3000 SERVER_SHUTDOWN_TIMEOUT=15 TADOKU_WEB_URL=https://tadoku.app TADOKU_API_URL=https://tadoku.app/api/internal
 WORKDIR /app
 COPY --from=build --chown=node:node /app/apps/webv3/.output ./
 USER 1000:1000

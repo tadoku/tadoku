@@ -14,13 +14,7 @@ export function requestUrls() {
  * Server routes outside TanStack Start pass their own Host header; everything else uses `requestUrls()`.
  */
 export function urlsForHost(host: string | null | undefined) {
-  const web = new URL(process.env.TADOKU_WEB_URL || 'https://tadoku.dev.lab')
-  const api = new URL(process.env.TADOKU_API_URL || 'https://tadoku.dev.lab/api/internal')
-  for (const url of [web, api]) {
-    if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) {
-      throw new Error('Invalid Tadoku runtime URL')
-    }
-  }
+  const { web, api } = runtimeOrigins()
   if (host && !hostPattern.test(host)) throw new Error('Invalid Webv3 request host')
   const appOrigin = `${web.protocol}//${host || `next.${web.host}`}`
 
@@ -42,6 +36,22 @@ export function urlsForHost(host: string | null | undefined) {
     accountUrl: sibling('account'),
     adminUrl: sibling('admin'),
   }
+}
+
+/** The configured web and API URLs, as new objects on every call. Throws an error naming the variable that is invalid. */
+export function runtimeOrigins() {
+  return {
+    web: runtimeUrl('TADOKU_WEB_URL', process.env.TADOKU_WEB_URL || 'https://tadoku.dev.lab'),
+    api: runtimeUrl('TADOKU_API_URL', process.env.TADOKU_API_URL || 'https://tadoku.dev.lab/api/internal'),
+  }
+}
+
+function runtimeUrl(name: string, value: string) {
+  const url = URL.canParse(value) ? new URL(value) : undefined
+  if (!url || !['https:', 'http:'].includes(url.protocol) || url.username || url.password) {
+    throw new Error(`${name} must be an http or https URL without credentials`)
+  }
+  return url
 }
 
 /** The branch a `<branch>.next.<domain>` host selects, if it is one. */

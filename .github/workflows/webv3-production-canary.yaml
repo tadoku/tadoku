@@ -29,7 +29,6 @@ jobs:
     env:
       WEBV3_BASE_URL: https://next.tadoku.app
       TADOKU_API_URL: https://tadoku.app/api/internal
-      PLAYWRIGHT_OUTPUT_DIR: ${{ runner.temp }}/webv3-canary
     steps:
       # The spec skips, and Playwright exits green, when the credentials are unset.
       - name: Require the canary credentials
@@ -57,6 +56,7 @@ jobs:
         env:
           E2E_READER_EMAIL: ${{ secrets.WEBV3_CANARY_EMAIL }}
           E2E_READER_PASSWORD: ${{ secrets.WEBV3_CANARY_PASSWORD }}
+          PLAYWRIGHT_OUTPUT_DIR: ${{ runner.temp }}/webv3-canary
       # Failure screenshots only: the HTML report records typed values, including the password.
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()

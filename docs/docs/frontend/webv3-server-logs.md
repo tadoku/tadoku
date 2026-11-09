@@ -47,10 +47,13 @@ call's operation. It covers upstream calls only: a request whose calls have
 finished keeps rendering.
 
 The same middleware records an SSR error for a response of status 500 or above
-and for a rejected request, unless the client has aborted it. An error thrown
-while a page streams keeps its response status and reaches only the framework's
-log. The framework writes its own unstructured errors to stderr, thrown messages
-included, so that stream is not covered by this contract.
+and for a rejected request, unless the client has aborted it. An error React
+recovers from while rendering, such as one thrown by a page component, keeps the
+response's status, usually 200, and is recorded as an SSR error with its class in
+`error_type`. A request records at most one SSR error, so a render error and the
+500 it causes are one line. The framework also writes its own unstructured
+errors to stderr, thrown messages included; that stream is not covered by this
+contract.
 
 ## Request deadline
 

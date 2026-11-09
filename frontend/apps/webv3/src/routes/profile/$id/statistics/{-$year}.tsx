@@ -7,6 +7,7 @@ import { PendingView } from '../../../../components/StatusViews'
 import { profileStatisticsQuery } from '../../../../lib/profile'
 import { ensureViewerData, viewerKey, viewerQueryOptions } from '../../../../lib/session'
 import { pageUnavailable } from '../../../../lib/page-status'
+import { sharingMeta } from '../../../../lib/page-meta'
 
 export const Route = createFileRoute('/profile/$id/statistics/{-$year}')({
   validateSearch: z.object({ contests: z.number().int().min(1).optional().catch(undefined) }),
@@ -16,10 +17,13 @@ export const Route = createFileRoute('/profile/$id/statistics/{-$year}')({
     const [viewer, result] = await ensureViewerData(context.queryClient, key => profileStatisticsQuery(input, key))
     if (result.status === 'not-found') throw notFound()
     if (result.status === 'unavailable') pageUnavailable(context.queryClient, profileStatisticsQuery(input, viewerKey(viewer)))
-    return { name: result.status === 'found' ? result.profile.display_name : undefined, year: input.year }
+    const name = result.profile.display_name
+    return { year: input.year, name, description: `${name}’s reading, listening and other immersion statistics for ${input.year} on Tadoku.` }
   },
   head: ({ loaderData }) => ({
-    meta: [{ title: loaderData?.name ? `Profile statistics · ${loaderData.name} · Tadoku` : 'Profile · Tadoku' }],
+    meta: loaderData
+      ? sharingMeta(loaderData.name, loaderData.description, `Profile statistics · ${loaderData.name} · Tadoku`)
+      : [{ title: 'Profile · Tadoku' }],
   }),
   notFoundComponent: () => (
     <EmptyState

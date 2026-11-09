@@ -1,6 +1,7 @@
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { Button, EmptyState } from 'paper-ui'
 import { PageUnavailableError } from '../lib/page-status'
+import { noindex } from '../lib/page-meta'
 
 /**
  * The account menu's Log out form posts here. A logout the API did not confirm falls through to this route's page,
@@ -19,7 +20,7 @@ export const Route = createFileRoute('/logout')({
     if (serverContext?.logout !== 'unavailable') throw notFound()
     throw new PageUnavailableError('Log out is unavailable')
   },
-  head: () => ({ meta: [{ title: 'Log out · Tadoku' }] }),
+  head: () => ({ meta: [{ title: 'Log out · Tadoku' }, noindex] }),
   component: LogoutUnavailable,
   errorComponent: LogoutUnavailable,
 })

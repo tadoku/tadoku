@@ -6,9 +6,10 @@ import { DraftOwnerGate } from '../../components/DraftOwnerGate'
 import { LogForm } from '../../components/LogForm'
 import { logOptionsQuery } from '../../lib/logs'
 import { useLoginUrl, viewerQueryOptions } from '../../lib/session'
+import { noindex } from '../../lib/page-meta'
 
 export const Route = createFileRoute('/logs/new')({
-  head: () => ({ meta: [{ title: 'Log activity · Tadoku' }] }),
+  head: () => ({ meta: [{ title: 'Log activity · Tadoku' }, noindex] }),
   // Webv2 prefills a positive whole amount from `?amount=` and ignores anything else.
   validateSearch: z.object({ amount: z.coerce.number().int().positive().optional().catch(undefined) }),
   loader: async ({ context }) => {

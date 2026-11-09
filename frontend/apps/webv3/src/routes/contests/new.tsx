@@ -5,9 +5,10 @@ import { ContestForm } from '../../components/ContestForm'
 import { DraftOwnerGate } from '../../components/DraftOwnerGate'
 import { contestEditorQuery, contestsHref } from '../../lib/contests'
 import { useLoginUrl, viewerQueryOptions } from '../../lib/session'
+import { noindex } from '../../lib/page-meta'
 
 export const Route = createFileRoute('/contests/new')({
-  head: () => ({ meta: [{ title: 'Create new contest · Tadoku' }] }),
+  head: () => ({ meta: [{ title: 'Create new contest · Tadoku' }, noindex] }),
   loader: async ({ context }) => {
     const viewer = await context.queryClient.ensureQueryData(viewerQueryOptions())
     if (viewer.status === 'signed-in') await context.queryClient.ensureQueryData(contestEditorQuery(viewer.userId))

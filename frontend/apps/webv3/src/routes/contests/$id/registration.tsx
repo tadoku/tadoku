@@ -6,6 +6,7 @@ import { contestBoardQuery } from '../../../lib/leaderboard'
 import { contestLanguagesQuery, registrationQuery } from '../../../lib/registration'
 import { ensureViewerData, loginHref, viewerKey } from '../../../lib/session'
 import { pageUnavailable } from '../../../lib/page-status'
+import { noindex } from '../../../lib/page-meta'
 
 export const Route = createFileRoute('/contests/$id/registration')({
   loader: async ({ context: { queryClient }, params, location, parentMatchPromise }) => {
@@ -28,7 +29,7 @@ export const Route = createFileRoute('/contests/$id/registration')({
     return { title: contest.title }
   },
   head: ({ loaderData }) => ({
-    meta: [{ title: loaderData?.title ? `Join ${loaderData.title} · Tadoku` : 'Contest registration · Tadoku' }],
+    meta: [{ title: loaderData?.title ? `Join ${loaderData.title} · Tadoku` : 'Contest registration · Tadoku' }, noindex],
   }),
   notFoundComponent: ContestNotFound,
   component: function RegistrationRoute() {

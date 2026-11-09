@@ -23,9 +23,10 @@ import { recordSurface } from '../../components/standings-styles'
 import { formControls } from '../../components/form-styles'
 import { AppLink } from '../../components/router-link'
 import { pageUnavailable } from '../../lib/page-status'
+import { noindex } from '../../lib/page-meta'
 
 export const Route = createFileRoute('/logs/$logId_/contests')({
-  head: () => ({ meta: [{ title: 'Submit to contests · Tadoku' }] }),
+  head: () => ({ meta: [{ title: 'Submit to contests · Tadoku' }, noindex] }),
   // Webv2's `?preselect=1` selects every eligible contest for a log not yet submitted to any.
   // The router reads `1` as a number; a string would be written back to the URL as `"1"`.
   validateSearch: z.object({ preselect: z.coerce.number().optional().catch(undefined) }),

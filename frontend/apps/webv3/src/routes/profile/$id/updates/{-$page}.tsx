@@ -8,6 +8,7 @@ import { pageNumber } from '../../../../lib/leaderboard'
 import { profileActivityQuery } from '../../../../lib/profile'
 import { viewerQueryOptions } from '../../../../lib/session'
 import { pageUnavailable } from '../../../../lib/page-status'
+import { sharingMeta } from '../../../../lib/page-meta'
 
 export const Route = createFileRoute('/profile/$id/updates/{-$page}')({
   // Webv2 ignores a malformed day and lists every update.
@@ -20,10 +21,13 @@ export const Route = createFileRoute('/profile/$id/updates/{-$page}')({
     ])
     if (result.status === 'not-found') throw notFound()
     if (result.status === 'unavailable') pageUnavailable(context.queryClient, profileActivityQuery(activityInput(params, deps.date)))
-    return { name: result.status === 'found' ? result.profile.display_name : undefined }
+    const name = result.profile.display_name
+    return { name, description: `${name}’s immersion logs on Tadoku.` }
   },
   head: ({ loaderData }) => ({
-    meta: [{ title: loaderData?.name ? `Profile updates · ${loaderData.name} · Tadoku` : 'Profile · Tadoku' }],
+    meta: loaderData
+      ? sharingMeta(loaderData.name, loaderData.description, `Profile updates · ${loaderData.name} · Tadoku`)
+      : [{ title: 'Profile · Tadoku' }],
   }),
   notFoundComponent: () => (
     <EmptyState

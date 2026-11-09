@@ -6,6 +6,7 @@ import { contestBoardQuery, pageNumber } from '../../../../lib/leaderboard'
 import { registrationQuery } from '../../../../lib/registration'
 import { ensureViewerData, viewerKey } from '../../../../lib/session'
 import { pageUnavailable } from '../../../../lib/page-status'
+import { contestDescription, sharingMeta } from '../../../../lib/page-meta'
 
 export const Route = createFileRoute('/contests/$id/updates/$')({
   loader: async ({ context: { queryClient }, params }) => {
@@ -20,10 +21,12 @@ export const Route = createFileRoute('/contests/$id/updates/$')({
     ])
     if (board.kind === 'none') throw notFound()
     if (board.kind === 'unavailable') pageUnavailable(queryClient, contestBoardQuery(params.id, viewerKey(viewer)))
-    return { title: board.kind === 'board' ? board.board.contest.title : undefined }
+    return { title: board.board.contest.title, description: contestDescription(board.board.contest) }
   },
   head: ({ loaderData }) => ({
-    meta: [{ title: loaderData?.title ? `Activity · ${loaderData.title} · Tadoku` : 'Contest activity · Tadoku' }],
+    meta: loaderData
+      ? sharingMeta(`Activity · ${loaderData.title}`, loaderData.description)
+      : [{ title: 'Contest activity · Tadoku' }],
   }),
   notFoundComponent: ContestNotFound,
   component: function ContestUpdatesRoute() {

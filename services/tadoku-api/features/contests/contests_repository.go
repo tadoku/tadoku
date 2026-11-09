@@ -182,6 +182,55 @@ func (r *ContestsRepository) ListYearlyRegistrations(
 	return result, total, nil
 }
 
+func (r *ContestsRepository) ListMyRegistrations(
+	ctx context.Context,
+	userID uuid.UUID,
+	parameters MyRegistrationsParameters,
+) ([]Registration, int, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	rows, err := queries.New(executor).ListMyContestRegistrations(ctx, queries.ListMyContestRegistrationsParams{
+		DeletedOrganizerName: deleteduser.OrganizerName,
+		UserID:               postgres.UUID(userID),
+		StartFrom:            parameters.offset(),
+		PageSize:             int32(parameters.PageSize),
+	})
+	if err != nil {
+		return nil, 0, fmt.Errorf("list my contest registrations: %w", err)
+	}
+
+	result := make([]Registration, 0, len(rows))
+	var total int
+	for _, row := range rows {
+		total = int(row.TotalSize)
+		if !row.ID.Valid {
+			continue
+		}
+		result = append(result, registrationFromRow(queries.ListOngoingContestRegistrationsRow{
+			ID:                      row.ID,
+			ContestID:               row.ContestID,
+			UserID:                  row.UserID,
+			LanguageCodes:           row.LanguageCodes,
+			UserDisplayName:         row.UserDisplayName.String,
+			ActivityTypeIDAllowList: row.ActivityTypeIDAllowList,
+			RegistrationEnd:         row.RegistrationEnd,
+			ContestStart:            row.ContestStart,
+			ContestEnd:              row.ContestEnd,
+			Private:                 row.Private.Bool,
+			Official:                row.Official.Bool,
+			Title:                   row.Title.String,
+			Description:             row.Description,
+			OwnerUserID:             row.OwnerUserID,
+			OwnerUserDisplayName:    row.OwnerUserDisplayName.String,
+		}))
+	}
+
+	return result, total, nil
+}
+
 func (r *ContestsRepository) DetachContestLogsForLanguages(
 	ctx context.Context,
 	userID uuid.UUID,

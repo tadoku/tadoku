@@ -43,6 +43,7 @@ go_test(
         "contest_profile_scores_test.go",
         "contest_registration_find_test.go",
         "contest_registration_locks_test.go",
+        "contest_registration_my_test.go",
         "contest_registration_ongoing_test.go",
         "contest_registration_upsert_test.go",
         "contest_registration_yearly_test.go",

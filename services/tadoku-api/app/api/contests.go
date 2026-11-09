@@ -17,6 +17,7 @@ import (
 
 type ListContestsParameters = contests.ListParameters
 type ListYearlyContestRegistrationsParameters = contests.YearlyRegistrationsParameters
+type ListMyContestRegistrationsParameters = contests.MyRegistrationsParameters
 type ContestView = contests.ContestView
 type Contest = contests.Contest
 type ContestSummary = contests.ContestSummary
@@ -197,6 +198,27 @@ func (a *Application) ListOngoingContestRegistrations(ctx context.Context) (*Con
 	}
 
 	return a.contests.ListOngoingRegistrations(ctx, userID, languages)
+}
+
+func (a *Application) ListMyContestRegistrations(
+	ctx context.Context,
+	parameters ListMyContestRegistrationsParameters,
+) (*ContestRegistrationList, error) {
+	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	userID, err := identity.RequireActorID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	languages, err := a.languages.ListLanguages(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.contests.ListMyRegistrations(ctx, userID, parameters, languages)
 }
 
 func (a *Application) UpsertContestRegistration(ctx context.Context, parameters ContestRegistrationUpsertParameters) error {

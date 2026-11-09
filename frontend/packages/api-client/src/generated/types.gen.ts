@@ -1750,6 +1750,38 @@ export type ImmersionContestGetConfigurationsResponses = {
 
 export type ImmersionContestGetConfigurationsResponse = ImmersionContestGetConfigurationsResponses[keyof ImmersionContestGetConfigurationsResponses];
 
+export type ImmersionContestListRegistrationsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        page_size?: number;
+        page?: number;
+    };
+    url: '/immersion/contests/registrations';
+};
+
+export type ImmersionContestListRegistrationsErrors = {
+    /**
+     * invalid page or page_size
+     */
+    400: unknown;
+    /**
+     * unauthorized
+     */
+    401: unknown;
+};
+
+export type ImmersionContestListRegistrationsResponses = {
+    /**
+     * successful operation
+     */
+    200: ImmersionContestRegistrations & {
+        registrations?: Array<ImmersionContestRegistration>;
+    };
+};
+
+export type ImmersionContestListRegistrationsResponse = ImmersionContestListRegistrationsResponses[keyof ImmersionContestListRegistrationsResponses];
+
 export type ImmersionContestListEventsData = {
     body?: never;
     path: {

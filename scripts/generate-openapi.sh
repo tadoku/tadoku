@@ -11,6 +11,7 @@ PATH_FRAGMENTS=(
   content-posts
   content-announcements
   immersion-contests
+  immersion-contest-registrations
   immersion-contest-events
   immersion-logs
   immersion-profiles

@@ -90,6 +90,12 @@ const sidebar: SidebarsConfig = {
         },
         {
           type: "doc",
+          id: "api/immersion/contest-list-registrations",
+          label: "Fetches every contest registration of the logged in user, across all years",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
           id: "api/immersion/contest-list-events",
           label: "Read contest submission events",
           className: "api-method get",

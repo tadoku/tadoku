@@ -613,6 +613,151 @@ func (q *Queries) ListLanguagesForContest(ctx context.Context, contestID pgtype.
 	return items, nil
 }
 
+const listMyContestRegistrations = `-- name: ListMyContestRegistrations :many
+with matches as materialized (
+  select
+    contest_registrations.id,
+    contest_registrations.contest_id,
+    contest_registrations.user_id,
+    contest_registrations.language_codes,
+    users.display_name as user_display_name,
+    contests.activity_type_id_allow_list,
+    contests.registration_end,
+    contests.contest_start,
+    contests.contest_end,
+    contests.private,
+    contests.official,
+    contests.title,
+    contests.description,
+    contests.owner_user_id
+  from contest_registrations
+  inner join contests
+    on contests.id = contest_registrations.contest_id
+  inner join users
+    on users.id = contest_registrations.user_id
+  where
+    contest_registrations.user_id = $1
+    and contest_registrations.deleted_at is null
+), page as (
+  select
+    matches.id,
+    matches.contest_id,
+    matches.user_id,
+    matches.language_codes,
+    matches.user_display_name,
+    matches.activity_type_id_allow_list,
+    matches.registration_end,
+    matches.contest_start,
+    matches.contest_end,
+    matches.private,
+    matches.official,
+    matches.title,
+    matches.description,
+    matches.owner_user_id,
+    case
+      when owner_users.id is null or owner_users.deleted_at is not null then $2::varchar
+      else owner_users.display_name
+    end::varchar as owner_user_display_name
+  from matches
+  left join users as owner_users
+    on owner_users.id = matches.owner_user_id
+  order by matches.contest_start desc, matches.id
+  limit $4
+  offset $3
+), total as (
+  select count(*) as total_size
+  from matches
+)
+select
+  page.id,
+  page.contest_id,
+  page.user_id,
+  page.language_codes,
+  page.user_display_name,
+  page.activity_type_id_allow_list,
+  page.registration_end,
+  page.contest_start,
+  page.contest_end,
+  page.private,
+  page.official,
+  page.title,
+  page.description,
+  page.owner_user_id,
+  page.owner_user_display_name,
+  total.total_size
+from total
+left join page on true
+order by page.contest_start desc, page.id
+`
+
+type ListMyContestRegistrationsParams struct {
+	UserID               pgtype.UUID
+	DeletedOrganizerName string
+	StartFrom            int32
+	PageSize             int32
+}
+
+type ListMyContestRegistrationsRow struct {
+	ID                      pgtype.UUID
+	ContestID               pgtype.UUID
+	UserID                  pgtype.UUID
+	LanguageCodes           []string
+	UserDisplayName         pgtype.Text
+	ActivityTypeIDAllowList []int32
+	RegistrationEnd         pgtype.Date
+	ContestStart            pgtype.Date
+	ContestEnd              pgtype.Date
+	Private                 pgtype.Bool
+	Official                pgtype.Bool
+	Title                   pgtype.Text
+	Description             pgtype.Text
+	OwnerUserID             pgtype.UUID
+	OwnerUserDisplayName    pgtype.Text
+	TotalSize               int64
+}
+
+func (q *Queries) ListMyContestRegistrations(ctx context.Context, arg ListMyContestRegistrationsParams) ([]ListMyContestRegistrationsRow, error) {
+	rows, err := q.db.Query(ctx, listMyContestRegistrations,
+		arg.UserID,
+		arg.DeletedOrganizerName,
+		arg.StartFrom,
+		arg.PageSize,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListMyContestRegistrationsRow{}
+	for rows.Next() {
+		var i ListMyContestRegistrationsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ContestID,
+			&i.UserID,
+			&i.LanguageCodes,
+			&i.UserDisplayName,
+			&i.ActivityTypeIDAllowList,
+			&i.RegistrationEnd,
+			&i.ContestStart,
+			&i.ContestEnd,
+			&i.Private,
+			&i.Official,
+			&i.Title,
+			&i.Description,
+			&i.OwnerUserID,
+			&i.OwnerUserDisplayName,
+			&i.TotalSize,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listOngoingContestRegistrations = `-- name: ListOngoingContestRegistrations :many
 select
   contest_registrations.id,

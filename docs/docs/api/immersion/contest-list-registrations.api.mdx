@@ -1,0 +1,70 @@
+---
+id: contest-list-registrations
+title: "Fetches every contest registration of the logged in user, across all years"
+description: "Includes private and deleted contests and excludes withdrawn registrations. Ordered by contest start descending, then by registration ID ascending. Results are paginated with a zero-based `page`; `page_size` defaults to 50, and 0 or values above 50 are treated as 50."
+sidebar_label: "Fetches every contest registration of the logged in user, across all years"
+hide_title: true
+hide_table_of_contents: true
+api: eJztGV1v2zbwrxB82QbIluw0w6o+dV03eOuWIuk2YIGhnsWzzUYiVZJy4hj+78NRki1ZbppmA4YBfrEl6r6/cdxwgTY1snBSKx7ziUqzUqBlhZErcMhACSYwQ4eCpVo5tM76Q7yrIW+lWwoDt4oZXEjrDBAtO2QXRqBBwWbrBpNZB8YxYolKSLUImFuiIog2Lpv8wKABGbJLtGVGXA2yAhZSAQlDbBmwezR6MAOLgr0vYIHvX1T/iZX3+J4JnINHdpqdR4GXPGLasBVkJVoGM71Cdh554s6gJw2WnUdDHnBdYCXRRPCY10q8kdZdtjXlAXewsDy+bkAsnwbcYloa6dY8vt7wVOsbiS9Lt+Tx9XQ7DXgBBnJ0aKwHUJAjj/lOdB5wSQ75WKJZ84Ab/FhKg4LHc8gsBtymS8yBxxvu1gWhSuVwgYZvt0GH3D+hNCVwW2hl0RLAOIrorxsztkxTtHZeZmxnMB5UtlCO4KEoMpn6D+EHS0ibFlfIsou5N8L+qZZEzz5g6jpCX3OFdy7xhnL6BomV0w6yymxkWUNiOFmJ3PrW1zDgeAd5kSGPR1G0DXq09yjWGakWPDhQXlqGeeHWTM4plg1+ZZnSjOiw2vo7FvyMnMOddP7tbRPLFFGcvPaQ1p3k6qvZ/bwXG4wB8rp0mLfPj/KowzeRgge8tGhaT0LaIoN14iMr4BmoRQkLPCKKFMfMNtcmB8djXpZS8G3QZvYY8EacR8N2BD6CtXfLB71UhLbX6cn2E2Qbz7FnFv/xYTkK6MXXRLHJ1cXg27PngzO2dK6wcRiiGt7KG1mgkDDUZhHSW/hncxTT01ujScLkTaNUSGGW6HkyubpIPL2kUTgh2Wzy9TgaPf+GLPF5m/0MBSi02Inohpc/rP3bzfDHRJ9vEnwfIKiEh9wHeH1UsSU7+15FBXs+l6mE7MlBWWvykObjaHzGLnWpBBsRSsdfh4itOK/UekgIQUpsu4o/Br5nmscgNUbbw860zhB8Juzs2P/aMoXvHwR9q9AkX5KgLYwvT9O0atMJfN6aAydzPPTeeDAaD0bP3o2ex8++i6PoL18yCvHvE60Hp2M2bmXNq8rd3wNl02e6AGSZvkWR7EtVsDuD1MmV9AHfC/8+Xr/EqTLLYEYiOVPiYSHa1RFqc7uBztO1Lxjh1i8MV2jWrOE0PBXPJxTPIz59Yk/yHfy4Uatk3cW2VO5sTGX10zPSo7S7RBB17avH7+NFRqqidEl1foSeKnMf8bkulUsKI3Pw8ytl3+512rbgy8pYa77d+tH1IMH+kHh7LPHaw/wnULvz/rEk/bJpLIe7SeW88+g0m51ms9NsdprNTrPZaTY7zWb/g+J5ms3+y9mMfgL+7NgiUqoVZFL4vRvtePfLVI8x6mOUCkq31Ebeo/Dsc3RLTcveBfqpDmhhy8Nmrxuag8WvRbNqVrilyXjMm1B2IPRNOYSiCKGQIXnMKMhCmedoLG1C+ba1Jb6idWiTT/td8T6uCvkLrptdbgXSBE/MK2aJRWsrQxHcXHv82qA7vgMoJA2JMkVlvXtrIr9O3tFA2dFiId2ynA1TndcKNX+zTM/CHKQK30xevf7t6jXZeFVxoKo7jIaRb2XauhxUi82P6NIlNqWoKVad/b/2u1SW6cUCBZOKUTcKGKRGW0uljK0RjD2sKZv9zvl0kdG5yKiDyOGdC4sMpM9x7+lNHeOtu4ugv2teahoWr/lmQxL+brLtlo6rKwWKfSEttaf9pcINrg+uM7ygPOa+jz4A3wGd0ouRVeu7nm4DvkQQaDzTCudlmmLhWli92waiskvsn15TlEMvu258dtUPrXEY1LpF+yDRGrnptzUedHE2myp5t9sdfPXpkxi1jg00uYvq3t9Y34h5
+sidebar_class_name: "get api-method"
+info_path: api/immersion/immersion-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+import Translate from "@docusaurus/Translate";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Fetches every contest registration of the logged in user, across all years"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/contests/registrations"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Includes private and deleted contests and excludes withdrawn registrations. Ordered by contest start descending, then by registration ID ascending. Results are paginated with a zero-based `page`; `page_size` defaults to 50, and 0 or values above 50 are treated as 50.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+>
+  <Translate id="theme.openapi.request.title">Request</Translate>
+</Heading>
+
+<ParamsDetails
+  {...require("./contest-list-registrations.ParamsDetails.json")}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  {...require("./contest-list-registrations.RequestSchema.json")}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  {...require("./contest-list-registrations.StatusCodes.json")}
+>
+  
+</StatusCodes>
+
+
+      

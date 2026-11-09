@@ -25,5 +25,6 @@ client.interceptors.response.use(async (response, _request, options) => {
   return response
 })
 
+export { client }
 export * from './generated'
 export * from './generated/zod.gen'

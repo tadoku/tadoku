@@ -18,16 +18,18 @@ export const reader: Account = { email: process.env.E2E_READER_EMAIL, password: 
 export const admin: Account = { email: process.env.E2E_SECOND_EMAIL, password: process.env.E2E_SECOND_PASSWORD, name: 'Dev Admin' }
 
 /**
- * Waits until the page has hydrated: Paper's navbar enables its menu trigger then, in Webv3 and authv2 alike. Leaving
- * a development page before then cancels its module requests, and the gateway can refuse the next page's requests on
- * the same connection, so that page never hydrates.
+ * Waits until a Webv3 page has hydrated, when Paper's navbar enables its menu trigger. Leaving a development page
+ * before then cancels its module requests, and the gateway can refuse the next page's requests on the same
+ * connection, so that page never hydrates.
  */
 export const hydrated = (page: Page) => expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled({ timeout: 15_000 })
 
-/** Submits authv2's login form once its page has hydrated. */
+/** Submits authv2's login form once the page has hydrated, when React has attached its props to the Email field. */
 export async function authenticate(page: Page, account = reader) {
-  await hydrated(page)
-  await page.getByLabel('Email').fill(account.email!)
+  const email = page.getByLabel('Email')
+  await expect.poll(() => email.evaluate(input => Object.keys(input).some(key => key.startsWith('__reactProps'))), { timeout: 15_000 })
+    .toBe(true)
+  await email.fill(account.email!)
   await page.getByLabel('Password').fill(account.password!)
   await page.getByRole('button', { name: 'Log in', exact: true }).click()
 }

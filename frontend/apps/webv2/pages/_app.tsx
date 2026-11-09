@@ -26,7 +26,10 @@ import {
   FeatureFlagRefresh,
   featureFlagDecisionsAtom,
 } from '@app/feature-flags/client'
-import { bootstrapFeatureFlagDecisions } from '@app/feature-flags/bootstrap'
+import {
+  bootstrapFeatureFlagDecisions,
+  webv3RedirectLocation,
+} from '@app/feature-flags/bootstrap'
 import { AppUrls, AppUrlsProvider, appUrlsForHost, serverApiEndpointForHost } from 'ui/app-urls'
 
 // Default timezone for app
@@ -151,6 +154,14 @@ MyApp.getInitialProps = async (ctx: AppContextWithSession) => {
     serverApiEndpointForHost(host),
     ctx.ctx.req?.headers['x-dev-branch'],
   )
+
+  const location = webv3RedirectLocation(
+    initialAppProps.pageProps.featureFlags,
+    ctx.ctx.pathname,
+    ctx.ctx.req?.url,
+    host,
+  )
+  if (location) ctx.ctx.res?.writeHead(302, { Location: location }).end()
 
   return initialAppProps
 }

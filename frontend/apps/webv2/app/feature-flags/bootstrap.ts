@@ -1,4 +1,5 @@
 import { immersionFeatureFlagDecisions } from 'api-client'
+import { webv3OriginForHost } from 'ui/app-urls'
 import type { Account } from 'ui/identity'
 import getConfig from 'next/config'
 import {
@@ -48,4 +49,25 @@ export const bootstrapFeatureFlagDecisions = async (
   } finally {
     clearTimeout(timeout)
   }
+}
+
+const errorPages = ['/404', '/500', '/_error']
+
+/**
+ * Where a server-rendered page request belongs while `release-webv3` is on for its account, if anywhere else.
+ * Takes the request's raw URL so that the path and query arrive unchanged. An error page stays here, because
+ * a path Webv2 does not have may be a missing asset.
+ */
+export const webv3RedirectLocation = (
+  decisions: FeatureFlagDecisions,
+  pathname: string,
+  url: string | undefined,
+  host: string | undefined,
+) => {
+  if (!decisions['release-webv3'] || !url || errorPages.includes(pathname)) {
+    return undefined
+  }
+
+  const origin = webv3OriginForHost(host)
+  return new URL(origin).host === host?.toLowerCase() ? undefined : `${origin}${url}`
 }

@@ -210,6 +210,11 @@ activity stays on the same Webv3 host, and its login link opens the matching
 branch's account host. Canonical `next.tadoku.app` uses production data and the
 canonical `account.tadoku.app` and `admin.tadoku.app` hosts.
 
+## Flagged release
+
+[Flagged release](webv3-flagged-release.md) covers sending named accounts from
+Webv2 to Webv3 before the host switch, and how to turn it off.
+
 ## Checks
 
 [Webv3 checks and browser tests](webv3-testing.md) lists the checks, the

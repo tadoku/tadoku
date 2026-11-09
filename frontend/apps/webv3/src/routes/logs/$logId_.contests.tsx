@@ -5,8 +5,9 @@ import { Button, buttonClassName, EmptyState, formFooter, PageHeader, Surface, u
 import { useState } from 'react'
 import { z } from 'zod'
 import { DraftOwnerGate } from '../../components/DraftOwnerGate'
+import { LogDescription } from '../../components/LogDescription'
 import { useLinks } from '../../lib/links'
-import { formatTracking, pointsUnit, scoreFormat } from '../../lib/format'
+import { formatTracking, logName, pointsUnit, scoreFormat } from '../../lib/format'
 import { contestChoices } from '../../lib/log-draft'
 import {
   logOptionsQuery,
@@ -137,7 +138,7 @@ function ContestsForm({ log, registrations, viewerId }: {
     <div>
       <PageHeader
         title="Submit to contests"
-        backLink={{ href: `/logs/${log.id}`, label: log.description || `${log.language.name} ${log.activity.name}` }}
+        backLink={{ href: `/logs/${log.id}`, label: logName(log) }}
       />
       <Surface className={recordSurface}>
         <LogSummary log={log} />
@@ -208,7 +209,6 @@ const organizer = (contest: Registration['contest']) =>
 
 /** The log being submitted, as Webv2 shows it above the contests: what, how much and its score. */
 function LogSummary({ log }: { log: ImmersionLog }) {
-  const nsfw = log.tags.some(tag => tag.toLowerCase() === 'nsfw')
   const what = [log.language.name, log.activity.name, formatTracking(log)].filter(Boolean).join(' · ')
 
   return (
@@ -221,7 +221,7 @@ function LogSummary({ log }: { log: ImmersionLog }) {
     >
       <p className="col-span-full text-metadata text-muted">Your log</p>
       <p className="font-semibold">{what}</p>
-      {log.description && !nsfw ? <p className="col-start-1 text-sm text-muted wrap-anywhere">{log.description}</p> : null}
+      {log.description ? <p className="col-start-1 text-sm text-muted wrap-anywhere"><LogDescription log={{ ...log, description: log.description }} /></p> : null}
       <p className="col-start-2 row-start-2 whitespace-nowrap font-bold tabular-nums">
         {scoreFormat.format(log.score)} <small className="text-metadata font-regular text-muted">{pointsUnit(log.score)}</small>
       </p>

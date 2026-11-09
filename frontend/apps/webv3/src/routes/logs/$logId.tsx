@@ -4,12 +4,13 @@ import { Link, createFileRoute, notFound, useHydrated } from '@tanstack/react-ro
 import { Button, buttonClassName, DescriptionList, EmptyState, entryLink, Modal, PageHeader, SectionHeading, StatGrid, Surface } from 'paper-ui'
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
-import { formatDate, pointsUnit, scoreFormat } from '../../lib/format'
+import { formatDate, isNsfw, pointsUnit, scoreFormat } from '../../lib/format'
 import { useLinks } from '../../lib/links'
 import { logQuery, useDeleteLog, type ImmersionLog, type LogFailure } from '../../lib/logs'
 import { viewerKey, viewerQueryOptions } from '../../lib/session'
 import { ActivityName } from '../../components/ActivityName'
 import { Avatar } from '../../components/Avatar'
+import { LogDescription } from '../../components/LogDescription'
 import { renderLink } from '../../components/router-link'
 
 export const Route = createFileRoute('/logs/$logId')({
@@ -43,7 +44,7 @@ function LogDetail() {
 
   const log = result.data
   const owner = viewer?.status === 'signed-in' && viewer.userId === log.user_id
-  const titledByNote = Boolean(log.description) && log.description!.length <= 60 && !log.tags.some(tag => tag.toLowerCase() === 'nsfw')
+  const titledByNote = Boolean(log.description) && log.description!.length <= 60 && !isNsfw(log)
   const learner = log.user_display_name ?? (owner && viewer?.status === 'signed-in' ? viewer.displayName : undefined)
   return (
     <div>
@@ -82,7 +83,7 @@ function LogDetail() {
             <DescriptionList
               className="border-t border-rule pt-6"
               items={[
-                ...(log.description && !titledByNote ? [{ label: 'Description', value: log.description }] : []),
+                ...(log.description && !titledByNote ? [{ label: 'Description', value: <LogDescription log={{ ...log, description: log.description }} /> }] : []),
                 ...(log.tags.length ? [{ label: 'Tags', value: log.tags.join(', ') }] : []),
               ]}
             />

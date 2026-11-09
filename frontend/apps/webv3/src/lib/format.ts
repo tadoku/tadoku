@@ -22,6 +22,13 @@ export function formatTracking(log: Pick<ImmersionLog, 'amount' | 'unit_name' | 
   return values.join(' · ')
 }
 
+/** Webv2 hides a description tagged NSFW until the reader chooses to see it. */
+export const isNsfw = (log: Pick<ImmersionLog, 'tags'>) => log.tags.some(tag => tag.toLowerCase() === 'nsfw')
+
+/** What links and titles call a log: its description, or its language and activity when it has none or is NSFW. */
+export const logName = (log: Pick<ImmersionLog, 'description' | 'tags' | 'language' | 'activity'>) =>
+  log.description && !isNsfw(log) ? log.description : `${log.language.name} ${log.activity.name.toLocaleLowerCase()}`
+
 /** Every score and point total, always to one decimal, for example `12.5` or `12.0`. */
 export const scoreFormat = new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 

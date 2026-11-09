@@ -41,6 +41,11 @@ kept; anything else is replaced with a generated ID. Records made outside a Star
 request, such as from a Nitro route in `frontend/apps/webv3/server/routes/`, have
 no `correlation_id` or `host`.
 
+A GET request's deadline, set in `frontend/apps/webv3/src/lib/session.server.ts`,
+records one `timeout` upstream failure for each call it aborts, naming that
+call's operation. It covers upstream calls only: a request whose calls have
+finished keeps rendering.
+
 The same middleware records an SSR error for a response of status 500 or above
 and for a rejected request, unless the client has aborted it. An error thrown
 while a page streams keeps its response status and reaches only the framework's

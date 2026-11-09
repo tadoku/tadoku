@@ -107,6 +107,9 @@ startup creates no database, Postgres cluster, PVC or database dependency Job.
   every write. The guard requires the route-shaped test tenant, the expected
   role and development database host. It refuses canonical seeding through
   the branch task. Credentials stay Secret references.
+- `.dev/seed.sql` adds sixty high-scoring participants to the branch tenant's
+  seeded round, because registration limits cannot create that many accounts.
+  Shared base seeding does not add them.
 - `.dev/config.yaml` resolves `DATABASE` to `tadoku` and `TENANT` to
   `tadoku/${DEV_ROUTE}`. API and worker use `${DEV_VAR_DATABASE}` and their
   `API_BRANCH` / `WORKER_BRANCH` settings use `${DEV_VAR_TENANT}`.

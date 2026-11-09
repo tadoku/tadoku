@@ -17,8 +17,11 @@ the introduction and how Tadoku works; a signed-in learner sees their place and
 points in the current round, or whether they have joined it, with the year's
 points, today's points, logs and active days beside it. Below come the activity
 calendar, their five newest logs and this year's contests, unfinished ones
-first. The home route's loader reads those from the profile statistics and
-activity queries for signed-in viewers, so they render on the server. `/plan`
+first. That ordering covers the first page of the year's registrations, so a
+learner with more than a page of contests in a year may not see an unfinished
+one there. The next round is its own read with its own failure state, and their
+place comes from the leaderboard entry operation at any rank. The home route's
+loader prefetches all of this, so it renders on the server. `/plan`
 demonstrates a validated immersion goal kept in the current browser; no page
 links to it. It does not sync the goal to a Tadoku account. [Native activity logging](webv3-logging.md), including a saved log's contest submissions, uses the existing account session and API.
 The latest official, yearly and all-time [leaderboards](webv3-leaderboards.md)
@@ -287,6 +290,19 @@ including empty or repeated ones, to the request's API gateway through the
 gives its tenant role. The gateway host selects the tenant; no incoming header
 can. Anonymous, signed-in, banned and unavailable states are distinct, and a
 failed or malformed answer never shows an account.
+
+Loaders start public reads alongside the viewer lookup and use the viewer only
+for cache keys and for final not-found and permission decisions; a read cached
+per viewer goes through `ensureViewerData` in `frontend/apps/webv3/src/lib/session.ts`.
+A server-side read made with the visitor's session goes through `readAsVisitor`,
+which reads signed out when the API rejects that session. A write checks that
+the session's account is the one that opened the form and reads the role only
+when it needs administrator access; the API itself refuses banned accounts.
+
+Every GET request has an overall deadline for its upstream calls, set in
+`session.server.ts`. Upstream calls still running at the deadline are aborted,
+each is [logged](webv3-server-logs.md), and the page renders with those sections
+marked as failed.
 
 Log in opens authv2's `/login` on the sibling account host, `account.<domain>`
 or `<route>.account.<domain>`, with the current page as `return_to`. It

@@ -52,6 +52,10 @@ their credentials be supplied through the variables below. Run it from
 Without the Dev Reader credentials, tests that need an account skip; the
 container smoke runs that way.
 
+The `tenant` hook also seeds sixty participants, with high scores, into the
+branch tenant's Dev Tadoku Round, so a `learner` who joins it and logs a little
+ranks below the first standings page. Pull-request deploys do not have them.
+
 Specs get accounts only from the fixtures in
 `frontend/apps/webv3/e2e/logging-fixtures.ts`, never by signing in or
 registering themselves:

@@ -32,7 +32,7 @@ export function MemberDashboard({ viewer, year, className }: { viewer: SignedIn;
 
   const { today, activity } = statistics
   const fresh = activity.ok && activity.data.total_updates === 0
-  const logs = recent?.status === 'found' && recent.logs.ok ? recent.logs.data.logs.slice(0, recentCount) : null
+  const logs = recent?.ok ? recent.data.logs : null
 
   return (
     <div className={`grid gap-10 *:min-w-0 ${className ?? ''}`}>
@@ -98,7 +98,10 @@ export function MemberYearTotals({ viewer, year }: { viewer: SignedIn; year: num
   )
 }
 
-/** This year's contests, unfinished ones first, for the home hero's left column. */
+/**
+ * This year's contests, unfinished ones first, for the home hero's left column. The ordering covers only the year's
+ * first page of registrations, so a learner with more than that may have an unfinished contest left out.
+ */
 export function MemberContests({ viewer, year }: { viewer: SignedIn; year: number }) {
   const links = useLinks()
   const [statisticsQuery] = memberDashboardQueries(viewer, year)

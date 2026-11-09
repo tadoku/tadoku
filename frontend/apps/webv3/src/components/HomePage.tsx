@@ -2,8 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useLoaderData } from '@tanstack/react-router'
 import { Button, EmptyState, Loading, SectionHeading, StatGrid, Surface, Table, buttonClassName } from 'paper-ui'
 import type { ReactNode } from 'react'
-import { homeQueryOptions, memberDashboardQueries, type HomeData } from '../lib/home'
-import { standingsQuery } from '../lib/leaderboard'
+import { memberDashboardQueries, nextContestQuery, useHomeData, type HomeData } from '../lib/home'
+import { contestEntryQuery } from '../lib/leaderboard'
 import { Person, Rank, currentRow, personLink } from './StandingsParts'
 import { formatDate, formatPeriod, numberFormat, place, pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
@@ -71,7 +71,8 @@ const message = [
 
 export function HomePage() {
   const links = useLinks()
-  const { data, dataUpdatedAt, isError, refetch, isFetching } = useQuery(homeQueryOptions())
+  const { data, dataUpdatedAt, isError, refetch, isFetching } = useHomeData()
+  const next = useQuery(nextContestQuery()).data
   // The loader's year matches the dashboard queries it prefetched, even when the contest board fails.
   const { year } = useLoaderData({ from: '/' })
   // The fetch time travels with the dehydrated data, so server and client agree on the contest day.
@@ -133,13 +134,13 @@ export function HomePage() {
       )}
 
       {/* While a round is running the card covers it; the next round earns a row once it is scheduled. */}
-      {phase !== 'loading' && phase !== 'unavailable' && (data?.nextContest || (phase !== 'open' && phase !== 'live')) && (
+      {phase !== 'loading' && next && ((next.ok && next.data) || (phase !== 'open' && phase !== 'live')) && (
         <section className={strip} aria-labelledby="home-next-title">
           <div>
             <h2 id="home-next-title" className="mb-1 mt-0 font-body text-sm">Next official round</h2>
-            <p className={`${stripText} text-lead font-semibold text-ink`}>{data?.nextContest ? formatPeriod(data.nextContest) : 'Not announced yet'}</p>
+            <p className={`${stripText} text-lead font-semibold text-ink`}>{next.ok ? (next.data ? formatPeriod(next.data) : 'Not announced yet') : 'Temporarily unavailable'}</p>
           </div>
-          {data?.nextContest && <p className={`${stripText} text-sm text-muted`}>Registration closes {formatDate(data.nextContest.registration_end)}.</p>}
+          {next.ok && next.data && <p className={`${stripText} text-sm text-muted`}>Registration closes {formatDate(next.data.registration_end)}.</p>}
           <AppLink className={stripLink} href={links.contests}>See all contests</AppLink>
         </section>
       )}
@@ -159,8 +160,8 @@ function MemberPromise({ member, data, phase, fresh }: {
   const links = useLinks()
   const contest = data?.latestContest
   const running = contest && (phase === 'open' || phase === 'live' || phase === 'upcoming')
-  const { registration, registered } = useParticipation(running ? contest.id : '')
-  const entry = useViewerEntry(running ? contest.id : undefined, member.userId, data, registered)
+  const { registration, registered } = useParticipation(running ? contest.id : undefined)
+  const entry = useViewerEntry(running ? contest.id : undefined, member.userId)
   const joinable = running && registration?.kind === 'not-registered' && (phase === 'open' || phase === 'upcoming')
 
   let title: string
@@ -196,15 +197,10 @@ function MemberPromise({ member, data, phase, fresh }: {
   )
 }
 
-/** The viewer's row in the round's standings, from the first standings page once they are registered. */
-function useViewerEntry(contestId: string | undefined, userId: string | undefined, data: HomeData | undefined, registered: boolean) {
-  const standings = useQuery({
-    ...standingsQuery({ kind: 'contest', contestId: contestId ?? '' }, 1),
-    enabled: Boolean(contestId && userId && registered),
-  })
-  const top = data?.standings?.entries.find(row => row.user_id === userId)
-  if (top || !contestId) return top
-  return standings.data?.ok ? standings.data.data.entries.find(row => row.user_id === userId) : undefined
+/** The viewer's place on the round's board at any rank; undefined when they aren't on it or it can't be read. */
+function useViewerEntry(contestId: string | undefined, userId: string | undefined) {
+  const entry = useQuery({ ...contestEntryQuery(contestId ?? '', userId ?? ''), enabled: Boolean(contestId && userId) }).data
+  return entry?.ok ? entry.data ?? undefined : undefined
 }
 
 function ContestBoard({ data, phase, today, retrying, retry }: {
@@ -217,8 +213,7 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
   const links = useLinks()
   const { data: viewer } = useQuery(viewerQueryOptions())
   const viewerId = viewer?.status === 'signed-in' ? viewer.userId : undefined
-  const { registered } = useParticipation(data?.latestContest?.id ?? '')
-  const viewerEntry = useViewerEntry(data?.latestContest?.id, viewerId, data, registered)
+  const viewerEntry = useViewerEntry(data?.latestContest?.id, viewerId)
   if (phase === 'loading') {
     return <>
       <SectionHeading level={2} id="home-board-title" className={ledgerHeader} title="Current contest" />

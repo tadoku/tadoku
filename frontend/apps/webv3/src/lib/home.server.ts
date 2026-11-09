@@ -1,23 +1,10 @@
 import {
   immersionContestFetchLeaderboard,
   immersionContestFetchSummary,
-  immersionContestFindLatestOfficial,
   immersionContestList,
-  type ImmersionContest,
 } from 'api-client'
-import type { HomeData, Identified } from './home'
-import { requestUrls } from './urls.server'
-
-/** Home data is public, so requests carry no credentials. */
-function anonymous() {
-  return {
-    baseUrl: requestUrls().apiUrl,
-    credentials: 'omit' as const,
-    headers: { Accept: 'application/json' },
-    redirect: 'error' as const,
-    signal: AbortSignal.timeout(10_000),
-  }
-}
+import type { HomeBoard, NextContestRead } from './home'
+import { sessionRequest } from './session.server'
 
 /** The validated answer, or null when the API has nothing to show (404). */
 async function found<T>(request: Promise<{ data?: T; response?: Response }>): Promise<T | null> {
@@ -27,48 +14,30 @@ async function found<T>(request: Promise<{ data?: T; response?: Response }>): Pr
   throw new Error('Tadoku data is unavailable. Try again.')
 }
 
-/** Home links need contest IDs; an answer without one is malformed. */
-function identified<T extends { id?: string }>(contest: T | null): Identified<T> | null {
-  if (contest && !contest.id) throw new Error('Tadoku data is unavailable. Try again.')
-  return contest as Identified<T> | null
-}
-
-async function readNextContest(): Promise<Identified<ImmersionContest> | null> {
-  const today = new Date().toISOString().slice(0, 10)
-  let nextContest: ImmersionContest | null = null
-  let page = 0
-
-  while (true) {
-    const result = await found(immersionContestList({
-      ...anonymous(),
-      query: { page_size: 50, page, official: true, include_deleted: false },
-    }))
-    if (!result) throw new Error('Tadoku data is unavailable. Try again.')
-
-    for (const contest of result.contests) {
-      if (contest.contest_start > today && (!nextContest || contest.contest_start < nextContest.contest_start)) {
-        nextContest = contest
-      }
-    }
-
-    if (!result.next_page_token || result.contests.length === 0) return identified(nextContest)
-    page += 1
-  }
-}
-
-export async function readHomeData(): Promise<HomeData> {
-  const [latestContest, nextContest] = await Promise.all([
-    found(immersionContestFindLatestOfficial(anonymous())).then(identified),
-    readNextContest(),
-  ])
-
-  if (!latestContest) return { latestContest: null, summary: null, standings: null, nextContest }
-
-  const path = { id: latestContest.id }
+/** The summary and top of the board for the latest contest; home data is public, so these reads carry no session. */
+export async function readHomeBoard(contestId: string): Promise<HomeBoard> {
+  const path = { id: contestId }
   const [summary, standings] = await Promise.all([
-    found(immersionContestFetchSummary({ ...anonymous(), path })),
-    found(immersionContestFetchLeaderboard({ ...anonymous(), path, query: { page_size: 5, page: 0 } })),
+    found(immersionContestFetchSummary({ ...sessionRequest('immersionContestFetchSummary'), path })),
+    found(immersionContestFetchLeaderboard({
+      ...sessionRequest('immersionContestFetchLeaderboard'),
+      path,
+      query: { page_size: 5, page: 0 },
+    })),
   ])
+  return { summary, standings }
+}
 
-  return { latestContest, summary, standings, nextContest }
+/** The soonest official contest that hasn't started, or null when none is scheduled. */
+export async function readNextContest(): Promise<NextContestRead> {
+  const { data } = await immersionContestList({
+    ...sessionRequest('immersionContestList'),
+    query: { upcoming: true, official: true, include_deleted: false, page_size: 1 },
+  }).catch(() => ({ data: undefined }))
+  if (!data) return { ok: false }
+
+  const [next] = data.contests
+  if (!next) return { ok: true, data: null }
+  // Home links need contest IDs; an answer without one is malformed.
+  return next.id ? { ok: true, data: { ...next, id: next.id } } : { ok: false }
 }

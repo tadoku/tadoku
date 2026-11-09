@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { HomePage } from '../components/HomePage'
-import { homeQueryOptions, memberDashboardQueries } from '../lib/home'
+import { homeBoardQuery, memberDashboardQueries, nextContestQuery } from '../lib/home'
+import { contestEntryQuery, latestBoardQuery } from '../lib/leaderboard'
 import { registrationQuery } from '../lib/registration'
 import { viewerKey, viewerQueryOptions } from '../lib/session'
 
@@ -14,22 +15,28 @@ export const Route = createFileRoute('/')({
       },
     ],
   }),
-  loader: async ({ context }) => {
-    const viewer = await context.queryClient.ensureQueryData(viewerQueryOptions())
+  loader: async ({ context: { queryClient } }) => {
     const year = new Date().getUTCFullYear()
-    const [statistics, activity] = viewer.status === 'signed-in'
-      ? memberDashboardQueries(viewer, year)
-      : [null, null]
+    const viewerRead = queryClient.ensureQueryData(viewerQueryOptions())
+    const contestRead = queryClient.ensureQueryData(latestBoardQuery())
+      .then(latest => (latest.kind === 'board' ? latest.board.contest.id : null))
+
     await Promise.all([
-      context.queryClient.prefetchQuery(homeQueryOptions()),
-      statistics ? context.queryClient.prefetchQuery(statistics) : null,
-      activity ? context.queryClient.prefetchQuery(activity) : null,
+      queryClient.prefetchQuery(nextContestQuery()),
+      contestRead.then(contestId => (contestId ? queryClient.prefetchQuery(homeBoardQuery(contestId)) : null)),
+      viewerRead.then(viewer => {
+        if (viewer.status !== 'signed-in') return null
+        const [statistics, logs] = memberDashboardQueries(viewer, year)
+        return Promise.all([queryClient.prefetchQuery(statistics), queryClient.prefetchQuery(logs)])
+      }),
+      // The hero offers Join only to members who haven't registered, and names their place, so both render on the server.
+      Promise.all([viewerRead, contestRead]).then(([viewer, contestId]) => (viewer.status === 'signed-in' && contestId
+        ? Promise.all([
+          queryClient.prefetchQuery(registrationQuery(contestId, viewerKey(viewer))),
+          queryClient.prefetchQuery(contestEntryQuery(contestId, viewer.userId)),
+        ])
+        : null)),
     ])
-    // The hero offers Join only to members who haven't registered, so their registration renders on the server too.
-    const contest = context.queryClient.getQueryData(homeQueryOptions().queryKey)?.latestContest
-    if (viewer.status === 'signed-in' && contest) {
-      await context.queryClient.prefetchQuery(registrationQuery(contest.id, viewerKey(viewer)))
-    }
     return { year }
   },
   component: HomePage,

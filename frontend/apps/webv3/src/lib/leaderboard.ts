@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import { createServerFn } from '@tanstack/react-start'
-import type { ImmersionContestView, ImmersionLeaderboard } from 'api-client'
+import type { ImmersionContestView, ImmersionLeaderboard, ImmersionLeaderboardEntry } from 'api-client'
 import { z } from 'zod'
 import type { Identified } from './home'
 
@@ -48,6 +48,13 @@ const getStandings = createServerFn({ method: 'GET' })
     return readStandings(data.scope, data.page)
   })
 
+const getContestEntry = createServerFn({ method: 'GET' })
+  .inputValidator(z.object({ contestId: z.guid(), userId: z.guid() }))
+  .handler(async ({ data }) => {
+    const { readContestEntry } = await import('./leaderboard.server')
+    return readContestEntry(data.contestId, data.userId)
+  })
+
 const getLatestBoard = createServerFn({ method: 'GET' }).handler(async () => {
   const { readLatestBoard } = await import('./leaderboard.server')
   return readLatestBoard()
@@ -64,6 +71,14 @@ const getContestBoard = createServerFn({ method: 'GET' })
 export const standingsQuery = (scope: StandingsScope, page: number) => queryOptions({
   queryKey: ['standings', scope, page],
   queryFn: (): Promise<Read<ImmersionLeaderboard>> => getStandings({ data: { scope, page } }),
+  staleTime: 30_000,
+  retry: false,
+})
+
+/** A participant's place on a contest's board at any rank, or null when they aren't on it. */
+export const contestEntryQuery = (contestId: string, userId: string) => queryOptions({
+  queryKey: ['contest-entry', contestId, userId],
+  queryFn: (): Promise<Read<ImmersionLeaderboardEntry | null>> => getContestEntry({ data: { contestId, userId } }),
   staleTime: 30_000,
   retry: false,
 })

@@ -6,7 +6,7 @@ import { ContestProfile } from '../../../../../components/ContestProfile'
 import { PendingView } from '../../../../../components/StatusViews'
 import { contestLogsQuery, contestProfileQuery } from '../../../../../lib/contest-activity'
 import { contestsHref } from '../../../../../lib/contests'
-import { pageNumber } from '../../../../../lib/leaderboard'
+import { contestEntryQuery, pageNumber } from '../../../../../lib/leaderboard'
 import { viewerQueryOptions } from '../../../../../lib/session'
 
 export const Route = createFileRoute('/contests/$id/profile/$userId/$')({
@@ -16,6 +16,7 @@ export const Route = createFileRoute('/contests/$id/profile/$userId/$')({
       queryClient.ensureQueryData(viewerQueryOptions()),
       queryClient.ensureQueryData(contestProfileQuery(input)),
       queryClient.ensureQueryData(contestLogsQuery({ ...input, page: pageNumber(params._splat) })),
+      queryClient.ensureQueryData(contestEntryQuery(input.contestId, input.userId)),
     ])
     if (profile.status === 'not-found') throw notFound()
     return profile.status === 'found'

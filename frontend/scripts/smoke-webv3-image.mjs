@@ -244,6 +244,18 @@ try {
   const health = await fetch(`${base}/healthz`, { signal: AbortSignal.timeout(2_000) })
   assert.equal(health.status, 200, 'API outage broke health')
   assert.equal(await health.text(), 'ok\n')
+  // Without the API, a contest page's main read fails: 503, the error page and one log line.
+  const apiOutage = await fetch(`${base}/contests/${contest.id}/leaderboard/1`, { headers: { 'X-Request-ID': 'smoke-outage' } })
+  assert.equal(apiOutage.status, 503, 'An API outage did not answer 503')
+  assert((await apiOutage.text()).includes('This page couldn’t load'), 'An API outage did not render the error page')
+  const records = docker('logs', container).split('\n').filter(line => line.includes('"correlation_id":"smoke-outage"'))
+  assert.deepEqual(records.map(line => JSON.parse(line).status), [503], 'An API outage did not log exactly one line')
+  // A logout the API cannot confirm renders its error page in the app shell.
+  const logout = await fetch(`${base}/logout`, { method: 'POST', redirect: 'manual',
+    headers: { Origin: base.replace('http:', 'https:'), Cookie: 'tadoku_session=fixture', Accept: 'text/html' } })
+  const logoutHtml = await logout.text()
+  assert.equal(logout.status, 503)
+  assert(logoutHtml.includes('Log out is unavailable') && logoutHtml.includes('Skip to content'), 'Failed logout lost the app shell')
   outcome = 'passed'
 } finally {
   if (developmentContainer) {

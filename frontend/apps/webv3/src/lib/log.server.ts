@@ -123,6 +123,15 @@ const answeredStatuses = new Set([400, 401, 403, 404, 409])
 type UpstreamCall = { operation: ApiOperation; startedAt: number }
 
 /** Request options that name the operation a failed call is recorded under. */
+/**
+ * The header that sends this request's ID to Tadoku API, which logs it as `correlation_id`, so both services' lines
+ * join. The ID is the ingress one only when it passed `requestIdPattern`; outside a request there is none.
+ */
+export function correlationHeader(): { 'X-Request-Id'?: string } {
+  const request = requestLog.getStore()
+  return request ? { 'X-Request-Id': request.requestId } : {}
+}
+
 export const upstreamCall = (operation: ApiOperation): { meta: UpstreamCall } => ({
   meta: { operation, startedAt: performance.now() },
 })

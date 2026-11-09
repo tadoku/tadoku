@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LogoutRouteImport } from './routes/logout'
 import { Route as BlogSplatRouteImport } from './routes/blog/$'
 import { Route as ContestsIndexRouteImport } from './routes/contests/index'
 import { Route as ContestsNewRouteImport } from './routes/contests/new'
@@ -38,6 +39,11 @@ import { Route as ContestsIdProfileUserIdSplatRouteImport } from './routes/conte
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LogoutRoute = LogoutRouteImport.update({
+  id: '/logout',
+  path: '/logout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogSplatRoute = BlogSplatRouteImport.update({
@@ -169,6 +175,7 @@ const ContestsIdProfileUserIdSplatRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/logout': typeof LogoutRoute
   '/blog/$': typeof BlogSplatRoute
   '/contests/new': typeof ContestsNewRoute
   '/logs/$logId': typeof LogsLogIdRoute
@@ -196,6 +203,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/logout': typeof LogoutRoute
   '/blog/$': typeof BlogSplatRoute
   '/contests/new': typeof ContestsNewRoute
   '/logs/$logId': typeof LogsLogIdRoute
@@ -224,6 +232,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/logout': typeof LogoutRoute
   '/blog/$': typeof BlogSplatRoute
   '/contests/new': typeof ContestsNewRoute
   '/logs/$logId': typeof LogsLogIdRoute
@@ -253,6 +262,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/logout'
     | '/blog/$'
     | '/contests/new'
     | '/logs/$logId'
@@ -280,6 +290,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/logout'
     | '/blog/$'
     | '/contests/new'
     | '/logs/$logId'
@@ -307,6 +318,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/logout'
     | '/blog/$'
     | '/contests/new'
     | '/logs/$logId'
@@ -335,6 +347,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LogoutRoute: typeof LogoutRoute
   BlogSplatRoute: typeof BlogSplatRoute
   ContestsNewRoute: typeof ContestsNewRoute
   LogsLogIdRoute: typeof LogsLogIdRoute
@@ -368,6 +381,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/logout': {
+      id: '/logout'
+      path: '/logout'
+      fullPath: '/logout'
+      preLoaderRoute: typeof LogoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog/$': {
@@ -543,6 +563,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LogoutRoute: LogoutRoute,
   BlogSplatRoute: BlogSplatRoute,
   ContestsNewRoute: ContestsNewRoute,
   LogsLogIdRoute: LogsLogIdRoute,

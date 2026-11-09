@@ -12,13 +12,15 @@ import { ActivityName } from '../../components/ActivityName'
 import { Avatar } from '../../components/Avatar'
 import { LogDescription } from '../../components/LogDescription'
 import { AppLink, renderLink } from '../../components/router-link'
+import { pageUnavailable } from '../../lib/page-status'
 
 export const Route = createFileRoute('/logs/$logId')({
   head: () => ({ meta: [{ title: 'Activity · Tadoku' }] }),
   loader: async ({ context, params }) => {
     if (!z.guid().safeParse(params.logId).success) throw notFound()
-    const [, result] = await ensureViewerData(context.queryClient, key => logQuery(params.logId, key))
+    const [viewer, result] = await ensureViewerData(context.queryClient, key => logQuery(params.logId, key))
     if (!result.ok && result.reason === 'not-found') throw notFound()
+    if (!result.ok && result.reason === 'unavailable') pageUnavailable(context.queryClient, logQuery(params.logId, viewerKey(viewer)))
   },
   component: LogDetail,
 })

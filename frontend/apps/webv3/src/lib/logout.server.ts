@@ -1,11 +1,13 @@
 import { identityLogout } from 'api-client'
-import { defineHandler } from 'nitro'
-import { assertSameOrigin, sessionCookie, sessionRequest } from '../../src/lib/session.server'
-import { urlsForHost } from '../../src/lib/urls.server'
+import { assertSameOrigin, sessionCookie, sessionRequest } from './session.server'
+import { requestUrls } from './urls.server'
 
-export default defineHandler(async event => {
-  const request = event.req
-  const urls = urlsForHost(request.headers.get('host'))
+/**
+ * Logs the request's session out with the API and answers with the redirect home, or 403 for a cross-origin request.
+ * Returns undefined when the API did not confirm the logout; the browser keeps its cookie, though the session may be gone.
+ */
+export async function logOut(request: Request): Promise<Response | undefined> {
+  const urls = requestUrls()
   const headers = new Headers({ 'Cache-Control': 'private, no-store', Vary: 'Cookie' })
   try {
     assertSameOrigin(request, urls.appOrigin)
@@ -16,17 +18,15 @@ export default defineHandler(async event => {
   const cookie = sessionCookie(request.headers.get('cookie') || '')
   if (cookie) {
     // The identity API accepts logout only from an app Origin on its allowlist; send the origin checked above.
-    const options = sessionRequest('identityLogout', cookie, urls.apiUrl)
+    const options = sessionRequest('identityLogout', cookie)
     const { error, response } = await identityLogout({
       ...options,
       headers: { ...options.headers, Origin: urls.appOrigin },
     })
-    if (!response?.ok || error !== undefined) {
-      return new Response('Log out is unavailable. Return to the previous page and try again.', { status: 503, headers })
-    }
+    if (!response?.ok || error !== undefined) return undefined
     for (const value of response.headers.getSetCookie()) headers.append('Set-Cookie', value)
   }
 
   headers.set('Location', '/')
   return new Response(null, { status: 303, headers })
-})
+}

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import type { APIRequestContext, Page } from '@playwright/test'
 import { accountId, admin, api, expect, reader, test, webv3 } from './logging-fixtures'
 
@@ -328,8 +329,10 @@ test('a started contest’s scoring is locked, and only administrators reach sco
   await expect(page.getByRole('link', { name: 'platform defaults' })).toBeVisible()
   await fitsWidth(page, 'locked scoring', testInfo.outputPath('scoring-locked-390.png'))
 
-  await page.goto('/contests/not-a-contest/scoring')
-  await expect(page.getByRole('heading', { level: 1, name: 'Contest not found' })).toBeVisible()
+  for (const path of ['/contests/not-a-contest/scoring', `/contests/${randomUUID()}/scoring`]) {
+    expect((await page.goto(path))?.status(), path).toBe(404)
+    await expect(page.getByRole('heading', { level: 1, name: 'Contest not found' })).toBeVisible()
+  }
 
   // The API lets organizers manage their own contest's scoring; Webv2's page, and so Webv3's, is for administrators.
   const readerId = await accountId(readerContext)

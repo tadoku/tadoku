@@ -4,7 +4,8 @@ import { ContestRegistrationPage } from '../../../components/ContestRegistration
 import { ContestNotFound } from '../../../components/ContestPage'
 import { contestBoardQuery } from '../../../lib/leaderboard'
 import { contestLanguagesQuery, registrationQuery } from '../../../lib/registration'
-import { ensureViewerData, loginHref } from '../../../lib/session'
+import { ensureViewerData, loginHref, viewerKey } from '../../../lib/session'
+import { pageUnavailable } from '../../../lib/page-status'
 
 export const Route = createFileRoute('/contests/$id/registration')({
   loader: async ({ context: { queryClient }, params, location, parentMatchPromise }) => {
@@ -16,7 +17,8 @@ export const Route = createFileRoute('/contests/$id/registration')({
       throw redirect({ href: loginHref(accountUrl, new URL(location.href, pageUrl).href) })
     }
     if (board.kind === 'none') throw notFound()
-    if (board.kind === 'unavailable' || viewer.status !== 'signed-in') return { title: undefined }
+    if (board.kind === 'unavailable') pageUnavailable(queryClient, contestBoardQuery(params.id, viewerKey(viewer)))
+    if (viewer.status !== 'signed-in') return { title: undefined }
 
     const { contest } = board.board
     await Promise.all([

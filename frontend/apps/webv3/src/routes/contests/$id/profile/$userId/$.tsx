@@ -8,6 +8,7 @@ import { contestLogsQuery, contestProfileQuery } from '../../../../../lib/contes
 import { contestsHref } from '../../../../../lib/contests'
 import { contestEntryQuery, pageNumber } from '../../../../../lib/leaderboard'
 import { viewerQueryOptions } from '../../../../../lib/session'
+import { pageUnavailable } from '../../../../../lib/page-status'
 
 export const Route = createFileRoute('/contests/$id/profile/$userId/$')({
   loader: async ({ context: { queryClient }, params }) => {
@@ -19,6 +20,7 @@ export const Route = createFileRoute('/contests/$id/profile/$userId/$')({
       queryClient.ensureQueryData(contestEntryQuery(input.contestId, input.userId)),
     ])
     if (profile.status === 'not-found') throw notFound()
+    if (profile.status === 'unavailable') pageUnavailable(queryClient, contestProfileQuery(input))
     return profile.status === 'found'
       ? { title: `${profile.registration.user_display_name} · ${profile.registration.contest.title} · Tadoku` }
       : { title: undefined }

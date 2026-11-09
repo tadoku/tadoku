@@ -7,6 +7,7 @@ import { LogForm } from '../../components/LogForm'
 import { PendingView } from '../../components/StatusViews'
 import { logOptionsQuery, logQuery } from '../../lib/logs'
 import { useLoginUrl, viewerQueryOptions } from '../../lib/session'
+import { pageUnavailable } from '../../lib/page-status'
 
 export const Route = createFileRoute('/logs/$logId_/edit')({
   head: () => ({ meta: [{ title: 'Edit log · Tadoku' }] }),
@@ -20,6 +21,7 @@ export const Route = createFileRoute('/logs/$logId_/edit')({
       context.queryClient.ensureQueryData(logOptionsQuery(viewer.userId)),
     ])
     if (!log.ok && log.reason === 'not-found') throw notFound()
+    if (!log.ok && log.reason === 'unavailable') pageUnavailable(context.queryClient, logQuery(params.logId, viewer.userId))
   },
   component: EditLog,
 })

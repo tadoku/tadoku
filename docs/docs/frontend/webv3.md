@@ -131,7 +131,8 @@ without JavaScript. The avatar is decorative and hidden
 from assistive technology; the name beside it carries the meaning.
 
 `/contests` redirects permanently to `/contests/official`, as Webv2 does.
-Unknown paths render the not-found page with a link home and status 404.
+Unknown paths render the not-found page with a link home and status 404; see
+[status codes and failure pages](webv3-status-codes.md).
 
 ## Local development
 
@@ -257,9 +258,8 @@ Authv2 follows only returns on the identity API's
 Log out submits a plain POST form to `/logout` from the account menu. After the Origin check below, the
 route sends `POST /identity/logout` with the session cookies and the app's own
 Origin, relays the API's cookie-clearing `Set-Cookie` and returns home. Any
-other answer, including a timeout, shows an unavailable message and keeps the
-browser's cookie, although an unconfirmed request may still have revoked the
-session. The identity API refuses logout from a host outside its allowlist. Logout and all
+other answer, including a timeout, renders Log out is unavailable with status
+503 and keeps the browser's cookie, although the session may be revoked. The identity API refuses logout from a host outside its allowlist. Logout and all
 non-GET server functions require an exact Origin and reject non-same-origin
 Fetch Metadata. Personalized documents and server-function responses emit
 `Cache-Control: private, no-store` and `Vary: Cookie`; development ingress

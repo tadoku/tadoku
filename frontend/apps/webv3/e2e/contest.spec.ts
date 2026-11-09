@@ -107,7 +107,7 @@ test('optional and past-the-end page segments follow the API', async ({ page, re
 })
 
 test('unknown and malformed contests are not found', async ({ page }) => {
-  for (const path of [contestPath(randomUUID()), '/contests/not-a-contest/leaderboard/1']) {
+  for (const path of [contestPath(randomUUID()), '/contests/not-a-contest/leaderboard/1', '/contests/not-a-contest/scoring']) {
     const response = await page.goto(path)
     expect(response?.status(), path).toBe(404)
     await expect(page.getByRole('heading', { level: 1, name: 'Contest not found' })).toBeVisible()

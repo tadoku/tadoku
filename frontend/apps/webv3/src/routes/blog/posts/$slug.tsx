@@ -3,11 +3,13 @@ import { createFileRoute, notFound } from '@tanstack/react-router'
 import { BlogPostArticle, ContentUnavailable } from '../../../components/ContentPages'
 import { PendingView } from '../../../components/StatusViews'
 import { postQuery } from '../../../lib/content'
+import { pageUnavailable } from '../../../lib/page-status'
 
 export const Route = createFileRoute('/blog/posts/$slug')({
   loader: async ({ context, params }) => {
     const post = await context.queryClient.ensureQueryData(postQuery(params.slug))
     if (post.kind === 'not-found') throw notFound()
+    if (post.kind === 'unavailable') pageUnavailable(context.queryClient, postQuery(params.slug))
     return { title: post.kind === 'found' ? post.data.title : undefined }
   },
   head: ({ loaderData }) => ({ meta: [{ title: loaderData?.title ? `${loaderData.title} · Blog · Tadoku` : 'Blog · Tadoku' }] }),

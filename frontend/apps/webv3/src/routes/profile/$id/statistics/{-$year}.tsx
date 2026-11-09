@@ -6,14 +6,16 @@ import { ProfileStatistics } from '../../../../components/ProfileStatistics'
 import { PendingView } from '../../../../components/StatusViews'
 import { profileStatisticsQuery } from '../../../../lib/profile'
 import { ensureViewerData, viewerKey, viewerQueryOptions } from '../../../../lib/session'
+import { pageUnavailable } from '../../../../lib/page-status'
 
 export const Route = createFileRoute('/profile/$id/statistics/{-$year}')({
   validateSearch: z.object({ contests: z.number().int().min(1).optional().catch(undefined) }),
   loaderDeps: ({ search }) => ({ page: search.contests ?? 1 }),
   loader: async ({ context, params, deps }) => {
     const input = statisticsInput(params, deps.page, new Date().getUTCFullYear())
-    const [, result] = await ensureViewerData(context.queryClient, key => profileStatisticsQuery(input, key))
+    const [viewer, result] = await ensureViewerData(context.queryClient, key => profileStatisticsQuery(input, key))
     if (result.status === 'not-found') throw notFound()
+    if (result.status === 'unavailable') pageUnavailable(context.queryClient, profileStatisticsQuery(input, viewerKey(viewer)))
     return { name: result.status === 'found' ? result.profile.display_name : undefined, year: input.year }
   },
   head: ({ loaderData }) => ({

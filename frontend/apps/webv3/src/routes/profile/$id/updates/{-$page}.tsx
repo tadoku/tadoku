@@ -7,6 +7,7 @@ import { PendingView } from '../../../../components/StatusViews'
 import { pageNumber } from '../../../../lib/leaderboard'
 import { profileActivityQuery } from '../../../../lib/profile'
 import { viewerQueryOptions } from '../../../../lib/session'
+import { pageUnavailable } from '../../../../lib/page-status'
 
 export const Route = createFileRoute('/profile/$id/updates/{-$page}')({
   // Webv2 ignores a malformed day and lists every update.
@@ -18,6 +19,7 @@ export const Route = createFileRoute('/profile/$id/updates/{-$page}')({
       context.queryClient.ensureQueryData(profileActivityQuery(activityInput(params, deps.date))),
     ])
     if (result.status === 'not-found') throw notFound()
+    if (result.status === 'unavailable') pageUnavailable(context.queryClient, profileActivityQuery(activityInput(params, deps.date)))
     return { name: result.status === 'found' ? result.profile.display_name : undefined }
   },
   head: ({ loaderData }) => ({

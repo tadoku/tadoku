@@ -26,11 +26,14 @@ export const Route = createFileRoute('/logs/$logId_/edit')({
 const signIn = { title: 'Sign in to edit activity', description: 'Log in to change the activity you logged.' }
 
 function EditLog() {
-  return <DraftOwnerGate signIn={signIn}>{viewerId => <EditDraft viewerId={viewerId} />}</DraftOwnerGate>
+  return <DraftOwnerGate signIn={signIn}>{(viewerId, admin) => <EditDraft viewerId={viewerId} admin={admin} />}</DraftOwnerGate>
 }
 
-/** Only the log's owner edits it. The draft starts from the log as first read; later reads never replace the form. */
-function EditDraft({ viewerId }: { viewerId: string }) {
+/**
+ * The log's owner or an administrator edits it; the API decides. The draft starts from the log as first read; later reads
+ * never replace the form.
+ */
+function EditDraft({ viewerId, admin }: { viewerId: string; admin: boolean }) {
   const { logId } = Route.useParams()
   const logResult = useQuery({ ...logQuery(logId, viewerId), staleTime: Infinity })
   const optionsResult = useQuery(logOptionsQuery(viewerId))
@@ -39,7 +42,7 @@ function EditDraft({ viewerId }: { viewerId: string }) {
   const options = optionsResult.data
 
   if (logResult.isPending || optionsResult.isPending) return null
-  if (log?.ok && log.data.user_id !== viewerId) {
+  if (log?.ok && log.data.user_id !== viewerId && !admin) {
     return (
       <EmptyState
         headingLevel={1}

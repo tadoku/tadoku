@@ -43,7 +43,10 @@ function LogDetail() {
   }
 
   const log = result.data
-  const owner = viewer?.status === 'signed-in' && viewer.userId === log.user_id
+  const viewerId = viewer?.status === 'signed-in' ? viewer.userId : undefined
+  const owner = viewerId === log.user_id
+  // The API lets its owner or an administrator change a log; it refuses anyone else.
+  const manager = owner || (viewer?.status === 'signed-in' && viewer.role === 'admin')
   const titledByNote = Boolean(log.description) && log.description!.length <= 60 && !isNsfw(log)
   const learner = log.user_display_name ?? (owner && viewer?.status === 'signed-in' ? viewer.displayName : undefined)
   return (
@@ -67,7 +70,7 @@ function LogDetail() {
             ) : null}
           </>
         )}
-        actions={owner ? <OwnerActions log={log} /> : null}
+        actions={manager && viewerId ? <OwnerActions log={log} viewerId={viewerId} /> : null}
       />
       <Surface className="max-w-record p-0 wrap-anywhere">
         <div className="grid gap-6 p-record-inset">
@@ -89,14 +92,14 @@ function LogDetail() {
             />
           ) : null}
         </div>
-        <LogContests log={log} owner={owner} />
+        <LogContests log={log} manager={manager} />
       </Surface>
     </div>
   )
 }
 
-/** Editing and deleting, offered only to the log's owner. The API refuses both to anyone else. */
-function OwnerActions({ log }: { log: ImmersionLog }) {
+/** Editing and deleting, offered to the log's owner and administrators. The API refuses both to anyone else. */
+function OwnerActions({ log, viewerId }: { log: ImmersionLog; viewerId: string }) {
   const links = useLinks()
   const deleteLog = useDeleteLog()
   const hydrated = useHydrated()
@@ -108,7 +111,7 @@ function OwnerActions({ log }: { log: ImmersionLog }) {
   const confirm = async () => {
     setPending(true)
     setFailure(null)
-    const result = await deleteLog(log.user_id, log.id)
+    const result = await deleteLog(viewerId, log.id)
     if (result.ok) {
       window.location.assign(links.profile(log.user_id))
       return
@@ -164,17 +167,17 @@ const deleteFailures: Partial<Record<LogFailure, string>> = {
   unavailable: 'We could not confirm the deletion. Reload this page to check whether the log still exists.',
 }
 
-/** Contest submissions are private: only the log's owner sees them and the way to manage them. */
-function LogContests({ log, owner }: { log: ImmersionLog; owner: boolean }) {
+/** Contest submissions are private: only the log's owner and administrators see them and the way to manage them. */
+function LogContests({ log, manager }: { log: ImmersionLog; manager: boolean }) {
   return (
     <section className="border-t border-rule px-record-inset pb-record-inset pt-6" aria-labelledby="log-contests">
       <SectionHeading
         id="log-contests"
         level={2}
         title="Contests"
-        actions={owner ? <Link className="text-link hover:text-link-hover" to="/logs/$logId/contests" params={{ logId: log.id }}>Manage contest submissions</Link> : null}
+        actions={manager ? <Link className="text-link hover:text-link-hover" to="/logs/$logId/contests" params={{ logId: log.id }}>Manage contest submissions</Link> : null}
       />
-      {owner ? <OwnContests log={log} /> : <p className="m-0 text-muted">Contest submissions are visible to the log&apos;s owner.</p>}
+      {manager ? <OwnContests log={log} /> : <p className="m-0 text-muted">Contest submissions are visible to the log&apos;s owner.</p>}
     </section>
   )
 }

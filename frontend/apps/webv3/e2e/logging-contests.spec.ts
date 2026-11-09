@@ -102,16 +102,16 @@ test('owner submits a saved log to a contest, sees it after reload, then removes
 test('another learner cannot manage the log\'s contests', async ({ page, readerContext, adminContext }) => {
   test.skip(!webv3 || !api || !reader.email || !admin.email, 'Set both development fixture identities')
   const description = `contests-visitor-${Date.now()}`
-  const id = await createPersonalLog(page, description)
+  // Dev Admin owns the log and Dev Reader visits it, because administrators may manage any learner's log.
+  const id = await createPersonalLog(await adminContext.newPage(), description)
 
-  const adminPage = await adminContext.newPage()
-  await adminPage.goto(`${webv3}/logs/${id}`)
-  await expect(logDescription(adminPage)).toHaveText(description)
-  await expect(manageLink(adminPage)).toHaveCount(0)
-  await adminPage.goto(`${webv3}/logs/${id}/contests`)
-  await expect(adminPage.getByRole('heading', { name: 'This is someone else\'s record' })).toBeVisible()
-  await expect(adminPage.getByRole('checkbox')).toHaveCount(0)
-  await expect(saveSubmissions(adminPage)).toHaveCount(0)
+  await page.goto(`${webv3}/logs/${id}`)
+  await expect(logDescription(page)).toHaveText(description)
+  await expect(manageLink(page)).toHaveCount(0)
+  await page.goto(`${webv3}/logs/${id}/contests`)
+  await expect(page.getByRole('heading', { name: 'This is someone else\'s record' })).toBeVisible()
+  await expect(page.getByRole('checkbox')).toHaveCount(0)
+  await expect(saveSubmissions(page)).toHaveCount(0)
 
   // The API refuses an anonymous change outright.
   const anonymous = await readerContext.browser()!.newContext()
@@ -123,5 +123,5 @@ test('another learner cannot manage the log\'s contests', async ({ page, readerC
   } finally {
     await anonymous.close()
   }
-  expect(await submissions(readerContext, id)).toEqual([])
+  expect(await submissions(adminContext, id)).toEqual([])
 })

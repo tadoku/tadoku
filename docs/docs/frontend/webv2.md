@@ -35,7 +35,7 @@ backdate logs or reuse the previous description.
 
 ## Configuration
 
-`next.config.js` maps the `NEXT_PUBLIC_*` variables to `publicRuntimeConfig`. These cover the API endpoint and the admin and home URLs; the authv2 URL is the `authv2.` sibling of the home URL. `NEXT_SERVER_API_ENDPOINT` overrides the API endpoint for server-side requests. `WEBV3_URL`, read at runtime, sets where an account with `release-webv3` is [redirected](webv3.md#flagged-release); without it, that is the `next.` sibling of the home URL. The defaults point at the public tadoku.app hosts, and the development stack sets them for `*.tadoku.dev.lab`.
+`next.config.js` maps the `NEXT_PUBLIC_*` variables to `publicRuntimeConfig`. These cover the API endpoint and the admin and home URLs; the authv2 URL is the `authv2.` sibling of the home URL. `NEXT_SERVER_API_ENDPOINT` overrides the API endpoint for server-side requests. `WEBV3_URL`, read at runtime, sets where an account with `release-webv3` is [redirected](webv3-flagged-release.md); without it, that is the `next.` sibling of the home URL. The defaults point at the public tadoku.app hosts, and the development stack sets them for `*.tadoku.dev.lab`.
 
 `frontend/packages/ui/app-urls.tsx` resolves sibling URLs and the public API
 endpoint per host. SSR supplies those URLs through its provider; browser API

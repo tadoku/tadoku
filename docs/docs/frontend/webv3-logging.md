@@ -85,6 +85,18 @@ The detail page is titled Log details. Its lead names the language, the activity
 and who logged it, linked to their profile. It shows the measure, score and date,
 then the description and tags as labelled rows; the record's ID is not shown. It offers its owner
 Edit log and Delete log; visitors see neither.
+
+A log tagged `nsfw`, in any case, never shows its description as a title or a
+link label: the detail page is titled by its language and activity, and the
+edit and contest pages link back by them. Wherever the description itself is
+shown, on the detail page, the contest page's summary and the activity feeds,
+`frontend/apps/webv3/src/components/LogDescription.tsx` masks it with Paper's
+`Spoiler`, as Webv2 does: the text is blurred under an NSFW label and hidden
+from assistive technology until the reader selects Reveal NSFW description, and
+a mouse resting on it previews it. It stays masked until the page hydrates.
+`frontend/apps/webv3/src/lib/format.ts` owns the tag rule and the name links
+use.
+
 `/logs/$logId/edit` shows the edit form only to the log's owner; another account
 sees that the record is someone else's, and an anonymous visitor is asked to
 sign in. It uses the same tags and tag sidebar, shows the activity read-only
@@ -142,7 +154,8 @@ and without ongoing registrations, detail, ownership and tenant isolation;
 `logging-form.spec.ts` covers tag chips and suggestions, the tag sidebar and its
 limit, remembered choices, unavailable storage and the edit form's tags; `logging-edit.spec.ts` covers edits, deletion, owner actions and the
 score estimate; `logging-contests.spec.ts` covers submitting a saved log to a
-contest, removing it and refusing other visitors; `logging-session.spec.ts` covers expiry, CSRF, suspension and
+contest, removing it and refusing other visitors; `logging-nsfw.spec.ts` covers
+NSFW masking on the detail page, its back links and the activity feed; `logging-session.spec.ts` covers expiry, CSRF, suspension and
 account switches. Run them with `WEBV3_BASE_URL`, `TADOKU_API_URL`, `E2E_READER_EMAIL`
 and `E2E_READER_PASSWORD` for the documented development fixture. Ownership,
 suspension and account-switch cases also use `E2E_SECOND_EMAIL` and

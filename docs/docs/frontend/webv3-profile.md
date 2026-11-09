@@ -54,9 +54,9 @@ without deleted logs, each day's date shown once above its logs, each linking to
 reads as the first page, and a malformed one too, as in Webv2. `?date=YYYY-MM-DD`
 lists one UTC day's logs, with a way back to all of them; a malformed date lists
 every log. Entries show their UTC creation day, description, language, activity,
-amount in its unit and duration, and score. A description tagged NSFW stays
-hidden behind a disclosure, and the entry is titled by its language and
-activity. A page past the end links back to the first page. A profile without
+amount in its unit and duration, and score. A description tagged NSFW is
+[masked as on its detail page](webv3-logging.md), and the entry is titled by its
+language and activity. A page past the end links back to the first page. A profile without
 logs shows an empty state that offers its owner the activity form; only the owner
 sees the downloads.
 

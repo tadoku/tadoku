@@ -2,11 +2,12 @@ import type { ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import { EmptyState, Pagination, entryLink, entryList, listFooter, metaLine } from 'paper-ui'
 import type { ImmersionLog } from 'api-client'
-import { formatDate, formatTracking, numberFormat, pointsUnit, scoreFormat } from '../lib/format'
+import { formatDate, formatTracking, isNsfw, logName, numberFormat, pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { activityPageSize } from '../lib/profile'
 import { ActivityName } from './ActivityName'
 import { Avatar } from './Avatar'
+import { LogDescription } from './LogDescription'
 import { renderLink } from './router-link'
 
 /** A page of logs, newest first, each opening its detail page, with its count, pagination and empty states. */
@@ -68,7 +69,6 @@ export function LogEntries({ logs, total, page, pageHref, empty, showParticipant
 const entries = entryList()
 const footer = listFooter()
 
-/** Webv2 hides a description tagged NSFW until the reader chooses to see it. */
 const logDay = (log: ImmersionLog) => new Date(log.created_at).toISOString().slice(0, 10)
 
 const participantLink = 'text-ink no-underline hover:text-link hover:underline'
@@ -81,8 +81,6 @@ function Entry({ log, showParticipant, actions, firstOfDay }: {
   firstOfDay: boolean
 }) {
   const day = logDay(log)
-  const subject = `${log.language.name} ${log.activity.name.toLocaleLowerCase()}`
-  const nsfw = log.tags.some(tag => tag.toLowerCase() === 'nsfw')
   const links = useLinks()
   const tracking = formatTracking(log)
   const participant = showParticipant
@@ -107,16 +105,15 @@ function Entry({ log, showParticipant, actions, firstOfDay }: {
       <div className={entries.body()}>
         {participant ? <p className="mb-0.5 mt-0 text-sm font-semibold">{participant}</p> : null}
         <Link className={entryLink({ clamp: true, className: `profile-entry-title ${participant ? 'font-regular' : ''}` })} to="/logs/$logId" params={{ logId: log.id }}>
-          {nsfw || !log.description ? subject : log.description}
+          {logName(log)}
         </Link>
         <p className={metaLine({ className: 'profile-entry-meta flex flex-wrap gap-x-3' })}>
           {meta.map((part, index) => <span key={index} className="whitespace-nowrap">{part}</span>)}
         </p>
-        {nsfw && log.description ? (
-          <details className="mt-2.5 text-sm">
-            <summary className="cursor-pointer text-muted">Show NSFW description</summary>
-            <p className="mb-0 mt-2 max-w-measure-note leading-170 wrap-anywhere">{log.description}</p>
-          </details>
+        {log.description && isNsfw(log) ? (
+          <p className="mb-0 mt-2.5 max-w-measure-note text-sm leading-170 wrap-anywhere">
+            <LogDescription log={{ ...log, description: log.description }} />
+          </p>
         ) : null}
       </div>
       {/* Actions sit under the score, so they add no row of their own. */}

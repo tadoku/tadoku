@@ -21,6 +21,8 @@ for (const locale of ['ja-JP', 'en-GB']) {
 
       await page.goto(`/profile/${await accountId(readerContext)}/statistics`)
       await hydrated(page)
+      // The browser really runs in this locale: both the language it reports and Intl's default follow it.
+      expect(await page.evaluate(() => [navigator.language, Intl.DateTimeFormat().resolvedOptions().locale])).toEqual([locale, locale])
       await expect(page.locator('svg.paper-heatmap')).toBeVisible()
       await page.goto('/')
       await hydrated(page)

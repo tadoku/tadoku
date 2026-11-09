@@ -13,7 +13,6 @@ const (
 	NotFound
 	Conflict
 	Unavailable
-	NotImplemented
 	Throttled
 )
 

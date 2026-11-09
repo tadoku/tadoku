@@ -1,10 +1,21 @@
+import { createHash, randomUUID } from 'node:crypto'
+import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { expect, test as base, type Browser, type BrowserContext, type Cookie, type Page, type Request } from '@playwright/test'
 
 export const webv3 = process.env.WEBV3_BASE_URL
 export const api = process.env.TADOKU_API_URL
-export const reader = { email: process.env.E2E_READER_EMAIL, password: process.env.E2E_READER_PASSWORD }
-export const admin = { email: process.env.E2E_SECOND_EMAIL, password: process.env.E2E_SECOND_PASSWORD }
 export const branch = webv3 ? new URL(webv3).hostname.split('.next.')[0] : undefined
+
+/** An account a test can sign in as by typing its credentials into authv2. */
+export interface Account { email?: string; password?: string; name: string }
+
+/** A freshly registered account and a context signed in as it. */
+export interface Learner extends Required<Account> { id: string; context: BrowserContext }
+
+export const reader: Account = { email: process.env.E2E_READER_EMAIL, password: process.env.E2E_READER_PASSWORD, name: 'Dev Reader' }
+export const admin: Account = { email: process.env.E2E_SECOND_EMAIL, password: process.env.E2E_SECOND_PASSWORD, name: 'Dev Admin' }
 
 export async function authenticate(page: Page, account = reader) {
   await page.getByLabel('Email').fill(account.email!)
@@ -22,7 +33,7 @@ export async function signIn(page: Page, account = reader) {
 }
 
 /** Logs out from the account menu, as Webv2's user dropdown does. */
-export async function logOut(page: Page, name = 'Dev Reader') {
+export async function logOut(page: Page, { name } = reader) {
   await expect(page.getByRole('button', { name, exact: true })).toBeEnabled()
   await page.getByRole('button', { name, exact: true }).click()
   await page.getByRole('menuitem', { name: 'Log out', exact: true }).click()
@@ -106,8 +117,7 @@ export async function accountId(context: BrowserContext) {
   return (await (await context.request.get(`${api}/identity/session`)).json()).account.id as string
 }
 
-async function session(browser: Browser, account: typeof reader) {
-  if (!webv3 || !account.email || !account.password) return []
+async function session(browser: Browser, account: Account) {
   const context = await browser.newContext({ baseURL: webv3 })
   try {
     await signIn(await context.newPage(), account)
@@ -117,22 +127,82 @@ async function session(browser: Browser, account: typeof reader) {
   }
 }
 
+async function signedIn(browser: Browser, cookies: Cookie[]) {
+  if (!api || !cookies.length) return false
+  const context = await browser.newContext()
+  try {
+    await context.addCookies(cookies)
+    const response = await context.request.get(`${api}/identity/session`)
+    return response.ok() && Boolean((await response.json()).account)
+  } finally {
+    await context.close()
+  }
+}
+
+const sessions = join(tmpdir(), 'tadoku-webv3-e2e-sessions')
+
 /**
- * The identity API admits ten logins per account in 15 minutes, counting successful ones, so journeys where login is
- * incidental share one real session per account per worker, held only in memory. Journeys that log out, switch
- * accounts or test login itself sign in on their own.
+ * The account's session on this host, kept on disk so later workers and runs reuse it while the API still accepts it.
+ * ponytail: no lock, so workers that start together may each sign in once; add one if the suite runs in parallel.
  */
-export const test = base.extend<{ readerContext: BrowserContext; adminContext: BrowserContext }, {
-  readerCookies: Cookie[]
-  adminCookies: Cookie[]
-}>({
+async function storedSession(browser: Browser, account: Account) {
+  if (!webv3 || !account.email || !account.password) return []
+  const file = join(sessions, `${createHash('sha256').update(`${webv3}\n${account.email}`).digest('hex').slice(0, 16)}.json`)
+  const stored = await readFile(file, 'utf8').then(text => JSON.parse(text) as Cookie[], () => [])
+  if (await signedIn(browser, stored)) return stored
+  const cookies = await session(browser, account)
+  await mkdir(sessions, { recursive: true, mode: 0o700 })
+  await writeFile(`${file}.tmp`, JSON.stringify(cookies), { mode: 0o600 })
+  await rename(`${file}.tmp`, file)
+  return cookies
+}
+
+/** Registers an account in the selected tenant; registration starts its session without spending a login. */
+async function register(browser: Browser): Promise<Learner> {
+  const context = await browser.newContext({ baseURL: webv3 })
+  const account = { email: `webv3-${randomUUID()}@example.com`, password: `Pw-${randomUUID()}`, name: `Learner ${randomUUID().slice(0, 8)}` }
+  const origin = new URL(webv3!)
+  origin.hostname = origin.hostname.replace(/(^|\.)next\./, '$1account.')
+  const response = await context.request.post(`${api}/identity/registration`, {
+    headers: { Origin: origin.origin },
+    data: { email: account.email, display_name: account.name, password: account.password },
+  })
+  expect(response.status(), 'registration in the selected tenant').toBe(201)
+  return { ...account, id: await accountId(context), context }
+}
+
+const credentialed = Boolean(webv3 && api && reader.email)
+let loginAccount: Promise<Required<Account>> | undefined
+
+/**
+ * Accounts for journeys, within the identity API's budgets: ten logins per account and ten registrations per tenant
+ * and client IP, each in 15 minutes.
+ * - `readerContext` and `adminContext` hold Dev Reader's and Dev Admin's stored sessions. Never log them out.
+ * - `learner` is a new account per test, signed in, for journeys whose writes must not carry over to the next run.
+ * - `loginLearner` is one new account per worker for journeys that sign in, out or switch accounts through authv2.
+ */
+export const test = base.extend<{
+  readerContext: BrowserContext
+  adminContext: BrowserContext
+  learner: Learner
+  loginLearner: Required<Account>
+}, { readerCookies: Cookie[]; adminCookies: Cookie[] }>({
   // Set here rather than with a module-level test.use(), which Playwright attributes to whichever spec loads this file
   // first and which then breaks the fixture digest of the other specs sharing its worker.
   trace: ['off', { scope: 'worker' }],
   video: ['off', { scope: 'worker' }],
   ignoreHTTPSErrors: false,
-  readerCookies: [async ({ browser }, provide) => provide(await session(browser, reader)), { scope: 'worker' }],
-  adminCookies: [async ({ browser }, provide) => provide(await session(browser, admin)), { scope: 'worker' }],
+  readerCookies: [async ({ browser }, provide) => provide(await storedSession(browser, reader)), { scope: 'worker' }],
+  adminCookies: [async ({ browser }, provide) => provide(await storedSession(browser, admin)), { scope: 'worker' }],
+  // Cached per worker process; a test-scoped fixture can skip where the environment has no credentials.
+  loginLearner: async ({ browser }, provide) => {
+    base.skip(!credentialed, 'Set the credentialed development environment')
+    loginAccount ??= register(browser).then(async ({ email, password, name, context }) => {
+      await context.close()
+      return { email, password, name }
+    })
+    await provide(await loginAccount)
+  },
   readerContext: async ({ context, readerCookies }, provide) => {
     await context.addCookies(readerCookies)
     await provide(context)
@@ -142,6 +212,12 @@ export const test = base.extend<{ readerContext: BrowserContext; adminContext: B
     await context.addCookies(adminCookies)
     await provide(context)
     await context.close()
+  },
+  learner: async ({ browser }, provide) => {
+    base.skip(!credentialed, 'Set the credentialed development environment')
+    const learner = await register(browser)
+    await provide(learner)
+    await learner.context.close()
   },
 })
 

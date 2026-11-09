@@ -5,20 +5,20 @@ import { useLoginUrl, viewerQueryOptions, type Viewer } from '../lib/session'
 
 /**
  * Renders a draft for the account that owns it: the first account seen signed in on this page, even if the page opened
- * signed out. The owner stays fixed when the session later ends or changes, so the draft stays visible and is never
- * saved for another account. Without an owner it explains why.
+ * signed out, and whether that account was an administrator then. The owner stays fixed when the session later ends or
+ * changes, so the draft stays visible and is never saved for another account. Without an owner it explains why.
  */
 export function DraftOwnerGate({ signIn, suspended = 'Activity cannot be saved for this account.', children }: {
   signIn: { title: string; description: string }
   /** Why a suspended account cannot continue. */
   suspended?: string
-  children: (viewerId: string) => ReactNode
+  children: (viewerId: string, admin: boolean) => ReactNode
 }) {
   const viewerQuery = useQuery(viewerQueryOptions())
   const owner = useDraftOwner(viewerQuery.data)
   const loginUrl = useLoginUrl()
 
-  if (owner) return <Fragment key={owner}>{children(owner)}</Fragment>
+  if (owner) return <Fragment key={owner.id}>{children(owner.id, owner.admin)}</Fragment>
 
   switch (viewerQuery.data?.status) {
     case 'anonymous':
@@ -51,7 +51,7 @@ export function DraftOwnerGate({ signIn, suspended = 'Activity cannot be saved f
 }
 
 function useDraftOwner(viewer: Viewer | undefined) {
-  const signedIn = viewer?.status === 'signed-in' ? viewer.userId : null
+  const signedIn = viewer?.status === 'signed-in' ? { id: viewer.userId, admin: viewer.role === 'admin' } : null
   const [owner, setOwner] = useState(signedIn)
   if (!owner && signedIn) setOwner(signedIn)
   return owner ?? signedIn

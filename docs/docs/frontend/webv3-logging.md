@@ -79,12 +79,19 @@ The saved log's detail at `/logs/$logId` displays the persisted language,
 measure, tags, score and contests. Reload reads that
 record again. An expired session cookie retries a public detail read
 anonymously. Public detail omits private contest submissions; only the owner
-gets the link to manage them.
+and administrators get the link to manage them.
+
+Administrators manage any learner's log as its owner does: the detail page
+offers them Edit log, Delete log and the contest submissions, and the edit and
+contest pages admit them. The pages decide this from the viewer's role, and the
+API, which accepts a change from the log's owner or an administrator, stays the
+authority. `DraftOwnerGate` records whether the draft's account was an
+administrator when the draft started.
 
 The detail page is titled Log details. Its lead names the language, the activity
 and who logged it, linked to their profile. It shows the measure, score and date,
 then the description and tags as labelled rows; the record's ID is not shown. It offers its owner
-Edit log and Delete log; visitors see neither.
+and administrators Edit log and Delete log; other visitors see neither.
 
 A log tagged `nsfw`, in any case, never shows its description as a title or a
 link label: the detail page is titled by its language and activity, and the
@@ -97,7 +104,8 @@ a mouse resting on it previews it. It stays masked until the page hydrates.
 `frontend/apps/webv3/src/lib/format.ts` owns the tag rule and the name links
 use.
 
-`/logs/$logId/edit` shows the edit form only to the log's owner; another account
+`/logs/$logId/edit` shows the edit form only to the log's owner and
+administrators; another account
 sees that the record is someone else's, and an anonymous visitor is asked to
 sign in. It uses the same tags and tag sidebar, shows the activity read-only
 and keeps contest submissions as they are; Cancel and Save return to the log.
@@ -111,9 +119,17 @@ edited and saved as a duration. A save replaces the edit page with the updated
 detail. Retrying an unconfirmed update is safe. The edit draft starts from the
 log as first read; later reads do not replace it.
 
-`/logs/$logId/contests` lets the log's owner choose which of their ongoing
-contest registrations the saved log counts in; another account sees that the
-record is someone else's, and an anonymous visitor is asked to sign in. Each
+`/logs/$logId/contests` lets the log's owner, or an administrator, choose which
+of the owner's ongoing contest registrations the saved log counts in; another
+account sees that the record is someone else's, and an anonymous visitor is
+asked to sign in. The API accepts only the owner's ongoing registrations, so
+`ownerRegistrationsQuery` in `frontend/apps/webv3/src/lib/logs.ts` reads them for
+whoever is viewing: the owner's own ongoing registrations, or for an
+administrator the owner's contest registrations of this year and last whose
+contest has started and has not finished by today's UTC date, the API's
+ongoing rule. Those registrations do not name a community contest's organizer,
+so their cards omit it. A choice the API no longer counts as ongoing is refused
+as invalid. Each
 registration is offered unless the contest does not allow the log's activity,
 the registration lacks its language or the contest has ended, in that order.
 As in Webv2, the page opens with a summary of the log and lists each
@@ -155,7 +171,10 @@ and without ongoing registrations, detail, ownership and tenant isolation;
 limit, remembered choices, unavailable storage and the edit form's tags; `logging-edit.spec.ts` covers edits, deletion, owner actions and the
 score estimate; `logging-contests.spec.ts` covers submitting a saved log to a
 contest, removing it and refusing other visitors; `logging-nsfw.spec.ts` covers
-NSFW masking on the detail page, its back links and the activity feed; `logging-session.spec.ts` covers expiry, CSRF, suspension and
+NSFW masking on the detail page, its back links and the activity feed;
+`logging-admin.spec.ts` covers an administrator editing, resubmitting and
+deleting another learner's log, and refusing that edit after an account switch;
+`logging-session.spec.ts` covers expiry, CSRF, suspension and
 account switches. Run them with `WEBV3_BASE_URL`, `TADOKU_API_URL`, `E2E_READER_EMAIL`
 and `E2E_READER_PASSWORD` for the documented development fixture. Ownership,
 suspension and account-switch cases also use `E2E_SECOND_EMAIL` and

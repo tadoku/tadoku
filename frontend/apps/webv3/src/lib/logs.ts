@@ -45,6 +45,16 @@ const getLogOptions = createServerFn({ method: 'GET' }).handler(async () => {
   return readLogOptions()
 })
 
+const ownerRegistrationsSchema = z.object({ viewerId: z.guid(), ownerId: z.guid() })
+export type OwnerRegistrations = z.infer<typeof ownerRegistrationsSchema>
+
+const getOwnerRegistrations = createServerFn({ method: 'GET' })
+  .inputValidator(ownerRegistrationsSchema)
+  .handler(async ({ data }) => {
+    const { readOwnerRegistrations } = await import('./logs.server')
+    return readOwnerRegistrations(data)
+  })
+
 const getLog = createServerFn({ method: 'GET' })
   .inputValidator(z.guid())
   .handler(async ({ data }) => {
@@ -114,6 +124,14 @@ export const tagSuggestionsQuery = (viewerId: string, query: string) => queryOpt
 export const logOptionsQuery = (viewerId: string) => queryOptions({
   queryKey: ['log-options', viewerId],
   queryFn: () => getLogOptions(),
+  retry: false,
+  staleTime: Infinity,
+})
+
+/** The registrations a viewer can submit a log of `ownerId` to: the owner's ongoing ones, whoever is viewing. */
+export const ownerRegistrationsQuery = (viewerId: string, ownerId: string) => queryOptions({
+  queryKey: ['owner-registrations', viewerId, ownerId],
+  queryFn: () => getOwnerRegistrations({ data: { viewerId, ownerId } }),
   retry: false,
   staleTime: Infinity,
 })

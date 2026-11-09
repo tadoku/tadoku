@@ -10,8 +10,8 @@ import { useLinks } from '../../lib/links'
 import { formatTracking, logName, pointsUnit, scoreFormat } from '../../lib/format'
 import { contestChoices } from '../../lib/log-draft'
 import {
-  logOptionsQuery,
   logQuery,
+  ownerRegistrationsQuery,
   useUpdateLogContests,
   type ImmersionLog,
   type LogFailure,
@@ -31,11 +31,11 @@ export const Route = createFileRoute('/logs/$logId_/contests')({
     const viewer = await context.queryClient.ensureQueryData(viewerQueryOptions())
     if (viewer.status !== 'signed-in') return
 
-    const [log] = await Promise.all([
-      context.queryClient.ensureQueryData(logQuery(params.logId, viewer.userId)),
-      context.queryClient.ensureQueryData(logOptionsQuery(viewer.userId)),
-    ])
+    const log = await context.queryClient.ensureQueryData(logQuery(params.logId, viewer.userId))
     if (!log.ok && log.reason === 'not-found') throw notFound()
+    if (log.ok && (log.data.user_id === viewer.userId || viewer.role === 'admin')) {
+      await context.queryClient.ensureQueryData(ownerRegistrationsQuery(viewer.userId, log.data.user_id))
+    }
   },
   component: LogContests,
 })
@@ -46,20 +46,25 @@ const signIn = {
 }
 
 function LogContests() {
-  return <DraftOwnerGate signIn={signIn}>{viewerId => <ContestsDraft viewerId={viewerId} />}</DraftOwnerGate>
+  return <DraftOwnerGate signIn={signIn}>{(viewerId, admin) => <ContestsDraft viewerId={viewerId} admin={admin} />}</DraftOwnerGate>
 }
 
-/** Only the log's owner changes its submissions. The choice starts from the log as first read. */
-function ContestsDraft({ viewerId }: { viewerId: string }) {
+/**
+ * The log's owner or an administrator changes its submissions, choosing among the owner's registrations; the API decides.
+ * The choice starts from the log as first read.
+ */
+function ContestsDraft({ viewerId, admin }: { viewerId: string; admin: boolean }) {
   const { logId } = Route.useParams()
   const logResult = useQuery({ ...logQuery(logId, viewerId), staleTime: Infinity })
-  const optionsResult = useQuery(logOptionsQuery(viewerId))
-  const loginUrl = useLoginUrl()
   const log = logResult.data
-  const options = optionsResult.data
+  const ownerId = log?.ok ? log.data.user_id : viewerId
+  const allowed = ownerId === viewerId || admin
+  const registrationsResult = useQuery({ ...ownerRegistrationsQuery(viewerId, ownerId), enabled: Boolean(log?.ok) && allowed })
+  const loginUrl = useLoginUrl()
+  const registrations = registrationsResult.data
 
-  if (logResult.isPending || optionsResult.isPending) return null
-  if (log?.ok && log.data.user_id !== viewerId) {
+  if (logResult.isPending) return null
+  if (log?.ok && !allowed) {
     return (
       <EmptyState
         headingLevel={1}
@@ -69,14 +74,15 @@ function ContestsDraft({ viewerId }: { viewerId: string }) {
       />
     )
   }
-  if (log?.ok && options?.ok) {
-    return <ContestsForm log={log.data} registrations={options.data.registrations} viewerId={viewerId} />
+  if (log?.ok && registrationsResult.isPending) return null
+  if (log?.ok && registrations?.ok) {
+    return <ContestsForm log={log.data} registrations={registrations.data} viewerId={viewerId} />
   }
 
   if (log?.ok === false && log.reason === 'not-found') {
     return <EmptyState headingLevel={1} title="Activity not found" description="This log may have been deleted." />
   }
-  if ((log?.ok === false && log.reason === 'signed-out') || (options?.ok === false && options.reason === 'signed-out')) {
+  if ((log?.ok === false && log.reason === 'signed-out') || (registrations?.ok === false && registrations.reason === 'signed-out')) {
     return (
       <EmptyState
         headingLevel={1}
@@ -91,7 +97,7 @@ function ContestsDraft({ viewerId }: { viewerId: string }) {
       headingLevel={1}
       title="Contests unavailable"
       description="We could not load your contests for this activity. Try again."
-      actions={<Button onClick={() => void Promise.all([logResult.refetch(), optionsResult.refetch()])}>Try again</Button>}
+      actions={<Button onClick={() => void Promise.all([logResult.refetch(), registrationsResult.refetch()])}>Try again</Button>}
     />
   )
 }
@@ -156,7 +162,7 @@ function ContestsForm({ log, registrations, viewerId }: {
                         variant="card"
                         value={choice.registration.id}
                         label={choice.registration.contest.title}
-                        description={`Organized by ${organizer(choice.registration.contest)}`}
+                        description={organizer(choice.registration.contest)}
                         aside={choice.kind === 'ineligible' ? choice.reason : `${scoreFormat.format(log.score)} ${pointsUnit(log.score)}`}
                         disabled={choice.kind === 'ineligible'}
                       />
@@ -204,8 +210,11 @@ function ContestsForm({ log, registrations, viewerId }: {
   )
 }
 
-const organizer = (contest: Registration['contest']) =>
-  contest.official ? 'Tadoku' : contest.owner_user_display_name ?? 'Unknown user'
+/** A registration read from the owner's contest history, as an administrator does, does not name the organizer. */
+const organizer = (contest: Registration['contest']) => {
+  const name = contest.official ? 'Tadoku' : contest.owner_user_display_name
+  return name ? `Organized by ${name}` : undefined
+}
 
 /** The log being submitted, as Webv2 shows it above the contests: what, how much and its score. */
 function LogSummary({ log }: { log: ImmersionLog }) {

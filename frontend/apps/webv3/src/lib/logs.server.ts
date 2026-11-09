@@ -7,12 +7,14 @@ import {
   immersionLogGetConfigurations,
   immersionLogTagSuggestions,
   immersionLogUpdate,
+  immersionProfileYearlyContestRegistrationsByUserId,
   immersionScorePreview,
+  type ImmersionContestRegistration,
   type ImmersionScorePreview,
   type ImmersionTagSuggestions,
 } from 'api-client'
 import type { LogContestsUpdate, LogUpdate, NewLog, ScorePreviewInput } from './log-draft'
-import type { ImmersionLog, LogFailure, LogOptions, LogResult, Registration } from './logs'
+import type { ImmersionLog, LogFailure, LogOptions, LogResult, OwnerRegistrations, Registration } from './logs'
 import { readViewer, sessionCookie, sessionRequest } from './session.server'
 
 export const logFailures: Partial<Record<number, LogFailure>> = {
@@ -46,13 +48,51 @@ export async function readLogOptions(): Promise<LogResult<LogOptions>> {
   // The form needs a language, an activity and identified contests; an answer without them is malformed.
   const { languages, activities } = configuration.data
   const offered = registrations.data.registrations
-  const identified = (registration: (typeof offered)[number]): registration is Registration =>
-    registration.id !== undefined && registration.contest !== undefined
   if (!languages.length || !activities.length || !offered.every(identified)) {
     return { ok: false, reason: 'unavailable' }
   }
   return { ok: true, data: { configuration: configuration.data, registrations: offered } }
 }
+
+const identified = (registration: ImmersionContestRegistration): registration is Registration =>
+  registration.id !== undefined && registration.contest !== undefined
+
+/**
+ * The ongoing registrations of a log's owner, which are the only ones the API accepts for its submissions. Another
+ * account, such as an administrator, reads the owner's registrations of this year and last and keeps those whose
+ * contest has started and not finished by today's UTC date, as `contestwindow.Started` and `Unfinished` in the API do.
+ */
+export async function readOwnerRegistrations({ viewerId, ownerId }: OwnerRegistrations): Promise<LogResult<Registration[]>> {
+  const cookie = sessionCookie()
+  if (!cookie) return { ok: false, reason: 'signed-out' }
+  if (viewerId === ownerId) {
+    const own = await answer(immersionContestFindOngoingRegistrations(sessionRequest(cookie)))
+    if (!own.ok) return own
+    return own.data.registrations.every(identified) ? { ok: true, data: own.data.registrations } : { ok: false, reason: 'unavailable' }
+  }
+
+  const today = new Date().toISOString().slice(0, 10)
+  const year = Number(today.slice(0, 4))
+  const registrations: Registration[] = []
+  for (const contestYear of [year, year - 1]) {
+    for (let page = 0; ; page++) {
+      const result = await answer(immersionProfileYearlyContestRegistrationsByUserId({
+        ...sessionRequest(cookie),
+        path: { userId: ownerId, year: contestYear },
+        query: { page_size: yearlyPageSize, page },
+      }))
+      if (!result.ok) return result
+      if (!result.data.registrations.every(identified)) return { ok: false, reason: 'unavailable' }
+
+      registrations.push(...result.data.registrations.filter(({ contest }) =>
+        contest.contest_start <= today && contest.contest_end >= today))
+      if (result.data.registrations.length < yearlyPageSize) break
+    }
+  }
+  return { ok: true, data: registrations }
+}
+
+const yearlyPageSize = 50
 
 /** Reads a log as the visitor. A rejected session cookie falls back to the public view of the log. */
 export async function readLog(id: string): Promise<LogResult<ImmersionLog>> {

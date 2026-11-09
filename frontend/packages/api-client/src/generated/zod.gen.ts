@@ -1050,6 +1050,11 @@ export const zImmersionProfileAvatarByUserIdPath = z.object({
  */
 export const zImmersionProfileAvatarByUserIdResponse = z.string();
 
+/**
+ * The cached avatar now matches Gravatar, including when the user has no Gravatar image.
+ */
+export const zImmersionProfileAvatarRefreshResponse = z.void();
+
 export const zImmersionProfileYearlyActivityByUserIdPath = z.object({
     userId: z.string().guid(),
     year: z.int()

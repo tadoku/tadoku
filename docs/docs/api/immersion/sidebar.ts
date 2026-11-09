@@ -204,6 +204,12 @@ const sidebar: SidebarsConfig = {
         },
         {
           type: "doc",
+          id: "api/immersion/profile-avatar-refresh",
+          label: "Refreshes your cached Gravatar avatar",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
           id: "api/immersion/profile-yearly-activity-by-user-id",
           label: "Fetches a activity summary of a user for a given year",
           className: "api-method get",

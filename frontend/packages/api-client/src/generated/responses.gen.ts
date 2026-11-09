@@ -53,6 +53,7 @@ export const successResponses: Readonly<Record<string, Readonly<Record<number, b
   'GET /immersion/logs/tag-suggestions': { 200: true },
   'GET /immersion/users/{userId}/profile': { 200: true },
   'GET /immersion/users/{userId}/avatar': { 200: true },
+  'POST /immersion/profile/avatar/refresh': { 204: false },
   'GET /immersion/users/{userId}/activity/{year}': { 200: true },
   'GET /immersion/users/{userId}/scores/{year}': { 200: true },
   'GET /immersion/users/{user_id}/logs': { 200: true },

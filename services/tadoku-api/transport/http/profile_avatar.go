@@ -27,3 +27,15 @@ func (s *server) ImmersionProfileAvatarByUserID(
 		ContentLength: int64(len(avatar.Image)),
 	}, nil
 }
+
+func (s *server) ImmersionProfileAvatarRefresh(
+	ctx context.Context,
+	_ openapi.ImmersionProfileAvatarRefreshRequestObject,
+) (openapi.ImmersionProfileAvatarRefreshResponseObject, error) {
+	if err := s.application.RefreshOwnAvatar(ctx); err != nil {
+		s.logOperationError(ctx, "RefreshOwnAvatar", err)
+		return nil, err
+	}
+
+	return openapi.ImmersionProfileAvatarRefresh204Response{}, nil
+}

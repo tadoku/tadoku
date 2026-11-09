@@ -1,11 +1,11 @@
 ---
 id: profile-avatar-by-user-id
 title: "Fetches the Gravatar avatar of a user"
-description: "Returns the user's Gravatar image at 128 pixels, fetched and cached by the server so neither the user's email nor the viewer's address reaches Gravatar. The server caches an image, or the absence of one, for up to 24 hours, so a changed email or Gravatar image can take that long to appear."
+description: "Returns the user's Gravatar image at 128 pixels, fetched and cached by the server so neither the user's email nor the viewer's address reaches Gravatar. The server caches an image, or the absence of one, for up to 24 hours, so a changed email or Gravatar image can take that long to appear. The user can refresh their own cached avatar sooner with ImmersionProfileAvatarRefresh."
 sidebar_label: "Fetches the Gravatar avatar of a user"
 hide_title: true
 hide_table_of_contents: true
-api: eJztVd9v3DYM/lcIvqwbdOdblhWFgT1kSXq4/eiCNsUGBMFA2/RZiC2pknzJ4eD/faDsu6TXbEjf9yRbor6P5EdSO6w4lF67qK3BHN9z7L0JEBuGPrD/JsDS04YiedAdrRkowvcnb8DpB26Dgppj2XAFZCooKX0W23Q9sN+wh2DBsI4N+6eg3JFuwdhxc6P5Pm1TVXkOATwL1CP3HK4fEcvxjMzokYIJhYrApmSwNVjDCmrroXcQLZycQmN7H5R4Q1A2ZNZcTU5YfxxiSQYi3THEhiK01qwFhJxj8nNUaB17koStKszReVvrls8Sws/bj4H96gIVRloHzG/253ir0JGnjiN7OdihoY4xR0nJqkKFWhRwFBtUR7KsLiSqff7gvrGBYfI5WvBJNVTo+VOvPVeYR9+zwlA23BHmO4xbJ1whem3WqLC2vqMo7L2ucBhu5XJw1gQOYn+yWMjyuRsiwtNMKaAAv1xdLhVcvVsqWK7eSjr/5OJK8tQwVSnWHZ6LZrNza6K37ZfAZ+09bQO4vmh1qaCjhxmt+ac3r08Xi/lXxDUMCv9KNGzi7HrrePZH4gj/ymlsMLquv45lUFiOJHKacpF9J58vSHihDfmtgAwKT59L88psqNXVqPXqYo7J8PR5PZJRZVkiicAPOkTRoCHZOKrshPTj4ocvkQ52NemWK0EYiyq1NvSmD1S0/BnMMw4dYCpdJX/GmqpAG4i6k5uDwo5jY6V11hxRjRWfYyaRhGw3tsOQjUiocGz7sWV632KOTYwu5FkWqbJ3/Zycy8jpTJvI3lCb6a5jH7Q1GUphBy57r+P2g4gzlndp7Z3ms16YD1qR07/ydt+IowmqfZuOZH8HDoKcAtGmtum+jq2YHHhn5DQqbHXJJrCYTCC/r65RHUWx1rHpi3lpuymg/VK0tsg60ib7bXV++e7DpeR9MzJgjifzxXwhW86G2JF5QvM2TeVxjB80mRZbA6WqOZ4yu8ea/v8deMk7MJVN5IeYuZa0ETGStrupqG/ScA+oMD9M+amubxU2NkSx2e0KCvzRt8Mg25969lvMb24Vbshr6btU+5VOPVhhXlMb+D/Ue/V+mmTfwktfjmdj2feFkabYUNvLHyq84+3juzXcDvtRn9wcD8/Kkl18cm0/JKUhDwNgeXmNw/APU9/q0Q==
+api: eJztVU1v4zYQ/SuDufQDtOWmabEQ0EOaZA233W2QzaIFgqAYSyOLiERyScqOYei/F0NZjtebFrunXnqSTQ7fm683s8OSQ+G1i9oazPGWY+dNgFgzdIH9VwHmntYUyYNuacVAEb47ewVOP3ETFFQci5pLIFNCQenncpueB/Zr9hAsGNaxZn8Myi3pBowdDteaN+mYytJzCOBZoJ65p3D3jFgMd2QGjxTsUWgZ2BQMtgJrWEFlPXQOooWzc6ht54MSbwiKmsyKy70T1p+GWJCBSI8MsaYIjTUrASHnePREokhmnivPoRZ+7cFuzJiEPWCw1rCHjY41LNqWfdDW3Hhb6YYvksntgDBFhdaxJynEosQc3bHVz9v3gf3iChVGWgXM78d7fFDoyFPLkb1c7NBQy5ijOLkoUaGWyjqKNaqTci+uJFtjXWBT28Cj69GCT92ACj1/6LTnEvPoO1YYippbwnyHceuEK0SvzQoVVta3FIW90yX2/YM8Ds6awEHsz2Yz+XzshqT0uAIKKMAvN9dzBTdv5wrmi9dSpj94eSN5qpnKFOsOLyXbk0trorfNp8AXzYa2AVy3bHShoKWnCa34p1c/ns9m0y+Iq+8V/plo2MTJ3dbx5PfEEf6R09hgdFV9GUuvsBhI5DblIvtWfn5GwpfakN8KSK/w/KU0L8yaGl0OtV5cTTEZnr9cj2RUWpZIIvCTDlFqUJMcnCgmIf0w+/5TpINdRbrhUhCGpkojAzrTBVo2/BHMCw4dYEpdJn+GnipBG4i6lZe9wpZjbUU6K46oho7PMZNIQrYb5NBnAxIqHMbJIJnON5hjHaMLeZZFKu1jNyXnMnI60yayN9RkelRwhtLYgYvO67h9J8UZ2ruw9lHzRSfMh1qR07/ydhTiYIJqlOlA9lfgIMgpEG0qm97r2IjJgXdCTqPCRhdsAovJHuTN4g7VSRQrHetuOS1suw9o/Cwbu8xa0ib7bXF5/fbdteR9PTBgjmfT2XQmR86G2JI5onmdpv2wHg412X9sBZS65nTK7J57+v/98l/ul307Rn6KmWtIGyly6pndXiz3aWkEVJgftsdeLw8Kaxui2Ox2Swr83jd9L8cfOvZbzO8fFK7Ja9Fz0lSpk7ZLzCtqAv9LV3x9u5+Q38DnbqQXYxn1ZkRsa2o6+YcKH3n7vA/7h35cIcnN4fKiKNjFo2fj8BWhHwbL/PoO+/5v2GQslA==
 sidebar_class_name: "get api-method"
 info_path: api/immersion/immersion-api
 custom_edit_url: null
@@ -38,7 +38,7 @@ import Translate from "@docusaurus/Translate";
 
 
 
-Returns the user's Gravatar image at 128 pixels, fetched and cached by the server so neither the user's email nor the viewer's address reaches Gravatar. The server caches an image, or the absence of one, for up to 24 hours, so a changed email or Gravatar image can take that long to appear.
+Returns the user's Gravatar image at 128 pixels, fetched and cached by the server so neither the user's email nor the viewer's address reaches Gravatar. The server caches an image, or the absence of one, for up to 24 hours, so a changed email or Gravatar image can take that long to appear. The user can refresh their own cached avatar sooner with ImmersionProfileAvatarRefresh.
 
 <Heading
   id={"request"}

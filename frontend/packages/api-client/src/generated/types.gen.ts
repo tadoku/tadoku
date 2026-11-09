@@ -2254,6 +2254,37 @@ export type ImmersionProfileAvatarByUserIdResponses = {
 
 export type ImmersionProfileAvatarByUserIdResponse = ImmersionProfileAvatarByUserIdResponses[keyof ImmersionProfileAvatarByUserIdResponses];
 
+export type ImmersionProfileAvatarRefreshData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/immersion/profile/avatar/refresh';
+};
+
+export type ImmersionProfileAvatarRefreshErrors = {
+    /**
+     * Authentication required.
+     */
+    401: unknown;
+    /**
+     * Gravatar failed or returned an unusable image.
+     */
+    503: unknown;
+    /**
+     * Gravatar did not respond in time.
+     */
+    504: unknown;
+};
+
+export type ImmersionProfileAvatarRefreshResponses = {
+    /**
+     * The cached avatar now matches Gravatar, including when the user has no Gravatar image.
+     */
+    204: void;
+};
+
+export type ImmersionProfileAvatarRefreshResponse = ImmersionProfileAvatarRefreshResponses[keyof ImmersionProfileAvatarRefreshResponses];
+
 export type ImmersionProfileYearlyActivityByUserIdData = {
     body?: never;
     path: {

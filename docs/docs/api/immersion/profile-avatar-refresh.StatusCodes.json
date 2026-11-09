@@ -1,0 +1,1 @@
+{"responses":{"204":{"description":"The cached avatar now matches Gravatar, including when the user has no Gravatar image."},"401":{"description":"Authentication required."},"503":{"description":"Gravatar failed or returned an unusable image."},"504":{"description":"Gravatar did not respond in time."}}}

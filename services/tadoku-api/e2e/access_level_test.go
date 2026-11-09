@@ -48,6 +48,7 @@ var operationAccess = map[string]accessLevel{
 
 	"ImmersionProfileFindByUserID":                accessPublic,
 	"ImmersionProfileAvatarByUserID":              accessPublic,
+	"ImmersionProfileAvatarRefresh":               accessAuthenticated,
 	"ImmersionProfileYearlyActivityByUserID":      accessPublic,
 	"ImmersionProfileYearlyScoresByUserID":        accessPublic,
 	"ImmersionProfileYearlyActivitySplitByUserID": accessPublic,
@@ -165,6 +166,8 @@ var operationFixtures = map[string]string{
 	"ImmersionLanguageList":   "ListLanguages",
 	"ImmersionLanguageCreate": "CreateLanguage",
 	"ImmersionLanguageUpdate": "UpdateLanguage",
+
+	"ImmersionProfileAvatarRefresh": "ImmersionProfileAvatarRefresh",
 
 	"ProfileAccountDeletionCreate": "ProfileAccountDeletionCreate",
 	"ProfileUsersList":             "ProfileUsersList",

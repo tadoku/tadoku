@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
 func (a *Application) ListUsers(ctx context.Context, pageSize, page int, query string) (*profile.UserList, error) {
@@ -34,4 +35,17 @@ func (a *Application) FindProfile(ctx context.Context, userID uuid.UUID) (*profi
 
 func (a *Application) FindAvatar(ctx context.Context, userID uuid.UUID) (profile.Avatar, error) {
 	return a.avatars.Find(ctx, userID)
+}
+
+func (a *Application) RefreshOwnAvatar(ctx context.Context) error {
+	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
+		return err
+	}
+
+	actorID, err := identity.RequireActorID(ctx)
+	if err != nil {
+		return err
+	}
+
+	return a.avatars.Refresh(ctx, actorID)
 }

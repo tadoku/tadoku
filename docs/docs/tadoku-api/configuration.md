@@ -141,9 +141,13 @@ so browsers never receive the email or its hash and Gravatar never sees viewers.
 - The image and its content type, or the absence of one (a Gravatar `404`), are
   cached in Valkey under `tenant:<name>/<id>:profile:avatar:<user id>` for 24
   hours. A changed email or Gravatar image can therefore take up to 24 hours to
-  show. Valkey failures fall back to fetching from Gravatar.
-- The operation checks the user before the cache, so a deleted user's cached
-  avatar is never served.
+  show, unless its owner refreshes it sooner. Valkey failures fall back to
+  fetching from Gravatar.
+- The read operation checks the user before the cache, so a deleted user's
+  cached avatar is never served.
+- The refresh operation (`POST /immersion/profile/avatar/refresh`) fetches the
+  signed-in user's Gravatar past the cache and overwrites the cached image or
+  absence with the result. A failed fetch leaves the cached avatar in place.
 
 ### Scoring engine
 

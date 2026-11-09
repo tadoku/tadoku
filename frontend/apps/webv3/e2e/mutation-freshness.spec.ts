@@ -211,6 +211,39 @@ test('joining a contest shows it in Joined and in the profile\'s contest history
   expect(loads(), 'full document loads').toBe(0)
 })
 
+test('dropping a registration language takes its logs out of the contest without a reload', async ({ readerContext, adminContext }) => {
+  const contest = await createContest(adminContext)
+  const seed = await submitLog(readerContext, contest.id, 2)
+  const widened = await readerContext.request.post(`${api}/immersion/contests/${contest.id}/registration`, { data: { language_codes: ['jpn', 'kor'] } })
+  expect(widened.status(), 'adding a second language').toBe(200)
+
+  const page = await readerContext.newPage()
+  await page.goto(`/logs/${seed.id}`)
+  await hydrated(page)
+  const loads = documentLoads(page)
+  const submitted = submissions(page).getByRole('link', { name: contest.title, exact: true })
+  await expect(submitted).toBeVisible()
+
+  await submitted.click()
+  await expect(rowScore(page, reader.name)).toHaveText(score.format(seed.score))
+  await contestViews(page, 'Activity').click()
+  await expect(feedEntry(page, seed.id)).toBeVisible()
+
+  await page.getByRole('button', { name: 'Contest options', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'Update registration', exact: true }).click()
+  await page.getByRole('button', { name: 'Remove Japanese', exact: true }).click()
+  await page.getByRole('button', { name: 'Update registration', exact: true }).click()
+  await expect(page).not.toHaveURL(/\/registration$/)
+
+  await contestViews(page, 'Activity').click()
+  await expect.soft(feedEntry(page, seed.id), 'contest feed').toHaveCount(0, soon)
+
+  for (let back = 0; back < 8 && !new URL(page.url()).pathname.endsWith(`/logs/${seed.id}`); back++) await page.goBack()
+  await expect(page).toHaveURL(new RegExp(`/logs/${seed.id}$`))
+  await expect.soft(submitted, 'the log\'s submissions').toHaveCount(0, soon)
+  expect(loads(), 'full document loads').toBe(0)
+})
+
 test('removing a log from a contest updates the log\'s submissions and the standings without a reload', async ({ readerContext, adminContext }) => {
   const contest = await createContest(adminContext)
   const seed = await submitLog(readerContext, contest.id, 2)

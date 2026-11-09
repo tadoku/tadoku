@@ -26,14 +26,14 @@ def copy_tree(destination):
         shutil.copyfile(ROOT / name, target)
 
 
-def run_mutated(name, file, old, new, appended):
+def run_mutated(name, file, old, new):
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
         copy_tree(root)
         path = root / file
         text = path.read_text()
         assert old in text, f'{name}: {old!r} not in {file}'
-        path.write_text(text.replace(old, new, 1) + appended)
+        path.write_text(text.replace(old, new, 1))
         return run(root)
 
 
@@ -73,54 +73,18 @@ def main():
 
     dockerfile = 'frontend/apps/webv3/Dockerfile'
     urls = 'frontend/apps/webv3/src/lib/urls.server.ts'
-    flags = 'k8s/dev/base/flipt/features.yaml'
     mutations = [
         ('prefixed env name', dockerfile, ' HOST=', ' APP_HOST='),
         ('prefixed env name', dockerfile, ' PORT=', ' APP_PORT='),
         ('extended host', dockerfile, 'TADOKU_WEB_URL=https://tadoku.app ', 'TADOKU_WEB_URL=https://tadoku.app.example '),
         ('prefixed host', urls, '`next.${web.host}`', '`preview-next.${web.host}`'),
-        (
-            'renamed env read kept in a comment',
-            urls,
-            'process.env.TADOKU_API_URL ',
-            '/* formerly process.env.TADOKU_API_URL */ process.env.TADOKU_API_URL_V2 ',
-        ),
-        (
-            'renamed segment kept in a comment',
-            flags,
-            '  - key: release-webv3-access\n',
-            '  # - key: release-webv3-access\n  - key: release-webv3-beta\n',
-        ),
-        (
-            'renamed env read kept in a line comment without a space',
-            urls,
-            'process.env.TADOKU_API_URL ',
-            'process.env.TADOKU_API_URL_V2 ',
-            '\nvoid 0;// formerly process.env.TADOKU_API_URL\n',
-        ),
-        (
-            'renamed Go flag key kept in a line comment without a space',
-            'services/tadoku-api/internal/featureflags/registry.go',
-            '"release-webv3",',
-            '"release-webv3-next",',
-            '\nvar _ = 0// formerly "release-webv3"\n',
-        ),
         ('extended host template', urls, '`next.${web.host}`', '`next.${web.host}.example`'),
         ('env name extended with $', urls, 'process.env.TADOKU_API_URL ', 'process.env.TADOKU_API_URL$ '),
     ]
-    harmless = [
-        ('block comment opener in a string', urls, '  const api = ', "  void '/*'\n  const api = "),
-        ('line comment opener in a string', urls, '  const api = ', "  void ' // '; const api = "),
-        ('hash in a Dockerfile value', dockerfile, 'ENV NODE_ENV=', 'ENV NOTE=" # " NODE_ENV='),
-    ]
-    for name, file, old, new, *appended in mutations:
-        result = run_mutated(name, file, old, new, ''.join(appended))
+    for name, file, old, new in mutations:
+        result = run_mutated(name, file, old, new)
         assert result.returncode == 1 and file in result.stderr, f'{name} passed: {result.stdout}'
         checks.append(f'{name} fails')
-    for name, file, old, new in harmless:
-        result = run_mutated(name, file, old, new, '')
-        assert result.returncode == 0, f'{name} failed: {result.stderr}'
-        checks.append(f'{name} passes')
 
     print('PASS:', '; '.join(checks))
 

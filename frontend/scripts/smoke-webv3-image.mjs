@@ -186,6 +186,13 @@ try {
     'console.log(JSON.stringify([process.getuid(), process.getgid()]))')), [1000, 1000])
   const base = `http://127.0.0.1:${info.NetworkSettings.Ports['3000/tcp'][0].HostPort}`
   await waitForHealth(base)
+  for (const path of ['/pages/%FF', '/pages/%E0%A4', '/pages/%']) {
+    const answer = await fetch(base + path, { signal: AbortSignal.timeout(5_000) }).catch(() => assert.fail(`${path} hung`))
+    assert([400, 404].includes(answer.status), `${path} answered ${answer.status}`)
+  }
+  const bootLog = execFileSync('sh', ['-c', `docker logs ${container} 2>&1`], { encoding: 'utf8' })
+  assert(!bootLog.includes('uncaughtException'), 'A malformed path threw')
+  assert.equal(bootLog.match(/"event":"startup"/g)?.length, 1, 'Boot wrote no single startup line')
   runtimeLinks.push(...await checkRuntimeLinks(base, [
     ['next.tadoku.app', 'https://tadoku.app'],
     ['alice.next.preview.tadoku.app', 'https://alice.preview.tadoku.app'],

@@ -7,6 +7,8 @@ export interface Board { entries: Entry[]; total_size: number }
 export const score = new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 const count = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 0 })
 
+/** The standings table's participant rows: its header row holds only column headers. */
+export const standingRows = (page: Page) => page.getByRole('table').getByRole('row').filter({ has: page.getByRole('cell') })
 
 export async function apiJson<T>(request: APIRequestContext, path: string): Promise<T> {
   const response = await request.get(`${api}${path}`)
@@ -19,13 +21,13 @@ export const board = (request: APIRequestContext, path: string, page = 1) =>
 
 /** Every API entry is a row with its rank (T for ties), its name linking to `profile` and its score. */
 export async function expectRows(page: Page, entries: Entry[], profile: (userId: string) => string) {
-  const rows = page.locator('.standings-table tbody tr')
+  const rows = standingRows(page)
   await expect(rows).toHaveCount(entries.length)
   for (const [index, entry] of entries.entries()) {
     const row = rows.nth(index)
-    await expect(row.locator('td').first()).toHaveText(`${entry.is_tie ? 'T' : ''}${entry.rank}`)
+    await expect(row.getByRole('cell').first()).toHaveText(`${entry.is_tie ? 'T' : ''}${entry.rank}`)
     await expect(row.getByRole('link', { name: entry.user_display_name, exact: true })).toHaveAttribute('href', profile(entry.user_id))
-    await expect(row.locator('td').last()).toHaveText(score.format(entry.score))
+    await expect(row.getByRole('cell').last()).toHaveText(score.format(entry.score))
   }
 }
 
@@ -37,7 +39,7 @@ export async function expectTotal(page: Page, data: Board, pageNumber = 1) {
   }
   const first = (pageNumber - 1) * 50 + 1
   // The range summary appears only beside page links.
-  await expect(page.locator('.standings-pagination > p')).toHaveText(data.total_size > 50 || pageNumber > 1
+  await expect(page.getByText(/ of [\d,]+ participants$/)).toHaveText(data.total_size > 50 || pageNumber > 1
     ? [`${count.format(first)}–${count.format(first + data.entries.length - 1)} of ${count.format(data.total_size)} participants`]
     : [])
   await expect(page.getByRole('navigation', { name: 'Standings pages' })).toHaveCount(data.total_size > 50 ? 1 : 0)

@@ -18,11 +18,11 @@ export const reader: Account = { email: process.env.E2E_READER_EMAIL, password: 
 export const admin: Account = { email: process.env.E2E_SECOND_EMAIL, password: process.env.E2E_SECOND_PASSWORD, name: 'Dev Admin' }
 
 /**
- * Waits until a Webv3 page has hydrated, when Paper's navbar enables its menu trigger. Leaving a development page
- * before then cancels its module requests, and the gateway can refuse the next page's requests on the same
- * connection, so that page never hydrates.
+ * Waits until a Webv3 page has hydrated, when Paper's navbar replaces its link to the menu with a button, which wide
+ * viewports hide with CSS. Leaving a page before then cancels its module requests.
  */
-export const hydrated = (page: Page) => expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled({ timeout: 15_000 })
+export const hydrated = (page: Page) =>
+  expect(page.getByRole('button', { name: /^(Open|Close) menu$/, includeHidden: true })).toBeAttached({ timeout: 15_000 })
 
 /** Submits authv2's login form once the page has hydrated, when React has attached its props to the Email field. */
 export async function authenticate(page: Page, account = reader) {
@@ -73,6 +73,25 @@ export const isSaveRequest = (request: Request) => request.method() === 'POST' &
 
 export const saveButton = (page: Page) => page.getByRole('button', { name: 'Log activity', exact: true })
 
+/** The links to `href`, by their destination, because a link's visible name often is the data the test reads. */
+export const linkTo = (page: Page, href: string) => page.getByRole('link').and(page.locator(`[href="${href}"]`))
+
+/** Each listed contest's row, in the list every contest collection labels. */
+export const contestRows = (page: Page) => page.getByRole('list', { name: /contests/i }).getByRole('listitem')
+
+/** Each log's row in a page of activity. */
+export const activityEntries = (page: Page) => page.getByRole('list', { name: 'Activity', exact: true }).getByRole('listitem')
+
+/** Each listed log's link to its detail page, beside any link to its learner. */
+export const logLinks = (page: Page) => activityEntries(page).getByRole('link').and(page.locator('[href^="/logs/"]'))
+
+/** The value of a page's statistic with this label. */
+export const statValue = (page: Page, label: string) =>
+  page.locator('dl > div').filter({ has: page.getByRole('term').filter({ hasText: label }) }).getByRole('definition')
+
+/** Every statistic's value on the page. */
+export const statValues = (page: Page) => page.getByRole('main').getByRole('definition')
+
 /**
  * Creates the open draft and returns its ID, leaving the page on the saved log's detail. An account with ongoing
  * registrations first reaches the contest step; the log stays personal because that step is not saved.
@@ -96,6 +115,33 @@ export async function addTags(page: Page, tags: string[]) {
 
 /** Paper's amount field is a group labelled "Amount" that holds the amount input and the unit select. */
 export const amountInput = (page: Page) => page.getByRole('spinbutton', { name: 'Amount', exact: true })
+
+/**
+ * A new open contest created by `organizer` and joined in Japanese by `participant`, so a test need not rely on a
+ * seeded round or its dates. `organizer` must be able to create contests, which rules out freshly registered accounts.
+ */
+export async function joinedContest(organizer: BrowserContext, participant: BrowserContext) {
+  const day = (offset: number) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10)
+  const created = await organizer.request.post(`${api}/immersion/contests`, {
+    data: {
+      title: `Webv3 joined contest ${randomUUID().slice(0, 8)}`,
+      description: 'Created by a Webv3 journey.',
+      contest_start: day(0),
+      contest_end: day(30),
+      registration_end: day(14),
+      private: false,
+      official: false,
+      language_code_allow_list: null,
+      activity_type_id_allow_list: [1, 2],
+    },
+  })
+  expect(created.ok(), `contest creation answered ${created.status()}`).toBeTruthy()
+  const { id } = await created.json() as { id: string }
+  const joined = await participant.request.post(`${api}/immersion/contests/${id}/registration`, { data: { language_codes: ['jpn'] } })
+  expect(joined.status(), 'registration').toBe(200)
+  const registration = await (await participant.request.get(`${api}/immersion/contests/${id}/registration`)).json() as { id: string }
+  return { id, registrationId: registration.id }
+}
 
 /** Enters an amount and a description in the open activity form. */
 export async function fillDraft(page: Page, amount: string, description: string) {
@@ -155,20 +201,29 @@ async function signedIn(browser: Browser, cookies: Cookie[]) {
 
 const sessions = join(tmpdir(), 'tadoku-webv3-e2e-sessions')
 
+/** The file that holds `key`'s state for this host, shared by every worker and run on the machine. */
+const stateFile = (key: string) => join(sessions, `${createHash('sha256').update(`${webv3}\n${key}`).digest('hex').slice(0, 16)}.json`)
+
+const readState = <T>(file: string) => readFile(file, 'utf8').then(text => JSON.parse(text) as T, () => undefined)
+
+async function writeState(file: string, state: unknown) {
+  await mkdir(sessions, { recursive: true, mode: 0o700 })
+  // ponytail: no lock, so two runs that start together on one machine can each do the work and the last rename wins;
+  // add a cross-process lock if the suite ever runs with several workers.
+  const temporary = `${file}.${process.pid}.${randomUUID()}.tmp`
+  await writeFile(temporary, JSON.stringify(state), { mode: 0o600 })
+  await rename(temporary, file)
+}
+
 /** The account's session on this host, kept on disk so later workers and runs reuse it while the API still accepts it. */
 async function storedSession(browser: Browser, account: Account) {
   if (!webv3 || !account.email || !account.password) return []
-  const file = join(sessions, `${createHash('sha256').update(`${webv3}\n${account.email}`).digest('hex').slice(0, 16)}.json`)
-  const stored = await readFile(file, 'utf8').then(text => JSON.parse(text) as Cookie[], () => [])
+  const file = stateFile(account.email)
+  const stored = await readState<Cookie[]>(file) ?? []
   if (await signedIn(browser, stored)) return stored
 
   const cookies = await session(browser, account)
-  await mkdir(sessions, { recursive: true, mode: 0o700 })
-  // ponytail: no lock, so two runs that start together on one machine each sign in once and the last rename wins;
-  // add a cross-process lock if the suite ever runs with several workers.
-  const temporary = `${file}.${process.pid}.${randomUUID()}.tmp`
-  await writeFile(temporary, JSON.stringify(cookies), { mode: 0o600 })
-  await rename(temporary, file)
+  await writeState(file, cookies)
   return cookies
 }
 
@@ -187,19 +242,47 @@ async function register(browser: Browser): Promise<Learner> {
 }
 
 const credentialed = Boolean(webv3 && api && reader.email)
-let loginAccount: Promise<Required<Account>> | undefined
+const loginWindow = 15 * 60_000
+/** Below the API's ten, so a test that signs in twice or a run cut short cannot reach the refusal. */
+const loginsPerAccount = 8
+
+interface StoredLearner extends Omit<Learner, 'context'> { cookies: Cookie[]; logins: number[] }
+
+/**
+ * The host's reusable learner, kept on disk so a worker restarted by a failed test registers nothing. Each login
+ * spends from the account's budget; a spent account, or one whose session the API no longer accepts, is replaced.
+ */
+async function storedLearner(browser: Browser, spendLogin: boolean) {
+  const file = stateFile('learner')
+  const now = Date.now()
+  const stored = await readState<StoredLearner>(file)
+  const logins = stored?.logins.filter(at => now - at < loginWindow) ?? []
+  let learner = stored && { ...stored, logins }
+  if (!learner || (spendLogin && logins.length >= loginsPerAccount) || !await signedIn(browser, learner.cookies)) {
+    const { context, ...account } = await register(browser)
+    learner = { ...account, cookies: await context.cookies(), logins: [] }
+    await context.close()
+  }
+  if (spendLogin) learner.logins.push(now)
+  await writeState(file, learner)
+  return learner
+}
 
 /**
  * Accounts for journeys, within the identity API's budgets: ten logins per account and ten registrations per tenant
  * and client IP, each in 15 minutes.
  * - `readerContext` and `adminContext` hold Dev Reader's and Dev Admin's stored sessions. Never log them out.
- * - `learner` is a new account per test, signed in, for journeys whose writes must not carry over to the next run.
- * - `loginLearner` is one new account per worker for journeys that sign in, out or switch accounts through authv2.
+ * - `learner` is a new account per test, signed in, for journeys that need an untouched account.
+ * - `returningLearner` is a stored, signed-in account reused across tests and runs, for journeys that only need a young
+ *   account and whose writes are safe to repeat.
+ * - `loginLearner` is that stored account's credentials, for journeys that sign in, out or switch accounts through
+ *   authv2. Each test that takes it may sign in once.
  */
 export const test = base.extend<{
   readerContext: BrowserContext
   adminContext: BrowserContext
   learner: Learner
+  returningLearner: Learner
   loginLearner: Required<Account>
 }, { readerCookies: Cookie[]; adminCookies: Cookie[] }>({
   // Set here rather than with a module-level test.use(), which Playwright attributes to whichever spec loads this file
@@ -209,14 +292,18 @@ export const test = base.extend<{
   ignoreHTTPSErrors: false,
   readerCookies: [async ({ browser }, provide) => provide(await storedSession(browser, reader)), { scope: 'worker' }],
   adminCookies: [async ({ browser }, provide) => provide(await storedSession(browser, admin)), { scope: 'worker' }],
-  // Cached per worker process; a test-scoped fixture can skip where the environment has no credentials.
   loginLearner: async ({ browser }, provide) => {
     base.skip(!credentialed, 'Set the credentialed development environment')
-    loginAccount ??= register(browser).then(async ({ email, password, name, context }) => {
-      await context.close()
-      return { email, password, name }
-    })
-    await provide(await loginAccount)
+    const { email, password, name } = await storedLearner(browser, true)
+    await provide({ email, password, name })
+  },
+  returningLearner: async ({ browser }, provide) => {
+    base.skip(!credentialed, 'Set the credentialed development environment')
+    const { cookies, id, email, password, name } = await storedLearner(browser, false)
+    const context = await browser.newContext({ baseURL: webv3 })
+    await context.addCookies(cookies)
+    await provide({ id, email, password, name, context })
+    await context.close()
   },
   readerContext: async ({ context, readerCookies }, provide) => {
     await context.addCookies(readerCookies)

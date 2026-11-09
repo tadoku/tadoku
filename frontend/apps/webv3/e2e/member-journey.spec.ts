@@ -1,8 +1,15 @@
-import { api, createLog, expect, fillDraft, reader, saveButton, test, webv3 } from './logging-fixtures'
+import { admin, api, createLog, expect, fillDraft, joinedContest, reader, saveButton, test, webv3 } from './logging-fixtures'
+import { standingRows } from './standings'
 
-test('a member walks home, contest, standings, profile, logging and the saved log without leaving Webv3', async ({ readerContext }, testInfo) => {
-  test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
+test('a member walks home, contest, standings, profile, logging and the saved log without leaving Webv3', async ({ readerContext, adminContext }, testInfo) => {
+  test.skip(!webv3 || !api || !reader.email || !admin.email, 'Set development URLs and both fixture identities')
   test.setTimeout(90_000)
+  // Joined and logged to in setup, so the journey doesn't rely on a seeded round or its dates.
+  const { id: contestId, registrationId } = await joinedContest(adminContext, readerContext)
+  const logged = await readerContext.request.post(`${api}/immersion/logs`, {
+    data: { language_code: 'jpn', activity_id: 1, amount: 1, unit_key: 'pages', tags: [], description: 'Member journey', registration_ids: [registrationId] },
+  })
+  expect(logged.ok(), `log answered ${logged.status()}`).toBeTruthy()
   const page = await readerContext.newPage()
   const origin = new URL(webv3!).origin
   const visited: string[] = []
@@ -17,7 +24,7 @@ test('a member walks home, contest, standings, profile, logging and the saved lo
   for (const heading of [`Your ${new Date().getUTCFullYear()}`, 'Recent activity', 'Your contests']) {
     await expect(page.getByRole('heading', { level: 2, name: heading, exact: true })).toBeVisible()
   }
-  // Dev Reader joined this year's seeded round, so the contests carry the link to everything they joined.
+  // Having joined a contest this year, the home page links to everything they joined.
   await expect(page.getByRole('link', { name: 'All joined', exact: true })).toHaveAttribute('href', '/contests/joined/1')
   await shot('1-home')
 
@@ -33,16 +40,15 @@ test('a member walks home, contest, standings, profile, logging and the saved lo
   await page.getByRole('menuitem', { name: `Use ${theme} theme` }).click()
   await expect(page.locator('html')).toHaveAttribute('data-theme', theme!)
 
-  await page.getByRole('link', { name: /^(Contest details|Full leaderboard|See final board)$/ }).first().click()
-  await expect(page).toHaveURL(/\/contests\/[a-f0-9-]{36}\/leaderboard\/1$/)
-  const standings = page.locator('.standings-table tbody tr')
+  await page.goto(`/contests/${contestId}/leaderboard/1`)
+  const standings = standingRows(page)
   await expect(standings.first()).toBeVisible()
   await shot('2-contest-standings')
 
   // A standings row opens its participant from anywhere on the row, here its score.
   const participant = standings.first().getByRole('link')
   const name = (await participant.textContent())!
-  const score = await standings.first().locator('td').last().boundingBox()
+  const score = await standings.first().getByRole('cell').last().boundingBox()
   await page.mouse.click(score!.x + score!.width / 2, score!.y + score!.height / 2)
   await expect(page).toHaveURL(/\/contests\/[a-f0-9-]{36}\/profile\/[a-f0-9-]{36}\/1$/)
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()

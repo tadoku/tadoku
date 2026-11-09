@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import type { BrowserContext, Page } from '@playwright/test'
 import {
   addTags,
@@ -167,7 +166,8 @@ test('edit keeps the activity fixed, uses the same tags and sidebar and returns 
   await expect(save).toBeEnabled({ timeout: 15_000 })
   // An edit can't change the activity, so the header states it and the form offers no control for it. This log is
   // submitted to no contest, so its language can still change.
-  await expect(page.locator('.paper-page-header__lead')).toHaveText(/ · /)
+  const { language: logLanguage, activity: logActivity } = await record(readerContext, id)
+  await expect(page.getByText(`${logLanguage.name} · ${logActivity.name}`, { exact: true })).toBeVisible()
   await expect(language(page)).toHaveCount(1)
   await expect(activity(page)).toHaveCount(0)
   await expect(chip(page, 'book')).toBeVisible()
@@ -175,7 +175,7 @@ test('edit keeps the activity fixed, uses the same tags and sidebar and returns 
   const aside = page.getByRole('complementary', { name: 'Suggested tags' })
   await aside.getByRole('button', { name: 'manga', exact: true }).click()
   await expect(chip(page, 'manga')).toBeVisible()
-  await expect(page.locator('.log-form__estimate')).toContainText('Estimated score:')
+  await expect(page.getByText(/^Estimated score:/)).toBeVisible()
   await page.screenshot({ path: testInfo.outputPath('edit-1280.png'), fullPage: true })
   await page.setViewportSize({ width: 390, height: 844 })
   expect(await fitsViewport(page)).toBe(true)
@@ -186,15 +186,8 @@ test('edit keeps the activity fixed, uses the same tags and sidebar and returns 
   expect([...(await record(readerContext, id)).tags].sort()).toEqual(['book', 'manga'])
 })
 
-test('a learner without ongoing registrations goes from Create straight to the saved log', async ({ page }) => {
-  test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
-  // Both fixture accounts are registered in the seeded round, so this journey registers a disposable branch account.
-  await page.goto(webv3!.replace('.next.', '.account.') + '/register')
-  await page.getByLabel('Display name').fill('Webv3 Log Form')
-  await page.getByLabel('Email').fill(`webv3-log-form-${randomUUID()}@example.test`)
-  await page.getByLabel('Password').fill(`Log-form-${randomUUID()}`)
-  await page.getByRole('button', { name: 'Create account', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'Create account', exact: true })).toHaveCount(0, { timeout: 15_000 })
+test('a learner without ongoing registrations goes from Create straight to the saved log', async ({ learner }) => {
+  const page = await learner.context.newPage()
   const ongoing = await page.request.get(`${api}/immersion/contests/ongoing-registrations`)
   expect((await ongoing.json()).registrations).toEqual([])
 

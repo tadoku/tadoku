@@ -19,7 +19,7 @@ async function joinWithSmallLog(context: BrowserContext) {
   return latest
 }
 
-test('a participant ranked below the first standings page sees their rank on home and on the participant page', async ({ learner }, testInfo) => {
+test('a participant ranked below the first standings page sees their rank on home and on the participant page', async ({ returningLearner: learner }, testInfo) => {
   test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
   test.setTimeout(60_000)
   const { context, id: userId } = learner

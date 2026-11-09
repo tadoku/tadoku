@@ -1,9 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { APIRequestContext, Page } from '@playwright/test'
-import { accountId, api, branch, expect, logDescription, reader, test, webv3 } from './logging-fixtures'
-
-// The fixtures' own test.use applies only to the first file that imports them; authenticated runs keep traces off.
-test.use({ trace: 'off', video: 'off', ignoreHTTPSErrors: false })
+import { accountId, activityEntries, api, branch, expect, linkTo, logDescription, logLinks, reader, test, webv3 } from './logging-fixtures'
 
 const pageSize = 25
 
@@ -21,7 +18,7 @@ async function apiLogs(request: APIRequestContext, userId: string, page: number,
 
 /** The page lists exactly the API's logs, in its newest-first order, each linking to its native detail page. */
 async function expectEntries(page: Page, expected: { logs: Log[] }) {
-  const titles = page.locator('.profile-entries > li a.profile-entry-title')
+  const titles = logLinks(page)
   await expect(titles).toHaveCount(expected.logs.length)
   // Retried: after a client navigation the URL changes before the new page's rows replace the old ones.
   await expect.poll(() => titles.evaluateAll(links => links.map(link => link.getAttribute('href'))))
@@ -34,12 +31,13 @@ async function expectEntries(page: Page, expected: { logs: Log[] }) {
   expect(created).toEqual([...created].sort((left, right) => right - left))
 }
 
+const homeParticipant = (page: Page) => page.getByRole('table').getByRole('rowheader').getByRole('link').first()
 const fitsWidth = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)
 
 test('a visitor follows a standings profile to its activity, pages through it and opens an entry', async ({ page }, testInfo) => {
   test.skip(!webv3 || !api, 'Set development URLs')
   await page.goto('/')
-  const participant = page.locator('a.home-person-link').first()
+  const participant = homeParticipant(page)
   const name = (await participant.textContent())!
   await participant.click()
   await expect(page).toHaveURL(/\/profile\/[0-9a-f-]{36}\/statistics$/)
@@ -61,7 +59,7 @@ test('a visitor follows a standings profile to its activity, pages through it an
     await expectEntries(page, await apiLogs(page.request, userId, 2))
   }
 
-  const entry = page.locator('.profile-entries > li a.profile-entry-title').first()
+  const entry = logLinks(page).first()
   const href = (await entry.getAttribute('href'))!
   await entry.click()
   await expect(page).toHaveURL(new RegExp(`${href}$`))
@@ -74,9 +72,10 @@ test('an owner pages through their newest-first activity, opens a day from the c
   const userId = await accountId(readerContext)
   const request = readerContext.request
 
-  // Pagination needs more than one page: top the account up through the API's own create operation.
+  // Pagination needs more than one page and the calendar a log today: top the account up through the API's own create
+  // operation, with at least one log.
   const existing = await apiLogs(request, userId, 1)
-  for (let index = existing.total_size; index <= pageSize; index++) {
+  for (let index = Math.min(existing.total_size, pageSize); index <= pageSize; index++) {
     const response = await request.post(`${api}/immersion/logs`, {
       data: { language_code: 'jpn', activity_id: 2, duration_seconds: 60, tags: [], description: `webv3-activity-${index}` },
     })
@@ -109,7 +108,7 @@ test('an owner pages through their newest-first activity, opens a day from the c
   // A calendar day opens that UTC day's updates natively, with a way back to all of them.
   const today = new Date().toISOString().slice(0, 10)
   await page.goto(`/profile/${userId}/statistics`)
-  await page.locator(`a.paper-heatmap__link[href="/profile/${userId}/updates/1?date=${today}"]`).click()
+  await linkTo(page, `/profile/${userId}/updates/1?date=${today}`).click()
   await expect(page).toHaveURL(new RegExp(`/profile/${userId}/updates/1\\?date=${today}$`))
   await expect(page.getByText('Showing activity on')).toBeVisible()
   const day = await apiLogs(request, userId, 1, today)
@@ -123,7 +122,7 @@ test('an owner pages through their newest-first activity, opens a day from the c
   await expectEntries(page, first)
 
   const entry = first.logs[0]
-  await page.locator(`a.profile-entry-title[href="/logs/${entry.id}"]`).click()
+  await linkTo(page, `/logs/${entry.id}`).click()
   await expect(page).toHaveURL(new RegExp(`/logs/${entry.id}$`))
   if (entry.description) await expect(logDescription(page)).toHaveText(entry.description)
 })
@@ -138,7 +137,7 @@ test('a new account’s activity shows the empty state to its owner and to visit
   await page.goto(`/profile/${userId}/updates/1`)
   await expect(page.getByRole('heading', { name: 'No activity yet' })).toBeVisible()
   await expect(page.getByRole('main').getByRole('link', { name: 'Log activity' })).toHaveAttribute('href', '/logs/new')
-  await expect(page.locator('.profile-entries')).toHaveCount(0)
+  await expect(activityEntries(page)).toHaveCount(0)
   await expect(page.getByRole('navigation', { name: 'Update pages', exact: true })).toHaveCount(0)
   await page.screenshot({ path: testInfo.outputPath('owner-empty.png'), fullPage: true })
 
@@ -165,9 +164,9 @@ test('the activity page fits at 390px', async ({ page }, testInfo) => {
   test.skip(!webv3 || !api, 'Set development URLs')
   await page.setViewportSize({ width: 390, height: 900 })
   await page.goto('/')
-  await page.locator('a.home-person-link').first().click()
+  await homeParticipant(page).click()
   await page.getByRole('link', { name: 'Activity', exact: true }).click()
-  await expect(page.locator('.profile-entries > li').first()).toBeVisible()
+  await expect(activityEntries(page).first()).toBeVisible()
   expect(await fitsWidth(page)).toBe(true)
   await page.screenshot({ path: testInfo.outputPath('activity-390.png') })
 })

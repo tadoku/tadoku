@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
-import type { APIRequestContext, Page } from '@playwright/test'
-import { accountId, admin, api, expect, reader, test, webv3 } from './logging-fixtures'
+import type { APIRequestContext, Locator, Page } from '@playwright/test'
+import { accountId, admin, api, contestRows, expect, hydrated, reader, test, webv3 } from './logging-fixtures'
+import { platformFallback, ruleSets } from './scoring-rule-sets'
 
 interface Contest {
   id: string
@@ -14,23 +15,12 @@ interface Contest {
   language_code_allow_list: string[] | null
   activity_type_id_allow_list: number[]
 }
-interface RuleSet {
-  id: string
-  version: number
-  status: 'draft' | 'published'
-  active: boolean
-  mode?: 'override' | 'replace'
-  fallback_rule_set_id?: string
-  rules: { priority: number; stackable: boolean; activity_id: number; tag?: string; score_source: string; rate: number }[]
-}
-
 const utcDay = (offset = 0) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10)
 const unique = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
 const createButton = (page: Page) => page.getByRole('button', { name: 'Create contest', exact: true })
-
-async function hydrated(page: Page) {
-  await expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled()
-}
+const ruleFields = (page: Page) => page.getByRole('group', { name: /^Rule \d+$/ })
+const ruleSetVersions = (page: Page) => page.getByRole('article', { name: /^Version \d+$/ })
+const versionTags = (version: Locator) => version.getByText(/^(Draft|Published|Active)$/)
 
 async function fitsWidth(page: Page, name: string, path: string) {
   await page.setViewportSize({ width: 390, height: 900 })
@@ -58,12 +48,6 @@ async function postContest(request: APIRequestContext, start: string, end: strin
   })
   expect(response.ok(), `contest creation answered ${response.status()}`).toBeTruthy()
   return response.json() as Promise<Contest>
-}
-
-async function ruleSets(request: APIRequestContext, path: string) {
-  const response = await request.get(`${api}${path}`)
-  expect(response.ok(), `${path} answered ${response.status()}`).toBeTruthy()
-  return (await response.json() as { rule_sets: RuleSet[] }).rule_sets
 }
 
 test('anonymous visitors are asked to log in to create a contest and sent to log in for scoring', async ({ page }, testInfo) => {
@@ -144,7 +128,7 @@ test('an organizer gets each invalid field focused, then creates a contest and l
   const id = new URL(page.url()).pathname.split('/')[2]
   await page.goBack()
   await expect(page).toHaveURL(/\/contests\/my-contests\/1$/)
-  await expect(page.locator('.contest-row').first().getByRole('heading', { level: 2 })).toHaveText(name)
+  await expect(contestRows(page).first().getByRole('heading', { level: 2 })).toHaveText(name)
   const created = await (await adminContext.request.get(`${api}/immersion/contests/${id}`)).json() as Contest & {
     allowed_languages: { code: string }[] | null
     allowed_activities: { id: number }[]
@@ -163,7 +147,7 @@ test('an organizer gets each invalid field focused, then creates a contest and l
   expect(failures).toEqual([])
 })
 
-test('an account the API refuses to let create contests sees the refusal instead of the contest form', async ({ learner }, testInfo) => {
+test('an account the API refuses to let create contests sees the refusal instead of the contest form', async ({ returningLearner: learner }, testInfo) => {
   test.skip(!api || !webv3, 'Set TADOKU_API_URL and WEBV3_BASE_URL')
   expect((await learner.context.request.get(`${api}/immersion/contests/create-permissions`)).status()).toBe(403)
   const page = await learner.context.newPage()
@@ -186,7 +170,7 @@ test('an administrator drafts, publishes and activates a contest rule set', asyn
 
   await page.goto(`/contests/${contest.id}/leaderboard/1`)
   await hydrated(page)
-  await expect(page.locator('.standings-header .paper-page-header__actions').getByRole('link')).toHaveText(['Join contest'])
+  await expect(page.getByRole('main').getByRole('link', { name: 'Join contest', exact: true })).toHaveCount(1)
   await page.getByRole('button', { name: 'Contest options' }).click()
   await expect(page.getByRole('menuitem')).toHaveText(['Scoring rules'])
   await page.screenshot({ path: testInfo.outputPath('contest-admin-menu.png') })
@@ -205,7 +189,7 @@ test('an administrator drafts, publishes and activates a contest rule set', asyn
   await expect(pinned).toHaveValue(expectedFallback?.id ?? '')
   if (!expectedFallback) await page.getByLabel('Contest behavior').selectOption('replace')
 
-  const rules = page.locator('.scoring-rule')
+  const rules = ruleFields(page)
   const rate = rules.nth(0).getByLabel('Rate')
   await rate.fill('')
   await page.getByRole('button', { name: 'Create draft' }).click()
@@ -229,7 +213,7 @@ test('an administrator drafts, publishes and activates a contest rule set', asyn
 
   await page.getByRole('button', { name: 'Create draft' }).click()
   await expect(page.getByRole('status').filter({ hasText: 'Scoring rule-set draft created.' })).toBeVisible()
-  const version = page.locator('.scoring-version')
+  const version = ruleSetVersions(page)
   await expect(version).toHaveCount(1)
   let [draft] = await ruleSets(adminContext.request, `/immersion/contests/${contest.id}/scoring/rule-sets`)
   expect(draft).toMatchObject({
@@ -244,7 +228,7 @@ test('an administrator drafts, publishes and activates a contest rule set', asyn
     { priority: 10, stackable: true, activity_id: 2, tag: 'webv3 podcast', score_source: 'duration_minutes', rate: 0.5 },
   ])
   await expect(version.getByRole('heading', { level: 3 })).toHaveText(`Version ${draft.version}`)
-  await expect(version.locator('.paper-status-tag')).toHaveText(['Draft'])
+  await expect(versionTags(version)).toHaveText(['Draft'])
   await expect(version).toContainText('2.5')
   await expect(version).toContainText('webv3 podcast')
 
@@ -254,25 +238,23 @@ test('an administrator drafts, publishes and activates a contest rule set', asyn
   await expect(dialog).toHaveCount(0)
   await version.getByRole('button', { name: 'Publish' }).click()
   await page.getByRole('dialog', { name: 'Publish this version?' }).getByRole('button', { name: 'Publish' }).click()
-  await expect(version.locator('.paper-status-tag')).toHaveText(['Published'])
+  await expect(versionTags(version)).toHaveText(['Published'])
   await version.getByRole('button', { name: 'Activate' }).click()
   await page.getByRole('dialog', { name: 'Activate this version?' }).getByRole('button', { name: 'Activate' }).click()
-  await expect(version.locator('.paper-status-tag')).toHaveText(['Published', 'Active'])
+  await expect(versionTags(version)).toHaveText(['Published', 'Active'])
   await expect(version.getByRole('button')).toHaveCount(0)
   ;[draft] = await ruleSets(adminContext.request, `/immersion/contests/${contest.id}/scoring/rule-sets`)
   expect(draft).toMatchObject({ status: 'published', active: true })
 
   await page.reload()
-  await expect(version.locator('.paper-status-tag')).toHaveText(['Published', 'Active'])
+  await expect(versionTags(version)).toHaveText(['Published', 'Active'])
   await fitsWidth(page, 'scoring', testInfo.outputPath('scoring-390.png'))
 })
 
 test('scoring versions describe their own fallback, name a modifier’s unit and keep heading IDs unique', async ({ adminContext }) => {
   test.skip(!api || !admin.email || !admin.password, 'Set TADOKU_API_URL, E2E_SECOND_EMAIL and E2E_SECOND_PASSWORD')
   const contest = await postContest(adminContext.request, utcDay(30), utcDay(60))
-  const platform = (await ruleSets(adminContext.request, '/immersion/scoring/rule-sets')).filter(ruleSet => ruleSet.status === 'published')
-  const fallback = platform.find(ruleSet => ruleSet.active) ?? platform[0]
-  test.skip(!fallback, 'No published platform rule set to fall back to')
+  const fallback = await platformFallback(adminContext.request)
   const reading = [
     { priority: 0, stackable: false, activity_id: 1, unit_key: 'pages', score_source: 'amount', rate: 1 },
     { priority: 10, stackable: true, activity_id: 1, unit_key: 'pages', tag: 'webv3_bonus', score_source: 'amount', rate: 2 },
@@ -285,7 +267,7 @@ test('scoring versions describe their own fallback, name a modifier’s unit and
 
   const page = await adminContext.newPage()
   await page.goto(`/contests/${contest.id}/scoring`)
-  const versions = page.locator('.scoring-version')
+  const versions = ruleSetVersions(page)
   await expect(versions).toHaveCount(3)
   const overriding = versions.filter({ hasText: 'pinned fallback' })
   await expect(overriding).toContainText('Inputs this version does not cover score with its pinned platform version.')
@@ -304,7 +286,7 @@ test('scoring versions describe their own fallback, name a modifier’s unit and
   await expect(page.getByText('Inputs these rules do not cover score with the pinned platform version.', { exact: true })).toBeVisible()
 
   // Without rules, an override still falls back to its pinned version; only a replacement scores zero.
-  const drafted = page.locator('.scoring-rule')
+  const drafted = ruleFields(page)
   for (let count = await drafted.count(); count > 0; count--) await drafted.last().getByRole('button', { name: 'Remove', exact: true }).click()
   await expect(drafted).toHaveCount(0)
   const zero = page.getByText('This replacing rule set will score every input as zero.', { exact: true })

@@ -122,7 +122,10 @@ inside headings, whose text it would join; the account menu shows it alone. The 
 `GET /immersion/users/{userId}/avatar` through the gateway on the public web
 origin, so the learner's email and its hash never reach the browser. The
 avatar is a circle with the learner's initials, one letter at the
-smallest size, and the image covers it once it loads. A learner without a
+smallest size, and the image covers it once it loads. The image loads lazily,
+with the width and height of the size it is shown at; the API serves every
+avatar at Gravatar's 128 pixels. It stays hidden until it has loaded, so
+without JavaScript the initials show. A learner without a
 Gravatar and any other failure leave the initials and no broken image, with or
 without JavaScript. The avatar is decorative and hidden
 from assistive technology; the name beside it carries the meaning.

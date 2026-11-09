@@ -149,6 +149,25 @@ test('the owner can export every log from a year or a day without any', async ({
   }
 })
 
+test('avatars load lazily at the size they are shown', async ({ page, readerContext }) => {
+  test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
+  await page.goto(`/profile/${await accountId(readerContext)}/statistics`)
+  const avatar = page.locator('.profile-page header img')
+  await expect(avatar).toHaveAttribute('loading', 'lazy')
+  await expect(avatar).toHaveAttribute('width', '64')
+  await expect(avatar).toHaveAttribute('height', '64')
+  await expect(avatar).toHaveAttribute('alt', '')
+  // Dev Reader has no Gravatar: the initials show, not a broken image.
+  await expect(avatar).toBeHidden()
+  await expect(page.locator('.profile-page header').getByText('DR', { exact: true })).toBeVisible()
+
+  // With a Gravatar the image covers the initials; the browser answers its request with a one-pixel PNG.
+  const pixel = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64')
+  await page.route('**/avatar', route => route.fulfill({ contentType: 'image/png', body: pixel }))
+  await page.reload()
+  await expect(avatar).toBeVisible()
+})
+
 test('an unknown or malformed profile is not found', async ({ page }) => {
   test.skip(!webv3 || !api, 'Set development URLs')
   const unknown = randomUUID()

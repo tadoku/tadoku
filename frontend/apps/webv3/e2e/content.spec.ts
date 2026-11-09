@@ -81,8 +81,22 @@ async function ensureContent(context: BrowserContext) {
   const hostile = await context.request.post(`${api}/content/pages/tadoku`, {
     data: { ...hostilePage, published_at: new Date(Date.now() - 60_000).toISOString() },
   })
-  expect([draftPost, draftPage, hostile].map(created)).toEqual([true, true, true])
+  const imagePage = await context.request.post(`${api}/content/pages/tadoku`, {
+    data: { ...imagesPage, published_at: new Date(Date.now() - 60_000).toISOString() },
+  })
+  const imagePost = await context.request.post(`${api}/content/posts/tadoku`, {
+    data: { ...imagesPost, published_at: new Date(Date.now() - 60_000).toISOString() },
+  })
+  expect([draftPost, draftPage, hostile, imagePage, imagePost].map(created)).toEqual([true, true, true, true, true])
 }
+
+// Reused by later runs, like the sanitized page: one CMS image with its size and one Markdown image without.
+const imagesPage = {
+  slug: 'webv3-e2e-images',
+  title: 'Webv3 image page',
+  html: '<p><img src="/webv3-e2e/cms.png" alt="CMS image" width="320" height="180"></p>',
+}
+const imagesPost = { slug: 'webv3-e2e-image-post', title: 'Webv3 image post', content: '![Markdown image](/webv3-e2e/markdown.png)' }
 
 test.beforeEach(() => {
   test.skip(!webv3 || !api, 'Set WEBV3_BASE_URL and TADOKU_API_URL')
@@ -240,6 +254,18 @@ test('published content an administrator adds appears, sanitized and paginated, 
   await hydrated(page)
   await expectSanitized(page)
   await page.screenshot({ path: testInfo.outputPath('cms-sanitized.png'), fullPage: true })
+
+  // Content images load as they approach the viewport; a CMS image keeps the size its author gave it.
+  await page.goto(`/pages/${imagesPage.slug}`)
+  const cms = prose(page).getByRole('img', { name: 'CMS image' })
+  await expect(cms).toHaveAttribute('loading', 'lazy')
+  await expect(cms).toHaveAttribute('decoding', 'async')
+  await expect(cms).toHaveAttribute('width', '320')
+  await expect(cms).toHaveAttribute('height', '180')
+  await page.goto(`/blog/posts/${imagesPost.slug}`)
+  const markdown = prose(page).getByRole('img', { name: 'Markdown image' })
+  await expect(markdown).toHaveAttribute('loading', 'lazy')
+  await expect(markdown).toHaveAttribute('decoding', 'async')
   await context.close()
 })
 

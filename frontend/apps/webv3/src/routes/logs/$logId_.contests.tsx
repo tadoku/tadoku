@@ -116,6 +116,8 @@ function ContestsForm({ log, registrations, viewerId }: {
   const links = useLinks()
   const [failure, setFailure] = useState<LogFailure | null>(null)
   const { today } = Route.useLoaderData()
+  // An administrator choosing for another learner reads about the learner's record, not their own.
+  const owner = log.user_id === viewerId
   const choices = contestChoices(log, registrations, today)
   const eligible = choices.filter(choice => choice.kind === 'eligible').map(choice => choice.registration.id)
   const submitted = log.registrations ?? []
@@ -150,7 +152,7 @@ function ContestsForm({ log, registrations, viewerId }: {
         backLink={{ href: `/logs/${log.id}`, label: logName(log) }}
       />
       <Surface className={recordSurface}>
-        <LogSummary log={log} owner={log.user_id === viewerId} />
+        <LogSummary log={log} owner={owner} />
         <form.AppForm>
           <form.Form className="min-w-0" aria-busy={pending}>
             <fieldset className={formControls} disabled={disabled}>
@@ -174,7 +176,7 @@ function ContestsForm({ log, registrations, viewerId }: {
                 ))}
                 </div>
                 {eligible.length ? <p className="mb-0 mt-2 text-metadata text-muted">Unchecking removes this log’s score from that contest.</p> : null}
-                {choices.some(choice => choice.kind === 'ineligible')
+                {owner && choices.some(choice => choice.kind === 'ineligible')
                   ? <p className="mb-0 mt-1 text-metadata text-muted">Registered for the wrong language? <AppLink className="text-link hover:text-link-hover" href={links.contests}>Update your registration</AppLink> from its contest page.</p>
                   : null}
                 {finished.map(submission => (
@@ -189,10 +191,12 @@ function ContestsForm({ log, registrations, viewerId }: {
                   variant="plain"
                   headingLevel={2}
                   title="No eligible contests"
-                  description={choices.length
-                    ? 'This activity already counts in your personal history.'
-                    : 'No contest registrations found. You can submit to contests after joining one. This activity already counts in your personal history.'}
-                  actions={<AppLink className="text-link hover:text-link-hover" href={links.contests}>Find a contest to join</AppLink>}
+                  description={!owner
+                    ? 'This activity already counts in the learner\'s personal history.'
+                    : choices.length
+                      ? 'This activity already counts in your personal history.'
+                      : 'No contest registrations found. You can submit to contests after joining one. This activity already counts in your personal history.'}
+                  actions={owner ? <AppLink className="text-link hover:text-link-hover" href={links.contests}>Find a contest to join</AppLink> : null}
                 />
               )}
             </fieldset>

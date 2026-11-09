@@ -114,3 +114,23 @@ test('an administrator\'s edit of another learner\'s log is refused after the se
   await expect(moderator).toHaveURL(`${webv3}/logs/${id}/edit`)
   expect((await ownerRecord(readerContext, id)).description).toBe(description)
 })
+
+test('an administrator choosing contests for another learner\'s log reads about the learner, not themselves', async ({
+  readerContext,
+  adminContext,
+}) => {
+  // Neither of Dev Reader's registrations accepts Afrikaans, so no contest is eligible.
+  const created = await readerContext.request.post(`${api}/immersion/logs`, {
+    data: { language_code: 'afr', activity_id: 1, unit_key: 'pages', amount: 3, description: `admin-ineligible-${Date.now()}`, tags: [] },
+  })
+  expect(created.ok()).toBe(true)
+  const { id } = await created.json() as { id: string }
+
+  const moderator = await adminContext.newPage()
+  await moderator.goto(`/logs/${id}/contests`)
+  await expect(moderator.getByRole('heading', { name: 'No eligible contests' })).toBeVisible()
+  await expect(moderator.getByText('This activity already counts in the learner\'s personal history.')).toBeVisible()
+  await expect(moderator.getByText(/your personal history/)).toHaveCount(0)
+  await expect(moderator.getByRole('link', { name: 'Update your registration' })).toHaveCount(0)
+  await expect(moderator.getByRole('link', { name: 'Find a contest to join' })).toHaveCount(0)
+})

@@ -87,7 +87,8 @@ contest pages admit them. The pages decide this from the viewer's role, and the
 API, which accepts a change from the log's owner or an administrator, stays the
 authority. `DraftOwnerGate` records whether the draft's account was an
 administrator when the draft started. Their pages name another learner's log in the third person, such as This log
-and the learner's personal record.
+and the learner's personal record, and leave out the advice to join a contest
+or change a registration, which concerns the viewer's own contests.
 
 The detail page is titled Log details. Its lead names the language, the activity
 and who logged it, linked to their profile. It shows the measure, rounded and pluralized as the lists show it, the score, and

@@ -17,7 +17,16 @@ export interface Learner extends Required<Account> { id: string; context: Browse
 export const reader: Account = { email: process.env.E2E_READER_EMAIL, password: process.env.E2E_READER_PASSWORD, name: 'Dev Reader' }
 export const admin: Account = { email: process.env.E2E_SECOND_EMAIL, password: process.env.E2E_SECOND_PASSWORD, name: 'Dev Admin' }
 
+/**
+ * Waits until the page has hydrated: Paper's navbar enables its menu trigger then, in Webv3 and authv2 alike. Leaving
+ * a development page before then cancels its module requests, and the gateway can refuse the next page's requests on
+ * the same connection, so that page never hydrates.
+ */
+export const hydrated = (page: Page) => expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled({ timeout: 15_000 })
+
+/** Submits authv2's login form once its page has hydrated. */
 export async function authenticate(page: Page, account = reader) {
+  await hydrated(page)
   await page.getByLabel('Email').fill(account.email!)
   await page.getByLabel('Password').fill(account.password!)
   await page.getByRole('button', { name: 'Log in', exact: true }).click()
@@ -26,17 +35,20 @@ export async function authenticate(page: Page, account = reader) {
 /** Opens the activity form anonymously, logs in through authv2 and waits for the form on its return. */
 export async function signIn(page: Page, account = reader) {
   await page.goto('/logs/new')
+  await hydrated(page)
   await page.getByRole('link', { name: 'Log in', exact: true }).first().click()
   await authenticate(page, account)
   await page.waitForURL(`${webv3}/logs/new`)
   await expect(saveButton(page)).toBeEnabled({ timeout: 15_000 })
 }
 
-/** Logs out from the account menu, as Webv2's user dropdown does. */
+/** Logs out from the account menu, as Webv2's user dropdown does, and waits for the homepage it returns to. */
 export async function logOut(page: Page, { name } = reader) {
   await expect(page.getByRole('button', { name, exact: true })).toBeEnabled()
   await page.getByRole('button', { name, exact: true }).click()
   await page.getByRole('menuitem', { name: 'Log out', exact: true }).click()
+  await page.waitForURL(`${webv3}/`)
+  await hydrated(page)
 }
 
 /** Opens the activity form in a context that already holds a session from `signIn`. */

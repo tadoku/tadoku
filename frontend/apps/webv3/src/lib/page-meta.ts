@@ -3,18 +3,19 @@ export const noindex = { name: 'robots', content: 'noindex' }
 
 /**
  * The document title and the description, Open Graph and Twitter card tags that search results and link previews show.
- * `name` is the page's own name, which the title follows with ` · Tadoku`.
+ * `name` is the page's own name, which the title follows with ` · Tadoku`. The description is cut to 160 characters.
  */
 export function sharingMeta(name: string, description: string, title = `${name} · Tadoku`) {
+  const capped = excerpt(description, '')
   return [
     { title },
-    { name: 'description', content: description },
+    { name: 'description', content: capped },
     { property: 'og:type', content: 'website' },
     { property: 'og:title', content: name },
-    { property: 'og:description', content: description },
+    { property: 'og:description', content: capped },
     { name: 'twitter:card', content: 'summary' },
     { name: 'twitter:title', content: name },
-    { name: 'twitter:description', content: description },
+    { name: 'twitter:description', content: capped },
   ]
 }
 

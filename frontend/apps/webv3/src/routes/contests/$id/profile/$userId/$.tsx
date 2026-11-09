@@ -9,7 +9,7 @@ import { contestsHref } from '../../../../../lib/contests'
 import { contestEntryQuery, pageNumber } from '../../../../../lib/leaderboard'
 import { viewerQueryOptions } from '../../../../../lib/session'
 import { pageUnavailable } from '../../../../../lib/page-status'
-import { sharingMeta } from '../../../../../lib/page-meta'
+import { noindex, sharingMeta } from '../../../../../lib/page-meta'
 
 export const Route = createFileRoute('/contests/$id/profile/$userId/$')({
   loader: async ({ context: { queryClient }, params }) => {
@@ -23,9 +23,17 @@ export const Route = createFileRoute('/contests/$id/profile/$userId/$')({
     if (profile.status === 'not-found') throw notFound()
     if (profile.status === 'unavailable') pageUnavailable(queryClient, contestProfileQuery(input))
     const { user_display_name: name, contest } = profile.registration
-    return { name: `${name} · ${contest.title}`, description: `${name}’s scores and logs in ${contest.title} on Tadoku.` }
+    return {
+      name: `${name} · ${contest.title}`,
+      description: `${name}’s scores and logs in ${contest.title} on Tadoku.`,
+      private: contest.private,
+    }
   },
-  head: ({ loaderData }) => ({ meta: loaderData ? sharingMeta(loaderData.name, loaderData.description) : [{ title: 'Contest profile · Tadoku' }] }),
+  head: ({ loaderData }) => ({
+    meta: loaderData
+      ? [...sharingMeta(loaderData.name, loaderData.description), ...(loaderData.private ? [noindex] : [])]
+      : [{ title: 'Contest profile · Tadoku' }],
+  }),
   notFoundComponent: () => (
     <EmptyState
       headingLevel={1}

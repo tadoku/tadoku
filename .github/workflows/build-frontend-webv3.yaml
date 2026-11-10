@@ -155,12 +155,9 @@ jobs:
   gate:
     name: webv3 / release gate
     needs: publish
-    # A dedicated scale-to-zero runner set that admits only this workflow from main and reaches only the development
-    # ingress and API server. See docs/docs/develop/ci-workflows.md#webv3-release-gate.
-    runs-on: tadoku-webv3-gate
-    environment:
-      name: webv3-release-gate
-      deployment: false
+    # A dedicated scale-to-zero runner set that admits only this workflow from main, reaches only the development
+    # ingress and API server and mounts the gate's credentials. See docs/docs/develop/ci-workflows.md#webv3-release-gate.
+    runs-on: tadoku-release-gate
     timeout-minutes: 100
     permissions:
       contents: read
@@ -171,31 +168,28 @@ jobs:
       DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
       GATE_FORCE_FAILURE: ${{ github.event_name == 'workflow_dispatch' && inputs.force_failure }}
       NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/ca.crt
+      DEV_CLI_VERSION: v0.12.0
     steps:
+      # The runner set mounts these files only into its own pods. Without either one, the gate fails here.
       - name: Require the gate's configuration
         env:
-          DEV_KUBE_CA: ${{ secrets.DEV_KUBE_CA }}
-          DEV_KUBE_TOKEN: ${{ secrets.DEV_KUBE_TOKEN }}
-          E2E_READER_EMAIL: ${{ secrets.E2E_READER_EMAIL }}
-          E2E_READER_PASSWORD: ${{ secrets.E2E_READER_PASSWORD }}
-          E2E_SECOND_EMAIL: ${{ secrets.E2E_SECOND_EMAIL }}
-          E2E_SECOND_PASSWORD: ${{ secrets.E2E_SECOND_PASSWORD }}
-          DEV_CLI_VERSION: ${{ vars.DEV_CLI_VERSION }}
+          KUBECONFIG: /run/secrets/tadoku-release-gate/kubeconfig
+          FIXTURES: /run/secrets/tadoku-release-gate/fixtures.env
         run: |
           if [[ $GATE_FORCE_FAILURE == true && $DRY_RUN != true ]]; then
             echo "::error::force_failure runs only with dry_run."
             exit 1
           fi
-          missing=()
-          for name in DEV_KUBE_CA DEV_KUBE_TOKEN E2E_READER_EMAIL E2E_READER_PASSWORD E2E_SECOND_EMAIL E2E_SECOND_PASSWORD; do
-            [[ -n ${!name} ]] || missing+=("$name")
+          for file in "$KUBECONFIG" "$FIXTURES"; do
+            test -s "$file" || { echo "::error::The runner has no $file; it is not a configured tadoku-release-gate runner."; exit 1; }
           done
-          [[ $DEV_CLI_VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || missing+=(DEV_CLI_VERSION)
-          if ((${#missing[@]})); then
-            echo "::error::Set ${missing[*]} in the webv3-release-gate environment."
+          test -s "$NODE_EXTRA_CA_CERTS" || { echo "::error::The runner has no Lab CA at $NODE_EXTRA_CA_CERTS."; exit 1; }
+          identity="$(kubectl --context homelab-talos-dev auth whoami -o jsonpath='{.status.userInfo.username}')"
+          if [[ $identity != system:serviceaccount:* ]]; then
+            echo "::error::The runner's kubeconfig authenticates as '$identity', not a ServiceAccount."
             exit 1
           fi
-          test -s "$NODE_EXTRA_CA_CERTS" || { echo "::error::The runner has no Lab CA at $NODE_EXTRA_CA_CERTS."; exit 1; }
+          echo "Cluster identity: $identity"
           echo "EVIDENCE=$RUNNER_TEMP/webv3-release-gate" >>"$GITHUB_ENV"
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -211,8 +205,6 @@ jobs:
           go-version: stable
           cache: false
       - name: Install dev-cli
-        env:
-          DEV_CLI_VERSION: ${{ vars.DEV_CLI_VERSION }}
         run: |
           go install "github.com/antonve/dev-cli/cmd/dev@$DEV_CLI_VERSION"
           dev version
@@ -237,34 +229,30 @@ jobs:
       # The runner image provides Chromium's system libraries and the Lab CA in its NSS database.
       - run: pnpm --filter webv3 exec playwright install chromium
         working-directory: frontend
-      # Only the steps that run kubectl or dev-cli receive the cluster token; the script writes a kubeconfig for
-      # that command and removes it when the command ends.
+      # Only the steps that run kubectl or dev-cli receive KUBECONFIG, and only the suite reads the fixture accounts.
       - name: Deploy the gate's branch once the development base runs the candidate
         id: deploy
         timeout-minutes: 35
         env:
-          DEV_KUBE_SERVER: https://192.168.1.218:6443
-          DEV_KUBE_CA: ${{ secrets.DEV_KUBE_CA }}
-          DEV_KUBE_TOKEN: ${{ secrets.DEV_KUBE_TOKEN }}
+          KUBECONFIG: /run/secrets/tadoku-release-gate/kubeconfig
         run: |
           mkdir -p "$EVIDENCE"
           scripts/webv3-release-gate.sh deploy "$CANDIDATE" "$EVIDENCE"
       - name: Run the suite against the candidate
         id: test
         timeout-minutes: 30
-        env:
-          E2E_READER_EMAIL: ${{ secrets.E2E_READER_EMAIL }}
-          E2E_READER_PASSWORD: ${{ secrets.E2E_READER_PASSWORD }}
-          E2E_SECOND_EMAIL: ${{ secrets.E2E_SECOND_EMAIL }}
-          E2E_SECOND_PASSWORD: ${{ secrets.E2E_SECOND_PASSWORD }}
-        run: scripts/webv3-release-gate.sh test "$EVIDENCE"
+        run: |
+          while IFS= read -r line; do
+            if [[ $line =~ ^(E2E_READER_EMAIL|E2E_READER_PASSWORD|E2E_SECOND_EMAIL|E2E_SECOND_PASSWORD)=(.*)$ ]]; then
+              export "${BASH_REMATCH[1]}=${BASH_REMATCH[2]}"
+            fi
+          done </run/secrets/tadoku-release-gate/fixtures.env
+          scripts/webv3-release-gate.sh test "$EVIDENCE"
       - name: Check that the development base served the candidate throughout
         id: verify
         timeout-minutes: 5
         env:
-          DEV_KUBE_SERVER: https://192.168.1.218:6443
-          DEV_KUBE_CA: ${{ secrets.DEV_KUBE_CA }}
-          DEV_KUBE_TOKEN: ${{ secrets.DEV_KUBE_TOKEN }}
+          KUBECONFIG: /run/secrets/tadoku-release-gate/kubeconfig
         run: scripts/webv3-release-gate.sh verify "$CANDIDATE" "$EVIDENCE"
       # A branch left behind expires after the development TTL, and the next dev up tears it down, so a failed teardown
       # never blocks a release.
@@ -273,12 +261,10 @@ jobs:
         continue-on-error: true
         timeout-minutes: 15
         env:
-          DEV_KUBE_SERVER: https://192.168.1.218:6443
-          DEV_KUBE_CA: ${{ secrets.DEV_KUBE_CA }}
-          DEV_KUBE_TOKEN: ${{ secrets.DEV_KUBE_TOKEN }}
+          KUBECONFIG: /run/secrets/tadoku-release-gate/kubeconfig
         run: scripts/webv3-release-gate.sh down "$EVIDENCE"
-      # The evidence directory holds no cluster credentials. The HTML report records typed values, so the environment
-      # holds only development fixture identities.
+      # The evidence directory holds no kubeconfig. The HTML report records typed values, so fixtures.env holds only
+      # development fixture identities.
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always() && steps.deploy.outcome != 'skipped'
         with:

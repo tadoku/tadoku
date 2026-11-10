@@ -9,13 +9,11 @@
 #
 # Run from the repository root, on a local branch (not a detached HEAD) at the
 # candidate's commit, with dev-cli installed, the frontend dependencies
-# installed and paper-ui built. deploy, verify and down use the cluster: with
-# DEV_KUBE_SERVER, DEV_KUBE_CA (base64 PEM) and DEV_KUBE_TOKEN set they write a
-# private kubeconfig for that command only and require a ServiceAccount;
-# otherwise they use your homelab-talos-dev context. test never uses the
-# cluster and needs E2E_READER_EMAIL, E2E_READER_PASSWORD, E2E_SECOND_EMAIL and
-# E2E_SECOND_PASSWORD. GATE_OWNER selects the dev-cli owner, and
-# GATE_FORCE_FAILURE=true adds a failing spec for a dry run.
+# installed and paper-ui built. deploy, verify and down use the
+# homelab-talos-dev context of KUBECONFIG or your default kubeconfig. test
+# never uses the cluster and needs E2E_READER_EMAIL, E2E_READER_PASSWORD,
+# E2E_SECOND_EMAIL and E2E_SECOND_PASSWORD. GATE_OWNER selects the dev-cli
+# owner, and GATE_FORCE_FAILURE=true adds a failing spec for a dry run.
 set -euo pipefail
 
 owner=${GATE_OWNER:-gha}
@@ -40,30 +38,9 @@ require_digest() {
 }
 
 use_cluster() {
-  if [[ -z ${DEV_KUBE_TOKEN:-} ]]; then
-    return
+  if [[ -n ${KUBECONFIG:-} && ! -r $KUBECONFIG ]]; then
+    fail "KUBECONFIG names $KUBECONFIG, which is missing or unreadable."
   fi
-  if [[ ${DEV_KUBE_SERVER:-} != https://* ]] ||
-    ! base64 -d <<<"${DEV_KUBE_CA//[[:space:]]/}" 2>/dev/null | grep -q 'BEGIN CERTIFICATE'; then
-    fail "Set DEV_KUBE_SERVER (https URL), DEV_KUBE_CA (base64 PEM) and DEV_KUBE_TOKEN."
-  fi
-
-  local identity
-  kubeconfig="$(mktemp)"
-  trap 'rm -f "$kubeconfig"' EXIT
-  jq -n --arg context "$context" '{
-    apiVersion: "v1",
-    kind: "Config",
-    clusters: [{name: $context,
-      cluster: {server: env.DEV_KUBE_SERVER, "certificate-authority-data": (env.DEV_KUBE_CA | gsub("\\s"; ""))}}],
-    users: [{name: "webv3-release-gate", user: {token: (env.DEV_KUBE_TOKEN | gsub("\\s"; ""))}}],
-    contexts: [{name: $context, context: {cluster: $context, user: "webv3-release-gate"}}],
-    "current-context": $context
-  }' >"$kubeconfig"
-  export KUBECONFIG=$kubeconfig
-  identity="$(kubectl --context "$context" auth whoami -o jsonpath='{.status.userInfo.username}')"
-  [[ $identity == system:serviceaccount:* ]] || fail "DEV_KUBE_TOKEN authenticates as '$identity', not a ServiceAccount."
-  echo "Cluster identity: $identity"
 }
 
 # Prints the development base's Webv3 as JSON: the Deployment's generation and

@@ -125,7 +125,9 @@ function ContestsForm({ log, registrations, viewerId }: {
   const choices = contestChoices(log, registrations, today)
   const eligible = choices.filter(choice => choice.kind === 'eligible').map(choice => choice.registration.id)
   const submitted = log.registrations ?? []
-  const preselect = Route.useSearch().preselect === 1 && submitted.length === 0
+  // `?preselect=1` marks the step right after logging, where leaving is skipping rather than cancelling.
+  const afterLogging = Route.useSearch().preselect === 1
+  const preselect = afterLogging && submitted.length === 0
   const [defaultValues] = useState(() => ({
     registrationIds: preselect
       ? eligible
@@ -208,7 +210,7 @@ function ContestsForm({ log, registrations, viewerId }: {
             {failure ? <SaveFailure failure={failure} /> : null}
             <div className={formFooter().root()}>
               <div className={formFooter().actions()}>
-                <Link className={buttonClassName({ variant: 'ghost' })} to="/logs/$logId" params={{ logId: log.id }}>Cancel</Link>
+                <Link className={buttonClassName({ variant: 'ghost' })} to="/logs/$logId" params={{ logId: log.id }}>{afterLogging ? 'Skip' : 'Cancel'}</Link>
                 <Button type="submit" disabled={disabled || !eligible.length}>
                   {pending ? 'Saving…' : 'Save submissions'}
                 </Button>

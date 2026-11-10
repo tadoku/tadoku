@@ -1,8 +1,6 @@
 import { createRootRouteWithContext, HeadContent, Scripts, ScriptOnce } from '@tanstack/react-router'
 import type { QueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import mark from 'paper-ui/assets/brand/cut-meter.svg?url'
-import reversedMark from 'paper-ui/assets/brand/cut-meter-reversed.svg?url'
 import { AppShell } from '../components/AppShell'
 import { ErrorView, NotFoundView, PendingView } from '../components/StatusViews'
 import { getPageUrls } from '../lib/links'
@@ -23,8 +21,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       meta: canonical ? [{ property: 'og:site_name', content: 'Tadoku' }, { property: 'og:url', content: canonical }] : [],
       links: [
         ...(canonical ? [{ rel: 'canonical', href: canonical }] : []),
-        { rel: 'icon', type: 'image/svg+xml', href: mark, media: '(prefers-color-scheme: light)' },
-        { rel: 'icon', type: 'image/svg+xml', href: reversedMark, media: '(prefers-color-scheme: dark)' },
+        // `public/favicon.svg` switches its fill with the visitor's appearance; the PNG and `/favicon.ico` are for browsers
+        // without SVG icons. All are drawn from paper-ui's brand `favicon` sources.
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', type: 'image/png', sizes: '48x48', href: '/favicon.png' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+        { rel: 'manifest', href: '/site.webmanifest' },
       ],
     }
   },
@@ -41,6 +43,10 @@ function RootDocument({ children }: { children: ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <ScriptOnce>{themeBootScript}</ScriptOnce>
+        {/* The header's paper surface in each appearance, so the browser's bar continues it. Kept out of head(), which
+            keeps one meta per name. */}
+        <meta name="theme-color" content="#f4f4f4" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#1c1c1c" media="(prefers-color-scheme: dark)" />
         <HeadContent />
       </head>
       <body className={bodyClassName}>

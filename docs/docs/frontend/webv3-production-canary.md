@@ -1,6 +1,6 @@
 ---
 title: Webv3 production canary
-description: The signed-in journey that checks next.tadoku.app on a schedule, the account and secrets it needs, how it avoids writes, and where its green or red result is read.
+description: The signed-in journey that checks tadoku.app on a schedule, the account and secrets it needs, how it avoids writes, and where its green or red result is read.
 sidebar_position: 3
 ---
 
@@ -10,7 +10,7 @@ Read this when you change the production canary, create its account or read its
 result.
 
 `.github/workflows/webv3-production-canary.yaml` signs in on
-`https://next.tadoku.app` through authv2 and runs
+`https://tadoku.app` through authv2 and runs
 `frontend/apps/webv3/e2e/production-canary.spec.ts`. The journey loads the
 home page, an official contest, the account's profile and `/logs/new`.
 

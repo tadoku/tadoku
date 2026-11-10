@@ -29,11 +29,10 @@ hand.
 
 ## Before the switch
 
-- **Replicas and disruption budget.** Production runs one Webv3 replica with no
-  PodDisruptionBudget, so a node drain or eviction takes Webv3 down. Run at least
-  two replicas spread across nodes, with a PodDisruptionBudget of
-  `minAvailable: 1`, and keep the `preStop` delay so rollouts and drains do not
-  answer 503s. The AppProject already permits PodDisruptionBudgets.
+- **Replicas and disruption budget.** Webv3 runs two replicas spread across
+  nodes, with a PodDisruptionBudget of `minAvailable: 1` and a 5-second
+  `preStop` delay, so a node drain, an eviction or a rollout never leaves it
+  without a ready pod. Keep all three while Webv3 serves `tadoku.app`.
 - **Environment.** Production already sets `TADOKU_WEB_URL=https://tadoku.app`
   and `TADOKU_API_URL=https://tadoku.app/api/internal`, so `tadoku.app` is
   Webv3's web host and becomes indexable once it serves Webv3. Nothing else
@@ -42,9 +41,10 @@ hand.
   After the switch, `https://tadoku.app/api/health` reaches Webv3 and answers
   404. Point every monitor or probe of that path at `/healthz` in the same change.
   The homelab blackbox probe reads `https://tadoku.app/` and needs no change.
-- **Canary.** `.github/workflows/webv3-production-canary.yaml` signs in on
-  `next.tadoku.app`. Point its `WEBV3_BASE_URL` at `https://tadoku.app` when the
-  switch lands.
+- **Canary.** `.github/workflows/webv3-production-canary.yaml` signs in on the
+  host Webv3 serves for everyone: `WEBV3_BASE_URL` is `https://tadoku.app` while
+  Webv3 serves it, and `https://next.tadoku.app` otherwise. Change it in the
+  same step as the host, because a canary on Webv2 fails and reverts Webv3.
 - **Request IDs.** The tadoku HTTPS listeners and the internal Gateway must keep
   an incoming `X-Request-Id`, or Webv3's and Tadoku API's log lines will not
   join on `correlation_id`; see [Webv3 server logs](webv3-server-logs.md).
@@ -66,10 +66,9 @@ on Webv2 until its route is removed.
      reads the edge access logs of the `frontend-webv3` HTTPRoute, so
      `tadoku.app` must stay on it. The Oathkeeper HTTPRoute keeps serving
      `/api/internal`, a longer path prefix.
-   - **Remove the edge `X-Robots-Tag` header.** Today the `frontend-webv3`
-     HTTPRoute sets `X-Robots-Tag: noindex, nofollow` on its only rule.
-     HTTPRoute filters cannot match a hostname, so once `tadoku.app` is on the
-     same route every page would be noindex. Webv3 itself sends
+   - **No edge `X-Robots-Tag` header.** The `frontend-webv3` HTTPRoute must
+     not set `X-Robots-Tag`: HTTPRoute filters cannot match a hostname, so with
+     `tadoku.app` on the same route every page would be noindex. Webv3 itself sends
      `X-Robots-Tag: noindex` from every host that is not its web host, as
      [headers, indexing and sharing](webv3-indexing.md) describes, so
      `next.tadoku.app` stays out of search results without it. The route that
@@ -126,6 +125,9 @@ After Argo CD syncs:
      HTTPRoute, and restore its `X-Robots-Tag` filter for `next.tadoku.app`.
      `tadoku.app` returns to Webv2. Webv3's namespace can then leave the
      listener's list.
+
+  Point the canary's `WEBV3_BASE_URL` back at `https://next.tadoku.app` at once,
+  or its next run reaches Webv2, fails and reverts Webv3's image.
 
   This needs Webv2 still deployed at its last image, so do not retire it while a
   rollback is possible. If Webv3 itself is at fault, also empty the

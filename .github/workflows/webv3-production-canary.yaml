@@ -1,6 +1,6 @@
 name: webv3-production-canary
 
-# Signed-in journey against next.tadoku.app. See docs/docs/frontend/webv3-production-canary.md.
+# Signed-in journey against tadoku.app. See docs/docs/frontend/webv3-production-canary.md.
 
 on:
   schedule:
@@ -29,7 +29,7 @@ jobs:
       name: production-canary
       deployment: false
     env:
-      WEBV3_BASE_URL: https://next.tadoku.app
+      WEBV3_BASE_URL: https://tadoku.app
       TADOKU_API_URL: https://tadoku.app/api/internal
     steps:
       # The spec skips, and Playwright exits green, when the credentials are unset.
@@ -113,7 +113,7 @@ jobs:
           EVENT: ${{ github.event_name }}
         run: |
           if test "$RESULT" = success; then state=green severity=info; else state=red severity=critical; fi
-          body="Result: $RESULT. Signed-in journey on next.tadoku.app ($EVENT), workflow revision $GITHUB_SHA."
+          body="Result: $RESULT. Signed-in journey on tadoku.app ($EVENT), workflow revision $GITHUB_SHA."
           echo "### Webv3 production canary: $state ($RESULT)" >> "$GITHUB_STEP_SUMMARY"
           jq --null-input --compact-output \
             --arg title "Webv3 production canary $state" \

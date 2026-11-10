@@ -1,3 +1,4 @@
+import type { APIRequestContext } from '@playwright/test'
 import { api, expect, reader, test, webv3 } from './logging-fixtures'
 import { apiJson } from './standings'
 
@@ -8,6 +9,11 @@ interface Route {
   paged?: string
   /** The page number the path selects, when it is not the first. */
   page?: number
+}
+
+async function redirect(request: APIRequestContext, path: string) {
+  const response = await request.get(`${webv3}${path}`, { maxRedirects: 0 })
+  return { status: response.status(), location: new URL(response.headers().location, webv3).href }
 }
 
 test('every Webv2 route shape, bookmarked with or without page numbers, opens the same page on Webv3', async ({ browser, request }, testInfo) => {
@@ -91,21 +97,22 @@ test('every Webv2 route shape, bookmarked with or without page numbers, opens th
   }
   await page.screenshot({ path: testInfo.outputPath('last-route.png'), fullPage: true })
 
-  // Webv2's permanent redirect, its trailing-slash redirects and the sign-in redirects of session-only pages.
-  const redirect = async (path: string) => {
-    const response = await request.get(`${webv3}${path}`, { maxRedirects: 0 })
-    return { status: response.status(), location: new URL(response.headers().location, webv3).href }
-  }
-  expect(await redirect('/contests')).toEqual({ status: 308, location: `${webv3}/contests/official` })
-  for (const path of ['/blog/', '/contests/official/', `${c}/leaderboard/2/`]) {
-    const { status, location } = await redirect(path)
-    expect([307, 308], path).toContain(status)
-    expect(location, path).toBe(`${webv3}${path.slice(0, -1)}`)
-  }
+  // Webv2's permanent redirect and the sign-in redirects of session-only pages.
+  expect(await redirect(request, '/contests')).toEqual({ status: 308, location: `${webv3}/contests/official` })
   for (const path of [`${c}/registration`, `${c}/scoring`]) {
-    const { status, location } = await redirect(path)
+    const { status, location } = await redirect(request, path)
     expect(status, path).toBe(307)
     expect(new URL(location).searchParams.get('return_to'), path).toBe(`${webv3}${path}`)
   }
   await context.close()
+})
+
+test('a bookmark with a trailing slash redirects permanently to the page without it, as in Webv2', async ({ request }) => {
+  test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
+  // Defect: Webv3 answers 307 where Webv2's Next.js answered 308 for a trailing slash.
+  test.fail()
+  const { id } = await apiJson<{ id: string }>(request, '/immersion/contests/latest-official')
+  for (const path of ['/blog/', '/contests/official/', `/contests/${id}/leaderboard/2/`]) {
+    expect(await redirect(request, path), path).toEqual({ status: 308, location: `${webv3}${path.slice(0, -1)}` })
+  }
 })

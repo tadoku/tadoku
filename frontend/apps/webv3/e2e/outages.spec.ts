@@ -2,7 +2,7 @@ import { join } from 'node:path'
 import type { Page } from '@playwright/test'
 import { faultyWebv3, type Fault } from './fault-server'
 import { api, expect, hydrated, reader, statValue, test, webv3 } from './logging-fixtures'
-import { apiJson } from './standings'
+import { apiJson, score as scoreFormat } from './standings'
 
 // One local server for the file: the outages replace API answers the deployed branch's server would read.
 let server: Awaited<ReturnType<typeof faultyWebv3>>
@@ -25,11 +25,11 @@ test.describe('partial outages', () => {
 
   async function participant(page: Page) {
     const contest = await apiJson<{ id: string; title: string }>(page.request, '/immersion/contests/latest-official')
-    const { entries: [entry] } = await apiJson<{ entries: { user_id: string; user_display_name: string }[] }>(
+    const { entries: [entry] } = await apiJson<{ entries: { user_id: string; user_display_name: string; score: number }[] }>(
       page.request,
       `/immersion/contests/${contest.id}/leaderboard?page_size=1&page=0`,
     )
-    return { contest, userId: entry.user_id, name: entry.user_display_name }
+    return { contest, userId: entry.user_id, name: entry.user_display_name, score: entry.score }
   }
 
   test('a failed and a malformed profile section are marked while the rest of the year shows, until the API recovers', async ({ page }, testInfo) => {
@@ -75,7 +75,7 @@ test.describe('partial outages', () => {
   })
 
   test('home keeps the board when the schedule cannot be read', async ({ page }, testInfo) => {
-    const { contest } = await participant(page)
+    const { contest, name, score } = await participant(page)
     const schedule: Fault = { path: /^\/immersion\/contests\?.*upcoming=true/, kind: 'reset' }
     inject(schedule)
 
@@ -83,7 +83,9 @@ test.describe('partial outages', () => {
     expect(response?.status()).toBe(200)
     expect(schedule.hits, 'the server-rendered page read the schedule').toBeGreaterThan(0)
     const board = page.getByRole('region', { name: new RegExp(contest.title) })
-    await expect(board.getByRole('link').first()).toBeVisible()
+    // The board's table still lists the round's leader with the API's score.
+    const leader = board.getByRole('table').getByRole('row').filter({ has: page.getByRole('link', { name, exact: true }) })
+    await expect(leader.getByRole('cell').last()).toHaveText(scoreFormat.format(score))
     await expect(page.getByText('The board could not be loaded')).toHaveCount(0)
     // A running round covers the schedule, so an unreadable one is left out; otherwise its row says so.
     const next = page.getByRole('region', { name: 'Next official round' })

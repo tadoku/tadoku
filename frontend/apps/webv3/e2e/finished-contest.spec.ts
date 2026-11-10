@@ -6,7 +6,8 @@ import { apiJson, score, standingRows } from './standings'
 
 interface Submission { contest_id: string; title: string; score?: number }
 
-const utcDay = (offset = 0) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10)
+/** The UTC day `offset` days from `now`; a test takes `now` once, so its dates can't straddle UTC midnight. */
+const utcDay = (now: number, offset = 0) => new Date(now + offset * 86_400_000).toISOString().slice(0, 10)
 const submissions = async (request: APIRequestContext, logId: string) =>
   (await apiJson<{ registrations?: Submission[] }>(request, `/immersion/logs/${logId}`)).registrations ?? []
 
@@ -37,7 +38,7 @@ test('a finished contest keeps its score after an edit, refuses deletion and kee
   const round = finishedRound()
   const { request } = readerContext
   const { contest_end: end } = await apiJson<{ contest_end: string }>(request, `/immersion/contests/${round.contestId}`)
-  expect(end < utcDay(), 'the seeded round has finished').toBe(true)
+  expect(end < utcDay(Date.now()), 'the seeded round has finished').toBe(true)
   const standings = async () => {
     await page.goto(`/contests/${round.contestId}/leaderboard/1`)
     await expect(standingRows(page).filter({ hasText: reader.name }).getByRole('cell').last()).toHaveText(score.format(round.score))
@@ -82,8 +83,9 @@ test('a finished contest keeps its score after an edit, refuses deletion and kee
 test('a contest takes logs through its last UTC day and nothing after it', async ({ page, readerContext, adminContext }, testInfo) => {
   const { request } = readerContext
   const userId = await accountId(readerContext)
-  const lastDay = await contest(adminContext.request, utcDay(-3), utcDay(), utcDay())
-  const ended = await contest(adminContext.request, utcDay(-3), utcDay(-1), utcDay())
+  const now = Date.now()
+  const lastDay = await contest(adminContext.request, utcDay(now, -3), utcDay(now), utcDay(now))
+  const ended = await contest(adminContext.request, utcDay(now, -3), utcDay(now, -1), utcDay(now))
 
   const joined = await request.post(`${api}/immersion/contests/${lastDay.id}/registration`, { data: { language_codes: ['jpn'] } })
   expect(joined.status(), 'registration on the last day').toBe(200)

@@ -1,6 +1,6 @@
 import { getRequest, getRequestHeader } from '@tanstack/react-start/server'
 import { authzRoleGet, identitySessionGet } from 'api-client'
-import { upstreamCall, type ApiOperation } from './log.server'
+import { correlationHeader, upstreamCall, type ApiOperation } from './log.server'
 import type { Viewer } from './session'
 import { requestUrls } from './urls.server'
 
@@ -40,7 +40,7 @@ export function sessionRequest(operation: ApiOperation, cookie?: string, apiUrl?
   const timeout = AbortSignal.timeout(10_000)
   return {
     baseUrl: apiUrl ?? requestUrls().apiUrl,
-    headers: { Accept: 'application/json', ...(cookie ? { Cookie: cookie } : {}) },
+    headers: { Accept: 'application/json', ...correlationHeader(), ...(cookie ? { Cookie: cookie } : {}) },
     cache: 'no-store' as const,
     redirect: 'error' as const,
     signal: deadline ? AbortSignal.any([timeout, deadline]) : timeout,

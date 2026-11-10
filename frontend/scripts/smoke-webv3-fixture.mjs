@@ -48,10 +48,19 @@ const announcement = {
   starts_at: '2020-01-01T00:00:00Z', ends_at: '2099-12-31T00:00:00Z',
 }
 export const writes = []
-/** `delayMs` holds every answer that long, so a check can keep a page request open. */
-export const fixtureOptions = { delayMs: 0 }
+/**
+ * `delayMs` holds every answer that long, so a check can keep a page request open; `status` answers every read with
+ * that status instead of data. `requestIds` collects each read's `X-Request-Id`.
+ */
+export const fixtureOptions = { delayMs: 0, status: 0 }
+export const requestIds = []
 export const fixture = createServer((request, response) => setTimeout(() => answer(request, response), fixtureOptions.delayMs))
 function answer(request, response) {
+  requestIds.push(request.headers['x-request-id'])
+  if (fixtureOptions.status) {
+    response.writeHead(fixtureOptions.status).end()
+    return
+  }
   if (request.method !== 'GET') {
     writes.push(`${request.method} ${request.url}`)
     response.writeHead(405).end()

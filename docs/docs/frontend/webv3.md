@@ -119,8 +119,8 @@ once its announcement ends. An unavailable announcement list shows nothing.
 
 Every page links the logomark favicon in `frontend/apps/webv3/public/`: an SVG
 that draws the mark dark or light with the visitor's appearance, a PNG and
-`/favicon.ico` for browsers without SVG icons, an Apple touch icon, a web
-manifest and a `theme-color` matching the header in each appearance. The rasters
+`/favicon.ico` for browsers without SVG icons, an Apple touch icon and a web
+manifest. The browser picks its own toolbar colour; Webv3 sets no `theme-color`. The rasters
 are drawn from paper-ui's brand `favicon` sources.
 
 ### Avatars

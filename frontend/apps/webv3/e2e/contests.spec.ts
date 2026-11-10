@@ -155,7 +155,9 @@ test('server-rendered official and community lists show the API contests and lin
     await expect(page.getByRole('link', { name: 'Contests', exact: true }).first()).toHaveAttribute('href', '/contests/official/1')
     // Guests see no create action and no restrictions, as in Webv2; a row may still name its deadline.
     await expect(page.getByRole('link', { name: 'Create contest' })).toHaveCount(0)
-    await expect(contestRows(page).getByText(/^(Japanese|Reading, Listening)$/)).toHaveCount(0)
+    for (const meta of await contestRows(page).locator('p > span').allTextContents()) {
+      expect(meta).toMatch(/^Registration closes \d+ \w+ \d{4}$/)
+    }
     await expectRows(page, data)
     await page.screenshot({ path: testInfo.outputPath(`ssr-${name}.png`), fullPage: true })
   }

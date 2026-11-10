@@ -136,11 +136,11 @@ export async function joinedContest(organizer: BrowserContext, participant: Brow
     },
   })
   expect(created.ok(), `contest creation answered ${created.status()}`).toBeTruthy()
-  const { id } = await created.json() as { id: string }
+  const { id, title } = await created.json() as { id: string; title: string }
   const joined = await participant.request.post(`${api}/immersion/contests/${id}/registration`, { data: { language_codes: ['jpn'] } })
   expect(joined.status(), 'registration').toBe(200)
   const registration = await (await participant.request.get(`${api}/immersion/contests/${id}/registration`)).json() as { id: string }
-  return { id, registrationId: registration.id }
+  return { id, title, registrationId: registration.id }
 }
 
 /** Enters an amount and a description in the open activity form. */

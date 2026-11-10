@@ -155,15 +155,15 @@ test('the updates feed and a contest profile fit at 390px', async ({ page, reque
 })
 
 /** A contest created through the API as the context's account, open today. */
-async function createContest(context: BrowserContext): Promise<Contest> {
+async function createContest(context: BrowserContext, days = 30): Promise<Contest> {
   const title = `Webv3 moderation check ${randomUUID().slice(0, 8)}`
   const response = await context.request.post(`${api}/immersion/contests`, {
     data: {
       title,
       description: 'Created by the Webv3 contest moderation journey.',
       contest_start: day(),
-      contest_end: day(30),
-      registration_end: day(14),
+      contest_end: day(days),
+      registration_end: day(days - 16),
       private: false,
       official: false,
       language_code_allow_list: null,
@@ -175,15 +175,18 @@ async function createContest(context: BrowserContext): Promise<Contest> {
 }
 
 /**
- * Dev Reader's seeded unlisted contest. The yearly creation quota counts every contest an account has created, so a
- * spec that created one as Dev Reader on each run would start failing after a dozen runs.
+ * A contest Dev Reader owns that is open today. The yearly creation quota counts every contest an account has created,
+ * so this reuses an open one, such as the seeded contest, and otherwise creates one that stays open for most of a year.
  */
 async function readerOwnContest(context: BrowserContext): Promise<Contest> {
   const query = `page_size=25&page=0&official=false&include_deleted=false&user_id=${await accountId(context)}`
-  const { contests } = await apiJson<{ contests: (Contest & { private: boolean })[] }>(context.request, `/immersion/contests?${query}`)
-  const seeded = contests.find(contest => contest.private)
-  expect(seeded, 'Dev Reader owns the seeded private contest').toBeTruthy()
-  return seeded!
+  const { contests } = await apiJson<{ contests: (Contest & { contest_start: string; contest_end: string; registration_end: string })[] }>(
+    context.request,
+    `/immersion/contests?${query}`,
+  )
+  const today = day()
+  return contests.find(contest => contest.contest_start <= today && today <= contest.contest_end && today <= contest.registration_end)
+    ?? createContest(context, 360)
 }
 
 /** Registers the context's account for the contest and submits one log to it through the API. */

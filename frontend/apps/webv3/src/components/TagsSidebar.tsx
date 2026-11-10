@@ -1,12 +1,14 @@
 import { useStore } from '@tanstack/react-form'
 import { withPaperForm } from 'paper-ui'
 import { normalizeTag, parseTags, type LogDraft } from '../lib/log-draft'
-import { CheckIcon, ChevronRightIcon } from 'paper-ui/icons'
+import { ChevronRightIcon } from 'paper-ui/icons'
 
 const tagButton = [
   'min-h-8 cursor-pointer border border-field-edge bg-field px-2.5 py-1 text-fine text-ink',
   'not-disabled:hover:border-field-edge-hover not-disabled:hover:bg-neutral-hover focus-visible:outline-ring focus-visible:outline-focus',
   'focus-visible:outline-offset-ring disabled:cursor-default disabled:opacity-faded',
+  // As in Webv2, a chosen tag is struck through, so choosing one never changes the chip's width.
+  'aria-pressed:text-muted aria-pressed:line-through',
 ].join(' ')
 
 type SuggestedTag = { tag: string; modifier?: true }
@@ -105,7 +107,6 @@ export const TagsSidebar = withPaperForm({
               onClick={() => toggle(tag)}
             >
               {tag.replaceAll('_', ' ')}
-              {selected.has(tag) ? <CheckIcon className="ms-1 inline-block size-3 align-middle" aria-hidden="true" /> : null}
             </button>
           ))}
         </div>

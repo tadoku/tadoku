@@ -67,9 +67,11 @@ test('the tag sidebar toggles tags, stops at ten and follows the activity, besid
   await expect(aside.getByRole('region', { name: 'Common tags' }).getByRole('button', { name: 'ebook' })).toBeVisible()
 
   const manga = modifiers.getByRole('button', { name: 'manga', exact: true })
+  const restingWidth = (await manga.boundingBox())!.width
   await manga.click()
   await expect(chip(page, 'manga')).toBeVisible()
   await expect(manga).toHaveAttribute('aria-pressed', 'true')
+  expect((await manga.boundingBox())!.width, 'choosing a tag keeps its width').toBe(restingWidth)
   await page.screenshot({ path: testInfo.outputPath('new-1280.png'), fullPage: true })
   expect(await fitsViewport(page)).toBe(true)
   await manga.click()

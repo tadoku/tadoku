@@ -165,7 +165,7 @@ function ContestsForm({ log, registrations, viewerId }: {
               <fieldset className="m-0 grid gap-2 border-0 p-0">
                 <legend className="sr-only">Contests</legend>
                 {/* As in Webv2: open contests first, then unavailable ones, each naming why on its own row. */}
-                <div className="grid [&>*:not(:first-child)]:-mt-px">
+                <div className="grid gap-2">
                 {[...choices].sort((a, b) => Number(a.kind === 'ineligible') - Number(b.kind === 'ineligible')).map(choice => (
                   <form.AppField key={choice.registration.id} name="registrationIds">
                     {field => (

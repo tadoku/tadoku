@@ -25,7 +25,7 @@ Tags are chips, at most 10. While the viewer types, and once typing pauses for
 text with their usage counts, such as `manga (3×)`, followed by common tags; a
 failed read suggests nothing. Beside the form on wide screens, and below the
 tags on narrow ones, the activity's score modifier and common tags toggle in
-the draft; adding stops at 10 tags. Paper's `TagsInput` reports the typed text
+the draft, a chosen one struck through; adding stops at 10 tags. Paper's `TagsInput` reports the typed text
 through `onQueryChange` and labels suggestions with `formatOption`.
 
 After a save the browser remembers the log's language and activity under
@@ -145,7 +145,7 @@ as invalid. Each
 registration is offered unless the contest does not allow the log's activity,
 the registration lacks its language or the contest has ended, in that order.
 As in Webv2, the page opens with a summary of the log and lists each
-registration as a card naming its organizer and the points the log adds;
+registration as a separate card naming its organizer and the points the log adds;
 offered contests come first, and an unavailable one shows its reason on its
 card. The owner's current submissions start
 selected; with `?preselect=1`, a log not yet submitted anywhere starts with every

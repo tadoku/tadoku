@@ -152,7 +152,9 @@ selected; with `?preselect=1`, a log not yet submitted anywhere starts with ever
 eligible registration selected, as Webv2's link after saving does. Saving sends
 the selection to the contest registration update operation, which adds and removes submissions to unfinished contests and keeps
 submissions to finished contests and their saved scores; the page lists those
-as finished. A save opens the updated detail, and saving again is safe. Without
+as finished. A save opens the updated detail, and saving again is safe. Leaving
+without saving returns to the log through Skip on the step after saving, or
+Cancel otherwise. Without
 an eligible registration the page links to the contest lists. Removing a
 submission leaves the personal record unchanged.
 

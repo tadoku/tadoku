@@ -95,6 +95,9 @@ export {
 export {
   AppliedFilters,
   type AppliedFiltersProps,
+  type RemovableAppliedFiltersProps,
+  type RemovableFilter,
+  type TextAppliedFiltersProps,
 } from './components/forms/AppliedFilters'
 export {
   EmptyState,

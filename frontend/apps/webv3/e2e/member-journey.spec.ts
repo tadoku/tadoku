@@ -44,8 +44,11 @@ test('a member walks home, contest, standings, profile, logging and the saved lo
 
   await page.getByRole('region', { name: 'Your contests', exact: true }).getByRole('link', { name: contestTitle, exact: true }).click()
   await expect(page).toHaveURL(new RegExp(`/contests/${contestId}/profile/${memberId}/1$`))
+  // The URL changes before the page does, and home's link has the same name as this page's back link.
+  await expect(page.getByRole('heading', { level: 1, name: member })).toBeVisible()
   await page.getByRole('main').getByRole('link', { name: contestTitle, exact: true }).click()
   await expect(page).toHaveURL(new RegExp(`/contests/${contestId}/leaderboard/1$`))
+  await expect(page.getByRole('heading', { level: 1, name: contestTitle })).toBeVisible()
   const standings = standingRows(page)
   await expect(standings.first()).toBeVisible()
   await shot('2-contest-standings')

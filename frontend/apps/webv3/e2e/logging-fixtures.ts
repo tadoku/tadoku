@@ -177,8 +177,9 @@ export async function accountId(context: BrowserContext) {
   return (await (await context.request.get(`${api}/identity/session`)).json()).account.id as string
 }
 
+/** Signs in with JavaScript on, even when the requesting test turns it off: authv2's login form needs hydration. */
 async function session(browser: Browser, account: Account) {
-  const context = await browser.newContext({ baseURL: webv3 })
+  const context = await browser.newContext({ baseURL: webv3, javaScriptEnabled: true })
   try {
     await signIn(await context.newPage(), account)
     return await context.cookies()

@@ -88,7 +88,11 @@ in Organizing on returning there, shows a newly registered learner the refusal
 screen instead of the form, drafts, publishes and activates a rule set and compares it with the API, checks a
 started contest's lock, and that Dev Reader cannot reach scoring, even for its
 own contest, and that only administrators see the contest page's Scoring rules
-menu item. Pages are checked at 390px. The anonymous checks also run in the
+menu item. Pages are checked at 390px.
+`frontend/apps/webv3/e2e/scoring-outcomes.spec.ts` previews and saves real logs in
+the seeded Dev Scoring Round, checks the base rule, the stacked modifier and the
+platform fallback, and compares the standings and contest profile with the scores
+the API saved. The anonymous checks also run in the
 production container smoke. The browser test covers only the refusal screen; the API golden cases in
 `services/tadoku-api/e2e/testdata/ContestCreatePermissionCheck/` own the account
 age and yearly quota rules.

@@ -321,16 +321,16 @@ jobs:
             exit 1
           fi
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
-        if: ${{ !cancelled() && env.DRY_RUN != 'true' }}
+        if: ${{ success() && !cancelled() && env.DRY_RUN != 'true' }}
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Tag the tested digest prod
-        if: ${{ !cancelled() && env.DRY_RUN != 'true' }}
+        if: ${{ success() && !cancelled() && env.DRY_RUN != 'true' }}
         run: docker buildx imagetools create --tag "$IMAGE:prod" "$IMAGE@$CANDIDATE"
       - name: Check that prod names the tested digest
-        if: ${{ !cancelled() && env.DRY_RUN != 'true' }}
+        if: ${{ success() && !cancelled() && env.DRY_RUN != 'true' }}
         run: |
           prod="$(docker buildx imagetools inspect "$IMAGE:prod" --format '{{json .Manifest.Digest}}' | jq -r .)"
           echo "- prod: \`$prod\`" >>"$GITHUB_STEP_SUMMARY"

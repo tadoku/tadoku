@@ -1,5 +1,5 @@
 import { Menu } from "@base-ui/react/menu";
-import { useId, useState, type ReactElement, type ReactNode } from "react";
+import { forwardRef, useId, useImperativeHandle, useRef, useState, type ReactElement, type ReactNode } from "react";
 import { CheckIcon, ChevronDownIcon, iconClassName } from "../../../icons";
 import { surface } from "../../../foundations/recipes";
 import { cn, tv } from "../../../foundations/variants";
@@ -83,6 +83,11 @@ export interface FilterMenuProps {
   readonly label?: string;
 }
 
+/** Focuses the visible trigger, for example after Clear all in AppliedFilters removes the focused control. */
+export interface FilterMenuHandle {
+  readonly focus: () => void;
+}
+
 interface ListedSection extends FilterMenuSection {
   readonly listed: readonly FilterMenuValue[];
 }
@@ -127,14 +132,17 @@ function TriggerContent({ label, count }: { readonly label: string; readonly cou
  * A Filters button that opens checkbox sections: a menu from the tablet breakpoint up, and a full-screen sheet
  * below it. It reports selections; the screen filters, keeps the selection in the address and resets pagination.
  */
-export function FilterMenu({
-  sections,
-  onChange,
-  onClear,
-  resultLabel,
-  visibleCount,
-  label = "Filters",
-}: FilterMenuProps) {
+export const FilterMenu = forwardRef<FilterMenuHandle, FilterMenuProps>(function FilterMenu(
+  { sections, onChange, onClear, resultLabel, visibleCount, label = "Filters" },
+  ref,
+) {
+  const root = useRef<HTMLSpanElement>(null);
+  useImperativeHandle(ref, () => ({
+    focus: () => {
+      const triggers = Array.from(root.current?.querySelectorAll<HTMLElement>(".paper-filter-menu__trigger") ?? []);
+      (triggers.find((trigger) => trigger.getClientRects().length > 0) ?? triggers[0])?.focus();
+    },
+  }));
   const count = sections.reduce((total, section) => total + section.selected.length, 0);
   const triggerClassName = (presentation: "menu" | "sheet") =>
     buttonClassName({
@@ -149,7 +157,7 @@ export function FilterMenu({
   const shared = { sections: listed(sections), onChange, onClear, resultLabel, count };
 
   return (
-    <span className={slots.root()}>
+    <span ref={root} className={slots.root()}>
       <DesktopMenu
         {...shared}
         visibleCount={visibleCount ?? 6}
@@ -168,7 +176,7 @@ export function FilterMenu({
       />
     </span>
   );
-}
+});
 
 interface PresentationProps {
   readonly sections: readonly ListedSection[];

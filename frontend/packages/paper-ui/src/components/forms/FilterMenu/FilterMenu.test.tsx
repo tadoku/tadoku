@@ -1,8 +1,8 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useState } from "react";
+import { createRef, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { FilterMenu, type FilterMenuSection } from "./FilterMenu";
+import { FilterMenu, type FilterMenuHandle, type FilterMenuSection } from "./FilterMenu";
 
 const tags = ["audiobook", "dense", "fiction", "manga", "news", "podcast", "graded", "novel", "drama"];
 
@@ -266,5 +266,15 @@ describe("FilterMenu on a phone", () => {
     expect(onClear).toHaveBeenCalledTimes(1);
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(sheetTrigger()).toHaveFocus();
+  });
+});
+
+describe("FilterMenu focus handle", () => {
+  it("lets the screen return focus to the trigger after clearing filters elsewhere", () => {
+    const ref = createRef<FilterMenuHandle>();
+    render(<FilterMenu ref={ref} sections={baseSections} onChange={vi.fn()} onClear={vi.fn()} resultLabel="83 logs" />);
+
+    ref.current?.focus();
+    expect(document.activeElement).toHaveAccessibleName("Filters");
   });
 });

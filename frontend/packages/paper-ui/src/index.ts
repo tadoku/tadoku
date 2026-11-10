@@ -88,6 +88,7 @@ export {
 } from './components/feedback'
 export {
   FilterMenu,
+  type FilterMenuHandle,
   type FilterMenuProps,
   type FilterMenuSection,
   type FilterMenuValue,

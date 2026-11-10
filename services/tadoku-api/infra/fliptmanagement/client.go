@@ -82,13 +82,15 @@ type parsedSegment struct {
 	Revision string
 }
 
-func NewClient(cfg Config) *Client {
-	baseURL, _ := url.Parse(strings.TrimRight(cfg.URL, "/"))
-	httpClient := cfg.HTTPClient
-	if httpClient == nil {
-		httpClient = http.DefaultClient
+func NewClient(cfg Config) (*Client, error) {
+	baseURL, err := url.Parse(strings.TrimRight(cfg.URL, "/"))
+	if err != nil || baseURL.Hostname() == "" || (baseURL.Scheme != "http" && baseURL.Scheme != "https") {
+		return nil, errors.New("flipt management URL must be an absolute HTTP or HTTPS URL")
 	}
-	return &Client{baseURL: baseURL, targets: cfg.Targets, httpClient: httpClient}
+	if cfg.HTTPClient == nil {
+		return nil, errors.New("flipt management HTTP client is required")
+	}
+	return &Client{baseURL: baseURL, targets: cfg.Targets, httpClient: cfg.HTTPClient}, nil
 }
 
 func (c *Client) GetNamedUserAccess(ctx context.Context, spec Segment, targetUserID uuid.UUID) (State, error) {

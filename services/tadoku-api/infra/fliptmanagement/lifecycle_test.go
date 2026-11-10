@@ -2,8 +2,10 @@ package fliptmanagement_test
 
 import (
 	"errors"
+	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/flipt"
@@ -19,7 +21,12 @@ func TestTestNamespaceLifecyclePreservesExistingResources(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	client := fliptmanagement.NewClient(fliptmanagement.Config{URL: fixture.URL(), Targets: targets})
+	client, err := fliptmanagement.NewClient(fliptmanagement.Config{
+		URL: fixture.URL(), Targets: targets, HTTPClient: &http.Client{Timeout: time.Second},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	key, err := tenant.ParseTestTenant("e2e/lifecycle-0123abcd")
 	if err != nil {
 		t.Fatal(err)
@@ -90,7 +97,12 @@ func TestTestNamespaceLifecycleRejectsZeroKeyWithoutRequests(t *testing.T) {
 	fixture := testflipt.New()
 	t.Cleanup(fixture.Close)
 	targets, _ := flipt.NewTargets("local", "default", "test")
-	client := fliptmanagement.NewClient(fliptmanagement.Config{URL: fixture.URL(), Targets: targets})
+	client, err := fliptmanagement.NewClient(fliptmanagement.Config{
+		URL: fixture.URL(), Targets: targets, HTTPClient: &http.Client{Timeout: time.Second},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if err := client.ProvisionTestNamespace(t.Context(), tenant.TestKey{}, nil); err == nil {
 		t.Fatal("zero test key provisioned")

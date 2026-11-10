@@ -70,7 +70,7 @@ func TestScenarioSeedIsConfinedToItsTenant(t *testing.T) {
 	active := newScenario(t, "identity-b")
 	populateScenario(t, active, "identity-b")
 	activeKey := active.tenant(t, "identity-b")
-	if err := scenarioLifecycle().SetOverride(t.Context(), activeKey, jobqueue.WorkerComponent); err != nil {
+	if err := scenarioLifecycle(t).SetOverride(t.Context(), activeKey, jobqueue.WorkerComponent); err != nil {
 		t.Fatal(err)
 	}
 	activeBefore := scenarioState(t, activeKey)

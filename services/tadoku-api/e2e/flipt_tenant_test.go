@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	fliptclient "github.com/tadoku/tadoku/services/tadoku-api/infra/flipt"
@@ -28,7 +29,12 @@ func TestFliptTenantIsolation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	management := fliptmanagement.NewClient(fliptmanagement.Config{URL: flipt.URL(), Targets: targets})
+	management, err := fliptmanagement.NewClient(fliptmanagement.Config{
+		URL: flipt.URL(), Targets: targets, HTTPClient: &http.Client{Timeout: time.Second},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	testTenant, err := tenant.Parse("e2e/flipt-0123abcd")
 	if err != nil {
 		t.Fatal(err)

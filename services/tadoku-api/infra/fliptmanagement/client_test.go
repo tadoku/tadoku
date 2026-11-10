@@ -7,11 +7,32 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/flipt"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
+
+func TestNewClient(t *testing.T) {
+	t.Parallel()
+	targets, err := flipt.NewTargets("local", "default", "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	httpClient := &http.Client{Timeout: time.Second}
+
+	if _, err := NewClient(Config{URL: "relative/path", Targets: targets, HTTPClient: httpClient}); err == nil {
+		t.Fatal("relative URL accepted")
+	}
+	if _, err := NewClient(Config{URL: "http://flipt.example", Targets: targets}); err == nil {
+		t.Fatal("nil HTTP client accepted")
+	}
+	client, err := NewClient(Config{URL: "http://flipt.example", Targets: targets, HTTPClient: httpClient})
+	if err != nil || client == nil {
+		t.Fatalf("valid config rejected: client=%v error=%v", client, err)
+	}
+}
 
 func TestManagementRejectsAnotherNamespaceAndMissingTenant(t *testing.T) {
 	targets, err := flipt.NewTargets("local", "default", "test")
@@ -49,7 +70,12 @@ func TestManagementRejectsAnotherNamespaceAndMissingTenant(t *testing.T) {
 				_, _ = response.Write([]byte(strings.Replace(body, "NAMESPACE", namespace, 1)))
 			}))
 			t.Cleanup(server.Close)
-			client := NewClient(Config{URL: server.URL, Targets: targets})
+			client, err := NewClient(Config{
+				URL: server.URL, Targets: targets, HTTPClient: &http.Client{Timeout: time.Second},
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			if _, err := client.SetNamedUserAccess(context.Background(), spec, user, true); err == nil || calls != 0 {
 				t.Fatalf("missing tenant error=%v provider calls=%d", err, calls)

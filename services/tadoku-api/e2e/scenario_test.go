@@ -132,7 +132,7 @@ func newScenario(t testing.TB, roles ...string) *scenario {
 	}
 	s.ids = newScenarioIDs(keys[0])
 
-	lifecycle := scenarioLifecycle()
+	lifecycle := scenarioLifecycle(t)
 	t.Cleanup(func() {
 		s.stopWorkers(t)
 
@@ -230,12 +230,19 @@ func allocateScenarioTenant(role string) (tenant.TestKey, error) {
 	}
 }
 
-func scenarioLifecycle() *tenantlifecycle.Application {
+func scenarioLifecycle(t testing.TB) *tenantlifecycle.Application {
+	t.Helper()
 	targets, _ := fliptclient.NewTargets("local", "default", "test")
+	management, err := fliptmanagement.NewClient(fliptmanagement.Config{
+		URL: flipt.URL(), Targets: targets, HTTPClient: &http.Client{Timeout: time.Second},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	return tenantlifecycle.NewApplication(
 		api.db.Pool,
 		leaderboard.NewCache(leaderboardValkey.client, time.Second),
-		fliptmanagement.NewClient(fliptmanagement.Config{URL: flipt.URL(), Targets: targets}),
+		management,
 	)
 }
 

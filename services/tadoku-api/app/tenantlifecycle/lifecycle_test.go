@@ -53,11 +53,18 @@ func TestTenantLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	httpClient := &http.Client{Timeout: time.Second}
+	management, err := fliptmanagement.NewClient(fliptmanagement.Config{
+		URL: fliptFixture.URL(), Targets: targets, HTTPClient: httpClient,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	lifecycle := lifecyclePool(t, db)
 	application := tenantlifecycle.NewApplication(
 		lifecycle,
 		leaderboard.NewCache(client, time.Second),
-		fliptmanagement.NewClient(fliptmanagement.Config{URL: fliptFixture.URL(), Targets: targets}),
+		management,
 	)
 	key := lifecycleKey(t, "removed")
 	other := lifecycleKey(t, "preserved")
@@ -246,9 +253,15 @@ segments: []
 		t.Fatal("override accepted zero test key")
 	}
 	requestsBefore := fliptFixture.RequestCount()
+	runtimeManagement, err := fliptmanagement.NewClient(fliptmanagement.Config{
+		URL: fliptFixture.URL(), Targets: targets, HTTPClient: httpClient,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	runtimeApplication := tenantlifecycle.NewApplication(db.AppPool,
 		leaderboard.NewCache(client, time.Second),
-		fliptmanagement.NewClient(fliptmanagement.Config{URL: fliptFixture.URL(), Targets: targets}))
+		runtimeManagement)
 	if err := runtimeApplication.Provision(t.Context(), other, features); err == nil {
 		t.Fatal("runtime credentials were accepted for provisioning")
 	}
@@ -264,9 +277,15 @@ segments: []
 	if fliptFixture.RequestCount() != requestsBefore {
 		t.Fatal("runtime credentials reached the provider")
 	}
+	ownerManagement, err := fliptmanagement.NewClient(fliptmanagement.Config{
+		URL: fliptFixture.URL(), Targets: targets, HTTPClient: httpClient,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	ownerApplication := tenantlifecycle.NewApplication(db.Pool,
 		leaderboard.NewCache(client, time.Second),
-		fliptmanagement.NewClient(fliptmanagement.Config{URL: fliptFixture.URL(), Targets: targets}))
+		ownerManagement)
 	if err := ownerApplication.Teardown(t.Context(), other); err != nil {
 		t.Fatalf("owner credentials were refused for teardown: %v", err)
 	}

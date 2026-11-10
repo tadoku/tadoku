@@ -136,7 +136,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: |
           digest="$(docker buildx imagetools inspect "ghcr.io/tadoku/tadoku/frontend-webv3:$GITHUB_SHA" \
-            --format '{{json .Manifest.Digest}}' | jq -r .)"
+            --format '{{json .Manifest.Digest}}' | jq -r .)" || digest=""
           if [[ ! $digest =~ ^sha256:[0-9a-f]{64}$ ]]; then
             echo "::error::Commit $GITHUB_SHA published no Webv3 image."
             exit 1

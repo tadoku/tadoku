@@ -168,6 +168,13 @@ try {
     assert.equal(response.status, 403, `Built createLog at ${createPath} did not reject an unsafe request`)
     mutationProtection.push({ path: createPath, origin: headers.Origin || 'absent', status: response.status })
   }
+  // A tab from an earlier release calls a server function this build doesn't have: 409, never a 5xx or an SSR error.
+  const outdated = await fetch(`${base}/_serverFn/${'f'.repeat(64)}`, {
+    headers: { 'x-tsr-serverFn': 'true', 'X-Request-ID': 'smoke-outdated-build' },
+  })
+  assert.equal(outdated.status, 409, 'An unknown server function did not answer 409')
+  assert.equal(outdated.headers.get('X-Tadoku-Outdated-Build'), 'true', 'An unknown server function lost its marker')
+  assert(!docker('logs', container).includes('"correlation_id":"smoke-outdated-build"'), 'An unknown server function was logged')
   const html = await (await fetch(base, { signal: AbortSignal.timeout(15_000) })).text()
   assert(html.includes(contest.title), 'Runtime API override or SSR failed')
   assert(html.includes('https://account.tadoku.app/login'), 'Production account links missing')

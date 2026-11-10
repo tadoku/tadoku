@@ -71,7 +71,9 @@ and for a rejected request, unless the client has aborted it. An error React
 recovers from while rendering, such as one thrown by a page component, keeps the
 response's status, usually 200, and is recorded as an SSR error with its class in
 `error_type`. A request records at most one SSR error, so a render error and the
-500 it causes are one line. The framework also writes its own unstructured
+500 it causes are one line. A call to a server function this build doesn't have
+answers 409 and records nothing; see
+[status codes](webv3-status-codes.md). The framework also writes its own unstructured
 errors to stderr, thrown messages included; that stream is not covered by this
 contract.
 

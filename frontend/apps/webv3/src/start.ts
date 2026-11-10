@@ -1,5 +1,6 @@
 import { createMiddleware, createStart } from '@tanstack/react-start'
 import { getRequest, getRequestHeader, setResponseHeader } from '@tanstack/react-start/server'
+import { outdatedBuildHeader, serverFunctionFetch } from './lib/outdated-build'
 
 const requestLogging = createMiddleware().server(async ({ next }) => {
   const request = getRequest()
@@ -64,6 +65,25 @@ const trailingSlash = createMiddleware().server(({ next }) => {
   return new Response(null, { status: 308, headers: { Location: path + url.search } })
 })
 
+/** What TanStack Start throws for a server function ID this build doesn't have: built, then on the Vite server. */
+const unknownServerFunction = /^(Server function info not found for |Invalid server function ID: )/
+
+/**
+ * Answers a call to a server function this build doesn't have, as from a tab loaded before a release, with 409 rather
+ * than a 500, so it never counts as a server error; `serverFunctionFetch` then reloads that tab.
+ */
+const outdatedServerFunctions = createMiddleware().server(async ({ next, handlerType }) => {
+  if (handlerType !== 'serverFn') return next()
+  try {
+    return await next()
+  } catch (error) {
+    if (!(error instanceof Error) || !unknownServerFunction.test(error.message)) throw error
+    return new Response('This page is from an earlier version of Tadoku. Reload it to continue.', {
+      status: 409, headers: { 'Content-Type': 'text/plain; charset=utf-8', [outdatedBuildHeader]: 'true' },
+    })
+  }
+})
+
 const mutations = createMiddleware({ type: 'function' }).server(async ({ next }) => {
   const request = getRequest()
   if (!['GET', 'HEAD'].includes(request.method)) {
@@ -74,5 +94,7 @@ const mutations = createMiddleware({ type: 'function' }).server(async ({ next })
 })
 
 export const startInstance = createStart(() => ({
-  requestMiddleware: [requestLogging, securityHeaders, privateResponses, trailingSlash], functionMiddleware: [mutations],
+  requestMiddleware: [requestLogging, securityHeaders, privateResponses, trailingSlash, outdatedServerFunctions],
+  functionMiddleware: [mutations],
+  serverFns: { fetch: serverFunctionFetch },
 }))

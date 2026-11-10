@@ -59,6 +59,8 @@ It reaches the built `createLog` server function at the ID
 `vite.config.ts` hands that function to TanStack Start, so a server function's
 ID changes only when its file or variable is renamed, never with the bundler's
 output. A wrong ID answers 500 instead of the expected 403 and fails the smoke.
+An ID no build has must answer 409 with `X-Tadoku-Outdated-Build` and write no
+log line.
 It retains a browser report, container log and result with source revision and
 fixture boundary. This proves container behavior; it does not verify real API,
 authentication, DNS, ingress or deployment. Docker on Linux, Node22 and installed pnpm

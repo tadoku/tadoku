@@ -17,6 +17,7 @@ unavailable data, or when you read Webv3's 5xx responses.
 | That page's main read fails | 503 | The error page, with Try again |
 | A list, the home page, or a section beside a page's main read fails | 200 | That section's own failure state |
 | A logout the API does not confirm | 503 | Log out is unavailable, with Try again, in the app shell |
+| A call to a server function this build doesn't have, such as from a tab loaded before a release | 409 | Plain text, with `X-Tadoku-Outdated-Build: true`; the tab reloads once |
 | An unexpected server error | 500 | The error page |
 
 A loader fails its page with `pageUnavailable` from
@@ -30,6 +31,16 @@ section it can render without.
 slow profile section, an unreadable schedule beside a working home board, and a
 contest page whose main read fails or answers malformed, then recovery, through
 a local server whose API reads it can fail.
+
+`outdatedServerFunctions` in `frontend/apps/webv3/src/start.ts` answers an
+unknown server function ID with 409, so open tabs calling renamed or removed
+functions after a release never count toward the burst alert.
+`serverFunctionFetch` in `frontend/apps/webv3/src/lib/outdated-build.ts` then
+reloads that tab to load the current build. A tab that reloaded for this in the
+last five minutes, or cannot use `sessionStorage`, shows the call's failure
+instead, so a lasting mismatch cannot reload in a loop.
+`frontend/apps/webv3/e2e/stale-build.spec.ts` checks the 409, the single reload
+and the loop guard.
 
 Each 5xx response writes one `ssr_error` [server log](webv3-server-logs.md)
 line. The edge counts every 5xx toward the Webv3 5xx burst alert, which reverts

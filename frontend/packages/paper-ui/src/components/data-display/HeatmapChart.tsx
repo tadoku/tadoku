@@ -97,7 +97,7 @@ const OFFSET = { x: 30, y: 15 } as const;
 const WEEKDAYS = ["Mon", undefined, "Wed", undefined, "Fri", undefined, "Sun"] as const;
 
 // Fixed points-per-day bins keep a record day from recolouring earlier activity.
-const LEVELS = [
+export const LEVELS = [
   { level: "0", lowerBound: 0, label: "0" },
   { level: "1", lowerBound: 0, label: "Under 30" },
   { level: "2", lowerBound: 30, label: "30–99" },
@@ -427,7 +427,7 @@ function outlineForRect({ x, y, width, height, arrowX }: TooltipRect): string {
   ].join(" ");
 }
 
-function getCellDepth(value: number | undefined): "empty" | (typeof LEVELS)[number]["level"] {
+export function getCellDepth(value: number | undefined): "empty" | (typeof LEVELS)[number]["level"] {
   if (value === undefined) return "empty";
 
   // Bins follow the one-decimal precision scores are displayed with.

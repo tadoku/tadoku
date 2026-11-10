@@ -2,17 +2,15 @@ import { useQuery } from '@tanstack/react-query'
 import { useLoaderData } from '@tanstack/react-router'
 import { Button, EmptyState, Loading, SectionHeading, StatGrid, Surface, Table, buttonClassName } from 'paper-ui'
 import type { ReactNode } from 'react'
-import { memberDashboardQueries, nextContestQuery, useHomeData, type HomeData } from '../lib/home'
+import { nextContestQuery, useHomeData, type HomeData } from '../lib/home'
 import { contestEntryQuery } from '../lib/leaderboard'
 import { Person, Rank, currentRow, personLink } from './StandingsParts'
-import { formatDate, formatPeriod, numberFormat, place, pointsUnit, scoreFormat } from '../lib/format'
+import { formatDate, formatPeriod, numberFormat, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
-import { MemberContests, MemberDashboard, MemberYearTotals } from './MemberDashboard'
-import { viewerQueryOptions, type Viewer } from '../lib/session'
+import { MemberActivity, MemberDashboard } from './MemberDashboard'
+import { viewerQueryOptions } from '../lib/session'
 import { AppLink } from './router-link'
-
-const noMember: Extract<Viewer, { status: 'signed-in' }> = { status: 'signed-in', userId: '', displayName: '', role: 'user' }
 
 const dayNumber = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000) + 1
 
@@ -44,7 +42,6 @@ const hero = [
   'grid grid-cols-halves items-start gap-16 py-2 max-lg:gap-8',
   'max-tablet:grid-cols-single max-tablet:gap-8 max-tablet:pt-0',
 ].join(' ')
-const memberHero = 'grid grid-cols-halves items-start gap-x-16 py-2 max-lg:gap-x-8 max-tablet:grid-cols-single max-tablet:gap-y-6 tablet:grid-rows-docs'
 const status = 'mb-4 mt-0 text-sm font-semibold text-warning'
 const headline = 'm-0 max-w-measure-hero text-balance font-display text-hero leading-120 tracking-hero'
 const lead = 'my-6 max-w-measure-sm text-lead leading-175 text-ink max-tablet:my-5 max-tablet:text-base'
@@ -82,14 +79,16 @@ export function HomePage() {
   const joinable = contest && (phase === 'open' || phase === 'upcoming')
   const { data: viewer } = useQuery(viewerQueryOptions())
   const member = viewer?.status === 'signed-in' ? viewer : null
-  const memberStatistics = useQuery({ ...memberDashboardQueries(member ?? noMember, year)[0], enabled: member !== null }).data
-  const fresh = memberStatistics?.status === 'found' && memberStatistics.activity.ok && memberStatistics.activity.data.total_updates === 0
 
   return (
     <div className="home-page">
-      <section className={member ? memberHero : hero} aria-labelledby="home-title">
+      <section className={hero} aria-labelledby="home-title">
         {member
-          ? <MemberPromise member={member} data={data} phase={phase} fresh={Boolean(fresh)} />
+          ? (
+            <div className="min-w-0">
+              <MemberActivity viewer={member} year={year} />
+            </div>
+          )
           : (
             <div>
               {phase === 'unavailable' && <p className={status}>Contest updates are delayed</p>}
@@ -104,16 +103,10 @@ export function HomePage() {
             </div>
           )}
 
-        <Surface as="section" elevation="showcase" className={`me-1.25 min-w-0 p-0 ${member ? 'tablet:col-start-2 tablet:row-span-2 tablet:row-start-1' : ''}`} aria-labelledby="home-board-title">
+        <Surface as="section" elevation="showcase" className="me-1.25 min-w-0 p-0" aria-labelledby="home-board-title">
           <ContestBoard data={data} phase={phase} today={today} retrying={isFetching} retry={() => void refetch()} />
         </Surface>
-        {member ? (
-          <div className="min-w-0 tablet:col-start-1 tablet:row-start-2">
-            <MemberYearTotals viewer={member} year={year} />
-            <MemberContests viewer={member} year={year} />
-          </div>
-        ) : null}
-        {member ? <MemberDashboard viewer={member} year={year} className="col-span-full mt-8" /> : null}
+        {member ? <MemberDashboard viewer={member} year={year} boardContestId={contest?.id} className="col-span-full mt-8" /> : null}
       </section>
 
       {member ? null : (
@@ -150,53 +143,6 @@ export function HomePage() {
 }
 
 
-/** A signed-in learner's hero: where they stand in the current round and the one action that moves it. */
-function MemberPromise({ member, data, phase, fresh }: {
-  member: Extract<Viewer, { status: 'signed-in' }>
-  data: HomeData | undefined
-  phase: Phase
-  fresh: boolean
-}) {
-  const links = useLinks()
-  const contest = data?.latestContest
-  const running = contest && (phase === 'open' || phase === 'live' || phase === 'upcoming')
-  const { registration, registered } = useParticipation(running ? contest.id : undefined)
-  const entry = useViewerEntry(running ? contest.id : undefined, member.userId)
-  const joinable = running && registration?.kind === 'not-registered' && (phase === 'open' || phase === 'upcoming')
-
-  let title: string
-  let summary: string
-  if (running && entry) {
-    title = `${entry.is_tie ? 'Tied ' : ''}${place(entry.rank)} place`
-    const field = data?.summary ? ` Out of ${numberFormat.format(data.summary.participant_count)} participants.` : ''
-    summary = `${scoreFormat.format(entry.score)} ${pointsUnit(entry.score)} in ${contest.title}.${field}`
-  } else if (running && registered) {
-    title = `You’re in ${contest.title}`
-    summary = phase === 'upcoming' ? `The round starts ${formatDate(contest.contest_start)}.` : 'Log what you read and listen to.'
-  } else if (joinable) {
-    title = `${contest.title} is open`
-    summary = `Registration closes ${formatDate(contest.registration_end)}.`
-  } else {
-    title = `Welcome back, ${member.displayName}`
-    summary = 'Log what you read and listen to today.'
-  }
-
-  return (
-    <div>
-      {phase === 'unavailable' && <p className={status}>Contest updates are delayed</p>}
-      <h1 id="home-title" className={headline}>{title}</h1>
-      <p className={lead}>{summary}</p>
-      {/* Log activity is already the header's action; the hero adds Join only while the member can still join. */}
-      {joinable ? (
-        <div className={actions}>
-          <AppLink href={links.joinContest(contest.id)} className={buttonClassName()}>Join contest</AppLink>
-          {fresh ? <AppLink className="text-link hover:text-link-hover" href={links.logs}>Log your first activity</AppLink> : null}
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
 /** The viewer's place on the round's board at any rank; undefined when they aren't on it or it can't be read. */
 function useViewerEntry(contestId: string | undefined, userId: string | undefined) {
   const entry = useQuery({ ...contestEntryQuery(contestId ?? '', userId ?? ''), enabled: Boolean(contestId && userId) }).data
@@ -214,6 +160,8 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
   const { data: viewer } = useQuery(viewerQueryOptions())
   const viewerId = viewer?.status === 'signed-in' ? viewer.userId : undefined
   const viewerEntry = useViewerEntry(data?.latestContest?.id, viewerId)
+  // Guests get Join in the hero; a signed-in learner who hasn't joined gets it on the board.
+  const { registration } = useParticipation(phase === 'open' || phase === 'upcoming' ? data?.latestContest?.id : undefined)
   if (phase === 'loading') {
     return <>
       <SectionHeading level={2} id="home-board-title" className={ledgerHeader} title="Current contest" />
@@ -247,9 +195,16 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
   }
 
   const length = dayNumber(contest.contest_start, contest.contest_end)
-  const header = (description: string, action: ReactNode) => (
+  const join = registration?.kind === 'not-registered' ? (
+    <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3 border-b border-rule px-ledger-inset py-4">
+      <p className="m-0 text-metadata leading-160 text-muted">Registration closes {formatDate(contest.registration_end)}.</p>
+      <AppLink href={links.joinContest(contest.id)} className={buttonClassName()}>Join contest</AppLink>
+    </div>
+  ) : null
+  const header = (description: string, action: ReactNode) => <>
     <SectionHeading level={2} id="home-board-title" className={ledgerHeader} title={contest.title} description={description} actions={action} />
-  )
+    {join}
+  </>
 
   if (phase === 'upcoming') {
     const activities = contest.allowed_activities.map(({ name }, index) => index ? name.toLowerCase() : name).join(' & ')

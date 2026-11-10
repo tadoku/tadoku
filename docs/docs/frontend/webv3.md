@@ -13,13 +13,17 @@ page at the same paths, so cutover is a host switch, and its links leave the hos
 only for the account and admin applications, the log export download and
 external sites. Its homepage follows the Paper playground composition and reads the current official contest, summary,
 standings and next scheduled round from the configured Tadoku API. Guests see
-the introduction and how Tadoku works; a signed-in learner sees their place and
-points in the current round, or whether they have joined it, with the year's
-points, today's points, logs and active days beside it. Below come the activity
-calendar, their five newest logs and this year's contests, unfinished ones
-first, ordered within the first page of the year's registrations. The next
-round is its own read with its own failure state, and their place comes from
-the leaderboard entry at any rank. The home route's loader prefetches all of
+the introduction and how Tadoku works. A signed-in learner who has cleared
+"Getting going" sees their past 30 UTC days beside the round's board: points,
+today's points, streak, active days and a 13-week activity map. They have
+cleared it once their activity shows 5 active days within 30, or two active
+days in a row while in a contest, and keep the map from then on.
+Until then the column lists those steps. The page reads last year's
+statistics too while the map reaches back into last year. The board marks
+their own row at any rank and offers Join while they can still join. Below come
+this year's running and upcoming contests other than the board's, ending
+soonest first and read from the first page of the year's registrations, and
+their five newest logs; the year calendar stays on the profile. The next round is its own read with its own failure state. The home route's loader prefetches all of
 this, so it renders on the server. [Native activity logging](webv3-logging.md), including a saved log's contest submissions, uses the existing account session and API.
 The latest official, yearly and all-time [leaderboards](webv3-leaderboards.md)
 read their standings from the API, and the Official, Community, Joined and Organizing
@@ -232,8 +236,9 @@ Webv2 to Webv3 before the host switch, and how to turn it off.
 
 [Webv3 checks and browser tests](webv3-testing.md) lists the checks, the
 browser suite and the fixture accounts its specs use. `home-values.spec.ts`
-compares a signed-in learner's place, points, year totals and newest logs on the
-homepage with the API. `webv2-urls.spec.ts` opens every Webv2 route shape,
+compares a signed-in learner's past 30 days, activity map, board row and newest
+logs on the homepage with the API, and checks that a new account keeps Getting going
+until every step is done. `webv2-urls.spec.ts` opens every Webv2 route shape,
 with and without page numbers, without JavaScript, and checks page links,
 `/contests`'s and trailing slashes' permanent redirects and session-only redirects.
 

@@ -4,7 +4,7 @@ import { standingRows } from './standings'
 test('a member walks home, contest, standings, profile, logging and the saved log without leaving Webv3', async ({ learner, adminContext }, testInfo) => {
   test.skip(!webv3 || !api || !admin.email, 'Set development URLs and the Dev Admin fixture account')
   test.setTimeout(90_000)
-  // A new account's home lists the contest it joined; Dev Reader's lists only its oldest five unfinished contests.
+  // A new account's home lists the contest it joined; Dev Reader's lists only the five running contests ending soonest.
   // Joined and logged to in setup, so the journey doesn't rely on a seeded round or its dates.
   const { context, name: member, id: memberId } = learner
   const { id: contestId, title: contestTitle, registrationId } = await joinedContest(adminContext, context)
@@ -22,8 +22,9 @@ test('a member walks home, contest, standings, profile, logging and the saved lo
 
   await page.goto('/')
   await expect(page.getByRole('button', { name: member, exact: true })).toBeVisible()
-  // A member's home carries their year, newest updates and contests under the hero.
-  for (const heading of [`Your ${new Date().getUTCFullYear()}`, 'Recent activity', 'Your contests']) {
+  // A new member's home leads with the getting-going steps, with their contests and newest updates below.
+  await expect(page.getByRole('heading', { level: 1, name: 'Getting going', exact: true })).toBeVisible()
+  for (const heading of ['Your contests', 'Recent activity']) {
     await expect(page.getByRole('heading', { level: 2, name: heading, exact: true })).toBeVisible()
   }
   // Having joined a contest this year, the home page links to it and to everything they joined.

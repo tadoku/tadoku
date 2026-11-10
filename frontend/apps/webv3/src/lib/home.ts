@@ -77,3 +77,7 @@ export const memberDashboardQueries = (viewer: Extract<Viewer, { status: 'signed
   profileStatisticsQuery({ userId: viewer.userId, year, page: 1 }, viewerKey(viewer)),
   recentLogsQuery(viewer.userId),
 ] as const
+
+/** Last year's statistics, which the home page reads only while its activity map reaches back into last year. */
+export const lastYearStatisticsQuery = (viewer: Extract<Viewer, { status: 'signed-in' }>, year: number) =>
+  profileStatisticsQuery({ userId: viewer.userId, year: year - 1, page: 1 }, viewerKey(viewer))

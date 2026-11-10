@@ -52,6 +52,11 @@ async function submitLog(context: BrowserContext, contestId: string, amount: num
   return await created.json() as Log
 }
 
+async function todayTotal(request: APIRequestContext, userId: string) {
+  const { scores } = await apiJson<{ scores: { date: string; score: number }[] }>(request, `/immersion/users/${userId}/activity/${year}`)
+  return scores.find(day => day.date === new Date().toISOString().slice(0, 10))?.score ?? 0
+}
+
 async function yearTotal(request: APIRequestContext, userId: string) {
   const { scores } = await apiJson<{ scores: { score: number }[] }>(request, `/immersion/users/${userId}/scores/${year}`)
   return scores.reduce((sum, item) => sum + item.score, 0)
@@ -64,6 +69,7 @@ const banner = (page: Page, name: string) => page.getByRole('banner').getByRole(
 const contestViews = (page: Page, name: string) => page.getByRole('navigation', { name: 'Contest views' }).getByRole('link', { name, exact: true })
 const submissions = (page: Page) => page.getByRole('region', { name: 'Contests' })
 const overallScore = (page: Page) => statValue(page, 'Overall score')
+const homeToday = (page: Page) => statValue(page, 'Today')
 const rowScore = (page: Page, name: string) => standingRows(page).filter({ hasText: name }).getByRole('cell').last()
 const feedEntry = (page: Page, logId: string) => linkTo(page, `/logs/${logId}`)
 
@@ -90,7 +96,7 @@ test('saving a log and submitting it refreshes standings, the feed, home and pro
   await contestViews(page, 'Activity').click()
   await expect(feedEntry(page, seed.id)).toBeVisible()
   await banner(page, 'Home').click()
-  await expect(overallScore(page)).toBeVisible()
+  await expect(homeToday(page)).toBeVisible()
   await page.getByRole('link', { name: 'Your profile', exact: true }).click()
   await expect(page).toHaveURL(/\/statistics$/)
   await expect(overallScore(page)).toBeVisible()
@@ -110,6 +116,7 @@ test('saving a log and submitting it refreshes standings, the feed, home and pro
   const after = await contestScore(readerContext.request, contest.id, readerId)
   expect(after, 'the save added to the contest score').toBeGreaterThan(before)
   const total = await yearTotal(readerContext.request, readerId)
+  const today = await todayTotal(readerContext.request, readerId)
 
   // Back through the router: every page shows the save.
   await submissions(page).getByRole('link', { name: contest.title, exact: true }).click()
@@ -118,7 +125,7 @@ test('saving a log and submitting it refreshes standings, the feed, home and pro
   await contestViews(page, 'Activity').click()
   await expect.soft(feedEntry(page, logId), 'contest feed').toBeVisible(soon)
   await banner(page, 'Home').click()
-  await expect.soft(overallScore(page), 'home totals').toContainText(score.format(total), soon)
+  await expect.soft(homeToday(page), 'home today').toContainText(score.format(today), soon)
   await page.getByRole('link', { name: 'Your profile', exact: true }).click()
   await expect(page).toHaveURL(/\/statistics$/)
   await expect.soft(overallScore(page), 'profile totals').toContainText(score.format(total), soon)

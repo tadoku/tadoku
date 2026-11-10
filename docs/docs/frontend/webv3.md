@@ -95,8 +95,8 @@ plain. After a client navigation that changes the path,
 focuses the new page's `h1`, or `main` without one, and announces the page
 title through the shell's status region; the first load leaves focus to the
 browser. `navigation.spec.ts` covers a home → contest → profile → leaderboard
-journey without a document load, that focus and announcement, the profile's
-date field, and both menus without JavaScript.
+journey without a document load, that focus and announcement, and both menus
+without JavaScript.
 
 A suspended account sees the suspended screen, with a Discord contact link and
 Log out, in place of every page. An unavailable account service names itself

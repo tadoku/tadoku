@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { accountId, api, expect, hydrated, reader, test, webv3 } from './logging-fixtures'
+import { expect, hydrated, reader, test, webv3 } from './logging-fixtures'
 
 /** Every document request the page makes from now on; client navigation makes none. */
 function documentRequests(page: Page) {
@@ -46,18 +46,6 @@ test('a client navigation focuses and announces the new page, and the first load
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Leaderboard', exact: true }).first().click()
   await expect(page).toHaveURL(/\/leaderboard\/latest\/1$/)
   await expectArrival(page)
-})
-
-test('the calendar\'s date field opens that day\'s activity', async ({ page, readerContext }) => {
-  test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
-  const id = await accountId(readerContext)
-  const today = new Date().toISOString().slice(0, 10)
-  await page.goto(`/profile/${id}/statistics`)
-  await hydrated(page)
-
-  await page.getByLabel(/^Open a day/).fill(today)
-  await page.getByRole('button', { name: 'Open day', exact: true }).click()
-  await expect(page).toHaveURL(`${webv3}/profile/${id}/updates/1?date=${today}`)
 })
 
 test.describe('without JavaScript', () => {

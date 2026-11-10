@@ -15,6 +15,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'develop/toolchain',
         'develop/ci-workflows',
+        'develop/webv3-release-gate',
         'develop/race-tests',
         'develop/query-climb',
         'develop/environment',

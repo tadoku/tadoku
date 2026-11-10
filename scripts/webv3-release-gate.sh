@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The Webv3 release gate, run by build-frontend-webv3.yaml and by hand; see
-# docs/docs/develop/ci-workflows.md#webv3-release-gate.
+# docs/docs/develop/webv3-release-gate.md.
 #
 #   webv3-release-gate.sh deploy <sha256:digest> <evidence-dir>
 #   webv3-release-gate.sh test <evidence-dir>

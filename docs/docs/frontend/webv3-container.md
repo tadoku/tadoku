@@ -68,7 +68,7 @@ are required. The command removes only its own container.
 on pull requests. Main publishes immutable commit and `latest` tags to
 `ghcr.io/tadoku/tadoku/frontend-webv3`. The publication job rebuilds the image;
 its digest can differ from the smoke-checked image. The
-[release gate](../develop/ci-workflows.md#webv3-release-gate) then runs the
+[release gate](../develop/webv3-release-gate.md) then runs the
 credentialed suite against the published digest on a development tenant and,
 when it passes, tags that same digest `prod` without rebuilding. No pull request
 publishes an image.

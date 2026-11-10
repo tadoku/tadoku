@@ -157,7 +157,7 @@ jobs:
     name: webv3 / release gate
     needs: publish
     # A dedicated scale-to-zero runner set that admits only this workflow from main, reaches only the development
-    # ingress and API server and mounts the gate's credentials. See docs/docs/develop/ci-workflows.md#webv3-release-gate.
+    # ingress and API server and mounts the gate's credentials. See docs/docs/develop/webv3-release-gate.md.
     runs-on: tadoku-release-gate
     timeout-minutes: 100
     permissions:

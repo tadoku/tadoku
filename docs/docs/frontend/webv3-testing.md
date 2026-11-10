@@ -64,7 +64,7 @@ Without the Dev Reader credentials, tests that need an account skip; the
 container smoke runs that way.
 
 Every Webv3 release runs the whole suite this way first: the
-[release gate](../develop/ci-workflows.md#webv3-release-gate) deploys a fresh
+[release gate](../develop/webv3-release-gate.md) deploys a fresh
 branch tenant whose Webv3 host is served by the development base running the
 published image, and tags `prod` only when the suite passes there with no skip
 outside the gate's allowlist. A spec must therefore pass against the built

@@ -59,6 +59,22 @@ func TestImmersionContestListLogs(t *testing.T) {
 		{description: []string{"deleted", "contest", "admin"}, want: http.StatusNotFound},
 		{description: []string{"missing", "owner"}, want: http.StatusNotFound},
 		{description: []string{"invalid", "contest", "catalog"}, want: http.StatusOK},
+		{description: []string{"filter", "language"}, want: http.StatusOK},
+		{description: []string{"filter", "activity"}, want: http.StatusOK},
+		{description: []string{"filter", "two", "activities"}, want: http.StatusOK},
+		{description: []string{"filter", "tag"}, want: http.StatusOK},
+		{description: []string{"filter", "two", "tags"}, want: http.StatusOK},
+		{description: []string{"filter", "tags", "matching", "one", "log"}, want: http.StatusOK},
+		{description: []string{"filter", "activity", "and", "tag"}, want: http.StatusOK},
+		{description: []string{"filter", "comma", "tag"}, want: http.StatusOK},
+		{description: []string{"filter", "no", "match"}, want: http.StatusOK},
+		{description: []string{"filter", "user", "page"}, want: http.StatusOK},
+		{description: []string{"malformed", "activity", "filter"}, want: http.StatusBadRequest},
+		{description: []string{"activity", "filter", "below", "minimum"}, want: http.StatusBadRequest},
+		{description: []string{"activity", "filter", "above", "maximum"}, want: http.StatusBadRequest},
+		{description: []string{"too", "many", "tags"}, want: http.StatusBadRequest},
+		{description: []string{"too", "many", "languages"}, want: http.StatusBadRequest},
+		{description: []string{"long", "tag"}, want: http.StatusBadRequest},
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionContestListLogs", test.want, test.description...)

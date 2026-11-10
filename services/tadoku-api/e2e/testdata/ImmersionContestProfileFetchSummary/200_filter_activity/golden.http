@@ -1,0 +1,6 @@
+>>> GET /immersion/contests/f1111111-1111-4111-8111-111111111111/profile/11111111-1111-4111-8111-111111111111/summary?activity=1
+HTTP/1.1 200 OK
+Content-Length: 523
+Content-Type: application/json; charset=UTF-8
+
+{"active_days":3,"activities":[{"id":1,"name":"Reading","score":22},{"id":2,"name":"Listening","score":11.5},{"id":3,"name":"Writing","score":3}],"best_day":{"date":"2025-12-31","score":10},"days":[{"activity_id":1,"date":"2025-12-31","score":10},{"activity_id":1,"date":"2026-01-01","score":2},{"activity_id":1,"date":"2027-01-01","score":10}],"languages":[{"code":"jpn","name":"Japanese","score":22}],"log_count":3,"score":22,"tags":[{"log_count":1,"score":2,"tag":"alpha"},{"log_count":1,"score":2,"tag":"comma, tag"}]}

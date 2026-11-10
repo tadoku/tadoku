@@ -273,6 +273,12 @@ accepts the old session cookie. Set
 `TADOKU_API_URL` to the branch's public API root for that check. Authenticated
 tests disable traces and videos and retain no browser storage.
 
+## Cutover
+
+[Webv3 cutover runbook](webv3-cutover.md) covers moving `tadoku.app` from Webv2
+to Webv3: what to change before and during the host switch, how to verify it,
+how to roll it back and what to check when an auto-revert fires.
+
 ## Headers, indexing and sharing
 
 [Headers, indexing and sharing](webv3-indexing.md) covers the security headers

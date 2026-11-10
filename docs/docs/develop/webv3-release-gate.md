@@ -58,9 +58,9 @@ Dev Reader and Dev Admin, on a fresh development tenant. Its jobs run in order:
 3. **Promote** runs after every gate result except in a cancelled run. It
    refuses unless the gate passed on the published digest and that digest is
    still `latest`, so an older run, or a re-run of one after a newer push,
-   cannot move `prod`. Only a push's first attempt builds and pushes; any
-   re-run gates the image its commit already published, and a dispatch gates
-   `latest`. It copies the
+   cannot move `prod`. Only a push's first attempt builds and pushes. A re-run
+   of a push gates the image its commit already published; a dispatch, and a
+   re-run of one, resolves `latest` again. It copies the
    digest to `prod` with `docker buildx imagetools create`, which pushes the
    same manifest without rebuilding, then reads `prod` back and fails unless it
    names that digest.
@@ -78,16 +78,18 @@ base that never rolls out the digest or a hung suite, ends in a failed or
 timed-out job, so it blocks the release. One failure is quiet: when no runner
 picks the job up, GitHub keeps it queued for up to 24 hours before failing it,
 and the workflow's later runs wait behind it. To release a blocked commit, fix
-the cause and use **Re-run failed jobs**, which tests the same digest again,
-or merge a fix. A re-run can only re-gate an image its commit already
-published: when a push's check or publish job failed before the image was
+the cause and use **Re-run failed jobs** on the push's run, which tests the
+same digest again, or merge a fix. A push's re-run can only re-gate an image
+its commit already published: when a push's check or publish job failed before the image was
 pushed, that commit needs a new push to `main` that touches one of the
 workflow's watched paths.
 
 The suite refuses a committed `test.only`, so a focused test cannot pass the
-gate in place of the whole suite. The branch tenant runs the candidate commit's
-API, while production may still run an older one, so a Webv3 change that needs
-an API change production does not have yet can pass the gate.
+gate in place of the whole suite. The suite and the branch tenant's API come
+from the workflow's revision: the pushed commit, or `main`'s head for a
+dispatch, which can be newer than the commit that built `latest`. Production may
+still run an older API, so a Webv3 change that needs an API change production
+does not have yet can pass the gate.
 
 ## Dry runs
 

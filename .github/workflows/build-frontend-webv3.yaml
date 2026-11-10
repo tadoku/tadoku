@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: Gate this commit's published image and report the decision and digest without moving prod
+        description: Gate the current candidate, latest, and report the decision and digest without moving prod
         type: boolean
         default: true
       force_failure:

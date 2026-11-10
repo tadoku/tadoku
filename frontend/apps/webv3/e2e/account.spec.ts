@@ -101,7 +101,7 @@ test('an expired session cookie renders anonymous', async ({ context, page, logi
   await expect(page.getByRole('link', { name: 'Log in', exact: true })).toBeVisible()
 })
 
-test('thirty interleaved requests isolate two identities and anonymous HTML', async ({ browser, loginLearner, adminContext }) => {
+test('thirty interleaved requests isolate two identities and anonymous HTML', async ({ browser, loginLearner, adminContext, adminCookies }) => {
   test.setTimeout(90_000)
   test.skip(!admin.email, 'Set E2E_SECOND_EMAIL and E2E_SECOND_PASSWORD')
   const [learner, anonymous] = await Promise.all([browser.newContext(), browser.newContext()])
@@ -123,8 +123,8 @@ test('thirty interleaved requests isolate two identities and anonymous HTML', as
       if (kind === 2) expect(html).toContain('>Log in<')
     }))
     await logOut(page, loginLearner)
-    await page.getByRole('link', { name: 'Log in', exact: true }).click()
-    await authenticate(page, admin)
+    await learner.addCookies(adminCookies)
+    await page.reload()
     await expect(page.getByRole('button', { name: 'Dev Admin', exact: true })).toBeVisible()
     expect(await page.getByRole('navigation', { name: 'Main navigation' }).textContent()).not.toContain(loginLearner.name)
 

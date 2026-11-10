@@ -1,5 +1,6 @@
+import { randomUUID } from 'node:crypto'
 import type { APIRequestContext, BrowserContext, Page } from '@playwright/test'
-import { accountId, admin, api, expect, reader, test, webv3 } from './logging-fixtures'
+import { accountId, admin, api, contestRows, expect, hydrated, reader, test, webv3 } from './logging-fixtures'
 
 interface Contest {
   id: string
@@ -36,14 +37,14 @@ function statuses(contest: Contest, today = new Date().toISOString().slice(0, 10
 
 /** Every API contest is a row in the API's order, linking to its contest page, with its privacy and status tags. */
 async function expectRows(page: Page, data: Contests, pageNumber = 1) {
-  const rows = page.locator('.contest-row')
+  const rows = contestRows(page)
   await expect(rows).toHaveCount(data.contests.length)
   for (const [index, contest] of data.contests.entries()) {
     const row = rows.nth(index)
     await expect(row.getByRole('heading', { level: 2 })).toHaveText(contest.title)
     await expect(row.getByRole('link', { name: contest.title, exact: true }))
       .toHaveAttribute('href', `/contests/${contest.id}/leaderboard/1`)
-    await expect(row.locator('.contest-row__title .paper-status-tag')).toHaveText(statuses(contest))
+    await expect(row.getByText(/^(Ended|Live now|Upcoming|Unlisted)$/)).toHaveText(statuses(contest))
   }
   if (data.total_size === 0) {
     await expect(page.getByRole('main').getByRole('heading', { level: 2 })).toHaveText(/No contests found|You don’t organize any contests yet/)
@@ -51,32 +52,30 @@ async function expectRows(page: Page, data: Contests, pageNumber = 1) {
   }
   const first = (pageNumber - 1) * pageSize + 1
   // The range summary appears only beside page links.
-  await expect(page.locator('.contests-pagination > p')).toHaveText(data.total_size > pageSize
+  await expect(page.getByText(/ of [\d,]+ contests$/)).toHaveText(data.total_size > pageSize
     ? [`${count.format(first)}–${count.format(first + data.contests.length - 1)} of ${count.format(data.total_size)} contests`]
     : [])
   await expect(page.getByRole('navigation', { name: 'Contest pages', exact: true })).toHaveCount(data.total_size > pageSize ? 1 : 0)
 }
 
-async function hydrated(page: Page) {
-  await expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled()
-}
-
-/** Gives Dev Admin more than one page of community contests in the selected tenant, one of them unlisted. */
+/**
+ * Gives Dev Admin more than one page of community contests in the selected tenant and one new unlisted contest. The
+ * list is newest first, so the new contest is on the first page however many the tenant has accumulated.
+ */
 async function ensureOrganizerPages(context: BrowserContext) {
   const userId = await accountId(context)
   const owned = await contests(context.request, false, 1, userId)
   const year = new Date().getUTCFullYear()
   const today = new Date().toISOString().slice(0, 10)
-  for (let index = owned.total_size; index < pageSize + 2; index++) {
-    const kind = index % 3
+  const create = async (title: string, kind: number, unlisted: boolean) => {
     const response = await context.request.post(`${api}/immersion/contests`, {
       data: {
-        title: `Webv3 list check ${index + 1}`,
+        title,
         description: 'Created by the Webv3 contest list journey.',
         contest_start: kind === 0 ? `${year - 1}-01-01` : kind === 1 ? today : `${year + 1}-01-01`,
         contest_end: kind === 0 ? `${year - 1}-01-31` : kind === 1 ? `${year + 1}-01-31` : `${year + 1}-01-31`,
         registration_end: kind === 0 ? `${year - 1}-01-15` : `${year + 1}-01-15`,
-        private: index === 0,
+        private: unlisted,
         official: false,
         language_code_allow_list: ['jpn'],
         activity_type_id_allow_list: [1, 2],
@@ -84,7 +83,10 @@ async function ensureOrganizerPages(context: BrowserContext) {
     })
     expect(response.ok(), `contest creation answered ${response.status()}`).toBeTruthy()
   }
-  return userId
+  for (let index = owned.total_size; index < pageSize + 2; index++) await create(`Webv3 list check ${index + 1}`, index % 3, false)
+  const newest = `Webv3 organizer check ${randomUUID().slice(0, 8)}`
+  await create(newest, 1, true)
+  return { userId, newest }
 }
 
 /** One page of the signed-in user's registrations, shaped like a contest list. */
@@ -153,7 +155,7 @@ test('server-rendered official and community lists show the API contests and lin
     await expect(page.getByRole('link', { name: 'Contests', exact: true }).first()).toHaveAttribute('href', '/contests/official/1')
     // Guests see no create action and no restrictions, as in Webv2; a row may still name its deadline.
     await expect(page.getByRole('link', { name: 'Create contest' })).toHaveCount(0)
-    for (const meta of await page.locator('.contest-row__allows').allTextContents()) {
+    for (const meta of await contestRows(page).locator('p > span').allTextContents()) {
       expect(meta).toMatch(/^Registration closes \d+ \w+ \d{4}$/)
     }
     await expectRows(page, data)
@@ -207,14 +209,14 @@ test('collection tabs, pages and the signed-out Joined and Organizing prompts wo
   const login = new URL((await page.locator('main').getByRole('link', { name: 'Log in', exact: true }).getAttribute('href'))!)
   expect(login.pathname).toBe('/login')
   expect(login.searchParams.get('return_to')).toBe(page.url())
-  await expect(page.locator('.contest-row')).toHaveCount(0)
+  await expect(contestRows(page)).toHaveCount(0)
   await page.screenshot({ path: testInfo.outputPath('my-contests-anonymous.png'), fullPage: true })
   expect(failures).toEqual([])
 })
 
 test('an organizer pages through their own contests, unlisted ones included, and can open contest creation', async ({ adminContext }, testInfo) => {
   test.skip(!admin.email || !admin.password, 'Set E2E_SECOND_EMAIL and E2E_SECOND_PASSWORD')
-  const userId = await ensureOrganizerPages(adminContext)
+  const { userId, newest } = await ensureOrganizerPages(adminContext)
   const page = await adminContext.newPage()
   const mine = await contests(adminContext.request, false, 1, userId)
   expect(mine.total_size).toBeGreaterThan(pageSize)
@@ -224,9 +226,9 @@ test('an organizer pages through their own contests, unlisted ones included, and
   await expectRows(page, mine)
   await expect(page.getByRole('link', { name: 'Create contest' })).toHaveAttribute('href', '/contests/new')
   // Signed-in community and organizer lists name the restrictions, as Webv2 does.
-  const restricted = page.locator('.contest-row').filter({ hasText: 'Webv3 list check' }).first().locator('.contest-row__allows')
-  await expect(restricted.filter({ hasText: /^Japanese$/ })).toBeVisible()
-  await expect(restricted.filter({ hasText: /^Reading, Listening$/ })).toBeVisible()
+  const restricted = contestRows(page).filter({ has: page.getByRole('heading', { name: newest, exact: true }) })
+  await expect(restricted.getByText('Japanese', { exact: true })).toBeVisible()
+  await expect(restricted.getByText('Reading, Listening', { exact: true })).toBeVisible()
   await page.screenshot({ path: testInfo.outputPath('my-contests-organizer.png'), fullPage: true })
 
   await hydrated(page)

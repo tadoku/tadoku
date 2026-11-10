@@ -45,7 +45,7 @@ export function LogEntries({ logs, total, page, pageHref, empty, showParticipant
           <Pagination label="Update pages, top" totalPages={pages} currentPage={page} getHref={pageHref} renderLink={renderLink} classNames={{ list: 'flex-wrap' }} />
         </div>
       ) : null}
-      <ol className={entries.root({ className: 'profile-entries' })}>
+      <ol className={entries.root({ className: 'profile-entries' })} aria-label="Activity">
         {logs.map((log, index) => (
           <Entry
             key={log.id}

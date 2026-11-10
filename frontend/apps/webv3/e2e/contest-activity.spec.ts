@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { APIRequestContext, BrowserContext, Page } from '@playwright/test'
-import { accountId, admin, api, expect, reader, test, webv3 } from './logging-fixtures'
-import { apiJson, score } from './standings'
+import { accountId, activityEntries, admin, api, expect, linkTo, logLinks, reader, statValues, test, webv3 } from './logging-fixtures'
+import { apiJson, score, standingRows } from './standings'
 
 interface Contest { id: string; title: string }
 interface Log { id: string; description?: string; tags: string[]; language: { name: string }; activity: { name: string }; user_display_name?: string }
@@ -20,36 +20,35 @@ function contestLogs(request: APIRequestContext, contestId: string, page = 1, us
   return apiJson<Logs>(request, `/immersion/contests/${contestId}/logs?${query}`)
 }
 
-const entries = (page: Page) => page.locator('.profile-entries > li')
 const removeButtons = (page: Page) => page.getByRole('button', { name: 'Remove from contest' })
 
 /** The page lists exactly the API's logs in order, each linking to its native detail page and naming its learner. */
 async function expectLogs(page: Page, expected: Logs, participants: boolean) {
-  const titles = page.locator('.profile-entries > li a.profile-entry-title')
+  const titles = logLinks(page)
   await expect(titles).toHaveCount(expected.logs.length)
   // Retried: after a client navigation the URL changes before the new page's rows replace the old ones.
   await expect.poll(() => titles.evaluateAll(links => links.map(link => link.getAttribute('href'))))
     .toEqual(expected.logs.map(log => `/logs/${log.id}`))
   if (participants) {
-    await expect(page.locator('.profile-entries > li')).toContainText(expected.logs.map(log => log.user_display_name ?? 'Unknown user'))
+    await expect(activityEntries(page)).toContainText(expected.logs.map(log => log.user_display_name ?? 'Unknown user'))
   }
   // The range summary appears only beside page links.
   if (expected.total_size > 25) {
-    await expect(page.locator('.profile-entries-footer > p')).toHaveText(new RegExp(`of ${expected.total_size} logs$`))
+    await expect(page.getByText(new RegExp(`of ${expected.total_size} logs$`))).toBeVisible()
   } else {
-    await expect(page.locator('.profile-entries-footer')).toHaveCount(0)
+    await expect(page.getByText(/ of [\d,]+ logs$/)).toHaveCount(0)
   }
 }
 
 
 /** The page's overall score and each registered language's score agree with the API's contest profile. */
 async function expectScores(page: Page, profile: Profile) {
-  const stats = page.locator('.profile-stats')
+  const stats = statValues(page)
   const total = profile.scores.reduce((sum, item) => sum + item.score, 0)
-  await expect(page.locator('.paper-page-header__lead')).toContainText(score.format(total))
+  await expect(page.getByText(new RegExp(`${score.format(total).replace('.', '\\.')} points? in `))).toBeVisible()
   const languages = profile.registration.languages
   if (languages.length > 1) {
-    await expect(stats.locator('.paper-stat-grid__value')).toHaveText(languages.map(language =>
+    await expect(stats).toHaveText(languages.map(language =>
       score.format(profile.scores.find(item => item.language_code === language.code)?.score ?? 0)))
   } else {
     await expect(stats).toHaveCount(0)
@@ -91,7 +90,7 @@ test('the server-rendered updates feed lists the API\'s contest logs, pages thro
     await expect(live.getByRole('heading', { name: 'This page is past the end of the activity' })).toBeVisible()
     await live.goto(updatesPath(contest.id))
     const entry = first.logs[0]
-    await live.locator(`a.profile-entry-title[href="/logs/${entry.id}"]`).click()
+    await linkTo(live, `/logs/${entry.id}`).click()
     await expect(live).toHaveURL(new RegExp(`/logs/${entry.id}$`))
     await expect(live.getByRole('heading', { level: 1 })).toBeVisible()
     await expect(live.getByRole('link', { name: 'Edit log' })).toHaveCount(0)
@@ -99,17 +98,18 @@ test('the server-rendered updates feed lists the API\'s contest logs, pages thro
   await live.close()
 })
 
-test('a standings participant opens their contest profile, with the API\'s scores and logs', async ({ page, request }, testInfo) => {
-  const contest = await latest(request)
+test('a standings participant opens their contest profile, with the API\'s scores and logs', async ({ page, request, readerContext, adminContext }, testInfo) => {
+  test.skip(!reader.email || !admin.email, 'Set both development fixture identities')
+  const contest = await createContest(adminContext)
+  await submitLog(readerContext, contest.id, `webv3-participant-${randomUUID().slice(0, 8)}`)
   const standings = await apiJson<{ entries: { user_id: string; user_display_name: string }[] }>(
     request,
     `/immersion/contests/${contest.id}/leaderboard?page_size=50&page=0`,
   )
-  test.skip(standings.entries.length === 0, 'The latest official contest has no participants')
   const participant = standings.entries[0]
 
   await page.goto(`/contests/${contest.id}/leaderboard/1`)
-  await page.locator('.standings-table').getByRole('link', { name: participant.user_display_name, exact: true }).click()
+  await standingRows(page).getByRole('link', { name: participant.user_display_name, exact: true }).click()
   await expect(page).toHaveURL(new RegExp(`${profilePath(contest.id, participant.user_id)}$`))
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(participant.user_display_name)
   await expect(page).toHaveTitle(`${participant.user_display_name} · ${contest.title} · Tadoku`)
@@ -155,15 +155,15 @@ test('the updates feed and a contest profile fit at 390px', async ({ page, reque
 })
 
 /** A contest created through the API as the context's account, open today. */
-async function createContest(context: BrowserContext): Promise<Contest> {
+async function createContest(context: BrowserContext, days = 30): Promise<Contest> {
   const title = `Webv3 moderation check ${randomUUID().slice(0, 8)}`
   const response = await context.request.post(`${api}/immersion/contests`, {
     data: {
       title,
       description: 'Created by the Webv3 contest moderation journey.',
       contest_start: day(),
-      contest_end: day(30),
-      registration_end: day(14),
+      contest_end: day(days),
+      registration_end: day(days - 16),
       private: false,
       official: false,
       language_code_allow_list: null,
@@ -172,6 +172,21 @@ async function createContest(context: BrowserContext): Promise<Contest> {
   })
   expect(response.ok(), `contest creation answered ${response.status()}`).toBeTruthy()
   return { ...(await response.json()), title }
+}
+
+/**
+ * A contest Dev Reader owns that is open today. The yearly creation quota counts every contest an account has created,
+ * so this reuses an open one, such as the seeded contest, and otherwise creates one that stays open for most of a year.
+ */
+async function readerOwnContest(context: BrowserContext): Promise<Contest> {
+  const query = `page_size=25&page=0&official=false&include_deleted=false&user_id=${await accountId(context)}`
+  const { contests } = await apiJson<{ contests: (Contest & { contest_start: string; contest_end: string; registration_end: string })[] }>(
+    context.request,
+    `/immersion/contests?${query}`,
+  )
+  const today = day()
+  return contests.find(contest => contest.contest_start <= today && today < contest.contest_end && today < contest.registration_end)
+    ?? createContest(context, 360)
 }
 
 /** Registers the context's account for the contest and submits one log to it through the API. */
@@ -196,7 +211,7 @@ test('an administrator removes a log from a contest with a reason; a participant
   const own = await readerContext.newPage()
   await own.goto(profilePath(contest.id, readerId))
   await expectScores(own, await apiJson<Profile>(readerContext.request, `/immersion/contests/${contest.id}/profile/${readerId}/scores`))
-  await expect(own.locator('main')).toContainText(score.format(log.score))
+  await expect(own.getByRole('main')).toContainText(score.format(log.score))
   await expectLogs(own, await contestLogs(readerContext.request, contest.id, 1, readerId), false)
   await expect(removeButtons(own)).toHaveCount(0)
   await own.goto(updatesPath(contest.id))
@@ -206,7 +221,7 @@ test('an administrator removes a log from a contest with a reason; a participant
 
   const page = await adminContext.newPage()
   await page.goto(updatesPath(contest.id))
-  await expect(entries(page)).toHaveCount(1)
+  await expect(activityEntries(page)).toHaveCount(1)
   await expect(removeButtons(page)).toHaveCount(1)
   await removeButtons(page).click()
   const dialog = page.getByRole('dialog', { name: 'Remove log from contest' })
@@ -237,17 +252,18 @@ test('an administrator removes a log from a contest with a reason; a participant
 
 test('a community contest\'s organizer can remove a log without being an administrator', async ({ readerContext, adminContext }) => {
   test.skip(!reader.email || !admin.email, 'Set both development fixture identities')
-  const contest = await createContest(readerContext)
+  const contest = await readerOwnContest(readerContext)
   const log = await submitLog(adminContext, contest.id, `webv3-organizer-${randomUUID().slice(0, 8)}`)
 
   const page = await readerContext.newPage()
   await page.goto(updatesPath(contest.id))
-  await expect(page.locator(`a.profile-entry-title[href="/logs/${log.id}"]`)).toBeVisible()
-  await removeButtons(page).click()
+  const entry = activityEntries(page).filter({ has: linkTo(page, `/logs/${log.id}`) })
+  await expect(entry).toBeVisible()
+  await entry.getByRole('button', { name: 'Remove from contest' }).click()
   const dialog = page.getByRole('dialog', { name: 'Remove log from contest' })
   await dialog.getByLabel('Reason').fill('Organizer moderation check')
   await dialog.getByRole('button', { name: 'Yes, remove it' }).click()
   await expect(page.getByText('Log removed from contest.')).toBeVisible()
-  expect((await contestLogs(readerContext.request, contest.id)).total_size).toBe(0)
+  expect((await contestLogs(readerContext.request, contest.id)).logs.map(item => item.id)).not.toContain(log.id)
   await page.close()
 })

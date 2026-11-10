@@ -25,10 +25,10 @@ for (const locale of ['ja-JP', 'en-GB']) {
       await hydrated(page)
       // The browser really runs in this locale: both the language it reports and Intl's default follow it.
       expect(await page.evaluate(() => [navigator.language, Intl.DateTimeFormat().resolvedOptions().locale])).toEqual([locale, locale])
-      await expect(page.locator('svg.paper-heatmap')).toBeVisible()
+      await expect(page.getByRole('group', { name: /^Daily activity for \d{4}$/ })).toBeVisible()
       await page.goto('/')
       await hydrated(page)
-      await expect(page.locator('svg.paper-heatmap')).toBeVisible()
+      await expect(page.getByRole('group', { name: /^Daily activity for \d{4}$/ })).toBeVisible()
       expect(errors).toEqual([])
     })
   })

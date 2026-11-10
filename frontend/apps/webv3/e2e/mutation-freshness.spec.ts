@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { APIRequestContext, BrowserContext, Page } from '@playwright/test'
-import { accountId, admin, amountInput, api, contestStepUrl, expect, fillDraft, hydrated, reader, saveButton, savedLogId, savedLogUrl, test, webv3 } from './logging-fixtures'
-import { apiJson, score } from './standings'
+import { accountId, admin, amountInput, api, contestStepUrl, expect, fillDraft, hydrated, linkTo, reader, saveButton, savedLogId, savedLogUrl, statValue, test, webv3 } from './logging-fixtures'
+import { apiJson, score, standingRows } from './standings'
 
 interface Contest { id: string; title: string }
 interface Log { id: string; score: number }
@@ -63,9 +63,9 @@ const contestScore = async (request: APIRequestContext, contestId: string, userI
 const banner = (page: Page, name: string) => page.getByRole('banner').getByRole('link', { name, exact: true })
 const contestViews = (page: Page, name: string) => page.getByRole('navigation', { name: 'Contest views' }).getByRole('link', { name, exact: true })
 const submissions = (page: Page) => page.getByRole('region', { name: 'Contests' })
-const overallScore = (page: Page) => page.locator('.paper-stat-grid__item', { hasText: 'Overall score' }).locator('dd')
-const rowScore = (page: Page, name: string) => page.locator('.standings-table tbody tr', { hasText: name }).locator('td').last()
-const feedEntry = (page: Page, logId: string) => page.locator(`a.profile-entry-title[href="/logs/${logId}"]`)
+const overallScore = (page: Page) => statValue(page, 'Overall score')
+const rowScore = (page: Page, name: string) => standingRows(page).filter({ hasText: name }).getByRole('cell').last()
+const feedEntry = (page: Page, logId: string) => linkTo(page, `/logs/${logId}`)
 
 test.beforeEach(() => {
   test.skip(!webv3 || !api || !reader.email || !admin.email, 'Set development URLs and both fixture identities')
@@ -169,7 +169,7 @@ test('an administrator\'s edit of another learner\'s log refreshes that learner\
   expect(loads(), 'full document loads').toBe(0)
 })
 
-test('joining a contest shows it in Joined and in the profile\'s contest history without a reload', async ({ learner, adminContext }) => {
+test('joining a contest shows it in Joined and in the profile\'s contest history without a reload', async ({ returningLearner: learner, adminContext }) => {
   const contest = await createContest(adminContext)
   const page = await learner.context.newPage()
   await page.goto(`/contests/${contest.id}/leaderboard/1`)
@@ -183,7 +183,7 @@ test('joining a contest shows it in Joined and in the profile\'s contest history
   await banner(page, 'Contests').click()
   await joined.click()
   await expect(page).toHaveURL(/\/contests\/joined\/1$/)
-  await expect(page.locator('main')).not.toContainText(contest.title)
+  await expect(page.getByRole('main')).not.toContainText(contest.title)
   await account.click()
   await page.getByRole('menuitem', { name: 'Profile', exact: true }).click()
   await expect(page).toHaveURL(/\/statistics$/)

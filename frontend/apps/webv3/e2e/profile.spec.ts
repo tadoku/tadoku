@@ -7,14 +7,14 @@ import {
   branch,
   expect,
   fillDraft,
+  linkTo,
   openForm,
   reader,
+  statValue,
+  statValues,
   test,
   webv3,
 } from './logging-fixtures'
-
-// The fixtures' own test.use applies only to the first file that imports them; authenticated runs keep traces off.
-test.use({ trace: 'off', video: 'off', ignoreHTTPSErrors: false })
 
 const year = new Date().getUTCFullYear()
 const scoreFormat = new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
@@ -48,12 +48,12 @@ async function expectYear(page: Page, request: APIRequestContext, userId: string
 
   if (expected.activity.total_updates === 0) {
     await expect(page.getByRole('heading', { name: `No activity recorded in ${target}` })).toBeVisible()
-    await expect(page.locator('.paper-stat-grid')).toHaveCount(0)
+    await expect(statValues(page)).toHaveCount(0)
   } else {
     const total = expected.scores.scores.reduce((sum, score) => sum + score.score, 0)
-    await expect(stat(page, 'Overall score')).toContainText(scoreFormat.format(total))
-    await expect(stat(page, 'Logs')).toContainText(String(expected.activity.total_updates))
-    await expect(stat(page, 'Languages')).toContainText(String(expected.scores.scores.length))
+    await expect(statValue(page, 'Overall score')).toContainText(scoreFormat.format(total))
+    await expect(statValue(page, 'Logs')).toContainText(String(expected.activity.total_updates))
+    await expect(statValue(page, 'Languages')).toContainText(String(expected.scores.scores.length))
     const languages = page.getByRole('region', { name: 'Score by language' })
     for (const score of expected.scores.scores) {
       await expect(languages.getByRole('listitem').filter({ hasText: score.language_name ?? score.language_code }))
@@ -70,8 +70,6 @@ async function expectYear(page: Page, request: APIRequestContext, userId: string
   await expect(contests.getByRole('link')).toHaveText(expected.contests.map(contest => contest.title))
   return expected
 }
-
-const stat = (page: Page, label: string) => page.locator('.paper-stat-grid__item', { hasText: label }).locator('dd')
 
 test('an owner sees API totals, switches years and gets the export and day links', async ({ readerContext }, testInfo) => {
   test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
@@ -96,7 +94,7 @@ test('an owner sees API totals, switches years and gets the export and day links
   expect(csv.headers()['content-disposition']).toMatch(/attachment/)
   await expect(page.getByRole('link', { name: 'Activity', exact: true })).toHaveAttribute('href', new RegExp(`/profile/${userId}/updates/1$`))
   const today = new Date().toISOString().slice(0, 10)
-  const day = page.locator(`a.paper-heatmap__link[href$="/profile/${userId}/updates/1?date=${today}"]`)
+  const day = linkTo(page, `/profile/${userId}/updates/1?date=${today}`)
   await expect(day).toHaveAttribute('aria-label', / points on /)
   await page.screenshot({ path: testInfo.outputPath('owner-current-year.png'), fullPage: true })
 
@@ -114,7 +112,7 @@ test('a visitor opens a standings profile, server-rendered without owner tools',
   const context = await browser.newContext({ baseURL: webv3, javaScriptEnabled: false })
   const page = await context.newPage()
   await page.goto('/')
-  const participant = page.locator('a.home-person-link').first()
+  const participant = page.getByRole('table').getByRole('rowheader').getByRole('link').first()
   const name = (await participant.textContent())!
   await participant.click()
 
@@ -123,7 +121,7 @@ test('a visitor opens a standings profile, server-rendered without owner tools',
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(name)
   const visible = await expectYear(page, context.request, userId, year)
   expect(visible.contests.every(contest => !contest.private)).toBe(true)
-  if (visible.activity.total_updates > 0) await expect(page.locator('.paper-heatmap rect[data-date]')).not.toHaveCount(0)
+  if (visible.activity.total_updates > 0) await expect(page.getByRole('group', { name: /^Daily activity for / }).locator('rect[data-date]')).not.toHaveCount(0)
   await expect(page.getByRole('link', { name: /Download/ })).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Activity', exact: true }))
     .toHaveAttribute('href', `/profile/${userId}/updates/1`)
@@ -152,14 +150,15 @@ test('the owner can export every log from a year or a day without any', async ({
 test('avatars load lazily at the size they are shown', async ({ page, readerContext }) => {
   test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
   await page.goto(`/profile/${await accountId(readerContext)}/statistics`)
-  const avatar = page.locator('.profile-page header img')
+  const header = page.getByRole('main').locator('header')
+  const avatar = header.locator('img')
   await expect(avatar).toHaveAttribute('loading', 'lazy')
   await expect(avatar).toHaveAttribute('width', '64')
   await expect(avatar).toHaveAttribute('height', '64')
   await expect(avatar).toHaveAttribute('alt', '')
   // Dev Reader has no Gravatar: the initials show, not a broken image.
   await expect(avatar).toBeHidden()
-  await expect(page.locator('.profile-page header').getByText('DR', { exact: true })).toBeVisible()
+  await expect(header.getByText('DR', { exact: true })).toBeVisible()
 
   // With a Gravatar the image covers the initials; the browser answers its request with a one-pixel PNG.
   const pixel = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64')

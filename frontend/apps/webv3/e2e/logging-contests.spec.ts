@@ -7,6 +7,7 @@ import {
   api,
   branch,
   expect,
+  joinedContest,
   logDescription,
   openForm,
   reader,
@@ -22,7 +23,7 @@ const manageLink = (page: Page) => page.getByRole('link', { name: 'Manage contes
 /** Saves a reading log to the personal record only and returns its ID, leaving the page on its detail. */
 async function createPersonalLog(page: Page, text: string) {
   await openForm(page)
-  // Japanese is registered in the seeded contests; the default follows the account's previously used languages.
+  // The default follows the account's previously used languages; contests the test joined are in Japanese.
   await page.getByLabel('Language', { exact: true }).selectOption('jpn')
   await page.getByLabel('Activity', { exact: true }).selectOption({ label: 'Reading' })
   await amountInput(page).fill('7')
@@ -45,8 +46,9 @@ test('an anonymous visitor is asked to sign in and sees no contest choices', asy
   await expect(saveSubmissions(page)).toHaveCount(0)
 })
 
-test('owner submits a saved log to a contest, sees it after reload, then removes it', async ({ page, readerContext }, testInfo) => {
-  test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
+test('owner submits a saved log to a contest, sees it after reload, then removes it', async ({ page, readerContext, adminContext }, testInfo) => {
+  test.skip(!webv3 || !api || !reader.email || !admin.email, 'Set both development fixture identities')
+  await joinedContest(adminContext, readerContext)
   const id = await createPersonalLog(page, `contests-${Date.now()}`)
   expect(await submissions(readerContext, id)).toEqual([])
   await expect(page.getByText('Saved to your personal record only.')).toBeVisible()
@@ -72,13 +74,13 @@ test('owner submits a saved log to a contest, sees it after reload, then removes
   await page.setViewportSize({ width: 1280, height: 800 })
 
   const chosen = (await eligible.first().getAttribute('value'))!
-  const title = (await page.locator(`label:has(input[value="${chosen}"]) .paper-choice__label`).innerText()).trim()
   await eligible.first().check()
   await saveSubmissions(page).click()
   await expect(page).toHaveURL(`${webv3}/logs/${id}`)
 
   const [submission] = await submissions(readerContext, id)
-  expect(submission).toMatchObject({ registration_id: chosen, title })
+  expect(submission.registration_id).toBe(chosen)
+  const { title } = submission
   expect(submission.score).toBeGreaterThan(0)
   await page.reload()
   const contests = page.getByRole('region', { name: 'Contests' })
@@ -88,7 +90,7 @@ test('owner submits a saved log to a contest, sees it after reload, then removes
 
   await page.goto(`/logs/${id}/contests`)
   await expect(saveSubmissions(page)).toBeEnabled({ timeout: 15_000 })
-  const saved = page.locator(`input[value="${chosen}"]`)
+  const saved = page.getByRole('checkbox', { name: title })
   await expect(saved).toBeChecked()
   await saved.uncheck()
   await saveSubmissions(page).click()

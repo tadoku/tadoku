@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Cookie, Page } from '@playwright/test'
 import {
   createLog,
   accountId,
@@ -23,6 +23,12 @@ import {
 } from './logging-fixtures'
 
 const header = (page: Page) => page.getByRole('navigation', { name: 'Main navigation' })
+
+/** Switches the page's context to Dev Admin's stored session, which spends no login, and waits for the form. */
+async function becomeAdmin(page: Page, cookies: Cookie[]) {
+  await page.context().addCookies(cookies)
+  await openForm(page)
+}
 
 test('expired session keeps draft, rejects save and recovers through authv2 login', async ({ page, readerContext }) => {
   test.skip(!webv3 || !reader.email, 'Set development fixture credentials')
@@ -117,7 +123,7 @@ test('branch-only suspension rejects an open draft and renders the suspended acc
   }
 })
 
-test('a draft cannot be saved under an account switched in another tab', async ({ page, context, loginLearner }, testInfo) => {
+test('a draft cannot be saved under an account switched in another tab', async ({ page, context, loginLearner, adminCookies }, testInfo) => {
   test.skip(!admin.email, 'Set E2E_SECOND_EMAIL and E2E_SECOND_PASSWORD')
   const description = `account-switch-${Date.now()}`
   await signIn(page, loginLearner)
@@ -127,7 +133,7 @@ test('a draft cannot be saved under an account switched in another tab', async (
   const other = await context.newPage()
   await other.goto(`${webv3}/pages/manual`)
   await logOut(other, loginLearner)
-  await signIn(other, admin)
+  await becomeAdmin(other, adminCookies)
   const adminId = await accountId(context)
 
   await page.bringToFront()
@@ -156,7 +162,7 @@ test('public activity detail still loads with an expired session cookie and has 
 })
 
 for (const change of ['expiry', 'account switch']) {
-  test(`an anonymously opened form keeps its first signed-in draft after ${change}`, async ({ page, context, loginLearner }, testInfo) => {
+  test(`an anonymously opened form keeps its first signed-in draft after ${change}`, async ({ page, context, loginLearner, adminCookies }, testInfo) => {
     test.skip(!admin.email, 'Set E2E_SECOND_EMAIL and E2E_SECOND_PASSWORD')
     const description = `anonymous-entry-${change}-${Date.now()}`
     const refocusAfterViewerGoesStale = async () => {
@@ -178,7 +184,7 @@ for (const change of ['expiry', 'account switch']) {
     // End or switch the session in the other tab.
     await other.bringToFront()
     await logOut(other, loginLearner)
-    if (change === 'account switch') await signIn(other, admin)
+    if (change === 'account switch') await becomeAdmin(other, adminCookies)
     await page.bringToFront()
     if (change === 'expiry') {
       await refocusAfterViewerGoesStale()

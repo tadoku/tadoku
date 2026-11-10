@@ -29,8 +29,10 @@ const decisionBecomes = (context: BrowserContext, expected: boolean) => expect.p
 
 const get = (context: BrowserContext, url: string) => context.request.get(url, { maxRedirects: 0 })
 
+// Before any fixture runs, so a run without Flipt spends no registration on this test.
+test.skip(!flipt || !webv2, 'Set E2E_FLIPT_URL, WEBV3_BASE_URL and TADOKU_API_URL for a branch tenant')
+
 test('webv2 sends an account with release-webv3 to the same page on Webv3 and nothing else', async ({ browser, learner }) => {
-  test.skip(!flipt || !webv2, 'Set E2E_FLIPT_URL, WEBV3_BASE_URL and TADOKU_API_URL for a branch tenant')
   test.setTimeout(240_000)
   const { context, id } = learner
   const guest = await browser.newContext({ baseURL: webv3 })

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, hydrated, test } from './logging-fixtures'
 
 test('renders the configured read-only contest and standings before JavaScript runs', async ({ browser, request }, testInfo) => {
   const api = process.env.TADOKU_API_URL || 'https://tadoku.dev.lab/api/internal'
@@ -31,8 +31,8 @@ test('hydrates without errors and keeps the homepage within mobile and desktop v
     await page.setViewportSize({ width, height: 900 })
     await page.goto('/')
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-    await expect(page.locator('table')).toBeVisible()
-    await expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled()
+    await expect(page.getByRole('table')).toBeVisible()
+    await hydrated(page)
     await page.evaluate(() => document.fonts.ready)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await page.screenshot({ path: testInfo.outputPath(`homepage-${width}.png`), fullPage: true })
@@ -50,7 +50,7 @@ test('returns a useful not-found page for an unknown route', async ({ page }) =>
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   await page.getByRole('link', { name: /home/i }).first().click()
   await expect(page).toHaveURL(/\/$/)
-  await expect(page.locator('table')).toBeVisible()
+  await expect(page.getByRole('table')).toBeVisible()
 })
 
 test('preserves the dark theme and opens the blog through mobile navigation', async ({ page }, testInfo) => {

@@ -6,8 +6,12 @@ const suffix: Record<string, string> = { one: 'st', two: 'nd', few: 'rd', other:
 const place = (rank: number) => `${rank}${suffix[ordinal.select(rank)]}`
 
 /** Joins the latest official round and logs a little to it, which ranks the learner below the seeded field. */
-async function joinWithSmallLog(context: BrowserContext) {
+async function joinWithSmallLog(context: BrowserContext, userId: string) {
   const latest = await (await context.request.get(`${api}/immersion/contests/latest-official`)).json() as { id: string; title: string }
+  // The account is reused between runs, so logging every time would eventually lift it onto the first page.
+  const entry = await context.request.get(`${api}/immersion/contests/${latest.id}/leaderboard/${userId}`)
+  if (entry.status() === 200 && (await entry.json() as { score: number }).score > 0) return latest
+
   const registered = await context.request.post(`${api}/immersion/contests/${latest.id}/registration`, { data: { language_codes: ['jpn'] } })
   expect(registered.status(), 'registration').toBe(200)
   const { id: registrationId } = await (await context.request.get(`${api}/immersion/contests/${latest.id}/registration`)).json() as { id: string }
@@ -19,11 +23,11 @@ async function joinWithSmallLog(context: BrowserContext) {
   return latest
 }
 
-test('a participant ranked below the first standings page sees their rank on home and on the participant page', async ({ learner }, testInfo) => {
+test('a participant ranked below the first standings page sees their rank on home and on the participant page', async ({ returningLearner: learner }, testInfo) => {
   test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
   test.setTimeout(60_000)
   const { context, id: userId } = learner
-  const contest = await joinWithSmallLog(context)
+  const contest = await joinWithSmallLog(context, userId)
 
   // The API's answer, whichever rank the field above leaves the learner, must be beyond the first page of 50.
   await expect.poll(async () => (await context.request.get(`${api}/immersion/contests/${contest.id}/leaderboard/${userId}`)).status(), { timeout: 20_000 }).toBe(200)

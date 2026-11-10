@@ -1,4 +1,4 @@
-import { expect, reader, saveButton, signIn, test, webv3 } from './logging-fixtures'
+import { contestRows, expect, reader, saveButton, signIn, test, webv3 } from './logging-fixtures'
 
 /**
  * The journey `.github/workflows/webv3-production-canary.yaml` runs against production. The account may hold real data,
@@ -31,7 +31,7 @@ test('a signed-in member loads home, a contest, their profile and the log form w
 
   await banner.getByRole('link', { name: 'Contests', exact: true }).click()
   await expect(page).toHaveURL(/\/contests\/official\/1$/)
-  const contest = page.locator('.contest-row').first().getByRole('link').first()
+  const contest = contestRows(page).first().getByRole('link').first()
   const title = (await contest.textContent())!
   await contest.click()
   await expect(page).toHaveURL(/\/contests\/[a-f0-9-]{36}\/leaderboard\/1$/)

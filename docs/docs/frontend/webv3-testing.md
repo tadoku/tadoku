@@ -23,13 +23,24 @@ The browser suite lives in `frontend/apps/webv3/e2e/`, one spec per feature
 area; each feature page's checks section says what its spec covers. A spec
 reads `WEBV3_BASE_URL` for the server under test and `TADOKU_API_URL` to compare
 pages with the API, and skips what its environment cannot run rather than
-failing. Specs that write create their own data in the selected tenant and never
-assume it is empty. Browser tests cover what the pages show for each API answer;
+failing. A skip names a missing environment variable, never missing tenant data:
+a test that needs data creates it in setup. Specs that write create their own
+data in the selected tenant, never assume it is empty and never depend on an
+earlier run, another spec's data or a seeded round's dates. Specs select elements
+by role, label or text; a CSS class is styling, not a contract. Browser tests
+cover what the pages show for each API answer;
 the API's golden cases in `services/tadoku-api/e2e/testdata/` own the rules
 behind those answers, such as contest creation's account age and yearly quota.
+The yearly quota counts every contest an account has created, deleted ones
+included, so only Dev Admin, who is exempt, creates contests on every run.
 The suite needs Chromium installed through Playwright. `PLAYWRIGHT_OUTPUT_DIR`
 selects where reports and screenshots go, defaulting to a temporary directory
 outside the source tree.
+
+Chromium runs with HTTP/2 disabled. A branch's Vite server sends each page as
+about 200 module requests, and the development ingress closes an HTTP/2
+connection after 1,000 requests, failing whichever modules are in flight; that
+page then never hydrates. A wider timeout cannot help it.
 
 ## Credentialed runs and fixture accounts
 
@@ -65,21 +76,30 @@ registering themselves:
   safe to repeat. Never log them out, and restore any role change before the
   test ends.
 - `learner` is a newly registered, signed-in account for one test, with its ID
-  and credentials. Use it when the test needs an untouched account or leaves
-  state a rerun would trip over. The API refuses contest creation to accounts
-  younger than a month, so a learner cannot create contests.
-- `loginLearner` is one newly registered account per worker, given as
-  credentials. Use it with `signIn`, `authenticate` and `logOut` when the test
-  is about signing in, signing out or switching accounts.
+  and credentials. Use it only when the test needs an untouched account, such as
+  one with no logs or no registrations: each use spends a registration. The API
+  refuses contest creation to accounts younger than a month, so a learner cannot
+  create contests.
+- `returningLearner` has the same shape but is one stored account reused across
+  tests and runs. Use it when the test needs a young, signed-in account and its
+  writes are safe to repeat.
+- `loginLearner` is that stored account's credentials. Use it with `signIn`,
+  `authenticate` and `logOut` when the test is about signing in, signing out or
+  switching accounts through authv2. Each test that takes it may sign in once.
 
 The identity API admits ten logins per account and ten registrations per tenant
-and client IP, each in 15 minutes. The fixtures store the Dev Reader and Dev
-Admin sessions in `tadoku-webv3-e2e-sessions` under the system temporary
-directory, keyed by host and email, and later workers and runs reuse them while
-`GET /identity/session` still accepts them. A complete run must stay
-repeatable straight away on the same tenant: a test that adds a login with a
-fixture account or a registration on every run must keep two consecutive runs
-within both budgets. Delete that directory to force new sign-ins.
+and client IP, each in 15 minutes. The fixtures keep the Dev Reader and Dev
+Admin sessions and the stored learner in `tadoku-webv3-e2e-sessions` under the
+system temporary directory, keyed by host, and later workers and runs reuse them
+while `GET /identity/session` still accepts them, so a failed test's restarted
+worker spends nothing. The stored learner also records its logins; after eight
+in 15 minutes the fixtures register a replacement. Switch to Dev Admin with
+`adminCookies` rather than typing its password, because every login with a shared
+fixture account spends from a budget no replacement can restore. A complete run
+must stay repeatable straight away on the same tenant: a test that adds a
+registration or a login with a fixture account on every run must keep two
+consecutive runs within both budgets. Delete that directory to force new
+sign-ins.
 
 `frontend/apps/webv3/e2e/mutation-freshness.spec.ts` checks that a page visited
 before a save, an administrator's edit, a registration or a moderation removal

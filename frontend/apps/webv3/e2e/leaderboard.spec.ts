@@ -1,5 +1,5 @@
-import { api, expect, reader, test, webv3 } from './logging-fixtures'
-import { apiJson, board, expectRows, expectTotal } from './standings'
+import { api, expect, hydrated, reader, test, webv3 } from './logging-fixtures'
+import { apiJson, board, expectRows, expectTotal, standingRows } from './standings'
 
 const year = new Date().getUTCFullYear()
 
@@ -87,7 +87,7 @@ test('year and period tabs switch boards in the browser', async ({ page, request
     if (message.type() === 'error') failures.push(message.text())
   })
   await page.goto(`/leaderboard/yearly/${year}/1`)
-  await expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled()
+  await hydrated(page)
   const years = page.getByRole('group', { name: 'Standings year' })
   await expect(years).toContainText(String(year))
   await expect(years.getByRole('button', { name: 'Next year' })).toBeDisabled()
@@ -125,17 +125,15 @@ test('a signed-in participant sees their own row and the join action while they 
 
   await page.goto('/leaderboard/latest/1')
   await expect(page.getByText('You need to log in to participate in this contest.')).toHaveCount(0)
-  const own = page.locator('.standings-table tbody tr[aria-current="true"]')
+  const own = standingRows(page).and(page.locator('[aria-current="true"]'))
   if (data.entries.some(entry => entry.user_id === session.account.id)) {
     await expect(own).toHaveCount(1)
     await expect(own).toContainText('You')
   } else {
     await expect(own).toHaveCount(0)
   }
-  const header = page.locator('.standings-header')
   // Registered participants log through the site header's Log activity action; the board offers only joining.
-  if (!registered && today <= latest.registration_end) await expect(header.getByRole('link', { name: 'Join contest' })).toBeVisible()
-  else await expect(header.getByRole('link')).toHaveCount(0)
+  await expect(page.getByRole('main').getByRole('link', { name: 'Join contest' })).toHaveCount(!registered && today <= latest.registration_end ? 1 : 0)
   await page.screenshot({ path: testInfo.outputPath('latest-signed-in.png'), fullPage: true })
 })
 
@@ -145,7 +143,7 @@ test('leaderboards stay within mobile and desktop viewports', async ({ page }, t
     for (const path of ['/leaderboard/latest/1', `/leaderboard/yearly/${year}/1`, '/leaderboard/all-time/1']) {
       await page.goto(path)
       await expect(page.getByRole('heading', { level: 1, name: 'Leaderboard' })).toBeVisible()
-      await expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled()
+      await hydrated(page)
       await page.evaluate(() => document.fonts.ready)
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${path} at ${width}px`).toBe(true)
       await page.screenshot({ path: testInfo.outputPath(`${path.split('/')[2]}-${width}.png`), fullPage: true })

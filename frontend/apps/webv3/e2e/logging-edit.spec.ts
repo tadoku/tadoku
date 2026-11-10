@@ -9,6 +9,7 @@ import {
   expect,
   fillDraft,
   isSaveRequest,
+  joinedContest,
   logDescription,
   openForm,
   reader,
@@ -17,7 +18,7 @@ import {
   webv3,
 } from './logging-fixtures'
 
-const estimate = (page: Page) => page.locator('.log-form__estimate strong')
+const estimate = (page: Page) => page.getByText(/^Estimated score:/).getByRole('strong')
 const timeSpent = (page: Page) => page.getByLabel(/^Time spent/)
 const description = (page: Page) => page.getByLabel(/^Description/)
 const saveChanges = (page: Page) => page.getByRole('button', { name: 'Save', exact: true })
@@ -53,7 +54,7 @@ test('owner edits a saved log, sees the estimate and the persisted change after 
   await expect(page).toHaveURL(`${webv3}/logs/${id}/edit`)
   await expect(saveChanges(page)).toBeEnabled({ timeout: 15_000 })
   // The activity can't change on an edit, so the form states it instead of offering a control.
-  await expect(page.locator('.paper-page-header__lead')).toHaveText(`${before.language.name} · ${before.activity.name}`)
+  await expect(page.getByText(`${before.language.name} · ${before.activity.name}`, { exact: true })).toBeVisible()
   await expect(page.getByLabel('Activity', { exact: true })).toHaveCount(0)
   await expect(amountInput(page)).toHaveValue('5')
   await expect(page.getByLabel('Unit', { exact: true })).toHaveValue(before.unit_key)
@@ -123,10 +124,10 @@ test('owner changes the language of a log submitted to no contest', async ({ pag
   await testInfo.attach('language-change', { body: JSON.stringify({ before, after }, null, 2), contentType: 'application/json' })
 })
 
-test('a log submitted to a contest keeps its language: the edit form offers no language control', async ({ page, readerContext }) => {
-  test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
+test('a log submitted to a contest keeps its language: the edit form offers no language control', async ({ page, readerContext, adminContext }) => {
+  test.skip(!webv3 || !api || !reader.email || !admin.email, 'Set both development fixture identities')
+  await joinedContest(adminContext, readerContext)
   await openForm(page)
-  // Japanese is registered in the seeded contests.
   await page.getByLabel('Language', { exact: true }).selectOption('jpn')
   await page.getByLabel('Activity', { exact: true }).selectOption({ label: 'Reading' })
   await fillDraft(page, '6', `edit-attached-${Date.now()}`)
@@ -142,7 +143,7 @@ test('a log submitted to a contest keeps its language: the edit form offers no l
   await page.goto(`/logs/${id}/edit`)
   await expect(saveChanges(page)).toBeEnabled({ timeout: 15_000 })
   await expect(page.getByLabel('Language', { exact: true })).toHaveCount(0)
-  await expect(page.locator('.paper-page-header__lead')).toHaveText(`Japanese · ${before.activity.name}`)
+  await expect(page.getByText(`Japanese · ${before.activity.name}`, { exact: true })).toBeVisible()
 
   const refused = await readerContext.request.put(`${api}/immersion/logs/${id}`, {
     data: { language_code: 'eng', amount: before.amount, unit_key: before.unit_key, tags: [] },

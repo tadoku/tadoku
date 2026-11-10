@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { APIRequestContext, BrowserContext, Page } from '@playwright/test'
-import { admin, api, expect, reader, test, webv3 } from './logging-fixtures'
-import { apiJson, board, expectRows, expectTotal } from './standings'
+import { admin, api, expect, hydrated, reader, test, webv3 } from './logging-fixtures'
+import { apiJson, board, expectRows, expectTotal, standingRows } from './standings'
 
 interface Contest {
   id: string
@@ -49,8 +49,8 @@ async function chooseLanguage(page: Page, name: string) {
   await page.getByRole('option', { name, exact: true }).click()
 }
 
-const headerLinks = (page: Page) => page.locator('.standings-header .paper-page-header__actions').getByRole('link')
-const contestOptions = (page: Page) => page.locator('.standings-header').getByRole('button', { name: 'Contest options' })
+const joinLinks = (page: Page) => page.getByRole('main').getByRole('link', { name: 'Join contest', exact: true })
+const contestOptions = (page: Page) => page.getByRole('main').getByRole('button', { name: 'Contest options' })
 
 async function contestMenu(page: Page) {
   await contestOptions(page).click()
@@ -79,8 +79,8 @@ test('the server-rendered contest page shows its details, API standings and an a
   const today = day()
   const ended = today > contest.contest_end
   const open = !ended && today <= contest.registration_end
-  await expect(headerLinks(page)).toHaveText(open ? ['Join contest'] : [])
-  if (open) await expect(headerLinks(page)).toHaveAttribute('href', `/contests/${contest.id}/registration`)
+  await expect(joinLinks(page)).toHaveCount(open ? 1 : 0)
+  if (open) await expect(joinLinks(page)).toHaveAttribute('href', `/contests/${contest.id}/registration`)
   await expect(contestOptions(page)).toHaveCount(0)
   await page.screenshot({ path: testInfo.outputPath('contest-anonymous.png'), fullPage: true })
   await context.close()
@@ -103,7 +103,7 @@ test('optional and past-the-end page segments follow the API', async ({ page, re
   await expect(page.getByRole('heading', { name: 'This page is past the end of the standings' })).toBeVisible()
   await page.getByRole('link', { name: 'Go to the first page' }).click()
   await expect(page).toHaveURL(new RegExp(`${contestPath(contest.id)}$`))
-  await expect(page.locator('.standings-table tbody tr')).toHaveCount(data.entries.length)
+  await expect(standingRows(page)).toHaveCount(data.entries.length)
 })
 
 test('unknown and malformed contests are not found', async ({ page }) => {
@@ -135,8 +135,8 @@ test('a signed-in learner joins an open contest, sees it on the contest page and
 
   await page.goto(contestPath(contest.id))
   await expect(page.getByRole('link', { name: 'Community contests' })).toHaveAttribute('href', '/contests/user-contests/1')
-  await expect(headerLinks(page)).toHaveText(['Join contest'])
-  await headerLinks(page).getByText('Join contest').click()
+  await expect(joinLinks(page)).toHaveCount(1)
+  await joinLinks(page).click()
   await expect(page.getByRole('heading', { level: 1, name: `Join ${contest.title}` })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Register' })).toBeEnabled()
 
@@ -146,7 +146,7 @@ test('a signed-in learner joins an open contest, sees it on the contest page and
   await chooseLanguage(page, 'Japanese')
   await page.getByRole('button', { name: 'Register' }).click()
   await expect(page).toHaveURL(new RegExp(`${contestPath(contest.id)}$`))
-  await expect(headerLinks(page)).toHaveText([])
+  await expect(joinLinks(page)).toHaveCount(0)
   await expect(await contestMenu(page)).toHaveText(['Update registration'])
   await page.keyboard.press('Escape')
   expect(await registeredLanguages(readerContext, contest.id)).toEqual(['Japanese'])
@@ -154,7 +154,7 @@ test('a signed-in learner joins an open contest, sees it on the contest page and
   // On a phone the menu sits on the back link's row, so the title keeps the full width.
   await page.setViewportSize({ width: 390, height: 844 })
   await page.reload()
-  await expect(headerLinks(page)).toHaveText([])
+  await expect(joinLinks(page)).toHaveCount(0)
   const options = await contestOptions(page).boundingBox()
   const back = await page.getByRole('link', { name: 'Community contests' }).boundingBox()
   const title = await page.getByRole('heading', { level: 1 }).boundingBox()
@@ -186,8 +186,8 @@ test('registration after the deadline is refused as in Webv2', async ({ page, re
 
   await page.goto(contestPath(closed.id))
   await expect(page.getByRole('heading', { level: 1, name: closed.title })).toBeVisible()
-  await expect(page.locator('.standings-header').getByText('Live now')).toBeVisible()
-  await expect(headerLinks(page)).toHaveText([])
+  await expect(page.getByRole('main').getByText('Live now', { exact: true })).toBeVisible()
+  await expect(joinLinks(page)).toHaveCount(0)
   await expect(page.getByText('Closed to new participants')).toBeVisible()
 
   await page.goto(`/contests/${closed.id}/registration`)
@@ -225,7 +225,7 @@ test('contest and registration pages stay within mobile and desktop viewports', 
     for (const [name, path] of pages) {
       await page.goto(path)
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-      await expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled()
+      await hydrated(page)
       await page.evaluate(() => document.fonts.ready)
       expect(await fitsViewport(page), `${path} at ${width}px`).toBe(true)
       await page.screenshot({ path: testInfo.outputPath(`${name}-${width}.png`), fullPage: true })

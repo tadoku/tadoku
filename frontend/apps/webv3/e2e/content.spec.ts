@@ -1,5 +1,6 @@
+import { randomUUID } from 'node:crypto'
 import type { APIRequestContext, BrowserContext, Page } from '@playwright/test'
-import { admin, api, expect, test, webv3 } from './logging-fixtures'
+import { admin, api, expect, hydrated, test, webv3 } from './logging-fixtures'
 
 interface Post { slug: string; title: string; content: string; published_at: string }
 interface Posts { posts: Post[]; total_size: number }
@@ -32,7 +33,8 @@ const visibleText = (page: Page, html: string) => page.evaluate(source => {
   return (template.content.textContent ?? '').replace(/\s+/g, ' ').trim()
 }, html)
 
-const prose = (page: Page) => page.locator('.content-prose')
+/** An article's body: its only direct `div`, beside the page header. */
+const prose = (page: Page) => page.getByRole('article').locator(':scope > div')
 
 async function expectSanitized(page: Page) {
   await expect(prose(page).locator('script, [onerror], a[href^="javascript:"]')).toHaveCount(0)
@@ -43,17 +45,14 @@ async function expectContained(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 }
 
+const olderPosts = (page: Page) => page.getByRole('region', { name: 'Older posts', exact: true })
+
 /** One page of the blog: page 1 leads with the newest post, the rest are listed with their titles. */
 async function expectBlogPage(page: Page, data: Posts, number: number) {
   const listed = number === 1 ? data.posts.slice(1) : data.posts
-  if (number === 1) await expect(page.locator('.blog-lead h2')).toHaveText(data.posts[0].title)
-  else await expect(page.locator('.blog-lead')).toHaveCount(0)
-  await expect(page.locator('.blog-posts a')).toHaveText(listed.map(post => post.title))
+  await expect(page.getByRole('region', { name: data.posts[0].title, exact: true })).toHaveCount(number === 1 ? 1 : 0)
+  await expect(olderPosts(page).getByRole('link')).toHaveText(listed.map(post => post.title))
   await expect(page.getByRole('navigation', { name: 'Blog pages' })).toHaveCount(data.total_size > pageSize ? 1 : 0)
-}
-
-async function hydrated(page: Page) {
-  await expect(page.locator('.paper-navbar__mobile-trigger')).toBeEnabled()
 }
 
 /** Gives the admin's branch tenant more than one page of published posts, a draft post and page, and the hostile page. */
@@ -202,9 +201,9 @@ test('the blog lists the API posts, pages through them and opens a post', async 
     const second = await posts(request, 2)
     await expectBlogPage(page, second, 2)
     opened = second.posts[0]
-    await page.locator('.blog-posts a', { hasText: opened.title }).first().click()
+    await olderPosts(page).getByRole('link', { name: opened.title, exact: true }).first().click()
   } else {
-    await page.locator('.blog-lead h2 a').click()
+    await page.getByRole('region', { name: opened.title, exact: true }).getByRole('heading', { level: 2 }).getByRole('link').click()
   }
 
   await expect(page).toHaveURL(new RegExp(`/blog/posts/${opened.slug}$`))
@@ -225,7 +224,7 @@ test('the blog lists the API posts, pages through them and opens a post', async 
   const past = Math.ceil(first.total_size / pageSize) + 1
   await page.goto(`/blog/${past}`)
   await expect(page.getByRole('main').getByRole('heading', { level: 2 })).toHaveText(`There is no page ${past}`)
-  await expect(page.locator('.blog-posts, .blog-lead')).toHaveCount(0)
+  await expect(olderPosts(page)).toHaveCount(0)
 })
 
 test('published content an administrator adds appears, sanitized and paginated, while drafts stay hidden', async ({ adminContext, browser }, testInfo) => {
@@ -272,25 +271,36 @@ test('published content an administrator adds appears, sanitized and paginated, 
   await context.close()
 })
 
-test('active announcements show above pages until this browser dismisses them', async ({ page, request }, testInfo) => {
-  test.skip(!api, 'Set TADOKU_API_URL')
-  const { announcements } = await apiJson<{ announcements: { id: string; href?: string | null }[] }>(
-    request,
-    '/content/announcements/tadoku/active',
-  )
-  test.skip(announcements.length === 0, 'The selected tenant has no active announcement')
+test('active announcements show above pages until this browser dismisses them', async ({ page, adminContext }, testInfo) => {
+  test.skip(!api || !admin.email, 'Set TADOKU_API_URL and E2E_SECOND_EMAIL')
+  const content = `Webv3 announcement check ${randomUUID().slice(0, 8)}`
+  const created = await adminContext.request.post(`${api}/content/announcements/tadoku`, {
+    data: {
+      title: content,
+      content,
+      style: 'info',
+      href: '/pages/manual',
+      starts_at: new Date(Date.now() - 3_600_000).toISOString(),
+      ends_at: new Date(Date.now() + 3_600_000).toISOString(),
+    },
+  })
+  expect(created.status(), 'announcement creation').toBe(201)
+  const { id } = await created.json() as { id: string }
 
-  await page.goto('/blog/1')
-  const banners = page.locator('main .paper-flash')
-  await expect(banners).toHaveCount(announcements.length)
-  const first = banners.first()
-  if (announcements[0].href) await expect(first.getByRole('link', { name: 'Learn more' })).toHaveAttribute('href', announcements[0].href)
-  await page.screenshot({ path: testInfo.outputPath('announcement.png') })
+  try {
+    await page.goto('/blog/1')
+    const banner = page.getByRole('main').getByRole('status').filter({ hasText: content })
+    await expect(banner).toBeVisible()
+    await expect(banner.getByRole('link', { name: 'Learn more' })).toHaveAttribute('href', '/pages/manual')
+    await page.screenshot({ path: testInfo.outputPath('announcement.png') })
 
-  await first.getByRole('button', { name: 'Dismiss announcement' }).click()
-  await expect(banners).toHaveCount(announcements.length - 1)
-  expect(JSON.parse((await page.evaluate(() => localStorage.getItem('dismissed_announcements')))!)).toEqual([announcements[0].id])
-  await page.reload()
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-  await expect(banners).toHaveCount(announcements.length - 1)
+    await banner.getByRole('button', { name: 'Dismiss announcement' }).click()
+    await expect(banner).toHaveCount(0)
+    expect(JSON.parse((await page.evaluate(() => localStorage.getItem('dismissed_announcements')))!)).toContain(id)
+    await page.reload()
+    await hydrated(page)
+    await expect(banner).toHaveCount(0)
+  } finally {
+    await adminContext.request.delete(`${api}/content/announcements/tadoku/${id}`)
+  }
 })

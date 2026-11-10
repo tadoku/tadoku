@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: Run the release gate and report its decision and digest without moving prod
+        description: Gate this commit's published image and report the decision and digest without moving prod
         type: boolean
         default: true
       force_failure:
@@ -108,7 +108,7 @@ jobs:
       contents: read
       packages: write
     outputs:
-      digest: ${{ steps.image.outputs.digest }}
+      digest: ${{ steps.image.outputs.digest || steps.published.outputs.digest }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
@@ -117,10 +117,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      # Development follows latest, so the development base runs this image before the release gate tests it. A dry
-      # run rebuilds the commit, so it leaves the commit tag to the image the release used.
+      # Development follows latest, so the development base runs this image before the release gate tests it.
       - name: Build and publish the candidate image
         id: image
+        if: github.event_name == 'push'
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: frontend
@@ -128,22 +128,36 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            ghcr.io/tadoku/tadoku/frontend-webv3:${{ github.sha }}${{ (github.event_name == 'workflow_dispatch' && inputs.dry_run) && format('-dry-run-{0}', github.run_id) || '' }}
+            ghcr.io/tadoku/tadoku/frontend-webv3:${{ github.sha }}
             ghcr.io/tadoku/tadoku/frontend-webv3:latest
+      # A dispatch gates the image its commit already published and pushes nothing.
+      - name: Resolve the commit's published image
+        id: published
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          digest="$(docker buildx imagetools inspect "ghcr.io/tadoku/tadoku/frontend-webv3:$GITHUB_SHA" \
+            --format '{{json .Manifest.Digest}}' | jq -r .)"
+          if [[ ! $digest =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "::error::Commit $GITHUB_SHA published no Webv3 image."
+            exit 1
+          fi
+          echo "digest=$digest" >>"$GITHUB_OUTPUT"
       - name: Record the candidate
+        env:
+          DIGEST: ${{ steps.image.outputs.digest || steps.published.outputs.digest }}
         run: |
           {
             echo "### Tadoku Webv3 candidate"
             echo "- Source: \`${GITHUB_SHA}\`"
-            echo "- Digest: \`${{ steps.image.outputs.digest }}\`"
+            echo "- Digest: \`${DIGEST}\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
   gate:
     name: webv3 / release gate
     needs: publish
-    # The gate drives dev-cli on homelab-talos-dev and opens its branch hosts, which only the homelab reaches. See
-    # docs/docs/develop/ci-workflows.md#webv3-release-gate for what this runner set must admit.
-    runs-on: tadoku-ci
+    # A dedicated scale-to-zero runner set that admits only this workflow from main and reaches only the development
+    # ingress and API server. See docs/docs/develop/ci-workflows.md#webv3-release-gate.
+    runs-on: tadoku-webv3-gate
     environment:
       name: webv3-release-gate
       deployment: false
@@ -151,7 +165,7 @@ jobs:
     permissions:
       contents: read
     outputs:
-      tested_digest: ${{ steps.test.outputs.tested_digest }}
+      tested_digest: ${{ steps.verify.outputs.tested_digest }}
     env:
       CANDIDATE: ${{ needs.publish.outputs.digest }}
       DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
@@ -160,7 +174,8 @@ jobs:
     steps:
       - name: Require the gate's configuration
         env:
-          DEV_KUBECONFIG: ${{ secrets.DEV_KUBECONFIG }}
+          DEV_KUBE_CA: ${{ secrets.DEV_KUBE_CA }}
+          DEV_KUBE_TOKEN: ${{ secrets.DEV_KUBE_TOKEN }}
           E2E_READER_EMAIL: ${{ secrets.E2E_READER_EMAIL }}
           E2E_READER_PASSWORD: ${{ secrets.E2E_READER_PASSWORD }}
           E2E_SECOND_EMAIL: ${{ secrets.E2E_SECOND_EMAIL }}
@@ -172,7 +187,7 @@ jobs:
             exit 1
           fi
           missing=()
-          for name in DEV_KUBECONFIG E2E_READER_EMAIL E2E_READER_PASSWORD E2E_SECOND_EMAIL E2E_SECOND_PASSWORD; do
+          for name in DEV_KUBE_CA DEV_KUBE_TOKEN E2E_READER_EMAIL E2E_READER_PASSWORD E2E_SECOND_EMAIL E2E_SECOND_PASSWORD; do
             [[ -n ${!name} ]] || missing+=("$name")
           done
           [[ $DEV_CLI_VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || missing+=(DEV_CLI_VERSION)
@@ -181,6 +196,7 @@ jobs:
             exit 1
           fi
           test -s "$NODE_EXTRA_CA_CERTS" || { echo "::error::The runner has no Lab CA at $NODE_EXTRA_CA_CERTS."; exit 1; }
+          echo "EVIDENCE=$RUNNER_TEMP/webv3-release-gate" >>"$GITHUB_ENV"
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
@@ -218,23 +234,21 @@ jobs:
         working-directory: frontend
       - run: pnpm --filter paper-ui build
         working-directory: frontend
-      - run: pnpm --filter webv3 exec playwright install --with-deps chromium
+      # The runner image provides Chromium's system libraries and the Lab CA in its NSS database.
+      - run: pnpm --filter webv3 exec playwright install chromium
         working-directory: frontend
-      - name: Write the kubeconfig
-        env:
-          DEV_KUBECONFIG: ${{ secrets.DEV_KUBECONFIG }}
-        run: |
-          kubeconfig="$RUNNER_TEMP/kubeconfig"
-          (umask 077 && printf '%s\n' "$DEV_KUBECONFIG" >"$kubeconfig")
-          echo "KUBECONFIG=$kubeconfig" >>"$GITHUB_ENV"
-          KUBECONFIG=$kubeconfig kubectl --context homelab-talos-dev -n tdk-dev-frontend-webv3 \
-            get deployment frontend-webv3 -o name
+      # Only the steps that run kubectl or dev-cli receive the cluster token; the script writes a kubeconfig for
+      # that command and removes it when the command ends.
       - name: Deploy the gate's branch once the development base runs the candidate
         id: deploy
         timeout-minutes: 35
+        env:
+          DEV_KUBE_SERVER: https://192.168.1.218:6443
+          DEV_KUBE_CA: ${{ secrets.DEV_KUBE_CA }}
+          DEV_KUBE_TOKEN: ${{ secrets.DEV_KUBE_TOKEN }}
         run: |
-          mkdir -p "$RUNNER_TEMP/webv3-release-gate"
-          scripts/webv3-release-gate.sh deploy "$CANDIDATE" "$RUNNER_TEMP/webv3-release-gate"
+          mkdir -p "$EVIDENCE"
+          scripts/webv3-release-gate.sh deploy "$CANDIDATE" "$EVIDENCE"
       - name: Run the suite against the candidate
         id: test
         timeout-minutes: 30
@@ -243,15 +257,28 @@ jobs:
           E2E_READER_PASSWORD: ${{ secrets.E2E_READER_PASSWORD }}
           E2E_SECOND_EMAIL: ${{ secrets.E2E_SECOND_EMAIL }}
           E2E_SECOND_PASSWORD: ${{ secrets.E2E_SECOND_PASSWORD }}
-        run: scripts/webv3-release-gate.sh test "$CANDIDATE" "$RUNNER_TEMP/webv3-release-gate"
+        run: scripts/webv3-release-gate.sh test "$EVIDENCE"
+      - name: Check that the development base served the candidate throughout
+        id: verify
+        timeout-minutes: 5
+        env:
+          DEV_KUBE_SERVER: https://192.168.1.218:6443
+          DEV_KUBE_CA: ${{ secrets.DEV_KUBE_CA }}
+          DEV_KUBE_TOKEN: ${{ secrets.DEV_KUBE_TOKEN }}
+        run: scripts/webv3-release-gate.sh verify "$CANDIDATE" "$EVIDENCE"
       # A branch left behind expires after the development TTL, and the next dev up tears it down, so a failed teardown
       # never blocks a release.
       - name: Tear the gate's branch down
         if: always() && steps.deploy.outcome != 'skipped'
         continue-on-error: true
         timeout-minutes: 15
-        run: scripts/webv3-release-gate.sh down "$RUNNER_TEMP/webv3-release-gate"
-      # The HTML report records typed values, so the environment holds only development fixture identities.
+        env:
+          DEV_KUBE_SERVER: https://192.168.1.218:6443
+          DEV_KUBE_CA: ${{ secrets.DEV_KUBE_CA }}
+          DEV_KUBE_TOKEN: ${{ secrets.DEV_KUBE_TOKEN }}
+        run: scripts/webv3-release-gate.sh down "$EVIDENCE"
+      # The evidence directory holds no cluster credentials. The HTML report records typed values, so the environment
+      # holds only development fixture identities.
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always() && steps.deploy.outcome != 'skipped'
         with:
@@ -263,7 +290,7 @@ jobs:
     name: webv3 / promote to prod
     needs: [publish, gate]
     # Runs after every gate result so a dry run reports a blocked release too. Only a gate that passed on the published
-    # digest moves prod, and it moves it to that digest without rebuilding.
+    # digest moves prod, only while that digest is still latest, and it moves it to that digest without rebuilding.
     if: always() && needs.publish.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -278,21 +305,26 @@ jobs:
       DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
       FORCED: ${{ github.event_name == 'workflow_dispatch' && inputs.force_failure }}
     steps:
+      # latest names the newest published candidate, so an older run, or a re-run after a newer push, cannot move prod.
       - name: Decide
         run: |
-          if [[ $GATE == success && $CANDIDATE =~ ^sha256:[0-9a-f]{64}$ && $TESTED == "$CANDIDATE" && $FORCED != true ]]; then
-            decision="promote $CANDIDATE to prod"
-            if [[ $DRY_RUN == true ]]; then
-              decision="would promote $CANDIDATE to prod; dry run, prod unchanged"
-            fi
-          else
+          latest="$(docker buildx imagetools inspect "$IMAGE:latest" --format '{{json .Manifest.Digest}}' | jq -r .)" ||
+            latest=""
+          if [[ $GATE != success || ! $CANDIDATE =~ ^sha256:[0-9a-f]{64}$ || $TESTED != "$CANDIDATE" || $FORCED == true ]]; then
             decision="blocked: the release gate's result is $GATE and it tested '${TESTED:-nothing}'; prod unchanged"
+          elif [[ $latest != "$CANDIDATE" ]]; then
+            decision="blocked: latest is now '${latest:-unreadable}', so $CANDIDATE is no longer the newest candidate; prod unchanged"
+          elif [[ $DRY_RUN == true ]]; then
+            decision="would promote $CANDIDATE to prod; dry run, prod unchanged"
+          else
+            decision="promote $CANDIDATE to prod"
           fi
           {
             echo "### Webv3 release gate: $decision"
             echo "- Source: \`$GITHUB_SHA\`"
             echo "- Published: \`$CANDIDATE\`"
             echo "- Tested: \`${TESTED:-none}\`"
+            echo "- latest: \`${latest:-unreadable}\`"
             echo "- Gate: \`$GATE\`, dry run \`$DRY_RUN\`, forced failure \`$FORCED\`"
           } >>"$GITHUB_STEP_SUMMARY"
           echo "Decision: $decision"

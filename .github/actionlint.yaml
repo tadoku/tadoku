@@ -2,3 +2,4 @@ self-hosted-runner:
   labels:
     - tadoku-ci
     - tadoku-prod-branch
+    - tadoku-webv3-gate

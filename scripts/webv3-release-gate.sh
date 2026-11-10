@@ -3,21 +3,32 @@
 # docs/docs/develop/ci-workflows.md#webv3-release-gate.
 #
 #   webv3-release-gate.sh deploy <sha256:digest> <evidence-dir>
-#   webv3-release-gate.sh test <sha256:digest> <evidence-dir>
+#   webv3-release-gate.sh test <evidence-dir>
+#   webv3-release-gate.sh verify <sha256:digest> <evidence-dir>
 #   webv3-release-gate.sh down <evidence-dir>
 #
 # Run from the repository root, on a local branch (not a detached HEAD) at the
-# candidate's commit, with dev-cli installed, the homelab-talos-dev kubectl
-# context, the frontend dependencies installed and paper-ui built. GATE_OWNER
-# selects the dev-cli owner. test needs E2E_READER_EMAIL, E2E_READER_PASSWORD,
-# E2E_SECOND_EMAIL and E2E_SECOND_PASSWORD; GATE_FORCE_FAILURE=true adds a
-# failing spec for a dry run.
+# candidate's commit, with dev-cli installed, the frontend dependencies
+# installed and paper-ui built. deploy, verify and down use the cluster: with
+# DEV_KUBE_SERVER, DEV_KUBE_CA (base64 PEM) and DEV_KUBE_TOKEN set they write a
+# private kubeconfig for that command only and require a ServiceAccount;
+# otherwise they use your homelab-talos-dev context. test never uses the
+# cluster and needs E2E_READER_EMAIL, E2E_READER_PASSWORD, E2E_SECOND_EMAIL and
+# E2E_SECOND_PASSWORD. GATE_OWNER selects the dev-cli owner, and
+# GATE_FORCE_FAILURE=true adds a failing spec for a dry run.
 set -euo pipefail
 
 owner=${GATE_OWNER:-gha}
 context=homelab-talos-dev
 namespace=tdk-dev-frontend-webv3
 base_backend=frontend-webv3.$namespace.svc.cluster.local
+
+# Skips the suite may report: they need an environment no branch tenant has. Any
+# other skip, such as one for missing credentials or data, fails the gate.
+allowed_skips='[
+  "indexing.spec.ts › the web host is indexable and lets crawlers in",
+  "webv2-release-redirect.spec.ts › webv2 sends an account with release-webv3 to the same page on Webv3 and nothing else"
+]'
 
 fail() {
   echo "::error::$*" >&2
@@ -28,37 +39,69 @@ require_digest() {
   [[ $1 =~ ^sha256:[0-9a-f]{64}$ ]] || fail "'$1' is not an image digest."
 }
 
-# Prints the digest the development base's Webv3 runs once its rollout has
-# finished and every pod runs it, or nothing.
-base_digest() {
-  local deployment pods spec running
+use_cluster() {
+  if [[ -z ${DEV_KUBE_TOKEN:-} ]]; then
+    return
+  fi
+  if [[ ${DEV_KUBE_SERVER:-} != https://* ]] ||
+    ! base64 -d <<<"${DEV_KUBE_CA//[[:space:]]/}" 2>/dev/null | grep -q 'BEGIN CERTIFICATE'; then
+    fail "Set DEV_KUBE_SERVER (https URL), DEV_KUBE_CA (base64 PEM) and DEV_KUBE_TOKEN."
+  fi
+
+  local identity
+  kubeconfig="$(mktemp)"
+  trap 'rm -f "$kubeconfig"' EXIT
+  jq -n --arg context "$context" '{
+    apiVersion: "v1",
+    kind: "Config",
+    clusters: [{name: $context,
+      cluster: {server: env.DEV_KUBE_SERVER, "certificate-authority-data": (env.DEV_KUBE_CA | gsub("\\s"; ""))}}],
+    users: [{name: "webv3-release-gate", user: {token: (env.DEV_KUBE_TOKEN | gsub("\\s"; ""))}}],
+    contexts: [{name: $context, context: {cluster: $context, user: "webv3-release-gate"}}],
+    "current-context": $context
+  }' >"$kubeconfig"
+  export KUBECONFIG=$kubeconfig
+  identity="$(kubectl --context "$context" auth whoami -o jsonpath='{.status.userInfo.username}')"
+  [[ $identity == system:serviceaccount:* ]] || fail "DEV_KUBE_TOKEN authenticates as '$identity', not a ServiceAccount."
+  echo "Cluster identity: $identity"
+}
+
+# Prints the development base's Webv3 as JSON: the Deployment's generation and
+# image digest, each live pod's UID and image digest, and whether the rollout
+# has finished with every pod on the Deployment's digest.
+base_state() {
+  local deployment pods
   deployment="$(kubectl --context "$context" -n "$namespace" get deployment frontend-webv3 -o json)"
   pods="$(kubectl --context "$context" -n "$namespace" get pods -l app=frontend-webv3 -o json)"
-  spec="$(jq -r '.spec.replicas as $replicas
-    | select(.metadata.generation == .status.observedGeneration and $replicas > 0
-      and ([.status.updatedReplicas, .status.readyReplicas, .status.availableReplicas, .status.replicas]
-        | all(. == $replicas)))
-    | .spec.template.spec.containers[] | select(.name == "frontend-webv3") | .image
-    | capture("@(?<digest>sha256:[0-9a-f]{64})$").digest' <<<"$deployment")"
-  running="$(jq -r '[.items[].status.containerStatuses[]? | select(.name == "frontend-webv3") | .imageID
-    | capture("@(?<digest>sha256:[0-9a-f]{64})$").digest] | unique | if length == 1 then .[0] else empty end' <<<"$pods")"
-  if [[ -n $spec && $spec == "$running" ]]; then
-    echo "$spec"
-  fi
+  jq -n --argjson deployment "$deployment" --argjson pods "$pods" '
+    def digest: (capture("@(?<d>sha256:[0-9a-f]{64})$").d) // null;
+    $deployment as $d | $d.spec.replicas as $replicas
+    | ($d.spec.template.spec.containers[] | select(.name == "frontend-webv3") | .image | digest) as $digest
+    | [$pods.items[] | select(.status.phase != "Succeeded" and .status.phase != "Failed")
+      | {uid: .metadata.uid, terminating: (.metadata.deletionTimestamp != null),
+        digest: ([.status.containerStatuses[]? | select(.name == "frontend-webv3") | .imageID | digest][0])}]
+      | sort_by(.uid) as $live
+    | {generation: $d.metadata.generation, digest: $digest, pods: $live,
+      settled: ($d.metadata.generation == $d.status.observedGeneration and $replicas > 0
+        and ([$d.status.updatedReplicas, $d.status.readyReplicas, $d.status.availableReplicas, $d.status.replicas]
+          | all(. == $replicas))
+        and ($live | length) == $replicas and ($live | all(.terminating | not))
+        and $digest != null and ($live | all(.digest == $digest)))}'
 }
 
 # The gate needs a deployable to create the route and its tenant. Comparing
 # with HEAD selects none from the commit's own changes, and admin is one the
 # suite never opens, so every Webv3 request reaches the base.
 deploy() {
-  local candidate=$1 evidence=$2 deadline webv3 app headers route
+  local candidate=$1 evidence=$2 deadline webv3 app headers route state
   require_digest "$candidate"
+  use_cluster
   deadline=$((SECONDS + ${GATE_BASE_WAIT_SECONDS:-1200}))
-  until [[ $(base_digest) == "$candidate" ]]; do
+  until state="$(base_state)" && jq -e --arg c "$candidate" '.settled and .digest == $c' <<<"$state" >/dev/null; do
     if ((SECONDS >= deadline)); then
-      fail "The development base never ran $candidate; it runs '$(base_digest)'."
+      fail "The development base never settled on $candidate: ${state:-unreadable}"
     fi
-    echo "Waiting for the development base to run $candidate; it runs '$(base_digest)'."
+    echo "Waiting for the development base to run $candidate: $(jq -c '{digest, settled}' <<<"${state:-null}")"
     sleep 20
   done
   echo "The development base runs $candidate."
@@ -81,13 +124,18 @@ deploy() {
   done
   printf 'ROUTE=%s\nWEBV3_BASE_URL=%s\nTADOKU_API_URL=%sapi/internal\n' "$route" "${webv3%/}" "$app" >"$evidence/route.env"
   cat "$evidence/route.env"
+
+  # verify requires these exact pods after the suite, so no rollout can come and go unseen.
+  state="$(base_state)"
+  jq -e --arg c "$candidate" '.settled and .digest == $c' <<<"$state" >/dev/null ||
+    fail "The development base moved off $candidate during dev up: $state"
+  jq . <<<"$state" | tee "$evidence/base-before.json"
 }
 
 test_suite() {
-  local candidate=$1 evidence=$2 forced=frontend/apps/webv3/e2e/release-gate-forced-failure.spec.ts code=0 tested
-  require_digest "$candidate"
+  local evidence=$1 forced=frontend/apps/webv3/e2e/release-gate-forced-failure.spec.ts code=0 summary
   for name in E2E_READER_EMAIL E2E_READER_PASSWORD E2E_SECOND_EMAIL E2E_SECOND_PASSWORD; do
-    [[ -n ${!name:-} ]] || fail "Set $name; without it the credentialed specs skip and the suite passes."
+    [[ -n ${!name:-} ]] || fail "Set $name; without it the credentialed specs skip."
   done
   set -a
   # shellcheck source=/dev/null
@@ -103,22 +151,46 @@ test_suite() {
   (cd frontend && PLAYWRIGHT_OUTPUT_DIR="$evidence/playwright" timeout --kill-after=60 "${GATE_SUITE_TIMEOUT:-1800}" \
     pnpm --filter webv3 test:e2e) || code=$?
 
-  tested="$(base_digest || true)"
-  jq --null-input \
-    --arg candidate "$candidate" --arg tested "$tested" --arg route "${ROUTE:?route.env names no route}" --arg revision "$(git rev-parse HEAD)" \
-    --arg forced "${GATE_FORCE_FAILURE:-false}" --argjson code "$code" \
-    '{candidate: $candidate, tested: $tested, route: $route, revision: $revision, forcedFailure: ($forced == "true"),
-      suiteExitCode: $code, passed: ($code == 0 and $tested == $candidate)}' | tee "$evidence/result.json"
-  if [[ -n ${GITHUB_OUTPUT:-} ]]; then
-    echo "tested_digest=$tested" >>"$GITHUB_OUTPUT"
-  fi
+  [[ -s $evidence/playwright/results.json ]] || fail "The suite exited $code and wrote no results."
+  summary="$(jq --argjson code "$code" --argjson allowed "$allowed_skips" \
+    --arg route "${ROUTE:?route.env names no route}" --arg revision "$(git rev-parse HEAD)" '
+    [.. | objects | select(has("specs")) | .specs[]
+      | {name: "\(.file | split("/") | last) › \(.title)", status: [.tests[].status]}] as $tests
+    | [$tests[] | select(.status | index("skipped")) | .name] as $skipped
+    | {route: $route, revision: $revision, exitCode: $code, stats: .stats, skipped: $skipped,
+      disallowedSkips: ($skipped - $allowed),
+      passed: ($code == 0 and ($tests | length) > 0 and ($skipped - $allowed | length) == 0)}' \
+    "$evidence/playwright/results.json")"
+  tee "$evidence/suite.json" <<<"$summary"
   ((code == 0)) || fail "The suite exited $code."
-  [[ $tested == "$candidate" ]] || fail "The development base moved from $candidate to '$tested' during the suite."
+  jq -e '.disallowedSkips == []' <<<"$summary" >/dev/null || fail "The suite skipped tests the gate requires."
+  jq -e '.passed' <<<"$summary" >/dev/null || fail "The suite ran no tests."
+}
+
+verify() {
+  local candidate=$1 evidence=$2 after
+  require_digest "$candidate"
+  use_cluster
+  after="$(base_state)"
+  jq . <<<"$after" >"$evidence/base-after.json"
+  jq -n --arg candidate "$candidate" --slurpfile before "$evidence/base-before.json" --argjson after "$after" '
+    {candidate: $candidate, before: $before[0], after: $after,
+      unchanged: ($before[0].pods == $after.pods and $before[0].generation == $after.generation
+        and $after.settled and $after.digest == $candidate)}' | tee "$evidence/base.json"
+  jq -e '.unchanged' "$evidence/base.json" >/dev/null ||
+    fail "The development base changed during the suite; see base.json."
+  if [[ -n ${GITHUB_OUTPUT:-} ]]; then
+    echo "tested_digest=$candidate" >>"$GITHUB_OUTPUT"
+  fi
 }
 
 case ${1:-} in
   deploy) deploy "$2" "$3" ;;
-  test) test_suite "$2" "$3" ;;
-  down) dev down --owner "$owner" 2>&1 | tee "$2/dev-down.log" ;;
-  *) fail "Usage: webv3-release-gate.sh deploy|test <sha256:digest> <evidence-dir>, or down <evidence-dir>" ;;
+  test) test_suite "$2" ;;
+  verify) verify "$2" "$3" ;;
+  down)
+    use_cluster
+    dev down --owner "$owner" 2>&1 | tee "$2/dev-down.log"
+    ;;
+  *) fail "Usage: webv3-release-gate.sh deploy|verify <sha256:digest> <evidence-dir>, or test|down <evidence-dir>" ;;
 esac

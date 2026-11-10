@@ -98,7 +98,10 @@ order by "date" asc;
 with filters as not materialized (
   select
     sqlc.arg('include_deleted')::boolean as include_deleted,
-    sqlc.narg('user_id')::uuid as user_id
+    sqlc.narg('user_id')::uuid as user_id,
+    sqlc.narg('language_codes')::text[] as language_codes,
+    sqlc.narg('activity_ids')::smallint[] as activity_ids,
+    sqlc.narg('tags')::text[] as tag_filter
 ), eligible_logs as (
   select
     logs.id,
@@ -135,6 +138,18 @@ with filters as not materialized (
   where
     (filters.include_deleted or logs.deleted_at is null)
     and (logs.user_id = filters.user_id or filters.user_id is null)
+    and (filters.language_codes is null or logs.language_code = any(filters.language_codes))
+    and (filters.activity_ids is null or logs.log_activity_id = any(filters.activity_ids))
+    and (
+      filters.tag_filter is null
+      or exists (
+        select 1
+        from log_tags
+        where
+          log_tags.log_id = logs.id
+          and log_tags.tag = any(filters.tag_filter)
+      )
+    )
     and contest_logs.contest_id = sqlc.arg('contest_id')
 ), page as (
   select

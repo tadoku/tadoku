@@ -4,6 +4,7 @@ go_library(
     name = "logs",
     srcs = [
         "contest_logs.sql.go",
+        "contest_profile_summary.sql.go",
         "db.go",
         "logs.sql.go",
         "models.go",

@@ -645,7 +645,10 @@ const listLogsForContest = `-- name: ListLogsForContest :many
 with filters as not materialized (
   select
     $1::boolean as include_deleted,
-    $2::uuid as user_id
+    $2::uuid as user_id,
+    $3::text[] as language_codes,
+    $4::smallint[] as activity_ids,
+    $5::text[] as tag_filter
 ), eligible_logs as (
   select
     logs.id,
@@ -682,7 +685,19 @@ with filters as not materialized (
   where
     (filters.include_deleted or logs.deleted_at is null)
     and (logs.user_id = filters.user_id or filters.user_id is null)
-    and contest_logs.contest_id = $3
+    and (filters.language_codes is null or logs.language_code = any(filters.language_codes))
+    and (filters.activity_ids is null or logs.log_activity_id = any(filters.activity_ids))
+    and (
+      filters.tag_filter is null
+      or exists (
+        select 1
+        from log_tags
+        where
+          log_tags.log_id = logs.id
+          and log_tags.tag = any(filters.tag_filter)
+      )
+    )
+    and contest_logs.contest_id = $6
 ), page as (
   select
     eligible_logs.id,
@@ -707,8 +722,8 @@ with filters as not materialized (
     eligible_logs.tags
   from eligible_logs
   order by eligible_logs.created_at desc, eligible_logs.id desc
-  limit $5
-  offset $4
+  limit $8
+  offset $7
 ), total as (
   select count(*) as total_size
   from eligible_logs
@@ -751,6 +766,9 @@ order by page.created_at desc, page.id desc
 type ListLogsForContestParams struct {
 	IncludeDeleted bool
 	UserID         pgtype.UUID
+	LanguageCodes  []string
+	ActivityIds    []int16
+	Tags           []string
 	ContestID      pgtype.UUID
 	StartFrom      int32
 	PageSize       int32
@@ -784,6 +802,9 @@ func (q *Queries) ListLogsForContest(ctx context.Context, arg ListLogsForContest
 	rows, err := q.db.Query(ctx, listLogsForContest,
 		arg.IncludeDeleted,
 		arg.UserID,
+		arg.LanguageCodes,
+		arg.ActivityIds,
+		arg.Tags,
 		arg.ContestID,
 		arg.StartFrom,
 		arg.PageSize,

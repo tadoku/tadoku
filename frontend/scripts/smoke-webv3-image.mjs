@@ -4,6 +4,7 @@ import { get } from 'node:http'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { promisify } from 'node:util'
+import { serverFunctionId } from '../apps/webv3/server-function-id.mjs'
 import { apiPort, contest, fixture, fixtureOptions, requestIds, writes } from './smoke-webv3-fixture.mjs'
 
 const image = process.argv[2]
@@ -156,19 +157,15 @@ try {
   assert.equal(outage.status, 200)
   assert(outageHtml.includes('Account service unavailable'), 'Identity outage did not render the unavailable account state')
   assert(!outageHtml.includes('>Log in<'), 'Identity outage rendered a guest')
-  const createPath = docker('exec', container, 'node', '--input-type=module', '-e', String.raw`
-    import { readdirSync, readFileSync } from 'node:fs';
-    const source = readdirSync('/app/server/_ssr').filter(name => name.endsWith('.mjs'))
-      .map(name => readFileSync('/app/server/_ssr/' + name, 'utf8')).join('\n');
-    const id = source.match(/id:\s*"([a-f0-9]+)",\s*name:\s*"createLog"/)[1];
-    console.log('/_serverFn/' + id);
-  `)
+  // vite.config.ts derives every server function's ID from its file and variable, so the built createLog is found
+  // without reading the bundle. A wrong ID answers something other than 403 and fails below.
+  const createPath = `/_serverFn/${serverFunctionId('src/lib/logs.ts', 'createLog')}`
   for (const headers of [{ Origin: 'https://evil.tadoku.app', 'Sec-Fetch-Site': 'same-site' }, {}]) {
     const response = await fetch(base + createPath, {
       method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...headers },
       body: new URLSearchParams({}), redirect: 'manual',
     })
-    assert.equal(response.status, 403, 'Built createLog did not reject an unsafe request')
+    assert.equal(response.status, 403, `Built createLog at ${createPath} did not reject an unsafe request`)
     mutationProtection.push({ path: createPath, origin: headers.Origin || 'absent', status: response.status })
   }
   const html = await (await fetch(base, { signal: AbortSignal.timeout(15_000) })).text()

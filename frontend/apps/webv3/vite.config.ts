@@ -3,9 +3,20 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { nitro } from 'nitro/vite'
 import { defineConfig } from 'vite'
+import { serverFunctionId } from './server-function-id.mjs'
 
 export default defineConfig({
-  plugins: [tanstackStart({ serverFns: { disableCsrfMiddlewareWarning: true } }), nitro({ serverDir: './server', preset: 'node-server', devServer: { runner: 'self' }, traceDeps: ['jsdom'] }), react(), tailwindcss()],
+  plugins: [
+    tanstackStart({
+      serverFns: {
+        disableCsrfMiddlewareWarning: true,
+        generateFunctionId: ({ filename, functionName }) => serverFunctionId(filename, functionName),
+      },
+    }),
+    nitro({ serverDir: './server', preset: 'node-server', devServer: { runner: 'self' }, traceDeps: ['jsdom'] }),
+    react(),
+    tailwindcss(),
+  ],
   resolve: {
     dedupe: ['react', 'react-dom', '@tanstack/react-query'],
   },

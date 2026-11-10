@@ -311,7 +311,8 @@ Pod recovers, the maintainer must assess the failed operation and approve any
 required full sync separately.
 
 Source changes to Webv3 or the workspace lockfile also trigger its normal
-publication workflow. Production follows `frontend-webv3:prod` by
+publication workflow, which tags `prod` once Webv3's release gate passes.
+Production follows `frontend-webv3:prod` by
 digest: Image Updater writes to the production GitOps repository and Argo CD
 automatically rolls `next.tadoku.app`. This is a source-merge effect. Webv3's SSR bundles
 `@tanstack/query-core` to keep its build compatible with this workspace; the

@@ -63,6 +63,16 @@ their credentials be supplied through the variables below. Run it from
 Without the Dev Reader credentials, tests that need an account skip; the
 container smoke runs that way.
 
+Every Webv3 release runs the whole suite this way first: the
+[release gate](../develop/webv3-release-gate.md) deploys a fresh
+branch tenant whose Webv3 host is served by the development base running the
+published image, and tags `prod` only when the suite passes there with no skip
+outside the gate's allowlist. A spec must therefore pass against the built
+image as well as the Vite overlay: wait for a hydrated control before measuring
+or using it, measure a layout until content that arrives after hydration, such
+as announcements, has settled, and after a client navigation wait for the new
+page's content before counting what it does or does not show.
+
 The `tenant` hook also seeds sixty participants, with high scores, into the
 branch tenant's Dev Tadoku Round, so a `learner` who joins it and logs a little
 ranks below the first standings page. Pull-request deploys do not have them.

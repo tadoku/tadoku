@@ -6,9 +6,15 @@ const artifacts = process.env.PLAYWRIGHT_OUTPUT_DIR || join(tmpdir(), 'tadoku-we
 
 export default defineConfig({
   testDir: './e2e',
+  // A committed test.only would silently drop every other test, so CI refuses it.
+  forbidOnly: !!process.env.CI,
   workers: 1,
   fullyParallel: false,
-  reporter: [['list'], ['html', { outputFolder: join(artifacts, 'report'), open: 'never' }]],
+  reporter: [
+    ['list'],
+    ['html', { outputFolder: join(artifacts, 'report'), open: 'never' }],
+    ['json', { outputFile: join(artifacts, 'results.json') }],
+  ],
   outputDir: join(artifacts, 'results'),
   use: {
     baseURL: process.env.WEBV3_BASE_URL || 'http://127.0.0.1:5183',

@@ -43,8 +43,8 @@ identity API owns session reads, logout and CSRF.
 
 A source merge automatically releases the API and worker to production through
 `build-bazel.yaml`, Image Updater and Argo CD. Treat it as a real production
-release. Frontend workflows publish `prod` from `main` the same way, so a
-merge also releases every affected frontend; development reconciliation
+release. Frontend workflows publish `prod` from `main` the same way, Webv3
+once its release gate passes, so a merge also releases every affected frontend; development reconciliation
 switches the shared callback and private SSR routes. See
 [Production branches](../develop/production-branches.md) for branch support.
 

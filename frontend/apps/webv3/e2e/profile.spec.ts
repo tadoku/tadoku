@@ -42,7 +42,9 @@ async function apiYear(request: APIRequestContext, userId: string, target: numbe
 /** The page shows the year's totals, breakdowns and contests exactly as the API reports them. */
 async function expectYear(page: Page, request: APIRequestContext, userId: string, target: number) {
   const expected = await apiYear(request, userId, target)
-  // An account with a single year has no year tabs.
+  // After a client navigation the previous year stays on screen until the new one renders, and an account with a
+  // single year has no year tabs, so count them only once the target year is shown.
+  await expect(page.getByRole('region', { name: new RegExp(`’s activity in ${target}$`) })).toBeVisible()
   const yearTabs = page.getByRole('navigation', { name: 'Profile year' })
   if (await yearTabs.count()) await expect(yearTabs.locator('[aria-current="page"]')).toHaveText(String(target))
 

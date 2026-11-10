@@ -1,12 +1,13 @@
 ---
 title: CI workflows
-description: What each GitHub Actions workflow checks and when it runs, how backend CI uses the private runner pool and Bazel caches, and where failing test logs are uploaded.
+description: What each GitHub Actions workflow checks and when it runs, how backend CI uses the private runner pool and Bazel caches, where failing test logs are uploaded and how the Webv3 release gate decides when to tag prod.
 ---
 
 # CI workflows
 
 Read this when you need to know what CI checks on a pull request, why a
-workflow ran or how backend CI caches its work. The commands each workflow runs
+workflow ran, how backend CI caches its work or how a Webv3 image reaches
+`prod`. The commands each workflow runs
 are explained in [Toolchain and repository](./toolchain.md).
 
 All workflows live in `.github/workflows/`.
@@ -85,7 +86,7 @@ console output; they include assertion output and fixture cleanup errors.
 | `build-frontend-styleguide.yaml` | Pushes touching styleguide, `ui` or the lockfile | Builds the `ui` styleguide; publishes its image from `main` |
 | `build-frontend-paper-styleguide.yaml` | PRs and `main` pushes touching Paper | Paper boundaries, `paper-ui` and `paper-styleguide` lint, typecheck, test and build, package checks, image smoke test; publishes from `main` |
 | `build-frontend-authv2.yaml` | PRs and main pushes touching authv2 or Paper | Node 22 typecheck, lint, boundaries and container build; main publishes commit, `latest` and `prod`; Playwright remains manual |
-| `build-frontend-webv3.yaml` | PRs and `main` pushes touching Webv3 or Paper inputs | Node 22 lint, typecheck, boundaries, standalone container and synthetic read-only browser journeys; publishes commit, `latest` and `prod` from `main` |
+| `build-frontend-webv3.yaml` | PRs and `main` pushes touching an input of the Webv3 image or its release gate | Node 22 lint, typecheck, boundaries, standalone container and synthetic read-only browser journeys; from `main`, publishes the commit tag and `latest`, then tags `prod` only after the [release gate](#webv3-release-gate) passes on that digest |
 | `webv3-production-canary.yaml` | Hourly and manual dispatch from `main`, once `WEBV3_CANARY_ENABLED` is `true` | Signs in on `next.tadoku.app`, walks a read-only journey and publishes green or red; see [Webv3 production canary](../frontend/webv3-production-canary.md) |
 | `check-paper-playground.yaml` | PRs and `main` pushes touching the playground or `paper-ui` | Paper boundaries and `paper-playground` lint, typecheck, test and build; never published |
 | `pr-branch.yaml` | `pull_request_target` label, push, reopen and close events | Authorizes the `deploy` label, deploys the pinned commit beside production with dev-cli and tears the branch down when the label is removed or the pull request closes. Its deploy and teardown jobs are the called workflows `pr-branch-called-deploy.yaml` and `pr-branch-called-teardown.yaml`. See [Pull-request deploys](./pull-request-deploys.md) |
@@ -96,9 +97,14 @@ console output; they include assertion output and fixture cleanup errors.
 Frontend application images from `dev/` branches publish only their immutable commit tag.
 They never update `latest` or `prod`. Development manifests can pin those images
 without a production release. Main publication updates the commit tag, `latest`
-and `prod`. Development follows `latest` and production follows `prod`, so merging
-frontend source to `main` releases each affected frontend to production, as it
-does for the backend images.
+and `prod`, except that Webv3's `prod` waits for its release gate. Development
+follows `latest` and production follows `prod`, so merging frontend source to
+`main` releases each affected frontend to production, as it does for the backend
+images.
+
+## Webv3 release gate
+
+`build-frontend-webv3.yaml` tags `prod` only on an image digest that passed the credentialed browser suite on a development branch tenant. See [Webv3 release gate](./webv3-release-gate.md).
 
 ## Production config contract
 

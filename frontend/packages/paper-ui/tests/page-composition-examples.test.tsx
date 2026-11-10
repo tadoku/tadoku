@@ -82,41 +82,58 @@ describe("page composition examples teach observable outcomes", () => {
     expect(screen.getByRole("region", { name: "Current contest" })).toHaveTextContent("Submitted entries");
   });
 
-  it("summarizes collapsed filters and clears them back to the toggle", async () => {
+  it("narrows logs from the Filters menu and offers only values that still have results", async () => {
     const user = userEvent.setup();
     example("pattern.filter-bar");
 
-    const toggle = screen.getByRole("button", { name: "Filters" });
-    expect(toggle).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByRole("combobox", { name: "Language" })).not.toBeInTheDocument();
-
-    await user.click(toggle);
-    await user.selectOptions(screen.getByRole("combobox", { name: "Language" }), "Spanish");
-    await user.click(toggle);
-
-    expect(toggle).toHaveAccessibleName("Filters (1)");
-    expect(screen.getByRole("group", { name: "Applied filters" })).toHaveTextContent("Spanish");
-    expect(screen.getByRole("status")).toHaveTextContent("2 of 5 participants");
-
-    await user.click(screen.getByRole("button", { name: "Clear all" }));
-    expect(toggle).toHaveFocus();
-    expect(toggle).toHaveAccessibleName("Filters");
+    const trigger = document.querySelector<HTMLElement>(".paper-filter-menu__trigger--menu")!;
     expect(screen.queryByRole("group", { name: "Applied filters" })).not.toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent("5 of 5 participants");
+    await user.click(trigger);
+    await user.click(await screen.findByRole("menuitemcheckbox", { name: /Spanish/ }));
+
+    const activity = within(screen.getByRole("group", { name: "Activity" }));
+    expect(activity.queryByRole("menuitemcheckbox", { name: /Reading/ })).not.toBeInTheDocument();
+    expect(activity.getByRole("menuitemcheckbox", { name: /Listening/ })).toHaveTextContent("105.5");
+    await user.keyboard("{Escape}");
+
+    expect(trigger).toHaveAccessibleName("Filters (1)");
+    expect(screen.getByRole("group", { name: "Applied filters" })).toHaveTextContent("3 logs of 7");
+    expect(screen.getAllByRole("listitem").map((item) => item.textContent)).not.toContain(
+      expect.stringContaining("Yotsuba"),
+    );
   });
 
-  it("explains a filtered standings view without matches and recovers from it", async () => {
+  it("removes filters from their chips and clears back to the Filters button", async () => {
     const user = userEvent.setup();
     example("pattern.filter-bar");
 
-    const toggle = screen.getByRole("button", { name: "Filters" });
-    await user.click(toggle);
-    await user.type(screen.getByRole("searchbox", { name: "Find a participant" }), "Zed");
+    const trigger = document.querySelector<HTMLElement>(".paper-filter-menu__trigger--menu")!;
+    await user.click(trigger);
+    await user.click(await screen.findByRole("menuitemcheckbox", { name: /podcast/ }));
+    await user.click(screen.getByRole("menuitemcheckbox", { name: /Japanese/ }));
+    await user.keyboard("{Escape}");
 
-    expect(screen.queryByRole("table")).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 3, name: "No participants match these filters." })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Clear filters" }));
-    expect(toggle).toHaveFocus();
-    expect(screen.getByRole("table")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Remove Japanese" }));
+    expect(screen.getByRole("button", { name: "Remove podcast" })).toHaveFocus();
+    expect(screen.getByRole("group", { name: "Applied filters" })).toHaveTextContent("2 logs of 7");
+
+    await user.click(screen.getByRole("button", { name: "Clear all" }));
+    expect(trigger).toHaveFocus();
+    expect(trigger).toHaveAccessibleName("Filters");
+    expect(screen.queryByRole("group", { name: "Applied filters" })).not.toBeInTheDocument();
+  });
+
+  it("boxes the contest summary figures as label and value pairs", () => {
+    example("stat-grid.contest-summary");
+
+    expect(screen.getAllByRole("term").map((term) => term.textContent)).toEqual(["Score", "Active days", "Logs", "Best day"]);
+    expect(screen.getAllByRole("definition")[0]).toHaveTextContent("4th place");
+  });
+
+  it("names the contest activity chart and lists its series", () => {
+    example("stacked-bar-chart.contest-activity");
+
+    expect(screen.getByRole("img", { name: "Points per day by activity, with the running total" })).toBeInTheDocument();
+    expect(screen.getByText("Running total")).toBeInTheDocument();
   });
 });

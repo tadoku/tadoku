@@ -1,50 +1,89 @@
-import { useStore } from '@tanstack/react-form'
-import { AppliedFilters, Button, cluster, EmptyState, SectionHeading, Table, typography, usePaperForm } from 'paper-ui'
-import { ChevronDownIcon, iconClassName } from 'paper-ui/icons'
+import {
+  AppliedFilters,
+  FilterMenu,
+  SectionHeading,
+  listRows,
+  metaLine,
+  type FilterMenuHandle,
+  type FilterMenuSection,
+} from 'paper-ui'
 import { useId, useRef, useState } from 'react'
 
-interface Standing {
-  readonly name: string
+interface Log {
+  readonly id: number
+  readonly title: string
   readonly language: string
   readonly activity: string
-  readonly score: number
+  readonly tags: readonly string[]
+  readonly points: number
 }
 
-const standings: readonly Standing[] = [
-  { name: 'Kai', language: 'Japanese', activity: 'Reading', score: 1400 },
-  { name: 'Mei', language: 'Japanese', activity: 'Listening', score: 1120 },
-  { name: 'Sora', language: 'Spanish', activity: 'Reading', score: 860 },
-  { name: 'Anton', language: 'Japanese', activity: 'Reading', score: 450 },
-  { name: 'Lina', language: 'Spanish', activity: 'Listening', score: 320 },
+const logs: readonly Log[] = [
+  { id: 1, title: 'Kiki’s Delivery Service', language: 'Japanese', activity: 'Reading', tags: ['novel'], points: 84.5 },
+  { id: 2, title: 'NHK News Web Easy', language: 'Japanese', activity: 'Reading', tags: ['news'], points: 22 },
+  { id: 3, title: 'Hanashite Hanashite', language: 'Japanese', activity: 'Listening', tags: ['podcast'], points: 41.2 },
+  { id: 4, title: 'Yotsuba&!', language: 'Japanese', activity: 'Reading', tags: ['manga'], points: 36 },
+  { id: 5, title: 'El Hobbit', language: 'Spanish', activity: 'Listening', tags: ['audiobook', 'novel'], points: 58 },
+  { id: 6, title: 'Diario de clase', language: 'Spanish', activity: 'Writing', tags: [], points: 12 },
+  { id: 7, title: 'Radio Ambulante', language: 'Spanish', activity: 'Listening', tags: ['podcast'], points: 47.5 },
 ]
-const noFilters = { language: 'all', activity: 'all', query: '' }
+
+type Dimension = 'language' | 'activity' | 'tag'
+type Selection = Record<Dimension, readonly string[]>
+
+const dimensions: readonly { readonly id: Dimension; readonly label: string }[] = [
+  { id: 'language', label: 'Language' },
+  { id: 'activity', label: 'Activity' },
+  { id: 'tag', label: 'Tags' },
+]
+const none: Selection = { language: [], activity: [], tag: [] }
+const valuesOf = (log: Log, dimension: Dimension) => (dimension === 'tag' ? log.tags : [log[dimension]])
+
+// Values within a filter are "any of"; filters combine with "and". `except` leaves one filter out.
+const matches = (log: Log, selection: Selection, except?: Dimension) =>
+  dimensions.every(
+    ({ id }) =>
+      id === except ||
+      selection[id].length === 0 ||
+      valuesOf(log, id).some(value => selection[id].includes(value)),
+  )
+
+// A value's points count the logs that the other filters still allow, so the menu offers what has results.
+function sectionsFor(selection: Selection): FilterMenuSection[] {
+  return dimensions.map(({ id, label }) => {
+    const points = new Map<string, number>()
+    for (const log of logs) {
+      for (const value of valuesOf(log, id)) {
+        const allowed = matches(log, selection, id) ? log.points : 0
+        points.set(value, (points.get(value) ?? 0) + allowed)
+      }
+    }
+    return {
+      id,
+      label,
+      selected: selection[id],
+      values: [...points]
+        .sort(([, left], [, right]) => right - left)
+        .map(([value, total]) => ({ value, label: value, points: total })),
+    }
+  })
+}
 
 export default function FilterBarExample() {
-  const [open, setOpen] = useState(false)
-  const toggle = useRef<HTMLButtonElement>(null)
-  const panelId = useId()
+  const [selection, setSelection] = useState<Selection>(none)
+  const menu = useRef<FilterMenuHandle>(null)
   const headingId = useId()
-  const methods = usePaperForm({ defaultValues: noFilters })
-  const {
-    language = 'all',
-    activity = 'all',
-    query = '',
-  } = useStore(methods.store, state => state.values)
-  const search = query.trim().toLocaleLowerCase()
-  const applied = [
-    language !== 'all' ? language : '',
-    activity !== 'all' ? activity : '',
-    search ? `Name: ${query.trim()}` : '',
-  ].filter(Boolean)
-  const rows = standings.filter(
-    row =>
-      (language === 'all' || row.language === language) &&
-      (activity === 'all' || row.activity === activity) &&
-      row.name.toLocaleLowerCase().includes(search),
-  )
-  const clearFilters = () => {
-    methods.reset(noFilters, { keepDefaultValues: true })
-    toggle.current?.focus()
+  const rows = logs.filter(log => matches(log, selection))
+  const list = listRows()
+  const resultLabel = `${rows.length} ${rows.length === 1 ? 'log' : 'logs'}`
+  const clear = () => {
+    setSelection(none)
+    menu.current?.focus()
+  }
+  const remove = (dimension: Dimension, value: string) => {
+    const next = { ...selection, [dimension]: selection[dimension].filter(item => item !== value) }
+    setSelection(next)
+    if (Object.values(next).every(values => values.length === 0)) menu.current?.focus()
   }
 
   return (
@@ -52,106 +91,39 @@ export default function FilterBarExample() {
       <SectionHeading
         level={2}
         id={headingId}
-        title="2026 Round 5 standings"
+        title="Logs"
         actions={
-          <Button
-            ref={toggle}
-            variant="ghost"
-            aria-expanded={open}
-            aria-controls={panelId}
-            onClick={() => setOpen(!open)}
-            trailingIcon={
-              <ChevronDownIcon
-                className={iconClassName('compact', open ? 'rotate-flip' : undefined)}
-              />
-            }
-          >
-            Filters{applied.length ? ` (${applied.length})` : ''}
-          </Button>
+          <FilterMenu
+            ref={menu}
+            sections={sectionsFor(selection)}
+            onChange={(id, values) => setSelection({ ...selection, [id]: values })}
+            onClear={() => setSelection(none)}
+            resultLabel={resultLabel}
+          />
         }
       />
-      <div id={panelId} hidden={!open}>
-        <methods.AppForm>
-          <form
-            onSubmit={event => event.preventDefault()}
-            className="grid grid-cols-filters gap-3 pb-4"
-          >
-            <methods.AppField name="language">
-              {field => (
-                <field.Select
-                  label="Language"
-                  options={[
-                    { value: 'all', label: 'All languages' },
-                    { value: 'Japanese', label: 'Japanese' },
-                    { value: 'Spanish', label: 'Spanish' },
-                  ]}
-                />
-              )}
-            </methods.AppField>
-            <methods.AppField name="activity">
-              {field => (
-                <field.Select
-                  label="Activity"
-                  options={[
-                    { value: 'all', label: 'All activities' },
-                    { value: 'Reading', label: 'Reading' },
-                    { value: 'Listening', label: 'Listening' },
-                  ]}
-                />
-              )}
-            </methods.AppField>
-            <methods.AppField name="query">
-              {field => (
-                <field.Input label="Find a participant" type="search" />
-              )}
-            </methods.AppField>
-          </form>
-        </methods.AppForm>
-      </div>
-      <div
-        className={cluster({ className: 'justify-between' })}
-      >
-        <AppliedFilters filters={applied} onClear={clearFilters} />
-        <p className={typography({ role: 'metadata' })} role="status">
-          {rows.length} of {standings.length} participants
-        </p>
-      </div>
-      {rows.length ? (
-        <Table
-          caption="Standings"
-          captionVisibility="screen-reader"
-          rows={rows}
-          getRowKey={row => row.name}
-          minWidth="17rem"
-          columns={[
-            {
-              id: 'participant',
-              header: 'Participant',
-              rowHeader: true,
-              cell: row => row.name,
-            },
-            { id: 'language', header: 'Language', cell: row => row.language },
-            {
-              id: 'score',
-              header: 'Score',
-              align: 'end',
-              cell: row => row.score.toLocaleString('en'),
-            },
-          ]}
-        />
-      ) : (
-        <EmptyState
-          variant="plain"
-          headingLevel={3}
-          title="No participants match these filters."
-          description="Filtering and searching never change anyone’s rank."
-          actions={
-            <Button variant="outline" onClick={clearFilters}>
-              Clear filters
-            </Button>
-          }
-        />
-      )}
+      <AppliedFilters
+        variant="removable"
+        className="mb-3"
+        filters={dimensions.flatMap(({ id }) =>
+          selection[id].map(value => ({ id: `${id}:${value}`, label: value, onRemove: () => remove(id, value) })),
+        )}
+        onClear={clear}
+        resultLabel={`${resultLabel} of ${logs.length}`}
+      />
+      <ul className={list.root()}>
+        {rows.map(log => (
+          <li key={log.id} className={list.item({ className: 'grid-cols-content-end gap-x-4' })}>
+            <span>
+              {log.title}
+              <span className={metaLine({ className: 'block' })}>
+                {[log.language, log.activity, ...log.tags].join(' · ')}
+              </span>
+            </span>
+            <span className="font-bold tabular-nums">{log.points}</span>
+          </li>
+        ))}
+      </ul>
     </section>
   )
 }

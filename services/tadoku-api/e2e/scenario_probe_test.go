@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -34,7 +35,12 @@ func populateScenario(t testing.TB, s *scenario, role string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	management := fliptmanagement.NewClient(fliptmanagement.Config{URL: flipt.URL(), Targets: targets})
+	management, err := fliptmanagement.NewClient(fliptmanagement.Config{
+		URL: flipt.URL(), Targets: targets, HTTPClient: &http.Client{Timeout: time.Second},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	_, err = management.SetNamedUserAccess(
 		tenant.WithKey(t.Context(), key.Key()),
 		fliptmanagement.Segment{

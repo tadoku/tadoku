@@ -153,12 +153,16 @@ func run(ctx context.Context, args []string) error {
 	}
 	httpClient := &http.Client{Timeout: 30 * time.Second}
 	defer httpClient.CloseIdleConnections()
+	management, err := fliptmanagement.NewClient(fliptmanagement.Config{
+		URL: cfg.FliptManagementURL, Targets: targets, HTTPClient: httpClient,
+	})
+	if err != nil {
+		return err
+	}
 	application = tenantlifecycle.NewApplication(
 		pool,
 		leaderboard.NewCache(client, time.Second),
-		fliptmanagement.NewClient(fliptmanagement.Config{
-			URL: cfg.FliptManagementURL, Targets: targets, HTTPClient: httpClient,
-		}),
+		management,
 	)
 	if command.action == "provision" {
 		return application.Provision(ctx, command.key, features)

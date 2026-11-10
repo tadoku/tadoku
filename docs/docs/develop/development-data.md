@@ -109,7 +109,11 @@ startup creates no database, Postgres cluster, PVC or database dependency Job.
   the branch task. Credentials stay Secret references.
 - `.dev/seed.sql` adds sixty high-scoring participants to the branch tenant's
   seeded round, because registration limits cannot create that many accounts.
-  Shared base seeding does not add them.
+  It also adds Dev Finished Round, which ended a week before seeding and holds
+  one Dev Reader log, and Dev Scoring Round, which starts on seeding day and
+  scores with its own active override rule set. The API attaches logs only to
+  started, unfinished contests and locks scoring from a contest's first day, so
+  no request can create either. Shared base seeding does not add them.
 - `.dev/config.yaml` resolves `DATABASE` to `tadoku` and `TENANT` to
   `tadoku/${DEV_ROUTE}`. API and worker use `${DEV_VAR_DATABASE}` and their
   `API_BRANCH` / `WORKER_BRANCH` settings use `${DEV_VAR_TENANT}`.

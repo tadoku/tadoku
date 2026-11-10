@@ -9,8 +9,8 @@ sidebar_position: 3
 Read this when you change the Webv2 redirect, grant an account Webv3 or turn
 the release off.
 
-Before the host switch, Webv3 is released to named accounts with the
-`release-webv3` flag. While the flag is on for an account, Webv2 answers that
+Before the host switch, which the [cutover runbook](webv3-cutover.md)
+describes, Webv3 is released to named accounts with the `release-webv3` flag. While the flag is on for an account, Webv2 answers that
 account's page requests with an uncached `302` to the same path and query on
 Webv3. Everyone else keeps Webv2. `frontend/apps/webv2/pages/_app.tsx` makes the
 decision on the server, so it applies to full page loads; a Webv2 tab already

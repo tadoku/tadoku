@@ -10,6 +10,23 @@ const statGrid = tv({
     unit: "paper-stat-grid__unit ms-1 text-metadata font-regular text-muted",
     detail: "paper-stat-grid__detail mt-1 block text-fine leading-150 font-regular text-muted",
   },
+  variants: {
+    variant: {
+      plain: {},
+      sheet: {
+        root: [
+          "paper-stat-grid--sheet grid-flow-col auto-cols-fr gap-px border border-rule-subtle bg-rule-subtle",
+          "max-tablet:grid-flow-row max-tablet:grid-cols-halves max-sm:gap-x-px",
+        ],
+        item: "gap-y-0.5 bg-paper px-3.5 py-3",
+        label: "font-semibold",
+        value: "text-xl leading-130",
+        unit: "text-fine",
+        detail: "mt-0.5",
+      },
+    },
+  },
+  defaultVariants: { variant: "plain" },
 });
 
 export interface StatGridItem {
@@ -23,11 +40,13 @@ export interface StatGridItem {
 
 export interface StatGridProps {
   readonly stats: readonly StatGridItem[];
+  /** `plain` sits in the page; `sheet` boxes the figures in one ruled row, two columns on phones. */
+  readonly variant?: "plain" | "sheet";
   readonly className?: string;
 }
 
-export function StatGrid({ stats, className }: StatGridProps) {
-  const slots = statGrid();
+export function StatGrid({ stats, variant = "plain", className }: StatGridProps) {
+  const slots = statGrid({ variant });
   return (
     <dl className={slots.root({ className })}>
       {stats.map((stat, index) => (

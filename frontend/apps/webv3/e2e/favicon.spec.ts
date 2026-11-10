@@ -8,14 +8,13 @@ const assets: [string, RegExp][] = [
   ['/site.webmanifest', /^application\/(manifest\+)?json/],
 ]
 
-test('pages offer the logomark favicon, its fallbacks, a manifest and a theme color for each appearance', async ({ page, request }) => {
+test('pages offer the logomark favicon, its fallbacks and a manifest', async ({ page, request }) => {
   await page.goto('/pages/manual')
   await expect(page.locator('link[rel="icon"][type="image/svg+xml"]')).toHaveAttribute('href', '/favicon.svg')
   await expect(page.locator('link[rel="icon"][type="image/png"]')).toHaveAttribute('href', '/favicon.png')
   await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute('href', '/apple-touch-icon.png')
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute('href', '/site.webmanifest')
-  await expect(page.locator('meta[name="theme-color"][media="(prefers-color-scheme: light)"]')).toHaveAttribute('content', '#f4f4f4')
-  await expect(page.locator('meta[name="theme-color"][media="(prefers-color-scheme: dark)"]')).toHaveAttribute('content', '#1c1c1c')
+  await expect(page.locator('meta[name="theme-color"]')).toHaveCount(0)
 
   for (const [path, type] of assets) {
     const response = await request.get(path)

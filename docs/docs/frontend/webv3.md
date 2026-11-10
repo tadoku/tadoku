@@ -95,8 +95,8 @@ plain. After a client navigation that changes the path,
 focuses the new page's `h1`, or `main` without one, and announces the page
 title through the shell's status region; the first load leaves focus to the
 browser. `navigation.spec.ts` covers a home → contest → profile → leaderboard
-journey without a document load, that focus and announcement, the profile's
-date field, and both menus without JavaScript.
+journey without a document load, that focus and announcement, and both menus
+without JavaScript.
 
 A suspended account sees the suspended screen, with a Discord contact link and
 Log out, in place of every page. An unavailable account service names itself
@@ -119,8 +119,8 @@ once its announcement ends. An unavailable announcement list shows nothing.
 
 Every page links the logomark favicon in `frontend/apps/webv3/public/`: an SVG
 that draws the mark dark or light with the visitor's appearance, a PNG and
-`/favicon.ico` for browsers without SVG icons, an Apple touch icon, a web
-manifest and a `theme-color` matching the header in each appearance. The rasters
+`/favicon.ico` for browsers without SVG icons, an Apple touch icon and a web
+manifest. The browser picks its own toolbar colour; Webv3 sets no `theme-color`. The rasters
 are drawn from paper-ui's brand `favicon` sources.
 
 ### Avatars

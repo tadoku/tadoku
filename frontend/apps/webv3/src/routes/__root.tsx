@@ -43,10 +43,6 @@ function RootDocument({ children }: { children: ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <ScriptOnce>{themeBootScript}</ScriptOnce>
-        {/* The header's paper surface in each appearance, so the browser's bar continues it. Kept out of head(), which
-            keeps one meta per name. */}
-        <meta name="theme-color" content="#f4f4f4" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#1c1c1c" media="(prefers-color-scheme: dark)" />
         <HeadContent />
       </head>
       <body className={bodyClassName}>

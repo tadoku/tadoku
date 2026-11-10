@@ -155,6 +155,7 @@ test('a signed-in learner joins an open contest, sees it on the contest page and
   await page.setViewportSize({ width: 390, height: 844 })
   await page.reload()
   await expect(joinLinks(page)).toHaveCount(0)
+  await expect(contestOptions(page)).toBeEnabled()
   const options = await contestOptions(page).boundingBox()
   const back = await page.getByRole('link', { name: 'Community contests' }).boundingBox()
   const title = await page.getByRole('heading', { level: 1 }).boundingBox()

@@ -108,86 +108,113 @@ On `main`, `build-frontend-webv3.yaml` tags `prod` only on an image digest
 that passed `pnpm --filter webv3 test:e2e` against a real Tadoku API, with
 Dev Reader and Dev Admin, on a fresh development tenant. Its jobs run in order:
 
-1. **Publish** builds the image once and pushes the commit tag and `latest`.
-   Its output is the image's digest.
-2. **Release gate** runs `scripts/webv3-release-gate.sh` on `tadoku-ci`:
+1. **Publish.** A push builds the image once and pushes the commit tag and
+   `latest`. A `workflow_dispatch` builds and pushes nothing: it resolves the
+   digest its commit already published as `:<commit>`, and fails when there is
+   none. The job's output is the digest.
+2. **Release gate** runs `scripts/webv3-release-gate.sh` on the
+   `tadoku-release-gate` runner set:
    - `deploy` waits, for up to 20 minutes, until the development base's
      `frontend-webv3` Deployment has finished rolling out and every pod runs the
-     published digest. Development follows `latest`, so Image Updater rolls
-     the base to it. It then runs
-     `dev up --owner gha --base HEAD --no-watch --service admin` on the local
-     branch `webv3-gate-<run>-<attempt>`, whose `tenant` hook provisions and
-     seeds a new tenant (see [Branch tenants](./development-data.md#branch-tenants)).
-     Comparing with `HEAD` selects no deployable from the commit's changes, and
-     admin is an overlay the suite never opens, so the branch's Webv3 host is
-     served by the base. The step fails unless that host answers with the base's
-     `X-Dev-Backend` and the route's `X-Dev-Selected`.
-   - `test` runs the suite against the branch's hosts, refuses to start without
-     the four fixture variables, because without them the credentialed specs
-     skip and the suite passes, and then checks that the base still runs the
-     digest. It writes `result.json` with the published and tested digests,
-     the route, the revision and the suite's exit code.
+     digest. Development follows `latest`, so Image Updater rolls the base to a
+     pushed candidate; a bad candidate therefore runs on the shared development
+     base before the gate has tested it. The step then runs
+     `dev up --owner gha --base HEAD --no-watch --service tadoku-api` on the
+     local branch `webv3-gate-<run>-<attempt>`, whose `tenant` hook provisions
+     and seeds a new tenant (see
+     [Branch tenants](./development-data.md#branch-tenants)). Comparing with
+     `HEAD` selects no deployable from the commit's changes. `tadoku-api`, which
+     also starts the worker, is the only deployable that is not a frontend:
+     dev-cli copies a frontend overlay's sources in with `kubectl exec`, which
+     the gate's ServiceAccount may not do. The branch's Webv3 host is served by
+     the base, and the step fails unless it answers with the base's
+     `X-Dev-Backend` and the route's `X-Dev-Selected`. Last, it records the
+     base Deployment's generation and each pod's UID and digest in
+     `base-before.json`.
+   - `test` runs the suite against the branch's hosts. It refuses to start
+     without the four fixture variables, reads Playwright's JSON report, and
+     fails on any skipped test outside the allowlist at the top of the script,
+     which holds only tests that need an environment no branch tenant has. It
+     writes `suite.json` with the skips and counts.
+   - `verify` reads the base again and fails unless the Deployment's generation
+     and every pod's UID and digest equal `base-before.json`, so a rollout that
+     came and went during the suite cannot pass. Only then does the job output
+     the tested digest.
    - `down` runs `dev down` whatever happened. A failed teardown does not block
      the release: the branch expires after the development TTL and the next
      `dev up` on the cluster tears it down.
 
    The artifact `webv3-release-gate-<attempt>` keeps the Playwright report and
-   results, the `dev up` and `dev down` logs and `result.json` for 14 days. The
-   report records typed values and the repository is public, so the
-   environment holds only development fixture identities.
-3. **Promote** runs after every gate result. It copies the published digest to
-   `prod` with `docker buildx imagetools create`, which pushes the same
-   manifest without rebuilding, then reads `prod` back and fails unless it
+   results, the `dev up` and `dev down` logs, both base snapshots and
+   `suite.json` for 14 days. It holds no kubeconfig. The report records typed
+   values and the repository is public, so the fixture file holds only
+   development fixture identities.
+3. **Promote** runs after every gate result. It refuses unless the gate passed
+   on the published digest and that digest is still `latest`, so an older run,
+   or a re-run of one after a newer push, cannot move `prod`. It copies the
+   digest to `prod` with `docker buildx imagetools create`, which pushes the
+   same manifest without rebuilding, then reads `prod` back and fails unless it
    names that digest.
 
-| Gate result | Tested digest | Result |
-| --- | --- | --- |
-| Succeeded | The published digest | `prod` moves to the published digest |
-| Succeeded | Any other, or none | Blocked: the promote job fails and `prod` stays |
-| Failed, cancelled or timed out | Any | Blocked |
+| Gate result | Tested digest | `latest` | Result |
+| --- | --- | --- | --- |
+| Succeeded | The published digest | The published digest | `prod` moves to the published digest |
+| Succeeded | The published digest | Any other | Blocked: a newer candidate exists |
+| Succeeded | Any other, or none | Any | Blocked |
+| Failed, cancelled or timed out | Any | Any | Blocked |
 
-Every way the gate can break, such as missing configuration, a runner that
-refuses the job, a base that never rolls out the digest or a hung suite, ends
-in a failed or timed-out job, so it blocks the release. Production keeps its
-current `prod` digest. To release a blocked commit, fix the cause and use
-**Re-run failed jobs**, which tests the same digest again, or merge a fix.
+A blocked release fails the promote job and leaves production on its current
+`prod` digest. Every way the gate can break, such as a misconfigured runner, a
+base that never rolls out the digest or a hung suite, ends in a failed or
+timed-out job, so it blocks the release. One failure is quiet: when no runner
+picks the job up, GitHub keeps it queued for up to 24 hours before failing it,
+and the workflow's later runs wait behind it. To release a blocked commit, fix
+the cause and use **Re-run failed jobs**, which tests the same digest again,
+or merge a fix.
 
 ### Dry runs
 
-A `workflow_dispatch` from `main` runs the whole workflow. Its `dry_run`
-input, checked by default, publishes the image as
-`<commit>-dry-run-<run id>` and `latest`, runs the gate, and reports the
-decision and both digests in the promote job's summary without logging in to
-the registry or moving `prod`. The `force_failure` input, allowed only with
+A `workflow_dispatch` from `main` gates the image the dispatched commit
+published. Its `dry_run` input, checked by default, runs the gate and reports
+the decision and the digests in the promote job's summary without logging in
+to the registry or moving `prod`. The `force_failure` input, allowed only with
 `dry_run`, writes a failing spec into the runner's checkout before the suite
-runs, to show a blocked release. A dispatch with `dry_run` unchecked releases
-like a push.
+runs, to show a blocked release. A dispatch with `dry_run` unchecked promotes
+like a push. The development base runs only `latest`, so a dispatch for a
+commit whose image is no longer `latest` waits out the 20 minutes and blocks.
 
 `scripts/webv3-release-gate.sh` also runs by hand from a branch checkout with
 the `homelab-talos-dev` context, installed frontend dependencies and a built
 `paper-ui`; set `GATE_OWNER` to your own dev-cli owner and
 `NODE_EXTRA_CA_CERTS` to the Lab CA.
 
-### Runner and configuration
+### Runner and credentials
 
 The gate drives dev-cli on `homelab-talos-dev` and opens its branch hosts,
-which only the homelab reaches, so it runs on the `tadoku-ci` runner set. That
-set's job-started hook must admit `build-frontend-webv3.yaml` pushes and
-dispatches from `main`, and its egress must reach the development ingress and
-the `homelab-talos-dev` API server. The job reads the Lab CA from
-`/usr/local/share/ca-certificates/ca.crt`. Both are defined in the homelab
-repository's runner runbook.
+which only the homelab reaches. The `tadoku-release-gate` runner set, defined
+in the homelab repository's runner runbook, scales to zero, admits only this
+workflow's `push` and `workflow_dispatch` runs from `main`, runs no Docker
+daemon, and reaches only DNS, public HTTPS, the development ingress (which also
+serves `registry.dev.lab`) and the `homelab-talos-dev` API server. The gate
+needs no Docker, `registry.lab`, Bazel remote cache or production host: Bazel
+builds and pushes the branch's images and pulls only public base images. The
+runner image provides Chromium's system libraries and trusts the Lab CA in its
+system bundle and in the `runner` user's NSS database, because Chromium does
+not read `NODE_EXTRA_CA_CERTS`. The job sets that variable to
+`/usr/local/share/ca-certificates/lab-root-ca.crt` for Node.
 
-The `webv3-release-gate` GitHub environment, limited to `main`, holds:
+The runner set mounts its credentials only into its own pods, at
+`/run/secrets/tadoku-release-gate/`. The repository holds no secret for the
+gate.
 
-| Name | Kind | Value |
+| File | Contents | Given to |
 | --- | --- | --- |
-| `DEV_KUBECONFIG` | Secret | A kubeconfig whose `homelab-talos-dev` context can run dev-cli in the namespaces of `.dev/config.yaml` and read the `frontend-webv3` Deployment and its pods |
-| `E2E_READER_EMAIL`, `E2E_READER_PASSWORD` | Secrets | Dev Reader as the `tenant` hook seeds it |
-| `E2E_SECOND_EMAIL`, `E2E_SECOND_PASSWORD` | Secrets | Dev Admin as the `tenant` hook seeds it |
-| `DEV_CLI_VERSION` | Variable | A dev-cli release tag, such as `v0.12.0` |
+| `kubeconfig` | One context, `homelab-talos-dev`, with the token of a ServiceAccount bound by RoleBindings in the namespaces of `.dev/config.yaml` | The steps that run `kubectl` or dev-cli, as `KUBECONFIG` |
+| `fixtures.env` | `E2E_READER_EMAIL`, `E2E_READER_PASSWORD`, `E2E_SECOND_EMAIL` and `E2E_SECOND_PASSWORD` for Dev Reader and Dev Admin as the `tenant` hook seeds them | The suite step only |
 
-The gate fails before it touches the cluster when any of them is missing.
+The job fails before it touches the cluster when either file is missing or
+the kubeconfig does not authenticate as a ServiceAccount. dev-cli is pinned in
+the workflow to `v0.12.0`.
 
 ## Production config contract
 

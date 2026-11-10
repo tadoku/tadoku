@@ -184,6 +184,8 @@ limit, remembered choices, unavailable storage and the edit form's tags; `loggin
 score estimate; `logging-contests.spec.ts` covers submitting a saved log to a
 contest, removing it and refusing other visitors; `logging-nsfw.spec.ts` covers
 NSFW masking on the detail page, its back links and the activity feed;
+`finished-contest.spec.ts` covers an edit, a deletion and the contest step
+for a log in the seeded finished round, and a contest's last day;
 `logging-admin.spec.ts` covers an administrator editing, resubmitting and
 deleting another learner's log, and refusing that edit after an account switch;
 `logging-session.spec.ts` covers expiry, CSRF, suspension and

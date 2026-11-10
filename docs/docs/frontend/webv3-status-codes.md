@@ -26,6 +26,11 @@ drops that cached failure, so Try again reads it afresh, and
 router's 500. Use `notFound()` for missing data; never fail a page for a
 section it can render without.
 
+`frontend/apps/webv3/e2e/outages.spec.ts` checks a failed, a malformed and a
+slow profile section, an unreadable schedule beside a working home board, and a
+contest page whose main read fails or answers malformed, then recovery, through
+a local server whose API reads it can fail.
+
 Each 5xx response writes one `ssr_error` [server log](webv3-server-logs.md)
 line. The edge counts every 5xx toward the Webv3 5xx burst alert, which reverts
 a release, so an API outage that fails resource pages can trip it.

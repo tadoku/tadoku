@@ -69,6 +69,11 @@ summary in the Paper design need API support and are not built.
 `frontend/apps/webv3/src/components/ProfileActivity.tsx` renders the page around
 the log list in `frontend/apps/webv3/src/components/LogEntries.tsx`.
 
+`exports.spec.ts` downloads the owner's CSV and JSON exports from a year and a
+day without logs, compares them with every log the account has, checks the CSV's
+byte order mark, columns, joined tags and formula guard, and checks that another
+account's export leaves them out and a visitor's request is refused.
+
 `profile-activity.spec.ts` follows a homepage standings profile to its activity,
 compares each page with the API, pages forward and opens an entry. With fixture
 credentials it tops Dev Reader up to more than one page through the API's create

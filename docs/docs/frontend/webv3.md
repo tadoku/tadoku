@@ -228,7 +228,11 @@ Webv2 to Webv3 before the host switch, and how to turn it off.
 ## Checks
 
 [Webv3 checks and browser tests](webv3-testing.md) lists the checks, the
-browser suite and the fixture accounts its specs use.
+browser suite and the fixture accounts its specs use. `home-values.spec.ts`
+compares a signed-in learner's place, points, year totals and newest logs on the
+homepage with the API. `webv2-urls.spec.ts` opens every Webv2 route shape,
+with and without page numbers, without JavaScript, and checks page links,
+`/contests`'s permanent redirect, trailing slashes and session-only redirects.
 
 ## Production container and CI
 

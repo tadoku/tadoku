@@ -101,6 +101,29 @@ registration or a login with a fixture account on every run must keep two
 consecutive runs within both budgets. Delete that directory to force new
 sign-ins.
 
+Two contests a run cannot create come from the `tenant` hook's seed, and
+`frontend/apps/webv3/e2e/seeded.ts` derives their IDs from the branch tenant as
+the seed does: Dev Finished Round, which ended before the run and holds a Dev
+Reader log, and Dev Scoring Round, which has started and scores with its own
+override rule set. A spec may change the seeded log, since the finished round
+keeps its saved score. Development clusters run Tadoku API's scoring engine in
+shadow mode, so saved scores follow the legacy rules and only the score preview
+applies rule sets; `scoring-outcomes.spec.ts` reads the mode from the logging
+configuration and expects the saved scores that mode produces.
+
+A page's own upstream reads happen on the server, out of the browser's reach,
+and the deployed branch's server cannot reach the machine running the suite.
+`frontend/apps/webv3/e2e/fault-server.ts` therefore starts this checkout's
+development server with its API behind a local proxy to `TADOKU_API_URL` that
+answers chosen requests with a status, a dropped connection, a malformed body
+or a delay; `outages.spec.ts` uses it for partial outages and recovery. Fault
+the API this way only to fail a read: a test never fakes a successful write.
+
+`frontend/apps/webv3/e2e/release-journey.spec.ts` is the signed-in journey a
+release depends on: a newly registered learner logs in through authv2, logs,
+submits to a contest, finds the log in their profile and the standings, edits
+and deletes it, and logs out.
+
 `frontend/apps/webv3/e2e/mutation-freshness.spec.ts` checks that a page visited
 before a save, an administrator's edit, a registration or a moderation removal
 shows the change when reached again through the router, with no document load.

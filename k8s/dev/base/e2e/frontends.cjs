@@ -99,12 +99,13 @@ function proveFrontends({ evidence, prefix, containers, report, run }, docs) {
               const response = await readHtml('/pages/manual', host);
               if (response.status !== 200) throw new Error('Webv3 SSR failed for ' + host);
               const html = response.html;
-              // Guide stays on Webv3; the account login proves Host still selects the matching lab sibling.
+              // Guide links stay on Webv3; the canonical <link> is absolute by design. The account login proves Host still
+              // selects the matching lab sibling.
               // Guests no longer get a header Log activity link, so the guide's SSR has no /logs/new after that parity change.
               const account = product === 'tadoku.dev.lab' ? 'account.tadoku.dev.lab' : product.replace('.tadoku.dev.lab', '.account.tadoku.dev.lab');
               const login = 'https://' + account + '/login?return_to=' + encodeURIComponent('https://' + host + '/pages/manual');
               if (!html.includes('<title>Guide · Tadoku</title>') || !html.includes('href="' + login + '"') || /href="https:\/\/tadoku\.app/.test(html)) throw new Error('Webv3 SSR development product links are incorrect for ' + host);
-              if (!html.includes('href="/pages/manual"') || /href="https?:\/\/[^"]*\/pages\/manual"/.test(html)) throw new Error('Webv3 SSR guide link must stay on the Webv3 host for ' + host);
+              if (!html.includes('href="/pages/manual"') || /<a\b[^>]*\bhref="https?:\/\/[^"]*\/pages\/manual"/.test(html)) throw new Error('Webv3 SSR guide link must stay on the Webv3 host for ' + host);
               const assets = [...html.matchAll(/(?:src|href)="([^" ]+\.(?:js|css)(?:\?[^" ]*)?)"/g)].map(m => m[1]);
               if (!assets.length) throw new Error('Webv3 SSR has no compiled assets');
               for (const asset of assets) if (!(await fetch(new URL(asset, base), {signal: AbortSignal.timeout(5000)})).ok) throw new Error('Missing compiled Webv3 asset: ' + asset);

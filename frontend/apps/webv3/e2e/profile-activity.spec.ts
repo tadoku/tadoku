@@ -90,6 +90,7 @@ test('an owner pages through their newest-first activity, opens a day from the c
   expect(first.total_size).toBeGreaterThan(pageSize)
   await expectEntries(page, first)
   const pages = page.getByRole('navigation', { name: 'Update pages', exact: true })
+  await expect(page.getByRole('navigation', { name: /pages/ })).toHaveCount(1)
   await expect(pages.getByRole('link', { name: 'Page 2' })).toHaveAttribute('href', `/profile/${userId}/updates/2`)
   await page.screenshot({ path: testInfo.outputPath('owner-activity.png') })
 

@@ -49,7 +49,7 @@ container smoke's synthetic API serves that learner's profile year.
 ## Activity
 
 `/profile/$id/updates/{-$page}` lists a profile's logs newest first, as Webv2's
-updates page does, 25 to a page with page links above and below the list,
+updates page does, 25 to a page with page links below the list,
 without deleted logs, each day's date shown once above its logs, each linking to its
 [native detail page](webv3-logging.md). A missing page segment
 reads as the first page, and a malformed one too, as in Webv2. `?date=YYYY-MM-DD`

@@ -39,12 +39,6 @@ export function LogEntries({ logs, total, page, pageHref, empty, showParticipant
 
   return (
     <>
-      {/* Long pages repeat their page links above the list, so the next page is reachable without scrolling 50 rows. */}
-      {pages > 1 ? (
-        <div className="mb-1 mt-2 flex justify-end">
-          <Pagination label="Update pages, top" totalPages={pages} currentPage={page} getHref={pageHref} renderLink={renderLink} classNames={{ list: 'flex-wrap' }} />
-        </div>
-      ) : null}
       <ol className={entries.root({ className: 'profile-entries' })} aria-label="Activity">
         {logs.map((log, index) => (
           <Entry

@@ -132,6 +132,12 @@ export {
   type StatGridItem,
   type StatGridProps,
 } from './components/data-display/StatGrid'
+export {
+  StackedBarChart,
+  type StackedBarChartDay,
+  type StackedBarChartProps,
+  type StackedBarChartSeries,
+} from './components/data-display/StackedBarChart'
 export { IconTile } from './components/data-display/IconTile'
 export { Spoiler, type SpoilerProps } from './components/data-display/Spoiler'
 export { entryLink, entryList, listFooter, listRows, metaLine } from './components/data-display/lists'

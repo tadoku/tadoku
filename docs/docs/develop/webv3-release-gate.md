@@ -13,9 +13,11 @@ that passed `pnpm --filter webv3 test:e2e` against a real Tadoku API, with
 Dev Reader and Dev Admin, on a fresh development tenant. Its jobs run in order:
 
 1. **Publish.** A push builds the image once and pushes the commit tag and
-   `latest`. A `workflow_dispatch` builds and pushes nothing: it resolves the
-   digest its commit already published as `:<commit>`, and fails when there is
-   none. The job's output is the digest.
+   `latest`. A re-run builds and pushes nothing: it resolves the digest its
+   commit already published as `:<commit>`, and fails when there is none. A
+   `workflow_dispatch` also pushes nothing and resolves `latest`, the current
+   candidate, since `main`'s head is often a commit that publishes no Webv3
+   image. The job's output is the digest.
 2. **Release gate** runs `scripts/webv3-release-gate.sh` on the
    `tadoku-release-gate` runner set:
    - `deploy` waits, for up to 20 minutes, until the development base's
@@ -56,8 +58,9 @@ Dev Reader and Dev Admin, on a fresh development tenant. Its jobs run in order:
 3. **Promote** runs after every gate result except in a cancelled run. It
    refuses unless the gate passed on the published digest and that digest is
    still `latest`, so an older run, or a re-run of one after a newer push,
-   cannot move `prod`. Only a push's first attempt builds and pushes; any
-   re-run, like a dispatch, gates the image its commit already published. It copies the
+   cannot move `prod`. Only a push's first attempt builds and pushes. A re-run
+   of a push gates the image its commit already published; a dispatch, and a
+   re-run of one, resolves `latest` again. It copies the
    digest to `prod` with `docker buildx imagetools create`, which pushes the
    same manifest without rebuilding, then reads `prod` back and fails unless it
    names that digest.
@@ -75,27 +78,28 @@ base that never rolls out the digest or a hung suite, ends in a failed or
 timed-out job, so it blocks the release. One failure is quiet: when no runner
 picks the job up, GitHub keeps it queued for up to 24 hours before failing it,
 and the workflow's later runs wait behind it. To release a blocked commit, fix
-the cause and use **Re-run failed jobs**, which tests the same digest again,
-or merge a fix. A re-run can only re-gate an image its commit already
-published: when a push's check or publish job failed before the image was
+the cause and use **Re-run failed jobs** on the push's run, which tests the
+same digest again, or merge a fix. A push's re-run can only re-gate an image
+its commit already published: when a push's check or publish job failed before the image was
 pushed, that commit needs a new push to `main` that touches one of the
 workflow's watched paths.
 
 The suite refuses a committed `test.only`, so a focused test cannot pass the
-gate in place of the whole suite. The branch tenant runs the candidate commit's
-API, while production may still run an older one, so a Webv3 change that needs
-an API change production does not have yet can pass the gate.
+gate in place of the whole suite. The suite and the branch tenant's API come
+from the workflow's revision: the pushed commit, or `main`'s head for a
+dispatch, which can be newer than the commit that built `latest`. Production may
+still run an older API, so a Webv3 change that needs an API change production
+does not have yet can pass the gate.
 
 ## Dry runs
 
-A `workflow_dispatch` from `main` gates the image the dispatched commit
-published. Its `dry_run` input, checked by default, runs the gate and reports
+A `workflow_dispatch` from `main` gates the current candidate, `latest`, with
+the suite from `main`'s head. Its `dry_run` input, checked by default, runs the gate and reports
 the decision and the digests in the promote job's summary without logging in
 to the registry or moving `prod`. The `force_failure` input, allowed only with
 `dry_run`, writes a failing spec into the runner's checkout before the suite
 runs, to show a blocked release. A dispatch with `dry_run` unchecked promotes
-like a push. The development base runs only `latest`, so a dispatch for a
-commit whose image is no longer `latest` waits out the 20 minutes and blocks.
+like a push, promoting `latest` if it passes.
 
 `scripts/webv3-release-gate.sh` also runs by hand from a branch checkout with
 the `homelab-talos-dev` context, installed frontend dependencies and a built

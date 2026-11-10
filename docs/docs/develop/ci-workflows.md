@@ -172,7 +172,9 @@ timed-out job, so it blocks the release. One failure is quiet: when no runner
 picks the job up, GitHub keeps it queued for up to 24 hours before failing it,
 and the workflow's later runs wait behind it. To release a blocked commit, fix
 the cause and use **Re-run failed jobs**, which tests the same digest again,
-or merge a fix.
+or merge a fix. A re-run can only re-gate an image its commit already
+published: when a push's check or publish job failed before the image was
+pushed, that commit needs a new push to `main`.
 
 The suite refuses a committed `test.only`, so a focused test cannot pass the
 gate in place of the whole suite. The branch tenant runs the candidate commit's

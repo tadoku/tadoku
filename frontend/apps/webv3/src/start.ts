@@ -55,6 +55,15 @@ const privateResponses = createMiddleware().server(async ({ next }) => {
   return result
 })
 
+/** Answers a path with a trailing slash with 308 to it without, as Webv2 did, before the router's 307 does the same. */
+const trailingSlash = createMiddleware().server(({ next }) => {
+  const url = new URL(getRequest().url)
+  if (url.pathname === '/' || !url.pathname.endsWith('/')) return next()
+  // A leading `//` would make the location another host.
+  const path = url.pathname.slice(0, -1).replace(/^\/+/, '/')
+  return new Response(null, { status: 308, headers: { Location: path + url.search } })
+})
+
 const mutations = createMiddleware({ type: 'function' }).server(async ({ next }) => {
   const request = getRequest()
   if (!['GET', 'HEAD'].includes(request.method)) {
@@ -65,5 +74,5 @@ const mutations = createMiddleware({ type: 'function' }).server(async ({ next })
 })
 
 export const startInstance = createStart(() => ({
-  requestMiddleware: [requestLogging, securityHeaders, privateResponses], functionMiddleware: [mutations],
+  requestMiddleware: [requestLogging, securityHeaders, privateResponses, trailingSlash], functionMiddleware: [mutations],
 }))

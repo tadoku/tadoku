@@ -109,22 +109,19 @@ test('every Webv2 route shape, bookmarked with or without page numbers, opens th
 
 const trailingSlashPaths = async (request: APIRequestContext) => {
   const { id } = await apiJson<{ id: string }>(request, '/immersion/contests/latest-official')
-  return ['/blog/', '/contests/official/', `/contests/${id}/leaderboard/2/`]
+  return ['/blog/', '/contests/official/?ref=bookmark', `/contests/${id}/leaderboard/2/`]
 }
 
 test('a bookmark with a trailing slash redirects to the page without it', async ({ request }) => {
   test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
   for (const path of await trailingSlashPaths(request)) {
-    const { status, location } = await redirect(request, path)
-    expect([307, 308], path).toContain(status)
-    expect(location, path).toBe(`${webv3}${path.slice(0, -1)}`)
+    const { location } = await redirect(request, path)
+    expect(location, path).toBe(`${webv3}${path.replace(/\/(\?|$)/, '$1')}`)
   }
 })
 
 test('a trailing-slash redirect is permanent, as in Webv2', async ({ request }) => {
   test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
-  // Defect: Webv3 answers 307 where Webv2's Next.js answered 308 for a trailing slash.
-  test.fail()
   const paths = await trailingSlashPaths(request)
   const statuses = await Promise.all(paths.map(async path => (await redirect(request, path)).status))
   expect(statuses).toEqual(paths.map(() => 308))

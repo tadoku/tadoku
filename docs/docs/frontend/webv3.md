@@ -139,7 +139,10 @@ Gravatar and any other failure leave the initials and no broken image, with or
 without JavaScript. The avatar is decorative and hidden
 from assistive technology; the name beside it carries the meaning.
 
-`/contests` redirects permanently to `/contests/official`, as Webv2 does.
+`/contests` redirects permanently to `/contests/official`, as Webv2 does, and a
+path with a trailing slash redirects permanently, with status 308, to the same
+path and query without it; `frontend/apps/webv3/src/start.ts` answers it before
+the router, whose own redirect is temporary.
 Unknown paths render the not-found page with a link home and status 404; see
 [status codes and failure pages](webv3-status-codes.md).
 
@@ -232,7 +235,7 @@ browser suite and the fixture accounts its specs use. `home-values.spec.ts`
 compares a signed-in learner's place, points, year totals and newest logs on the
 homepage with the API. `webv2-urls.spec.ts` opens every Webv2 route shape,
 with and without page numbers, without JavaScript, and checks page links,
-`/contests`'s permanent redirect, trailing slashes and session-only redirects.
+`/contests`'s and trailing slashes' permanent redirects and session-only redirects.
 
 ## Production container and CI
 

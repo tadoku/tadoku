@@ -2,10 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useHydrated, useRouterState } from '@tanstack/react-router'
 import { Button, Flash } from 'paper-ui'
 import { XMarkIcon, iconClassName } from 'paper-ui/icons'
-import { useEffect, useState } from 'react'
-import ReactMarkdown from 'react-markdown'
-import rehypeSanitize from 'rehype-sanitize'
-import remarkGfm from 'remark-gfm'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { announcementsQuery } from '../lib/content'
 
 // Webv2's key, so dismissals carry over when the host switches.
@@ -22,6 +19,24 @@ function readDismissed(): string[] {
 
 function storeDismissed(ids: string[]) {
   try { localStorage.setItem(storageKey, JSON.stringify(ids)) } catch { /* Without storage a dismissal lasts for this page. */ }
+}
+
+// Announcements render only after hydration, so the Markdown renderer loads then instead of in every page's entry.
+const Markdown = lazy(() => import('./Markdown'))
+
+/**
+ * Where Learn more may lead: an HTTPS page, or a path on this site. The API also accepts plain HTTP; anything else,
+ * such as `//host` or a script URL, has no link.
+ */
+function learnMoreHref(href: string | undefined) {
+  if (!href) return undefined
+  if (href.startsWith('/')) return href.startsWith('//') || href.startsWith('/\\') ? undefined : href
+  try {
+    const url = new URL(href)
+    return url.protocol === 'https:' && url.hostname && !url.username && !url.password ? href : undefined
+  } catch {
+    return undefined
+  }
 }
 
 function pathOf(href: string) {
@@ -62,13 +77,18 @@ export function Announcements() {
           }
         >
           <div className="grid gap-1 wrap-anywhere [&_p]:m-0">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{announcement.content}</ReactMarkdown>
-            {announcement.href && pathOf(announcement.href) !== currentPath
-              ? <a className="text-link hover:text-link-hover" href={announcement.href}>Learn more</a>
-              : null}
+            <Suspense fallback={null}>
+              <Markdown>{announcement.content}</Markdown>
+            </Suspense>
+            <LearnMore href={learnMoreHref(announcement.href)} currentPath={currentPath} />
           </div>
         </Flash>
       ))}
     </div>
   )
+}
+
+function LearnMore({ href, currentPath }: { href: string | undefined; currentPath: string }) {
+  if (!href || pathOf(href) === currentPath) return null
+  return <a className="text-link hover:text-link-hover" href={href}>Learn more</a>
 }

@@ -1,10 +1,8 @@
 import { Link } from '@tanstack/react-router'
 import { Button, EmptyState, PageHeader, Pagination, prose } from 'paper-ui'
-import ReactMarkdown, { type Components } from 'react-markdown'
-import rehypeSanitize from 'rehype-sanitize'
-import remarkGfm from 'remark-gfm'
 import { blogHref, blogPageSize, type BlogPage, type BlogPost, type CmsPage, type SanitizedHtml } from '../lib/content'
 import { formatDate } from '../lib/format'
+import Markdown from './Markdown'
 import { renderLink } from './router-link'
 
 
@@ -32,12 +30,6 @@ const postLink = 'text-inherit no-underline hover:text-link hover:underline max-
  */
 const lazyImages = (html: SanitizedHtml) => html.replace(/<img\b/gi, '<img loading="lazy" decoding="async"')
 
-const markdownComponents: Components = {
-  img: ({ node, ...props }) => {
-    void node
-    return <img {...props} loading="lazy" decoding="async" />
-  },
-}
 
 export function CmsPageArticle({ page }: { page: CmsPage }) {
   return (
@@ -60,10 +52,7 @@ export function BlogPostArticle({ post }: { post: BlogPost }) {
         renderLink={renderLink}
       />
       <div className={prose({ className: 'content-prose' })}>
-        {/* As in Webv2: Markdown without raw HTML, through rehype-sanitize's default schema. */}
-        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]} components={markdownComponents}>
-          {post.content}
-        </ReactMarkdown>
+        <Markdown>{post.content}</Markdown>
       </div>
     </article>
   )

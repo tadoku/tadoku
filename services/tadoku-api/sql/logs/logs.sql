@@ -159,7 +159,7 @@ with filters as not materialized (
     eligible_logs.user_display_name,
     eligible_logs.tags
   from eligible_logs
-  order by eligible_logs.created_at desc
+  order by eligible_logs.created_at desc, eligible_logs.id desc
   limit sqlc.arg('page_size')
   offset sqlc.arg('start_from')
 ), total as (
@@ -198,7 +198,7 @@ select
 from total
 cross join filters
 left join page on true
-order by page.created_at desc;
+order by page.created_at desc, page.id desc;
 
 -- name: ListLogsForUser :many
 with eligible_logs as (
@@ -253,7 +253,7 @@ with eligible_logs as (
     eligible_logs.deleted_at,
     eligible_logs.tags
   from eligible_logs
-  order by eligible_logs.created_at desc
+  order by eligible_logs.created_at desc, eligible_logs.id desc
   limit sqlc.arg('page_size')
   offset sqlc.arg('start_from')
 ), total as (
@@ -283,7 +283,7 @@ select
   total.total_size
 from total
 left join page on true
-order by page.created_at desc;
+order by page.created_at desc, page.id desc;
 
 -- name: FindLogByID :one
 select

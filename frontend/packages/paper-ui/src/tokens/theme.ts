@@ -237,6 +237,7 @@ const container = {
   measure: '65ch',
   'measure-prose': '66ch',
   menu: '13rem',
+  'filter-menu': '18rem',
   'unit-select': '6rem',
   'chip-input': '3rem',
   toggle: '28rem',

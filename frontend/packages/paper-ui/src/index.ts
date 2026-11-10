@@ -87,6 +87,12 @@ export {
   type ToastUpdateOptions,
 } from './components/feedback'
 export {
+  FilterMenu,
+  type FilterMenuProps,
+  type FilterMenuSection,
+  type FilterMenuValue,
+} from './components/forms/FilterMenu'
+export {
   AppliedFilters,
   type AppliedFiltersProps,
 } from './components/forms/AppliedFilters'

@@ -53,16 +53,29 @@ Put a component in its own file when its API, examples, tests, or consumers warr
 | A region heading with an optional description, status and actions | `SectionHeading` with an explicit `level` from 2 to 6. Pass `id` and label the section with `aria-labelledby` |
 | The current state of a contest, record or service | `StatusTag`, which requires visible text and maps its tone to the status colours |
 | An empty, filtered, failed or not-found state | `EmptyState` with an explicit `headingLevel`; `surface` stands alone and `plain` sits inside a container |
-| Headline figures | `StatGrid` |
+| Headline figures | `StatGrid`; `variant="sheet"` boxes them in one ruled row, such as a summary above a chart |
+| Points per day across a date range, stacked by series, with an optional running total | `StackedBarChart`, which renders on the server and carries an accessible name and description |
 | Facts about one subject | `DescriptionList`, `stacked` or `inline` |
-| A summary of collapsed filters with one reset action | `AppliedFilters` |
+| Filters for one list | `FilterMenu` beside the section heading, and `AppliedFilters` with `variant="removable"` below it. See [Filters](#filters) |
 | Page links for a long list | `Pagination`, once, below the list it pages. It isn't designed to sit above a list |
 
-These controls own semantics, spacing and type roles, not page layout: screens keep page grids, columns, breakpoints, a main column beside an aside, and page-specific typography, and pass `className`, or `classNames` keyed by part, for them. [Paper styling](paper-styling.md) explains the tokens and utilities they use. The Filter bar catalogue pattern shows how a screen composes a Filters toggle, the filter panel, `AppliedFilters`, a result count and `EmptyState` while owning the filter state.
+These controls own semantics, spacing and type roles, not page layout: screens keep page grids, columns, breakpoints, a main column beside an aside, and page-specific typography, and pass `className`, or `classNames` keyed by part, for them. [Paper styling](paper-styling.md) explains the tokens and utilities they use.
 
 When a group pairs a quiet action (ghost, destructive ghost or a Cancel) with a filled or outline one, the quiet action comes first so the stronger action ends the row.
 
 `PageHeader` and `SectionHeading` wrap according to their content at every width. Status tags stay beside the title while they fit. Actions share the row while the text, status and actions fit together; otherwise actions move below the text without squeezing the title into a narrow column. Long titles still wrap within the available width.
+
+## Filters
+
+The Filter bar catalogue pattern, in `frontend/packages/paper-ui/src/catalog/examples/pattern.filter-bar.tsx`, shows the composition. The screen owns the selection and the filtering; `FilterMenu` and `AppliedFilters` only report choices.
+
+- The entry point is `FilterMenu` in the actions of the heading of the section it filters. When nothing is applied, its Filters button is the only trace. Applied values sit under the heading as removable chips with the result count.
+- Values within a filter combine with "or", and filters combine with "and".
+- Menus list only values that still have results under the other filters. A chosen value stays listed even when it has none.
+- There is one Clear all action, which resets every filter and returns focus to the Filters trigger. After clearing from the chips, focus it through the `FilterMenu` ref.
+- Filters are URL search parameters, so a filtered view can be shared and reloaded. Pagination resets when a filter changes.
+- Filters narrow one view, while tabs switch between views.
+- Phones get a full-screen sheet below the tablet breakpoint: `FilterMenu` opens `Drawer` with `size="full"`, with larger rows and a footer that names the result.
 
 ## Documenting a pattern
 

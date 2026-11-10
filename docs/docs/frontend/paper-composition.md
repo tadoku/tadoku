@@ -56,6 +56,7 @@ Put a component in its own file when its API, examples, tests, or consumers warr
 | Headline figures | `StatGrid` |
 | Facts about one subject | `DescriptionList`, `stacked` or `inline` |
 | A summary of collapsed filters with one reset action | `AppliedFilters` |
+| Page links for a long list | `Pagination`, once, below the list it pages. It isn't designed to sit above a list |
 
 These controls own semantics, spacing and type roles, not page layout: screens keep page grids, columns, breakpoints, a main column beside an aside, and page-specific typography, and pass `className`, or `classNames` keyed by part, for them. [Paper styling](paper-styling.md) explains the tokens and utilities they use. The Filter bar catalogue pattern shows how a screen composes a Filters toggle, the filter panel, `AppliedFilters`, a result count and `EmptyState` while owning the filter state.
 

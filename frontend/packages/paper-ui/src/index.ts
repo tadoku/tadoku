@@ -129,9 +129,11 @@ export { entryLink, entryList, listFooter, listRows, metaLine } from './componen
 export { Modal, type ModalProps } from './components/overlays/Modal'
 export {
   DRAWER_PLACEMENTS,
+  DRAWER_SIZES,
   Drawer,
   type DrawerPlacement,
   type DrawerProps,
+  type DrawerSize,
 } from './components/overlays/Drawer'
 export {
   ActionMenu,

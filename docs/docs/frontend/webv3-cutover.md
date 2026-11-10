@@ -51,22 +51,44 @@ hand.
 
 ## Host switch
 
-One GitOps pull request:
+Two GitOps pull requests, with a check between them. Both HTTPRoutes are
+attached to `tadoku.app` in between; for the same path match, Envoy Gateway
+routes to the route created first, which is `frontend-webv2`, so traffic stays
+on Webv2 until its route is removed.
 
-- Add `tadoku.app` and the `https-apex` listener to the `frontend-webv3`
-  HTTPRoute, and remove the `frontend-webv2` HTTPRoute, which serves only
-  `tadoku.app`; keep the `www-redirect` route beside it. Keep
-  the route's name: the `TadokuWebv3ServerErrorBurst` alert reads the edge access
-  logs of the `frontend-webv3` HTTPRoute, so `tadoku.app` must stay on it. The
-  Oathkeeper HTTPRoute keeps serving `/api/internal`, a longer path prefix.
-- **Remove the edge `X-Robots-Tag` header.** Today the `frontend-webv3` HTTPRoute
-  sets `X-Robots-Tag: noindex, nofollow` on its only rule. HTTPRoute filters
-  cannot match a hostname, so with `tadoku.app` on the same route every page
-  would be noindex. Webv3 itself sends `X-Robots-Tag: noindex` from every host
-  that is not its web host, as [headers, indexing and sharing](webv3-indexing.md)
-  describes, so `next.tadoku.app` stays out of search results without it. The
-  route that serves `tadoku.app` must add no `X-Robots-Tag`.
-- Leave the `www.tadoku.app` redirect and the account and admin hosts as they are.
+1. **Admit and attach Webv3.**
+   - Add `tdk-prod-frontend-webv3` to the `https-apex` listener's
+     `allowedRoutes` namespace list on Gateway `tadoku`. Without it the listener
+     rejects Webv3's route, and removing Webv2's would leave `tadoku.app`
+     without a page route.
+   - Add `tadoku.app` and the `https-apex` listener to the `frontend-webv3`
+     HTTPRoute. Keep the route's name: the `TadokuWebv3ServerErrorBurst` alert
+     reads the edge access logs of the `frontend-webv3` HTTPRoute, so
+     `tadoku.app` must stay on it. The Oathkeeper HTTPRoute keeps serving
+     `/api/internal`, a longer path prefix.
+   - **Remove the edge `X-Robots-Tag` header.** Today the `frontend-webv3`
+     HTTPRoute sets `X-Robots-Tag: noindex, nofollow` on its only rule.
+     HTTPRoute filters cannot match a hostname, so once `tadoku.app` is on the
+     same route every page would be noindex. Webv3 itself sends
+     `X-Robots-Tag: noindex` from every host that is not its web host, as
+     [headers, indexing and sharing](webv3-indexing.md) describes, so
+     `next.tadoku.app` stays out of search results without it. The route that
+     serves `tadoku.app` must add no `X-Robots-Tag`.
+2. **Check admission.** After Argo CD syncs, both conditions must be `True` for
+   the `https-apex` parent before you go on:
+
+   ```sh
+   kubectl -n tdk-prod-frontend-webv3 get httproute frontend-webv3 \
+     -o jsonpath='{range .status.parents[?(@.parentRef.sectionName=="https-apex")].conditions[*]}{.type}={.status}{"\n"}{end}'
+   ```
+
+   It prints `Accepted=True` and `ResolvedRefs=True`. Anything else, or no
+   output, means the route is not admitted on `https-apex`; fix that first.
+3. **Remove Webv2's route.** Delete the `frontend-webv2` HTTPRoute, which serves
+   only `tadoku.app`, and keep the `www-redirect` route beside it. `tadoku.app`
+   now reaches Webv3.
+
+Leave the `www.tadoku.app` redirect and the account and admin hosts as they are.
 
 ## Verify
 
@@ -87,10 +109,26 @@ After Argo CD syncs:
 
 ## Rollback
 
-- **Host switch.** Revert the host-switch pull request: `tadoku.app` returns to
-  the `frontend-webv2` HTTPRoute and `next.tadoku.app` to the route with its
-  header. This needs Webv2 still deployed at its last image, so do not retire it
-  while a rollback is possible. If Webv3 itself is at fault, also empty the
+- **Host switch.** Mirror the switch, again in two pull requests with a check
+  between them. A restored `frontend-webv2` HTTPRoute is created after
+  `frontend-webv3`, so Webv3 keeps the traffic until it leaves `https-apex`.
+  1. Restore the `frontend-webv2` HTTPRoute. Its namespace is still on the
+     listener's list.
+  2. Check that it is admitted for the `https-apex` parent:
+
+     ```sh
+     kubectl -n tdk-prod-frontend-webv2 get httproute frontend-webv2 \
+       -o jsonpath='{range .status.parents[?(@.parentRef.sectionName=="https-apex")].conditions[*]}{.type}={.status}{"\n"}{end}'
+     ```
+
+     It must print `Accepted=True` and `ResolvedRefs=True`.
+  3. Remove `tadoku.app` and the `https-apex` listener from the `frontend-webv3`
+     HTTPRoute, and restore its `X-Robots-Tag` filter for `next.tadoku.app`.
+     `tadoku.app` returns to Webv2. Webv3's namespace can then leave the
+     listener's list.
+
+  This needs Webv2 still deployed at its last image, so do not retire it while a
+  rollback is possible. If Webv3 itself is at fault, also empty the
   `release-webv3-access` segment, or flagged accounts are sent back to it.
 - **A broken release.** The Webv3 auto-revert rolls back the image, not the host;
   the homelab's Tadoku web alerts runbook describes it for each phase.
@@ -107,8 +145,12 @@ After Argo CD syncs:
   `upstream_failure` or `ssr_error` line means Webv3 did not answer the edge, not
   that the deadline was skipped. Read that request's edge access log: `UT` means
   the edge gave up on Webv3, so read Webv3's stderr, where framework errors go,
-  around that time; `UC` or `UF` means the connection to the pod dropped, so
-  check restarts and memory; a 504 on the API route means the API timed out,
+  around that time; `UC` means an established connection to the pod was
+  terminated, so check restarts, OOM kills and rollouts at that time; `UF` means
+  the edge could not establish a connection to the pod, so read the line's
+  `upstream_transport_failure_reason` and `response_code_details`, such as a
+  refused connection or a TLS error, and the pod's readiness and endpoints; a 504
+  on the API route means the API timed out,
   which Webv3 logs as an `http_status` 504. A single one is noise; take a pattern
   to the API owners with the request ID.
 
@@ -116,6 +158,10 @@ After Argo CD syncs:
 
 - Retire Webv2's Deployment and HTTPRoute, and the `/api/health` entry of the
   production config contract.
-- Replace the `next.tadoku.app` route with a `301` to `tadoku.app`, as the
-  `www.tadoku.app` route does. The identity API keeps the `next.` host on its app
+- Redirect `next.tadoku.app` with a route of its own: move `next.tadoku.app`
+  and the `https-next` listener off the `frontend-webv3` HTTPRoute onto a new
+  HTTPRoute for `next.tadoku.app` only, whose rule answers a `301` to
+  `tadoku.app` as the `www-redirect` route does. Keep `frontend-webv3`, under
+  that name, as the `tadoku.app` backend route; a redirect on it would send
+  `tadoku.app` to itself. The identity API keeps the `next.` host on its app
   allowlist, so sign-ins that return there keep working until then.

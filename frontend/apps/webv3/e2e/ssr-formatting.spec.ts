@@ -17,7 +17,7 @@ for (const locale of ['ja-JP', 'en-GB']) {
 
     // Hydration smoke coverage: luxon 3.7.2 already formats the heatmap's months in English under every locale, so this
     // guards the en-US pin rather than reproducing a known mismatch.
-    test(`hydration smoke: a signed-in profile's statistics and the home calendar hydrate without mismatches in ${locale}`, async ({ page, readerContext }) => {
+    test(`hydration smoke: a signed-in profile's statistics and the home activity map hydrate without mismatches in ${locale}`, async ({ page, readerContext }) => {
       test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
       const errors = hydrationErrors(page)
 
@@ -28,7 +28,7 @@ for (const locale of ['ja-JP', 'en-GB']) {
       await expect(page.getByRole('group', { name: /^Daily activity for \d{4}$/ })).toBeVisible()
       await page.goto('/')
       await hydrated(page)
-      await expect(page.getByRole('group', { name: /^Daily activity for \d{4}$/ })).toBeVisible()
+      await expect(page.getByRole('group', { name: 'Daily activity for the past 13 weeks', exact: true })).toBeVisible()
       expect(errors).toEqual([])
     })
   })

@@ -13,6 +13,7 @@ import (
 type Log = logs.Log
 type LogList = logs.LogList
 type LogListParameters = logs.ListParameters
+type LogFilters = logs.Filters
 type ExportedLog = logs.ExportedLog
 
 func (a *Application) FindLog(ctx context.Context, id uuid.UUID) (*Log, error) {

@@ -56,6 +56,35 @@ type ContestActivity struct {
 	Score        float32
 }
 
+type ContestProfileSummary struct {
+	Score      float32
+	LogCount   int
+	ActiveDays int
+	BestDay    *DayScore
+	Days       []ContestDayScore
+	Languages  []Score
+	Activities []ActivitySplitScore
+	Tags       []TagScore
+}
+
+type DayScore struct {
+	Date  time.Time
+	Score float32
+}
+
+type ContestDayScore struct {
+	Date       time.Time
+	ActivityID int
+	Score      float32
+	logCount   int
+}
+
+type TagScore struct {
+	Tag      string
+	Score    float32
+	LogCount int
+}
+
 var (
 	ErrLogNotFound     = errx.NewNotFoundError("log not found")
 	ErrInvalidActivity = errx.NewInvalidInputError("invalid log activity")
@@ -170,9 +199,80 @@ type FindForViewerParameters struct {
 type ListParameters struct {
 	UserID         *uuid.UUID
 	ContestID      uuid.UUID
+	Filters        Filters
 	IncludeDeleted bool
 	PageSize       int
 	Page           int
+}
+
+// Filters selects logs matching any of the values of each non-empty field, and
+// every non-empty field.
+type Filters struct {
+	LanguageCodes []string
+	ActivityIDs   []int
+	Tags          []string
+}
+
+const (
+	maxLanguageFilterValues = 10
+	maxActivityFilterValues = 10
+	maxTagFilterValues      = 20
+	maxLanguageCodeLength   = 10
+	maxTagLength            = 50
+)
+
+func (f Filters) Validate() error {
+	if len(f.LanguageCodes) > maxLanguageFilterValues {
+		return errx.NewInvalidInputError("language must have at most 10 values")
+	}
+	for _, code := range f.LanguageCodes {
+		length := utf8.RuneCountInString(code)
+		if length < 1 || length > maxLanguageCodeLength {
+			return errx.NewInvalidInputError("language must be 1 to 10 characters")
+		}
+	}
+
+	if len(f.ActivityIDs) > maxActivityFilterValues {
+		return errx.NewInvalidInputError("activity must have at most 10 values")
+	}
+	for _, id := range f.ActivityIDs {
+		if id < 1 || id > math.MaxInt16 {
+			return errx.NewInvalidInputError("activity must be between 1 and 32767")
+		}
+	}
+
+	if len(f.Tags) > maxTagFilterValues {
+		return errx.NewInvalidInputError("tag must have at most 20 values")
+	}
+	for _, tag := range f.Tags {
+		length := utf8.RuneCountInString(tag)
+		if length < 1 || length > maxTagLength {
+			return errx.NewInvalidInputError("tag must be 1 to 50 characters")
+		}
+	}
+	return nil
+}
+
+type queryFilters struct {
+	languageCodes []string
+	activityIDs   []int16
+	tags          []string
+}
+
+// query must follow a successful Validate. An empty field becomes nil, which
+// the queries read as no filter.
+func (f Filters) query() queryFilters {
+	result := queryFilters{}
+	if len(f.LanguageCodes) > 0 {
+		result.languageCodes = f.LanguageCodes
+	}
+	if len(f.Tags) > 0 {
+		result.tags = f.Tags
+	}
+	for _, id := range f.ActivityIDs {
+		result.activityIDs = append(result.activityIDs, int16(id))
+	}
+	return result
 }
 
 type LogList struct {
@@ -182,6 +282,9 @@ type LogList struct {
 }
 
 func (p ListParameters) Validate() error {
+	if err := p.Filters.Validate(); err != nil {
+		return err
+	}
 	if p.PageSize < 0 {
 		return errx.NewInvalidInputError("page_size must not be negative")
 	}

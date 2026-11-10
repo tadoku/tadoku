@@ -4,6 +4,8 @@ go_library(
     name = "logs",
     srcs = [
         "domain.go",
+        "logs_contest_profile_repository.go",
+        "logs_contest_profile_service.go",
         "logs_contest_repository.go",
         "logs_contest_service.go",
         "logs_mutation_service.go",

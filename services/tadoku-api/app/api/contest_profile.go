@@ -42,3 +42,11 @@ func (a *Application) ContestProfileScores(ctx context.Context, userID, contestI
 func (a *Application) ContestProfileActivity(ctx context.Context, userID, contestID uuid.UUID) ([]logs.ContestActivity, error) {
 	return a.logs.ContestActivity(ctx, userID, contestID)
 }
+
+func (a *Application) ContestProfileSummary(
+	ctx context.Context,
+	userID, contestID uuid.UUID,
+	filters LogFilters,
+) (*logs.ContestProfileSummary, error) {
+	return a.logs.ContestProfileSummary(ctx, userID, contestID, filters)
+}

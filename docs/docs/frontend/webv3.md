@@ -13,8 +13,9 @@ page at the same paths, so cutover is a host switch, and its links leave the hos
 only for the account and admin applications, the log export download and
 external sites. Its homepage follows the Paper playground composition and reads the current official contest, summary,
 standings and next scheduled round from the configured Tadoku API. Guests see
-the introduction and how Tadoku works. A signed-in learner who has cleared
-"Getting going" sees their past 30 UTC days beside the round's board: points,
+the introduction and how Tadoku works over a decorative activity grid that
+fades out behind the hero's text; signed-in learners get a plain page. A
+signed-in learner who has cleared "Getting going" sees their past 30 UTC days beside the round's board: points,
 today's points, streak, active days and a 13-week activity map. They have
 cleared it once their activity shows 5 active days within 30, or two active
 days in a row while in a contest, and keep the map from then on.

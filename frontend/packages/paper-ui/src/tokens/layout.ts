@@ -82,6 +82,8 @@ export const layoutHeight = {
   'metadata-line': 'var(--leading-metadata)',
   card: '11rem',
   picker: 'min(22rem, 55vh)',
+  /** The activity grid in Webv3's homepage backdrop. */
+  'home-backdrop-grid': '22.75rem',
 } as const
 
 export const layoutGridTemplateColumns = {

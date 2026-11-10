@@ -70,7 +70,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   ]
 
   return (
-    <div className={frame.root()}>
+    <div className={frame.root({ class: 'isolate' })}>
       <SkipLink href="#main-content">Skip to content</SkipLink>
       <header className={frame.header()}>
         <Navbar

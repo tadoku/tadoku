@@ -11,6 +11,7 @@ import { useParticipation } from '../lib/registration'
 import { MemberActivity, MemberDashboard } from './MemberDashboard'
 import { viewerQueryOptions } from '../lib/session'
 import { AppLink } from './router-link'
+import { HomeBackdrop } from './HomeBackdrop'
 
 const dayNumber = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000) + 1
 
@@ -82,6 +83,7 @@ export function HomePage() {
 
   return (
     <div className="home-page">
+      {member ? null : <HomeBackdrop />}
       <section className={hero} aria-labelledby="home-title">
         {member
           ? (

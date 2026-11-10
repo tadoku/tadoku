@@ -109,10 +109,19 @@ without one follow their system choice. The header stays in view while scrolling
 credit line and Tadoku's Discord, GitHub and Twitter beside grouped links to
 About, Guide, Rules and Questions & help, and Privacy and Contact. `frontend/apps/webv3/src/components/Announcements.tsx`
 shows the CMS's active announcements above each page after hydration, rendering
-their Markdown as the blog does, with Learn more unless the announcement links
-to the current page. A dismissal is stored in the browser under Webv2's
+their Markdown as the blog does, through `frontend/apps/webv3/src/components/Markdown.tsx`,
+which loads only then so the Markdown renderer stays out of every page's entry
+scripts. Their images load lazily. Learn more appears for an HTTPS or same-site
+link, unless it leads to the current page; the API also accepts plain HTTP,
+which shows no link. A dismissal is stored in the browser under Webv2's
 `dismissed_announcements` key, so it survives the host switch, and is forgotten
 once its announcement ends. An unavailable announcement list shows nothing.
+
+Every page links the logomark favicon in `frontend/apps/webv3/public/`: an SVG
+that draws the mark dark or light with the visitor's appearance, a PNG and
+`/favicon.ico` for browsers without SVG icons, an Apple touch icon, a web
+manifest and a `theme-color` matching the header in each appearance. The rasters
+are drawn from paper-ui's brand `favicon` sources.
 
 ### Avatars
 

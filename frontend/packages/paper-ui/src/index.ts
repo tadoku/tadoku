@@ -143,6 +143,8 @@ export {
   Table,
   type HeatmapChartDatum,
   type HeatmapChartProps,
+  RecentHeatmap,
+  type RecentHeatmapProps,
   type TableColumn,
   type TableColumnAlignment,
   type TableProps,

@@ -1,13 +1,9 @@
 import type { ImmersionUserActivity } from 'api-client'
 import { HeatmapChart, focusRing } from 'paper-ui'
 import { useEffect, useRef, type ReactNode } from 'react'
-import { pointsUnit, scoreFormat } from '../lib/format'
+import { formatDay, pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 
-const dayFormat = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' })
-
-/** For example `Nov 4, 2026` for `2026-11-04`. */
-const formatDay = (date: string) => dayFormat.format(new Date(`${date}T00:00:00Z`))
 
 /**
  * A learner's year of daily scores, each day linking to its updates. The region is named by the heading `labelledBy`;

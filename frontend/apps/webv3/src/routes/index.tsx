@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { HomePage } from '../components/HomePage'
-import { homeBoardQuery, memberDashboardQueries, nextContestQuery } from '../lib/home'
+import { homeBoardQuery, lastYearStatisticsQuery, memberDashboardQueries, nextContestQuery } from '../lib/home'
+import { utcToday } from '../lib/format'
+import { readsLastYear } from '../lib/recent-activity'
 import { contestEntryQuery, latestBoardQuery } from '../lib/leaderboard'
 import { registrationQuery } from '../lib/registration'
 import { viewerKey, viewerQueryOptions } from '../lib/session'
@@ -27,9 +29,13 @@ export const Route = createFileRoute('/')({
       viewerRead.then(viewer => {
         if (viewer.status !== 'signed-in') return null
         const [statistics, logs] = memberDashboardQueries(viewer, year)
-        return Promise.all([queryClient.prefetchQuery(statistics), queryClient.prefetchQuery(logs)])
+        return Promise.all([
+          queryClient.prefetchQuery(statistics),
+          queryClient.prefetchQuery(logs),
+          readsLastYear(utcToday()) ? queryClient.prefetchQuery(lastYearStatisticsQuery(viewer, year)) : null,
+        ])
       }),
-      // The hero offers Join only to members who haven't registered, and names their place, so both render on the server.
+      // The board offers Join only to members who haven't registered, and marks their row, so both render on the server.
       Promise.all([viewerRead, contestRead]).then(([viewer, contestId]) => (viewer.status === 'signed-in' && contestId
         ? Promise.all([
           queryClient.prefetchQuery(registrationQuery(contestId, viewerKey(viewer))),

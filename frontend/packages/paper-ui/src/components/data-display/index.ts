@@ -9,3 +9,7 @@ export {
   type HeatmapChartDatum,
   type HeatmapChartProps,
 } from "./HeatmapChart";
+export {
+  RecentHeatmap,
+  type RecentHeatmapProps,
+} from "./RecentHeatmap";

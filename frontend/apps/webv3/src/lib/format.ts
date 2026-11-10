@@ -14,6 +14,10 @@ const amountPlural = new Intl.PluralRules(numberLocale, { maximumFractionDigits:
 export const utcToday = () => new Date().toISOString().slice(0, 10)
 
 export const dayAndMonth = (date: string) => `${Number(date.slice(8, 10))} ${months[Number(date.slice(5, 7)) - 1]}`
+const dayFormat = new Intl.DateTimeFormat(numberLocale, { dateStyle: 'medium', timeZone: 'UTC' })
+
+/** For example `Nov 4, 2026` for `2026-11-04`, as heatmap tooltips name a day. */
+export const formatDay = (date: string) => dayFormat.format(new Date(`${date}T00:00:00Z`))
 export const formatDate = (date: string) => `${dayAndMonth(date)} ${date.slice(0, 4)}`
 export const formatPeriod = ({ contest_start: start, contest_end: end }: Pick<ImmersionContest, 'contest_start' | 'contest_end'>) =>
   `${start.slice(0, 4) === end.slice(0, 4) ? dayAndMonth(start) : formatDate(start)} – ${formatDate(end)}`

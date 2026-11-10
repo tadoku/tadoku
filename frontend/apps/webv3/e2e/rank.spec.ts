@@ -31,12 +31,13 @@ test('a participant ranked below the first standings page sees their rank on hom
 
   // The API's answer, whichever rank the field above leaves the learner, must be beyond the first page of 50.
   await expect.poll(async () => (await context.request.get(`${api}/immersion/contests/${contest.id}/leaderboard/${userId}`)).status(), { timeout: 20_000 }).toBe(200)
-  const { rank, is_tie: tie } = await (await context.request.get(`${api}/immersion/contests/${contest.id}/leaderboard/${userId}`)).json() as { rank: number; is_tie: boolean }
+  const { rank } = await (await context.request.get(`${api}/immersion/contests/${contest.id}/leaderboard/${userId}`)).json() as { rank: number }
   expect(rank, 'the seeded field ranks above the learner').toBeGreaterThan(50)
 
   const page = await context.newPage()
   await page.goto('/')
-  await expect.soft(page.getByRole('heading', { level: 1 })).toHaveText(`${tie ? 'Tied ' : ''}${place(rank)} place`)
+  const you = page.getByRole('region', { name: contest.title, exact: true }).locator('tr[aria-current="true"]')
+  await expect.soft(you.getByRole('cell').first()).toHaveText(String(rank))
   await page.screenshot({ path: testInfo.outputPath('home-rank.png'), fullPage: true })
 
   await page.goto(`/contests/${contest.id}/profile/${userId}/1`)

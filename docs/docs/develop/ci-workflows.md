@@ -149,9 +149,11 @@ Dev Reader and Dev Admin, on a fresh development tenant. Its jobs run in order:
    `suite.json` for 14 days. It holds no kubeconfig. The report records typed
    values and the repository is public, so the fixture file holds only
    development fixture identities.
-3. **Promote** runs after every gate result. It refuses unless the gate passed
-   on the published digest and that digest is still `latest`, so an older run,
-   or a re-run of one after a newer push, cannot move `prod`. It copies the
+3. **Promote** runs after every gate result except in a cancelled run. It
+   refuses unless the gate passed on the published digest and that digest is
+   still `latest`, so an older run, or a re-run of one after a newer push,
+   cannot move `prod`. Only a push's first attempt builds and pushes; any
+   re-run, like a dispatch, gates the image its commit already published. It copies the
    digest to `prod` with `docker buildx imagetools create`, which pushes the
    same manifest without rebuilding, then reads `prod` back and fails unless it
    names that digest.
@@ -171,6 +173,11 @@ picks the job up, GitHub keeps it queued for up to 24 hours before failing it,
 and the workflow's later runs wait behind it. To release a blocked commit, fix
 the cause and use **Re-run failed jobs**, which tests the same digest again,
 or merge a fix.
+
+The suite refuses a committed `test.only`, so a focused test cannot pass the
+gate in place of the whole suite. The branch tenant runs the candidate commit's
+API, while production may still run an older one, so a Webv3 change that needs
+an API change production does not have yet can pass the gate.
 
 ### Dry runs
 
@@ -209,8 +216,10 @@ gate.
 
 | File | Contents | Given to |
 | --- | --- | --- |
-| `kubeconfig` | One context, `homelab-talos-dev`, with the token of a ServiceAccount bound by RoleBindings in the namespaces of `.dev/config.yaml` | The steps that run `kubectl` or dev-cli, as `KUBECONFIG` |
+| `kubeconfig` | One context, `homelab-talos-dev`, with the token of a ServiceAccount bound by RoleBindings in the namespaces of `.dev/config.yaml` | Set as `KUBECONFIG` only in the steps that run `kubectl` or dev-cli |
 | `fixtures.env` | `E2E_READER_EMAIL`, `E2E_READER_PASSWORD`, `E2E_SECOND_EMAIL` and `E2E_SECOND_PASSWORD` for Dev Reader and Dev Admin as the `tenant` hook seeds them | The suite step only |
+
+The files are mounted for the whole job, so any step could read them; scoping `KUBECONFIG` only prevents accidental use. The real limits are that only reviewed code on `main` runs on this runner and that the ServiceAccount is namespaced, with no Secrets and no `pods/exec`.
 
 The job fails before it touches the cluster when either file is missing or
 the kubeconfig does not authenticate as a ServiceAccount. dev-cli is pinned in

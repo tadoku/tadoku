@@ -6,6 +6,8 @@ const artifacts = process.env.PLAYWRIGHT_OUTPUT_DIR || join(tmpdir(), 'tadoku-we
 
 export default defineConfig({
   testDir: './e2e',
+  // A committed test.only would silently drop every other test, so CI refuses it.
+  forbidOnly: !!process.env.CI,
   workers: 1,
   fullyParallel: false,
   reporter: [

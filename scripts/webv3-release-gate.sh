@@ -135,7 +135,7 @@ test_suite() {
   summary="$(jq --argjson code "$code" --argjson allowed "$allowed_skips" \
     --arg route "${ROUTE:?route.env names no route}" --arg revision "$(git rev-parse HEAD)" '
     [.. | objects | select(has("specs")) | .specs[]
-      | {name: "\(.file | split("/") | last) › \(.title)", status: [.tests[].status]}] as $tests
+      | {name: "\(.file) › \(.title)", status: [.tests[].status]}] as $tests
     | [$tests[] | select(.status | index("skipped")) | .name] as $skipped
     | {route: $route, revision: $revision, exitCode: $code, stats: .stats, skipped: $skipped,
       disallowedSkips: ($skipped - $allowed),

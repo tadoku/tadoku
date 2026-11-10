@@ -120,7 +120,8 @@ jobs:
       # Development follows latest, so the development base runs this image before the release gate tests it.
       - name: Build and publish the candidate image
         id: image
-        if: github.event_name == 'push'
+        # Only a push's first attempt builds; a re-run reuses what that attempt published, so it cannot move latest.
+        if: github.event_name == 'push' && github.run_attempt == '1'
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: frontend
@@ -130,10 +131,10 @@ jobs:
           tags: |
             ghcr.io/tadoku/tadoku/frontend-webv3:${{ github.sha }}
             ghcr.io/tadoku/tadoku/frontend-webv3:latest
-      # A dispatch gates the image its commit already published and pushes nothing.
+      # A dispatch or a re-run gates the image its commit already published and pushes nothing.
       - name: Resolve the commit's published image
         id: published
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' || github.run_attempt != '1'
         run: |
           digest="$(docker buildx imagetools inspect "ghcr.io/tadoku/tadoku/frontend-webv3:$GITHUB_SHA" \
             --format '{{json .Manifest.Digest}}' | jq -r .)" || digest=""

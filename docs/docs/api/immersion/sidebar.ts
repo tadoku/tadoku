@@ -130,6 +130,12 @@ const sidebar: SidebarsConfig = {
           label: "Fetches the activity of a user profile in a contest",
           className: "api-method get",
         },
+        {
+          type: "doc",
+          id: "api/immersion/contest-profile-fetch-summary",
+          label: "Summarizes a user's logs in a contest, with breakdowns for filtering",
+          className: "api-method get",
+        },
       ],
     },
     {

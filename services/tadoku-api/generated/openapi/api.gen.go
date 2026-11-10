@@ -902,6 +902,68 @@ type ImmersionContestProfileScores struct {
 	Scores       ImmersionScores              `json:"scores"`
 }
 
+// ImmersionContestProfileSummary The totals, days and best day apply every filter. Each breakdown (languages, activities, tags) applies every filter except its own, so it lists the alternatives to the values selected in that filter.
+type ImmersionContestProfileSummary struct {
+	// ActiveDays Number of distinct dates with at least one matching log.
+	ActiveDays int `json:"active_days"`
+
+	// Activities Score per activity under every filter except activity, ordered by score descending, then ID.
+	Activities []ImmersionContestProfileSummaryActivity `json:"activities"`
+
+	// BestDay The date with the highest score, the earliest on a tie; null without logs.
+	BestDay nullable.Nullable[ImmersionContestProfileSummaryBestDay] `json:"best_day"`
+
+	// Days Score per date and activity, ordered by date, then activity ID.
+	Days []ImmersionContestProfileSummaryDay `json:"days"`
+
+	// Languages Score per language under every filter except language, ordered by score descending, then code.
+	Languages []ImmersionContestProfileSummaryLanguage `json:"languages"`
+	LogCount  int                                      `json:"log_count"`
+	Score     float32                                  `json:"score"`
+
+	// Tags The 200 highest-scoring tags under every filter except tag, ordered by score descending, then tag. A log counts toward each of its tags, so tag scores overlap and need not add up to the total.
+	Tags []ImmersionContestProfileSummaryTag `json:"tags"`
+}
+
+// ImmersionContestProfileSummaryActivity defines model for ImmersionContestProfileSummaryActivity.
+type ImmersionContestProfileSummaryActivity struct {
+	Id int `json:"id"`
+
+	// Name Example: Reading
+	Name  string  `json:"name"`
+	Score float32 `json:"score"`
+}
+
+// ImmersionContestProfileSummaryBestDay defines model for ImmersionContestProfileSummaryBestDay.
+type ImmersionContestProfileSummaryBestDay struct {
+	Date  openapi_types.Date `json:"date"`
+	Score float32            `json:"score"`
+}
+
+// ImmersionContestProfileSummaryDay defines model for ImmersionContestProfileSummaryDay.
+type ImmersionContestProfileSummaryDay struct {
+	ActivityId int                `json:"activity_id"`
+	Date       openapi_types.Date `json:"date"`
+	Score      float32            `json:"score"`
+}
+
+// ImmersionContestProfileSummaryLanguage defines model for ImmersionContestProfileSummaryLanguage.
+type ImmersionContestProfileSummaryLanguage struct {
+	// Code Example: jpn
+	Code string `json:"code"`
+
+	// Name Example: Japanese
+	Name  string  `json:"name"`
+	Score float32 `json:"score"`
+}
+
+// ImmersionContestProfileSummaryTag defines model for ImmersionContestProfileSummaryTag.
+type ImmersionContestProfileSummaryTag struct {
+	LogCount int     `json:"log_count"`
+	Score    float32 `json:"score"`
+	Tag      string  `json:"tag"`
+}
+
 // ImmersionContestRegistration defines model for ImmersionContestRegistration.
 type ImmersionContestRegistration struct {
 	Contest   *ImmersionContestView `json:"contest,omitempty"`
@@ -1335,6 +1397,15 @@ type ProfileUserListEntry struct {
 	Role        *string `json:"role,omitempty"`
 }
 
+// ImmersionLogActivityFilter defines model for ImmersionLogActivityFilter.
+type ImmersionLogActivityFilter = []int
+
+// ImmersionLogLanguageFilter defines model for ImmersionLogLanguageFilter.
+type ImmersionLogLanguageFilter = []string
+
+// ImmersionLogTagFilter defines model for ImmersionLogTagFilter.
+type ImmersionLogTagFilter = []string
+
 // ImmersionAccountDeletionInProgress defines model for ImmersionAccountDeletionInProgress.
 type ImmersionAccountDeletionInProgress = ImmersionErrorResponse
 
@@ -1413,11 +1484,32 @@ type ImmersionContestListLogsParams struct {
 	PageSize       *int                `form:"page_size,omitempty" json:"page_size,omitempty"`
 	Page           *int                `form:"page,omitempty" json:"page,omitempty"`
 	UserId         *openapi_types.UUID `form:"user_id,omitempty" json:"user_id,omitempty"`
+
+	// Language Only logs in one of these languages. Repeat the parameter for several values.
+	Language *ImmersionLogLanguageFilter `form:"language,omitempty" json:"language,omitempty"`
+
+	// Activity Only logs of one of these activity IDs. Repeat the parameter for several values.
+	Activity *ImmersionLogActivityFilter `form:"activity,omitempty" json:"activity,omitempty"`
+
+	// Tag Only logs with any of these tags. Repeat the parameter for several values; a comma is part of the tag, not a separator.
+	Tag *ImmersionLogTagFilter `form:"tag,omitempty" json:"tag,omitempty"`
 }
 
 // ImmersionContestModerationDetachLogJSONBody defines parameters for ImmersionContestModerationDetachLog.
 type ImmersionContestModerationDetachLogJSONBody struct {
 	Reason string `json:"reason"`
+}
+
+// ImmersionContestProfileFetchSummaryParams defines parameters for ImmersionContestProfileFetchSummary.
+type ImmersionContestProfileFetchSummaryParams struct {
+	// Language Only logs in one of these languages. Repeat the parameter for several values.
+	Language *ImmersionLogLanguageFilter `form:"language,omitempty" json:"language,omitempty"`
+
+	// Activity Only logs of one of these activity IDs. Repeat the parameter for several values.
+	Activity *ImmersionLogActivityFilter `form:"activity,omitempty" json:"activity,omitempty"`
+
+	// Tag Only logs with any of these tags. Repeat the parameter for several values; a comma is part of the tag, not a separator.
+	Tag *ImmersionLogTagFilter `form:"tag,omitempty" json:"tag,omitempty"`
 }
 
 // ImmersionContestRegistrationUpsertJSONBody defines parameters for ImmersionContestRegistrationUpsert.
@@ -1821,6 +1913,9 @@ type ServerInterface interface {
 	// ImmersionContestProfileFetchScores Fetches the scores of a user profile in a contest
 	// (GET /immersion/contests/{id}/profile/{user_id}/scores)
 	ImmersionContestProfileFetchScores(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, userId openapi_types.UUID)
+	// ImmersionContestProfileFetchSummary Summarizes a user's logs in a contest, with breakdowns for filtering
+	// (GET /immersion/contests/{id}/profile/{user_id}/summary)
+	ImmersionContestProfileFetchSummary(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, userId openapi_types.UUID, params ImmersionContestProfileFetchSummaryParams)
 	// ImmersionContestFindRegistration Fetches a contest registration if it exists
 	// (GET /immersion/contests/{id}/registration)
 	ImmersionContestFindRegistration(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
@@ -3501,6 +3596,45 @@ func (siw *ServerInterfaceWrapper) ImmersionContestListLogs(w http.ResponseWrite
 		return
 	}
 
+	// ------------- Optional query parameter "language" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "language", r.URL.Query(), &params.Language, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "language"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "language", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "activity" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "activity", r.URL.Query(), &params.Activity, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "activity"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "activity", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "tag" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "tag", r.URL.Query(), &params.Tag, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "tag"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tag", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ImmersionContestListLogs(w, r, id, params)
 	}))
@@ -3643,6 +3777,83 @@ func (siw *ServerInterfaceWrapper) ImmersionContestProfileFetchScores(w http.Res
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ImmersionContestProfileFetchScores(w, r, id, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImmersionContestProfileFetchSummary operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionContestProfileFetchSummary(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "user_id" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", r.PathValue("user_id"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ImmersionContestProfileFetchSummaryParams
+
+	// ------------- Optional query parameter "language" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "language", r.URL.Query(), &params.Language, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "language"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "language", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "activity" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "activity", r.URL.Query(), &params.Activity, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "activity"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "activity", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "tag" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "tag", r.URL.Query(), &params.Tag, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "tag"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tag", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionContestProfileFetchSummary(w, r, id, userId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4849,10 +5060,11 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/summary", wrapper.ImmersionContestFetchSummary)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/logs", wrapper.ImmersionContestListLogs)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/contests/{id}/moderation/detach/{log_id}", wrapper.ImmersionContestModerationDetachLog)
-	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/profile/{user_id}/scores", wrapper.ImmersionContestProfileFetchScores)
-	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/profile/{user_id}/activity", wrapper.ImmersionContestProfileFetchActivity)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/ongoing-registrations", wrapper.ImmersionContestFindOngoingRegistrations)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/configuration-options", wrapper.ImmersionContestGetConfigurations)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/profile/{user_id}/scores", wrapper.ImmersionContestProfileFetchScores)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/profile/{user_id}/activity", wrapper.ImmersionContestProfileFetchActivity)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/profile/{user_id}/summary", wrapper.ImmersionContestProfileFetchSummary)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/registrations", wrapper.ImmersionContestListRegistrations)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/events", wrapper.ImmersionContestListEvents)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/logs/{logId}", wrapper.ImmersionContestFindLog)
@@ -7351,6 +7563,14 @@ func (response ImmersionContestListLogs200JSONResponse) VisitImmersionContestLis
 	return err
 }
 
+type ImmersionContestListLogs400Response struct {
+}
+
+func (response ImmersionContestListLogs400Response) VisitImmersionContestListLogsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
 type ImmersionContestListLogs404Response struct {
 }
 
@@ -7556,6 +7776,46 @@ type ImmersionContestProfileFetchScores500Response struct {
 }
 
 func (response ImmersionContestProfileFetchScores500Response) VisitImmersionContestProfileFetchScoresResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type ImmersionContestProfileFetchSummaryRequestObject struct {
+	Id     openapi_types.UUID `json:"id"`
+	UserId openapi_types.UUID `json:"user_id"`
+	Params ImmersionContestProfileFetchSummaryParams
+}
+
+type ImmersionContestProfileFetchSummaryResponseObject interface {
+	VisitImmersionContestProfileFetchSummaryResponse(w http.ResponseWriter) error
+}
+
+type ImmersionContestProfileFetchSummary200JSONResponse ImmersionContestProfileSummary
+
+func (response ImmersionContestProfileFetchSummary200JSONResponse) VisitImmersionContestProfileFetchSummaryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionContestProfileFetchSummary400Response struct {
+}
+
+func (response ImmersionContestProfileFetchSummary400Response) VisitImmersionContestProfileFetchSummaryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type ImmersionContestProfileFetchSummary500Response struct {
+}
+
+func (response ImmersionContestProfileFetchSummary500Response) VisitImmersionContestProfileFetchSummaryResponse(w http.ResponseWriter) error {
 	w.WriteHeader(500)
 	return nil
 }
@@ -9193,6 +9453,9 @@ type StrictServerInterface interface {
 	// ImmersionContestProfileFetchScores Fetches the scores of a user profile in a contest
 	// (GET /immersion/contests/{id}/profile/{user_id}/scores)
 	ImmersionContestProfileFetchScores(ctx context.Context, request ImmersionContestProfileFetchScoresRequestObject) (ImmersionContestProfileFetchScoresResponseObject, error)
+	// ImmersionContestProfileFetchSummary Summarizes a user's logs in a contest, with breakdowns for filtering
+	// (GET /immersion/contests/{id}/profile/{user_id}/summary)
+	ImmersionContestProfileFetchSummary(ctx context.Context, request ImmersionContestProfileFetchSummaryRequestObject) (ImmersionContestProfileFetchSummaryResponseObject, error)
 	// ImmersionContestFindRegistration Fetches a contest registration if it exists
 	// (GET /immersion/contests/{id}/registration)
 	ImmersionContestFindRegistration(ctx context.Context, request ImmersionContestFindRegistrationRequestObject) (ImmersionContestFindRegistrationResponseObject, error)
@@ -10728,6 +10991,34 @@ func (sh *strictHandler) ImmersionContestProfileFetchScores(w http.ResponseWrite
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ImmersionContestProfileFetchScoresResponseObject); ok {
 		if err := validResponse.VisitImmersionContestProfileFetchScoresResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionContestProfileFetchSummary operation middleware
+func (sh *strictHandler) ImmersionContestProfileFetchSummary(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, userId openapi_types.UUID, params ImmersionContestProfileFetchSummaryParams) {
+	var request ImmersionContestProfileFetchSummaryRequestObject
+
+	request.Id = id
+	request.UserId = userId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionContestProfileFetchSummary(ctx, request.(ImmersionContestProfileFetchSummaryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionContestProfileFetchSummary")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionContestProfileFetchSummaryResponseObject); ok {
+		if err := validResponse.VisitImmersionContestProfileFetchSummaryResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

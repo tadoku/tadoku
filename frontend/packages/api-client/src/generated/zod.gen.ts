@@ -251,6 +251,49 @@ export const zImmersionLeaderboardEntry = z.object({
     is_tie: z.boolean()
 });
 
+export const zImmersionContestProfileSummaryBestDay = z.object({
+    date: z.iso.date(),
+    score: z.number()
+});
+
+export const zImmersionContestProfileSummaryDay = z.object({
+    date: z.iso.date(),
+    activity_id: z.int(),
+    score: z.number()
+});
+
+export const zImmersionContestProfileSummaryLanguage = z.object({
+    code: z.string(),
+    name: z.string(),
+    score: z.number()
+});
+
+export const zImmersionContestProfileSummaryActivity = z.object({
+    id: z.int(),
+    name: z.string(),
+    score: z.number()
+});
+
+export const zImmersionContestProfileSummaryTag = z.object({
+    tag: z.string(),
+    score: z.number(),
+    log_count: z.int()
+});
+
+/**
+ * The totals, days and best day apply every filter. Each breakdown (languages, activities, tags) applies every filter except its own, so it lists the alternatives to the values selected in that filter.
+ */
+export const zImmersionContestProfileSummary = z.object({
+    score: z.number(),
+    log_count: z.int(),
+    active_days: z.int(),
+    best_day: zImmersionContestProfileSummaryBestDay.nullable(),
+    days: z.array(zImmersionContestProfileSummaryDay),
+    languages: z.array(zImmersionContestProfileSummaryLanguage).max(100),
+    activities: z.array(zImmersionContestProfileSummaryActivity).max(100),
+    tags: z.array(zImmersionContestProfileSummaryTag).max(200)
+});
+
 export const zImmersionContestEvent = z.object({
     id: z.string().guid(),
     log_id: z.string().guid(),
@@ -531,6 +574,21 @@ export const zEmailList = z.object({
     emails: z.array(zEmailMessage).max(100),
     next_cursor: z.string().regex(/^[\s\S]{0,2048}$/u).nullable()
 });
+
+/**
+ * Only logs in one of these languages. Repeat the parameter for several values.
+ */
+export const zImmersionLogLanguageFilter = z.array(z.string().regex(/^[\s\S]{1,10}$/u)).max(10);
+
+/**
+ * Only logs of one of these activity IDs. Repeat the parameter for several values.
+ */
+export const zImmersionLogActivityFilter = z.array(z.int().gte(1).lte(32767)).max(10);
+
+/**
+ * Only logs with any of these tags. Repeat the parameter for several values; a comma is part of the tag, not a separator.
+ */
+export const zImmersionLogTagFilter = z.array(z.string().regex(/^[\s\S]{1,50}$/u)).max(20);
 
 /**
  * successful operation
@@ -852,11 +910,14 @@ export const zImmersionContestListLogsQuery = z.object({
     include_deleted: z.boolean().optional(),
     page_size: z.int().optional(),
     page: z.int().optional(),
-    user_id: z.string().guid().optional()
+    user_id: z.string().guid().optional(),
+    language: z.array(z.string().regex(/^[\s\S]{1,10}$/u)).max(10).optional(),
+    activity: z.array(z.int().gte(1).lte(32767)).max(10).optional(),
+    tag: z.array(z.string().regex(/^[\s\S]{1,50}$/u)).max(20).optional()
 });
 
 /**
- * successful operation
+ * successful operation. Filters combine with "and"; several values of one filter combine with "or".
  */
 export const zImmersionContestListLogsResponse = zImmersionLogs;
 
@@ -868,6 +929,16 @@ export const zImmersionContestModerationDetachLogPath = z.object({
     id: z.string().guid(),
     log_id: z.string().guid()
 });
+
+/**
+ * successful operation
+ */
+export const zImmersionContestFindOngoingRegistrationsResponse = zImmersionContestRegistrations;
+
+/**
+ * successful operation
+ */
+export const zImmersionContestGetConfigurationsResponse = zImmersionContestConfigurationOptions;
 
 export const zImmersionContestProfileFetchScoresPath = z.object({
     id: z.string().guid(),
@@ -889,15 +960,21 @@ export const zImmersionContestProfileFetchActivityPath = z.object({
  */
 export const zImmersionContestProfileFetchActivityResponse = zImmersionContestProfileActivity;
 
-/**
- * successful operation
- */
-export const zImmersionContestFindOngoingRegistrationsResponse = zImmersionContestRegistrations;
+export const zImmersionContestProfileFetchSummaryPath = z.object({
+    id: z.string().guid(),
+    user_id: z.string().guid()
+});
+
+export const zImmersionContestProfileFetchSummaryQuery = z.object({
+    language: z.array(z.string().regex(/^[\s\S]{1,10}$/u)).max(10).optional(),
+    activity: z.array(z.int().gte(1).lte(32767)).max(10).optional(),
+    tag: z.array(z.string().regex(/^[\s\S]{1,50}$/u)).max(20).optional()
+});
 
 /**
  * successful operation
  */
-export const zImmersionContestGetConfigurationsResponse = zImmersionContestConfigurationOptions;
+export const zImmersionContestProfileFetchSummaryResponse = zImmersionContestProfileSummary;
 
 export const zImmersionContestListRegistrationsQuery = z.object({
     page_size: z.int().optional(),

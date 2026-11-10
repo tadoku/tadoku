@@ -5,6 +5,7 @@ sql:
     queries:
       - logs.sql
       - contest_logs.sql
+      - contest_profile_summary.sql
       - user_removal.sql
     gen:
       go:

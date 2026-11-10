@@ -71,6 +71,7 @@ func (s *server) ImmersionContestListLogs(ctx context.Context, request openapi.I
 	parameters := api.LogListParameters{}
 	parameters.ContestID = request.Id
 	parameters.UserID = request.Params.UserId
+	parameters.Filters = logFilters(request.Params.Language, request.Params.Activity, request.Params.Tag)
 	if request.Params.PageSize != nil {
 		parameters.PageSize = *request.Params.PageSize
 	}
@@ -88,6 +89,20 @@ func (s *server) ImmersionContestListLogs(ctx context.Context, request openapi.I
 	}
 
 	return openapi.ImmersionContestListLogs200JSONResponse(logListResponse(result)), nil
+}
+
+func logFilters(languageCodes *[]string, activityIDs *[]int, tags *[]string) api.LogFilters {
+	filters := api.LogFilters{}
+	if languageCodes != nil {
+		filters.LanguageCodes = *languageCodes
+	}
+	if activityIDs != nil {
+		filters.ActivityIDs = *activityIDs
+	}
+	if tags != nil {
+		filters.Tags = *tags
+	}
+	return filters
 }
 
 func logListResponse(result *api.LogList) openapi.ImmersionLogs {

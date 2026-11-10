@@ -160,8 +160,12 @@ func (r *LogsRepository) ListContestLogs(ctx context.Context, parameters ListPar
 		return nil, err
 	}
 
+	filters := parameters.Filters.query()
 	rows, err := queries.New(executor).ListLogsForContest(ctx, queries.ListLogsForContestParams{
 		UserID:         postgres.NullableUUID(parameters.UserID),
+		LanguageCodes:  filters.languageCodes,
+		ActivityIds:    filters.activityIDs,
+		Tags:           filters.tags,
 		StartFrom:      parameters.offset(),
 		PageSize:       int32(parameters.PageSize),
 		IncludeDeleted: parameters.IncludeDeleted,

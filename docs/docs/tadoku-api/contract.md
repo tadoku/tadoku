@@ -79,7 +79,27 @@ against the production router, using real authentication, authorization and
 persistence; see [HTTP golden cases](./http-e2e.md#http-golden-cases).
 
 Profile and contest-profile language scores are ordered by score descending,
-then language code ascending when scores are equal.
+then language code ascending when scores are equal. Contest-profile activity
+and tag scores follow the same rule, with activity ID and tag as the tiebreak.
+
+## Log filters
+
+Log reads that filter by language, activity or tag share the `language`,
+`activity` and `tag` query parameters in
+`services/tadoku-api/spec/openapi/components.yaml`.
+
+- Each parameter is repeatable in form style with explode, as in
+  `?tag=a&tag=b`. A comma is part of a value, never a separator.
+- Several values of one filter combine with "or", so a tag filter matches logs
+  with any of its tags. Different filters combine with "and". An absent filter
+  applies no restriction.
+- The feature domain validates the counts and lengths the contract declares
+  and returns 400 for a violation. Malformed values fail request decoding with
+  400.
+- A response that pairs filtered totals with a breakdown by language, activity
+  or tag applies every filter except the breakdown's own, so the breakdown
+  lists the alternatives to the values selected in that filter. A log counts
+  toward each of its tags, so tag scores overlap.
 
 ## Request decoding
 

@@ -41,6 +41,7 @@ go_test(
         "contest_list_test.go",
         "contest_profile_activity_test.go",
         "contest_profile_scores_test.go",
+        "contest_profile_summary_test.go",
         "contest_registration_find_test.go",
         "contest_registration_locks_test.go",
         "contest_registration_my_test.go",

@@ -1,0 +1,4 @@
+>>> GET /immersion/contests/f1111111-1111-4111-8111-111111111111/logs?tag=t1&tag=t2&tag=t3&tag=t4&tag=t5&tag=t6&tag=t7&tag=t8&tag=t9&tag=t10&tag=t11&tag=t12&tag=t13&tag=t14&tag=t15&tag=t16&tag=t17&tag=t18&tag=t19&tag=t20&tag=t21
+HTTP/1.1 400 Bad Request
+Content-Length: 0
+

@@ -1,12 +1,13 @@
 ---
 title: CI workflows
-description: What each GitHub Actions workflow checks and when it runs, how backend CI uses the private runner pool and Bazel caches, and where failing test logs are uploaded.
+description: What each GitHub Actions workflow checks and when it runs, how backend CI uses the private runner pool and Bazel caches, where failing test logs are uploaded and how the Webv3 release gate decides when to tag prod.
 ---
 
 # CI workflows
 
 Read this when you need to know what CI checks on a pull request, why a
-workflow ran or how backend CI caches its work. The commands each workflow runs
+workflow ran, how backend CI caches its work or how a Webv3 image reaches
+`prod`. The commands each workflow runs
 are explained in [Toolchain and repository](./toolchain.md).
 
 All workflows live in `.github/workflows/`.
@@ -85,7 +86,7 @@ console output; they include assertion output and fixture cleanup errors.
 | `build-frontend-styleguide.yaml` | Pushes touching styleguide, `ui` or the lockfile | Builds the `ui` styleguide; publishes its image from `main` |
 | `build-frontend-paper-styleguide.yaml` | PRs and `main` pushes touching Paper | Paper boundaries, `paper-ui` and `paper-styleguide` lint, typecheck, test and build, package checks, image smoke test; publishes from `main` |
 | `build-frontend-authv2.yaml` | PRs and main pushes touching authv2 or Paper | Node 22 typecheck, lint, boundaries and container build; main publishes commit, `latest` and `prod`; Playwright remains manual |
-| `build-frontend-webv3.yaml` | PRs and `main` pushes touching Webv3 or Paper inputs | Node 22 lint, typecheck, boundaries, standalone container and synthetic read-only browser journeys; publishes commit, `latest` and `prod` from `main` |
+| `build-frontend-webv3.yaml` | PRs and `main` pushes touching an input of the Webv3 image or its release gate | Node 22 lint, typecheck, boundaries, standalone container and synthetic read-only browser journeys; from `main`, publishes the commit tag and `latest`, then tags `prod` only after the [release gate](#webv3-release-gate) passes on that digest |
 | `webv3-production-canary.yaml` | Hourly and manual dispatch from `main`, once `WEBV3_CANARY_ENABLED` is `true` | Signs in on `next.tadoku.app`, walks a read-only journey and publishes green or red; see [Webv3 production canary](../frontend/webv3-production-canary.md) |
 | `check-paper-playground.yaml` | PRs and `main` pushes touching the playground or `paper-ui` | Paper boundaries and `paper-playground` lint, typecheck, test and build; never published |
 | `pr-branch.yaml` | `pull_request_target` label, push, reopen and close events | Authorizes the `deploy` label, deploys the pinned commit beside production with dev-cli and tears the branch down when the label is removed or the pull request closes. Its deploy and teardown jobs are the called workflows `pr-branch-called-deploy.yaml` and `pr-branch-called-teardown.yaml`. See [Pull-request deploys](./pull-request-deploys.md) |
@@ -96,9 +97,97 @@ console output; they include assertion output and fixture cleanup errors.
 Frontend application images from `dev/` branches publish only their immutable commit tag.
 They never update `latest` or `prod`. Development manifests can pin those images
 without a production release. Main publication updates the commit tag, `latest`
-and `prod`. Development follows `latest` and production follows `prod`, so merging
-frontend source to `main` releases each affected frontend to production, as it
-does for the backend images.
+and `prod`, except that Webv3's `prod` waits for its release gate. Development
+follows `latest` and production follows `prod`, so merging frontend source to
+`main` releases each affected frontend to production, as it does for the backend
+images.
+
+## Webv3 release gate
+
+On `main`, `build-frontend-webv3.yaml` tags `prod` only on an image digest
+that passed `pnpm --filter webv3 test:e2e` against a real Tadoku API, with
+Dev Reader and Dev Admin, on a fresh development tenant. Its jobs run in order:
+
+1. **Publish** builds the image once and pushes the commit tag and `latest`.
+   Its output is the image's digest.
+2. **Release gate** runs `scripts/webv3-release-gate.sh` on `tadoku-ci`:
+   - `deploy` waits, for up to 20 minutes, until the development base's
+     `frontend-webv3` Deployment has finished rolling out and every pod runs the
+     published digest. Development follows `latest`, so Image Updater rolls
+     the base to it. It then runs
+     `dev up --owner gha --base HEAD --no-watch --service admin` on the local
+     branch `webv3-gate-<run>-<attempt>`, whose `tenant` hook provisions and
+     seeds a new tenant (see [Branch tenants](./development-data.md#branch-tenants)).
+     Comparing with `HEAD` selects no deployable from the commit's changes, and
+     admin is an overlay the suite never opens, so the branch's Webv3 host is
+     served by the base. The step fails unless that host answers with the base's
+     `X-Dev-Backend` and the route's `X-Dev-Selected`.
+   - `test` runs the suite against the branch's hosts, refuses to start without
+     the four fixture variables, because without them the credentialed specs
+     skip and the suite passes, and then checks that the base still runs the
+     digest. It writes `result.json` with the published and tested digests,
+     the route, the revision and the suite's exit code.
+   - `down` runs `dev down` whatever happened. A failed teardown does not block
+     the release: the branch expires after the development TTL and the next
+     `dev up` on the cluster tears it down.
+
+   The artifact `webv3-release-gate-<attempt>` keeps the Playwright report and
+   results, the `dev up` and `dev down` logs and `result.json` for 14 days. The
+   report records typed values and the repository is public, so the
+   environment holds only development fixture identities.
+3. **Promote** runs after every gate result. It copies the published digest to
+   `prod` with `docker buildx imagetools create`, which pushes the same
+   manifest without rebuilding, then reads `prod` back and fails unless it
+   names that digest.
+
+| Gate result | Tested digest | Result |
+| --- | --- | --- |
+| Succeeded | The published digest | `prod` moves to the published digest |
+| Succeeded | Any other, or none | Blocked: the promote job fails and `prod` stays |
+| Failed, cancelled or timed out | Any | Blocked |
+
+Every way the gate can break, such as missing configuration, a runner that
+refuses the job, a base that never rolls out the digest or a hung suite, ends
+in a failed or timed-out job, so it blocks the release. Production keeps its
+current `prod` digest. To release a blocked commit, fix the cause and use
+**Re-run failed jobs**, which tests the same digest again, or merge a fix.
+
+### Dry runs
+
+A `workflow_dispatch` from `main` runs the whole workflow. Its `dry_run`
+input, checked by default, publishes the image as
+`<commit>-dry-run-<run id>` and `latest`, runs the gate, and reports the
+decision and both digests in the promote job's summary without logging in to
+the registry or moving `prod`. The `force_failure` input, allowed only with
+`dry_run`, writes a failing spec into the runner's checkout before the suite
+runs, to show a blocked release. A dispatch with `dry_run` unchecked releases
+like a push.
+
+`scripts/webv3-release-gate.sh` also runs by hand from a branch checkout with
+the `homelab-talos-dev` context, installed frontend dependencies and a built
+`paper-ui`; set `GATE_OWNER` to your own dev-cli owner and
+`NODE_EXTRA_CA_CERTS` to the Lab CA.
+
+### Runner and configuration
+
+The gate drives dev-cli on `homelab-talos-dev` and opens its branch hosts,
+which only the homelab reaches, so it runs on the `tadoku-ci` runner set. That
+set's job-started hook must admit `build-frontend-webv3.yaml` pushes and
+dispatches from `main`, and its egress must reach the development ingress and
+the `homelab-talos-dev` API server. The job reads the Lab CA from
+`/usr/local/share/ca-certificates/ca.crt`. Both are defined in the homelab
+repository's runner runbook.
+
+The `webv3-release-gate` GitHub environment, limited to `main`, holds:
+
+| Name | Kind | Value |
+| --- | --- | --- |
+| `DEV_KUBECONFIG` | Secret | A kubeconfig whose `homelab-talos-dev` context can run dev-cli in the namespaces of `.dev/config.yaml` and read the `frontend-webv3` Deployment and its pods |
+| `E2E_READER_EMAIL`, `E2E_READER_PASSWORD` | Secrets | Dev Reader as the `tenant` hook seeds it |
+| `E2E_SECOND_EMAIL`, `E2E_SECOND_PASSWORD` | Secrets | Dev Admin as the `tenant` hook seeds it |
+| `DEV_CLI_VERSION` | Variable | A dev-cli release tag, such as `v0.12.0` |
+
+The gate fails before it touches the cluster when any of them is missing.
 
 ## Production config contract
 

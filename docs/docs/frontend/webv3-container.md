@@ -54,6 +54,11 @@ in production and development runtime modes, checking that account links stay
 with their matching origins, native links stay on the requested host and
 forwarded-host or branch headers cannot override the request Host. A second container verifies development runtime
 overrides against the same production-built image.
+It reaches the built `createLog` server function at the ID
+`frontend/apps/webv3/server-function-id.mjs` gives its file and variable;
+`vite.config.ts` hands that function to TanStack Start, so a server function's
+ID changes only when its file or variable is renamed, never with the bundler's
+output. A wrong ID answers 500 instead of the expected 403 and fails the smoke.
 It retains a browser report, container log and result with source revision and
 fixture boundary. This proves container behavior; it does not verify real API,
 authentication, DNS, ingress or deployment. Docker on Linux, Node22 and installed pnpm
@@ -62,16 +67,21 @@ are required. The command removes only its own container.
 `.github/workflows/build-frontend-webv3.yaml` runs checks and container journeys
 on pull requests. Main publishes immutable commit and `latest` tags to
 `ghcr.io/tadoku/tadoku/frontend-webv3`. The publication job rebuilds the image;
-its digest can differ from the smoke-checked image. No pull request publishes an
-image.
+its digest can differ from the smoke-checked image. The
+[release gate](../develop/ci-workflows.md#webv3-release-gate) then runs the
+credentialed suite against the published digest on a development tenant and,
+when it passes, tags that same digest `prod` without rebuilding. No pull request
+publishes an image.
 
 The active production GitOps configuration makes `next.tadoku.app` follow
 the `prod` digest automatically through Image Updater and Argo CD. Webv3 uses the same production
 backend as Webv2; the homepage, leaderboards, contest lists and contest pages read contest data, content pages read the CMS and blog, native logging, contest registration and log moderation use the existing account, activity and contest API, and contest creation and scoring use its contest and scoring API. No product
 journey opens Webv2.
 Merging source that matches the Webv3 workflow's paths, including the shared
-lockfile, therefore republishes `latest` and `prod` and rolls this production
-preview through Image Updater and Argo CD's automatic sync.
+lockfile, therefore republishes `latest`, and `prod` once the release gate
+passes, and rolls this production preview through Image Updater and Argo CD's
+automatic sync. A blocked release leaves production on its current `prod`
+digest.
 Require `webv3 / container journeys` on the exact reviewed source head before
 landing such changes. An authv2 production hold does not hold this Webv3 pipeline.
 

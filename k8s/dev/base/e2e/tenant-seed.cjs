@@ -9,6 +9,8 @@ function proveTenantSeed({ root, report, run }, db) {
   const psql = ['exec', '-i', db, 'psql', '-X', '-qAt', '-U', 'postgres', '-d', 'tadoku', '-v', 'ON_ERROR_STOP=1']
   run('docker', psql, `
     insert into tenants(key,kind) values ('${tenant}','test');
+    -- As tadoku-tenant provision does after registering a test tenant.
+    select copy_production_platform_scoring('${tenant}');
     insert into users(tenant,id,display_name,created_at) values
       ('${tenant}','${admin}','Changed branch name',now()-interval '2 months'),
       ('${tenant}','${reader}','Dev Reader',now()-interval '2 months');

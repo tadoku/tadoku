@@ -1,0 +1,134 @@
+components:
+  schemas:
+    ImmersionContestProfileSummary:
+      type: object
+      description: >-
+        The totals, days and best day apply every filter. Each breakdown
+        (languages, activities, tags) applies every filter except its own, so it
+        lists the alternatives to the values selected in that filter.
+      required:
+        - score
+        - log_count
+        - active_days
+        - best_day
+        - days
+        - languages
+        - activities
+        - tags
+      properties:
+        score:
+          type: number
+          format: float
+        log_count:
+          type: integer
+        active_days:
+          type: integer
+          description: Number of distinct dates with at least one matching log.
+        best_day:
+          description: The date with the highest score, the earliest on a tie; null without logs.
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/ImmersionContestProfileSummaryBestDay"
+        days:
+          type: array
+          description: Score per date and activity, ordered by date, then activity ID.
+          maxItems: 3660
+          items:
+            $ref: "#/components/schemas/ImmersionContestProfileSummaryDay"
+        languages:
+          type: array
+          description: >-
+            Score per language under every filter except language, ordered by
+            score descending, then code.
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/ImmersionContestProfileSummaryLanguage"
+        activities:
+          type: array
+          description: >-
+            Score per activity under every filter except activity, ordered by
+            score descending, then ID.
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/ImmersionContestProfileSummaryActivity"
+        tags:
+          type: array
+          description: >-
+            The 200 highest-scoring tags under every filter except tag, ordered by
+            score descending, then tag. A log counts toward each of its tags, so
+            tag scores overlap and need not add up to the total.
+          maxItems: 200
+          items:
+            $ref: "#/components/schemas/ImmersionContestProfileSummaryTag"
+    ImmersionContestProfileSummaryBestDay:
+      type: object
+      required:
+        - date
+        - score
+      properties:
+        date:
+          type: string
+          format: date
+        score:
+          type: number
+          format: float
+    ImmersionContestProfileSummaryDay:
+      type: object
+      required:
+        - date
+        - activity_id
+        - score
+      properties:
+        date:
+          type: string
+          format: date
+        activity_id:
+          type: integer
+        score:
+          type: number
+          format: float
+    ImmersionContestProfileSummaryLanguage:
+      type: object
+      required:
+        - code
+        - name
+        - score
+      properties:
+        code:
+          type: string
+          example: jpn
+        name:
+          type: string
+          example: Japanese
+        score:
+          type: number
+          format: float
+    ImmersionContestProfileSummaryActivity:
+      type: object
+      required:
+        - id
+        - name
+        - score
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          example: Reading
+        score:
+          type: number
+          format: float
+    ImmersionContestProfileSummaryTag:
+      type: object
+      required:
+        - tag
+        - score
+        - log_count
+      properties:
+        tag:
+          type: string
+        score:
+          type: number
+          format: float
+        log_count:
+          type: integer

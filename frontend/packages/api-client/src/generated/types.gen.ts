@@ -279,6 +279,67 @@ export type ImmersionLeaderboard = ImmersionPaginatedList & {
     entries: Array<ImmersionLeaderboardEntry>;
 };
 
+/**
+ * The totals, days and best day apply every filter. Each breakdown (languages, activities, tags) applies every filter except its own, so it lists the alternatives to the values selected in that filter.
+ */
+export type ImmersionContestProfileSummary = {
+    score: number;
+    log_count: number;
+    /**
+     * Number of distinct dates with at least one matching log.
+     */
+    active_days: number;
+    /**
+     * The date with the highest score, the earliest on a tie; null without logs.
+     */
+    best_day: ImmersionContestProfileSummaryBestDay | null;
+    /**
+     * Score per date and activity, ordered by date, then activity ID.
+     */
+    days: Array<ImmersionContestProfileSummaryDay>;
+    /**
+     * Score per language under every filter except language, ordered by score descending, then code.
+     */
+    languages: Array<ImmersionContestProfileSummaryLanguage>;
+    /**
+     * Score per activity under every filter except activity, ordered by score descending, then ID.
+     */
+    activities: Array<ImmersionContestProfileSummaryActivity>;
+    /**
+     * The 200 highest-scoring tags under every filter except tag, ordered by score descending, then tag. A log counts toward each of its tags, so tag scores overlap and need not add up to the total.
+     */
+    tags: Array<ImmersionContestProfileSummaryTag>;
+};
+
+export type ImmersionContestProfileSummaryBestDay = {
+    date: string;
+    score: number;
+};
+
+export type ImmersionContestProfileSummaryDay = {
+    date: string;
+    activity_id: number;
+    score: number;
+};
+
+export type ImmersionContestProfileSummaryLanguage = {
+    code: string;
+    name: string;
+    score: number;
+};
+
+export type ImmersionContestProfileSummaryActivity = {
+    id: number;
+    name: string;
+    score: number;
+};
+
+export type ImmersionContestProfileSummaryTag = {
+    tag: string;
+    score: number;
+    log_count: number;
+};
+
 export type ImmersionContestEvent = {
     /**
      * Stable event identity, also usable as a cursor and deduplication key.
@@ -611,6 +672,21 @@ export type EmailList = {
     emails: Array<EmailMessage>;
     next_cursor: string | null;
 };
+
+/**
+ * Only logs in one of these languages. Repeat the parameter for several values.
+ */
+export type ImmersionLogLanguageFilter = Array<string>;
+
+/**
+ * Only logs of one of these activity IDs. Repeat the parameter for several values.
+ */
+export type ImmersionLogActivityFilter = Array<number>;
+
+/**
+ * Only logs with any of these tags. Repeat the parameter for several values; a comma is part of the tag, not a separator.
+ */
+export type ImmersionLogTagFilter = Array<string>;
 
 export type AuthzRoleGetData = {
     body?: never;
@@ -1587,11 +1663,27 @@ export type ImmersionContestListLogsData = {
         page_size?: number;
         page?: number;
         user_id?: string;
+        /**
+         * Only logs in one of these languages. Repeat the parameter for several values.
+         */
+        language?: Array<string>;
+        /**
+         * Only logs of one of these activity IDs. Repeat the parameter for several values.
+         */
+        activity?: Array<number>;
+        /**
+         * Only logs with any of these tags. Repeat the parameter for several values; a comma is part of the tag, not a separator.
+         */
+        tag?: Array<string>;
     };
     url: '/immersion/contests/{id}/logs';
 };
 
 export type ImmersionContestListLogsErrors = {
+    /**
+     * invalid filter or page
+     */
+    400: unknown;
     /**
      * not found
      */
@@ -1604,7 +1696,7 @@ export type ImmersionContestListLogsErrors = {
 
 export type ImmersionContestListLogsResponses = {
     /**
-     * successful operation
+     * successful operation. Filters combine with "and"; several values of one filter combine with "or".
      */
     200: ImmersionLogs;
 };
@@ -1654,6 +1746,45 @@ export type ImmersionContestModerationDetachLogResponses = {
      */
     200: unknown;
 };
+
+export type ImmersionContestFindOngoingRegistrationsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/immersion/contests/ongoing-registrations';
+};
+
+export type ImmersionContestFindOngoingRegistrationsErrors = {
+    /**
+     * unauthorized
+     */
+    401: unknown;
+};
+
+export type ImmersionContestFindOngoingRegistrationsResponses = {
+    /**
+     * successful operation
+     */
+    200: ImmersionContestRegistrations;
+};
+
+export type ImmersionContestFindOngoingRegistrationsResponse = ImmersionContestFindOngoingRegistrationsResponses[keyof ImmersionContestFindOngoingRegistrationsResponses];
+
+export type ImmersionContestGetConfigurationsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/immersion/contests/configuration-options';
+};
+
+export type ImmersionContestGetConfigurationsResponses = {
+    /**
+     * successful operation
+     */
+    200: ImmersionContestConfigurationOptions;
+};
+
+export type ImmersionContestGetConfigurationsResponse = ImmersionContestGetConfigurationsResponses[keyof ImmersionContestGetConfigurationsResponses];
 
 export type ImmersionContestProfileFetchScoresData = {
     body?: never;
@@ -1715,44 +1846,48 @@ export type ImmersionContestProfileFetchActivityResponses = {
 
 export type ImmersionContestProfileFetchActivityResponse = ImmersionContestProfileFetchActivityResponses[keyof ImmersionContestProfileFetchActivityResponses];
 
-export type ImmersionContestFindOngoingRegistrationsData = {
+export type ImmersionContestProfileFetchSummaryData = {
     body?: never;
-    path?: never;
-    query?: never;
-    url: '/immersion/contests/ongoing-registrations';
+    path: {
+        id: string;
+        user_id: string;
+    };
+    query?: {
+        /**
+         * Only logs in one of these languages. Repeat the parameter for several values.
+         */
+        language?: Array<string>;
+        /**
+         * Only logs of one of these activity IDs. Repeat the parameter for several values.
+         */
+        activity?: Array<number>;
+        /**
+         * Only logs with any of these tags. Repeat the parameter for several values; a comma is part of the tag, not a separator.
+         */
+        tag?: Array<string>;
+    };
+    url: '/immersion/contests/{id}/profile/{user_id}/summary';
 };
 
-export type ImmersionContestFindOngoingRegistrationsErrors = {
+export type ImmersionContestProfileFetchSummaryErrors = {
     /**
-     * unauthorized
+     * invalid identifier or filter
      */
-    401: unknown;
+    400: unknown;
+    /**
+     * participant statistics could not be fetched
+     */
+    500: unknown;
 };
 
-export type ImmersionContestFindOngoingRegistrationsResponses = {
+export type ImmersionContestProfileFetchSummaryResponses = {
     /**
      * successful operation
      */
-    200: ImmersionContestRegistrations;
+    200: ImmersionContestProfileSummary;
 };
 
-export type ImmersionContestFindOngoingRegistrationsResponse = ImmersionContestFindOngoingRegistrationsResponses[keyof ImmersionContestFindOngoingRegistrationsResponses];
-
-export type ImmersionContestGetConfigurationsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/immersion/contests/configuration-options';
-};
-
-export type ImmersionContestGetConfigurationsResponses = {
-    /**
-     * successful operation
-     */
-    200: ImmersionContestConfigurationOptions;
-};
-
-export type ImmersionContestGetConfigurationsResponse = ImmersionContestGetConfigurationsResponses[keyof ImmersionContestGetConfigurationsResponses];
+export type ImmersionContestProfileFetchSummaryResponse = ImmersionContestProfileFetchSummaryResponses[keyof ImmersionContestProfileFetchSummaryResponses];
 
 export type ImmersionContestListRegistrationsData = {
     body?: never;

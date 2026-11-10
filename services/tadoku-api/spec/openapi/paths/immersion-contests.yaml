@@ -365,13 +365,20 @@ paths:
           schema:
             type: string
             format: uuid
+        - $ref: "#/components/parameters/ImmersionLogLanguageFilter"
+        - $ref: "#/components/parameters/ImmersionLogActivityFilter"
+        - $ref: "#/components/parameters/ImmersionLogTagFilter"
       responses:
         "200":
-          description: successful operation
+          description: >-
+            successful operation. Filters combine with "and"; several values of one
+            filter combine with "or".
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ImmersionLogs"
+        "400":
+          description: invalid filter or page
         "404":
           description: not found
         "500":
@@ -431,74 +438,6 @@ paths:
       x-tadoku-exposure: public
       x-legacy-path: /contests/{id}/moderation/detach/{log_id}
       x-legacy-operation-id: contestModerationDetachLog
-  "/immersion/contests/{id}/profile/{user_id}/scores":
-    get:
-      summary: Fetches the scores of a user profile in a contest
-      operationId: ImmersionContestProfileFetchScores
-      tags:
-        - contests_profile
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: user_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ImmersionContestProfileScores"
-        "404":
-          description: not found
-        "500":
-          description: participant statistics could not be fetched
-      x-tadoku-source: Immersion
-      x-tadoku-exposure: public
-      x-legacy-path: /contests/{id}/profile/{user_id}/scores
-      x-legacy-operation-id: contestProfileFetchScores
-  "/immersion/contests/{id}/profile/{user_id}/activity":
-    get:
-      summary: Fetches the activity of a user profile in a contest
-      operationId: ImmersionContestProfileFetchActivity
-      tags:
-        - contests_profile
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: user_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ImmersionContestProfileActivity"
-        "404":
-          description: not found
-        "500":
-          description: participant statistics could not be fetched
-      x-tadoku-source: Immersion
-      x-tadoku-exposure: public
-      x-legacy-path: /contests/{id}/profile/{user_id}/activity
-      x-legacy-operation-id: contestProfileFetchActivity
   /immersion/contests/ongoing-registrations:
     get:
       summary: Fetches all the ongoing contest registrations of the logged in user,

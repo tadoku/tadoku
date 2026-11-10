@@ -131,15 +131,18 @@ jobs:
           tags: |
             ghcr.io/tadoku/tadoku/frontend-webv3:${{ github.sha }}
             ghcr.io/tadoku/tadoku/frontend-webv3:latest
-      # A dispatch or a re-run gates the image its commit already published and pushes nothing.
-      - name: Resolve the commit's published image
+      # A re-run gates the image its commit already published, and a dispatch gates the current candidate, latest,
+      # because main's head is often a commit that publishes no Webv3 image. Neither pushes anything.
+      - name: Resolve the published image
         id: published
         if: github.event_name == 'workflow_dispatch' || github.run_attempt != '1'
+        env:
+          TAG: ${{ github.event_name == 'workflow_dispatch' && 'latest' || github.sha }}
         run: |
-          digest="$(docker buildx imagetools inspect "ghcr.io/tadoku/tadoku/frontend-webv3:$GITHUB_SHA" \
+          digest="$(docker buildx imagetools inspect "ghcr.io/tadoku/tadoku/frontend-webv3:$TAG" \
             --format '{{json .Manifest.Digest}}' | jq -r .)" || digest=""
           if [[ ! $digest =~ ^sha256:[0-9a-f]{64}$ ]]; then
-            echo "::error::Commit $GITHUB_SHA published no Webv3 image."
+            echo "::error::No published Webv3 image for $TAG."
             exit 1
           fi
           echo "digest=$digest" >>"$GITHUB_OUTPUT"

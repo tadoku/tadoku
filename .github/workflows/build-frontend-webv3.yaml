@@ -167,7 +167,7 @@ jobs:
       CANDIDATE: ${{ needs.publish.outputs.digest }}
       DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
       GATE_FORCE_FAILURE: ${{ github.event_name == 'workflow_dispatch' && inputs.force_failure }}
-      NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/ca.crt
+      NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/lab-root-ca.crt
       DEV_CLI_VERSION: v0.12.0
     steps:
       # The runner set mounts these files only into its own pods. Without either one, the gate fails here.

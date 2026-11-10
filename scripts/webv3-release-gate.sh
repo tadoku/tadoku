@@ -67,8 +67,11 @@ base_state() {
 }
 
 # The gate needs a deployable to create the route and its tenant. Comparing
-# with HEAD selects none from the commit's own changes, and admin is one the
-# suite never opens, so every Webv3 request reaches the base.
+# with HEAD selects none from the commit's own changes. tadoku-api, which also
+# starts the worker, is the only deployable that is not a frontend: dev-cli
+# copies a frontend overlay's sources in with kubectl exec, which the gate's
+# ServiceAccount may not do. Webv3 then comes from the base, and the branch
+# tenant's API and worker run the candidate commit's code.
 deploy() {
   local candidate=$1 evidence=$2 deadline webv3 app headers route state
   require_digest "$candidate"
@@ -83,7 +86,7 @@ deploy() {
   done
   echo "The development base runs $candidate."
 
-  dev up --owner "$owner" --base HEAD --no-watch --service admin 2>&1 | tee "$evidence/dev-up.log"
+  dev up --owner "$owner" --base HEAD --no-watch --service tadoku-api 2>&1 | tee "$evidence/dev-up.log"
   webv3="$(dev url --owner "$owner" --host next.tadoku.dev.lab / | tail -n 1)"
   app="$(dev url --owner "$owner" / | tail -n 1)"
   [[ $webv3 =~ ^https://([a-z0-9-]+)\.next\.tadoku\.dev\.lab/$ ]] || fail "dev url printed '$webv3'."

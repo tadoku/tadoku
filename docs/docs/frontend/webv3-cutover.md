@@ -66,10 +66,9 @@ on Webv2 until its route is removed.
      reads the edge access logs of the `frontend-webv3` HTTPRoute, so
      `tadoku.app` must stay on it. The Oathkeeper HTTPRoute keeps serving
      `/api/internal`, a longer path prefix.
-   - **Remove the edge `X-Robots-Tag` header.** Today the `frontend-webv3`
-     HTTPRoute sets `X-Robots-Tag: noindex, nofollow` on its only rule.
-     HTTPRoute filters cannot match a hostname, so once `tadoku.app` is on the
-     same route every page would be noindex. Webv3 itself sends
+   - **No edge `X-Robots-Tag` header.** The `frontend-webv3` HTTPRoute must
+     not set `X-Robots-Tag`: HTTPRoute filters cannot match a hostname, so with
+     `tadoku.app` on the same route every page would be noindex. Webv3 itself sends
      `X-Robots-Tag: noindex` from every host that is not its web host, as
      [headers, indexing and sharing](webv3-indexing.md) describes, so
      `next.tadoku.app` stays out of search results without it. The route that

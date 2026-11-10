@@ -185,7 +185,7 @@ async function readerOwnContest(context: BrowserContext): Promise<Contest> {
     `/immersion/contests?${query}`,
   )
   const today = day()
-  return contests.find(contest => contest.contest_start <= today && today <= contest.contest_end && today <= contest.registration_end)
+  return contests.find(contest => contest.contest_start <= today && today < contest.contest_end && today < contest.registration_end)
     ?? createContest(context, 360)
 }
 

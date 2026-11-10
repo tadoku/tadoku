@@ -32,7 +32,6 @@ components:
         days:
           type: array
           description: Score per date and activity, ordered by date, then activity ID.
-          maxItems: 3660
           items:
             $ref: "#/components/schemas/ImmersionContestProfileSummaryDay"
         languages:

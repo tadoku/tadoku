@@ -288,7 +288,7 @@ export const zImmersionContestProfileSummary = z.object({
     log_count: z.int(),
     active_days: z.int(),
     best_day: zImmersionContestProfileSummaryBestDay.nullable(),
-    days: z.array(zImmersionContestProfileSummaryDay).max(3660),
+    days: z.array(zImmersionContestProfileSummaryDay),
     languages: z.array(zImmersionContestProfileSummaryLanguage).max(100),
     activities: z.array(zImmersionContestProfileSummaryActivity).max(100),
     tags: z.array(zImmersionContestProfileSummaryTag).max(200)

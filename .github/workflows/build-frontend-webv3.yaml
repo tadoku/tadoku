@@ -275,9 +275,10 @@ jobs:
   promote:
     name: webv3 / promote to prod
     needs: [publish, gate]
-    # Runs after every gate result so a dry run reports a blocked release too. Only a gate that passed on the published
-    # digest moves prod, only while that digest is still latest, and it moves it to that digest without rebuilding.
-    if: always() && needs.publish.result == 'success'
+    # Runs after every gate result so a dry run reports a blocked release too, but never in a cancelled run. Only a gate
+    # that passed on the published digest moves prod, only while that digest is still latest, and it moves it to that
+    # digest without rebuilding.
+    if: ${{ !cancelled() && needs.publish.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -319,16 +320,16 @@ jobs:
             exit 1
           fi
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
-        if: env.DRY_RUN != 'true'
+        if: ${{ !cancelled() && env.DRY_RUN != 'true' }}
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Tag the tested digest prod
-        if: env.DRY_RUN != 'true'
+        if: ${{ !cancelled() && env.DRY_RUN != 'true' }}
         run: docker buildx imagetools create --tag "$IMAGE:prod" "$IMAGE@$CANDIDATE"
       - name: Check that prod names the tested digest
-        if: env.DRY_RUN != 'true'
+        if: ${{ !cancelled() && env.DRY_RUN != 'true' }}
         run: |
           prod="$(docker buildx imagetools inspect "$IMAGE:prod" --format '{{json .Manifest.Digest}}' | jq -r .)"
           echo "- prod: \`$prod\`" >>"$GITHUB_STEP_SUMMARY"

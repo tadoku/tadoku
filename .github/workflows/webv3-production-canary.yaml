@@ -50,7 +50,7 @@ jobs:
           cache-dependency-path: frontend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile --filter webv3...
         working-directory: frontend
-      - run: pnpm --filter webv3 exec playwright install --with-deps chromium
+      - run: pnpm --filter webv3 exec playwright install chromium
         working-directory: frontend
       # One retry so a pod replaced mid-run does not page anyone; a broken release fails both attempts.
       - id: journey

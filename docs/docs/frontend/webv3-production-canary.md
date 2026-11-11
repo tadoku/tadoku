@@ -24,8 +24,11 @@ once, for example after a rollout, and only from `main`.
 It does nothing until the repository variable `WEBV3_CANARY_ENABLED` is `true`.
 
 The journey uses the GitHub-hosted `ubuntu-24.04` runner so its operating
-system does not change when `ubuntu-latest` advances. The report job uses
-`tadoku-ci` to reach the in-cluster telemetry and notification services.
+system does not change when `ubuntu-latest` advances. Playwright downloads
+Chromium and uses the runner's installed system libraries without running apt.
+The browser must still launch and complete the journey; missing runtime
+dependencies fail the run. The report job uses `tadoku-ci` to reach the
+in-cluster telemetry and notification services.
 
 ## Account and secrets
 

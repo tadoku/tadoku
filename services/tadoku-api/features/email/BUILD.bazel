@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "email",
@@ -24,5 +24,16 @@ go_library(
         "@com_github_jackc_pgx_v5//:pgx",
         "@com_github_jackc_pgx_v5//pgtype",
         "@com_github_jackc_pgx_v5//pgxpool",
+    ],
+)
+
+go_test(
+    name = "email_test",
+    srcs = ["email_service_test.go"],
+    embed = [":email"],
+    deps = [
+        "//services/tadoku-api/domain/mail",
+        "//services/tadoku-api/internal/errx",
+        "@com_github_google_uuid//:uuid",
     ],
 )

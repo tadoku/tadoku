@@ -37,6 +37,10 @@ func NewService(repository *Repository, sender Sender) *Service {
 }
 
 func (s *Service) Write(ctx context.Context, message mail.Message) (WriteResult, error) {
+	if _, ok := tenant.FromContext(ctx); !ok {
+		return WriteResult{}, errx.NewUnavailableError("email tenant missing", nil)
+	}
+
 	subject, body, err := render(message)
 	if err != nil {
 		return WriteResult{}, err
@@ -112,6 +116,10 @@ func (s *Service) List(ctx context.Context, filter Filter) (Page, error) {
 }
 
 func (s *Service) Find(ctx context.Context, id uuid.UUID) (Email, error) {
+	if _, ok := tenant.FromContext(ctx); !ok {
+		return Email{}, errx.NewUnavailableError("email tenant missing", nil)
+	}
+
 	return s.repository.find(ctx, id)
 }
 

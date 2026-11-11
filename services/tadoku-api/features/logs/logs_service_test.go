@@ -41,24 +41,41 @@ func TestRegistrationsForRescoringIncludesContestEndDay(t *testing.T) {
 
 	registrationID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
 	contestID := uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")
+	officialRegistrationID := uuid.MustParse("cccccccc-cccc-4ccc-8ccc-cccccccccccc")
+	officialContestID := uuid.MustParse("dddddddd-dddd-4ddd-8ddd-dddddddddddd")
 	contestEnd := time.Date(2026, 9, 12, 0, 0, 0, 0, time.UTC)
 	log := &Log{
-		Registrations: []RegistrationReference{{
+		Registrations: []RegistrationReference{
+			{
+				RegistrationID: registrationID,
+				ContestID:      contestID,
+				ContestEnd:     contestEnd,
+			},
+			{
+				RegistrationID: officialRegistrationID,
+				ContestID:      officialContestID,
+				ContestEnd:     contestEnd,
+				Official:       true,
+			},
+		},
+	}
+	want := []logscore.Target{
+		{
 			RegistrationID: registrationID,
 			ContestID:      contestID,
-			ContestEnd:     contestEnd,
-		}},
+		},
+		{
+			RegistrationID: officialRegistrationID,
+			ContestID:      officialContestID,
+			Official:       true,
+		},
 	}
-	want := []logscore.Target{{
-		RegistrationID: registrationID,
-		ContestID:      contestID,
-	}}
 
 	duringEndDay := NewService(nil, true).RegistrationsForRescoring(
 		log,
 		time.Date(2026, 9, 12, 15, 0, 0, 0, time.UTC),
 	)
-	if len(duringEndDay) != 1 || duringEndDay[0] != want[0] {
+	if len(duringEndDay) != len(want) || duringEndDay[0] != want[0] || duringEndDay[1] != want[1] {
 		t.Errorf("during end day: got %#v, want %#v", duringEndDay, want)
 	}
 

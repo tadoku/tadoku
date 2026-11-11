@@ -308,6 +308,7 @@ func (s *Service) RegistrationsForRescoring(log *Log, now time.Time) []logscore.
 			selected = append(selected, logscore.Target{
 				RegistrationID: registration.RegistrationID,
 				ContestID:      registration.ContestID,
+				Official:       registration.Official,
 			})
 		}
 	}

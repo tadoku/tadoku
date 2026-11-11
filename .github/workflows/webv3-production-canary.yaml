@@ -21,7 +21,7 @@ jobs:
     name: Sign in and walk Webv3 production
     # Scheduled workflows and dispatches run from main; a dispatch from another branch must not reach the credentials.
     if: vars.WEBV3_CANARY_ENABLED == 'true' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     outputs:
       journey: ${{ steps.journey.outcome }}

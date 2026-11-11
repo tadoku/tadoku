@@ -23,6 +23,10 @@ once, for example after a rollout, and only from `main`.
 
 It does nothing until the repository variable `WEBV3_CANARY_ENABLED` is `true`.
 
+The journey uses the GitHub-hosted `ubuntu-24.04` runner so its operating
+system does not change when `ubuntu-latest` advances. The report job uses
+`tadoku-ci` to reach the in-cluster telemetry and notification services.
+
 ## Account and secrets
 
 | Item | Where | Value |

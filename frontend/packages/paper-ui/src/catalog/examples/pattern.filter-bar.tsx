@@ -1,5 +1,7 @@
 import {
   AppliedFilters,
+  Button,
+  EmptyState,
   FilterMenu,
   SectionHeading,
   listRows,
@@ -111,6 +113,15 @@ export default function FilterBarExample() {
         onClear={clear}
         resultLabel={`${resultLabel} of ${logs.length}`}
       />
+      {rows.length === 0 ? (
+        <EmptyState
+          variant="plain"
+          headingLevel={3}
+          title="No logs match these filters"
+          description="Removing a value can leave a combination that nothing matches."
+          actions={<Button variant="outline" onClick={clear}>Clear filters</Button>}
+        />
+      ) : null}
       <ul className={list.root()}>
         {rows.map(log => (
           <li key={log.id} className={list.item({ className: 'grid-cols-content-end gap-x-4' })}>

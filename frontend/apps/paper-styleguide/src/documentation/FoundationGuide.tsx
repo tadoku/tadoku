@@ -61,7 +61,7 @@ export function GovernanceGuide({ document }: { document: CatalogDocument }) {
       ['Filters', 'FilterMenu in the actions of the heading of the section it filters. A menu on desktop, a full-screen sheet on phones.', 'The selection in URL search parameters, each value’s points under the other filters, and resetting pagination when a filter changes.'],
       ['Applied values', 'AppliedFilters variant="removable" with the result count, such as 83 logs of 127.', 'Derive chips and count from the same selection; return focus to Filters when the last chip or Clear all removes the group.'],
       ['Results', 'The screen’s list or Table.', 'Filtering: values within a filter are or, filters are and. Filtering never changes a rank.'],
-      ['No matches', 'EmptyState with variant="plain" and a Clear filters action.', 'Only an address with stale filters reaches it, because the menu offers values that still have results.'],
+      ['No matches', 'EmptyState with variant="plain" and a Clear filters action.', 'Reached when removing a value leaves a combination nothing matches, or from an address with stale filters.'],
     ]} />
     <h3>States the screen can reach</h3>
     <p>Without filters, the Filters button beside the heading is the only trace. With filters, the button reads Filters (n) on the selected look and the chips sit under the heading. Choices apply as they are ticked. Clear all resets every filter and returns focus to Filters.</p>

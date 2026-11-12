@@ -123,6 +123,24 @@ describe("page composition examples teach observable outcomes", () => {
     expect(screen.queryByRole("group", { name: "Applied filters" })).not.toBeInTheDocument();
   });
 
+  it("explains a chip removal that leaves no matches and clears back to the Filters button", async () => {
+    const user = userEvent.setup();
+    example("pattern.filter-bar");
+
+    const trigger = document.querySelector<HTMLElement>(".paper-filter-menu__trigger--menu")!;
+    await user.click(trigger);
+    await user.click(await screen.findByRole("menuitemcheckbox", { name: /novel/ }));
+    await user.click(screen.getByRole("menuitemcheckbox", { name: /podcast/ }));
+    await user.click(screen.getByRole("menuitemcheckbox", { name: /Reading/ }));
+    await user.keyboard("{Escape}");
+    await user.click(screen.getByRole("button", { name: "Remove novel" }));
+
+    expect(screen.getByRole("heading", { level: 3, name: "No logs match these filters" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+    expect(trigger).toHaveFocus();
+    expect(screen.getAllByRole("listitem")).toHaveLength(7);
+  });
+
   it("boxes the contest summary figures as label and value pairs", () => {
     example("stat-grid.contest-summary");
 

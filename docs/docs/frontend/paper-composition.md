@@ -72,6 +72,7 @@ The Filter bar catalogue pattern, in `frontend/packages/paper-ui/src/catalog/exa
 - The entry point is `FilterMenu` in the actions of the heading of the section it filters. When nothing is applied, its Filters button is the only trace. Applied values sit under the heading as removable chips with the result count.
 - Values within a filter combine with "or", and filters combine with "and".
 - Menus list only values that still have results under the other filters. A chosen value stays listed even when it has none.
+- Removing a value can still leave nothing to show, as can an address with stale filters. Show a plain `EmptyState` that explains the filters, with a Clear filters action.
 - There is one Clear all action, which resets every filter and returns focus to the Filters trigger. After clearing from the chips, focus it through the `FilterMenu` ref.
 - Filters are URL search parameters, so a filtered view can be shared and reloaded. Pagination resets when a filter changes.
 - Filters narrow one view, while tabs switch between views.

@@ -49,12 +49,22 @@ const drawer = tv({
         ],
       },
     },
+    size: {
+      default: {},
+      full: {
+        popup: "max-tablet:w-full max-tablet:border-0 max-tablet:shadow-none",
+      },
+    },
   },
 });
 
 export const DRAWER_PLACEMENTS = ["start", "end"] as const;
 
 export type DrawerPlacement = (typeof DRAWER_PLACEMENTS)[number];
+
+export const DRAWER_SIZES = ["default", "full"] as const;
+
+export type DrawerSize = (typeof DRAWER_SIZES)[number];
 
 export interface DrawerProps {
   /** The application-owned control that opens the drawer. */
@@ -68,6 +78,8 @@ export interface DrawerProps {
   /** Optional application-owned region below the scrolling body. */
   readonly footer?: ReactNode;
   readonly placement?: DrawerPlacement;
+  /** `full` covers the whole viewport below the tablet breakpoint, for tasks with long lists such as filters. */
+  readonly size?: DrawerSize;
   readonly closeLabel?: string;
   readonly defaultOpen?: boolean;
   readonly open?: boolean;
@@ -87,13 +99,14 @@ export function Drawer({
   children,
   footer,
   placement = "end",
+  size = "default",
   closeLabel = "Close",
   defaultOpen,
   open,
   onOpenChange,
 }: DrawerProps) {
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
-  const slots = drawer({ placement });
+  const slots = drawer({ placement, size });
 
   return (
     <Dialog.Root
@@ -119,6 +132,7 @@ export function Drawer({
           <Dialog.Popup
             className={cn(surface({ tone: "overlay", elevation: "showcase" }), slots.popup())}
             data-placement={placement}
+            data-size={size}
           >
             <header className={slots.header()}>
               <div className={slots.heading()}>

@@ -48,7 +48,7 @@ export function GovernanceGuide({ document }: { document: CatalogDocument }) {
     <h2 className={typography({ role: 'section' })}>Change history</h2>
     <p>The package version remains <code>0.1.0</code>. A documentation review date is not a release or deployment date. These entries describe repository work; verify the deployed commit before relying on a change in a live app.</p>
     <GuideTable label="Changes and consumer impact" columns={['When', 'Change', 'Consumer impact']} rows={[
-      ['Current review · unreleased', 'Foundation usage examples, spacing scale and layout utilities; corrected accent rail perimeter alignment. Experimental page-composition controls (PageHeader, SectionHeading, StatusTag, EmptyState, StatGrid, DescriptionList, AppliedFilters) and the Filter bar pattern.', 'Existing composition remains valid. New utilities and controls require the rebuilt package; the controls are Experimental and only paper-playground uses them. Application migrations remain separate work.'],
+      ['Current review · unreleased', 'Foundation usage examples, spacing scale and layout utilities; corrected accent rail perimeter alignment. Experimental page-composition controls (PageHeader, SectionHeading, StatusTag, EmptyState, StatGrid with its sheet variant, DescriptionList, AppliedFilters with removable chips, FilterMenu, StackedBarChart), Drawer size="full" and the Filter bar pattern.', 'Existing composition remains valid. New utilities and controls require the rebuilt package; the controls are Experimental and only paper-playground uses them. Application migrations remain separate work.'],
       ['2026-08-09', 'Refined action focus, form borders and Flash rails; restored wordmark and heatmap; styleguide controls use Paper.', 'Visual changes to existing components. Catalogue coverage did not establish complete usage guidance or readiness to migrate every application.'],
       ['2026-08-08 · 0.1.0 baseline', 'Canonical catalogue, framework-neutral exports, semantic light/dark themes and density controls.', 'Private workspace package; React 18.2 and TanStack Form 1.33.2 peers. Built declarations target TypeScript 5.4+ consumers.'],
     ]} />
@@ -58,15 +58,14 @@ export function GovernanceGuide({ document }: { document: CatalogDocument }) {
   if (document.id === 'pattern.filter-bar') return <section id="usage" className={documentSection}>
     <h2 className={typography({ role: 'section' })}>Compose the filter bar</h2>
     <GuideTable label="Parts in reading order" columns={['Part', 'Paper controls', 'Screen responsibility']} rows={[
-      ['Filters toggle', 'A ghost Button in SectionHeading actions, with aria-expanded and aria-controls.', 'Open state, any default-open rule and the applied count in its label.'],
-      ['Filter panel', 'Select, Input and other form controls inside a form.AppForm.', 'Field layout and filter state. Keep the panel mounted while collapsed.'],
-      ['Summary and count', 'AppliedFilters beside a role="status" result count.', 'Derive both from the state that filters the results; move focus after clearing.'],
-      ['Results', 'Table or the screen’s own list.', 'Sorting, pagination and ranks. Filtering never changes a rank.'],
-      ['No matches', 'EmptyState with variant="plain" and a Clear filters action.', 'Explain that the filters exclude everything and reset them.'],
+      ['Filters', 'FilterMenu in the actions of the heading of the section it filters. A menu on desktop, a full-screen sheet on phones.', 'The selection in URL search parameters, each value’s points under the other filters, and resetting pagination when a filter changes.'],
+      ['Applied values', 'AppliedFilters variant="removable" with the result count, such as 83 logs of 127.', 'Derive chips and count from the same selection; return focus to Filters when the last chip or Clear all removes the group.'],
+      ['Results', 'The screen’s list or Table.', 'Filtering: values within a filter are or, filters are and. Filtering never changes a rank.'],
+      ['No matches', 'EmptyState with variant="plain" and a Clear filters action.', 'Reached when removing a value leaves a combination nothing matches, or from an address with stale filters.'],
     ]} />
     <h3>States the screen can reach</h3>
-    <p>Collapsed without filters shows only the toggle. Collapsed with filters keeps the summary visible. Expanded shows the fields, and changes apply immediately. No matches replaces the results with a plain EmptyState. Clearing from the summary or the empty state resets every field and returns focus to the toggle.</p>
-    <p>When a screen has only one or two filters, keep the fields visible beside the list with a Clear filters button instead, as the contest list does; the toggle and summary add nothing there.</p>
+    <p>Without filters, the Filters button beside the heading is the only trace. With filters, the button reads Filters (n) on the selected look and the chips sit under the heading. Choices apply as they are ticked. Clear all resets every filter and returns focus to Filters.</p>
+    <p>Filters narrow one view; tabs switch between views. When a screen has only one or two filters with one value each, keep the fields visible beside the list with a Clear filters button instead.</p>
   </section>
   if (document.id === 'pattern.logging' || document.id === 'experiment.logging-v2') return <section id="usage" className={documentSection}>
     <h2 className={typography({ role: 'section' })}>Compose the reading flow</h2>

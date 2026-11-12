@@ -8,9 +8,9 @@ const stats = [
   { label: "Languages", value: "2", detail: "Japanese leads" },
 ];
 
-describe("StatGrid", () => {
+describe.each(["plain", "sheet"] as const)("StatGrid %s", (variant) => {
   it("pairs every label with its value in one description list", () => {
-    render(<StatGrid stats={stats} />);
+    render(<StatGrid stats={stats} variant={variant} />);
 
     const terms = screen.getAllByRole("term");
     const definitions = screen.getAllByRole("definition");
@@ -28,7 +28,7 @@ describe("StatGrid", () => {
   });
 
   it("keeps supporting detail with the value it explains", () => {
-    render(<StatGrid stats={stats} />);
+    render(<StatGrid stats={stats} variant={variant} />);
 
     const entries = screen.getAllByRole("definition")[1];
     expect(entries).toHaveTextContent("18");

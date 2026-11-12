@@ -4,6 +4,7 @@ import { getGlobalStartContext } from '@tanstack/react-start'
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
 import { routeAnnouncerId } from './components/AppShell'
 import { ErrorView, PendingView } from './components/StatusViews'
+import { parseSearch, stringifySearch } from './lib/search'
 import { routeTree } from './routeTree.gen'
 
 export function getRouter() {
@@ -23,6 +24,8 @@ export function getRouter() {
     defaultPendingComponent: PendingView,
     defaultPendingMs: 400,
     scrollRestoration: true,
+    parseSearch,
+    stringifySearch,
     ssr: { nonce: cspNonce() },
   })
 

@@ -202,7 +202,8 @@ function ScoreLists({ summary: section, languages, idPrefix }: { summary: Read<S
         title="Score by tag"
         section={section}
         items={data => data.tags.map(item => ({ label: item.tag, score: item.score, logs: item.log_count }))}
-        total={data => data.score}
+        // Tags ignore their own filter, so a tag can outscore the filtered total; bars never pass the largest.
+        total={data => Math.max(data.score, ...data.tags.map(item => item.score))}
         empty="No tagged logs."
       />
     </div>

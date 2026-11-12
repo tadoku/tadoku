@@ -36,7 +36,7 @@ export function Breakdown<T>({ id, title, section, items, empty }: {
 
 /**
  * Score by tag: the top six tags with their points and logs, then a line naming the rest. A log counts toward each of
- * its tags, so tags overlap: rows show no share, and bars are measured against `total`, the score of every log.
+ * its tags, so tags overlap: rows show no share, and bars are measured against `total`, which must be at least the largest tag's score.
  */
 export function TagBreakdown<T>({ id, title, section, items, total, empty }: {
   id: string

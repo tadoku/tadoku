@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
@@ -347,7 +348,7 @@ func normalizeTags(tags []string) ([]string, error) {
 		if tag == "" {
 			continue
 		}
-		if len(tag) > 50 {
+		if utf8.RuneCountInString(tag) > 50 {
 			return nil, errx.NewInvalidInputError("tag exceeds maximum length of 50 characters")
 		}
 		if _, exists := seen[tag]; exists {

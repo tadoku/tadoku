@@ -3,6 +3,7 @@ package scoring
 import (
 	"math"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -368,6 +369,32 @@ func TestEvaluateRejectsInvalidInput(t *testing.T) {
 }
 
 func floatPointerForTest(value float32) *float32 { return &value }
+
+func TestNormalizeTagsCountsCharactersNotBytes(t *testing.T) {
+	t.Parallel()
+
+	exactLimit := strings.Repeat("あ", 50)
+	overLimit := strings.Repeat("あ", 51)
+
+	got, err := normalizeTags([]string{exactLimit})
+	if err != nil {
+		t.Fatalf("normalizeTags(%q): %v", exactLimit, err)
+	}
+	if len(got) != 1 || got[0] != exactLimit {
+		t.Errorf("normalizeTags(%q) = %#v, want [%q]", exactLimit, got, exactLimit)
+	}
+
+	_, err = normalizeTags([]string{overLimit})
+	if errx.KindOf(err) != errx.InvalidInput || err.Error() != "tag exceeds maximum length of 50 characters" {
+		t.Errorf(
+			"normalizeTags(%q) error = %v (%v), want invalid input %q",
+			overLimit,
+			err,
+			errx.KindOf(err),
+			"tag exceeds maximum length of 50 characters",
+		)
+	}
+}
 
 func TestActivateRuleSetRejectsImpossiblePersistedStates(t *testing.T) {
 	service := NewService(nil, false, nil)

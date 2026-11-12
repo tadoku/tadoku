@@ -76,6 +76,15 @@ export const saveButton = (page: Page) => page.getByRole('button', { name: 'Log 
 /** The links to `href`, by their destination, because a link's visible name often is the data the test reads. */
 export const linkTo = (page: Page, href: string) => page.getByRole('link').and(page.locator(`[href="${href}"]`))
 
+/** The detail page's menu of owner and administrator actions. */
+export const logActions = (page: Page) => page.getByRole('button', { name: 'Log actions', exact: true })
+
+/** Chooses Edit log or Delete log from the detail page's actions menu. */
+export async function chooseLogAction(page: Page, action: 'Edit log' | 'Delete log') {
+  await logActions(page).click()
+  await page.getByRole('menuitem', { name: action, exact: true }).click()
+}
+
 /** Each listed contest's row, in the list every contest collection labels. */
 export const contestRows = (page: Page) => page.getByRole('list', { name: /contests/i }).getByRole('listitem')
 

@@ -3,6 +3,7 @@ import {
   admin,
   amountInput,
   api,
+  chooseLogAction,
   contestStepUrl,
   expect,
   joinedContest,
@@ -90,7 +91,7 @@ test('a learner logs in, logs, submits, sees it in profile and standings, edits 
   await shot('3-standings')
 
   await page.goto(`/logs/${logId}`)
-  await page.getByRole('link', { name: 'Edit log', exact: true }).click()
+  await chooseLogAction(page, 'Edit log')
   await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeEnabled({ timeout: 15_000 })
   await amountInput(page).fill('12')
   await page.getByRole('button', { name: 'Save', exact: true }).click()
@@ -101,7 +102,7 @@ test('a learner logs in, logs, submits, sees it in profile and standings, edits 
   await shot('4-edited-standings')
 
   await page.goto(`/logs/${logId}`)
-  await page.getByRole('button', { name: 'Delete log', exact: true }).click()
+  await chooseLogAction(page, 'Delete log')
   await page.getByRole('dialog', { name: 'Delete this log?' }).getByRole('button', { name: 'Delete log', exact: true }).click()
   await page.waitForURL(new RegExp(`/profile/${learner.id}/statistics`))
   expect((await context.request.get(`${api}/immersion/logs/${logId}`)).status()).toBe(404)

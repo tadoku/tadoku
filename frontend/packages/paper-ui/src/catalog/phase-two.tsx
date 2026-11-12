@@ -246,7 +246,7 @@ export const phaseTwoDocuments = [
   {
     "name": "triggerLabel",
     "type": "string",
-    "description": "Name for the standard trigger; required unless supplying trigger."
+    "description": "Name for the standard trigger. Omit it and trigger only for a controlled dialog another control opens, such as an ActionMenu item."
   },
   {
     "name": "trigger",
@@ -262,7 +262,7 @@ export const phaseTwoDocuments = [
   {
     "name": "open / onOpenChange",
     "type": "boolean / (open: boolean) => void",
-    "description": "Provide both for controlled state; close after successful async work."
+    "description": "Provide both for controlled state; close after successful async work. Required when the dialog has no trigger."
   },
   {
     "name": "defaultOpen",
@@ -315,7 +315,7 @@ export const phaseTwoDocuments = [
       contentGuidance: section("Content guidance", "Use a question for confirmation titles and put consequences in the description."),
       accessibility: section("Accessibility", "Title and description label the dialog; two close paths ensure touch-screen-reader escape."),
       implementation: section("Implementation", "Import Modal from paper-ui; Base UI remains a private interaction dependency."),
-      apiReference: section("API reference", "ModalProps supports controlled or uncontrolled open state, a standard or application-owned trigger, initialFocus, footer replacement or omission, title, description, content, close, and optional primary action contracts."),
+      apiReference: section("API reference", "ModalProps supports controlled or uncontrolled open state, a standard, application-owned or absent trigger, initialFocus, footer replacement or omission, title, description, content, close, and optional primary action contracts."),
       relatedPatterns: section("Related patterns", "Pair with destructive Button intent only when the action is genuinely destructive."),
       migration: section("Migration", "Replace legacy Dialog imports with Modal and remove application-owned portal/focus logic."),
       lifecycle: section("Lifecycle", "Stable in Paper 0.1.0 after keyboard, containment, dismissal, and return tests."),

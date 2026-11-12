@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link, useHydrated, useNavigate } from '@tanstack/react-router'
-import { ActionMenu, Button, EmptyState, PageHeader, StatusTag, Tabbar, buttonClassName, type ActionMenuItem } from 'paper-ui'
-import { EllipsisHorizontalIcon, iconClassName } from 'paper-ui/icons'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { Button, EmptyState, PageHeader, StatusTag, Tabbar, buttonClassName, type ActionMenuItem } from 'paper-ui'
 import { contestsHref } from '../lib/contests'
 import { formatDate, formatPeriod } from '../lib/format'
 import { contestBoardQuery, contestPhase, readDay, type ContestBoard } from '../lib/leaderboard'
@@ -10,6 +9,7 @@ import { useParticipation } from '../lib/registration'
 import { viewerKey, viewerQueryOptions } from '../lib/session'
 import { ContestBoardBody, RoundStatus } from './ContestLeaderboard'
 import { ContestUpdates } from './ContestUpdates'
+import { OptionsMenu } from './OptionsMenu'
 import { PendingView } from './StatusViews'
 import { AppLink, renderLink } from './router-link'
 import { standingsHeader } from './standings-styles'
@@ -110,28 +110,11 @@ function ContestBoardPage({ board, today, view, page }: { board: ContestBoard; t
 
 /** On phones the menu moves up to the back link's row so the title keeps the full width. */
 function ContestOptions({ options }: { options: { id: string; label: string; to: string }[] }) {
-  const hydrated = useHydrated()
   const navigate = useNavigate()
   const items: ActionMenuItem[] = options.map(({ id, label, to }) => ({ id, label, onSelect: () => void navigate({ to }) }))
   return (
     <span className="max-md:absolute max-md:-top-1.5 max-md:right-0">
-      {hydrated
-        ? <ActionMenu label="Contest options" items={items} iconOnly />
-        : (
-          // The menu's trigger as server HTML renders it, disabled until it can open.
-          <button
-            type="button"
-            className={buttonClassName({
-              variant: 'outline',
-              className: 'w-target min-h-target min-w-target p-0 disabled:cursor-progress disabled:opacity-full',
-            })}
-            aria-label="Contest options"
-            title="Contest options"
-            disabled
-          >
-            <EllipsisHorizontalIcon className={iconClassName()} aria-hidden="true" />
-          </button>
-        )}
+      <OptionsMenu label="Contest options" items={items} />
     </span>
   )
 }

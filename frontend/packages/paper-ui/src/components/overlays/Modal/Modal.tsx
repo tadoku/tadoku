@@ -46,18 +46,7 @@ type ModalInitialFocus =
   | RefObject<HTMLElement | null>
   | ((openType: ModalInteractionType) => boolean | HTMLElement | null | void);
 
-export interface ModalProps {
-  /**
-   * Label for the standard Paper button trigger. Required when `trigger` is not
-   * supplied.
-   */
-  readonly triggerLabel?: string;
-  /**
-   * Application-owned trigger element. Paper adds the dialog behavior and ARIA
-   * state without replacing the element's appearance or ref.
-   */
-  readonly trigger?: ReactElement;
-  readonly triggerVariant?: ButtonVariant;
+interface ModalContentProps {
   readonly title: string;
   readonly description?: string;
   readonly children: ReactNode;
@@ -79,6 +68,36 @@ export interface ModalProps {
   /** Determines which application-owned element receives focus when opened. */
   readonly initialFocus?: ModalInitialFocus;
 }
+
+type ModalTrigger =
+  | {
+      /** Label for the standard Paper button trigger. */
+      readonly triggerLabel: string;
+      readonly triggerVariant?: ButtonVariant;
+      readonly trigger?: never;
+    }
+  | {
+      /**
+       * Application-owned trigger element. Paper adds the dialog behavior and ARIA
+       * state without replacing the element's appearance or ref.
+       */
+      readonly trigger: ReactElement;
+      readonly triggerLabel?: never;
+      readonly triggerVariant?: never;
+    }
+  | {
+      /**
+       * No trigger: another control, such as an `ActionMenu` item, opens the
+       * dialog through the controlled `open` state.
+       */
+      readonly trigger?: never;
+      readonly triggerLabel?: never;
+      readonly triggerVariant?: never;
+      readonly open: boolean;
+      readonly onOpenChange: (open: boolean) => void;
+    };
+
+export type ModalProps = ModalContentProps & ModalTrigger;
 
 export function Modal({
   triggerLabel,
@@ -111,15 +130,16 @@ export function Modal({
     >
       {trigger ? (
         <Dialog.Trigger ref={captureTrigger} render={trigger} />
-      ) : (
+      ) : triggerLabel ? (
         <Dialog.Trigger
           ref={captureTrigger}
           className={buttonClassName({ variant: triggerVariant })}
         >
           {triggerLabel}
         </Dialog.Trigger>
-      )}
-      <Dialog.Portal container={portalContainer}>
+      ) : null}
+      {/* A trigger names the document to portal into, such as a catalogue iframe; without one, the current document. */}
+      <Dialog.Portal container={trigger || triggerLabel ? portalContainer : undefined}>
         <Dialog.Backdrop className={slots.backdrop()} />
         <Dialog.Viewport className={slots.viewport()}>
           <Dialog.Popup

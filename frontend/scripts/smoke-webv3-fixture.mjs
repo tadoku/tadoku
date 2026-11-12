@@ -108,8 +108,12 @@ function answer(request, response) {
     registration: { id: '22222222-2222-4222-8222-222222222222', contest_id: contest.id, user_id: learner.id,
       user_display_name: learner.display_name, languages: [{ code: 'jpn', name: 'Japanese' }], contest },
   }
-  else if (path === `/immersion/contests/${contest.id}/profile/${learner.id}/activity`) data = {
-    rows: [{ date: '2024-03-03', language_code: 'jpn', score: 13319.6455 }],
+  else if (path === `/immersion/contests/${contest.id}/profile/${learner.id}/summary`) data = {
+    score: 13319.6455, log_count: learnerLogs.length, active_days: 1, best_day: { date: '2024-03-03', score: 13319.6455 },
+    days: [{ date: '2024-03-03', activity_id: 1, score: 13319.6455 }],
+    languages: [{ code: 'jpn', name: 'Japanese', score: 13319.6455 }],
+    activities: [{ id: 1, name: 'Reading', score: 13319.6455 }],
+    tags: [],
   }
   else {
     const match = path.match(new RegExp(`^/immersion/users/${learner.id}/([a-z-]+)/(\\d{4})$`))

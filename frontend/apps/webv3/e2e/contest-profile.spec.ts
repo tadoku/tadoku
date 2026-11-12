@@ -184,6 +184,25 @@ test('a filter change on page 2 returns to page 1, and page links keep the filte
     .toEqual(second.logs.map(log => `/logs/${log.id}`))
 })
 
+test('page links keep every value of a filter with several', async ({ page, profile }) => {
+  await page.goto(`${path(profile)}?language=jpn&language=kor`)
+  await hydrated(page)
+
+  await page.getByRole('navigation', { name: 'Update pages', exact: true }).getByRole('link', { name: 'Next page' }).click()
+  await expect(page).toHaveURL(new RegExp(`${profilePath(profile.contest.id, profile.userId, 2)}\\?language=jpn&language=kor$`))
+})
+
+test('with a low-scoring tag chosen, every tag bar stays inside its list', async ({ page, profile }) => {
+  await page.goto(`${path(profile)}?tag=podcast`)
+
+  const tags = page.getByRole('region', { name: 'Score by tag' }).first()
+  const list = (await tags.boundingBox())!
+  for (const bar of await tags.locator('li span[style*="width"]').all()) {
+    const box = (await bar.boundingBox())!
+    expect(box.x + box.width).toBeLessThanOrEqual(list.x + list.width + 1)
+  }
+})
+
 test('invalid filter values in the address are dropped before the API reads them', async ({ page, request, profile }) => {
   const long = 'x'.repeat(51)
   const query = `activity=flying&activity=reading&tag=%20&tag=${long}&tag=%20manga%20&language=far-too-long-code`

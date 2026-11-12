@@ -5,6 +5,7 @@ import type { ImmersionContestView, ImmersionLog } from 'api-client'
 import { Button, EmptyState, Flash, Modal, usePaperForm } from 'paper-ui'
 import { useState } from 'react'
 import { contestLogsQuery, detachSchema, useDetachLog } from '../lib/contest-activity'
+import type { LogFilters } from '../lib/contest-filters'
 import type { LogFailure } from '../lib/logs'
 import { useLinks } from '../lib/links'
 import { useLoginUrl, viewerQueryOptions } from '../lib/session'
@@ -27,15 +28,17 @@ export function ContestUpdates({ contest, page }: { contest: Contest; page: numb
  * A page of a contest's logs, optionally one participant's. As in Webv2, the contest's owner and administrators can
  * remove a log from the contest; the API refuses anyone else.
  */
-export function ContestLogs({ contest, userId, page, pageHref, showParticipant = false }: {
+export function ContestLogs({ contest, userId, page, filters, pageHref, showParticipant = false }: {
   contest: Contest
   userId?: string
   page: number
+  /** Only the logs these filters match. */
+  filters?: LogFilters
   pageHref: (page: number) => string
   showParticipant?: boolean
 }) {
   const { data: viewer } = useQuery(viewerQueryOptions())
-  const logs = useQuery(contestLogsQuery({ contestId: contest.id, userId, page }))
+  const logs = useQuery(contestLogsQuery({ contestId: contest.id, userId, page, filters }))
   const [removed, setRemoved] = useState(false)
   const moderatorId = viewer?.status === 'signed-in' && (viewer.role === 'admin' || viewer.userId === contest.owner_user_id)
     ? viewer.userId

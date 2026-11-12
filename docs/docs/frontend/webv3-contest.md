@@ -72,14 +72,45 @@ learner beside their [avatar](webv3.md#avatars) and opening its
 malformed page segment reads as the first page; a page past the end links back
 to it.
 
-`/contests/$id/profile/$userId` shows one participant in one contest: their
-overall score and the score for each registered language, each active UTC day's
-score per language with the running total, and their contest logs, paged the
-same way. Webv2 draws the daily scores as a chart; Paper has no bar chart, so
-Webv3 lists them in a table. The API answers 404 for an unknown contest or a
-learner who has not joined it, and the page is not found. The daily scores fail
-on their own while the scores and logs still show. View profile opens the
-learner's Webv3 profile.
+`/contests/$id/profile/$userId` shows one participant in one contest, paged the
+same way. The header gives their place and overall score and links View profile
+to the learner's Webv3 profile. The Activity section has four figures, score,
+active days, logs and best day, and a chart of points per UTC day stacked by
+activity in the activity colours, with the running total, from the contest's
+first day to today or its last day, whichever is earlier. Below it the Logs list
+sits beside Score by language, which appears only with more than one registered
+language, Score by activity and Score by tag. Tags overlap, so their rows show
+points and logs but no share; the top six are listed and the rest follow on one
+line. Below the tablet breakpoint the three lists fold into one disclosure
+between the chart and Logs. The API answers 404 for an unknown contest or a
+learner who has not joined it, and the page is not found. A failed summary read
+leaves the scores and logs on the page.
+
+### Filters
+
+The Filters menu beside the Activity heading filters by language (only with
+more than one registered language), activity and tag, following the
+[Paper filter pattern](paper-composition.md#filters). Every figure on the page
+follows the filters: the summary, the chart, Logs and the three lists, each list
+counted under every filter but its own. Values in one filter match any of them,
+and filters combine. Filtered, the score figure reads as a share of the
+participant's contest score instead of their place, and the applied values
+show as removable chips with Clear all and the filtered log count. When nothing
+matches, Clear filters replaces the summary.
+
+Filters are repeated search parameters, `?language=jpn&activity=listening&tag=manga`,
+holding language codes, lower-case activity names and tags.
+`frontend/apps/webv3/src/lib/contest-filters.ts` parses them at the route: it
+drops malformed language codes, activity names `frontend/apps/webv3/src/lib/activity.ts`
+doesn't know, empty or overlong tags, repeats and values past the API's limits,
+and the server redirects to the cleaned address. A language code the
+participant didn't register matches nothing. `frontend/apps/webv3/src/lib/search.ts`
+writes the router's list parameters as repeated keys, so the page's links and a
+submitted form give the same address. Changing a filter returns to the first
+page, page links keep the filters, and while the new figures load the page keeps
+showing the current ones. Without JavaScript the Filters button is a disclosure
+holding a GET form with one checkbox group per filter and Apply; hydration
+replaces it with the menu.
 
 The contest's organizer and administrators see Remove from contest on each log
 in both lists. It asks for a reason of up to 1,000 characters before it sends
@@ -89,14 +120,18 @@ signed in since the page opened. The log stays in the learner's personal record;
 the contest's logs, participant profiles and places, the standings and the
 log's submissions are read again.
 
-- `frontend/apps/webv3/src/lib/contest-activity.ts` owns the contest log and
-  participant queries and `useDetachLog()`;
+- `frontend/apps/webv3/src/lib/contest-activity.ts` owns the contest log,
+  participant and summary queries and `useDetachLog()`;
   `frontend/apps/webv3/src/lib/contest-activity.server.ts` reads them anonymously
   and removes a log with the visitor's session.
 - `frontend/apps/webv3/src/components/ContestUpdates.tsx` renders a contest's
   logs and the moderation dialog, `frontend/apps/webv3/src/components/ContestProfile.tsx`
-  the participant profile, and `frontend/apps/webv3/src/components/LogEntries.tsx`
-  the log list it shares with [profile activity](webv3-profile.md#activity).
+  the participant profile with its filters from
+  `frontend/apps/webv3/src/components/ContestProfileFilters.tsx`, and
+  `frontend/apps/webv3/src/components/LogEntries.tsx` the log list it shares with
+  [profile activity](webv3-profile.md#activity).
+  `frontend/apps/webv3/src/components/Breakdown.tsx` draws the score lists both
+  profiles share.
 
 ## Checks
 
@@ -122,3 +157,11 @@ checks that Dev Reader sees no moderation action, and removes the log as Dev
 Admin with a reason; a contest Dev Reader organizes checks the organizer's
 removal. The container smoke's synthetic API serves 51 contest logs and the
 standings learner's contest profile.
+
+`frontend/apps/webv3/e2e/contest-profile.spec.ts` seeds a Dev Reader profile with
+two languages, both activities and overlapping tags in a contest Dev Admin
+creates, and checks the filters against the API's filtered summary and log list:
+choosing from the menu, tags matching either and an activity narrowing them,
+removing chips and Clear all returning focus to Filters, a filtered address, a
+filter change from page 2, invalid values, the form without JavaScript and the
+full-screen sheet at 390px.

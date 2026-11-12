@@ -13,8 +13,9 @@ three contest lists, contest creation and a contest's `/leaderboard`,
 `/registration`, `/scoring`, `/updates` and participant `/profile/<user-id>`
 pages on the `next.` host; `frontend/apps/webv3/e2e/leaderboard.spec.ts`,
 `frontend/apps/webv3/e2e/contests.spec.ts`, `frontend/apps/webv3/e2e/contest.spec.ts`,
-`frontend/apps/webv3/e2e/contest-admin.spec.ts` and
-`frontend/apps/webv3/e2e/contest-activity.spec.ts` compare them with the API,
+`frontend/apps/webv3/e2e/contest-admin.spec.ts`,
+`frontend/apps/webv3/e2e/contest-activity.spec.ts` and
+`frontend/apps/webv3/e2e/contest-profile.spec.ts` compare them with the API,
 register a learner, create contests and rule sets and remove a log from a contest
 in the selected tenant.
 

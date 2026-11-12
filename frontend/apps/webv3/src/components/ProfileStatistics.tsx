@@ -1,9 +1,10 @@
 import { buttonClassName, EmptyState, entryLink, listRows, metaLine, Pagination, SectionHeading, StatGrid, StatusTag, Tabbar } from 'paper-ui'
 import { activityTone } from '../lib/activity'
-import { formatPeriod, pointsUnit, scoreFormat } from '../lib/format'
+import { formatPeriod, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { activeDays, contestPageSize, type ContestHistory, type ProfileStatistics as Statistics, type Section } from '../lib/profile'
 import { ActivityCalendar } from './ActivityCalendar'
+import { Breakdown } from './Breakdown'
 import { ProfileHeader } from './ProfileHeader'
 import { AppLink, renderLink } from './router-link'
 import { sheetTabs } from './standings-styles'
@@ -118,41 +119,6 @@ function YearTabs({ statistics, year }: { statistics: Found; year: number }) {
         current: target === year,
       }))}
     />
-  )
-}
-
-function Breakdown<T>({ id, title, section, items, empty }: {
-  id: string
-  title: string
-  section: Section<T>
-  /** `fill` colours the row's bar, for example by activity; it defaults to a neutral. */
-  items: (data: T) => { label: string; score: number; fill?: string }[]
-  empty: string
-}) {
-  const rows = section.ok ? items(section.data).sort((left, right) => right.score - left.score) : []
-  const total = rows.reduce((sum, row) => sum + row.score, 0)
-
-  return (
-    <section aria-labelledby={id}>
-      <SectionHeading level={2} id={id} title={title} />
-      {!section.ok ? <p className={muted}>Could not retrieve this breakdown.</p> : rows.length ? (
-        <ol className="m-0 list-none p-0 [&>li+li]:mt-5">
-          {rows.map(row => (
-            <li key={row.label}>
-              <div className="mb-2 flex justify-between gap-4 text-ui wrap-anywhere">
-                <span>{row.label}</span>
-                <strong className="whitespace-nowrap tabular-nums">
-                  {scoreFormat.format(row.score)} <small className="font-regular text-muted">{pointsUnit(row.score)} · {total ? Math.round(row.score / total * 100) : 0}%</small>
-                </strong>
-              </div>
-              <span className="block h-2 bg-rule-subtle" aria-hidden="true">
-                <span className={`block h-full min-w-0.5 ${row.fill ?? 'bg-muted'}`} style={{ width: `${total ? row.score / total * 100 : 0}%` }} />
-              </span>
-            </li>
-          ))}
-        </ol>
-      ) : <p className={muted}>{empty}</p>}
-    </section>
   )
 }
 

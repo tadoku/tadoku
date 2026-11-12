@@ -63,6 +63,22 @@ describe("StackedBarChart", () => {
     expect(height(reading) / height(listening)).toBeCloseTo(3);
   });
 
+  it("keeps a contest's first day a bar, not a block across the whole plot", () => {
+    const { container } = render(
+      <StackedBarChart {...props} start="2026-09-02" end="2026-09-02" days={[{ date: "2026-09-02", values: { reading: 40 } }]} />,
+    );
+
+    const svg = desktop(container);
+    const bar = svg.querySelector<SVGRectElement>("rect[data-series]")!;
+    const plotWidth = svg.viewBox.baseVal.width;
+    const width = Number(bar.getAttribute("width"));
+    expect(width).toBeLessThan(plotWidth / 10);
+    const slot = svg.querySelector<SVGRectElement>(".paper-stacked-bar-chart__day > rect:not([data-series])")!;
+    expect(Number(bar.getAttribute("x")) + width / 2).toBeCloseTo(
+      Number(slot.getAttribute("x")) + Number(slot.getAttribute("width")) / 2,
+    );
+  });
+
   it("labels the points axis at zero, half and a round maximum at or above the best day", () => {
     const { container } = render(<StackedBarChart {...props} />);
 

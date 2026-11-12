@@ -1,24 +1,13 @@
 import { randomUUID } from 'node:crypto'
 import type { APIRequestContext, BrowserContext, Page } from '@playwright/test'
-import { accountId, activityEntries, admin, api, expect, linkTo, logActions, logLinks, reader, statValues, test, webv3 } from './logging-fixtures'
+import { activityChart, contestLogs, createContest, expectSummary, fitsViewport, profilePath, profileSummary, submitLog, type Contest, type Logs, day } from './contest-profile'
+import { accountId, activityEntries, admin, api, expect, linkTo, logActions, logLinks, reader, test, webv3 } from './logging-fixtures'
 import { apiJson, score, standingRows } from './standings'
 
-interface Contest { id: string; title: string }
-interface Log { id: string; description?: string; tags: string[]; language: { name: string }; activity: { name: string }; user_display_name?: string }
-interface Logs { logs: Log[]; total_size: number }
-interface Profile { scores: { language_code: string; score: number }[]; registration: { user_display_name: string; languages: { code: string; name: string }[] } }
+interface Profile { scores: { language_code: string; score: number }[] }
 
-const day = (offset = 0) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10)
 const updatesPath = (id: string, page = 1) => `/contests/${id}/updates/${page}`
-const profilePath = (id: string, userId: string, page = 1) => `/contests/${id}/profile/${userId}/${page}`
-const fitsViewport = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)
 const latest = (request: APIRequestContext) => apiJson<Contest>(request, '/immersion/contests/latest-official')
-
-/** One page of a contest's logs, counted from 1, as the API lists them. */
-function contestLogs(request: APIRequestContext, contestId: string, page = 1, userId?: string) {
-  const query = new URLSearchParams({ page_size: '25', page: String(page - 1), include_deleted: 'false', ...(userId ? { user_id: userId } : {}) })
-  return apiJson<Logs>(request, `/immersion/contests/${contestId}/logs?${query}`)
-}
 
 const removeButtons = (page: Page) => page.getByRole('button', { name: 'Remove from contest' })
 
@@ -41,18 +30,19 @@ async function expectLogs(page: Page, expected: Logs, participants: boolean) {
 }
 
 
-/** The page's overall score and each registered language's score agree with the API's contest profile. */
-async function expectScores(page: Page, profile: Profile) {
-  const stats = statValues(page)
+/**
+ * The lead's overall score agrees with the API's contest profile, and the summary and activity chart with its unfiltered
+ * summary. The page no longer lists each day or each language's score.
+ */
+async function expectScores(page: Page, request: APIRequestContext, contestId: string, userId: string) {
+  const profile = await apiJson<Profile>(request, `/immersion/contests/${contestId}/profile/${userId}/scores`)
   const total = profile.scores.reduce((sum, item) => sum + item.score, 0)
   await expect(page.getByText(new RegExp(`${score.format(total).replace('.', '\\.')} points? in `))).toBeVisible()
-  const languages = profile.registration.languages
-  if (languages.length > 1) {
-    await expect(stats).toHaveText(languages.map(language =>
-      score.format(profile.scores.find(item => item.language_code === language.code)?.score ?? 0)))
-  } else {
-    await expect(stats).toHaveCount(0)
-  }
+  const summary = await profileSummary(request, contestId, userId)
+  expect(summary.score).toBeCloseTo(total, 1)
+  await expectSummary(page, summary)
+  await expect(activityChart(page)).toBeVisible()
+  await expect(page.getByRole('table')).toHaveCount(0)
 }
 
 test.beforeEach(() => {
@@ -114,7 +104,7 @@ test('a standings participant opens their contest profile, with the API\'s score
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(participant.user_display_name)
   await expect(page).toHaveTitle(`${participant.user_display_name} · ${contest.title} · Tadoku`)
   await expect(page.getByRole('link', { name: 'View profile' })).toHaveAttribute('href', `/profile/${participant.user_id}/statistics`)
-  await expectScores(page, await apiJson<Profile>(request, `/immersion/contests/${contest.id}/profile/${participant.user_id}/scores`))
+  await expectScores(page, request, contest.id, participant.user_id)
   const logs = await contestLogs(request, contest.id, 1, participant.user_id)
   await expectLogs(page, logs, false)
   await page.screenshot({ path: testInfo.outputPath('contest-profile.png'), fullPage: true })
@@ -154,26 +144,6 @@ test('the updates feed and a contest profile fit at 390px', async ({ page, reque
   }
 })
 
-/** A contest created through the API as the context's account, open today. */
-async function createContest(context: BrowserContext, days = 30): Promise<Contest> {
-  const title = `Webv3 moderation check ${randomUUID().slice(0, 8)}`
-  const response = await context.request.post(`${api}/immersion/contests`, {
-    data: {
-      title,
-      description: 'Created by the Webv3 contest moderation journey.',
-      contest_start: day(),
-      contest_end: day(days),
-      registration_end: day(days - 16),
-      private: false,
-      official: false,
-      language_code_allow_list: null,
-      activity_type_id_allow_list: [1, 2],
-    },
-  })
-  expect(response.ok(), `contest creation answered ${response.status()}`).toBeTruthy()
-  return { ...(await response.json()), title }
-}
-
 /**
  * A contest Dev Reader owns that is open today. The yearly creation quota counts every contest an account has created,
  * so this reuses an open one, such as the seeded contest, and otherwise creates one that stays open for most of a year.
@@ -189,18 +159,6 @@ async function readerOwnContest(context: BrowserContext): Promise<Contest> {
     ?? createContest(context, 360)
 }
 
-/** Registers the context's account for the contest and submits one log to it through the API. */
-async function submitLog(context: BrowserContext, contestId: string, description: string) {
-  const joined = await context.request.post(`${api}/immersion/contests/${contestId}/registration`, { data: { language_codes: ['jpn'] } })
-  expect(joined.status()).toBe(200)
-  const registration = await apiJson<{ id: string }>(context.request, `/immersion/contests/${contestId}/registration`)
-  const created = await context.request.post(`${api}/immersion/logs`, {
-    data: { language_code: 'jpn', activity_id: 2, duration_seconds: 600, tags: [], description, registration_ids: [registration.id] },
-  })
-  expect(created.status()).toBe(200)
-  return (await created.json()) as Log & { score: number }
-}
-
 test('an administrator removes a log from a contest with a reason; a participant sees no such action', async ({ readerContext, adminContext }, testInfo) => {
   test.skip(!reader.email || !admin.email, 'Set both development fixture identities')
   const contest = await createContest(adminContext)
@@ -210,7 +168,7 @@ test('an administrator removes a log from a contest with a reason; a participant
   // The participant's contest profile shows the submitted log's score.
   const own = await readerContext.newPage()
   await own.goto(profilePath(contest.id, readerId))
-  await expectScores(own, await apiJson<Profile>(readerContext.request, `/immersion/contests/${contest.id}/profile/${readerId}/scores`))
+  await expectScores(own, readerContext.request, contest.id, readerId)
   await expect(own.getByRole('main')).toContainText(score.format(log.score))
   await expectLogs(own, await contestLogs(readerContext.request, contest.id, 1, readerId), false)
   await expect(removeButtons(own)).toHaveCount(0)

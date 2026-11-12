@@ -71,6 +71,8 @@ interface Geometry {
 
 const TOP = 8;
 const BOTTOM = 20;
+/** In viewBox units: a two-week range keeps its full bars, and a lone first day stays one bar wide. */
+const MAX_BAR_WIDTH = 48;
 const GEOMETRIES: readonly Geometry[] = [
   { name: "desktop", width: 960, height: 230, left: 40, right: 44, dayStep: 3, monthStep: 1 },
   { name: "phone", width: 340, height: 180, left: 32, right: 34, dayStep: 7, monthStep: 2 },
@@ -176,6 +178,8 @@ function Drawing({
   const plotWidth = width - left - right;
   const plotHeight = height - TOP - BOTTOM;
   const slotWidth = plotWidth / Math.max(days.length, 1);
+  // A short range, such as a contest's first day, keeps bars bar-shaped instead of filling the plot.
+  const barWidth = Math.min(Math.max(slotWidth * 0.76, 0.8), MAX_BAR_WIDTH);
   const bottom = TOP + plotHeight;
   const y = (value: number, max: number) => bottom - (plotHeight * value) / max;
   const short = days.length <= 45;
@@ -227,9 +231,9 @@ function Drawing({
                 <rect
                   key={item.id}
                   data-series={item.id}
-                  x={(x + slotWidth * 0.12).toFixed(2)}
+                  x={(x + (slotWidth - barWidth) / 2).toFixed(2)}
                   y={stackTop.toFixed(2)}
-                  width={Math.max(slotWidth * 0.76, 0.8).toFixed(2)}
+                  width={barWidth.toFixed(2)}
                   height={barHeight.toFixed(2)}
                   style={{ fill: item.color }}
                 />

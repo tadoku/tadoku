@@ -4,12 +4,14 @@ import {
   createLog,
   admin,
   amountInput,
+  chooseLogAction,
   api,
   branch,
   expect,
   fillDraft,
   isSaveRequest,
   joinedContest,
+  logActions,
   logDescription,
   openForm,
   reader,
@@ -50,7 +52,7 @@ test('owner edits a saved log, sees the estimate and the persisted change after 
   const id = await createReadingLog(page, `edit-before-${Date.now()}`)
   const before = await (await readRecord(readerContext, id)).json()
 
-  await page.getByRole('link', { name: 'Edit log', exact: true }).click()
+  await chooseLogAction(page, 'Edit log')
   await expect(page).toHaveURL(`${webv3}/logs/${id}/edit`)
   await expect(saveChanges(page)).toBeEnabled({ timeout: 15_000 })
   // The activity can't change on an edit, so the form states it instead of offering a control.
@@ -193,7 +195,7 @@ test('owner deletes a log after confirming, and its detail is gone', async ({ pa
   const { user_id: userId } = await (await readRecord(readerContext, id)).json()
   const dialog = page.getByRole('dialog', { name: 'Delete this log?' })
 
-  await page.getByRole('button', { name: 'Delete log', exact: true }).click()
+  await chooseLogAction(page, 'Delete log')
   await expect(dialog).toBeVisible()
   await expect(dialog.getByRole('button', { name: 'Keep log' })).toBeFocused()
   await page.screenshot({ path: testInfo.outputPath('delete-confirmation.png'), fullPage: true })
@@ -201,7 +203,7 @@ test('owner deletes a log after confirming, and its detail is gone', async ({ pa
   await expect(dialog).toBeHidden()
   expect((await readRecord(readerContext, id)).status()).toBe(200)
 
-  await page.getByRole('button', { name: 'Delete log', exact: true }).click()
+  await chooseLogAction(page, 'Delete log')
   await dialog.getByRole('button', { name: 'Delete log', exact: true }).click()
   await page.waitForURL(new RegExp(`/profile/${userId}/statistics`), { waitUntil: 'commit' })
 
@@ -215,13 +217,12 @@ test('visitors see no owner actions and cannot open the edit page for another le
   const adminPage = await adminContext.newPage()
   const description = `visitor-${Date.now()}`
   const id = await createReadingLog(adminPage, description)
-  await expect(adminPage.getByRole('link', { name: 'Edit log', exact: true })).toBeVisible()
+  await expect(logActions(adminPage)).toBeVisible()
 
   const readerPage = await readerContext.newPage()
   await readerPage.goto(`/logs/${id}`)
   await expect(logDescription(readerPage)).toHaveText(description)
-  await expect(readerPage.getByRole('link', { name: 'Edit log' })).toHaveCount(0)
-  await expect(readerPage.getByRole('button', { name: 'Delete log' })).toHaveCount(0)
+  await expect(logActions(readerPage)).toHaveCount(0)
   await readerPage.goto(`/logs/${id}/edit`)
   await expect(readerPage.getByRole('heading', { name: 'This is someone else\'s record' })).toBeVisible()
   await expect(saveChanges(readerPage)).toHaveCount(0)
@@ -231,8 +232,7 @@ test('visitors see no owner actions and cannot open the edit page for another le
     const anonymousPage = await anonymous.newPage()
     await anonymousPage.goto(`/logs/${id}`)
     await expect(logDescription(anonymousPage)).toHaveText(description)
-    await expect(anonymousPage.getByRole('link', { name: 'Edit log' })).toHaveCount(0)
-    await expect(anonymousPage.getByRole('button', { name: 'Delete log' })).toHaveCount(0)
+    await expect(logActions(anonymousPage)).toHaveCount(0)
     await anonymousPage.goto(`/logs/${id}/edit`)
     await expect(anonymousPage.getByRole('heading', { name: 'Sign in to edit activity' })).toBeVisible()
   } finally {

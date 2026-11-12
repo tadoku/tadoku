@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { APIRequestContext, BrowserContext, Page } from '@playwright/test'
-import { accountId, activityEntries, admin, api, expect, linkTo, logLinks, reader, statValues, test, webv3 } from './logging-fixtures'
+import { accountId, activityEntries, admin, api, expect, linkTo, logActions, logLinks, reader, statValues, test, webv3 } from './logging-fixtures'
 import { apiJson, score, standingRows } from './standings'
 
 interface Contest { id: string; title: string }
@@ -93,7 +93,7 @@ test('the server-rendered updates feed lists the API\'s contest logs, pages thro
     await linkTo(live, `/logs/${entry.id}`).click()
     await expect(live).toHaveURL(new RegExp(`/logs/${entry.id}$`))
     await expect(live.getByRole('heading', { level: 1 })).toBeVisible()
-    await expect(live.getByRole('link', { name: 'Edit log' })).toHaveCount(0)
+    await expect(logActions(live)).toHaveCount(0)
   }
   await live.close()
 })

@@ -1,5 +1,5 @@
 import type { BrowserContext, Page } from '@playwright/test'
-import { admin, amountInput, api, branch, createLog, expect, hydrated, openForm, reader, sessionCookie, test, webv3 } from './logging-fixtures'
+import { admin, amountInput, api, branch, chooseLogAction, createLog, expect, hydrated, logActions, openForm, reader, sessionCookie, test, webv3 } from './logging-fixtures'
 
 type Submission = { registration_id: string }
 
@@ -55,11 +55,12 @@ test('an administrator edits another learner\'s log and changes one contest subm
   const moderator = await adminContext.newPage()
   await moderator.goto(`/logs/${id}`)
   await hydrated(moderator)
-  await expect(moderator.getByRole('button', { name: 'Delete log', exact: true })).toBeEnabled()
-  await expect(moderator.getByRole('link', { name: 'Edit log', exact: true })).toBeVisible()
+  await logActions(moderator).click()
+  await expect(moderator.getByRole('menuitem', { name: 'Delete log', exact: true })).toBeVisible()
+  await expect(moderator.getByRole('menuitem', { name: 'Edit log', exact: true })).toBeVisible()
   await moderator.screenshot({ path: testInfo.outputPath('admin-detail.png'), fullPage: true })
 
-  await moderator.getByRole('link', { name: 'Edit log', exact: true }).click()
+  await moderator.getByRole('menuitem', { name: 'Edit log', exact: true }).click()
   await expect(moderator).toHaveURL(`${webv3}/logs/${id}/edit`)
   await expect(saveChanges(moderator)).toBeEnabled({ timeout: 15_000 })
   await amountInput(moderator).fill('9')
@@ -88,7 +89,7 @@ test('an administrator edits another learner\'s log and changes one contest subm
   for (const submission of changed.registrations!) expect(registrationIds).toContain(submission.registration_id)
 
   await hydrated(moderator)
-  await moderator.getByRole('button', { name: 'Delete log', exact: true }).click()
+  await chooseLogAction(moderator, 'Delete log')
   await moderator.getByRole('dialog').getByRole('button', { name: 'Delete log', exact: true }).click()
   await expect(moderator).toHaveURL(`${webv3}/profile/${before.user_id}/statistics`)
   expect((await readerContext.request.get(`${api}/immersion/logs/${id}`)).status()).toBe(404)

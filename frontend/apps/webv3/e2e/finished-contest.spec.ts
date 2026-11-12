@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { APIRequestContext } from '@playwright/test'
-import { accountId, admin, amountInput, api, expect, reader, test, webv3 } from './logging-fixtures'
+import { accountId, admin, amountInput, api, chooseLogAction, expect, reader, test, webv3 } from './logging-fixtures'
 import { finishedRound } from './seeded'
 import { apiJson, score, standingRows } from './standings'
 
@@ -60,7 +60,7 @@ test('a finished contest keeps its score after an edit, refuses deletion and kee
   await page.screenshot({ path: testInfo.outputPath('frozen-score.png'), fullPage: true })
 
   await page.goto(`/logs/${round.logId}`)
-  await page.getByRole('button', { name: 'Delete log', exact: true }).click()
+  await chooseLogAction(page, 'Delete log')
   await page.getByRole('dialog', { name: 'Delete this log?' }).getByRole('button', { name: 'Delete log', exact: true }).click()
   await expect(page.getByText('This log cannot be deleted. A log submitted to a finished contest stays in its results.')).toBeVisible()
   await expect(page).toHaveURL(`${webv3}/logs/${round.logId}`)

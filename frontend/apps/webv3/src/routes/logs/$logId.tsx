@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { PencilSquareIcon, TrashIcon, iconClassName } from 'paper-ui/icons'
-import { Link, createFileRoute, notFound, useHydrated } from '@tanstack/react-router'
-import { Button, buttonClassName, DescriptionList, EmptyState, entryLink, Modal, PageHeader, SectionHeading, StatGrid, Surface } from 'paper-ui'
+import { PencilSquareIcon, TrashIcon } from 'paper-ui/icons'
+import { Link, createFileRoute, notFound, useNavigate } from '@tanstack/react-router'
+import { Button, DescriptionList, EmptyState, entryLink, Modal, PageHeader, SectionHeading, StatGrid, Surface } from 'paper-ui'
 import { useRef, useState } from 'react'
 import { z } from 'zod'
 import { formatAmount, formatDate, formatMinutes, isNsfw, numberFormat, pointsUnit, scoreFormat } from '../../lib/format'
@@ -11,6 +11,7 @@ import { ensureViewerData, viewerKey, viewerQueryOptions } from '../../lib/sessi
 import { ActivityName } from '../../components/ActivityName'
 import { Avatar } from '../../components/Avatar'
 import { LogDescription } from '../../components/LogDescription'
+import { OptionsMenu } from '../../components/OptionsMenu'
 import { AppLink, renderLink } from '../../components/router-link'
 import { PendingView } from '../../components/StatusViews'
 import { pageUnavailable } from '../../lib/page-status'
@@ -57,7 +58,8 @@ function LogDetail() {
       <PageHeader
         backLink={{ href: links.profileUpdates(log.user_id), label: owner ? 'Your activity' : 'Activity' }}
         renderLink={renderLink}
-        className="max-w-record"
+        className="max-w-record max-md:relative"
+        classNames={{ actions: 'max-md:contents' }}
         title={titledByNote ? log.description! : `${log.language.name} ${log.activity.name.toLowerCase()}`}
         lead={(
           <>
@@ -101,11 +103,14 @@ function LogDetail() {
   )
 }
 
-/** Editing and deleting, offered to the log's owner and administrators. The API refuses both to anyone else. */
+/**
+ * Editing and deleting, offered to the log's owner and administrators in a menu. The API refuses both to anyone else.
+ * On phones the menu moves up to the back link's row so the title keeps the full width.
+ */
 function OwnerActions({ log, viewerId }: { log: ImmersionLog; viewerId: string }) {
   const links = useLinks()
+  const navigate = useNavigate()
   const deleteLog = useDeleteLog()
-  const hydrated = useHydrated()
   const [open, setOpen] = useState(false)
   const [pending, setPending] = useState(false)
   const [failure, setFailure] = useState<LogFailure | null>(null)
@@ -124,13 +129,20 @@ function OwnerActions({ log, viewerId }: { log: ImmersionLog; viewerId: string }
   }
 
   return (
-    <>
+    <span className="max-md:absolute max-md:-top-1.5 max-md:right-0">
+      <OptionsMenu
+        label="Log actions"
+        items={[
+          {
+            id: 'edit',
+            label: 'Edit log',
+            icon: <PencilSquareIcon />,
+            onSelect: () => void navigate({ to: '/logs/$logId/edit', params: { logId: log.id } }),
+          },
+          { id: 'delete', label: 'Delete log', icon: <TrashIcon />, destructive: true, onSelect: () => setOpen(true) },
+        ]}
+      />
       <Modal
-        trigger={(
-          <Button variant="destructive-ghost" disabled={!hydrated} leadingIcon={<TrashIcon className={iconClassName('compact')} />}>
-            Delete log
-          </Button>
-        )}
         title="Delete this log?"
         initialFocus={keepRef}
         open={open}
@@ -154,10 +166,7 @@ function OwnerActions({ log, viewerId }: { log: ImmersionLog; viewerId: string }
         </p>
         {failure ? <p role="alert">{deleteFailures[failure] ?? deleteFailures.unavailable}</p> : null}
       </Modal>
-      <Link className={buttonClassName({ variant: 'outline' })} to="/logs/$logId/edit" params={{ logId: log.id }}>
-        <PencilSquareIcon className={iconClassName('compact')} aria-hidden="true" />Edit log
-      </Link>
-    </>
+    </span>
   )
 }
 

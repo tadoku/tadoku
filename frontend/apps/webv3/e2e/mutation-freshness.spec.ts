@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { APIRequestContext, BrowserContext, Page } from '@playwright/test'
-import { accountId, admin, amountInput, api, contestStepUrl, expect, fillDraft, hydrated, linkTo, reader, saveButton, savedLogId, savedLogUrl, statValue, test, webv3 } from './logging-fixtures'
+import { accountId, admin, amountInput, api, chooseLogAction, contestStepUrl, expect, fillDraft, hydrated, linkTo, reader, saveButton, savedLogId, savedLogUrl, statValue, test, webv3 } from './logging-fixtures'
 import { apiJson, score, standingRows } from './standings'
 
 interface Contest { id: string; title: string }
@@ -155,7 +155,7 @@ test('an administrator\'s edit of another learner\'s log refreshes that learner\
   await expect(page).toHaveURL(new RegExp(`/profile/${readerId}/updates/1$`))
 
   await feedEntry(page, seed.id).click()
-  await page.getByRole('link', { name: 'Edit log', exact: true }).click()
+  await chooseLogAction(page, 'Edit log')
   await expect(amountInput(page)).toBeEnabled({ timeout: 15_000 })
   await amountInput(page).fill('50')
   await page.getByRole('button', { name: 'Save', exact: true }).click()

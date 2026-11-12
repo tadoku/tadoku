@@ -51,6 +51,9 @@ const scorePlural = new Intl.PluralRules(numberLocale, { minimumFractionDigits: 
 /** The unit word for a score as `scoreFormat` shows it: `1.0 points` takes the plural, as English does. */
 export const pointsUnit = (score: number) => (scorePlural.select(score) === 'one' ? 'point' : 'points')
 
+/** A whole count with its noun, for example `1 log` or `1,204 logs`. */
+export const countLabel = (count: number, noun: string) => `${numberFormat.format(count)} ${noun}${count === 1 ? '' : 's'}`
+
 const ordinal = new Intl.PluralRules('en', { type: 'ordinal' })
 const ordinalSuffix: Record<string, string> = { one: 'st', two: 'nd', few: 'rd', other: 'th' }
 

@@ -80,7 +80,7 @@ jobs:
       TADOKU_TEST_VALKEY_URL: redis://127.0.0.1:6379
     services:
       postgres:
-        image: postgres:17@sha256:748a18a54d3842d43bc156f0840d78029b8d349e0feca98c12b9c4ce3404a6b3
+        image: postgres:17@sha256:846a7ddaa67a4b354ae1d21087b683901aa6113a4ed626d3787cfbf6c85e3e07
         env:
           POSTGRES_DB: postgres
           POSTGRES_PASSWORD: postgres

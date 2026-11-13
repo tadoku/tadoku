@@ -396,6 +396,42 @@ func TestNormalizeTagsCountsCharactersNotBytes(t *testing.T) {
 	}
 }
 
+func TestDraftRulesNormalizeTrimsUnitKey(t *testing.T) {
+	t.Parallel()
+
+	padded := DraftRules{
+		Rules: []Rule{{
+			Priority:   1,
+			ActivityID: 1,
+			UnitKey:    " pages ",
+			Source:     SourceAmount,
+			Rate:       1,
+		}},
+	}
+	if err := padded.normalize(nil); err != nil {
+		t.Fatalf("normalize padded UnitKey: %v", err)
+	}
+	if padded.Rules[0].UnitKey != "pages" {
+		t.Errorf("padded UnitKey = %q, want %q", padded.Rules[0].UnitKey, "pages")
+	}
+
+	whitespace := DraftRules{
+		Rules: []Rule{{
+			Priority:   1,
+			ActivityID: 1,
+			UnitKey:    "   ",
+			Source:     SourceAmount,
+			Rate:       1,
+		}},
+	}
+	if err := whitespace.normalize(nil); err != nil {
+		t.Fatalf("normalize whitespace UnitKey: %v", err)
+	}
+	if whitespace.Rules[0].UnitKey != "" {
+		t.Errorf("whitespace UnitKey = %q, want empty", whitespace.Rules[0].UnitKey)
+	}
+}
+
 func TestActivateRuleSetRejectsImpossiblePersistedStates(t *testing.T) {
 	service := NewService(nil, false, nil)
 	updatedAt := time.Date(2026, 5, 1, 0, 0, 0, 0, time.UTC)

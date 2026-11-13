@@ -120,6 +120,7 @@ func (p *DraftRules) normalize(languages []domainlanguages.Language) error {
 		rule := &p.Rules[i]
 		rule.Tag = strings.ToLower(strings.TrimSpace(rule.Tag))
 		rule.LanguageCode = strings.ToLower(strings.TrimSpace(rule.LanguageCode))
+		rule.UnitKey = strings.TrimSpace(rule.UnitKey)
 		if rule.Priority < 0 {
 			return errx.NewInvalidInputError("rule priority must be non-negative")
 		}

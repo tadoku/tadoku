@@ -23,14 +23,23 @@ const maxActiveTokens = 10
 
 var acceptedScopes = []Scope{EmailRead}
 
+type tokenRepository interface {
+	lockTenant(context.Context) error
+	insert(context.Context, Token, string, int) (bool, error)
+	verify(context.Context, string, []Scope, time.Time) (Token, bool, error)
+	list(context.Context) ([]Token, error)
+	revoke(context.Context, uuid.UUID, time.Time) error
+}
+
 type Service struct {
-	repository *Repository
+	repository tokenRepository
 	production bool
 }
 
 var (
-	_ Verifier = (*Service)(nil)
-	_ Manager  = (*Service)(nil)
+	_ Verifier        = (*Service)(nil)
+	_ Manager         = (*Service)(nil)
+	_ tokenRepository = (*Repository)(nil)
 )
 
 func NewService(repository *Repository, production bool) *Service {
@@ -77,7 +86,8 @@ func (s *Service) Create(ctx context.Context, request Create) (Issued, error) {
 		return Issued{}, errx.NewForbiddenError("access tokens are unavailable for tadoku/prod in production")
 	}
 
-	if strings.TrimSpace(request.Name) == "" || len(request.Name) > 128 {
+	name := strings.TrimSpace(request.Name)
+	if name == "" || len(name) > 128 {
 		return Issued{}, errx.NewInvalidInputError("token name must contain 1–128 bytes")
 	}
 
@@ -105,7 +115,7 @@ func (s *Service) Create(ctx context.Context, request Create) (Issued, error) {
 	now := timex.Now(ctx)
 	row := Token{
 		ID:        uuidx.New(ctx),
-		Name:      request.Name,
+		Name:      name,
 		Scopes:    request.Scopes,
 		CreatedAt: now,
 		ExpiresAt: now.Add(request.ExpiresIn),

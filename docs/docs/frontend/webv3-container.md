@@ -29,14 +29,16 @@ the Deployment needs a `preStop` delay so the edge removes the pod before it
 receives `SIGTERM`.
 The [production config contract](../develop/ci-workflows.md#production-config-contract)
 fails CI when these variables, the canonical hosts or `/healthz` are renamed or removed.
-Never pass credentials as build arguments. Supply any private CA certificate and
+The only build argument, `VITE_BUILD_ID`, names the commit in
+[browser error reports](webv3-server-logs.md#browser-errors); publication sets it
+to the commit SHA, and it defaults to `dev`. Never pass credentials as build arguments. Supply any private CA certificate and
 `NODE_EXTRA_CA_CERTS` at runtime when the upstream requires it.
 
 From `frontend/`:
 
 ```sh
 docker build --platform linux/amd64 -f apps/webv3/Dockerfile -t webv3:check .
-pnpm --filter webv3 exec playwright install chromium
+pnpm --filter webv3 exec playwright install --with-deps chromium webkit
 PLAYWRIGHT_OUTPUT_DIR=/tmp/webv3-evidence node scripts/smoke-webv3-image.mjs webv3:check
 ```
 

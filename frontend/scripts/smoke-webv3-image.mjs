@@ -190,6 +190,20 @@ try {
     child.once('exit', resolve)
   })
   assert.equal(exitCode, 0, 'Browser journeys failed')
+  // client-errors.spec.ts threw in the page and posted reports the endpoint must refuse.
+  const containerLog = docker('logs', container)
+  const clientErrors = containerLog.split('\n').filter(line => line.includes('"event":"client_error"')).map(line => JSON.parse(line))
+  assert(clientErrors.some(record => record.error_type === 'error' && record.error === 'e2e client error' && record.path === '/'),
+    'A browser error was not logged as client_error')
+  assert(!clientErrors.some(record => record.error === 'e2e rejected report'), 'A refused report was logged')
+  assert(!containerLog.includes('e2e-secret'), 'A page query reached the log')
+  const redacted = clientErrors.filter(record => record.error?.startsWith('e2e redaction'))
+  assert(redacted.length > 0, 'The redaction report was not logged')
+  for (const record of redacted) {
+    const text = `${record.error}\n${record.stack}`
+    for (const secret of ['SECRET', 'token=', 'alice@example.com']) assert(!text.includes(secret), `${secret} reached the log: ${text}`)
+    for (const frame of ['index-abc.js:12:34', 'index-abc.js:56:78', 'index-abc.js:9:10']) assert(text.includes(frame), `Lost ${frame}: ${text}`)
+  }
   const newLog = await fetch(`${base}/logs/new`)
   assert.equal(newLog.status, 200)
   assert((await newLog.text()).includes('Sign in to log activity'), 'Anonymous native logging prompt missing')

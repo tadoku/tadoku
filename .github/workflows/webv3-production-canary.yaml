@@ -52,9 +52,10 @@ jobs:
         working-directory: frontend
       - run: pnpm --filter webv3 exec playwright install chromium
         working-directory: frontend
-      # One retry so a pod replaced mid-run does not page anyone; a broken release fails both attempts.
+      # One retry so a pod replaced mid-run does not page anyone; a broken release fails both attempts. Chromium only:
+      # WebKit needs apt on this runner every hour, so the release gate runs the journey in WebKit instead.
       - id: journey
-        run: pnpm --filter webv3 exec playwright test e2e/production-canary.spec.ts --retries=1
+        run: pnpm --filter webv3 exec playwright test e2e/production-canary.spec.ts --project=chromium --retries=1
         working-directory: frontend
         env:
           E2E_READER_EMAIL: ${{ secrets.WEBV3_CANARY_EMAIL }}

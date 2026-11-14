@@ -2,6 +2,7 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 import { randomUUID } from 'node:crypto'
 import * as ApiClient from 'api-client'
 import { z } from 'zod'
+import type { ClientErrorKind } from './client-errors'
 import { urlsForHost } from './urls.server'
 
 /** The name of a generated API operation: a compile-time literal, so caller data cannot become one. */
@@ -81,7 +82,18 @@ export function withRequestLog<T>(request: Request, run: () => T): T {
 function write(
   event: string,
   msg: string,
-  fields: { operation?: ApiOperation; status?: number; latency?: number; error_type?: string; issue_paths?: string[] },
+  fields: {
+    operation?: ApiOperation
+    status?: number
+    latency?: number
+    error_type?: string
+    issue_paths?: string[]
+    error?: string
+    stack?: string
+    path?: string
+    build_id?: string
+    user_agent?: string
+  },
   level: 'ERROR' | 'INFO' = 'ERROR',
 ) {
   const request = requestLog.getStore()
@@ -166,6 +178,37 @@ export function recordSsrError(error: SsrError) {
 
   write('ssr_error', 'server rendering failed', {
     error_type: reportedErrorNames.has(error.errorName) ? error.errorName : 'other',
+  })
+}
+
+type ClientError = {
+  kind: ClientErrorKind
+  message: string
+  stack?: string
+  path: string
+  build: string
+  userAgent: string | undefined
+}
+
+/**
+ * A query or fragment, of an absolute or relative URL, runs to the end of its word, dropping any URL nested in it. A
+ * stack frame's `:line:column` and the `)` that closes it stay. Characters a URL percent-encodes end a word.
+ */
+const urlQuery = /(?:(?<=\/[^\s?#'"<>]*)[?#]|[?#](?=[\w.%-]+=))[^\s'"<>]*?(?=(?::\d+){0,2}\)?(?:[\s'"<>]|$))/g
+const emailAddress = /(?<![\w.+-])[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g
+
+/** Browser text can quote a URL that carries a token, or an email address, so both are redacted from it. */
+const redact = (text: string) => text.replace(urlQuery, '').replace(emailAddress, '[email]')
+
+/** Records an error a browser reported, from a page anyone can load, so its free text is redacted. */
+export function recordClientError({ kind, message, stack, path, build, userAgent }: ClientError) {
+  write('client_error', 'browser error', {
+    error_type: kind,
+    error: redact(message),
+    stack: stack && redact(stack),
+    path: redact(path.split(/[?#]/)[0]),
+    build_id: build,
+    user_agent: userAgent?.slice(0, 256),
   })
 }
 

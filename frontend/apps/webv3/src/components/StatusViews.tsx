@@ -1,5 +1,7 @@
-import { Link, useRouter } from '@tanstack/react-router'
+import { Link, useRouter, type ErrorComponentProps } from '@tanstack/react-router'
 import { Button, EmptyState, buttonClassName } from 'paper-ui'
+import { useEffect } from 'react'
+import { reportClientError } from '../lib/client-errors'
 
 export function NotFoundView() {
   return (
@@ -12,8 +14,9 @@ export function NotFoundView() {
   )
 }
 
-export function ErrorView() {
+export function ErrorView({ error }: ErrorComponentProps) {
   const router = useRouter()
+  useEffect(() => reportClientError('route', error), [error])
   return (
     <EmptyState
       headingLevel={1}

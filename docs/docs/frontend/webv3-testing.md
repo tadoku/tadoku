@@ -33,7 +33,13 @@ the API's golden cases in `services/tadoku-api/e2e/testdata/` own the rules
 behind those answers, such as contest creation's account age and yearly quota.
 The yearly quota counts every contest an account has created, deleted ones
 included, so only Dev Admin, who is exempt, creates contests on every run.
-The suite needs Chromium installed through Playwright. `PLAYWRIGHT_OUTPUT_DIR`
+The suite runs every spec in Chromium. A WebKit project, Safari's engine, also runs
+`release-journey.spec.ts`, `production-canary.spec.ts` and `client-errors.spec.ts`,
+the journeys a release depends on and the browser error reports; the `testMatch`
+of the `webkit` project in `frontend/apps/webv3/playwright.config.ts` lists them.
+Install both browsers through Playwright, with `playwright install chromium webkit`.
+WebKit also needs its system libraries, which `playwright install --with-deps webkit`
+installs with apt. `PLAYWRIGHT_OUTPUT_DIR`
 selects where reports and screenshots go, defaulting to a temporary directory
 outside the source tree.
 
@@ -133,6 +139,13 @@ the API this way only to fail a read: a test never fakes a successful write.
 release depends on: a newly registered learner logs in through authv2, logs,
 submits to a contest, finds the log in their profile and the standings, edits
 and deletes it, and logs out.
+
+`frontend/apps/webv3/e2e/client-errors.spec.ts` checks that an uncaught error and
+an unhandled rejection on a page each send one report without the page's query,
+and that the report endpoint answers 400 to a body it cannot accept. The
+[container smoke](webv3-container.md) then finds the error's `client_error` line
+in the container's log. `outages.spec.ts` checks that a page whose main read
+failed sends no report.
 
 `frontend/apps/webv3/e2e/mutation-freshness.spec.ts` checks that a page visited
 before a save, an administrator's edit, a registration or a moderation removal

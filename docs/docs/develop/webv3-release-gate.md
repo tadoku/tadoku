@@ -37,7 +37,8 @@ Dev Reader and Dev Admin, on a fresh development tenant. Its jobs run in order:
      `X-Dev-Backend` and the route's `X-Dev-Selected`. Last, it records the
      base Deployment's generation and each pod's UID and digest in
      `base-before.json`.
-   - `test` runs the suite against the branch's hosts. It refuses to start
+   - `test` runs the suite against the branch's hosts, in Chromium and, for the
+     specs its WebKit project lists, in WebKit. It refuses to start
      without the four fixture variables, reads Playwright's JSON report, and
      fails on any skipped test outside the allowlist at the top of the script,
      which holds only tests that need an environment no branch tenant has. It
@@ -116,9 +117,10 @@ daemon, and reaches only DNS, public HTTPS, the development ingress (which also
 serves `registry.dev.lab`) and the `homelab-talos-dev` API server. The gate
 needs no Docker, `registry.lab`, Bazel remote cache or production host: Bazel
 builds and pushes the branch's images and pulls only public base images. The
-runner image provides Chromium's system libraries and trusts the Lab CA in its
-system bundle and in the `runner` user's NSS database, because Chromium does
-not read `NODE_EXTRA_CA_CERTS`. The job sets that variable to
+runner image provides Chromium's and WebKit's system libraries, so the suite's
+WebKit project runs without apt, and trusts the Lab CA in its system bundle,
+which WebKit reads, and in the `runner` user's NSS database, because Chromium
+does not read `NODE_EXTRA_CA_CERTS`. The job sets that variable to
 `/usr/local/share/ca-certificates/lab-root-ca.crt` for Node.
 
 The runner set mounts its credentials only into its own pods, at

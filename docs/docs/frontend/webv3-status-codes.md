@@ -43,5 +43,5 @@ instead, so a lasting mismatch cannot reload in a loop.
 and the loop guard.
 
 Each 5xx response writes one `ssr_error` [server log](webv3-server-logs.md)
-line. The edge counts every 5xx toward the Webv3 5xx burst alert, which reverts
-a release, so an API outage that fails resource pages can trip it.
+line. The edge counts every 5xx toward the Webv3 5xx burst alert, which opens
+an incident for the owner, so an API outage that fails resource pages can trip it.

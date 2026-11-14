@@ -76,8 +76,8 @@ jobs:
     runs-on: tadoku-ci
     timeout-minutes: 5
     steps:
-      # Red reverts Webv3, so only the journey's own result counts, not a failed checkout or install.
-      # Before Notify, so a Notify outage cannot hide a red run from the auto-revert alert. Contract:
+      # Red opens an SRE incident, so only the journey's own result counts, not a failed checkout or install.
+      # Before Notify, so a Notify outage cannot hide a red run from the canary alert. Contract:
       # antonve/homelab docs/runbooks/tadoku-web-alerts.md#canary-signal-contract
       - name: Publish green or red to the alert gauges
         if: needs.canary.outputs.journey == 'success' || needs.canary.outputs.journey == 'failure'

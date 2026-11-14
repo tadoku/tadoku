@@ -7,7 +7,7 @@ sidebar_position: 3
 # Webv3 cutover runbook
 
 Read this before you prepare, run or roll back the switch of `tadoku.app` from
-Webv2 to Webv3, or when a Webv3 auto-revert fires after it.
+Webv2 to Webv3, or when a Webv3 alert fires after it.
 
 The production manifests live in the maintainer's GitOps repository; every step
 there is a reviewed pull request that Argo CD syncs. Never change production by
@@ -42,9 +42,13 @@ hand.
   404. Point every monitor or probe of that path at `/healthz` in the same change.
   The homelab blackbox probe reads `https://tadoku.app/` and needs no change.
 - **Canary.** `.github/workflows/webv3-production-canary.yaml` signs in on the
-  host Webv3 serves for everyone: `WEBV3_BASE_URL` is `https://tadoku.app` while
-  Webv3 serves it, and `https://next.tadoku.app` otherwise. Change it in the
-  same step as the host, because a canary on Webv2 fails and reverts Webv3.
+  host Webv3 serves for everyone: `WEBV3_BASE_URL` is `https://next.tadoku.app`
+  until `tadoku.app` reaches Webv3, and `https://tadoku.app` after. The host
+  moves in GitOps pull requests and the base URL in a pull request here, so the
+  two never land together, and a run against the host Webv2 serves goes red
+  without any Webv3 fault. Change the base URL only where the host switch and
+  the rollback below say, so it always names a host Webv3 serves;
+  `next.tadoku.app` serves Webv3 throughout.
 - **Request IDs.** The tadoku HTTPS listeners and the internal Gateway must keep
   an incoming `X-Request-Id`, or Webv3's and Tadoku API's log lines will not
   join on `correlation_id`; see [Webv3 server logs](webv3-server-logs.md).
@@ -86,6 +90,11 @@ on Webv2 until its route is removed.
 3. **Remove Webv2's route.** Delete the `frontend-webv2` HTTPRoute, which serves
    only `tadoku.app`, and keep the `www-redirect` route beside it. `tadoku.app`
    now reaches Webv3.
+4. **Point the canary at `tadoku.app`.** Only after step 3 has synced and
+   `curl -sI https://tadoku.app/` shows Webv3's headers (see
+   [Verify](#verify)), change `WEBV3_BASE_URL` in the canary workflow, and the
+   host its Notify message names, to `https://tadoku.app` in a pull request
+   here. Until it merges, the canary keeps checking Webv3 on `next.tadoku.app`.
 
 Leave the `www.tadoku.app` redirect and the account and admin hosts as they are.
 
@@ -102,18 +111,26 @@ After Argo CD syncs:
   `Disallow: /`.
 - An `/api/internal` read and signing in and out through the account host work.
 - Run the canary's signed-in journey against `https://tadoku.app` with a
-  `workflow_dispatch`, once its base URL points there, and watch the edge 5xx ratio of the
+  `workflow_dispatch` once step 4 has merged, and watch the edge 5xx ratio of the
   `frontend-webv3` HTTPRoute and Webv3's `ssr_error` and `upstream_failure` lines
   in Loki for the next rollout.
 
 ## Rollback
 
 - **Host switch.** Mirror the switch, again in two pull requests with a check
-  between them. A restored `frontend-webv2` HTTPRoute is created after
-  `frontend-webv3`, so Webv3 keeps the traffic until it leaves `https-apex`.
-  1. Restore the `frontend-webv2` HTTPRoute. Its namespace is still on the
+  between them, after moving the canary. A restored `frontend-webv2` HTTPRoute
+  is created after `frontend-webv3`, so Webv3 keeps the traffic until it leaves
+  `https-apex`.
+  1. Point the canary's `WEBV3_BASE_URL`, and the host its Notify message names,
+     back at `https://next.tadoku.app` in a pull request here, and merge it
+     before the GitOps changes. `next.tadoku.app` keeps serving Webv3, so the
+     canary never reaches Webv2. A canary run that started or queued before the
+     merge keeps the old URL, so wait until no `webv3-production-canary` run
+     from an earlier commit is queued or in progress (cancel it if it must not
+     finish) before you go on.
+  2. Restore the `frontend-webv2` HTTPRoute. Its namespace is still on the
      listener's list.
-  2. Check that it is admitted for the `https-apex` parent:
+  3. Check that it is admitted for the `https-apex` parent:
 
      ```sh
      kubectl -n tdk-prod-frontend-webv2 get httproute frontend-webv2 \
@@ -121,27 +138,30 @@ After Argo CD syncs:
      ```
 
      It must print `Accepted=True` and `ResolvedRefs=True`.
-  3. Remove `tadoku.app` and the `https-apex` listener from the `frontend-webv3`
+  4. Remove `tadoku.app` and the `https-apex` listener from the `frontend-webv3`
      HTTPRoute, and restore its `X-Robots-Tag` filter for `next.tadoku.app`.
      `tadoku.app` returns to Webv2. Webv3's namespace can then leave the
      listener's list.
 
-  Point the canary's `WEBV3_BASE_URL` back at `https://next.tadoku.app` at once,
-  or its next run reaches Webv2, fails and reverts Webv3's image.
-
   This needs Webv2 still deployed at its last image, so do not retire it while a
   rollback is possible. If Webv3 itself is at fault, also empty the
   `release-webv3-access` segment, or flagged accounts are sent back to it.
-- **A broken release.** The Webv3 auto-revert rolls back the image, not the host;
-  the homelab's Tadoku web alerts runbook describes it for each phase.
+- **A broken release.** Nothing rolls Webv3 back automatically; rolling back is
+  the owner's decision. The homelab's Tadoku web alerts runbook gives the
+  rollback for each phase: the `release-webv3` flag before the host switch, the
+  previous image after it.
 
-## When an auto-revert fires
+## When a Webv3 alert fires
+
+The Webv3 alerts open an SRE incident that investigates and reports to the
+owner with its evidence; none of them rolls Webv3 back.
 
 - **Check Tadoku API's health first.** An API outage makes Webv3's resource pages
   answer 503 ([status codes](webv3-status-codes.md)), and those 503s count toward
-  `TadokuWebv3ServerErrorBurst`, so an API failure can revert a healthy Webv3
-  release. Reverting Webv3 does not fix the API; restore the reverted release once
-  the API recovers.
+  `TadokuWebv3ServerErrorBurst`, so an API failure can fire it for a healthy
+  Webv3 release. Rolling Webv3 back does not fix the API.
+- **A red canary.** Check that its `WEBV3_BASE_URL` names the host Webv3 serves
+  for everyone; a run against the host Webv2 serves fails without a Webv3 fault.
 - **A gateway 504 with no Webv3 log line.** Nothing on the production path times
   out within Webv3's 8-second upstream deadline, so a 504 with no
   `upstream_failure` or `ssr_error` line means Webv3 did not answer the edge, not

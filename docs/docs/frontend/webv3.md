@@ -299,7 +299,7 @@ tests disable traces and videos and retain no browser storage.
 
 [Webv3 cutover runbook](webv3-cutover.md) covers moving `tadoku.app` from Webv2
 to Webv3: what to change before and during the host switch, how to verify it,
-how to roll it back and what to check when an auto-revert fires.
+how to roll it back and what to check when a Webv3 alert fires.
 
 ## Headers, indexing and sharing
 

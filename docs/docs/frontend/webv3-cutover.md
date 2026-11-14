@@ -146,15 +146,18 @@ After Argo CD syncs:
   This needs Webv2 still deployed at its last image, so do not retire it while a
   rollback is possible. If Webv3 itself is at fault, also empty the
   `release-webv3-access` segment, or flagged accounts are sent back to it.
-- **A broken release.** Nothing rolls Webv3 back automatically; rolling back is
-  the owner's decision. The homelab's Tadoku web alerts runbook gives the
-  rollback for each phase: the `release-webv3` flag before the host switch, the
+- **A broken release.** While Webv2 is still deployed, nothing rolls Webv3 back
+  automatically; rolling back is the owner's decision. Once Webv2 is retired, a
+  Webv3 5xx burst or a red canary rolls Webv3 back to the previous image
+  automatically. The homelab's Tadoku web alerts runbook gives the rollback for
+  each phase: the `release-webv3-access` segment before the host switch, the
   previous image after it.
 
 ## When a Webv3 alert fires
 
 The Webv3 alerts open an SRE incident that investigates and reports to the
-owner with its evidence; none of them rolls Webv3 back.
+owner with its evidence. While Webv2 is still deployed, none of them rolls
+Webv3 back; after that, see [A broken release](#rollback).
 
 - **Check Tadoku API's health first.** An API outage makes Webv3's resource pages
   answer 503 ([status codes](webv3-status-codes.md)), and those 503s count toward
@@ -179,7 +182,9 @@ owner with its evidence; none of them rolls Webv3 back.
 ## After the rollback window
 
 - Retire Webv2's Deployment and HTTPRoute, and the `/api/health` entry of the
-  production config contract.
+  production config contract. Removing `services/frontend-webv2/` from the
+  GitOps repository ends the rollout: from then on a Webv3 5xx burst or a red
+  canary rolls Webv3 back automatically.
 - Redirect `next.tadoku.app` with a route of its own: move `next.tadoku.app`
   and the `https-next` listener off the `frontend-webv3` HTTPRoute onto a new
   HTTPRoute for `next.tadoku.app` only, whose rule answers a `301` to

@@ -36,21 +36,22 @@ export type ProfileStatistics =
   | { status: 'not-found' }
   | { status: 'unavailable' }
 
-const statisticsInput = z.object({
+/** A profile year's address as the server function accepts it; a route answers 404 for anything else. */
+export const profileStatisticsInput = z.object({
   userId: z.guid(),
   year: z.number().int().min(1000).max(9999),
   page: z.number().int().min(1),
 })
 
 const getProfileStatistics = createServerFn({ method: 'GET' })
-  .inputValidator(statisticsInput)
+  .inputValidator(profileStatisticsInput)
   .handler(async ({ data }) => {
     const { readProfileStatistics } = await import('./profile.server')
     return readProfileStatistics(data.userId, data.year, data.page)
   })
 
 /** A profile's year as one viewer sees it: its contest history includes private contests for their participant. */
-export const profileStatisticsQuery = (input: z.infer<typeof statisticsInput>, viewerKey: string) => queryOptions({
+export const profileStatisticsQuery = (input: z.infer<typeof profileStatisticsInput>, viewerKey: string) => queryOptions({
   queryKey: ['profile-statistics', input.userId, input.year, input.page, viewerKey],
   queryFn: () => getProfileStatistics({ data: input }),
   retry: false,

@@ -4,7 +4,7 @@ import { EmptyState } from 'paper-ui'
 import { z } from 'zod'
 import { ProfileStatistics } from '../../../../components/ProfileStatistics'
 import { PendingView } from '../../../../components/StatusViews'
-import { profileStatisticsQuery } from '../../../../lib/profile'
+import { profileStatisticsQuery, profileStatisticsInput } from '../../../../lib/profile'
 import { ensureViewerData, viewerKey, viewerQueryOptions } from '../../../../lib/session'
 import { pageUnavailable } from '../../../../lib/page-status'
 import { sharingMeta } from '../../../../lib/page-meta'
@@ -41,9 +41,10 @@ export const Route = createFileRoute('/profile/$id/statistics/{-$year}')({
  * years in UTC.
  */
 function statisticsInput(params: { id: string; year?: string }, page: number, currentYear: number) {
-  if (!z.guid().safeParse(params.id).success) throw notFound()
-  if (params.year !== undefined && !/^\d{4}$/.test(params.year)) throw notFound()
-  return { userId: params.id, year: Number(params.year ?? currentYear), page }
+  const year = params.year === undefined ? currentYear : /^\d{4}$/.test(params.year) ? Number(params.year) : NaN
+  const input = profileStatisticsInput.safeParse({ userId: params.id, year, page })
+  if (!input.success) throw notFound()
+  return input.data
 }
 
 function ProfileStatisticsPage() {

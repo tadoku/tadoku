@@ -106,10 +106,12 @@ outside the Start request middleware, so its line has no `correlation_id` or
 `host`, and anyone can call it. It reads at most 16 KiB of body and validates the
 report with Zod. An oversized body, invalid JSON or an invalid report answers 400
 and writes nothing, and no input can make it answer 5xx. Each server process
-writes at most 120 lines a minute and answers 429 beyond that. The line drops the
-query and fragment from every URL in the message and stack, copies only the named
-fields, and never reads cookies. The message and stack are browser text, which can
-quote page content.
+writes at most 120 lines a minute and answers 429 beyond that. The server, not
+the browser, redacts the message, stack and path: it drops the query and fragment
+of every absolute or relative URL, with any URL nested in them, keeping a stack
+frame's `:line:column`, and replaces each email address with `[email]`. The line
+copies only the named fields and never reads cookies. The message and stack are
+browser text, which can still quote other page content.
 
 ## Querying
 

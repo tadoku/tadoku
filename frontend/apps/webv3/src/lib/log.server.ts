@@ -190,16 +190,23 @@ type ClientError = {
   userAgent: string | undefined
 }
 
-/** A URL's query or fragment can carry a token, so both are dropped from browser text, keeping a stack frame's `:line:column`. */
-const withoutQueries = (text: string) => text.replace(/(https?:\/\/[^\s?#]*)[?#][^\s:)'"]*/g, '$1')
+/**
+ * A query or fragment, of an absolute or relative URL, runs to the end of its word, dropping any URL nested in it. A
+ * stack frame's `:line:column` and the `)` that closes it stay. Characters a URL percent-encodes end a word.
+ */
+const urlQuery = /(?:(?<=\/[^\s?#'"<>]*)[?#]|[?#](?=[\w.%-]+=))[^\s'"<>]*?(?=(?::\d+){0,2}\)?(?:[\s'"<>]|$))/g
+const emailAddress = /(?<![\w.+-])[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g
 
-/** Records an error a browser reported, from a page anyone can load, so its free text loses query strings. */
+/** Browser text can quote a URL that carries a token, or an email address, so both are redacted from it. */
+const redact = (text: string) => text.replace(urlQuery, '').replace(emailAddress, '[email]')
+
+/** Records an error a browser reported, from a page anyone can load, so its free text is redacted. */
 export function recordClientError({ kind, message, stack, path, build, userAgent }: ClientError) {
   write('client_error', 'browser error', {
     error_type: kind,
-    error: withoutQueries(message),
-    stack: stack && withoutQueries(stack),
-    path: path.split(/[?#]/)[0],
+    error: redact(message),
+    stack: stack && redact(stack),
+    path: redact(path.split(/[?#]/)[0]),
     build_id: build,
     user_agent: userAgent?.slice(0, 256),
   })

@@ -124,7 +124,10 @@ After Argo CD syncs:
   1. Point the canary's `WEBV3_BASE_URL`, and the host its Notify message names,
      back at `https://next.tadoku.app` in a pull request here, and merge it
      before the GitOps changes. `next.tadoku.app` keeps serving Webv3, so the
-     canary never reaches Webv2.
+     canary never reaches Webv2. A canary run that started or queued before the
+     merge keeps the old URL, so wait until no `webv3-production-canary` run
+     from an earlier commit is queued or in progress (cancel it if it must not
+     finish) before you go on.
   2. Restore the `frontend-webv2` HTTPRoute. Its namespace is still on the
      listener's list.
   3. Check that it is admitted for the `https-apex` parent:

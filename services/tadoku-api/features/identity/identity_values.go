@@ -42,17 +42,18 @@ func (e Email) recipient() string {
 }
 
 func ParseDisplayName(raw string) (DisplayName, error) {
-	if !utf8.ValidString(raw) || utf8.RuneCountInString(raw) < 2 || utf8.RuneCountInString(raw) > 32 {
-		return DisplayName{}, &Error{
-			"invalid_display_name", errx.NewInvalidInputError("display name must contain 2–32 characters"),
-		}
-	}
-	if strings.TrimSpace(raw) == "" {
+	value := strings.TrimSpace(raw)
+	if value == "" {
 		return DisplayName{}, &Error{
 			"invalid_display_name", errx.NewInvalidInputError("display name must contain a visible character"),
 		}
 	}
-	return DisplayName{raw}, nil
+	if !utf8.ValidString(value) || utf8.RuneCountInString(value) < 2 || utf8.RuneCountInString(value) > 32 {
+		return DisplayName{}, &Error{
+			"invalid_display_name", errx.NewInvalidInputError("display name must contain 2–32 characters"),
+		}
+	}
+	return DisplayName{value}, nil
 }
 
 func ParsePassword(raw string, email Email) (Password, error) {

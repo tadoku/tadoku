@@ -18,6 +18,7 @@ unavailable data, or when you read Webv3's 5xx responses.
 | A list, the home page, or a section beside a page's main read fails | 200 | That section's own failure state |
 | A logout the API does not confirm | 503 | Log out is unavailable, with Try again, in the app shell |
 | A server function call whose payload does not decode | 400 | A plain-text `Bad Request` |
+| A server function call that names no function, such as `/_serverFn/` | 404 | A plain-text `Not Found` from `frontend/apps/webv3/src/server.ts` |
 | A call to a server function this build doesn't have, such as from a tab loaded before a release | 409 | Plain text, with `X-Tadoku-Outdated-Build: true`; the tab reloads once |
 | An unexpected server error | 500 | The error page |
 
@@ -55,8 +56,11 @@ the serialized error the client throws. A route answers 404 for any path paramet
 function's input schema would reject, as the profile statistics route does by
 parsing with that schema; on the server, the rejection would fail the page with
 500.
+TanStack Start fails a call with no function ID before request middleware runs,
+so `frontend/apps/webv3/src/server.ts` answers it with 404 before passing the
+request to Start, reading the ID from the path the way Start does.
 `frontend/apps/webv3/e2e/server-function-input.spec.ts` checks malformed GET
-and POST payloads.
+and POST payloads and calls that name no function.
 
 Each 5xx response writes one `ssr_error` [server log](webv3-server-logs.md)
 line. The edge counts every 5xx toward the Webv3 5xx burst alert, which opens

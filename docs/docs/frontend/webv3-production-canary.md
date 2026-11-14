@@ -67,7 +67,7 @@ out of the artifact because it records typed values.
 A red result delivers through Notify's critical channels. Only the journey's own
 result reaches the gauges: a run that fails before the journey, or is cancelled,
 reports nothing there. A red gauge fires `TadokuWebv3CanaryFailed`, which opens
-an SRE incident that reports to the owner and never rolls Webv3 back; setting `WEBV3_CANARY_ENABLED` to anything else stops the gauges, so
+an SRE incident; while Webv2 is still deployed it reports to the owner and never rolls Webv3 back, and after that it rolls Webv3 back to the previous image. Setting `WEBV3_CANARY_ENABLED` to anything else stops the gauges, so
 silence `TadokuWebv3CanaryStale` first.
 
 ## Running it against a branch

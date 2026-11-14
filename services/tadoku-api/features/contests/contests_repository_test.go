@@ -228,6 +228,7 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 	repository := NewContestsRepository(db.Pool)
 	now := time.Date(2026, time.September, 12, 12, 0, 0, 0, time.UTC)
 	description := "Created through the repository"
+	ownerDisplayName := "Reader One"
 	contest := Contest{
 		ID:                      uuid.MustParse("77777777-7777-4777-8777-777777777777"),
 		ContestStart:            time.Date(2026, time.October, 1, 0, 0, 0, 0, time.UTC),
@@ -236,7 +237,7 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 		Title:                   "October contest",
 		Description:             &description,
 		OwnerUserID:             uuid.MustParse("11111111-1111-4111-8111-111111111111"),
-		OwnerUserDisplayName:    "Reader One",
+		OwnerUserDisplayName:    "must not be persisted",
 		LanguageCodeAllowList:   []string{"jpn"},
 		ActivityTypeIDAllowList: []int32{1, 2},
 		CreatedAt:               now,
@@ -245,7 +246,7 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 
 	if _, err := db.Pool.Exec(tenantCtx, `
 		insert into users (tenant, id, display_name, created_at, updated_at)
-		values ('tadoku/prod', $1, $2, $3, $3)`, contest.OwnerUserID, contest.OwnerUserDisplayName, now); err != nil {
+		values ('tadoku/prod', $1, $2, $3, $3)`, contest.OwnerUserID, ownerDisplayName, now); err != nil {
 		t.Fatal(err)
 	}
 
@@ -261,7 +262,15 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if created.ID != contest.ID || created.OwnerUserDisplayName != "Reader One" || !reflect.DeepEqual(created.LanguageCodeAllowList, []string{"jpn"}) {
+	var storedOwnerDisplayName string
+	if err := db.Pool.QueryRow(tenantCtx, `
+		select owner_user_display_name from contests where id = $1`, contest.ID).Scan(&storedOwnerDisplayName); err != nil {
+		t.Fatal(err)
+	}
+	if storedOwnerDisplayName != "" {
+		t.Errorf("stored owner_user_display_name=%q, want empty", storedOwnerDisplayName)
+	}
+	if created.ID != contest.ID || created.OwnerUserDisplayName != ownerDisplayName || !reflect.DeepEqual(created.LanguageCodeAllowList, []string{"jpn"}) {
 		t.Errorf("created contest=%+v", created)
 	}
 

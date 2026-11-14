@@ -44,11 +44,14 @@ instead, so a lasting mismatch cannot reload in a loop.
 and the loop guard.
 
 `undecodableServerFunctions` in `frontend/apps/webv3/src/start.ts` answers a
-server function call with 400 when TanStack Start fails it before any function
-middleware runs, which happens only when its payload does not decode; the
-origin check in `mutations` never sees such a call. A call that decoded keeps
-its status: one its input validator rejects answers 200 with the serialized
-error the client throws. A route answers 404 for any path parameter its server
+server function call with 400 when TanStack Start answers it with 500 and its
+payload does not decode; the origin check in `mutations` never sees such a
+call. After a 500 it decodes a copy of the payload the way TanStack Start does,
+with `serverFunctionPayloadDecodes` in
+`frontend/apps/webv3/src/lib/server-function-payload.server.ts`, so any other
+failure, including one before function middleware runs, keeps its 500. A call
+that decoded keeps its status: one its input validator rejects answers 200 with
+the serialized error the client throws. A route answers 404 for any path parameter its server
 function's input schema would reject, as the profile statistics route does by
 parsing with that schema; on the server, the rejection would fail the page with
 500.

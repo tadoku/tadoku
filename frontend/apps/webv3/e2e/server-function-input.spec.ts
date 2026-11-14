@@ -1,5 +1,5 @@
 import type { APIResponse, Response } from '@playwright/test'
-import { expect, fillDraft, hydrated, isSaveRequest, openForm, reader, saveButton, test, webv3 } from './logging-fixtures'
+import { expect, expectDraftKept, fillDraft, hydrated, isSaveRequest, openForm, reader, saveButton, test, webv3 } from './logging-fixtures'
 
 /** The headers TanStack Start's client sends with every server function call. */
 const clientHeaders = { 'x-tsr-serverFn': 'true', accept: 'application/x-tss-framed, application/x-ndjson, application/json' }
@@ -38,4 +38,5 @@ test('a saved activity whose request body does not decode answers 400 and keeps 
   await saveButton(page).click()
   await expectBadRequest(await save, 'POST {bad')
   await expect(page).toHaveURL(/\/logs\/new$/)
+  await expectDraftKept(page, '12', 'malformed save')
 })

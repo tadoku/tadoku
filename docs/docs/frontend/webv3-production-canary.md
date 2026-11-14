@@ -1,6 +1,6 @@
 ---
 title: Webv3 production canary
-description: The signed-in journey that checks tadoku.app on a schedule, the account and secrets it needs, how it avoids writes, and where its green or red result is read.
+description: The signed-in journey that checks Webv3 in production on a schedule, the account and secrets it needs, how it avoids writes, and where its green or red result is read.
 sidebar_position: 3
 ---
 
@@ -9,10 +9,11 @@ sidebar_position: 3
 Read this when you change the production canary, create its account or read its
 result.
 
-`.github/workflows/webv3-production-canary.yaml` signs in on
-`https://tadoku.app` through authv2 and runs
+`.github/workflows/webv3-production-canary.yaml` signs in through authv2 on
+the host in its `WEBV3_BASE_URL`, the host Webv3 serves for everyone, and runs
 `frontend/apps/webv3/e2e/production-canary.spec.ts`. The journey loads the
 home page, an official contest, the account's profile and `/logs/new`.
+[Webv3 cutover runbook](webv3-cutover.md) says when the base URL changes.
 
 ## When it runs
 
@@ -58,12 +59,12 @@ out of the artifact because it records typed values.
 | --- | --- |
 | Dashboards | `conclusion` of the newest completed run at `GET https://api.github.com/repos/tadoku/tadoku/actions/workflows/webv3-production-canary.yaml/runs?branch=main&status=completed&per_page=1`; `success` is green and anything else is red |
 | Alerts | Notify topic `webv3-production-canary`: severity `info` for green and `critical` for red, each linking to the run |
-| Auto-revert alert | Gauges `tadoku_webv3_canary_success` and `tadoku_webv3_canary_last_run_timestamp_seconds`, sent to the homelab's Alloy gateway after every run that reached a result |
+| Homelab alerts | Gauges `tadoku_webv3_canary_success` and `tadoku_webv3_canary_last_run_timestamp_seconds`, sent to the homelab's Alloy gateway after every run that reached a result |
 
 A red result delivers through Notify's critical channels. Only the journey's own
 result reaches the gauges: a run that fails before the journey, or is cancelled,
-reports nothing there. A red gauge fires `TadokuWebv3CanaryFailed`, which reverts
-Webv3; setting `WEBV3_CANARY_ENABLED` to anything else stops the gauges, so
+reports nothing there. A red gauge fires `TadokuWebv3CanaryFailed`, which opens
+an SRE incident that reports to the owner and never rolls Webv3 back; setting `WEBV3_CANARY_ENABLED` to anything else stops the gauges, so
 silence `TadokuWebv3CanaryStale` first.
 
 ## Running it against a branch

@@ -84,6 +84,25 @@ const outdatedServerFunctions = createMiddleware().server(async ({ next, handler
   }
 })
 
+/** Server function calls whose payload TanStack Start decoded, which it does before any function middleware runs. */
+const decodedCalls = new WeakSet<Request>()
+
+const decodedPayloads = createMiddleware({ type: 'function' }).server(({ next }) => {
+  decodedCalls.add(getRequest())
+  return next()
+})
+
+/**
+ * Answers a server function call whose payload does not decode with 400 rather than TanStack Start's 500, which would
+ * count as a server error and return the decoder's message. A call that did decode keeps its status.
+ */
+const undecodableServerFunctions = createMiddleware().server(async ({ next, handlerType }) => {
+  if (handlerType !== 'serverFn') return next()
+  const result = await next()
+  if (result.response.status !== 500 || decodedCalls.has(getRequest())) return result
+  return new Response('Bad Request\n', { status: 400, headers: { 'Content-Type': 'text/plain; charset=utf-8' } })
+})
+
 const mutations = createMiddleware({ type: 'function' }).server(async ({ next }) => {
   const request = getRequest()
   if (!['GET', 'HEAD'].includes(request.method)) {
@@ -94,7 +113,14 @@ const mutations = createMiddleware({ type: 'function' }).server(async ({ next })
 })
 
 export const startInstance = createStart(() => ({
-  requestMiddleware: [requestLogging, securityHeaders, privateResponses, trailingSlash, outdatedServerFunctions],
-  functionMiddleware: [mutations],
+  requestMiddleware: [
+    requestLogging,
+    securityHeaders,
+    privateResponses,
+    trailingSlash,
+    outdatedServerFunctions,
+    undecodableServerFunctions,
+  ],
+  functionMiddleware: [decodedPayloads, mutations],
   serverFns: { fetch: serverFunctionFetch },
 }))

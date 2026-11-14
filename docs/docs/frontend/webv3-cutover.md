@@ -182,7 +182,7 @@ Webv3 back; after that, see [A broken release](#rollback).
 ## After the rollback window
 
 - Retire Webv2's Deployment and HTTPRoute, and the `/api/health` entry of the
-  production config contract. Removing `services/frontend-webv2/` from the
+  production config contract. Removing Webv2's service directory from the
   GitOps repository ends the rollout: from then on a Webv3 5xx burst or a red
   canary rolls Webv3 back automatically.
 - Redirect `next.tadoku.app` with a route of its own: move `next.tadoku.app`

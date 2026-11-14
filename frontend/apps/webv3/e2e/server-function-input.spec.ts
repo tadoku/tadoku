@@ -27,6 +27,19 @@ test('a server function call whose payload does not decode answers 400', async (
   }
 })
 
+test('a server function call that names no function answers 404', async ({ request }) => {
+  test.skip(!webv3, 'Set WEBV3_BASE_URL')
+  for (const path of ['/_serverFn/', '/_serverFn//', '/_serverFn/%20', '/_serverFn/?payload=x']) {
+    for (const method of ['GET', 'POST']) {
+      const label = `${method} ${path}`
+      const response = await request.fetch(path, { method, headers: clientHeaders, maxRedirects: 0 })
+      expect(response.status(), label).toBe(404)
+      expect(response.headers()['content-type'], label).toContain('text/plain')
+      expect(await response.text(), label).not.toMatch(/error|\bat /i)
+    }
+  }
+})
+
 test('a saved activity whose request body does not decode answers 400 and keeps the draft', async ({ readerContext }) => {
   test.skip(!webv3 || !reader.email, 'Set development fixture credentials')
   const page = await readerContext.newPage()

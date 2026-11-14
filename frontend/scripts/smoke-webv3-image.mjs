@@ -190,6 +190,13 @@ try {
     child.once('exit', resolve)
   })
   assert.equal(exitCode, 0, 'Browser journeys failed')
+  // client-errors.spec.ts threw in the page and posted reports the endpoint must refuse.
+  const containerLog = docker('logs', container)
+  const clientErrors = containerLog.split('\n').filter(line => line.includes('"event":"client_error"')).map(line => JSON.parse(line))
+  assert(clientErrors.some(record => record.error_type === 'error' && record.error === 'e2e client error' && record.path === '/'),
+    'A browser error was not logged as client_error')
+  assert(!clientErrors.some(record => record.error === 'e2e rejected report'), 'A refused report was logged')
+  assert(!containerLog.includes('e2e-secret'), 'A page query reached the log')
   const newLog = await fetch(`${base}/logs/new`)
   assert.equal(newLog.status, 200)
   assert((await newLog.text()).includes('Sign in to log activity'), 'Anonymous native logging prompt missing')

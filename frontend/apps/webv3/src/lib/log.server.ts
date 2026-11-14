@@ -2,6 +2,7 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 import { randomUUID } from 'node:crypto'
 import * as ApiClient from 'api-client'
 import { z } from 'zod'
+import type { ClientErrorKind } from './client-errors'
 import { urlsForHost } from './urls.server'
 
 /** The name of a generated API operation: a compile-time literal, so caller data cannot become one. */
@@ -81,7 +82,18 @@ export function withRequestLog<T>(request: Request, run: () => T): T {
 function write(
   event: string,
   msg: string,
-  fields: { operation?: ApiOperation; status?: number; latency?: number; error_type?: string; issue_paths?: string[] },
+  fields: {
+    operation?: ApiOperation
+    status?: number
+    latency?: number
+    error_type?: string
+    issue_paths?: string[]
+    error?: string
+    stack?: string
+    path?: string
+    build_id?: string
+    user_agent?: string
+  },
   level: 'ERROR' | 'INFO' = 'ERROR',
 ) {
   const request = requestLog.getStore()
@@ -166,6 +178,30 @@ export function recordSsrError(error: SsrError) {
 
   write('ssr_error', 'server rendering failed', {
     error_type: reportedErrorNames.has(error.errorName) ? error.errorName : 'other',
+  })
+}
+
+type ClientError = {
+  kind: ClientErrorKind
+  message: string
+  stack?: string
+  path: string
+  build: string
+  userAgent: string | undefined
+}
+
+/** A URL's query or fragment can carry a token, so both are dropped from browser text, keeping a stack frame's `:line:column`. */
+const withoutQueries = (text: string) => text.replace(/(https?:\/\/[^\s?#]*)[?#][^\s:)'"]*/g, '$1')
+
+/** Records an error a browser reported, from a page anyone can load, so its free text loses query strings. */
+export function recordClientError({ kind, message, stack, path, build, userAgent }: ClientError) {
+  write('client_error', 'browser error', {
+    error_type: kind,
+    error: withoutQueries(message),
+    stack: stack && withoutQueries(stack),
+    path: path.split(/[?#]/)[0],
+    build_id: build,
+    user_agent: userAgent?.slice(0, 256),
   })
 }
 

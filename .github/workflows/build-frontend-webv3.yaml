@@ -80,7 +80,7 @@ jobs:
         working-directory: frontend
       - run: pnpm --filter webv3 typecheck && pnpm --filter webv3 lint
         working-directory: frontend
-      - run: pnpm --filter webv3 exec playwright install --with-deps chromium
+      - run: pnpm --filter webv3 exec playwright install --with-deps chromium webkit
         working-directory: frontend
       - run: docker build --platform linux/amd64 -f apps/webv3/Dockerfile -t webv3:ci .
         working-directory: frontend
@@ -127,6 +127,7 @@ jobs:
           context: frontend
           file: frontend/apps/webv3/Dockerfile
           platforms: linux/amd64
+          build-args: VITE_BUILD_ID=${{ github.sha }}
           push: true
           tags: |
             ghcr.io/tadoku/tadoku/frontend-webv3:${{ github.sha }}
@@ -230,8 +231,8 @@ jobs:
         working-directory: frontend
       - run: pnpm --filter paper-ui build
         working-directory: frontend
-      # The runner image provides Chromium's system libraries and the Lab CA in its NSS database.
-      - run: pnpm --filter webv3 exec playwright install chromium
+      # The runner image provides Chromium's and WebKit's system libraries and the Lab CA in its NSS database and system bundle.
+      - run: pnpm --filter webv3 exec playwright install chromium webkit
         working-directory: frontend
       # Only the steps that run kubectl or dev-cli receive KUBECONFIG, and only the suite reads the fixture accounts.
       - name: Deploy the gate's branch once the development base runs the candidate

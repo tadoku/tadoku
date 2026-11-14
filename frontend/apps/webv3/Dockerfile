@@ -10,6 +10,8 @@ COPY packages/paper-ui ./packages/paper-ui
 COPY packages/api-client ./packages/api-client
 RUN pnpm install --frozen-lockfile --offline --filter webv3...
 ENV NODE_OPTIONS=--max-old-space-size=3072
+# The commit the browser's error reports name; see docs/docs/frontend/webv3-server-logs.md.
+ARG VITE_BUILD_ID=dev
 RUN pnpm --filter paper-ui build && pnpm --filter webv3 build
 
 FROM docker.io/node:22-bookworm-slim@sha256:5ec23b7c622b00547753bc6ffd78085dd868a68aeb41c8e0a1418f033e13d96d AS release

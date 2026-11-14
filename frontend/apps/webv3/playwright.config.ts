@@ -20,8 +20,22 @@ export default defineConfig({
     baseURL: process.env.WEBV3_BASE_URL || 'http://127.0.0.1:5183',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    // A branch's Vite server sends a page as about 200 module requests, and the development ingress closes an HTTP/2
-    // connection after 1,000 requests, failing whichever are in flight and leaving that page unable to hydrate.
-    launchOptions: { args: ['--disable-http2'] },
   },
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        browserName: 'chromium',
+        // A branch's Vite server sends a page as about 200 module requests, and the development ingress closes an HTTP/2
+        // connection after 1,000 requests, failing whichever are in flight and leaving that page unable to hydrate.
+        launchOptions: { args: ['--disable-http2'] },
+      },
+    },
+    {
+      // Safari's engine, for the journeys a release and the production canary depend on and the browser error reports.
+      name: 'webkit',
+      use: { browserName: 'webkit' },
+      testMatch: /\/(release-journey|production-canary|client-errors)\.spec\.ts$/,
+    },
+  ],
 })

@@ -107,6 +107,9 @@ test.describe('partial outages', () => {
     const { contest } = await participant(page)
     const main = new RegExp(`^/immersion/contests/${contest.id}(\\?|$)`)
     const errorPage = page.getByRole('heading', { name: 'This page couldn’t load' })
+    // The server records a failed main read, so the browser reports nothing for it, nor for hydrating around it.
+    const reports: string[] = []
+    page.on('request', request => { if (new URL(request.url()).pathname === '/client-error') reports.push(request.postData()!) })
 
     const faults: Fault[] = [{ path: main, kind: 'reset' }, { path: main, kind: 'malformed', body: '{"id":42}' }]
     for (const fault of faults) {
@@ -120,6 +123,7 @@ test.describe('partial outages', () => {
 
     inject()
     await hydrated(page)
+    expect(reports).toEqual([])
     await page.getByRole('button', { name: 'Try again' }).click()
     await expect(page.getByRole('heading', { level: 1, name: contest.title })).toBeVisible()
     await expect(errorPage).toHaveCount(0)

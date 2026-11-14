@@ -84,6 +84,22 @@ const outdatedServerFunctions = createMiddleware().server(async ({ next, handler
   }
 })
 
+/**
+ * Answers a server function call whose payload does not decode with 400 rather than TanStack Start's 500, which would
+ * count as a server error and return the decoder's message. It decodes the payload again only after a 500, so every
+ * other failure keeps its 500.
+ */
+const undecodableServerFunctions = createMiddleware().server(async ({ next, handlerType, request }) => {
+  if (handlerType !== 'serverFn') return next()
+  const copy = request.clone()
+  const result = await next()
+  if (result.response.status !== 500) return result
+
+  const { serverFunctionPayloadDecodes } = await import('./lib/server-function-payload.server')
+  if (await serverFunctionPayloadDecodes(copy)) return result
+  return new Response('Bad Request\n', { status: 400, headers: { 'Content-Type': 'text/plain; charset=utf-8' } })
+})
+
 const mutations = createMiddleware({ type: 'function' }).server(async ({ next }) => {
   const request = getRequest()
   if (!['GET', 'HEAD'].includes(request.method)) {
@@ -94,7 +110,14 @@ const mutations = createMiddleware({ type: 'function' }).server(async ({ next })
 })
 
 export const startInstance = createStart(() => ({
-  requestMiddleware: [requestLogging, securityHeaders, privateResponses, trailingSlash, outdatedServerFunctions],
+  requestMiddleware: [
+    requestLogging,
+    securityHeaders,
+    privateResponses,
+    trailingSlash,
+    outdatedServerFunctions,
+    undecodableServerFunctions,
+  ],
   functionMiddleware: [mutations],
   serverFns: { fetch: serverFunctionFetch },
 }))

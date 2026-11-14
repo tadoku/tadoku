@@ -174,9 +174,15 @@ test('an unknown or malformed profile is not found', async ({ page }) => {
   const unknown = randomUUID()
   expect((await page.request.get(`${api}/immersion/users/${unknown}/profile`)).status()).toBe(404)
 
-  for (const path of [`/profile/${unknown}/statistics`, '/profile/not-a-user/statistics', `/profile/${unknown}/statistics/20x6`]) {
+  const paths = [
+    `/profile/${unknown}/statistics`,
+    '/profile/not-a-user/statistics',
+    `/profile/${unknown}/statistics/20x6`,
+    `/profile/${unknown}/statistics/0999`,
+  ]
+  for (const path of paths) {
     const response = await page.goto(path)
-    expect(response?.status()).toBe(404)
+    expect(response?.status(), path).toBe(404)
   }
   await page.goto(`/profile/${unknown}/statistics/${year}`)
   await expect(page.getByRole('heading', { name: 'Profile not found' })).toBeVisible()

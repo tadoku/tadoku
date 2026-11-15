@@ -259,8 +259,9 @@ cookie makes no upstream session lookup.
 including empty or repeated ones, to the request's API gateway through the
 [generated client](api-client.md):
 `GET /identity/session` names the account and `GET /authz/current-user/role`
-gives its tenant role. The gateway host selects the tenant; no incoming header
-can. Anonymous, signed-in, banned and unavailable states are distinct, and a
+gives its tenant role. Both reads start together, so a signed-in page waits for
+one round trip; the role counts only when the session names an account. The
+gateway host selects the tenant; no incoming header can. Anonymous, signed-in, banned and unavailable states are distinct, and a
 failed or malformed answer never shows an account.
 
 Loaders start public reads alongside the viewer lookup and use the viewer only

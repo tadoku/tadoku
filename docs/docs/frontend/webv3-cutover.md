@@ -113,20 +113,24 @@ After Argo CD syncs:
 - **A write on `tadoku.app`.** Signed in on `https://tadoku.app` with your own
   account, not the canary's, whose state the canary depends on, save a log
   without adding it to a contest and then delete it. The canary never writes, so
-  this is the first check that the session cookie, the same-origin check on
-  server functions and Webv3's writes work there. A save whose `/_serverFn/`
+  this is the first server-function write on `tadoku.app`, the first check
+  that Webv3's writes and their same-origin check work there. A save whose `/_serverFn/`
   POST answers 403 `Forbidden` points at that check: it accepts only an `Origin`
   equal to `TADOKU_WEB_URL`'s scheme plus the `Host` header Webv3 receives, and
   a `Sec-Fetch-Site` of `same-origin` when the browser sends one. Check that the
   route does not rewrite the `Host` header and that `TADOKU_WEB_URL` uses
   `https`.
-- **A Webv2 tab opened before the switch.** Open a signed-in Webv2 tab before
-  step 3. Afterwards, click a link in it to a page the tab has not opened and
-  whose link was not on screen, so its script was not prefetched: Webv3 answers
-  that `/_next/static/*` script with 404, and Next falls back to a full page
-  load that must end on Webv3. Links to pages the tab already loaded keep
-  rendering Webv2 until a reload; their reads and writes go to `/api/internal`,
-  which keeps reaching the API. Reload the tab to confirm it then shows Webv3.
+- **A Webv2 tab opened before the switch.** Before step 3, open a Webv2 tab on
+  `tadoku.app`, signed out or with an account outside the `release-webv3-access`
+  segment, since Webv2 sends accounts in it to `next.tadoku.app`. Stay on one
+  kind of page, such as a profile, and do not show or hover links to others,
+  because Next loads and prefetches one script per kind of page. After step 3,
+  click a link in it to a kind of page the tab has not loaded, such as the
+  leaderboard. In the browser's network panel, its `/_next/static/*` script
+  answers 404, and Next falls back to a full page load that must end on Webv3.
+  Kinds of page the tab already loaded keep rendering Webv2 until a reload;
+  their reads and writes go to `/api/internal`, which keeps reaching the API.
+  Reload the tab to confirm it then shows Webv3.
 - Run the canary's signed-in journey against `https://tadoku.app` with a
   `workflow_dispatch` once step 4 has merged, and watch the edge 5xx ratio of the
   `frontend-webv3` HTTPRoute and Webv3's `ssr_error` and `upstream_failure` lines
@@ -167,8 +171,8 @@ After Argo CD syncs:
   Webv3 tabs left open across the rollback send every server-function call, for
   in-app navigation as well as saves, to `/_serverFn/*`, and load route scripts
   from `/assets/*`. Webv2 answers both with a 404 and no outdated-build header,
-  so those tabs neither reload nor work: navigation shows the error page and
-  saves fail until the visitor reloads. Unsaved form input is lost on reload.
+  so the outdated-build reload does not happen: navigation can show the error
+  page, and saves fail until the visitor reloads. Unsaved form input is lost on reload.
 - **A broken release.** While Webv2 is still deployed, nothing rolls Webv3 back
   automatically; rolling back is the owner's decision. Once Webv2 is retired, a
   Webv3 5xx burst or a red canary rolls Webv3 back to the previous image

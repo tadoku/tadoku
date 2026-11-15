@@ -57,6 +57,9 @@ existing browser journeys, then disconnects the API and checks health again.
 It also checks that a container with a bad `TADOKU_API_URL`, or with
 `NODE_EXTRA_CA_CERTS` naming a directory, exits non-zero naming the variable,
 and that `docker stop` lets a page waiting 6.5 seconds on the API finish.
+A profile page whose one read takes 2.5 seconds must write exactly one
+`slow_upstream` and one `slow_request` line, without its query, and the same page
+answered quickly neither; see [slow calls](webv3-server-logs.md#slow-calls).
 It also requests the guide, `/pages/manual`, concurrently with canonical and branch Host headers
 in production and development runtime modes, checking that account links stay
 with their matching origins, native links stay on the requested host and

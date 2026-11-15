@@ -1,15 +1,15 @@
 ---
 title: Webv3 server logs
-description: The structured JSON log lines Webv3's server writes for upstream failures, rendering errors and errors browsers report, their fields, which statuses count as failures, what they can never contain, the request deadline and the signed-out read cache.
+description: The structured JSON log lines Webv3's server writes for upstream failures, rendering errors, errors browsers report and slow upstream calls and responses, their fields, the slow thresholds, which statuses count as failures, what they can never contain, the request deadline and the signed-out read cache.
 ---
 
 # Webv3 server logs
 
-Read this when you record a failure on Webv3's server or query its logs.
+Read this when you record a failure or a slow call on Webv3's server or query its logs.
 
 `frontend/apps/webv3/src/lib/log.server.ts` records upstream failures, server
-rendering errors and errors browsers report, plus one startup marker. Each failure writes one JSON line to
-stdout at level `ERROR`. Once per boot, after the startup checks in
+rendering errors and errors browsers report, plus slow calls and one startup marker. Each failure writes one JSON line to
+stdout at level `ERROR`, and each slow call one at level `WARN`; see [Slow calls](#slow-calls). Once per boot, after the startup checks in
 `frontend/apps/webv3/server/plugins/runtime-env.ts` pass, the server writes one
 `INFO` line with `event` `startup` and `msg` `server started`, and no other
 fields, so every rollout leaves a line. All lines use the field names of Tadoku API's `log/slog` JSON handler
@@ -21,15 +21,17 @@ both.
 | Field | Value |
 | --- | --- |
 | `time`, `level`, `msg` | As slog writes them; `msg` is a fixed string per event |
-| `event` | `upstream_failure`, `ssr_error`, `client_error` or `startup` |
+| `event` | `upstream_failure`, `ssr_error`, `client_error`, `slow_upstream`, `slow_request` or `startup` |
 | `correlation_id` | The request's ID |
 | `host` | The API gateway host this request reads from |
-| `operation` | The generated API operation that failed |
+| `operation` | The generated API operation that failed or was slow |
 | `status` | The HTTP status, when there is one |
-| `latency` | The upstream call's duration in integer nanoseconds, as slog encodes a `time.Duration` |
+| `latency` | The upstream call's or response's duration in integer nanoseconds, as slog encodes a `time.Duration` |
+| `handler` | What answered a slow response: `router` for a page, `serverFn` for a server function, `nitro` for anything else, such as a Nitro route or a static file |
 | `error_type` | `http_status`, `invalid_response`, `timeout` or `network` for an upstream failure; the error's class for a thrown server error, or `other` for a class outside the sink's list; the report's kind for a browser error |
 | `issue_paths` | The first 20 Zod issue paths of an invalid response, as dotted paths; `$` is the response root |
-| `error`, `stack`, `path`, `build_id`, `user_agent` | A browser error's message, stack, page path, build and browser; see [Browser errors](#browser-errors) |
+| `path` | A slow response's request path, or a browser error's page path, never with its query |
+| `error`, `stack`, `build_id`, `user_agent` | A browser error's message, stack, build and browser; see [Browser errors](#browser-errors) |
 
 `recordUpstreamFailure` and `recordSsrError` accept only their typed shapes and copy
 named fields, so their events cannot carry cookies, tokens, request bodies, URLs, error
@@ -38,15 +40,16 @@ A Zod path segment is kept only when it is a field name declared by an object
 schema the API client exports, so a record key and a field of an inline nested
 object become `*`.
 
-`withRequestLog` in `frontend/apps/webv3/src/start.ts` gives every Start request an
-ID through `AsyncLocalStorage`, which records read without callers passing it. A
+`logRequest`, which `frontend/apps/webv3/server/plugins/request-log.ts` wraps around
+every request the server answers, gives each request an ID through
+`AsyncLocalStorage`, which records read without callers passing it. A
 well-formed ingress `X-Request-ID` of 1 to 128 letters, digits, `_` or `-` is
 kept; anything else is replaced with a generated ID. Every upstream call sends
 the request's ID to Tadoku API as `X-Request-Id`, which the API logs as its
 `correlation_id` (`services/tadoku-api/transport/http/observability.go`), so
-both services' lines for one request share it. Records made outside a Start
-request, such as from a Nitro route in `frontend/apps/webv3/server/routes/`, have
-no `correlation_id` or `host`.
+both services' lines for one request share it. Nitro routes in
+`frontend/apps/webv3/server/routes/` get an ID and `host` too; only the startup line
+has neither.
 
 ## Upstream failures
 
@@ -78,6 +81,30 @@ answers 409 and records nothing; see
 errors to stderr, thrown messages included; that stream is not covered by this
 contract.
 
+## Slow calls
+
+Two lines record calls that succeeded but took long, at most one each per call,
+with the thresholds as constants in `log.server.ts`:
+
+| Event | Written when | Fields |
+| --- | --- | --- |
+| `slow_upstream` | An upstream call's answer arrives after more than 1 second and is not recorded as an upstream failure: a success, or one of the statuses adapters answer | `operation`, `status`, `latency` |
+| `slow_request` | A response's body ends more than 2 seconds after its request arrived | `path`, `handler`, `status`, `latency` |
+
+Tadoku API answers a read in milliseconds, so a 1-second answer is already
+degraded while still far from the 8-second [request deadline](#request-deadline).
+Two seconds leaves a page room for its reads and rendering and is a quarter of the
+deadline. A fast call writes nothing.
+
+The same response interceptor that times failures times `slow_upstream` when the
+answer's headers arrive, so a slow answer that then fails validation also writes
+`upstream_failure`; a slow failure otherwise writes only `upstream_failure`, whose
+`latency` shows it. `slow_request` covers pages, server functions and Nitro routes,
+because `logRequest` wraps Nitro's own request handler. Its `latency` ends when
+the client has read the body, so a client that reads slowly can make a response
+slow; a response the client abandons writes nothing. The lines copy only these
+named fields, so they never carry a query, cookie, header or body.
+
 ## Browser errors
 
 The browser reports an error that only happens on the page, which no server
@@ -102,8 +129,7 @@ published image).
 
 The browser sends the report with `navigator.sendBeacon` to `POST /client-error`,
 `frontend/apps/webv3/server/routes/client-error.post.ts`. It is a Nitro route
-outside the Start request middleware, so its line has no `correlation_id` or
-`host`, and anyone can call it. It reads at most 16 KiB of body and validates the
+outside the Start request middleware, and anyone can call it. It reads at most 16 KiB of body and validates the
 report with Zod. An oversized body, invalid JSON or an invalid report answers 400
 and writes nothing, and no input can make it answer 5xx. Each server process
 writes at most 120 lines a minute and answers 429 beyond that. The server, not
@@ -125,6 +151,9 @@ records for the canonical deployment:
   |~ "upstream_failure|ssr_error"
   | json body="body" | line_format "{{.body}}" | json
 ```
+
+Slow calls use the same selector with `|~ "slow_upstream|slow_request"`; join a
+slow page to its slow reads on `correlation_id`.
 
 Browser errors, grouped by kind and message:
 

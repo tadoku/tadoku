@@ -9,7 +9,7 @@ export const contest = {
   language_code_allow_list: process.env.WEBV3_LANGUAGE_FIXTURE === 'array' ? ['jpn'] : null,
   allowed_activities: [], activity_type_id_allow_list: [],
 }
-const learner = { id: '01000000-0000-0000-0000-000000000000', display_name: 'Fixture learner', created_at: '2024-03-01T08:00:00Z' }
+export const learner = { id: '01000000-0000-0000-0000-000000000000', display_name: 'Fixture learner', created_at: '2024-03-01T08:00:00Z' }
 // The learner's profile year: one Japanese reading day in whichever year is requested.
 function profileYear(kind, year) {
   const score = 12.5
@@ -49,12 +49,16 @@ const announcement = {
 }
 export const writes = []
 /**
- * `delayMs` holds every answer that long, so a check can keep a page request open; `status` answers every read with
- * that status instead of data. `requestIds` collects each read's `X-Request-Id`.
+ * `delayMs` holds every answer whose path starts with `delayPath` that long, so a check can keep a page request open or
+ * slow one read; `status` answers every read with that status instead of data. `requestIds` collects each read's
+ * `X-Request-Id`.
  */
-export const fixtureOptions = { delayMs: 0, status: 0 }
+export const fixtureOptions = { delayMs: 0, delayPath: '/', status: 0 }
 export const requestIds = []
-export const fixture = createServer((request, response) => setTimeout(() => answer(request, response), fixtureOptions.delayMs))
+export const fixture = createServer((request, response) => setTimeout(
+  () => answer(request, response),
+  request.url.startsWith(fixtureOptions.delayPath) ? fixtureOptions.delayMs : 0,
+))
 function answer(request, response) {
   requestIds.push(request.headers['x-request-id'])
   if (fixtureOptions.status) {

@@ -5,7 +5,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { promisify } from 'node:util'
 import { serverFunctionId } from '../apps/webv3/server-function-id.mjs'
-import { apiPort, contest, fixture, fixtureOptions, requestIds, writes } from './smoke-webv3-fixture.mjs'
+import { apiPort, contest, fixture, fixtureOptions, learner, requestIds, writes } from './smoke-webv3-fixture.mjs'
 
 const image = process.argv[2]
 assert(image, 'Usage: node scripts/smoke-webv3-image.mjs <image>')
@@ -149,6 +149,35 @@ try {
     const lines = docker('logs', container).split('\n').filter(line => line.includes(`"correlation_id":"${id}"`))
     assert(lines.some(line => JSON.parse(line).event === 'upstream_failure'), `No failure line carries ${id}`)
   }
+  // One read slower than slow_upstream's 1 second makes a page slower than slow_request's 2: one line of each, with
+  // the page's path but not its query. The same page answered quickly writes neither.
+  const year = new Date().getUTCFullYear()
+  const statistics = `/profile/${learner.id}/statistics/${year}`
+  for (const [id, delayMs] of [['smoke-slow', 2_500], ['smoke-fast', 0]]) {
+    Object.assign(fixtureOptions, { delayMs, delayPath: `/immersion/users/${learner.id}/activity-split/` })
+    try {
+      const page = await fetch(`${base}${statistics}?smoke-secret=1`, {
+        headers: { 'X-Request-ID': id }, signal: AbortSignal.timeout(15_000),
+      })
+      assert.equal(page.status, 200, `${id} answered ${page.status}`)
+      await page.text()
+    } finally {
+      Object.assign(fixtureOptions, { delayMs: 0, delayPath: '/' })
+    }
+  }
+  const timingLines = docker('logs', container).split('\n')
+    .filter(line => /"correlation_id":"smoke-(slow|fast)"/.test(line)).map(line => JSON.parse(line))
+  const slowLines = timingLines.filter(record => record.correlation_id === 'smoke-slow')
+  assert.deepEqual(slowLines.map(({ level, event, operation, status }) => ({ level, event, operation, status })), [
+    { level: 'WARN', event: 'slow_upstream', operation: 'immersionProfileYearlyActivitySplitByUserId', status: 200 },
+    { level: 'WARN', event: 'slow_request', operation: undefined, status: 200 },
+  ], `A delayed read logged ${JSON.stringify(slowLines)}`)
+  const [slowRead, slowPage] = slowLines
+  assert(slowRead.latency > 2_000_000_000 && slowPage.latency > slowRead.latency, 'Slow lines lost their latency')
+  assert.equal(slowPage.path, statistics)
+  assert.equal(slowPage.handler, 'router')
+  assert(!JSON.stringify(slowLines).includes('smoke-secret'), 'A slow line logged the query')
+  assert.deepEqual(timingLines.filter(record => record.correlation_id === 'smoke-fast'), [], 'A fast page logged a line')
   const refused = await fetch(`${base}/logout`, { method: 'POST', headers: { Origin: 'https://evil.tadoku.app', 'Sec-Fetch-Site': 'same-site' }, redirect: 'manual' })
   assert.equal(refused.status, 403)
   // The synthetic API has no identity routes, so a session cookie meets an unavailable identity service.

@@ -1,4 +1,4 @@
-import type { BrowserContext, Page } from '@playwright/test'
+import type { BrowserContext, Locator, Page } from '@playwright/test'
 import {
   addTags,
   amountInput,
@@ -200,3 +200,29 @@ test('a learner without ongoing registrations goes from Create straight to the s
   const saved = await record(page.context(), new URL(page.url()).pathname.split('/')[2])
   expect(saved).toMatchObject({ amount: 3, registrations: [] })
 })
+
+// Firefox keeps pasted whitespace, which empties a number input; Chromium and WebKit trim it natively. The suite runs
+// neither Firefox nor a real clipboard, so the test sends the paste event Firefox would and lets the form handle it.
+async function paste(input: Locator, text: string) {
+  await input.evaluate((element, value) => {
+    const clipboardData = new DataTransfer()
+    clipboardData.setData('text/plain', value)
+    element.dispatchEvent(new ClipboardEvent('paste', { clipboardData, bubbles: true, cancelable: true }))
+  }, text)
+}
+
+for (const [amount, minutes] of [[' 12 ', '30\n'], ['12\n', '\u00a030\t']]) {
+  test(`a pasted amount ${JSON.stringify(amount)} and time ${JSON.stringify(minutes)} are trimmed and saved`, async ({ page, readerContext }) => {
+    test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
+    await openForm(page)
+    await activity(page).selectOption({ label: 'Reading' })
+
+    await paste(amountInput(page), amount)
+    await paste(timeSpent(page), minutes)
+    await expect(amountInput(page)).toHaveValue('12')
+    await expect(timeSpent(page)).toHaveValue('30')
+
+    const id = await createLog(page)
+    expect(await record(readerContext, id)).toMatchObject({ amount: 12, duration_seconds: 1800 })
+  })
+}

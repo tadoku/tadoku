@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { EmptyState, buttonClassName } from 'paper-ui'
-import { z } from 'zod'
+import { z } from '../../../../../lib/zod'
 import { ContestProfile } from '../../../../../components/ContestProfile'
 import { PendingView } from '../../../../../components/StatusViews'
 import { contestLogsQuery, contestProfileQuery, contestSummaryQuery } from '../../../../../lib/contest-activity'

@@ -1,5 +1,5 @@
 import { createFileRoute, notFound } from '@tanstack/react-router'
-import { z } from 'zod'
+import { z } from '../../../../lib/zod'
 import { ContestNotFound, ContestPage } from '../../../../components/ContestPage'
 import { contestBoardQuery, pageNumber, standingsQuery } from '../../../../lib/leaderboard'
 import { registrationQuery } from '../../../../lib/registration'

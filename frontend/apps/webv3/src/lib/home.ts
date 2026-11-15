@@ -1,6 +1,6 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'
 import { createServerFn } from '@tanstack/react-start'
-import { z } from 'zod'
+import { z } from './zod'
 import type { ImmersionContest, ImmersionContestSummary, ImmersionContestView, ImmersionLeaderboard } from 'api-client'
 import { latestBoardQuery, type Read } from './leaderboard'
 import { profileStatisticsQuery, recentLogsQuery } from './profile'

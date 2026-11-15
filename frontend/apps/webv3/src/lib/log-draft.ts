@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from './zod'
 import type { ImmersionLog, LogOptions, Registration } from './logs'
 
 /**

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { EmptyState } from 'paper-ui'
-import { z } from 'zod'
+import { z } from '../../../../lib/zod'
 import { ProfileActivity } from '../../../../components/ProfileActivity'
 import { PendingView } from '../../../../components/StatusViews'
 import { pageNumber } from '../../../../lib/leaderboard'

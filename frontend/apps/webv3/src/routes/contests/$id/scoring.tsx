@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
 import { Button, EmptyState, buttonClassName } from 'paper-ui'
-import { z } from 'zod'
+import { z } from '../../../lib/zod'
 import { ContestNotFound } from '../../../components/ContestPage'
 import { ContestScoring } from '../../../components/ContestScoring'
 import { utcToday } from '../../../lib/format'

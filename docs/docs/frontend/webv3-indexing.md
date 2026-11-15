@@ -27,6 +27,13 @@ no report endpoint, so a browser reports violations only in its console. Built
 assets and the Nitro routes in `frontend/apps/webv3/server/routes/`, such as
 `/healthz` and `/robots.txt`, do not get these headers.
 
+The policy forbids evaluating strings as code. Zod probes for that with
+`new Function` when a schema is built, so Webv3 imports `z` only from
+`frontend/apps/webv3/src/lib/zod.ts`, which turns on Zod's `jitless` mode first.
+Importing `zod` anywhere else fails lint: in a production bundle, a
+configuration imported once from an entry runs after the shared chunks whose
+schemas it was meant to precede.
+
 Every response gets a new nonce. `frontend/apps/webv3/src/router.tsx` passes
 it to the router, which writes it on its own scripts and in a `csp-nonce` meta
 tag that the browser's router reads back. An inline script must get the nonce
@@ -70,6 +77,7 @@ description to 160 characters.
 ## Checks
 
 `frontend/apps/webv3/e2e/indexing.spec.ts` checks the headers, the nonce, the
-canonical link, robots and the metadata. Its web-host case requests the server
+canonical link, robots and the metadata. `frontend/apps/webv3/e2e/home.spec.ts`
+fails on any CSP violation the homepage reports while it hydrates. Its web-host case requests the server
 with the web host's `Host` header, so it runs only against a plain-HTTP server
 such as the image smoke and skips on a branch host.

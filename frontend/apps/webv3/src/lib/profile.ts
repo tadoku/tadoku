@@ -7,7 +7,7 @@ import type {
   ImmersionUserActivity,
   ImmersionUserProfile,
 } from 'api-client'
-import { z } from 'zod'
+import { z } from './zod'
 
 export const contestPageSize = 50
 /** Profile and contest log lists both show 25 logs per page. */

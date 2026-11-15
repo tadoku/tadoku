@@ -1,7 +1,7 @@
 import { queryOptions } from '@tanstack/react-query'
 import { createServerFn } from '@tanstack/react-start'
 import type { ImmersionContestView, ImmersionLeaderboard, ImmersionLeaderboardEntry } from 'api-client'
-import { z } from 'zod'
+import { z } from './zod'
 import type { Identified } from './home'
 
 /** Whose scores a standings table ranks. Global boards count official contests only. */

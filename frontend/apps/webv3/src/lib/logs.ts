@@ -7,7 +7,7 @@ import type {
   ImmersionLogConfigurationOptions,
   ImmersionTagSuggestion,
 } from 'api-client'
-import { z } from 'zod'
+import { z } from './zod'
 import {
   logContestsUpdateSchema,
   logUpdateSchema,

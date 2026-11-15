@@ -1,7 +1,7 @@
 import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createServerFn } from '@tanstack/react-start'
 import type { ImmersionLanguage } from 'api-client'
-import { z } from 'zod'
+import { z } from './zod'
 import type { Read } from './leaderboard'
 import { viewerKey, viewerQueryOptions } from './session'
 

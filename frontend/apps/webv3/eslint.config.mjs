@@ -20,6 +20,16 @@ export default tseslint.config(
     },
   },
   {
+    files: ['src/**/*.{ts,tsx}', 'server/**/*.ts'],
+    ignores: ['src/lib/zod.ts'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        paths: [{ name: 'zod', message: "Import z from src/lib/zod.ts, which turns off Zod's eval probe before any schema is built." }],
+        patterns: [{ group: ['zod/*'], message: 'Import z from src/lib/zod.ts.' }],
+      }],
+    },
+  },
+  {
     files: ['src/routes/**/*.tsx'],
     rules: { 'react-refresh/only-export-components': 'off' },
   },

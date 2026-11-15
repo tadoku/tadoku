@@ -1,5 +1,5 @@
 import { defineHandler } from 'nitro'
-import { z } from 'zod'
+import { z } from '../../src/lib/zod'
 import { clientErrorKinds, clientErrorLimits } from '../../src/lib/client-errors'
 import { recordClientError } from '../../src/lib/log.server'
 

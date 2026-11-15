@@ -17,9 +17,12 @@ the introduction and how Tadoku works over a decorative activity grid that
 fades out behind the hero's text; signed-in learners get a plain page. A
 signed-in learner who has cleared "Getting going" sees their past 30 UTC days beside the round's board: points,
 today's points, streak, active days and a 13-week activity map. They have
-cleared it once their activity shows 5 active days within 30, or two active
-days in a row while in a contest, and keep the map from then on.
-Until then the column lists those steps. The page reads last year's
+cleared it once their activity in any year since their account was created
+shows 5 active days within 30, or two active days in a row while in a contest,
+and keep the map from then on. Until then the column lists those steps. The
+server reads every year's activity to decide, and once the learner has cleared
+it sets a long-lived, HTTP-only `home_cleared_<account ID>` cookie, so later
+loads in that browser render the map without reading the history again. The page reads last year's
 statistics too while the map reaches back into last year. The board marks
 their own row at any rank and offers Join while they can still join. Below come
 this year's running and upcoming contests other than the board's, ending
@@ -241,7 +244,9 @@ Webv2 to Webv3 before the host switch, and how to turn it off.
 browser suite and the fixture accounts its specs use. `home-values.spec.ts`
 compares a signed-in learner's past 30 days, activity map, board row and newest
 logs on the homepage with the API, and checks that a new account keeps Getting going
-until every step is done. `webv2-urls.spec.ts` opens every Webv2 route shape,
+until every step is done. `home-history.spec.ts` checks that a learner who cleared
+it only in an earlier year sees the map, and that the cookie spares later loads the
+history read. `webv2-urls.spec.ts` opens every Webv2 route shape,
 with and without page numbers, without JavaScript, and checks page links,
 `/contests`'s and trailing slashes' permanent redirects and session-only redirects.
 

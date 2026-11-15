@@ -6,7 +6,7 @@ import type { ReactNode } from 'react'
 import { contestsHref } from '../lib/contests'
 import { dayAndMonth, formatDay, pointsUnit, scoreFormat, utcToday } from '../lib/format'
 import { useLinks } from '../lib/links'
-import { lastYearStatisticsQuery, memberDashboardQueries } from '../lib/home'
+import { gettingGoingClearedQuery, lastYearStatisticsQuery, memberDashboardQueries } from '../lib/home'
 import { activeDaysGoal, activityWeeks, homeActivity, readsLastYear } from '../lib/recent-activity'
 import type { Viewer } from '../lib/session'
 import { LogEntries } from './LogEntries'
@@ -30,13 +30,14 @@ export function MemberActivity({ viewer, year }: { viewer: SignedIn; year: numbe
   const statistics = useQuery(memberDashboardQueries(viewer, year)[0]).data
   const today = statistics?.status === 'found' ? statistics.today : utcToday()
   const lastYear = useQuery({ ...lastYearStatisticsQuery(viewer, year), enabled: readsLastYear(today) }).data
+  const clearedBefore = useQuery(gettingGoingClearedQuery(viewer)).data === true
   if (statistics?.status !== 'found' || !statistics.activity.ok) return null
 
   // Last year's activity is a bonus: when it can't be read, the window and history simply start on 1 January.
   const previous = lastYear?.status === 'found' && readsLastYear(today) ? lastYear : undefined
   const days = [...(previous?.activity.ok ? previous.activity.data.scores : []), ...statistics.activity.data.scores]
   const joinedContest = [statistics, previous].some(read => read?.contests.ok && read.contests.data.total > 0)
-  const activity = homeActivity(new Map(days.map(day => [day.date, day.score])), today, joinedContest)
+  const activity = homeActivity(new Map(days.map(day => [day.date, day.score])), today, joinedContest, clearedBefore)
   const title = activity.kind === 'active' ? 'Past 30 days' : 'Getting going'
 
   return (

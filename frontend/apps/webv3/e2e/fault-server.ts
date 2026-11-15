@@ -3,13 +3,14 @@ import { createServer, type IncomingMessage } from 'node:http'
 import type { AddressInfo } from 'node:net'
 
 /**
- * A failure the proxy answers in place of the API for requests whose path and query match `path`, counting each one in
- * `hits`.
+ * A failure, or a stand-in `json` answer, the proxy gives in place of the API for requests whose path and query match
+ * `path`, counting each one in `hits`.
  */
 export type Fault = { path: RegExp; hits?: number } & (
   | { kind: 'status'; status: number }
   | { kind: 'reset' }
   | { kind: 'malformed'; body: string }
+  | { kind: 'json'; body: unknown }
   | { kind: 'slow'; delayMs: number }
 )
 
@@ -41,6 +42,7 @@ export async function faultyWebv3(appDir: string, upstream: string) {
     if (fault?.kind === 'reset') return request.socket.destroy()
     if (fault?.kind === 'status') return response.writeHead(fault.status, { 'Content-Type': 'application/json' }).end('{}')
     if (fault?.kind === 'malformed') return response.writeHead(200, { 'Content-Type': 'application/json' }).end(fault.body)
+    if (fault?.kind === 'json') return response.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify(fault.body))
     if (fault?.kind === 'slow') await new Promise(resolve => setTimeout(resolve, fault.delayMs))
 
     try {

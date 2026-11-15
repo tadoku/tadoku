@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { HomePage } from '../components/HomePage'
-import { homeBoardQuery, lastYearStatisticsQuery, memberDashboardQueries, nextContestQuery } from '../lib/home'
+import { gettingGoingClearedQuery, homeBoardQuery, lastYearStatisticsQuery, memberDashboardQueries, nextContestQuery } from '../lib/home'
 import { utcToday } from '../lib/format'
 import { readsLastYear } from '../lib/recent-activity'
 import { contestEntryQuery, latestBoardQuery } from '../lib/leaderboard'
@@ -32,6 +32,7 @@ export const Route = createFileRoute('/')({
         return Promise.all([
           queryClient.prefetchQuery(statistics),
           queryClient.prefetchQuery(logs),
+          queryClient.prefetchQuery(gettingGoingClearedQuery(viewer)),
           readsLastYear(utcToday()) ? queryClient.prefetchQuery(lastYearStatisticsQuery(viewer, year)) : null,
         ])
       }),

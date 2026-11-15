@@ -178,11 +178,26 @@ test('an administrator removes a log from a contest with a reason; a participant
   await own.close()
 
   const page = await adminContext.newPage()
+  // A count of one takes the singular noun.
+  await page.goto(updatesPath(contest.id, 2))
+  await expect(page.getByText('This activity has 1 log.', { exact: true })).toBeVisible()
+  await page.goto(`/contests/${contest.id}/leaderboard/2`)
+  await expect(page.getByText('The standings have 1 participant.', { exact: true })).toBeVisible()
+
   await page.goto(updatesPath(contest.id))
   await expect(activityEntries(page)).toHaveCount(1)
   await expect(removeButtons(page)).toHaveCount(1)
   await removeButtons(page).click()
   const dialog = page.getByRole('dialog', { name: 'Remove log from contest' })
+  // As in Paper's other dialogs, Cancel leads and the confirmation ends the actions row at the dialog's far edge.
+  await expect(dialog).toBeVisible()
+  await page.waitForFunction(() => document.getAnimations().every(animation => animation.playState !== 'running'))
+  const cancel = await dialog.getByRole('button', { name: 'Cancel' }).boundingBox()
+  const confirm = await dialog.getByRole('button', { name: 'Yes, remove it' }).boundingBox()
+  const frame = await dialog.boundingBox()
+  expect(Math.abs(cancel!.y - confirm!.y)).toBeLessThan(2)
+  expect(confirm!.x - (cancel!.x + cancel!.width)).toBeGreaterThanOrEqual(8)
+  expect(frame!.x + frame!.width - (confirm!.x + confirm!.width)).toBeLessThanOrEqual(32)
   await dialog.getByRole('button', { name: 'Yes, remove it' }).click()
   await expect(dialog.getByText('Give a reason for removing this log.')).toBeVisible()
   await dialog.getByRole('button', { name: 'Cancel' }).click()

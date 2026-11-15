@@ -188,7 +188,7 @@ function ContestsForm({ log, registrations, viewerId }: {
                 {finished.map(submission => (
                   <p key={submission.registration_id}>
                     {submission.title} has finished. Its saved score
-                    {submission.score === undefined ? '' : ` of ${submission.score} points`} stays.
+                    {submission.score === undefined ? '' : ` of ${scoreFormat.format(submission.score)} ${pointsUnit(submission.score)}`} stays.
                   </p>
                 ))}
               </fieldset>

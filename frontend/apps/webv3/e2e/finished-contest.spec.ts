@@ -69,7 +69,7 @@ test('a finished contest keeps its score after an edit, refuses deletion and kee
 
   // Saving the contest step without choices keeps the finished submission and its saved score.
   await page.goto(`/logs/${round.logId}/contests`)
-  await expect(page.getByText(`Dev Finished Round has finished. Its saved score of ${round.score} points stays.`)).toBeVisible()
+  await expect(page.getByText(`Dev Finished Round has finished. Its saved score of ${score.format(round.score)} points stays.`)).toBeVisible()
   await expect(page.getByRole('checkbox', { name: 'Dev Finished Round' })).toHaveCount(0)
   const save = page.getByRole('button', { name: 'Save submissions', exact: true })
   if (await save.count()) {

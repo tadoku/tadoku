@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { Button, EmptyState, PageHeader, Pagination, prose } from 'paper-ui'
 import { blogHref, blogPageSize, type BlogPage, type BlogPost, type CmsPage, type SanitizedHtml } from '../lib/content'
-import { formatDate } from '../lib/format'
+import { countLabel, formatDate } from '../lib/format'
 import Markdown from './Markdown'
 import { renderLink } from './router-link'
 
@@ -73,7 +73,7 @@ export function BlogList({ blog, page }: { blog: BlogPage; page: number }) {
         <EmptyState
           headingLevel={2}
           title={`There is no page ${page}`}
-          description={`The blog has ${totalPages} ${totalPages === 1 ? 'page' : 'pages'}.`}
+          description={`The blog has ${countLabel(totalPages, 'page')}.`}
           actions={<Link to={blogHref.list()} className="text-link hover:text-link-hover">Newest posts</Link>}
         />
       ) : null}

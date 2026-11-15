@@ -77,7 +77,8 @@ description to 160 characters.
 ## Checks
 
 `frontend/apps/webv3/e2e/indexing.spec.ts` checks the headers, the nonce, the
-canonical link, robots and the metadata. `frontend/apps/webv3/e2e/home.spec.ts`
-fails on any CSP violation the homepage reports while it hydrates. Its web-host case requests the server
+canonical link, robots and the metadata. Its web-host case requests the server
 with the web host's `Host` header, so it runs only against a plain-HTTP server
 such as the image smoke and skips on a branch host.
+`frontend/apps/webv3/e2e/home.spec.ts` fails on any CSP violation the homepage
+reports while it hydrates.

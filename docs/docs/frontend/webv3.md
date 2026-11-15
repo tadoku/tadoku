@@ -260,7 +260,9 @@ including empty or repeated ones, to the request's API gateway through the
 [generated client](api-client.md):
 `GET /identity/session` names the account and `GET /authz/current-user/role`
 gives its tenant role. Both reads start together, so a signed-in page waits for
-one round trip; the role counts only when the session names an account. The
+one round trip; the role counts only when the session names an account. A
+cookie whose session has expired therefore also costs a role read, and a failed
+one is still recorded as an upstream failure. The
 gateway host selects the tenant; no incoming header can. Anonymous, signed-in, banned and unavailable states are distinct, and a
 failed or malformed answer never shows an account.
 

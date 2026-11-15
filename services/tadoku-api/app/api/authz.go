@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
@@ -41,6 +42,7 @@ func (a *Application) UpdateRole(ctx context.Context, parameters RoleUpdateParam
 	if err != nil {
 		return err
 	}
+	parameters.Reason = strings.TrimSpace(parameters.Reason)
 	update, err := a.authorization.PrepareRoleUpdate(ctx, parameters)
 	if err != nil {
 		return err

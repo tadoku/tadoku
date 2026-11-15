@@ -28,13 +28,14 @@ current UTC year. Pages hold 50 participants.
   the scope caption and the page and profile links.
 - `frontend/apps/webv3/src/components/LeaderboardPage.tsx` holds the shared title
   and period tabs and the yearly and all-time boards, which count official
-  contests only, say so beside the table and list the years since 2020.
+  contests only, say so beside the table and step between the years since 2020
+  with a year stepper.
   `frontend/apps/webv3/src/components/ContestLeaderboard.tsx` composes the latest
   official contest with its join action and conditions. The
   [contest page](webv3-contest.md) shares this board.
 
 Every board names its scope: the latest board titles its contest, and the
-selected period and year tabs name the yearly and all-time boards, whose
+selected period tab and the year stepper name the yearly and all-time boards, whose
 standings region carries the scope as its accessible name. The contest's
 phase follows the UTC day the board was read, as on the homepage. Yearly and
 all-time participants link to their Webv3 [profile statistics](webv3-profile.md);

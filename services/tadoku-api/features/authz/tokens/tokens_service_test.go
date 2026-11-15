@@ -40,44 +40,62 @@ func TestRevokeRequiresTenant(t *testing.T) {
 	}
 }
 
-func TestCreateTrimsNameBeforeValidateAndPersist(t *testing.T) {
+func TestCreateStoresValidNamesUnchanged(t *testing.T) {
 	t.Parallel()
 
+	names := []string{
+		"ops",
+		"email-debug_2026",
+		"a/b=c+d[e](f){g}",
+		strings.Repeat("x", 128),
+	}
+	for _, name := range names {
+		repo := &createRepositoryStub{}
+		issued, err := createTokenNamed(t, repo, name)
+		if err != nil {
+			t.Fatalf("create %q: %v", name, err)
+		}
+		if issued.Token.Name != name || repo.insertedName != name {
+			t.Errorf("create %q stored %q (insert %q), want unchanged", name, issued.Token.Name, repo.insertedName)
+		}
+	}
+}
+
+func TestCreateRejectsInvalidNamesWithoutInsert(t *testing.T) {
+	t.Parallel()
+
+	names := []string{
+		"",
+		"email debug",
+		"  ops  ",
+		"ops\t",
+		"ops\n",
+		"ops!",
+		"ops.prod",
+		"ops@tadoku",
+		"été",
+		strings.Repeat("x", 129),
+	}
+	for _, name := range names {
+		repo := &createRepositoryStub{}
+		_, err := createTokenNamed(t, repo, name)
+		if errx.KindOf(err) != errx.InvalidInput {
+			t.Errorf("create %q = %v, want invalid input", name, err)
+		}
+		if repo.inserts != 0 {
+			t.Errorf("create %q inserted %d times, want no insert", name, repo.inserts)
+		}
+	}
+}
+
+func createTokenNamed(t *testing.T, repo *createRepositoryStub, name string) (Issued, error) {
+	t.Helper()
+
 	ctx := tenant.WithKey(t.Context(), tenant.Production())
-	repo := &createRepositoryStub{}
 	service := &Service{repository: repo, production: false}
-	request := Create{Scopes: []Scope{EmailRead}, ExpiresIn: time.Hour}
+	request := Create{Name: name, Scopes: []Scope{EmailRead}, ExpiresIn: time.Hour}
 
-	request.Name = "  ops  "
-	issued, err := service.Create(ctx, request)
-	if err != nil {
-		t.Fatalf("padded name create: %v", err)
-	}
-	if issued.Token.Name != "ops" || repo.insertedName != "ops" {
-		t.Errorf("padded name stored %q (insert %q), want %q", issued.Token.Name, repo.insertedName, "ops")
-	}
-
-	request.Name = strings.Repeat(" ", 60) + "ops" + strings.Repeat(" ", 70)
-	if len(request.Name) <= 128 {
-		t.Fatalf("heavyPad len = %d, want > 128 raw bytes", len(request.Name))
-	}
-	issued, err = service.Create(ctx, request)
-	if err != nil {
-		t.Fatalf("heavy padding create: %v", err)
-	}
-	if issued.Token.Name != "ops" || repo.insertedName != "ops" {
-		t.Errorf("heavy padding stored %q (insert %q), want %q", issued.Token.Name, repo.insertedName, "ops")
-	}
-
-	insertsBefore := repo.inserts
-	request.Name = "   \t  "
-	_, err = service.Create(ctx, request)
-	if errx.KindOf(err) != errx.InvalidInput || err.Error() != "token name must contain 1–128 bytes" {
-		t.Errorf("whitespace-only name = %v, want invalid input token name must contain 1–128 bytes", err)
-	}
-	if repo.inserts != insertsBefore {
-		t.Errorf("whitespace-only name inserted %d times, want no insert", repo.inserts-insertsBefore)
-	}
+	return service.Create(ctx, request)
 }
 
 type createRepositoryStub struct {

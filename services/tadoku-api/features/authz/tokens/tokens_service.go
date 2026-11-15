@@ -86,9 +86,10 @@ func (s *Service) Create(ctx context.Context, request Create) (Issued, error) {
 		return Issued{}, errx.NewForbiddenError("access tokens are unavailable for tadoku/prod in production")
 	}
 
-	name := strings.TrimSpace(request.Name)
-	if name == "" || len(name) > 128 {
-		return Issued{}, errx.NewInvalidInputError("token name must contain 1–128 bytes")
+	if !validTokenName(request.Name) {
+		return Issued{}, errx.NewInvalidInputError(
+			"token name must be 1–128 ASCII letters, digits or -_/=+[](){} characters",
+		)
 	}
 
 	if !emailReadOnly(request.Scopes) {
@@ -115,7 +116,7 @@ func (s *Service) Create(ctx context.Context, request Create) (Issued, error) {
 	now := timex.Now(ctx)
 	row := Token{
 		ID:        uuidx.New(ctx),
-		Name:      name,
+		Name:      request.Name,
 		Scopes:    request.Scopes,
 		CreatedAt: now,
 		ExpiresAt: now.Add(request.ExpiresIn),
@@ -188,4 +189,19 @@ func tokenTenant(raw string) (tenant.Key, error) {
 	}
 
 	return key, nil
+}
+
+func validTokenName(name string) bool {
+	if name == "" || len(name) > 128 {
+		return false
+	}
+
+	for _, c := range []byte(name) {
+		isAlnum := c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9'
+		if !isAlnum && !strings.ContainsRune("-_/=+[](){}", rune(c)) {
+			return false
+		}
+	}
+
+	return true
 }

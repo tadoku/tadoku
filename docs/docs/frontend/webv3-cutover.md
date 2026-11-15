@@ -110,6 +110,17 @@ After Argo CD syncs:
 - `next.tadoku.app` answers `X-Robots-Tag: noindex` and its `robots.txt` answers
   `Disallow: /`.
 - An `/api/internal` read and signing in and out through the account host work.
+- **A write on `tadoku.app`.** Signed in with a test account on
+  `https://tadoku.app`, save a log and then delete it. No automated run
+  exercises the apex host, so this is the first check that the session cookie,
+  the same-origin check on server functions and Webv3's writes work there. A
+  failed save that answers 403 points at the origin check: compare
+  `TADOKU_WEB_URL` with the host.
+- **A Webv2 tab opened before the switch.** Keep a signed-in Webv2 tab open
+  across step 3, then click a link in it. Webv3 answers Webv2's `/_next/*`
+  scripts and data with 404, so the tab must end on Webv3 after a full page
+  load; if it shows a broken page instead, reloading fixes it. Webv2's API calls
+  go to `/api/internal`, which keeps reaching the API.
 - Run the canary's signed-in journey against `https://tadoku.app` with a
   `workflow_dispatch` once step 4 has merged, and watch the edge 5xx ratio of the
   `frontend-webv3` HTTPRoute and Webv3's `ssr_error` and `upstream_failure` lines
@@ -144,7 +155,12 @@ After Argo CD syncs:
      listener's list.
 
   This needs Webv2 still deployed at its last image, so do not retire it while a
-  rollback is possible. If Webv3 itself is at fault, also empty the
+  rollback is possible.
+
+  Webv3 tabs left open across the rollback send server-function calls to
+  `/_serverFn/*`, which Webv2 answers with a 404 that has no outdated-build
+  header. So those tabs do not reload by themselves, and a save from them fails
+  until the visitor reloads the page; any unsaved form input is lost on reload. If Webv3 itself is at fault, also empty the
   `release-webv3-access` segment, or flagged accounts are sent back to it.
 - **A broken release.** While Webv2 is still deployed, nothing rolls Webv3 back
   automatically; rolling back is the owner's decision. Once Webv2 is retired, a

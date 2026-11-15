@@ -29,14 +29,14 @@ function AmountForm({ control, inputProps }: { control: "AmountWithUnit" | "Inpu
   );
 }
 
-function paste(text: string) {
-  return fireEvent.paste(screen.getByRole("spinbutton", { name: "Amount" }), { clipboardData: { getData: () => text } });
-}
-
 const amountInput = () => screen.getByRole("spinbutton", { name: "Amount" });
 
+function paste(text: string) {
+  return fireEvent.paste(amountInput(), { clipboardData: { getData: () => text } });
+}
+
 describe.each(["AmountWithUnit", "Input"] as const)("pasting into a number %s", control => {
-  it.each([" 12.5", "12.5 ", "\t\n12.5\r\n", " 12.5 "])("trims %j into the field's number", pasted => {
+  it.each([" 12.5", "12.5 ", "\t\n12.5\r\n", "\u00a012.5\u00a0"])("trims %j into the field's number", pasted => {
     render(<AmountForm control={control} />);
 
     expect(paste(pasted)).toBe(false);

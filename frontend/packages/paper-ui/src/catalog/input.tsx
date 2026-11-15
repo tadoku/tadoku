@@ -174,7 +174,8 @@ export const inputDocument = defineCatalogDocument({
       "Associate label, hint, and error IDs with the native input."
     ],
     "keyboard": [
-      "The native input follows platform text-editing behavior."
+      "The native input follows platform text-editing behavior.",
+      "A number pasted with surrounding whitespace into a type=\"number\" Input is entered trimmed."
     ],
     "knownConstraints": [
       "Input requires a @tanstack/react-form form.AppForm."

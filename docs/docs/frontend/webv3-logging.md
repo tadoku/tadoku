@@ -16,9 +16,9 @@ amount and unit input; Time spent, in minutes, is required for timed activities
 and optional for the others. Changing the activity clears the quantity, because
 activities count in different units. Changing the language keeps the unit when
 the new language offers it, so the quantity keeps its meaning. A missing unit is reported on the amount
-field, which shows one error for the amount and its unit. As in Webv2, an amount or
-time pasted with surrounding whitespace, such as `" 12 "` or `"12\n"` from a
-reader or spreadsheet, is entered trimmed; Paper's number controls own this. The description is one
+field, which shows one error for the amount and its unit. As in Webv2, an amount
+pasted with surrounding whitespace is entered trimmed; Paper's number controls
+own this, so Time spent trims too. The description is one
 line. As in Webv2, `/logs/new?amount=<n>` prefills a positive whole amount; any
 other value is ignored. Cancel returns home, and Log activity saves.
 

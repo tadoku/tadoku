@@ -211,8 +211,10 @@ async function paste(input: Locator, text: string) {
   }, text)
 }
 
+const label = (text: string) => JSON.stringify(text).replaceAll('\u00a0', '\\u00a0')
+
 for (const [amount, minutes] of [[' 12 ', '30\n'], ['12\n', '\u00a030\t']]) {
-  test(`a pasted amount ${JSON.stringify(amount)} and time ${JSON.stringify(minutes)} are trimmed and saved`, async ({ page, readerContext }) => {
+  test(`a pasted amount ${label(amount)} and time ${label(minutes)} are trimmed and saved`, async ({ page, readerContext }) => {
     test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
     await openForm(page)
     await activity(page).selectOption({ label: 'Reading' })

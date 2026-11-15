@@ -1,6 +1,38 @@
 package identity
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
+
+func TestParseDisplayName(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name, raw, want, wantCode string
+	}{
+		{"pads trimmed", "  Reader  ", "Reader", ""},
+		{"one visible after trim", " a", "", "invalid_display_name"},
+		{"whitespace only", "   ", "", "invalid_display_name"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := ParseDisplayName(tc.raw)
+			if tc.wantCode == "" {
+				if err != nil {
+					t.Fatalf("ParseDisplayName(%q) error = %v, want %q", tc.raw, err, tc.want)
+				}
+				if got.String() != tc.want {
+					t.Errorf("ParseDisplayName(%q) = %q, want %q", tc.raw, got, tc.want)
+				}
+				return
+			}
+			var identityErr *Error
+			if !errors.As(err, &identityErr) || identityErr.Code != tc.wantCode {
+				t.Errorf("ParseDisplayName(%q) = %v, want code %q", tc.raw, err, tc.wantCode)
+			}
+		})
+	}
+}
 
 func TestAppHostAllowlist(t *testing.T) {
 	t.Parallel()

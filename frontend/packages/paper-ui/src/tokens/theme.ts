@@ -241,6 +241,9 @@ const container = {
   'unit-select': '6rem',
   'chip-input': '3rem',
   toggle: '28rem',
+  /** Page header widths where PageActions shows every action, or only its primary ones beside a menu. */
+  'actions-full': '36rem',
+  'actions-split': '24rem',
   heatmap: '44rem',
   'heatmap-legend': 'min(100%, calc(100vw - 5rem))',
   'nav-demo': '22rem',

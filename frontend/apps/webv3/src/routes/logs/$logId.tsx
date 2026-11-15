@@ -83,7 +83,7 @@ function LogDetail() {
             className="max-sm:grid-cols-halves [&>:last-child]:max-sm:col-span-full"
             stats={[
               ...measure(log),
-              { label: 'Score', value: scoreFormat.format(log.score), unit: pointsUnit(log.score) },
+              { label: 'Score', value: scoreFormat.format(log.score), unit: pointsUnit(log.score), detail: breakdown(log) },
               { label: 'Logged', ...logged(log.created_at) },
             ]}
           />
@@ -226,6 +226,11 @@ function measure(log: ImmersionLog) {
 
   const duration = { label: 'Duration', value: formatMinutes(log.duration_seconds) }
   return log.activity.input_type === 'time_primary' ? [duration] : [amount, duration]
+}
+
+/** As Webv2 shows it, an amount log's amount times its modifier, for example `12 pages × 1.5 modifier`. */
+function breakdown(log: ImmersionLog) {
+  return log.unit_name ? `${formatAmount(log.amount, log.unit_name)} × ${log.modifier} modifier` : undefined
 }
 
 /** The UTC day and time a log was created, read from one instant, for example `9 Nov 2026` and `06:19 UTC`. */

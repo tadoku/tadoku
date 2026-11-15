@@ -67,8 +67,9 @@ string, including a range summary such as `26–50 of 120 logs`, goes through
 `countLabel`. Dates are formatted by hand, or pinned to `en-US`
 and UTC, and screens read today's date and the current year from their loader's
 data rather than the clock while rendering, so server HTML and hydration match
-in every browser locale. The UI calls the list of logs "activity" and one entry
-a "log".
+in every browser locale. A countdown starts from the time its loader read the
+data in the same way. The UI calls the list of logs "activity" and one entry a
+"log".
 
 Server responses are parsed before the screen uses them. Production API null
 language lists mean unrestricted languages and normalize to empty lists; missing

@@ -15,6 +15,7 @@ import {
   reader,
   saveButton,
   savedLogId,
+  statValue,
   test,
   webv3,
 } from './logging-fixtures'
@@ -97,6 +98,9 @@ for (const activity of ['Reading', 'Listening']) {
     else expect(record.amount).toBe(17)
     expect(record.registrations.length).toBeGreaterThan(0)
     await expect(logDescription(page)).toHaveText(text)
+    // As in Webv2, an amount's score reads as the amount times its modifier; a timed log has no amount to multiply.
+    if (timed) await expect(statValue(page, 'Score')).not.toContainText('modifier')
+    else await expect(statValue(page, 'Score')).toContainText(`17 ${record.unit_name.toLowerCase()}s × ${record.modifier} modifier`)
     for (const registration of record.registrations) {
       await expect(page.getByRole('link', { name: registration.title, exact: true })).toBeVisible()
     }

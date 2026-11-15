@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { APIRequestContext, BrowserContext, Page } from '@playwright/test'
-import { admin, api, expect, hydrated, reader, test, webv3 } from './logging-fixtures'
+import { submitLog } from './contest-profile'
+import { admin, api, expect, hydrated, reader, statValue, test, webv3 } from './logging-fixtures'
 import { apiJson, board, expectRows, expectTotal, standingRows } from './standings'
 
 interface Contest {
@@ -104,6 +105,61 @@ test('optional and past-the-end page segments follow the API', async ({ page, re
   await page.getByRole('link', { name: 'Go to the first page' }).click()
   await expect(page).toHaveURL(new RegExp(`${contestPath(contest.id)}$`))
   await expect(standingRows(page)).toHaveCount(data.entries.length)
+})
+
+const countdown = /^\d+ days?, \d+ hr, \d+ min$/
+const utcClock = /^\d{1,2} [A-Z][a-z]{2,3} \d{4}, \d{2}:\d{2}:\d{2} UTC$/
+const facts = (page: Page) => page.getByRole('region', { name: 'About this contest' })
+const fact = (page: Page, label: string) => statValue(page, label).and(facts(page).getByRole('definition'))
+const clockTerms = (page: Page) => facts(page).getByRole('term').filter({ hasText: /^(Starting in|Ending in|Tadoku time)$/ })
+
+test('the contest page counts its participants from the API and counts down to its start or end on the UTC clock', async ({ browser, readerContext, adminContext }, testInfo) => {
+  test.skip(!reader.email || !admin.email, 'Set both development fixture identities')
+  const live = await createContest(adminContext, openDates())
+  await submitLog(readerContext, live.id, `webv3-countdown-${randomUUID().slice(0, 8)}`)
+  const upcoming = await createContest(adminContext, { contest_start: day(2), contest_end: day(30), registration_end: day(14) })
+  const ended = await createContest(adminContext, { contest_start: day(-30), contest_end: day(-2), registration_end: day(-14) })
+
+  // The server renders the count and the countdown from the API, without JavaScript.
+  const server = await browser.newContext({ javaScriptEnabled: false })
+  const document = await server.newPage()
+  await document.goto(contestPath(live.id))
+  const participants = (await board(document.request, `/immersion/contests/${live.id}/leaderboard`)).total_size
+  expect(participants).toBe(1)
+  await expect(fact(document, 'Participants')).toHaveText('1')
+  await expect(fact(document, 'Ending in')).toHaveText(countdown)
+  await expect(fact(document, 'Tadoku time')).toHaveText(utcClock)
+  await document.goto(contestPath(upcoming.id))
+  await expect(fact(document, 'Starting in')).toHaveText(/^[12] days?, \d+ hr, \d+ min$/)
+  await expect(fact(document, 'Participants')).toHaveText('0')
+  await document.goto(contestPath(ended.id))
+  await expect(fact(document, 'Dates')).toBeVisible()
+  await expect(clockTerms(document)).toHaveCount(0)
+  await server.close()
+
+  // With the browser's clock a month ahead, the page still hydrates with the server's time and then ticks on its own,
+  // until the contest's last UTC second passes.
+  const end = Date.parse(`${live.contest_end}T00:00:00Z`) + 86_400_000
+  const page = await browser.newPage()
+  const failures: string[] = []
+  page.on('pageerror', error => failures.push(error.message))
+  // An organizer without an avatar answers 404, and the page shows their initials instead.
+  page.on('console', message => {
+    if (message.type() === 'error' && !message.location().url.endsWith('/avatar')) failures.push(message.text())
+  })
+  await page.clock.install({ time: end - 65_000 })
+  await page.goto(contestPath(live.id))
+  await hydrated(page)
+  await expect(fact(page, 'Ending in')).toHaveText('0 days, 0 hr, 1 min')
+  const clock = await fact(page, 'Tadoku time').textContent()
+  await page.clock.fastForward(2_000)
+  await expect(fact(page, 'Tadoku time')).not.toHaveText(clock!)
+  await page.screenshot({ path: testInfo.outputPath('contest-countdown.png'), fullPage: true })
+  await page.clock.fastForward(65_000)
+  await expect(clockTerms(page)).toHaveCount(0)
+  await expect(fact(page, 'Participants')).toHaveText('1')
+  expect(failures).toEqual([])
+  await page.close()
 })
 
 test('unknown and malformed contests are not found', async ({ page }) => {

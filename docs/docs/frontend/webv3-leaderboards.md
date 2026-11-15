@@ -31,8 +31,8 @@ current UTC year. Pages hold 50 participants.
   contests only, say so beside the table and step between the years since 2020
   with a year stepper.
   `frontend/apps/webv3/src/components/ContestLeaderboard.tsx` composes the latest
-  official contest with its join action and conditions. The
-  [contest page](webv3-contest.md) shares this board.
+  official contest with its join action, conditions, countdown and participant
+  count. The [contest page](webv3-contest.md) shares this board.
 
 Every board names its scope: the latest board titles its contest, and the
 selected period tab and the year stepper name the yearly and all-time boards, whose

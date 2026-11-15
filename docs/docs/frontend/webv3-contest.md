@@ -41,6 +41,16 @@ registered participants can change their languages until the contest's last day,
 as the API enforces. An unlisted contest is left out of contest lists but anyone
 with its link can view and join it.
 
+The board's About this contest facts add Webv2's countdown and the standings'
+participant count. Until the contest's last UTC second, Starting in or Ending in
+counts down in days, hours and minutes, and Tadoku time shows the UTC clock to
+the second; both disappear once the contest ends. The clock starts from the time
+the board was read, so the server and hydration render the same text, then
+follows the browser's clock each second. Participants is the standings' total
+from the API, which counts every registered participant as the standings list
+them, whatever the count, and is left out while the standings load or when they
+fail to load.
+
 The page shows only the actions Webv2 allows the viewer: Join contest while
 registration is open and the viewer hasn't joined, Update registration until the
 contest ends for participants, and Scoring rules for administrators. Join contest
@@ -147,7 +157,10 @@ the API, follows page segments, checks unknown contests, the anonymous login
 redirect and containment at 390px and 1280px. With the Dev Reader and Dev Admin
 credentials it creates community contests in the selected tenant, registers Dev
 Reader, changes its languages and checks a refused registration after the
-deadline.
+deadline. It also checks the participant count and the countdown on upcoming,
+live and ended contests without JavaScript, then, with the browser's clock moved
+to a minute before a contest ends, that the page hydrates without errors, ticks
+and drops the countdown once the contest ends.
 
 `frontend/apps/webv3/e2e/contest-activity.spec.ts` compares the server-rendered
 activity and a standings participant's contest profile with the API, pages through

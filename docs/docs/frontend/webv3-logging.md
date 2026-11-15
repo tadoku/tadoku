@@ -107,10 +107,12 @@ such as Japanese reading. Its lead names the language and the activity; on
 another learner's log with a known display name, it also names who logged it,
 linked to their profile. It shows the measure, rounded and pluralized as the
 lists show it, the score, and the UTC day and time, both read from the creation
-instant. Labelled rows then show the description, unless it is empty or already
-the heading, and the tags, unless there are none; the record's ID is not shown. It offers its owner
-and administrators Edit log and Delete log in a Log actions menu, which on
-phones sits in the back link's row; other visitors see neither.
+instant. Under an amount log's score, Webv2's breakdown shows the amount times
+the log's modifier; a timed log has none. Labelled rows then show the
+description, unless it is empty or already the heading, and the tags, unless
+there are none; the record's ID is not shown. It offers its owner and
+administrators Edit log and Delete log in a Log actions menu, which on phones
+sits in the back link's row; other visitors see neither.
 
 A log tagged `nsfw`, in any case, never shows its description as a title or a
 link label: the detail page is titled by its language and activity, and the

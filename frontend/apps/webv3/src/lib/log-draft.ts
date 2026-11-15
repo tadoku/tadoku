@@ -22,7 +22,7 @@ const secondsRule = z.int32().positive()
 const minutesRule = z.number({ error: 'Enter minutes.' })
   .positive('Enter minutes greater than zero.')
   .refine(minutes => Math.round(minutes * 60) > 0, 'Enter at least one second.')
-  .refine(minutes => secondsRule.safeParse(Math.round(minutes * 60)).success, 'Enter at most 35,791,394 minutes.')
+  .refine(minutes => secondsRule.safeParse(Math.round(minutes * 60)).success, 'Enter less than 35,791,394.125 minutes.')
 
 // The API counts description characters as Unicode code points.
 const descriptionRule = z.string()

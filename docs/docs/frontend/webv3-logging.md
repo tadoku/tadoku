@@ -13,9 +13,9 @@ configuration and ongoing contest registrations from the selected tenant. The
 form follows Webv2's: the language list starts with the languages the viewer
 used before, then lists every language. Language and activity determine the
 amount and unit input; Time spent, in minutes, is required for timed activities
-and optional for the others. As in Webv2, it must round to at least one second
-and has no daily cap; the only upper limit is the API's 32-bit count of seconds. Changing the activity clears the quantity, because
-activities count in different units. Changing the language keeps the unit when
+and optional for the others. As in Webv2, it must round to at least one second;
+the rounded seconds must fit the API's 32-bit `duration_seconds`. Changing the
+activity clears the quantity, because activities count in different units. Changing the language keeps the unit when
 the new language offers it, so the quantity keeps its meaning. A missing unit is reported on the amount
 field, which shows one error for the amount and its unit. The description is one
 line. As in Webv2, `/logs/new?amount=<n>` prefills a positive whole amount; any
@@ -185,8 +185,8 @@ are held in memory and are lost when the form is reloaded or closed.
 `logging.spec.ts` covers the form, saves, the contest step after saving with
 and without ongoing registrations, detail, ownership and tenant isolation;
 `logging-form.spec.ts` covers tag chips and suggestions, the tag sidebar and its
-limit, remembered choices, unavailable storage and the edit form's tags; `logging-edit.spec.ts` covers edits, deletion, owner actions, the
-score estimate and timed logs longer than a day; `logging-contests.spec.ts` covers submitting a saved log to a
+limit, remembered choices, unavailable storage and the edit form's tags; `logging-edit.spec.ts` covers edits, deletion, owner actions and the
+score estimate; `logging-contests.spec.ts` covers submitting a saved log to a
 contest, removing it and refusing other visitors; `logging-nsfw.spec.ts` covers
 NSFW masking on the detail page, its back links and the activity feed;
 `finished-contest.spec.ts` covers an edit, a deletion and the contest step

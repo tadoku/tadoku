@@ -98,6 +98,7 @@ export const gettingGoingClearedQuery = (viewer: Extract<Viewer, { status: 'sign
   queryKey: ['getting-going-cleared', viewer.userId],
   queryFn: () => getGettingGoingCleared({ data: viewer.userId }),
   staleTime: ({ state }) => (state.data === true ? Infinity : 30_000),
+  refetchOnWindowFocus: false,
   retry: false,
   retryOnMount: false,
 })

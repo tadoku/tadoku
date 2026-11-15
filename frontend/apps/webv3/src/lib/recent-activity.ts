@@ -65,7 +65,12 @@ export function homeActivity(
     return {
       kind: 'getting-going',
       activeDays: recent.length,
-      steps: { logged: active.length > 0, loggedToday: todayScore > 0, joinedContest: contests.length > 0, twoDaysInARow: streak >= 2 },
+      steps: {
+        logged: active.length > 0,
+        loggedToday: todayScore > 0,
+        joinedContest: contests.length > 0,
+        twoDaysInARow: streak >= 2,
+      },
     }
   }
 

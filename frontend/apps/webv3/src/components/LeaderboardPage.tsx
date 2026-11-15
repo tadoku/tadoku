@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { firstYear, leaderboardHref, standingsQuery, type StandingsScope } from '../lib/leaderboard'
 import { useLinks } from '../lib/links'
 import { renderLink } from './router-link'
+import { pageActionsHeader } from './page-actions-styles'
 import { Standings } from './Standings'
 import { sheet, standingsHeader } from './standings-styles'
 import { YearStepper } from './YearStepper'
@@ -17,7 +18,7 @@ export function LeaderboardFrame({ period, currentYear, actions, children }: {
 }) {
   return (
     <div className="standings-page">
-      <PageHeader className={standingsHeader} title="Leaderboard" actions={actions} />
+      <PageHeader className={standingsHeader} classNames={pageActionsHeader} title="Leaderboard" actions={actions} />
       <Tabbar
         label="Leaderboard period"
         renderLink={renderLink}

@@ -6,7 +6,7 @@ import { tv } from "../../../foundations/variants";
 
 const pageHeader = tv({
   slots: {
-    root: "paper-page-header mb-8 mt-0 min-w-0",
+    root: "paper-page-header @container mb-8 mt-0 min-w-0",
     back: [
       "paper-page-header__back mb-4 inline-flex items-center gap-1 text-sm leading-150 text-link max-md:py-1.5",
       "underline underline-offset-link hover:text-link-hover hover:decoration-hover rtl:*:scale-x-mirror",

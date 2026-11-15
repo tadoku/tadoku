@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link, useNavigate } from '@tanstack/react-router'
-import { Button, EmptyState, PageHeader, StatusTag, Tabbar, buttonClassName, type ActionMenuItem } from 'paper-ui'
+import { Link } from '@tanstack/react-router'
+import { Button, EmptyState, PageHeader, StatusTag, Tabbar, buttonClassName } from 'paper-ui'
 import { contestsHref } from '../lib/contests'
 import { formatDate, formatPeriod } from '../lib/format'
 import { contestBoardQuery, contestPhase, readDay, type ContestBoard } from '../lib/leaderboard'
@@ -9,9 +9,10 @@ import { useParticipation } from '../lib/registration'
 import { viewerKey, viewerQueryOptions } from '../lib/session'
 import { ContestBoardBody, RoundStatus } from './ContestLeaderboard'
 import { ContestUpdates } from './ContestUpdates'
-import { OptionsMenu } from './OptionsMenu'
+import { PageActions } from './PageActions'
+import { pageActionsHeader } from './page-actions-styles'
 import { PendingView } from './StatusViews'
-import { AppLink, renderLink } from './router-link'
+import { renderLink } from './router-link'
 import { standingsHeader } from './standings-styles'
 
 export type ContestView = 'standings' | 'updates'
@@ -49,8 +50,8 @@ export function ContestNotFound() {
 
 /**
  * Webv2's actions: join while registration is open, change languages until the contest ends, log while it runs and
- * the scoring rules for administrators. Joining is the only button; the rest sit in the Contest options menu, which is
- * left out when it would be empty. Anonymous visitors who join are sent to log in first.
+ * the scoring rules for administrators. Joining is the primary action; `PageActions` moves the rest into the Contest
+ * options menu when the header is too narrow for them. Anonymous visitors who join are sent to log in first.
  */
 function ContestBoardPage({ board, readAt, view, page }: { board: ContestBoard; readAt: number; view: ContestView; page: number }) {
   const links = useLinks()
@@ -61,16 +62,17 @@ function ContestBoardPage({ board, readAt, view, page }: { board: ContestBoard; 
   const admin = viewer?.status === 'signed-in' && viewer.role === 'admin'
 
   const options = [
-    ...(registered && !phase.ended ? [{ id: 'registration', label: 'Update registration', to: links.joinContest(contest.id) }] : []),
-    ...(admin ? [{ id: 'scoring', label: 'Scoring rules', to: links.contestScoring(contest.id) }] : []),
+    ...(registered && !phase.ended ? [{ id: 'registration', label: 'Update registration', href: links.joinContest(contest.id) }] : []),
+    ...(admin ? [{ id: 'scoring', label: 'Scoring rules', href: links.contestScoring(contest.id) }] : []),
   ]
   const join = phase.registrationOpen && !registered && !banned
   const actions = join || options.length > 0
     ? (
-      <>
-        {join ? <AppLink className={buttonClassName()} href={links.joinContest(contest.id)}>Join contest</AppLink> : null}
-        {options.length > 0 ? <ContestOptions options={options} /> : null}
-      </>
+      <PageActions
+        label="Contest options"
+        primary={join ? [{ id: 'join', label: 'Join contest', variant: 'default', href: links.joinContest(contest.id) }] : []}
+        secondary={options}
+      />
     )
     : null
 
@@ -84,8 +86,8 @@ function ContestBoardPage({ board, readAt, view, page }: { board: ContestBoard; 
         title={contest.title}
         lead={`${formatPeriod(contest)}${phase.registrationOpen ? ` · Registration closes ${formatDate(contest.registration_end)}` : ''}`}
         status={<><RoundStatus phase={phase} />{contest.private ? <StatusTag>Unlisted</StatusTag> : null}</>}
-        className={`${standingsHeader} max-md:relative`}
-        classNames={{ lead: 'tablet:hidden', actions: 'max-md:contents' }}
+        className={standingsHeader}
+        classNames={{ ...pageActionsHeader, lead: 'tablet:hidden' }}
         actions={actions}
       />
       <Tabbar
@@ -109,13 +111,3 @@ function ContestBoardPage({ board, readAt, view, page }: { board: ContestBoard; 
   )
 }
 
-/** On phones the menu moves up to the back link's row so the title keeps the full width. */
-function ContestOptions({ options }: { options: { id: string; label: string; to: string }[] }) {
-  const navigate = useNavigate()
-  const items: ActionMenuItem[] = options.map(({ id, label, to }) => ({ id, label, onSelect: () => void navigate({ to }) }))
-  return (
-    <span className="max-md:absolute max-md:-top-1.5 max-md:right-0">
-      <OptionsMenu label="Contest options" items={items} />
-    </span>
-  )
-}

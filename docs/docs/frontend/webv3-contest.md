@@ -54,9 +54,8 @@ fail to load.
 The page shows only the actions Webv2 allows the viewer: Join contest while
 registration is open and the viewer hasn't joined, Update registration until the
 contest ends for participants, and Scoring rules for administrators. Join contest
-is the page's only button. The other two are items in a Contest options menu
-(an icon-only "⋯" trigger), which is left out when it would be empty. On phones the
-trigger sits at the end of the back link's row, so the title keeps the full width.
+is the primary [page action](paper-composition.md#page-actions) and the other two
+are secondary ones, in a Contest options menu when the header is narrow.
 Logging uses the header's Log activity action. Anonymous visitors see Join contest
 while registration is open; it sends them to log in and back to the registration. Suspended accounts get no join
 action. Scoring rules opens the native [scoring page](webv3-contest-admin.md),

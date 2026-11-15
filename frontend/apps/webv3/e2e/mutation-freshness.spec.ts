@@ -236,8 +236,7 @@ test('dropping a registration language takes its logs out of the contest without
   await contestViews(page, 'Activity').click()
   await expect(feedEntry(page, seed.id)).toBeVisible()
 
-  await page.getByRole('button', { name: 'Contest options', exact: true }).click()
-  await page.getByRole('menuitem', { name: 'Update registration', exact: true }).click()
+  await page.getByRole('main').getByRole('link', { name: 'Update registration', exact: true }).click()
   await page.getByRole('button', { name: 'Remove Japanese', exact: true }).click()
   await page.getByRole('button', { name: 'Update registration', exact: true }).click()
   await expect(page).not.toHaveURL(/\/registration$/)

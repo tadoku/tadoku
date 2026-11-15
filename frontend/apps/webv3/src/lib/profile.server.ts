@@ -28,7 +28,7 @@ async function section<T>(request: Promise<{ data?: T }>): Promise<Section<T>> {
  * Contest history includes private contests for their participant and administrators, so it is read with the
  * visitor's session. A rejected session cookie falls back to the public history.
  */
-async function readContestHistory(userId: string, year: number, page: number): Promise<Section<ContestHistory>> {
+export async function readContestHistory(userId: string, year: number, page: number): Promise<Section<ContestHistory>> {
   const answer = await readAsVisitor(cookie => immersionProfileYearlyContestRegistrationsByUserId({
     ...sessionRequest('immersionProfileYearlyContestRegistrationsByUserId', cookie),
     path: { userId, year },

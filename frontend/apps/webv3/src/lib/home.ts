@@ -28,6 +28,13 @@ const getHomeBoard = createServerFn({ method: 'GET' })
     return readHomeBoard(data)
   })
 
+const getGettingGoingCleared = createServerFn({ method: 'GET' })
+  .inputValidator(z.guid())
+  .handler(async ({ data }) => {
+    const { readGettingGoingCleared } = await import('./home.server')
+    return readGettingGoingCleared(data)
+  })
+
 const getNextContest = createServerFn({ method: 'GET' }).handler(async () => {
   const { readNextContest } = await import('./home.server')
   return readNextContest()
@@ -81,3 +88,17 @@ export const memberDashboardQueries = (viewer: Extract<Viewer, { status: 'signed
 /** Last year's statistics, which the home page reads only while its activity map reaches back into last year. */
 export const lastYearStatisticsQuery = (viewer: Extract<Viewer, { status: 'signed-in' }>, year: number) =>
   profileStatisticsQuery({ userId: viewer.userId, year: year - 1, page: 1 }, viewerKey(viewer))
+
+/**
+ * Whether the learner cleared Getting going in any year since their account was created. Once they have, a cookie for
+ * their account on this browser answers it without reading their history again, and the answer stays fresh; a no is
+ * read again when the page next mounts after 30 seconds, so progress or a recovered read reaches it.
+ */
+export const gettingGoingClearedQuery = (viewer: Extract<Viewer, { status: 'signed-in' }>) => queryOptions({
+  queryKey: ['getting-going-cleared', viewer.userId],
+  queryFn: () => getGettingGoingCleared({ data: viewer.userId }),
+  staleTime: ({ state }) => (state.data === true ? Infinity : 30_000),
+  refetchOnWindowFocus: false,
+  retry: false,
+  retryOnMount: false,
+})

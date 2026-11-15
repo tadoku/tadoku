@@ -24,28 +24,53 @@ export type HomeActivity =
 export const activeDaysGoal = 5
 const windowDays = 30
 
+const activeDates = (scores: ReadonlyMap<string, number>) =>
+  [...scores].filter(([, score]) => score > 0).map(([date]) => date).sort()
+
+/** A contest the learner registered for, by its UTC dates. */
+export type ContestPeriod = { contest_start: string; contest_end: string }
+
 /**
- * The learner's past 30 UTC days, or the getting-going checklist until they've cleared it. A learner has cleared it once
- * `scores` shows 5 active days within 30, or two active days in a row while they're in a contest, which is every step,
- * and keeps the map from then on even after a quiet month.
+ * Whether `scores` show the learner has cleared the getting-going checklist: 5 active days within 30, or two active days
+ * in a row inside one of `contests`, which is every step.
  */
-export function homeActivity(scores: ReadonlyMap<string, number>, today: string, joinedContest: boolean): HomeActivity {
-  const active = [...scores].filter(([, score]) => score > 0).map(([date]) => date).sort()
+export function clearedGettingGoing(scores: ReadonlyMap<string, number>, contests: readonly ContestPeriod[]) {
+  const active = activeDates(scores)
+  const inOneContest = (first: string, last: string) =>
+    contests.some(contest => contest.contest_start <= first && last <= contest.contest_end)
+  return active.some((date, index) => index + activeDaysGoal - 1 < active.length
+    && daysBetween(date, active[index + activeDaysGoal - 1]) < windowDays)
+    || active.some((date, index) => index > 0 && daysBetween(active[index - 1], date) === 1
+      && inOneContest(active[index - 1], date))
+}
+
+/**
+ * The learner's past 30 UTC days, or the getting-going checklist until they've cleared it in `scores` and `contests` or,
+ * as `clearedBefore` says, anywhere in their history. They keep the map from then on even after a quiet month.
+ */
+export function homeActivity(
+  scores: ReadonlyMap<string, number>,
+  today: string,
+  contests: readonly ContestPeriod[],
+  clearedBefore: boolean,
+): HomeActivity {
+  const active = activeDates(scores)
   const todayScore = scores.get(today) ?? 0
   const recent = active.filter(date => date > daysBefore(today, windowDays) && date <= today)
 
   let streak = 0
   for (let back = todayScore > 0 ? 0 : 1; (scores.get(daysBefore(today, back)) ?? 0) > 0; back++) streak++
 
-  const cleared = active.some((date, index) => index + activeDaysGoal - 1 < active.length
-    && daysBetween(date, active[index + activeDaysGoal - 1]) < windowDays)
-    || (joinedContest && active.some((date, index) => index > 0 && daysBetween(active[index - 1], date) === 1))
-
-  if (!cleared) {
+  if (!clearedBefore && !clearedGettingGoing(scores, contests)) {
     return {
       kind: 'getting-going',
       activeDays: recent.length,
-      steps: { logged: active.length > 0, loggedToday: todayScore > 0, joinedContest, twoDaysInARow: streak >= 2 },
+      steps: {
+        logged: active.length > 0,
+        loggedToday: todayScore > 0,
+        joinedContest: contests.length > 0,
+        twoDaysInARow: streak >= 2,
+      },
     }
   }
 

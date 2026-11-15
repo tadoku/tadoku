@@ -128,6 +128,8 @@ test('a draft cannot be saved under an account switched in another tab', async (
   const description = `account-switch-${Date.now()}`
   await signIn(page, loginLearner)
   const learnerId = await accountId(context)
+  // A newly registered stored learner has no language to preselect.
+  await page.getByLabel('Language', { exact: true }).selectOption('jpn')
   await fillDraft(page, '11', description)
 
   const other = await context.newPage()
@@ -179,6 +181,7 @@ for (const change of ['expiry', 'account switch']) {
     await signIn(other, loginLearner)
     await refocusAfterViewerGoesStale()
     await expect(saveButton(page)).toBeEnabled()
+    await page.getByLabel('Language', { exact: true }).selectOption('jpn')
     await fillDraft(page, '13', description)
 
     // End or switch the session in the other tab.

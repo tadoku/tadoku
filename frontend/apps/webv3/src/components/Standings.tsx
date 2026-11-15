@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Button, EmptyState, Pagination, Table, type TableColumn } from 'paper-ui'
 import type { ImmersionLeaderboard, ImmersionLeaderboardEntry } from 'api-client'
-import { numberFormat, scoreFormat } from '../lib/format'
+import { countLabel, numberFormat, scoreFormat } from '../lib/format'
 import { standingsPageSize, type Read } from '../lib/leaderboard'
 import { viewerQueryOptions } from '../lib/session'
 import { AppLink, renderLink } from './router-link'
@@ -49,7 +49,7 @@ export function Standings({ result, page, caption, pageHref, profileHref, empty,
         className={sheetEmpty}
         headingLevel={3}
         title="This page is past the end of the standings"
-        description={`The standings have ${numberFormat.format(total)} participants.`}
+        description={`The standings have ${countLabel(total, 'participant')}.`}
         actions={<Link className="text-link hover:text-link-hover" to={pageHref(1)}>Go to the first page</Link>}
       />
     ) : <EmptyState variant="plain" className={sheetEmpty} headingLevel={3} {...empty} />
@@ -95,7 +95,7 @@ export function Standings({ result, page, caption, pageHref, profileHref, empty,
       {totalPages > 1 ? (
         <div className={standingsPagination}>
           <p className={paginationSummary}>
-            {numberFormat.format(first)}–{numberFormat.format(first + entries.length - 1)} of {numberFormat.format(total)} participants
+            {numberFormat.format(first)}–{numberFormat.format(first + entries.length - 1)} of {countLabel(total, 'participant')}
           </p>
           <Pagination totalPages={totalPages} currentPage={page} getHref={pageHref} renderLink={renderLink} label="Standings pages" classNames={{ list: 'max-md:flex-wrap' }} />
         </div>

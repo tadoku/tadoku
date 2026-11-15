@@ -3,7 +3,7 @@ import { useStore } from '@tanstack/react-form'
 import { useHydrated } from '@tanstack/react-router'
 import type { ImmersionContestView, ImmersionLog } from 'api-client'
 import { Button, EmptyState, Flash, Modal, usePaperForm } from 'paper-ui'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { contestLogsQuery, detachSchema, useDetachLog } from '../lib/contest-activity'
 import type { LogFilters } from '../lib/contest-filters'
 import type { LogFailure } from '../lib/logs'
@@ -100,6 +100,7 @@ function RemoveFromContest({ log, contestId, viewerId, onRemoved }: {
     },
   })
   const pending = useStore(form.store, state => state.isSubmitting)
+  const formId = useId()
 
   return (
     <Modal
@@ -122,19 +123,20 @@ function RemoveFromContest({ log, contestId, viewerId, onRemoved }: {
         setFailure(null)
         if (!next) form.reset()
       }}
-      footer={null}
+      footer={(
+        <>
+          <Button variant="outline" disabled={pending} onClick={() => setOpen(false)}>Cancel</Button>
+          <Button type="submit" form={formId} variant="destructive" disabled={pending}>{pending ? 'Removing…' : 'Yes, remove it'}</Button>
+        </>
+      )}
     >
       <form.AppForm>
-        <form.Form className="min-w-0" aria-busy={pending}>
+        <form.Form id={formId} className="min-w-0" aria-busy={pending}>
           <p>Why are you removing this log from the contest? Please provide a reason.</p>
           <form.AppField name="reason" validators={{ onSubmit: ({ value }) => reasonError(value) }}>
             {field => <field.TextArea label="Reason" placeholder="e.g. Duplicate entry, incorrect data…" rows={4} required disabled={pending} />}
           </form.AppField>
           {failure ? <DetachFailure failure={failure} /> : null}
-          <div className="registration-actions">
-            <Button type="button" variant="ghost" disabled={pending} onClick={() => setOpen(false)}>Cancel</Button>
-            <Button type="submit" variant="destructive" disabled={pending}>{pending ? 'Removing…' : 'Yes, remove it'}</Button>
-          </div>
         </form.Form>
       </form.AppForm>
     </Modal>

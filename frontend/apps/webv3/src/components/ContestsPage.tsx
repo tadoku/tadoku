@@ -14,7 +14,7 @@ import {
   type ContestListScope,
   type ContestView,
 } from '../lib/contests'
-import { formatDate, formatPeriod, numberFormat } from '../lib/format'
+import { countLabel, formatDate, formatPeriod, numberFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { useLoginUrl, viewerKey, viewerQueryOptions } from '../lib/session'
 import { AppLink, renderLink } from './router-link'
@@ -117,7 +117,7 @@ function Contests({ scope, view, page, canCreate }: { scope: ContestListScope; v
       <EmptyState
         headingLevel={2}
         title="This page is past the end of the list"
-        description={`There are ${numberFormat.format(total)} contests.`}
+        description={`The list has ${countLabel(total, 'contest')}.`}
         actions={<Link className="text-link hover:text-link-hover" to={pageHref(1)}>Go to the first page</Link>}
       />
     ) : view.collection === 'organizing' ? (
@@ -147,7 +147,7 @@ function Contests({ scope, view, page, canCreate }: { scope: ContestListScope; v
       </ul>
       {totalPages > 1 ? (
         <div className={listFooter().root({ className: 'contests-pagination border-t border-rule pt-3' })}>
-          <p className={listFooter().summary()}>{numberFormat.format(first)}–{numberFormat.format(first + contests.length - 1)} of {numberFormat.format(total)} contests</p>
+          <p className={listFooter().summary()}>{numberFormat.format(first)}–{numberFormat.format(first + contests.length - 1)} of {countLabel(total, 'contest')}</p>
           <Pagination totalPages={totalPages} currentPage={page} getHref={pageHref} renderLink={renderLink} label="Contest pages" classNames={{ list: 'max-md:flex-wrap' }} />
         </div>
       ) : null}

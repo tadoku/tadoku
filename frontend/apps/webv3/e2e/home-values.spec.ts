@@ -107,4 +107,8 @@ test('a new learner keeps the getting-going checklist until every step is done',
   await expect(step(page, 'Log two days in a row')).toContainText('Not done')
   await expect(page.getByRole('group', { name: 'Daily activity for the past 13 weeks', exact: true })).toHaveCount(0)
   await page.screenshot({ path: testInfo.outputPath('getting-going-three-steps.png'), fullPage: true })
+
+  // With one contest joined, a page past the end of Joined counts it in the singular.
+  await page.goto('/contests/joined/2')
+  await expect(page.getByText('The list has 1 contest.', { exact: true })).toBeVisible()
 })

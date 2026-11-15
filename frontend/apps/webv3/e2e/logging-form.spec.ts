@@ -188,17 +188,26 @@ test('edit keeps the activity fixed, uses the same tags and sidebar and returns 
   expect([...(await record(readerContext, id)).tags].sort()).toEqual(['book', 'manga'])
 })
 
-test('a learner without ongoing registrations goes from Create straight to the saved log', async ({ learner }) => {
+test('a learner without ongoing registrations chooses a language, then goes from Create straight to the saved log', async ({ learner }) => {
   const page = await learner.context.newPage()
   const ongoing = await page.request.get(`${api}/immersion/contests/ongoing-registrations`)
   expect((await ongoing.json()).registrations).toEqual([])
 
+  // With no language used before and none remembered, the form asks for one instead of picking the first.
   await openForm(page)
+  await expect(language(page)).toHaveValue('')
   await amountInput(page).fill('3')
+  await page.getByRole('button', { name: 'Log activity', exact: true }).click()
+  await expect(page.getByText('Choose a language.', { exact: true })).toBeVisible()
+  await expect(language(page)).toHaveAttribute('aria-invalid', 'true')
+  await expect(page).toHaveURL(/\/logs\/new$/)
+
+  await language(page).selectOption('jpn')
+  await expect(page.getByText('Choose a language.', { exact: true })).toHaveCount(0)
   await page.getByRole('button', { name: 'Log activity', exact: true }).click()
   await expect(page).toHaveURL(savedLogUrl)
   const saved = await record(page.context(), new URL(page.url()).pathname.split('/')[2])
-  expect(saved).toMatchObject({ amount: 3, registrations: [] })
+  expect(saved).toMatchObject({ amount: 3, registrations: [], language: { code: 'jpn' } })
 })
 
 // Firefox keeps pasted whitespace, which empties a number input; Chromium and WebKit trim it natively. The suite runs

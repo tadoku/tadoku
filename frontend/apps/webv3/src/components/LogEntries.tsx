@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import { EmptyState, Pagination, entryLink, entryList, listFooter, metaLine } from 'paper-ui'
 import type { ImmersionLog } from 'api-client'
-import { formatDate, formatTracking, isNsfw, logName, numberFormat, pointsUnit, scoreFormat } from '../lib/format'
+import { countLabel, formatDate, formatTracking, isNsfw, logName, numberFormat, pointsUnit, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { activityPageSize } from '../lib/profile'
 import { ActivityName } from './ActivityName'
@@ -28,7 +28,7 @@ export function LogEntries({ logs, total, page, pageHref, empty, showParticipant
         variant="plain"
         headingLevel={3}
         title="This page is past the end of the activity"
-        description={`There are ${numberFormat.format(total)} logs.`}
+        description={`This activity has ${countLabel(total, 'log')}.`}
         actions={<Link className="text-link hover:text-link-hover" to={pageHref(1)}>Go to the first page</Link>}
       />
     ) : empty
@@ -52,7 +52,7 @@ export function LogEntries({ logs, total, page, pageHref, empty, showParticipant
       </ol>
       {pages > 1 ? (
         <div className={footer.root({ className: 'profile-entries-footer border-t border-rule py-4' })}>
-          <p className={footer.summary()}>{numberFormat.format(first)}–{numberFormat.format(first + logs.length - 1)} of {numberFormat.format(total)} logs</p>
+          <p className={footer.summary()}>{numberFormat.format(first)}–{numberFormat.format(first + logs.length - 1)} of {countLabel(total, 'log')}</p>
           <Pagination label="Update pages" totalPages={pages} currentPage={page} getHref={pageHref} renderLink={renderLink} classNames={{ list: 'flex-wrap' }} />
         </div>
       ) : null}

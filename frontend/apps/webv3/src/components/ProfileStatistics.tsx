@@ -1,6 +1,6 @@
 import { buttonClassName, EmptyState, entryLink, listRows, metaLine, Pagination, SectionHeading, StatGrid, StatusTag, Tabbar } from 'paper-ui'
 import { activityTone } from '../lib/activity'
-import { formatPeriod, scoreFormat } from '../lib/format'
+import { countLabel, formatPeriod, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { activeDays, contestPageSize, type ContestHistory, type ProfileStatistics as Statistics, type Section } from '../lib/profile'
 import { ActivityCalendar } from './ActivityCalendar'
@@ -88,14 +88,12 @@ function YearTotals({ statistics, year }: { statistics: Found; year: number }) {
       className="profile-stats mb-8 max-sm:[&>:first-child]:col-span-full"
       stats={[
         { label: 'Overall score', value: total === undefined ? 'Unavailable' : scoreFormat.format(total), detail: average },
-        ...(activity.ok ? [{ label: 'Logs', value: activity.data.total_updates, detail: daysActive(activeDays(activity.data.scores)) }] : []),
+        ...(activity.ok ? [{ label: 'Logs', value: activity.data.total_updates, detail: countLabel(activeDays(activity.data.scores), 'active day') }] : []),
         ...(scores.ok ? [{ label: 'Languages', value: scores.data.scores.length }] : []),
       ]}
     />
   )
 }
-
-const daysActive = (days: number) => `${days} active ${days === 1 ? 'day' : 'days'}`
 
 /**
  * One tab per year from the profile's first year to the current one, newest first, as the yearly leaderboard shows

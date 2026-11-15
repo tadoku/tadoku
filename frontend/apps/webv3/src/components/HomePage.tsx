@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import { nextContestQuery, useHomeData, type HomeData } from '../lib/home'
 import { contestEntryQuery } from '../lib/leaderboard'
 import { Person, Rank, currentRow, personLink } from './StandingsParts'
-import { formatDate, formatPeriod, numberFormat, scoreFormat } from '../lib/format'
+import { countLabel, formatDate, formatPeriod, numberFormat, scoreFormat } from '../lib/format'
 import { useLinks } from '../lib/links'
 import { useParticipation } from '../lib/registration'
 import { MemberActivity, MemberDashboard } from './MemberDashboard'
@@ -212,7 +212,7 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
     const activities = contest.allowed_activities.map(({ name }, index) => index ? name.toLowerCase() : name).join(' & ')
     return <>
       {header(formatPeriod(contest), <AppLink href={links.contest(contest.id)} className="text-link hover:text-link-hover">Contest details</AppLink>)}
-      <StatGrid className="px-ledger-inset py-4.5" stats={[{ label: 'Length', value: `${length} days` }, ...(activities ? [{ label: 'Activities', value: activities }] : [])]} />
+      <StatGrid className="px-ledger-inset py-4.5" stats={[{ label: 'Length', value: countLabel(length, 'day') }, ...(activities ? [{ label: 'Activities', value: activities }] : [])]} />
       <div className={message}>
         <p className="grid gap-1">
           <span className="text-metadata text-muted">Starts</span>

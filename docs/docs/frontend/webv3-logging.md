@@ -37,7 +37,9 @@ keys. Browser storage is per origin, so they carry over from Webv2 only once
 Webv3 serves `tadoku.app`; until then `next.tadoku.app` keeps its own. Once the page has hydrated, a
 new draft starts from them when they are still offered; a remembered timed
 activity starts without an amount, as in Webv2. Without them, the draft starts
-with the viewer's first previously used language and the first activity.
+with the viewer's first previously used language and the first activity. A
+viewer with no previously used language starts with none chosen, and the form
+asks them to choose one before it saves.
 Unavailable browser storage is ignored.
 
 Contests are not chosen in the form. When the viewer has ongoing registrations,

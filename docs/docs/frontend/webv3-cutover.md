@@ -122,17 +122,13 @@ After Argo CD syncs:
   `https`.
 - **A Webv2 tab opened before the switch.** Before step 3, open a Webv2 tab on
   `tadoku.app`, signed out or with an account outside the `release-webv3-access`
-  segment, since Webv2 sends accounts in it to `next.tadoku.app`, and stay on
-  one kind of page, such as a profile. After step 3, open the browser's network
-  panel, tick Disable cache, and click a link to a kind of page the tab has not
-  run, such as the leaderboard: Next loads one script per kind of page and
-  prefetches the scripts of visible links, so without that box the script may
-  come from the cache. Its `/_next/static/*` script answers 404, and Next falls
-  back to a full page load that must end on Webv3. Kinds of page the tab
-  already ran keep rendering Webv2 until a reload, and so do prefetched ones
-  when the cache is used; their reads and writes go to `/api/internal`, which
-  keeps reaching the API.
-  Reload the tab to confirm it then shows Webv3.
+  segment, since Webv2 sends accounts in it to `next.tadoku.app`. After step 3,
+  reload it: it must show Webv3. Until a visitor reloads, such a tab keeps
+  rendering Webv2 for every kind of page it already ran, including the ones Next
+  prefetched for links that were on screen, and its reads and writes go to
+  `/api/internal`, which keeps reaching the API. A link to a kind of page it has
+  not loaded requests that page's `/_next/static/*` script, which Webv3 answers
+  with 404, and Next falls back to a full page load that ends on Webv3.
 - Run the canary's signed-in journey against `https://tadoku.app` with a
   `workflow_dispatch` once step 4 has merged, and watch the edge 5xx ratio of the
   `frontend-webv3` HTTPRoute and Webv3's `ssr_error` and `upstream_failure` lines

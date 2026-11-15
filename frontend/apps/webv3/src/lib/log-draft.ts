@@ -15,6 +15,7 @@ export type LogDraft = {
   tags: string[]
 }
 
+const languageRule = z.string().min(1, 'Choose a language.')
 const amountRule = z.number({ error: 'Enter an amount.' }).positive('Enter an amount greater than zero.')
 const unitRule = z.string().min(1, 'Choose a unit.')
 const minutesRule = z.number({ error: 'Enter minutes.' })
@@ -82,6 +83,7 @@ export function logDraftSchema(options: LogOptions) {
       if (!result.success) context.addIssue({ code: 'custom', path: [field], message: result.error.issues[0].message })
     }
 
+    check('languageCode', languageRule, draft.languageCode)
     if (isTimed(options, draft.activityId)) {
       check('minutes', minutesRule, draft.minutes)
     } else {
@@ -100,13 +102,13 @@ export type LastLogged = { languageCode: string | null; activityId: string | nul
 
 /**
  * A new draft: the last logged language and activity when they are still offered, otherwise the viewer's first own
- * language and the first activity; the activity's first unit and `amount` if given. As in Webv2, a remembered timed
- * activity starts without an amount.
+ * language, or no language for the viewer to choose, and the first activity; the activity's first unit and `amount` if
+ * given. As in Webv2, a remembered timed activity starts without an amount.
  */
 export function firstDraft(options: LogOptions, amount = Number.NaN, last?: LastLogged): LogDraft {
   const { languages, activities, user_language_codes: ownLanguages = [] } = options.configuration
   const offered = (code: string | null | undefined) => languages.some(language => language.code === code)
-  const languageCode = (offered(last?.languageCode) ? last?.languageCode : ownLanguages.find(offered)) ?? languages[0].code
+  const languageCode = (offered(last?.languageCode) ? last?.languageCode : ownLanguages.find(offered)) ?? ''
   const remembered = activities.find(activity => String(activity.id) === last?.activityId)
   const activityId = String((remembered ?? activities[0]).id)
   const timed = isTimed(options, activityId)

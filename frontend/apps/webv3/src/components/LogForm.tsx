@@ -247,7 +247,7 @@ const ChoiceFields = withPaperForm({
             },
           }}
         >
-          {field => <field.Select label="Language" options={[]} groups={languageGroups(options)} />}
+          {field => <field.Select label="Language" placeholder={field.state.value ? undefined : 'Choose a language'} options={[]} groups={languageGroups(options)} />}
         </form.AppField> : null}
         {showActivity ? <form.AppField
           name="activityId"

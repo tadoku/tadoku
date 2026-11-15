@@ -149,7 +149,8 @@ Create prints one raw token line only after commit. Store it privately; it canno
 be recovered. List returns JSON metadata (`ID`, `Name`, `Scopes`, `CreatedAt`,
 `ExpiresAt`, `LastUsedAt`, `RevokedAt`), never token values or hashes. Revoke uses
 the listed UUID, is tenant-scoped and is safe to repeat. A missing UUID is an error.
-Creation requires a nonblank name of at most 128 bytes, exactly `email:read`,
+Creation requires a name of 1–128 ASCII letters, digits and `-_/=+[](){}`, with
+no spaces, exactly `email:read`,
 and a positive Go duration no longer than `720h` (30 days). At most ten unrevoked,
 unexpired tokens may exist per tenant; the tokens service sets that limit and the
 insert enforces it atomically. Concurrent creates serialize on that

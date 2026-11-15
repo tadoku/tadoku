@@ -23,9 +23,9 @@ a contest they joined, and keep the map from then on. Until then the column list
 those steps. The server reads every year's activity, and each year's first page
 of contest registrations when the activity alone is not enough, to decide. Once
 the learner has cleared it, the server sets a long-lived, HTTP-only
-`home_cleared_<account ID>` cookie, so later
-loads in that browser render the map without reading the history again. The page reads last year's
-statistics too while the map reaches back into last year. The board marks
+`home_cleared_<account ID>` cookie, so later loads in that browser render the
+map without reading the history again. The page reads last year's statistics
+too while the map reaches back into last year. The board marks
 their own row at any rank and offers Join while they can still join. Below come
 this year's running and upcoming contests other than the board's, ending
 soonest first and read from the first page of the year's registrations, and

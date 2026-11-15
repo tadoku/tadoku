@@ -1,8 +1,10 @@
 import { join } from 'node:path'
 import { faultyWebv3, type Fault } from './fault-server'
 import { api, expect, hydrated, reader, test, webv3 } from './logging-fixtures'
+import { apiJson } from './standings'
 
-// A new account can't log on earlier days, so a local server stands in the profile and an earlier year's activity.
+// A new account can't log on earlier days, so a local server stands in its profile and an earlier year's activity and
+// contests.
 let server: Awaited<ReturnType<typeof faultyWebv3>>
 const year = new Date().getUTCFullYear()
 
@@ -32,18 +34,53 @@ test.describe('getting going across years', () => {
     expect(await home()).toContain('>Getting going<')
     expect(await remembered()).toBeUndefined()
 
-    // Five active days within 30, three years ago, with nothing logged since.
+    // Three years ago, with nothing logged since. Each stand-in answer counts its own reads.
     const profile: Fault = {
       path: new RegExp(`^/immersion/users/${id}/profile(\\?|$)`),
       kind: 'json',
       body: { id, display_name: name, created_at: `${earlier}-03-01T12:00:00Z` },
     }
-    const history: Fault = {
-      path: new RegExp(`^/immersion/users/${id}/activity/${earlier}(\\?|$)`),
+    const activityPath = new RegExp(`^/immersion/users/${id}/activity/${earlier}(\\?|$)`)
+    const activity = (days: number[]): Fault => ({
+      path: activityPath,
       kind: 'json',
-      body: { total_updates: 5, scores: [3, 5, 9, 12, 20].map(day => ({ date: `${earlier}-03-${String(day).padStart(2, '0')}`, score: 4 })) },
-    }
-    server.faults.push(profile, history)
+      body: { total_updates: days.length, scores: days.map(day => ({ date: `${earlier}-03-${String(day).padStart(2, '0')}`, score: 4 })) },
+    })
+    // A real registration's shape, from a participant in the current round, moved to the learner and given dates.
+    const latest = await apiJson<{ id: string }>(context.request, '/immersion/contests/latest-official')
+    const { entries: [entry] } = await apiJson<{ entries: { user_id: string }[] }>(
+      context.request,
+      `/immersion/contests/${latest.id}/leaderboard?page_size=1&page=0`,
+    )
+    const { registrations: [template] } = await apiJson<{ registrations: { contest: object }[] }>(
+      context.request,
+      `/immersion/users/${entry.user_id}/contest-registrations/${year}?page_size=1&page=0`,
+    )
+    const joined = (start: string, end: string): Fault => ({
+      path: new RegExp(`^/immersion/users/${id}/contest-registrations/${earlier}(\\?|$)`),
+      kind: 'json',
+      body: {
+        registrations: [{ ...template, user_id: id, user_display_name: name, contest: { ...template.contest, contest_start: start, contest_end: end } }],
+        total_size: 1,
+        next_page_token: '',
+      },
+    })
+    const stand = (...faults: Fault[]) => server.faults.splice(0, server.faults.length, ...faults)
+
+    // A failed read of the earlier year clears nothing and remembers nothing.
+    const failed: Fault = { path: activityPath, kind: 'status', status: 500 }
+    stand(profile, failed)
+    expect(await home()).toContain('>Getting going<')
+    expect(failed.hits).toBeGreaterThan(0)
+    expect(await remembered()).toBeUndefined()
+
+    // Two active days in a row count only within the dates of a contest the learner joined.
+    stand(profile, activity([3, 4]), joined(`${earlier}-04-01`, `${earlier}-04-30`))
+    expect(await home()).toContain('>Getting going<')
+    expect(await remembered()).toBeUndefined()
+
+    const history = activity([3, 4])
+    stand(profile, history, joined(`${earlier}-03-01`, `${earlier}-03-31`))
     expect(await home()).toContain('>Past 30 days<')
     expect(history.hits, 'the earlier year was read once').toBe(1)
     const cookie = await remembered()
@@ -57,9 +94,12 @@ test.describe('getting going across years', () => {
     expect(history.hits, 'no further history read').toBe(1)
     await page.screenshot({ path: testInfo.outputPath('getting-going-earlier-year.png'), fullPage: true })
 
-    // Without the cookie, the server reads the history again and sets it.
+    // Without the cookie, the server reads the history again: five active days within 30 clear it without a contest.
     await context.clearCookies({ name: `home_cleared_${id}` })
+    const fiveDays = activity([3, 5, 9, 12, 20])
+    stand(profile, fiveDays)
     expect(await home()).toContain('>Past 30 days<')
-    expect(history.hits).toBe(2)
+    expect(fiveDays.hits).toBe(1)
+    expect(await remembered()).toBeDefined()
   })
 })

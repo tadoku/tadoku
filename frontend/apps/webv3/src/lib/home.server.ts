@@ -9,7 +9,7 @@ import {
 import type { HomeBoard, NextContestRead } from './home'
 import { readContestHistory } from './profile.server'
 import { clearedGettingGoing } from './recent-activity'
-import { publicReadRequest, sessionRequest } from './session.server'
+import { publicReadRequest, readAccount, sessionCookie, sessionRequest } from './session.server'
 
 /** The validated answer, or null when the API has nothing to show (404). */
 async function found<T>(request: Promise<{ data?: T; response?: Response }>): Promise<T | null> {
@@ -52,12 +52,16 @@ const clearedCookie = (userId: string) => `home_cleared_${userId}`
 const clearedCookieMaxAge = 400 * 86_400
 
 /**
- * Whether the learner cleared Getting going in any year since their account was created, read from every year's
- * activity. A yes is final, so it is remembered in a cookie for the account and later calls read nothing. A read that
- * fails counts as no activity.
+ * Whether the signed-in learner `userId` cleared Getting going in any year since their account was created, read from
+ * every year's activity. A yes is final, so it is remembered in a cookie for the account and later calls read nothing.
+ * A read that fails counts as no activity, and any other account gets a no.
  */
 export async function readGettingGoingCleared(userId: string): Promise<boolean> {
   if (getCookie(clearedCookie(userId))) return true
+  // Only the signed-in account's own history is read, and only its cookie is set.
+  const cookie = sessionCookie()
+  const account = cookie ? await readAccount(cookie) : undefined
+  if (account?.status !== 'account' || account.userId !== userId) return false
 
   const profile = await immersionProfileFindByUserId({ ...sessionRequest('immersionProfileFindByUserId'), path: { userId } })
     .catch(() => undefined)

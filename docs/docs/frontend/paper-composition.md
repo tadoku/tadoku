@@ -63,6 +63,8 @@ These controls own semantics, spacing and type roles, not page layout: screens k
 
 When a group pairs a quiet action (ghost, destructive ghost or a Cancel) with a filled or outline one, the quiet action comes first so the stronger action ends the row.
 
+A dialog's actions go in `Modal`'s `footer`. When the dialog holds a form, its submit button there names the form with the `form` attribute, so Enter and the button submit the same validated form.
+
 `PageHeader` and `SectionHeading` wrap according to their content at every width. Status tags stay beside the title while they fit. Actions share the row while the text, status and actions fit together; otherwise actions move below the text without squeezing the title into a narrow column. Long titles still wrap within the available width.
 
 ## Filters

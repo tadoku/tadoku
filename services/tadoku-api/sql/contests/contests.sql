@@ -222,10 +222,16 @@ select
   contests.title,
   contests.description,
   contests.private,
-  contests.official
+  contests.official,
+  contests.owner_user_id,
+  case
+    when owner_users.id is null or owner_users.deleted_at is not null then sqlc.arg(deleted_organizer_name)::varchar
+    else owner_users.display_name
+  end::varchar as owner_user_display_name
 from contest_registrations
 inner join contests on contests.id = contest_registrations.contest_id
 inner join users on users.id = contest_registrations.user_id
+left join users as owner_users on owner_users.id = contests.owner_user_id
 where contest_registrations.user_id = sqlc.arg(user_id)
   and contest_registrations.contest_id = sqlc.arg(contest_id)
   and contest_registrations.deleted_at is null;

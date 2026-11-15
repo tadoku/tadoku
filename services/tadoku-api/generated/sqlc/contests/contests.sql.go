@@ -309,39 +309,48 @@ select
   contests.title,
   contests.description,
   contests.private,
-  contests.official
+  contests.official,
+  contests.owner_user_id,
+  case
+    when owner_users.id is null or owner_users.deleted_at is not null then $1::varchar
+    else owner_users.display_name
+  end::varchar as owner_user_display_name
 from contest_registrations
 inner join contests on contests.id = contest_registrations.contest_id
 inner join users on users.id = contest_registrations.user_id
-where contest_registrations.user_id = $1
-  and contest_registrations.contest_id = $2
+left join users as owner_users on owner_users.id = contests.owner_user_id
+where contest_registrations.user_id = $2
+  and contest_registrations.contest_id = $3
   and contest_registrations.deleted_at is null
 `
 
 type FindContestRegistrationWithContestForUserParams struct {
-	UserID    pgtype.UUID
-	ContestID pgtype.UUID
+	DeletedOrganizerName string
+	UserID               pgtype.UUID
+	ContestID            pgtype.UUID
 }
 
 type FindContestRegistrationWithContestForUserRow struct {
-	ID              pgtype.UUID
-	ContestID       pgtype.UUID
-	UserID          pgtype.UUID
-	LanguageCodes   []string
-	CreatedAt       pgtype.Timestamp
-	UpdatedAt       pgtype.Timestamp
-	UserDisplayName string
-	ContestStart    pgtype.Date
-	ContestEnd      pgtype.Date
-	RegistrationEnd pgtype.Date
-	Title           string
-	Description     pgtype.Text
-	Private         bool
-	Official        bool
+	ID                   pgtype.UUID
+	ContestID            pgtype.UUID
+	UserID               pgtype.UUID
+	LanguageCodes        []string
+	CreatedAt            pgtype.Timestamp
+	UpdatedAt            pgtype.Timestamp
+	UserDisplayName      string
+	ContestStart         pgtype.Date
+	ContestEnd           pgtype.Date
+	RegistrationEnd      pgtype.Date
+	Title                string
+	Description          pgtype.Text
+	Private              bool
+	Official             bool
+	OwnerUserID          pgtype.UUID
+	OwnerUserDisplayName string
 }
 
 func (q *Queries) FindContestRegistrationWithContestForUser(ctx context.Context, arg FindContestRegistrationWithContestForUserParams) (FindContestRegistrationWithContestForUserRow, error) {
-	row := q.db.QueryRow(ctx, findContestRegistrationWithContestForUser, arg.UserID, arg.ContestID)
+	row := q.db.QueryRow(ctx, findContestRegistrationWithContestForUser, arg.DeletedOrganizerName, arg.UserID, arg.ContestID)
 	var i FindContestRegistrationWithContestForUserRow
 	err := row.Scan(
 		&i.ID,
@@ -358,6 +367,8 @@ func (q *Queries) FindContestRegistrationWithContestForUser(ctx context.Context,
 		&i.Description,
 		&i.Private,
 		&i.Official,
+		&i.OwnerUserID,
+		&i.OwnerUserDisplayName,
 	)
 	return i, err
 }

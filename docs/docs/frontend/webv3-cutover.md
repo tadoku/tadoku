@@ -35,9 +35,10 @@ hand.
   without a ready pod. Keep all three while Webv3 serves `tadoku.app`.
 - **Environment.** Production already sets `TADOKU_WEB_URL=https://tadoku.app`,
   so `tadoku.app` is Webv3's web host and becomes indexable once it serves
-  Webv3. `TADOKU_API_URL` points at in-cluster Oathkeeper, so server-side API
-  calls never pass the edge, and neither its rate limits nor its access logs see
-  them. Nothing else changes; [Webv3 production container](webv3-container.md)
+  Webv3. `TADOKU_API_URL` points at in-cluster Oathkeeper, so the canonical hosts'
+  server-side API calls never pass the edge, and neither its rate limits nor its
+  access logs see them; branch hosts still read through their public preview
+  API. Nothing else changes; [Webv3 production container](webv3-container.md)
   lists the variables.
 - **Health checks.** Webv2 answers `/api/health`; Webv3 answers `/healthz`.
   After the switch, `https://tadoku.app/api/health` reaches Webv3 and answers

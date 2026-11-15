@@ -16,7 +16,9 @@ calling the API; use it for readiness and liveness rather than the homepage.
 `TADOKU_API_URL` is read at runtime and defaults in the image to
 `https://tadoku.app/api/internal`; a runtime environment override selects another
 Tadoku API. `TADOKU_WEB_URL` is also read at runtime and defaults in the image to
-`https://tadoku.app`. Development deployments override both variables.
+`https://tadoku.app`. Development deployments override both variables, and
+production points `TADOKU_API_URL` at in-cluster Oathkeeper. Webv3 never sends
+`TADOKU_API_URL` to browsers, so it may be an in-cluster `http:` URL.
 `frontend/apps/webv3/server/plugins/runtime-env.ts` checks these URLs, `PORT`,
 `HOST`, `SERVER_SHUTDOWN_TIMEOUT` and any `NODE_EXTRA_CA_CERTS` file before the
 server listens. A bad value makes the process exit with status 1 and a stderr

@@ -128,9 +128,10 @@ After Argo CD syncs:
   run, such as the leaderboard: Next loads one script per kind of page and
   prefetches the scripts of visible links, so without that box the script may
   come from the cache. Its `/_next/static/*` script answers 404, and Next falls
-  back to a full page load that must end on Webv3. Without Disable cache, kinds
-  of page the tab already loaded or prefetched keep rendering Webv2 until a reload;
-  their reads and writes go to `/api/internal`, which keeps reaching the API.
+  back to a full page load that must end on Webv3. Kinds of page the tab
+  already ran keep rendering Webv2 until a reload, and so do prefetched ones
+  when the cache is used; their reads and writes go to `/api/internal`, which
+  keeps reaching the API.
   Reload the tab to confirm it then shows Webv3.
 - Run the canary's signed-in journey against `https://tadoku.app` with a
   `workflow_dispatch` once step 4 has merged, and watch the edge 5xx ratio of the

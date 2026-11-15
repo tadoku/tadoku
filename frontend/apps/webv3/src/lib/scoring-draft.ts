@@ -1,5 +1,5 @@
 import type { ImmersionLogConfigurationOptions, ImmersionScoringRuleSet } from 'api-client'
-import { z } from 'zod'
+import { z } from './zod'
 import { normalizeTag, tagRule } from './log-draft'
 
 /** One ordered rule in the form. Empty unit, language and tag matchers match any input. */

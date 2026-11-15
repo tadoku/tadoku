@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { EmptyState } from 'paper-ui'
-import { z } from 'zod'
+import { z } from '../../../../lib/zod'
 import { ProfileStatistics } from '../../../../components/ProfileStatistics'
 import { PendingView } from '../../../../components/StatusViews'
 import { profileStatisticsQuery, profileStatisticsInput } from '../../../../lib/profile'

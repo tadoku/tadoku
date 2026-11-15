@@ -1,5 +1,5 @@
 import type { ImmersionActivity, ImmersionContestConfigurationOptions, ImmersionLanguage } from 'api-client'
-import { z } from 'zod'
+import { z } from './zod'
 
 /** What the contest form holds. `official` applies only when the viewer may create official rounds. */
 export type ContestDraft = {

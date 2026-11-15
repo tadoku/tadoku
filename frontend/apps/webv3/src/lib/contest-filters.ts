@@ -1,5 +1,5 @@
 import type { FilterMenuSection, FilterMenuValue } from 'paper-ui'
-import { z } from 'zod'
+import { z } from './zod'
 import { activityId, activitySlug, type ActivitySlug } from './activity'
 import type { ContestSummary } from './contest-activity'
 

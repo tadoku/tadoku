@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import { Button, EmptyState, buttonClassName } from 'paper-ui'
-import { z } from 'zod'
+import { z } from '../../lib/zod'
 import { DraftOwnerGate } from '../../components/DraftOwnerGate'
 import { LogForm } from '../../components/LogForm'
 import { PendingView } from '../../components/StatusViews'

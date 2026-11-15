@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { randomUUID } from 'node:crypto'
 import * as ApiClient from 'api-client'
-import { z } from 'zod'
+import { z } from './zod'
 import type { ClientErrorKind } from './client-errors'
 import { urlsForHost } from './urls.server'
 

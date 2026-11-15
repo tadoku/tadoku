@@ -21,8 +21,11 @@ test('renders the configured read-only contest and standings before JavaScript r
   await context.close()
 })
 
-test('hydrates without errors and keeps the homepage within mobile and desktop viewports', async ({ page }, testInfo) => {
+test('hydrates without errors or CSP violations and keeps the homepage within mobile and desktop viewports', async ({ page }, testInfo) => {
   const failures: string[] = []
+  // The report-only CSP's violations reach the browser console but not Playwright's console events.
+  await page.addInitScript(() => addEventListener('securitypolicyviolation', event =>
+    console.error(`CSP violation: ${event.effectiveDirective} ${event.blockedURI}`)))
   page.on('pageerror', error => failures.push(error.message))
   page.on('console', message => {
     if (message.type() === 'error') failures.push(message.text())

@@ -103,6 +103,31 @@ test.describe('partial outages', () => {
     await expect(page.getByText('Temporarily unavailable')).toHaveCount(0)
   })
 
+  test('a signed-in viewer whose session or role cannot be read sees the account service unavailable, unless the session has expired', async ({ page, readerCookies }) => {
+    const session = readerCookies.find(cookie => cookie.name.startsWith('tadoku_session'))!
+    const signedIn = (value: string) => page.context().addCookies([{ name: session.name, value, domain: '127.0.0.1', path: '/' }])
+    const unavailable = page.getByText('Account service unavailable')
+    const role: Fault = { path: /^\/authz\/current-user\/role/, kind: 'status', status: 503 }
+    const identity: Fault = { path: /^\/identity\/session/, kind: 'status', status: 503 }
+
+    await signedIn(session.value)
+    await page.goto(`${server.url}/pages/manual`)
+    await expect(page.getByRole('button', { name: reader.name, exact: true })).toBeVisible()
+
+    for (const fault of [role, identity]) {
+      inject(fault)
+      await page.reload()
+      expect(fault.hits, fault.path.source).toBeGreaterThan(0)
+      await expect(unavailable, fault.path.source).toBeVisible()
+    }
+
+    inject(role)
+    await signedIn('expired')
+    await page.reload()
+    await expect(page.getByRole('link', { name: 'Log in', exact: true }).first()).toBeVisible()
+    await expect(unavailable).toHaveCount(0)
+  })
+
   test('a contest page whose main read fails or answers malformed is a 503 error page, and Try again recovers it', async ({ page }, testInfo) => {
     const { contest } = await participant(page)
     const main = new RegExp(`^/immersion/contests/${contest.id}(\\?|$)`)

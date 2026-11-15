@@ -4,7 +4,7 @@ import {
   immersionContestList,
 } from 'api-client'
 import type { HomeBoard, NextContestRead } from './home'
-import { sessionRequest } from './session.server'
+import { publicReadRequest } from './session.server'
 
 /** The validated answer, or null when the API has nothing to show (404). */
 async function found<T>(request: Promise<{ data?: T; response?: Response }>): Promise<T | null> {
@@ -18,9 +18,9 @@ async function found<T>(request: Promise<{ data?: T; response?: Response }>): Pr
 export async function readHomeBoard(contestId: string): Promise<HomeBoard> {
   const path = { id: contestId }
   const [summary, standings] = await Promise.all([
-    found(immersionContestFetchSummary({ ...sessionRequest('immersionContestFetchSummary'), path })),
+    found(immersionContestFetchSummary({ ...publicReadRequest('immersionContestFetchSummary'), path })),
     found(immersionContestFetchLeaderboard({
-      ...sessionRequest('immersionContestFetchLeaderboard'),
+      ...publicReadRequest('immersionContestFetchLeaderboard'),
       path,
       query: { page_size: 5, page: 0 },
     })),
@@ -31,7 +31,7 @@ export async function readHomeBoard(contestId: string): Promise<HomeBoard> {
 /** The soonest official contest that hasn't started, or null when none is scheduled. */
 export async function readNextContest(): Promise<NextContestRead> {
   const { data } = await immersionContestList({
-    ...sessionRequest('immersionContestList'),
+    ...publicReadRequest('immersionContestList'),
     query: { upcoming: true, official: true, include_deleted: false, page_size: 1 },
   }).catch(() => ({ data: undefined }))
   if (!data) return { ok: false }

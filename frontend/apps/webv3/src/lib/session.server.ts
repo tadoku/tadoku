@@ -115,10 +115,13 @@ export async function readViewer(): Promise<Viewer> {
   const cookie = sessionCookie()
   if (!cookie) return { status: 'anonymous' }
 
+  // Starts with the session read. Its outcome counts only for an account; `catch` keeps an unused failure handled.
+  const roleRead = authzRoleGet(sessionRequest('authzRoleGet', cookie))
+  roleRead.catch(() => {})
   const account = await readAccount(cookie)
   if (account.status !== 'account') return account
 
-  const role = (await authzRoleGet(sessionRequest('authzRoleGet', cookie))).data?.role
+  const role = (await roleRead).data?.role
   if (!role) return { status: 'unavailable' }
   if (role === 'guest') return { status: 'anonymous' }
   const user = { userId: account.userId, displayName: account.displayName }

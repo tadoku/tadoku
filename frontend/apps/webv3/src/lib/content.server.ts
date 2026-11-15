@@ -10,7 +10,7 @@ import { JSDOM } from 'jsdom'
 import type { Announcement, BlogPage, BlogPost, CmsPage, Content, SanitizedHtml } from './content'
 import { blogPageSize } from './content'
 import type { Read } from './leaderboard'
-import { publicReadRequest, sessionRequest } from './session.server'
+import { publicReadRequest } from './session.server'
 
 const namespace = 'tadoku'
 
@@ -61,7 +61,7 @@ export async function readPosts(page: number): Promise<Read<BlogPage>> {
 
 /** The announcements running now; an unavailable list shows none, as in Webv2. */
 export async function readAnnouncements(): Promise<Announcement[]> {
-  const { data } = await contentAnnouncementListActive({ ...sessionRequest('contentAnnouncementListActive'), path: { namespace } })
+  const { data } = await contentAnnouncementListActive({ ...publicReadRequest('contentAnnouncementListActive'), path: { namespace } })
     .catch(() => ({ data: undefined }))
   return (data?.announcements ?? []).flatMap(({ id, content, style, href }) =>
     id ? [{ id, content, tone: tones[style], href: href || undefined }] : [])

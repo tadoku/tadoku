@@ -1,7 +1,7 @@
 import { queryOptions, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { createServerFn } from '@tanstack/react-start'
 import type { ImmersionContest, ImmersionContestConfigurationOptions } from 'api-client'
-import { z } from 'zod'
+import { z } from './zod'
 import { newContestSchema, type NewContest } from './contest-form'
 import type { Identified } from './home'
 import type { Read } from './leaderboard'

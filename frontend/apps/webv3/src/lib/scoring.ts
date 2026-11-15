@@ -1,7 +1,7 @@
 import { queryOptions, useQueryClient } from '@tanstack/react-query'
 import { createServerFn } from '@tanstack/react-start'
 import type { ImmersionContestView, ImmersionLogConfigurationOptions, ImmersionScoringRuleSet } from 'api-client'
-import { z } from 'zod'
+import { z } from './zod'
 import type { LogResult } from './logs'
 import { newRuleSetSchema, type NewRuleSet } from './scoring-draft'
 import { viewerQueryOptions } from './session'

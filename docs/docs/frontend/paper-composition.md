@@ -72,6 +72,19 @@ A dialog's actions go in `Modal`'s `footer`. When the dialog holds a form, its s
 
 `PageHeader` and `SectionHeading` wrap according to their content at every width. Status tags stay beside the title while they fit. Actions share the row while the text, status and actions fit together; otherwise actions move below the text without squeezing the title into a narrow column. Long titles still wrap within the available width.
 
+### Page actions
+
+Webv3 page headers take their actions through `PageActions` in
+`frontend/apps/webv3/src/components/PageActions.tsx`, with the header slot classes
+from `frontend/apps/webv3/src/components/page-actions-styles.ts`. Callers split
+them into primary and secondary actions. Container queries on `PageHeader` pick
+the layout from the header's width alone, so server HTML is already right: from
+the `actions-full` container token every action is a button, from
+`actions-split` the primary ones stay beside an ellipsis menu of the rest, and
+below that the menu holds them all. The actions stay on the title's row, centred
+on its first line, instead of moving below the text as other `PageHeader`
+actions do.
+
 ## Filters
 
 The Filter bar catalogue pattern, in `frontend/packages/paper-ui/src/catalog/examples/pattern.filter-bar.tsx`, shows the composition. The screen owns the selection and the filtering; `FilterMenu` and `AppliedFilters` only report choices.

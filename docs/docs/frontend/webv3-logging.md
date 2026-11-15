@@ -111,8 +111,9 @@ instant. Under an amount log's score, Webv2's breakdown shows the amount times
 the log's modifier; a timed log has none. Labelled rows then show the
 description, unless it is empty or already the heading, and the tags, unless
 there are none; the record's ID is not shown. It offers its owner and
-administrators Edit log and Delete log in a Log actions menu, which on phones
-sits in the back link's row; other visitors see neither.
+administrators Edit log as the primary [page action](paper-composition.md#page-actions)
+and Delete log as a secondary one, in a Log actions menu when the header is
+narrow; other visitors see neither.
 
 A log tagged `nsfw`, in any case, never shows its description as a title or a
 link label: the detail page is titled by its language and activity, and the

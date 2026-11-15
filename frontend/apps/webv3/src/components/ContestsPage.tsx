@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { PlusIcon, iconClassName } from 'paper-ui/icons'
+import { PlusIcon } from 'paper-ui/icons'
 import { Link } from '@tanstack/react-router'
 import { Button, buttonClassName, EmptyState, listFooter, PageHeader, Pagination, StatusTag, Tabbar, typography } from 'paper-ui'
 import {
@@ -18,6 +18,8 @@ import { countLabel, formatDate, formatPeriod, numberFormat } from '../lib/forma
 import { useLinks } from '../lib/links'
 import { useLoginUrl, viewerKey, viewerQueryOptions } from '../lib/session'
 import { AppLink, renderLink } from './router-link'
+import { PageActions } from './PageActions'
+import { pageActionsHeader } from './page-actions-styles'
 import { standingsHeader } from './standings-styles'
 
 const tabs: { id: ContestCollection; label: string }[] = [
@@ -44,12 +46,11 @@ export function ContestsPage({ view, page }: { view: ContestView; page: number }
     <div className="contests-page">
       <PageHeader
         className={standingsHeader}
+        classNames={pageActionsHeader}
         title="Contests"
-        actions={(
-          <>
-            {canCreate ? <Link className={buttonClassName({ variant: 'outline' })} to={links.newContest}><PlusIcon className={iconClassName('compact')} aria-hidden="true" />Create contest</Link> : null}
-          </>
-        )}
+        actions={canCreate
+          ? <PageActions label="Contest actions" primary={[{ id: 'create', label: 'Create contest', icon: <PlusIcon />, href: links.newContest }]} />
+          : null}
       />
       <Tabbar
         className="mt-2"

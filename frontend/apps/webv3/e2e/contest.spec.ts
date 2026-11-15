@@ -52,6 +52,7 @@ async function chooseLanguage(page: Page, name: string) {
 
 const joinLinks = (page: Page) => page.getByRole('main').getByRole('link', { name: 'Join contest', exact: true })
 const contestOptions = (page: Page) => page.getByRole('main').getByRole('button', { name: 'Contest options' })
+const updateRegistration = (page: Page) => page.getByRole('main').getByRole('link', { name: 'Update registration', exact: true })
 
 async function contestMenu(page: Page) {
   await contestOptions(page).click()
@@ -203,22 +204,26 @@ test('a signed-in learner joins an open contest, sees it on the contest page and
   await page.getByRole('button', { name: 'Register' }).click()
   await expect(page).toHaveURL(new RegExp(`${contestPath(contest.id)}$`))
   await expect(joinLinks(page)).toHaveCount(0)
-  await expect(await contestMenu(page)).toHaveText(['Update registration'])
-  await page.keyboard.press('Escape')
+  // A wide header shows Update registration as a button and needs no menu.
+  await expect(updateRegistration(page)).toBeVisible()
+  await expect(contestOptions(page)).toHaveCount(0)
   expect(await registeredLanguages(readerContext, contest.id)).toEqual(['Japanese'])
 
-  // On a phone the menu sits on the back link's row, so the title keeps the full width.
+  // On a phone the menu holds it, on the title's row below the back link, centred on the title's first line.
   await page.setViewportSize({ width: 390, height: 844 })
   await page.reload()
   await expect(joinLinks(page)).toHaveCount(0)
+  await expect(updateRegistration(page)).toHaveCount(0)
   await expect(contestOptions(page)).toBeEnabled()
+  const heading = page.getByRole('heading', { level: 1 })
+  const line = await heading.evaluate(element => parseFloat(getComputedStyle(element).lineHeight))
   // Content above the row, such as announcements, arrives after hydration, so measure until the layout settles.
   await expect(async () => {
     const options = await contestOptions(page).boundingBox()
     const back = await page.getByRole('link', { name: 'Community contests' }).boundingBox()
-    const title = await page.getByRole('heading', { level: 1 }).boundingBox()
-    expect(options!.y + options!.height).toBeLessThanOrEqual(title!.y)
-    expect(Math.abs(options!.y + options!.height / 2 - (back!.y + back!.height / 2))).toBeLessThan(4)
+    const title = await heading.boundingBox()
+    expect(options!.y).toBeGreaterThanOrEqual(back!.y + back!.height)
+    expect(Math.abs(options!.y + options!.height / 2 - (title!.y + line / 2))).toBeLessThan(4)
   }).toPass({ timeout: 5_000 })
   expect(await fitsViewport(page)).toBe(true)
   await expect(await contestMenu(page)).toHaveText(['Update registration'])

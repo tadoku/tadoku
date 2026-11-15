@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import type { ImmersionContestView } from 'api-client'
-import { Button, buttonClassName, DescriptionList, EmptyState, Flash, SectionHeading, StatusTag, typography, type DescriptionListItem } from 'paper-ui'
+import { Button, DescriptionList, EmptyState, Flash, SectionHeading, StatusTag, typography, type DescriptionListItem } from 'paper-ui'
 import { useEffect, useState, type ReactNode } from 'react'
 import { countLabel, formatDate, formatPeriod, numberFormat } from '../lib/format'
 import { latestBoardQuery, leaderboardHref, standingsQuery, contestPhase, readDay, type ContestBoard, type ContestPhase } from '../lib/leaderboard'
@@ -11,6 +11,7 @@ import { LeaderboardFrame } from './LeaderboardPage'
 import { Standings } from './Standings'
 import { description, sheet, standingsAside, standingsContext, standingsContextTitle, standingsNotice, workspace } from './standings-styles'
 import { AppLink } from './router-link'
+import { PageActions } from './PageActions'
 
 export function RoundStatus({ phase }: { phase: ContestPhase }) {
   if (phase.ended) return <StatusTag>Ended</StatusTag>
@@ -53,7 +54,7 @@ function LatestBoard({ board, readAt, page }: { board: ContestBoard; readAt: num
   const { viewer, registered } = useParticipation(contest.id)
 
   const actions = phase.registrationOpen && !registered && viewer?.status !== 'banned'
-    ? <AppLink className={buttonClassName()} href={links.joinContest(contest.id)}>Join contest</AppLink>
+    ? <PageActions label="Leaderboard actions" primary={[{ id: 'join', label: 'Join contest', variant: 'default', href: links.joinContest(contest.id) }]} />
     : null
 
   return (

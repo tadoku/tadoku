@@ -13,6 +13,8 @@ import { Breakdown, TagBreakdown } from './Breakdown'
 import { ContestLogs } from './ContestUpdates'
 import { ProfileAppliedFilters, ProfileFilterMenu } from './ContestProfileFilters'
 import { renderLink } from './router-link'
+import { PageActions } from './PageActions'
+import { pageActionsHeader } from './page-actions-styles'
 import { muted, workspace } from './standings-styles'
 
 type Found = Extract<Profile, { status: 'found' }>
@@ -59,7 +61,8 @@ export function ContestProfile({ profile, page, filters }: { profile: Found; pag
         renderLink={renderLink}
         title={name}
         lead={`${rank ? `${place(rank)} · ` : ''}${scoreFormat.format(total)} ${pointsUnit(total)} in ${contest.title}`}
-        actions={<Link className={buttonClassName({ variant: 'outline' })} to={links.profile(userId)}>View profile</Link>}
+        classNames={pageActionsHeader}
+        actions={<PageActions label="Profile actions" primary={[{ id: 'profile', label: 'View profile', href: links.profile(userId) }]} />}
       />
       <section className="mt-8" aria-labelledby="contest-profile-activity">
         <SectionHeading

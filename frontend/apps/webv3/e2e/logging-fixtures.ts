@@ -76,13 +76,20 @@ export const saveButton = (page: Page) => page.getByRole('button', { name: 'Log 
 /** The links to `href`, by their destination, because a link's visible name often is the data the test reads. */
 export const linkTo = (page: Page, href: string) => page.getByRole('link').and(page.locator(`[href="${href}"]`))
 
-/** The detail page's menu of owner and administrator actions. */
-export const logActions = (page: Page) => page.getByRole('button', { name: 'Log actions', exact: true })
+/** The detail page's owner and administrator actions: an Edit log link on a wide page, the Log actions menu on a narrow one. */
+export const logActions = (page: Page) => page.getByRole('main').getByRole('link', { name: 'Edit log', exact: true })
+  .or(page.getByRole('button', { name: 'Log actions', exact: true }))
 
-/** Chooses Edit log or Delete log from the detail page's actions menu. */
+/** Chooses Edit log or Delete log from the detail page's header, opening its actions menu when the page is narrow. */
 export async function chooseLogAction(page: Page, action: 'Edit log' | 'Delete log') {
-  await logActions(page).click()
-  await page.getByRole('menuitem', { name: action, exact: true }).click()
+  const menu = page.getByRole('button', { name: 'Log actions', exact: true })
+  await logActions(page).waitFor()
+  if (await menu.isVisible()) {
+    await menu.click()
+    await page.getByRole('menuitem', { name: action, exact: true }).click()
+    return
+  }
+  await page.getByRole('main').getByRole(action === 'Edit log' ? 'link' : 'button', { name: action, exact: true }).click()
 }
 
 /** Each listed contest's row, in the list every contest collection labels. */

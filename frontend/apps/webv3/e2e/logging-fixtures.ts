@@ -82,14 +82,14 @@ export const logActions = (page: Page) => page.getByRole('main').getByRole('link
 
 /** Chooses Edit log or Delete log from the detail page's header, opening its actions menu when the page is narrow. */
 export async function chooseLogAction(page: Page, action: 'Edit log' | 'Delete log') {
-  const menu = page.getByRole('button', { name: 'Log actions', exact: true })
-  await logActions(page).waitFor()
-  if (await menu.isVisible()) {
-    await menu.click()
-    await page.getByRole('menuitem', { name: action, exact: true }).click()
+  const direct = page.getByRole('main').getByRole(action === 'Edit log' ? 'link' : 'button', { name: action, exact: true })
+  await logActions(page).first().waitFor()
+  if (await direct.isVisible()) {
+    await direct.click()
     return
   }
-  await page.getByRole('main').getByRole(action === 'Edit log' ? 'link' : 'button', { name: action, exact: true }).click()
+  await page.getByRole('button', { name: 'Log actions', exact: true }).click()
+  await page.getByRole('menuitem', { name: action, exact: true }).click()
 }
 
 /** Each listed contest's row, in the list every contest collection labels. */

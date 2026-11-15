@@ -56,12 +56,17 @@ test.describe('getting going across years', () => {
       context.request,
       `/immersion/users/${entry.user_id}/contest-registrations/${year}?page_size=1&page=0`,
     )
-    const joined = (start: string, end: string): Fault => ({
+    const joined = (...periods: [start: string, end: string][]): Fault => ({
       path: new RegExp(`^/immersion/users/${id}/contest-registrations/${earlier}(\\?|$)`),
       kind: 'json',
       body: {
-        registrations: [{ ...template, user_id: id, user_display_name: name, contest: { ...template.contest, contest_start: start, contest_end: end } }],
-        total_size: 1,
+        registrations: periods.map(([start, end]) => ({
+          ...template,
+          user_id: id,
+          user_display_name: name,
+          contest: { ...template.contest, contest_start: start, contest_end: end },
+        })),
+        total_size: periods.length,
         next_page_token: '',
       },
     })
@@ -75,12 +80,18 @@ test.describe('getting going across years', () => {
     expect(await remembered()).toBeUndefined()
 
     // Two active days in a row count only within the dates of a contest the learner joined.
-    stand(profile, activity([3, 4]), joined(`${earlier}-04-01`, `${earlier}-04-30`))
-    expect(await home()).toContain('>Getting going<')
-    expect(await remembered()).toBeUndefined()
+    for (const contests of [
+      [[`${earlier}-04-01`, `${earlier}-04-30`]],
+      // Each day in a different contest.
+      [[`${earlier}-03-01`, `${earlier}-03-03`], [`${earlier}-03-04`, `${earlier}-03-31`]],
+    ] as [string, string][][]) {
+      stand(profile, activity([3, 4]), joined(...contests))
+      expect(await home()).toContain('>Getting going<')
+      expect(await remembered()).toBeUndefined()
+    }
 
     const history = activity([3, 4])
-    stand(profile, history, joined(`${earlier}-03-01`, `${earlier}-03-31`))
+    stand(profile, history, joined([`${earlier}-03-01`, `${earlier}-03-31`]))
     expect(await home()).toContain('>Past 30 days<')
     expect(history.hits, 'the earlier year was read once').toBe(1)
     const cookie = await remembered()

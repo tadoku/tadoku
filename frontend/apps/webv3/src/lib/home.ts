@@ -92,7 +92,7 @@ export const lastYearStatisticsQuery = (viewer: Extract<Viewer, { status: 'signe
 /**
  * Whether the learner cleared Getting going in any year since their account was created. Once they have, a cookie for
  * their account on this browser answers it without reading their history again, and the answer stays fresh; a no is
- * read again like the page's other reads, so progress or a recovered read reaches it.
+ * read again when the page next mounts after 30 seconds, so progress or a recovered read reaches it.
  */
 export const gettingGoingClearedQuery = (viewer: Extract<Viewer, { status: 'signed-in' }>) => queryOptions({
   queryKey: ['getting-going-cleared', viewer.userId],

@@ -36,8 +36,8 @@ export function MemberActivity({ viewer, year }: { viewer: SignedIn; year: numbe
   // Last year's activity is a bonus: when it can't be read, the window and history simply start on 1 January.
   const previous = lastYear?.status === 'found' && readsLastYear(today) ? lastYear : undefined
   const days = [...(previous?.activity.ok ? previous.activity.data.scores : []), ...statistics.activity.data.scores]
-  const joinedContest = [statistics, previous].some(read => read?.contests.ok && read.contests.data.total > 0)
-  const activity = homeActivity(new Map(days.map(day => [day.date, day.score])), today, joinedContest, clearedBefore)
+  const contests = [statistics, previous].flatMap(read => (read?.contests.ok ? read.contests.data.contests : []))
+  const activity = homeActivity(new Map(days.map(day => [day.date, day.score])), today, contests, clearedBefore)
   const title = activity.kind === 'active' ? 'Past 30 days' : 'Getting going'
 
   return (

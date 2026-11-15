@@ -5,11 +5,11 @@ import {
   immersionContestList,
   immersionProfileFindByUserId,
   immersionProfileYearlyActivityByUserId,
-  immersionProfileYearlyContestRegistrationsByUserId,
 } from 'api-client'
 import type { HomeBoard, NextContestRead } from './home'
+import { readContestHistory } from './profile.server'
 import { clearedGettingGoing } from './recent-activity'
-import { publicReadRequest, readAsVisitor, sessionRequest } from './session.server'
+import { publicReadRequest, sessionRequest } from './session.server'
 
 /** The validated answer, or null when the API has nothing to show (404). */
 async function found<T>(request: Promise<{ data?: T; response?: Response }>): Promise<T | null> {
@@ -72,20 +72,17 @@ export async function readGettingGoingCleared(userId: string): Promise<boolean> 
   const scores = new Map(activity.flat().map(day => [day.date, day.score]))
 
   // Contests only matter for two days in a row, so they are read only when the activity alone doesn't clear it.
-  const cleared = clearedGettingGoing(scores, false)
-    || (clearedGettingGoing(scores, true) && await joinedAnyContest(userId, years))
+  const cleared = clearedGettingGoing(scores, [])
+    || (await readContests(userId, years).then(contests => clearedGettingGoing(scores, contests)))
   if (cleared) {
     setCookie(clearedCookie(userId), '1', { maxAge: clearedCookieMaxAge, path: '/', sameSite: 'lax', secure: true, httpOnly: true })
   }
   return cleared
 }
 
-/** Whether the learner registered for any contest in `years`, private ones included, as they see their own history. */
-async function joinedAnyContest(userId: string, years: number[]) {
-  const totals = await Promise.all(years.map(year => readAsVisitor(cookie => immersionProfileYearlyContestRegistrationsByUserId({
-    ...sessionRequest('immersionProfileYearlyContestRegistrationsByUserId', cookie),
-    path: { userId, year },
-    query: { page_size: 1, page: 0 },
-  }).catch(() => ({ data: undefined, response: undefined }))).then(({ data }) => data?.total_size ?? 0)))
-  return totals.some(total => total > 0)
+/** The contests the learner registered for in `years`, private ones included, as they see their own history. */
+async function readContests(userId: string, years: number[]) {
+  // ponytail: the first 50 registrations of each year, as the profile lists them; page further if anyone joins more.
+  const history = await Promise.all(years.map(year => readContestHistory(userId, year, 1)))
+  return history.flatMap(section => (section.ok ? section.data.contests : []))
 }

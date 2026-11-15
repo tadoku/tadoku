@@ -27,25 +27,30 @@ const windowDays = 30
 const activeDates = (scores: ReadonlyMap<string, number>) =>
   [...scores].filter(([, score]) => score > 0).map(([date]) => date).sort()
 
+/** A contest the learner registered for, by its UTC dates. */
+export type ContestPeriod = { contest_start: string; contest_end: string }
+
 /**
  * Whether `scores` show the learner has cleared the getting-going checklist: 5 active days within 30, or two active days
- * in a row while they're in a contest, which is every step.
+ * in a row inside one of `contests`, which is every step.
  */
-export function clearedGettingGoing(scores: ReadonlyMap<string, number>, joinedContest: boolean) {
+export function clearedGettingGoing(scores: ReadonlyMap<string, number>, contests: readonly ContestPeriod[]) {
   const active = activeDates(scores)
+  const inContest = (date: string) => contests.some(contest => contest.contest_start <= date && date <= contest.contest_end)
   return active.some((date, index) => index + activeDaysGoal - 1 < active.length
     && daysBetween(date, active[index + activeDaysGoal - 1]) < windowDays)
-    || (joinedContest && active.some((date, index) => index > 0 && daysBetween(active[index - 1], date) === 1))
+    || active.some((date, index) => index > 0 && daysBetween(active[index - 1], date) === 1
+      && inContest(active[index - 1]) && inContest(date))
 }
 
 /**
- * The learner's past 30 UTC days, or the getting-going checklist until they've cleared it in `scores` or, as
- * `clearedBefore` says, anywhere in their history. They keep the map from then on even after a quiet month.
+ * The learner's past 30 UTC days, or the getting-going checklist until they've cleared it in `scores` and `contests` or,
+ * as `clearedBefore` says, anywhere in their history. They keep the map from then on even after a quiet month.
  */
 export function homeActivity(
   scores: ReadonlyMap<string, number>,
   today: string,
-  joinedContest: boolean,
+  contests: readonly ContestPeriod[],
   clearedBefore: boolean,
 ): HomeActivity {
   const active = activeDates(scores)
@@ -55,11 +60,11 @@ export function homeActivity(
   let streak = 0
   for (let back = todayScore > 0 ? 0 : 1; (scores.get(daysBefore(today, back)) ?? 0) > 0; back++) streak++
 
-  if (!clearedBefore && !clearedGettingGoing(scores, joinedContest)) {
+  if (!clearedBefore && !clearedGettingGoing(scores, contests)) {
     return {
       kind: 'getting-going',
       activeDays: recent.length,
-      steps: { logged: active.length > 0, loggedToday: todayScore > 0, joinedContest, twoDaysInARow: streak >= 2 },
+      steps: { logged: active.length > 0, loggedToday: todayScore > 0, joinedContest: contests.length > 0, twoDaysInARow: streak >= 2 },
     }
   }
 

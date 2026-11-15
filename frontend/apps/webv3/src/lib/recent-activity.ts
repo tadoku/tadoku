@@ -36,11 +36,12 @@ export type ContestPeriod = { contest_start: string; contest_end: string }
  */
 export function clearedGettingGoing(scores: ReadonlyMap<string, number>, contests: readonly ContestPeriod[]) {
   const active = activeDates(scores)
-  const inContest = (date: string) => contests.some(contest => contest.contest_start <= date && date <= contest.contest_end)
+  const inOneContest = (first: string, last: string) =>
+    contests.some(contest => contest.contest_start <= first && last <= contest.contest_end)
   return active.some((date, index) => index + activeDaysGoal - 1 < active.length
     && daysBetween(date, active[index + activeDaysGoal - 1]) < windowDays)
     || active.some((date, index) => index > 0 && daysBetween(active[index - 1], date) === 1
-      && inContest(active[index - 1]) && inContest(date))
+      && inOneContest(active[index - 1], date))
 }
 
 /**

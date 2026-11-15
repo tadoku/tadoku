@@ -74,8 +74,9 @@ func (r *ContestsRepository) FindRegistrationWithContestForUser(ctx context.Cont
 	}
 
 	row, err := queries.New(executor).FindContestRegistrationWithContestForUser(ctx, queries.FindContestRegistrationWithContestForUserParams{
-		UserID:    postgres.UUID(userID),
-		ContestID: postgres.UUID(contestID),
+		DeletedOrganizerName: deleteduser.OrganizerName,
+		UserID:               postgres.UUID(userID),
+		ContestID:            postgres.UUID(contestID),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrRegistrationNotFound
@@ -93,16 +94,18 @@ func (r *ContestsRepository) FindRegistrationWithContestForUser(ctx context.Cont
 		CreatedAt:       row.CreatedAt.Time,
 		UpdatedAt:       row.UpdatedAt.Time,
 		Contest: &ContestView{
-			ID:                uuid.UUID(row.ContestID.Bytes),
-			ContestStart:      row.ContestStart.Time,
-			ContestEnd:        row.ContestEnd.Time,
-			RegistrationEnd:   row.RegistrationEnd.Time,
-			Title:             row.Title,
-			Description:       postgres.TextPointer(row.Description),
-			Private:           row.Private,
-			Official:          row.Official,
-			AllowedLanguages:  []Language{},
-			AllowedActivities: []Activity{},
+			ID:                   uuid.UUID(row.ContestID.Bytes),
+			ContestStart:         row.ContestStart.Time,
+			ContestEnd:           row.ContestEnd.Time,
+			RegistrationEnd:      row.RegistrationEnd.Time,
+			Title:                row.Title,
+			Description:          postgres.TextPointer(row.Description),
+			OwnerUserID:          uuid.UUID(row.OwnerUserID.Bytes),
+			OwnerUserDisplayName: row.OwnerUserDisplayName,
+			Private:              row.Private,
+			Official:             row.Official,
+			AllowedLanguages:     []Language{},
+			AllowedActivities:    []Activity{},
 		},
 	}, nil
 }

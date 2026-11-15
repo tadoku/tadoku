@@ -17,10 +17,12 @@ export type LogDraft = {
 
 const amountRule = z.number({ error: 'Enter an amount.' }).positive('Enter an amount greater than zero.')
 const unitRule = z.string().min(1, 'Choose a unit.')
+// As in Webv2, time spent has no upper limit beyond the API's int32 seconds.
+const secondsRule = z.int32().positive()
 const minutesRule = z.number({ error: 'Enter minutes.' })
   .positive('Enter minutes greater than zero.')
-  .max(1440, 'Enter at most 1440 minutes.')
   .refine(minutes => Math.round(minutes * 60) > 0, 'Enter at least one second.')
+  .refine(minutes => secondsRule.safeParse(Math.round(minutes * 60)).success, 'Enter less than 35,791,394.125 minutes.')
 
 // The API counts description characters as Unicode code points.
 const descriptionRule = z.string()
@@ -34,7 +36,6 @@ export const tagRule = z.string()
     'Use shorter tags. A tag allows 50 bytes, and most non-Latin characters take 2 to 4 bytes.',
   )
 const tagsRule = z.array(tagRule).max(10, 'Use at most 10 different tags.')
-const secondsRule = z.int().positive().max(86_400)
 
 /** The activity a viewer saves, as the API receives it. An amount may also record the time spent. */
 export const newLogSchema = z.object({

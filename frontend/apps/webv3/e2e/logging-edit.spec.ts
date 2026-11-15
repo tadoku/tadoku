@@ -173,6 +173,44 @@ test('editing only the description keeps a saved tag that holds a comma', async 
   expect((await (await readRecord(readerContext, id)).json()).tags).toEqual(['reading, fiction'])
 })
 
+// As in Webv2 and the API, time spent has no daily cap.
+test('a timed log longer than a day saves from the form, and its tags change on edit', async ({ page, readerContext }) => {
+  test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
+  await openForm(page)
+  await page.getByLabel('Activity', { exact: true }).selectOption({ label: 'Listening' })
+  await page.getByLabel('Language', { exact: true }).selectOption('jpn')
+  await timeSpent(page).fill('1500')
+  await description(page).fill(`long-timed-${Date.now()}`)
+  const id = await createLog(page)
+  expect((await (await readRecord(readerContext, id)).json()).duration_seconds).toBe(90_000)
+
+  await page.goto(`/logs/${id}/edit`)
+  await expect(saveChanges(page)).toBeEnabled({ timeout: 15_000 })
+  await expect(timeSpent(page)).toHaveValue('1500')
+  await addTags(page, ['marathon'])
+  await saveChanges(page).click()
+  await expect(page).toHaveURL(`${webv3}/logs/${id}`)
+
+  expect(await (await readRecord(readerContext, id)).json()).toMatchObject({ duration_seconds: 90_000, tags: ['marathon'] })
+})
+
+test('a timed log longer than a day saved through the API, as Webv2 saves it, opens valid and keeps its time', async ({ page, readerContext }) => {
+  test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
+  const created = await readerContext.request.post(`${api}/immersion/logs`, {
+    data: { language_code: 'jpn', activity_id: 2, duration_seconds: 100_000, tags: [], description: `long-webv2-${Date.now()}` },
+  })
+  expect(created.status()).toBe(200)
+  const { id } = await created.json() as { id: string }
+
+  await page.goto(`/logs/${id}/edit`)
+  await expect(saveChanges(page)).toBeEnabled({ timeout: 15_000 })
+  await addTags(page, ['marathon'])
+  await saveChanges(page).click()
+  await expect(page).toHaveURL(`${webv3}/logs/${id}`)
+
+  expect(await (await readRecord(readerContext, id)).json()).toMatchObject({ duration_seconds: 100_000, tags: ['marathon'] })
+})
+
 test('an expired session keeps the edit and changes nothing', async ({ page, readerContext }) => {
   test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
   const id = await createReadingLog(page, `edit-expired-${Date.now()}`)

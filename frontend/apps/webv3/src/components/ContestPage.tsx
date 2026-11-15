@@ -23,7 +23,7 @@ export function ContestPage({ contestId, view, page }: { contestId: string; view
 
   if (board.isPending) return <PendingView />
   if (board.data?.kind === 'board') {
-    return <ContestBoardPage board={board.data.board} today={readDay(board.dataUpdatedAt)} view={view} page={page} />
+    return <ContestBoardPage board={board.data.board} readAt={board.dataUpdatedAt} view={view} page={page} />
   }
   if (board.data?.kind === 'none') return <ContestNotFound />
   return (
@@ -52,10 +52,10 @@ export function ContestNotFound() {
  * the scoring rules for administrators. Joining is the only button; the rest sit in the Contest options menu, which is
  * left out when it would be empty. Anonymous visitors who join are sent to log in first.
  */
-function ContestBoardPage({ board, today, view, page }: { board: ContestBoard; today: string; view: ContestView; page: number }) {
+function ContestBoardPage({ board, readAt, view, page }: { board: ContestBoard; readAt: number; view: ContestView; page: number }) {
   const links = useLinks()
   const { contest } = board
-  const phase = contestPhase(contest, today)
+  const phase = contestPhase(contest, readDay(readAt))
   const { viewer, registered } = useParticipation(contest.id)
   const banned = viewer?.status === 'banned'
   const admin = viewer?.status === 'signed-in' && viewer.role === 'admin'
@@ -100,6 +100,7 @@ function ContestBoardPage({ board, today, view, page }: { board: ContestBoard; t
         <ContestBoardBody
           board={board}
           phase={phase}
+          readAt={readAt}
           page={page}
           pageHref={next => links.contest(contest.id, next)}
         />

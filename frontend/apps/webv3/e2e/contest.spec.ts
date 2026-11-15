@@ -143,8 +143,9 @@ test('the contest page counts its participants from the API and counts down to i
   const page = await browser.newPage()
   const failures: string[] = []
   page.on('pageerror', error => failures.push(error.message))
+  // An organizer without an avatar answers 404, and the page shows their initials instead.
   page.on('console', message => {
-    if (message.type() === 'error') failures.push(message.text())
+    if (message.type() === 'error' && !message.location().url.endsWith('/avatar')) failures.push(message.text())
   })
   await page.clock.install({ time: end - 65_000 })
   await page.goto(contestPath(live.id))

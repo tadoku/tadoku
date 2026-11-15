@@ -2,10 +2,10 @@ import { createMiddleware, createStart } from '@tanstack/react-start'
 import { getRequest, getRequestHeader, setResponseHeader } from '@tanstack/react-start/server'
 import { outdatedBuildHeader, serverFunctionFetch } from './lib/outdated-build'
 
-const requestLogging = createMiddleware().server(async ({ next }) => {
+const requestLogging = createMiddleware().server(async ({ next, handlerType }) => {
   const request = getRequest()
   const { recordSsrError, withRequestLog } = await import('./lib/log.server')
-  return withRequestLog(request, async () => {
+  return withRequestLog(request, handlerType, async () => {
     try {
       const result = await next()
       if (result.response.status >= 500) recordSsrError({ kind: 'response', status: result.response.status })

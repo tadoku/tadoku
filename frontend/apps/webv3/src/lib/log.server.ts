@@ -23,9 +23,20 @@ export type SsrError =
   | { kind: 'response'; status: number }
   | { kind: 'thrown'; errorName: string }
 
-type RequestLog = { requestId: string; host: string | undefined; ssrErrorRecorded: boolean }
+/** What answered a request: a TanStack Start page or server function, or anything else Nitro serves. */
+type RequestHandler = 'router' | 'serverFn' | 'nitro'
 
-const requestLog = new AsyncLocalStorage<RequestLog>()
+type RequestLog = { requestId: string; host: string | undefined; ssrErrorRecorded: boolean; handler: RequestHandler }
+
+/** A successful upstream call slower than this writes `slow_upstream`; an API read usually answers in milliseconds. */
+const slowUpstreamMs = 1_000
+/** A response slower than this writes `slow_request`; a quarter of the 8-second upstream deadline. */
+const slowRequestMs = 2_000
+
+// Nitro's plugins and TanStack Start's server bundle each get their own copy of this module, so both copies share one
+// store through `globalThis` or Start's records would not see the request `logRequest` opened.
+const shared = globalThis as { webv3RequestLog?: AsyncLocalStorage<RequestLog> }
+const requestLog = (shared.webv3RequestLog ??= new AsyncLocalStorage<RequestLog>())
 const requestIdPattern = /^[A-Za-z0-9_-]{1,128}$/
 const maxIssuePaths = 20
 const schemaFields = new Set(
@@ -66,8 +77,7 @@ function recordRenderErrors() {
 
 let renderErrorsRecorded = false
 
-/** Runs one request with the ID and host that every record made during it carries. */
-export function withRequestLog<T>(request: Request, run: () => T): T {
+function newRequestLog(request: Request, handler: RequestHandler): RequestLog {
   if (!renderErrorsRecorded) {
     renderErrorsRecorded = true
     recordRenderErrors()
@@ -75,7 +85,44 @@ export function withRequestLog<T>(request: Request, run: () => T): T {
 
   const ingressId = request.headers.get('x-request-id')
   const requestId = ingressId && requestIdPattern.test(ingressId) ? ingressId : randomUUID()
-  return requestLog.run({ requestId, host: upstreamHost(request.headers.get('host')), ssrErrorRecorded: false }, run)
+  return { requestId, host: upstreamHost(request.headers.get('host')), ssrErrorRecorded: false, handler }
+}
+
+/**
+ * Answers every request the server receives with the ID and host that each record made during it carries, and writes
+ * `slow_request` when the response, body included, takes longer than `slowRequestMs`. A response the client abandons
+ * before its body ends writes nothing.
+ */
+export async function logRequest(request: Request, respond: () => Response | Promise<Response>): Promise<Response> {
+  const startedAt = performance.now()
+  const log = newRequestLog(request, 'nitro')
+  const response = await requestLog.run(log, respond)
+
+  const finished = () => {
+    const durationMs = performance.now() - startedAt
+    if (durationMs <= slowRequestMs) return
+    requestLog.run(log, () => write('slow_request', 'request slow', {
+      path: new URL(request.url).pathname,
+      handler: log.handler,
+      status: response.status,
+      latency: Math.round(durationMs * 1_000_000),
+    }, 'WARN'))
+  }
+
+  if (!response.body) {
+    finished()
+    return response
+  }
+  return new Response(response.body.pipeThrough(new TransformStream({ flush: finished })), response)
+}
+
+/** Runs one TanStack Start request in the record `logRequest` opened, which it marks as answered by `handler`. */
+export function withRequestLog<T>(request: Request, handler: 'router' | 'serverFn', run: () => T): T {
+  const log = requestLog.getStore()
+  if (!log) return requestLog.run(newRequestLog(request, handler), run)
+
+  log.handler = handler
+  return run()
 }
 
 /** Keeps field names in step with Tadoku API's slog JSON handler, so one Loki query covers both. */
@@ -93,8 +140,9 @@ function write(
     path?: string
     build_id?: string
     user_agent?: string
+    handler?: RequestHandler
   },
-  level: 'ERROR' | 'INFO' = 'ERROR',
+  level: 'ERROR' | 'WARN' | 'INFO' = 'ERROR',
 ) {
   const request = requestLog.getStore()
   const entry = {
@@ -164,6 +212,29 @@ ApiClient.client.interceptors.error.use((error, response, _request, options) => 
   if (failure) recordUpstreamFailure({ operation: call.operation, durationMs: performance.now() - call.startedAt, failure })
   return error
 })
+
+/**
+ * Writes `slow_upstream` when an answer that is not an upstream failure arrives after `slowUpstreamMs`. It runs when the
+ * answer's headers arrive, so a slow success that then fails validation also writes `upstream_failure`.
+ */
+const recordSlowUpstream = (response: Response, _request: Request, options: unknown) => {
+  const call = (options as { meta?: UpstreamCall }).meta
+  const durationMs = call ? performance.now() - call.startedAt : 0
+  if (call && durationMs > slowUpstreamMs && (response.ok || answeredStatuses.has(response.status))) {
+    write('slow_upstream', 'upstream request slow', {
+      operation: call.operation,
+      status: response.status,
+      latency: Math.round(durationMs * 1_000_000),
+    }, 'WARN')
+  }
+  return response
+}
+
+// api-client registers its own response interceptor, so only the previous registration of this one is removed.
+const registered = globalThis as { webv3SlowUpstream?: typeof recordSlowUpstream }
+if (registered.webv3SlowUpstream) ApiClient.client.interceptors.response.eject(registered.webv3SlowUpstream)
+registered.webv3SlowUpstream = recordSlowUpstream
+ApiClient.client.interceptors.response.use(recordSlowUpstream)
 
 /** Records at most one SSR error per request: a render error and the 500 it causes are one failure. */
 export function recordSsrError(error: SsrError) {

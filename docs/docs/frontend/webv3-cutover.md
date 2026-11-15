@@ -113,8 +113,8 @@ After Argo CD syncs:
 - **A write on `tadoku.app`.** Signed in on `https://tadoku.app` with your own
   account, not the canary's, whose state the canary depends on, save a log
   without adding it to a contest and then delete it. The canary never writes, so
-  this is the first server-function write on `tadoku.app`, the first check
-  that Webv3's writes and their same-origin check work there. A save whose `/_serverFn/`
+  this is the first deliberate check that Webv3's server-function writes and
+  their same-origin check work on `tadoku.app`. A save whose `/_serverFn/`
   POST answers 403 `Forbidden` points at that check: it accepts only an `Origin`
   equal to `TADOKU_WEB_URL`'s scheme plus the `Host` header Webv3 receives, and
   a `Sec-Fetch-Site` of `same-origin` when the browser sends one. Check that the
@@ -122,13 +122,14 @@ After Argo CD syncs:
   `https`.
 - **A Webv2 tab opened before the switch.** Before step 3, open a Webv2 tab on
   `tadoku.app`, signed out or with an account outside the `release-webv3-access`
-  segment, since Webv2 sends accounts in it to `next.tadoku.app`. Stay on one
-  kind of page, such as a profile, and do not show or hover links to others,
-  because Next loads and prefetches one script per kind of page. After step 3,
-  click a link in it to a kind of page the tab has not loaded, such as the
-  leaderboard. In the browser's network panel, its `/_next/static/*` script
-  answers 404, and Next falls back to a full page load that must end on Webv3.
-  Kinds of page the tab already loaded keep rendering Webv2 until a reload;
+  segment, since Webv2 sends accounts in it to `next.tadoku.app`, and stay on
+  one kind of page, such as a profile. After step 3, open the browser's network
+  panel, tick Disable cache, and click a link to a kind of page the tab has not
+  run, such as the leaderboard: Next loads one script per kind of page and
+  prefetches the scripts of visible links, so without that box the script may
+  come from the cache. Its `/_next/static/*` script answers 404, and Next falls
+  back to a full page load that must end on Webv3. Without Disable cache, kinds
+  of page the tab already loaded or prefetched keep rendering Webv2 until a reload;
   their reads and writes go to `/api/internal`, which keeps reaching the API.
   Reload the tab to confirm it then shows Webv3.
 - Run the canary's signed-in journey against `https://tadoku.app` with a

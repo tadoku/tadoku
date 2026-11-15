@@ -80,7 +80,7 @@ function LogDetail() {
       <Surface className="max-w-record p-0 wrap-anywhere">
         <div className="grid gap-6 p-record-inset">
           <StatGrid
-            className="max-sm:grid-cols-halves [&>:last-child]:max-sm:col-span-full"
+            className="max-sm:grid-cols-single"
             stats={[
               ...measure(log),
               { label: 'Score', value: scoreFormat.format(log.score), unit: pointsUnit(log.score), detail: breakdown(log) },

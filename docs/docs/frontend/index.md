@@ -13,7 +13,7 @@ Read this when you start frontend work and need to find the right application, p
 | Application | Purpose | Stack | Design system |
 | --- | --- | --- | --- |
 | [webv2](webv2.md) | Main site: logs, contests, leaderboards, profiles, blog and CMS pages | Next.js 13 | `ui` (legacy) |
-| [webv3](webv3.md) | Unpublished homepage foundation with read-only development data and a local immersion goal | TanStack Start, Router, Query and Form | `paper-ui` (Paper) |
+| [webv3](webv3.md) | Main site's successor, served on `next.tadoku.app` to accounts in the flagged release until it takes over `tadoku.app` | TanStack Start, Router, Query and Form | `paper-ui` (Paper) |
 | [authv2](authv2.md) | Account app: login, registration, recovery and Settings | TanStack Start, Router, Query and Form | `paper-ui` (Paper) |
 | [admin](admin.md) | Administration: CMS content, users, languages, feature access | Next.js 13 | `ui` (legacy) |
 | [paper-styleguide](paper-styleguide.md) | Catalogue for `paper-ui` | Vite, React Router | `paper-ui` (Paper) |

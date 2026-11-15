@@ -30,7 +30,8 @@ through `onQueryChange` and labels suggestions with `formatOption`.
 
 After a save the browser remembers the log's language and activity under
 Webv2's `log-form-v2:last-logged-language` and `log-form-v2:last-logged-activity`
-keys, so they carry over between the two hosts. Once the page has hydrated, a
+keys. Browser storage is per origin, so they carry over from Webv2 only once
+Webv3 serves `tadoku.app`; until then `next.tadoku.app` keeps its own. Once the page has hydrated, a
 new draft starts from them when they are still offered; a remembered timed
 activity starts without an amount, as in Webv2. Without them, the draft starts
 with the viewer's first previously used language and the first activity.

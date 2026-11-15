@@ -92,7 +92,6 @@ func (a *Application) CreateContest(ctx context.Context, parameters CreateContes
 		Title:                   parameters.Title,
 		Description:             parameters.Description,
 		OwnerUserID:             creatorID,
-		OwnerUserDisplayName:    creator.DisplayName,
 		Official:                parameters.Official,
 		Private:                 parameters.Private,
 		LanguageCodeAllowList:   parameters.LanguageCodeAllowList,

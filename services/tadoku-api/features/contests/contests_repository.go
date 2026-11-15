@@ -286,7 +286,7 @@ func (r *ContestsRepository) CreateContest(ctx context.Context, contest Contest)
 	err = queries.New(executor).CreateContest(ctx, queries.CreateContestParams{
 		ID:                      postgres.UUID(contest.ID),
 		OwnerUserID:             postgres.UUID(contest.OwnerUserID),
-		OwnerUserDisplayName:    contest.OwnerUserDisplayName,
+		OwnerUserDisplayName:    "",
 		Official:                contest.Official,
 		Private:                 contest.Private,
 		ContestStart:            pgtype.Date{Time: contest.ContestStart, Valid: true},

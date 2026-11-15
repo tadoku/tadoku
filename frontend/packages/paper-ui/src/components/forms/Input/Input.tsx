@@ -1,4 +1,4 @@
-import { useField } from "../field"
+import { enterTrimmedNumber, useField } from "../field"
 import { forwardRef, useId, type InputHTMLAttributes } from "react"
 import { control, field as fieldStyles } from "../styles"
 
@@ -49,6 +49,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         value={typeof field.state.value === "number" && Number.isNaN(field.state.value) ? "" : field.state.value ?? ""}
         onChange={event => field.handleChange(props.type === "number" ? event.currentTarget.valueAsNumber : event.currentTarget.value)}
         onBlur={field.handleBlur}
+        onPaste={event => {
+          props.onPaste?.(event);
+          if (props.type === "number") enterTrimmedNumber(event, field.handleChange);
+        }}
         id={id}
         required={required}
         readOnly={readOnly}

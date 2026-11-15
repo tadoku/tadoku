@@ -1,5 +1,5 @@
 import { createFormHookContexts, useStore } from "@tanstack/react-form"
-import type { ReactNode } from "react";
+import type { ClipboardEvent, ReactNode } from "react";
 import { field as fieldStyles } from "./styles";
 
 export const { fieldContext, formContext, useFieldContext, useFormContext } = createFormHookContexts();
@@ -67,4 +67,24 @@ export function describedBy(id: string, hint?: string, error?: unknown, external
   return [hint ? `${id}-hint` : undefined, error ? `${id}-error` : undefined, external]
     .filter(Boolean)
     .join(" ") || undefined;
+}
+
+/**
+ * Enters a number pasted with surrounding whitespace, such as a copied spreadsheet cell, which Firefox would otherwise
+ * leave as an empty number input. Call it after the caller's own `onPaste`, which can cancel the paste.
+ */
+export function enterTrimmedNumber(event: ClipboardEvent<HTMLInputElement>, enter: (value: number) => void) {
+  const input = event.currentTarget;
+  if (event.defaultPrevented || input.disabled || input.readOnly) return;
+
+  const pasted = event.clipboardData.getData("text/plain");
+  const trimmed = pasted.trim();
+  if (trimmed === pasted) return;
+
+  const parsed = input.cloneNode() as HTMLInputElement;
+  parsed.value = trimmed;
+  if (!Number.isFinite(parsed.valueAsNumber)) return;
+
+  event.preventDefault();
+  enter(parsed.valueAsNumber);
 }

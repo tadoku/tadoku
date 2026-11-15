@@ -17,7 +17,9 @@ and optional for the others. As in Webv2, it must round to at least one second;
 the rounded seconds must fit the API's 32-bit `duration_seconds`. Changing the
 activity clears the quantity, because activities count in different units. Changing the language keeps the unit when
 the new language offers it, so the quantity keeps its meaning. A missing unit is reported on the amount
-field, which shows one error for the amount and its unit. The description is one
+field, which shows one error for the amount and its unit. As in Webv2, an amount
+pasted with surrounding whitespace is entered trimmed; Paper's number controls
+own this, so Time spent trims too. The description is one
 line. As in Webv2, `/logs/new?amount=<n>` prefills a positive whole amount; any
 other value is ignored. Cancel returns home, and Log activity saves.
 
@@ -185,7 +187,7 @@ are held in memory and are lost when the form is reloaded or closed.
 `logging.spec.ts` covers the form, saves, the contest step after saving with
 and without ongoing registrations, detail, ownership and tenant isolation;
 `logging-form.spec.ts` covers tag chips and suggestions, the tag sidebar and its
-limit, remembered choices, unavailable storage and the edit form's tags; `logging-edit.spec.ts` covers edits, deletion, owner actions and the
+limit, remembered choices, unavailable storage, pasted amounts and the edit form's tags; `logging-edit.spec.ts` covers edits, deletion, owner actions and the
 score estimate; `logging-contests.spec.ts` covers submitting a saved log to a
 contest, removing it and refusing other visitors; `logging-nsfw.spec.ts` covers
 NSFW masking on the detail page, its back links and the activity feed;

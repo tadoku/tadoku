@@ -31,6 +31,11 @@ numeric bounds. The native `required`, `min` and `max` props describe the contro
 
 `AmountWithUnit` binds the amount field and takes a separate `unitField` from a
 nested `AppField`. Both names stay explicit in the screen's typed values.
+A number pasted with surrounding whitespace into `AmountWithUnit` or a
+`type="number"` `Input` is entered trimmed, because Firefox would otherwise
+leave the input empty. A caller's `onPaste` runs first
+and can cancel it; a disabled or read-only control, and text that is not a
+number once trimmed, are left to the browser.
 Autocomplete values are selected objects or arrays, and `ToggleSelect` stores
 an empty array or one selected value. Disabled controls retain their values;
 submission handlers own which values belong in the operation.

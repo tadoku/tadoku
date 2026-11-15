@@ -1,7 +1,7 @@
 import { useId, type InputHTMLAttributes } from "react";
 import { ChevronDownIcon, iconClassName } from "../../icons";
 import { cn } from "../../foundations/variants";
-import { FieldFrame, describedBy, useField, type Option } from "./field";
+import { FieldFrame, describedBy, enterTrimmedNumber, useField, type Option } from "./field";
 import { compoundField, control, selectFrame } from "./styles";
 
 export interface AmountWithUnitProps
@@ -32,6 +32,10 @@ export function AmountWithUnit({ label, units, unitsLabel, unitField, hint, requ
           value={typeof field.state.value === 'number' && Number.isNaN(field.state.value) ? '' : field.state.value ?? ''}
           onChange={event => field.handleChange(event.currentTarget.valueAsNumber)}
           onBlur={field.handleBlur}
+          onPaste={event => {
+            props.onPaste?.(event);
+            enterTrimmedNumber(event, field.handleChange);
+          }}
           required={required}
           disabled={disabled}
           id={id}

@@ -208,20 +208,23 @@ test('an administrator removes a log from a contest with a reason; a participant
   await page.close()
 })
 
-test('a community contest\'s organizer can remove a log without being an administrator', async ({ readerContext, adminContext }) => {
+test('a community contest\'s organizer removes logs from its Activity tab and a participant\'s contest page', async ({ readerContext, adminContext }) => {
   test.skip(!reader.email || !admin.email, 'Set both development fixture identities')
   const contest = await readerOwnContest(readerContext)
-  const log = await submitLog(adminContext, contest.id, `webv3-organizer-${randomUUID().slice(0, 8)}`)
+  const adminId = await accountId(adminContext)
 
   const page = await readerContext.newPage()
-  await page.goto(updatesPath(contest.id))
-  const entry = activityEntries(page).filter({ has: linkTo(page, `/logs/${log.id}`) })
-  await expect(entry).toBeVisible()
-  await entry.getByRole('button', { name: 'Remove from contest' }).click()
-  const dialog = page.getByRole('dialog', { name: 'Remove log from contest' })
-  await dialog.getByLabel('Reason').fill('Organizer moderation check')
-  await dialog.getByRole('button', { name: 'Yes, remove it' }).click()
-  await expect(page.getByText('Log removed from contest.')).toBeVisible()
-  expect((await contestLogs(readerContext.request, contest.id)).logs.map(item => item.id)).not.toContain(log.id)
+  for (const path of [updatesPath(contest.id), profilePath(contest.id, adminId)]) {
+    const log = await submitLog(adminContext, contest.id, `webv3-organizer-${randomUUID().slice(0, 8)}`)
+    await page.goto(path)
+    const entry = activityEntries(page).filter({ has: linkTo(page, `/logs/${log.id}`) })
+    await expect(entry, path).toBeVisible()
+    await entry.getByRole('button', { name: 'Remove from contest' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Remove log from contest' })
+    await dialog.getByLabel('Reason').fill('Organizer moderation check')
+    await dialog.getByRole('button', { name: 'Yes, remove it' }).click()
+    await expect(page.getByText('Log removed from contest.')).toBeVisible()
+    expect((await contestLogs(readerContext.request, contest.id)).logs.map(item => item.id)).not.toContain(log.id)
+  }
   await page.close()
 })

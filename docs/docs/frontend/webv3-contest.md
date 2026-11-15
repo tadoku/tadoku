@@ -155,8 +155,9 @@ them, opens a log, checks not-found addresses and a 390px layout. With both
 fixture credentials it submits a Dev Reader log to a contest Dev Admin creates,
 checks that Dev Reader sees no moderation action, and removes the log as Dev
 Admin with a reason; a contest Dev Reader organizes checks the organizer's
-removal. The container smoke's synthetic API serves 51 contest logs and the
-standings learner's contest profile.
+removal from both its activity and a participant's contest profile. The
+container smoke's synthetic API serves 51 contest logs and the standings
+learner's contest profile.
 
 `frontend/apps/webv3/e2e/contest-profile.spec.ts` seeds a Dev Reader profile with
 two languages, both activities and overlapping tags in a contest Dev Admin

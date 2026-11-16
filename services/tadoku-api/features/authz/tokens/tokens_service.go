@@ -126,7 +126,7 @@ func (s *Service) Create(ctx context.Context, request Create) (Issued, error) {
 		return Issued{}, err
 	}
 	if !inserted {
-		return Issued{}, errx.NewInvalidInputError(fmt.Sprintf("tenant already has %d active tokens", maxActiveTokens))
+		return Issued{}, errx.NewConflictError(fmt.Sprintf("tenant already has %d active tokens", maxActiveTokens))
 	}
 
 	return Issued{Token: row, Secret: raw}, nil

@@ -187,7 +187,12 @@ type CreateContestParameters struct {
 	ActivityTypeIDAllowList []int32
 }
 
-func (p *CreateContestParameters) validate(ownerUserID uuid.UUID, ownerUserDisplayName string, admin bool, now time.Time) error {
+func (p CreateContestParameters) Normalize() CreateContestParameters {
+	p.Title = strings.TrimSpace(p.Title)
+	return p
+}
+
+func (p CreateContestParameters) validate(ownerUserID uuid.UUID, ownerUserDisplayName string, admin bool, now time.Time) error {
 	if ownerUserID == uuid.Nil {
 		return errx.NewInvalidInputError("invalid contest OwnerUserID: must not be nil")
 	}
@@ -203,7 +208,6 @@ func (p *CreateContestParameters) validate(ownerUserID uuid.UUID, ownerUserDispl
 	if p.RegistrationEnd.IsZero() {
 		return errx.NewInvalidInputError("invalid contest RegistrationEnd: must not be zero")
 	}
-	p.Title = strings.TrimSpace(p.Title)
 	if utf8.RuneCountInString(p.Title) <= 3 {
 		return errx.NewInvalidInputError("invalid contest Title: must contain more than three characters")
 	}

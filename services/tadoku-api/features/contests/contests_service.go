@@ -28,7 +28,7 @@ func (s *Service) FetchContestSummary(ctx context.Context, contestID uuid.UUID) 
 }
 
 func (s *Service) ValidateContestCreation(
-	parameters *CreateContestParameters,
+	parameters CreateContestParameters,
 	creatorID uuid.UUID,
 	creatorDisplayName string,
 	admin bool,

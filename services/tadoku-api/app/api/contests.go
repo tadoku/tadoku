@@ -69,7 +69,8 @@ func (a *Application) CreateContest(ctx context.Context, parameters CreateContes
 		return nil, err
 	}
 
-	if err := a.contests.ValidateContestCreation(&parameters, creatorID, creator.DisplayName, admin, now); err != nil {
+	parameters = parameters.Normalize()
+	if err := a.contests.ValidateContestCreation(parameters, creatorID, creator.DisplayName, admin, now); err != nil {
 		return nil, err
 	}
 	if !admin {

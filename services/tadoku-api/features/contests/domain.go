@@ -4,6 +4,7 @@ import (
 	"math"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 	"unicode/utf8"
 
@@ -184,6 +185,11 @@ type CreateContestParameters struct {
 	Private                 bool
 	LanguageCodeAllowList   []string
 	ActivityTypeIDAllowList []int32
+}
+
+func (p CreateContestParameters) Normalize() CreateContestParameters {
+	p.Title = strings.TrimSpace(p.Title)
+	return p
 }
 
 func (p CreateContestParameters) validate(ownerUserID uuid.UUID, ownerUserDisplayName string, admin bool, now time.Time) error {

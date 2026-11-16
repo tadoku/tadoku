@@ -275,6 +275,39 @@ func TestCreateContestParametersRejectsMissingSignedOwnerFields(t *testing.T) {
 	}
 }
 
+func TestCreateContestParametersTitleTrim(t *testing.T) {
+	now := time.Date(2026, time.September, 12, 12, 0, 0, 0, time.UTC)
+	ownerID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
+	base := CreateContestParameters{
+		ContestStart:            now,
+		ContestEnd:              now,
+		RegistrationEnd:         now,
+		ActivityTypeIDAllowList: []int32{1},
+	}
+	wantTitleError := "invalid contest Title: must contain more than three characters"
+
+	t.Run("whitespace-only title", func(t *testing.T) {
+		parameters := base
+		parameters.Title = "    "
+		err := parameters.validate(ownerID, "Reader One", false, now)
+		if errx.KindOf(err) != errx.InvalidInput || err.Error() != wantTitleError {
+			t.Errorf("validate error=%v, want invalid input %q", err, wantTitleError)
+		}
+	})
+
+	t.Run("padded title is trimmed", func(t *testing.T) {
+		parameters := base
+		parameters.Title = "  Valid title  "
+		err := parameters.validate(ownerID, "Reader One", false, now)
+		if err != nil {
+			t.Fatalf("validate error=%v, want nil", err)
+		}
+		if parameters.Title != "Valid title" {
+			t.Errorf("Title=%q, want %q", parameters.Title, "Valid title")
+		}
+	})
+}
+
 func TestCheckContestCreationYearlyLimit(t *testing.T) {
 	tests := []struct {
 		name            string

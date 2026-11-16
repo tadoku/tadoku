@@ -88,6 +88,22 @@ func TestCreateRejectsInvalidNamesWithoutInsert(t *testing.T) {
 	}
 }
 
+func TestCreateRejectsActiveTokenCapAsConflict(t *testing.T) {
+	t.Parallel()
+
+	repo := &createRepositoryStub{rejectInsert: true}
+	_, err := createTokenNamed(t, repo, "ops")
+	if errx.KindOf(err) != errx.Conflict {
+		t.Errorf("active-token cap = %v, want conflict", err)
+	}
+	if err == nil || err.Error() != "tenant already has 10 active tokens" {
+		t.Errorf("active-token cap message = %v, want tenant already has 10 active tokens", err)
+	}
+	if repo.inserts != 1 {
+		t.Errorf("active-token cap inserted %d times, want 1", repo.inserts)
+	}
+}
+
 func createTokenNamed(t *testing.T, repo *createRepositoryStub, name string) (Issued, error) {
 	t.Helper()
 
@@ -101,6 +117,7 @@ func createTokenNamed(t *testing.T, repo *createRepositoryStub, name string) (Is
 type createRepositoryStub struct {
 	insertedName string
 	inserts      int
+	rejectInsert bool
 }
 
 func (createRepositoryStub) lockTenant(context.Context) error { return nil }
@@ -108,6 +125,9 @@ func (createRepositoryStub) lockTenant(context.Context) error { return nil }
 func (s *createRepositoryStub) insert(_ context.Context, row Token, _ string, _ int) (bool, error) {
 	s.inserts++
 	s.insertedName = row.Name
+	if s.rejectInsert {
+		return false, nil
+	}
 	return true, nil
 }
 

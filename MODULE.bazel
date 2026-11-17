@@ -135,7 +135,7 @@ use_repo(oci, "tadoku_dev_node22", "tadoku_dev_node22_linux_amd64")
 
 oci.pull(
     name = "tadoku_dev_postgres",
-    digest = "sha256:b8faeff7712663c2773a190181e1246e37e364b887611c04658c28b44e2408fe",
+    digest = "sha256:0d938e975177bef9f1f61f3f9dbcf2e0aa0a139568f66d3415ed8892eb97f6ac",
     image = "index.docker.io/library/postgres",
     platforms = ["linux/amd64"],
     tag = "17",

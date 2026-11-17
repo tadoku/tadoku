@@ -31,17 +31,14 @@ test('a member walks home, contest, standings, profile, logging and the saved lo
   await expect(page.getByRole('link', { name: 'All joined', exact: true })).toHaveAttribute('href', '/contests/joined/1')
   await shot('1-home')
 
-  // The appearance switch is the account menu's; the choice survives a reload.
+  // The theme is chosen in account settings; Webv3 follows the shared cookie it leaves.
   const theme = await page.locator('html').getAttribute('data-theme')
   const other = theme === 'dark' ? 'light' : 'dark'
-  await page.getByRole('button', { name: member, exact: true }).click()
-  await page.getByRole('menuitem', { name: `Use ${other} theme` }).click()
-  await expect(page.locator('html')).toHaveAttribute('data-theme', other)
+  await context.addCookies([{ name: 'tadoku-theme', value: other, url: origin }])
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', other)
-  await page.getByRole('button', { name: member, exact: true }).click()
-  await page.getByRole('menuitem', { name: `Use ${theme} theme` }).click()
-  await expect(page.locator('html')).toHaveAttribute('data-theme', theme!)
+  await context.addCookies([{ name: 'tadoku-theme', value: 'system', url: origin }])
+  await page.reload()
 
   await page.getByRole('region', { name: 'Your contests', exact: true }).getByRole('link', { name: contestTitle, exact: true }).click()
   await expect(page).toHaveURL(new RegExp(`/contests/${contestId}/profile/${memberId}/1$`))

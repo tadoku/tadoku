@@ -14,7 +14,7 @@ type emailReaderKey struct{}
 
 func (a *Application) AuthenticateEmailReader(ctx context.Context, raw string) (context.Context, error) {
 	if a.tokens == nil {
-		return nil, errx.NewUnauthorizedError("access token authentication unavailable")
+		return nil, errx.NewUnavailableError("access token authentication unavailable", nil)
 	}
 
 	principal, err := a.tokens.Verify(ctx, raw, a.deployment)

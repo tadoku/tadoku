@@ -4,7 +4,7 @@ import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import { Button, DescriptionList, EmptyState, entryLink, Modal, PageHeader, SectionHeading, StatGrid, Surface } from 'paper-ui'
 import { useRef, useState } from 'react'
 import { z } from '../../lib/zod'
-import { formatAmount, formatDate, formatMinutes, isNsfw, numberFormat, pointsUnit, scoreFormat } from '../../lib/format'
+import { formatAmount, formatDate, formatMinutes, numberFormat, pointsUnit, scoreFormat } from '../../lib/format'
 import { useLinks } from '../../lib/links'
 import { logQuery, useDeleteLog, type ImmersionLog, type LogFailure } from '../../lib/logs'
 import { ensureViewerData, viewerKey, viewerQueryOptions } from '../../lib/session'
@@ -52,7 +52,6 @@ function LogDetail() {
   const owner = viewerId === log.user_id
   // The API lets its owner or an administrator change a log; it refuses anyone else.
   const manager = owner || (viewer?.status === 'signed-in' && viewer.role === 'admin')
-  const titledByNote = Boolean(log.description) && log.description!.length <= 60 && !isNsfw(log)
   const learner = log.user_display_name ?? (owner && viewer?.status === 'signed-in' ? viewer.displayName : undefined)
   return (
     <div>
@@ -61,7 +60,7 @@ function LogDetail() {
         renderLink={renderLink}
         className="max-w-record"
         classNames={pageActionsHeader}
-        title={titledByNote ? log.description! : `${log.language.name} ${log.activity.name.toLowerCase()}`}
+        title="Log detail"
         lead={(
           <>
             {log.language.name} · <ActivityName activity={log.activity} />
@@ -88,16 +87,16 @@ function LogDetail() {
               { label: 'Logged', ...logged(log.created_at) },
             ]}
           />
-          {(log.description && !titledByNote) || log.tags.length ? (
-            <DescriptionList
-              className="border-t border-rule pt-6"
-              items={[
-                ...(log.description && !titledByNote ? [{ label: 'Description', value: <LogDescription log={{ ...log, description: log.description }} /> }] : []),
-                ...(log.tags.length ? [{ label: 'Tags', value: log.tags.join(', ') }] : []),
-              ]}
-            />
+          {log.tags.length ? (
+            <DescriptionList className="border-t border-rule pt-6" items={[{ label: 'Tags', value: log.tags.join(', ') }]} />
           ) : null}
         </div>
+        {log.description ? (
+          <DescriptionList
+            className="border-t border-rule px-record-inset pb-record-inset pt-6"
+            items={[{ label: 'Description', value: <LogDescription log={{ ...log, description: log.description }} /> }]}
+          />
+        ) : null}
         <LogContests log={log} manager={manager} owner={owner} />
       </Surface>
     </div>

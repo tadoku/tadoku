@@ -1,14 +1,17 @@
 import { Link, useLocation, useRouter } from '@tanstack/react-router'
-import { Button, PageHeader, Surface, buttonClassName } from 'paper-ui'
+import { Button, PageHeader, Surface, Tabbar, buttonClassName, type NavigationLinkProps } from 'paper-ui'
 import { ArrowLeftIcon, iconClassName } from 'paper-ui/icons'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   continuation, displayNameProblem, emailProblem, passwordProblem, problemFor, withReturnTo, type Code,
 } from '../lib/identity'
 import { navigate, useAccountForm } from '../lib/account-form'
-import { settingsView, type AccountSearch, type SettingsEditor, type SettingsSaved, type SettingsView } from '../lib/search'
+import {
+  settingsView, type AccountSearch, type SettingsEditor, type SettingsSaved, type SettingsTab, type SettingsView,
+} from '../lib/search'
 import { useIdentity } from '../lib/session'
 import { FormProblem, ReturnTo } from './AccountForm'
+import { Appearance } from './Appearance'
 import { passwordHint } from './Credentials'
 import { accountForm, accountFormActions } from '../styles'
 
@@ -56,12 +59,31 @@ const settingEditor = [
 ].join(' ')
 const settingNote = 'm-0 text-metadata leading-metadata font-regular text-success'
 
-function SettingsGroup({ title, children }: { readonly title: string; readonly children: ReactNode }) {
+const tabs: readonly { readonly id: SettingsTab; readonly label: string }[] = [
+  { id: 'profile', label: 'Profile' },
+  { id: 'appearance', label: 'Appearance' },
+  { id: 'security', label: 'Sign-in and security' },
+]
+
+/** The tab links, which keep the path and the trusted `return_to` so they work without JavaScript. */
+function SettingsTabs({ current, next }: { readonly current: SettingsTab; readonly next?: string }) {
+  // Tabbar hands each link its tab's id as `href`; exact matching keeps the router from marking a tab current itself.
+  const renderLink = ({ href, ...props }: NavigationLinkProps) => (
+    <Link
+      {...props}
+      to="."
+      search={{ tab: tabs.find(tab => tab.id === href)?.id, return_to: next }}
+      resetScroll={false}
+      activeOptions={{ exact: true }}
+    />
+  )
   return (
-    <div className="[&+&]:mt-8">
-      <h2 className="mb-3 mt-0 font-display text-component leading-component">{title}</h2>
-      <Surface className="p-0">{children}</Surface>
-    </div>
+    <Tabbar
+      label="Settings sections"
+      className="mb-6"
+      links={tabs.map(tab => ({ ...tab, href: tab.id, current: tab.id === current }))}
+      renderLink={renderLink}
+    />
   )
 }
 
@@ -86,12 +108,12 @@ function SettingRow({ editor, label, value, view, next, children }: {
 
   return (
     <section className={open ? `${settingRow} ${settingRowOpen}` : settingRow} aria-labelledby={`${editor}-label`}>
-      <h3
+      <h2
         id={`${editor}-label`}
         className="m-0 font-body text-metadata leading-metadata font-regular text-muted max-tablet:col-span-full"
       >
         {label}
-      </h3>
+      </h2>
       {open ? <div className={settingEditor}>{children}</div> : (
         <>
           <div className="min-w-0">
@@ -157,9 +179,9 @@ function AvatarRow({ account, saved, fetched, error, next, reauthenticate }: {
 
   return (
     <section className={settingRow} aria-labelledby="avatar-label">
-      <h3 id="avatar-label" className="m-0 font-body text-metadata leading-metadata font-regular text-muted max-tablet:col-span-full">
+      <h2 id="avatar-label" className="m-0 font-body text-metadata leading-metadata font-regular text-muted max-tablet:col-span-full">
         Avatar
-      </h3>
+      </h2>
       <div className="flex min-w-0 items-start gap-4">
         <span
           className={[
@@ -199,12 +221,13 @@ function AvatarRow({ account, saved, fetched, error, next, reauthenticate }: {
   )
 }
 
-function Cancel({ next }: { readonly next?: string }) {
+/** Closes the editor and stays on its tab. */
+function Cancel({ tab, next }: { readonly tab: SettingsTab; readonly next?: string }) {
   // Its search is a subset of the open editor's, which would otherwise mark it as the current page.
   return (
     <Link
       to="."
-      search={{ return_to: next }}
+      search={{ tab, return_to: next }}
       resetScroll={false}
       activeOptions={{ exact: true }}
       className={buttonClassName({ variant: 'ghost' })}
@@ -232,7 +255,7 @@ function DisplayNameForm({ account, next, error, reauthenticate }: EditorProps) 
           {field => <field.Input id={fieldId('display_name')} label="Display name" autoComplete="nickname" required autoFocus />}
         </form.AppField>
         <div className={accountFormActions}>
-          <Cancel next={next} />
+          <Cancel tab="profile" next={next} />
           <Button type="submit" loading={pending} loadingLabel="Saving">Save display name</Button>
         </div>
       </form.Form>
@@ -270,7 +293,7 @@ function EmailForm({ account, next, error, reauthenticate }: EditorProps) {
           )}
         </form.AppField>
         <div className={accountFormActions}>
-          <Cancel next={next} />
+          <Cancel tab="security" next={next} />
           <Button type="submit" loading={pending} loadingLabel="Saving">Save email</Button>
         </div>
       </form.Form>
@@ -311,7 +334,7 @@ function PasswordForm({ account, next, error, reauthenticate }: EditorProps) {
           Needs a login within the last hour or a recovery link. Signs you out on your other devices.
         </p>
         <div className={accountFormActions}>
-          <Cancel next={next} />
+          <Cancel tab="security" next={next} />
           <Button type="submit" loading={pending} loadingLabel="Saving">
             {next ? 'Save password and continue' : 'Save password'}
           </Button>
@@ -350,45 +373,53 @@ export function Settings({ search }: { readonly search: AccountSearch }) {
         ) : null}
       />
       {search.form === 'logout' && search.error ? <div className="mb-5"><FormProblem problem={problemFor(search.error, 'logout')} /></div> : null}
-      <SettingsGroup title="Profile">
-        <AvatarRow
-          account={account}
-          saved={view.state === 'summary' && view.saved === 'avatar'}
-          fetched={search.fetched}
-          error={search.form === 'avatar' ? search.error : undefined}
-          next={next}
-          reauthenticate={editor.reauthenticate}
-        />
-        <SettingRow
-          {...row}
-          editor="display-name"
-          label="Display name"
-          value={account.display_name}
-        >
-          <DisplayNameForm {...editor} />
-        </SettingRow>
-      </SettingsGroup>
-      <SettingsGroup title="Sign-in and security">
-        <SettingRow
-          {...row}
-          editor="email"
-          label="Email"
-          value={account.email}
-        >
-          <EmailForm {...editor} />
-        </SettingRow>
-        <SettingRow
-          {...row}
-          editor="password"
-          label="Password"
-          value={<><span aria-hidden="true">••••••••••</span><span className="sr-only">Hidden</span></>}
-        >
-          <PasswordForm {...editor} />
-        </SettingRow>
-      </SettingsGroup>
-      <p className="mb-0 mt-10">
-        <Link to="/delete-account" search={{ return_to: next }} className="text-danger">Delete account</Link>
-      </p>
+      <SettingsTabs current={view.tab} next={next} />
+      {view.tab === 'profile' ? (
+        <Surface className="p-0">
+          <AvatarRow
+            account={account}
+            saved={view.state === 'summary' && view.saved === 'avatar'}
+            fetched={search.fetched}
+            error={search.form === 'avatar' ? search.error : undefined}
+            next={next}
+            reauthenticate={editor.reauthenticate}
+          />
+          <SettingRow
+            {...row}
+            editor="display-name"
+            label="Display name"
+            value={account.display_name}
+          >
+            <DisplayNameForm {...editor} />
+          </SettingRow>
+        </Surface>
+      ) : null}
+      {view.tab === 'appearance' ? <Appearance next={next} /> : null}
+      {view.tab === 'security' ? (
+        <Surface className="p-0">
+          <SettingRow
+            {...row}
+            editor="email"
+            label="Email"
+            value={account.email}
+          >
+            <EmailForm {...editor} />
+          </SettingRow>
+          <SettingRow
+            {...row}
+            editor="password"
+            label="Password"
+            value={<><span aria-hidden="true">••••••••••</span><span className="sr-only">Hidden</span></>}
+          >
+            <PasswordForm {...editor} />
+          </SettingRow>
+        </Surface>
+      ) : null}
+      {view.tab === 'security' ? (
+        <p className="mb-0 mt-10">
+          <Link to="/delete-account" search={{ return_to: next }} className="text-danger">Delete account</Link>
+        </p>
+      ) : null}
     </div>
   )
 }

@@ -1,12 +1,15 @@
 import { getRequestHeader, setResponseHeader } from '@tanstack/react-start/server'
 import { identitySessionGet } from 'api-client'
+import { cookieTheme } from 'paper-ui'
 import { requestUrls } from './urls.server'
 
 export async function readSession(read: boolean) {
   setResponseHeader('Cache-Control', 'private, no-store')
   const { apiUrl, ...origins } = requestUrls()
   // Browsers send identity forms to the public API on the tenant's main host; apiUrl may be private to the server.
-  const urls = { ...origins, api: `${origins.webUrl}/api/internal` }
+  // The theme cookie lets Appearance render the stored choice before, or without, JavaScript.
+  const theme = cookieTheme(getRequestHeader('cookie')) ?? 'system'
+  const urls = { ...origins, api: `${origins.webUrl}/api/internal`, theme }
   if (!read) return { status: 'unread' as const, ...urls }
   const headers: Record<string, string> = { Accept: 'application/json' }
   for (const name of ['cookie', 'x-dev-branch']) {

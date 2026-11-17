@@ -7,11 +7,24 @@ export type SettingsEditor = (typeof settingsEditors)[number]
 /** A Settings row a save can confirm: an editor, or the avatar's fetch. */
 export type SettingsSaved = SettingsEditor | 'avatar'
 
+const settingsTabs = ['profile', 'appearance', 'security'] as const
+
+export type SettingsTab = (typeof settingsTabs)[number]
+
+const rowTabs: Record<SettingsSaved, SettingsTab> = {
+  avatar: 'profile',
+  'display-name': 'profile',
+  email: 'security',
+  password: 'security',
+}
+
 export type AccountSearch = {
   readonly return_to?: string
   /** Set by a native submission that the identity API rejected, with the form that sent it. */
   readonly error?: Code
   readonly form?: Operation
+  /** The Settings tab a tab link opened. */
+  readonly tab?: SettingsTab
   /** The Settings editor a Change link opened. */
   readonly edit?: SettingsEditor
   /** Set by a Settings save that succeeded. */
@@ -30,6 +43,7 @@ export function accountSearch(search: Record<string, unknown>): AccountSearch {
     return_to: typeof search.return_to === 'string' ? search.return_to : undefined,
     error: isCode(search.error) ? search.error : undefined,
     form: typeof search.form === 'string' && isOperation(search.form) ? search.form : undefined,
+    tab: settingsTabs.find(value => value === search.tab),
     edit: settingsEditors.find(value => value === search.edit),
     saved: search.saved === 'avatar' ? 'avatar' : settingsEditors.find(value => value === search.saved),
     fetched: /^\d+$/.test(String(search.fetched)) ? String(search.fetched) : undefined,
@@ -39,13 +53,18 @@ export function accountSearch(search: Record<string, unknown>): AccountSearch {
 }
 
 export type SettingsView =
-  | { readonly state: 'summary'; readonly saved?: SettingsSaved }
-  | { readonly state: 'editing'; readonly editor: SettingsEditor; readonly error?: Code }
+  | { readonly state: 'summary'; readonly tab: SettingsTab; readonly saved?: SettingsSaved }
+  | { readonly state: 'editing'; readonly tab: SettingsTab; readonly editor: SettingsEditor; readonly error?: Code }
 
-/** The error's form wins over `edit`; `saved` only applies when nothing is open. */
+/**
+ * The error's form wins over `edit`; `saved` only applies when nothing is open. An open, failed or saved row shows its
+ * own tab, so native redirects that only name the row land on it.
+ */
 export function settingsView(search: AccountSearch): SettingsView {
   const failed = settingsEditors.find(editor => editor === search.form)
-  if (failed && search.error) return { state: 'editing', editor: failed, error: search.error }
-  if (search.edit) return { state: 'editing', editor: search.edit }
-  return { state: 'summary', saved: search.saved }
+  if (failed && search.error) return { state: 'editing', tab: rowTabs[failed], editor: failed, error: search.error }
+  if (search.edit) return { state: 'editing', tab: rowTabs[search.edit], editor: search.edit }
+  const avatarFailed = search.form === 'avatar' && search.error
+  const tab = search.saved ? rowTabs[search.saved] : avatarFailed ? 'profile' : search.tab ?? 'profile'
+  return { state: 'summary', tab, saved: search.saved }
 }

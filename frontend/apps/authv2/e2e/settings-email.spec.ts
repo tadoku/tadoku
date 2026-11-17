@@ -118,7 +118,7 @@ test('hydrated Settings shows stored addresses and only sends the fields a visit
         await waitForHydration(page)
         writes.length = 0
       }
-      await load('/settings')
+      await load('/settings?tab=security')
       expect.soft(await storedValue(page, 'Email'), 'the hydrated row shows the stored address').toBe(account.email)
 
       await load('/settings?edit=email')
@@ -198,7 +198,7 @@ test('native Settings forms send only what the visitor changed', async ({ browse
   for (const account of accounts) {
     await test.step(account.name, async () => {
       session = account.body
-      await page.goto('/settings')
+      await page.goto('/settings?tab=security')
       // Without hydration the row is the parsed server HTML, which turns CRLF into LF.
       expect.soft(await storedValue(page, 'Email'), 'the server-rendered row shows the stored address')
         .toBe(account.email.replace(/\r\n/g, '\n'))

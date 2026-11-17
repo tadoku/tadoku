@@ -1,12 +1,13 @@
 import { createServer } from 'node:http'
 import { test, expect, type Locator } from '@playwright/test'
-import { expectContained, settingRow, stubAvatars, waitForHydration } from './support'
+import { expectContained, openSettingsTab, settingRow, stubAvatars, waitForHydration } from './support'
 
 // Failure modes: an editor that can't be opened or cancelled without JavaScript; two editors open at once, or an
 // input at rest; Change or Cancel links that drop return_to or keep a stale error or confirmation; a native error
 // that doesn't reopen its editor, or shows in another row; a confirmation missing from its collapsed row; focus that
 // doesn't land in the opened input; more than one filled button on screen; a row that overflows 390px; the recovery
-// landing with the Password editor closed or without its continuing Save.
+// landing with the Password editor closed or without its continuing Save; a URL that hides the row it opens or confirms
+// behind another tab, or a Cancel that leaves the row's tab.
 // Runs on the Settings fixture's server (see e2e/README.md); only the session read reaches the fixture below.
 const enabled = process.env.AUTHV2_SETTINGS_FIXTURE === 'true'
 const session = JSON.stringify({
@@ -44,8 +45,14 @@ test.use({ actionTimeout: 10_000 })
 
 const destination = 'https://tadoku.dev.lab/pages/dev-welcome?w2=rows'
 const returnTo = encodeURIComponent(destination)
-const rows = [['display-name', 'Display name'], ['email', 'Email'], ['password', 'Password']] as const
+const rows = [
+  ['display-name', 'Display name', 'profile'],
+  ['email', 'Email', 'security'],
+  ['password', 'Password', 'security'],
+] as const
 type Editor = (typeof rows)[number][0]
+const tabOf = (editor?: Editor) => rows.find(row => row[0] === editor)?.[2] ?? 'profile'
+const tabNames = { profile: 'Profile', security: 'Sign-in and security' } as const
 
 type State = {
   readonly path: string
@@ -104,14 +111,17 @@ for (const javaScriptEnabled of [true, false]) {
         await expect(filled).toHaveCount(state.open ? 1 : 0)
         if (state.open) await expect(filled).toHaveAccessibleName(state.open.save)
 
-        for (const [editor, name] of rows) {
+        const tab = tabOf(state.open?.editor ?? state.saved?.editor)
+        await expect(page.getByRole('link', { name: tabNames[tab], exact: true })).toHaveAttribute('aria-current', 'page')
+        for (const [editor, name, rowTab] of rows) {
           const row = settingRow(page, name)
           const open = state.open?.editor === editor
-          await expect(row).toHaveCount(1)
+          await expect(row).toHaveCount(rowTab === tab ? 1 : 0)
+          if (rowTab !== tab) continue
           await expect(row.locator('input:visible')).toHaveCount(open ? 1 : 0)
           if (open) {
             await expect(row.locator('input:visible')).toBeFocused()
-            await expectTarget(row.getByRole('link', { name: 'Cancel', exact: true }), url.pathname, kept)
+            await expectTarget(row.getByRole('link', { name: 'Cancel', exact: true }), url.pathname, { tab: rowTab, ...kept })
             await expect(row.getByRole('link', { name: /^Change/ })).toHaveCount(0)
           } else {
             const change = row.getByRole('link', { name: `Change ${name.toLowerCase()}`, exact: true })
@@ -140,14 +150,15 @@ for (const javaScriptEnabled of [true, false]) {
       const change = (name: string) => settingRow(page, name)
         .getByRole('link', { name: `Change ${name.toLowerCase()}`, exact: true })
       await expect(change('Display name')).toBeVisible()
-      await change('Display name').focus()
-      for (const [, name] of rows.slice(1)) {
-        await page.keyboard.press('Tab')
-        await expect(change(name)).toBeFocused()
-      }
+      await openSettingsTab(page, tabNames.security)
+      await change('Email').focus()
+      await page.keyboard.press('Tab')
+      await expect(change('Password')).toBeFocused()
+      await openSettingsTab(page, tabNames.profile)
 
-      for (const [editor, name] of rows) {
+      for (const [editor, name, tab] of rows) {
         const row = settingRow(page, name)
+        if (!await row.isVisible()) await openSettingsTab(page, tabNames[tab])
         await change(name).focus()
         await page.keyboard.press('Enter')
         await expect.poll(() => Object.fromEntries(new URL(page.url()).searchParams))
@@ -161,7 +172,7 @@ for (const javaScriptEnabled of [true, false]) {
         await page.keyboard.press('Shift+Tab')
         await expect(row.getByRole('link', { name: 'Cancel', exact: true })).toBeFocused()
         await page.keyboard.press('Enter')
-        await expect.poll(() => Object.fromEntries(new URL(page.url()).searchParams)).toEqual({ return_to: destination })
+        await expect.poll(() => Object.fromEntries(new URL(page.url()).searchParams)).toEqual({ tab, return_to: destination })
         await expect(page.locator('main input:not([type="hidden"])')).toHaveCount(0)
       }
     })

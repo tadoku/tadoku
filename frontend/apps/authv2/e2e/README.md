@@ -113,8 +113,13 @@ The Settings fixtures use the same server. Run:
 AUTHV2_SETTINGS_FIXTURE=true \
   PLAYWRIGHT_OUTPUT_DIR=/workspace/.scratch/authv2-smoke \
   pnpm --filter authv2 exec playwright test e2e/settings-email.spec.ts e2e/settings-rows.spec.ts \
-    e2e/settings-avatar.spec.ts
+    e2e/settings-avatar.spec.ts e2e/settings-appearance.spec.ts
 ```
+
+`settings-appearance.spec.ts` picks each theme and checks the page, the shared
+cookie, a reload and a device change under System; without JavaScript, that
+the picker shows the stored choice and **Save theme** stores a new one; and
+that tabs follow the row a URL opens or confirms, with and without JavaScript.
 
 `settings-email.spec.ts` serves the session bytes the API writes for an
 ordinary address and for imported addresses with a leading vertical tab, form

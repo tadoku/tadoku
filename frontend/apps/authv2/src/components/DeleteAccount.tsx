@@ -69,7 +69,7 @@ export function DeleteAccount({ search }: { readonly search: AccountSearch }) {
             )}
           </form.AppField>
           <div className={accountFormActions}>
-            <Link to="/" search={{ return_to: next }} className={buttonClassName({ variant: 'ghost' })}>Cancel</Link>
+            <Link to="/" search={{ tab: 'security', return_to: next }} className={buttonClassName({ variant: 'ghost' })}>Cancel</Link>
             <Button
               type="submit"
               variant="destructive"

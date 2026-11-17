@@ -101,24 +101,21 @@ administrator when the draft started. Their pages name another learner's log in 
 and the learner's personal record, and leave out the advice to join a contest
 or change a registration, which concerns the viewer's own contests.
 
-The detail page's heading is the log's description when it is nonempty, has at
-most 60 characters and has no NSFW tag, and otherwise its language and activity,
-such as Japanese reading. Its lead names the language and the activity; on
-another learner's log with a known display name, it also names who logged it,
-linked to their profile. It shows the measure, rounded and pluralized as the
+The detail page's heading is Log detail. Its lead names the language and the
+activity; on another learner's log with a known display name, it also names who
+logged it, linked to their profile. It shows the measure, rounded and pluralized as the
 lists show it, the score, and the UTC day and time, both read from the creation
 instant. Under an amount log's score, Webv2's breakdown shows the amount times
-the log's modifier; a timed log has none. Labelled rows then show the
-description, unless it is empty or already the heading, and the tags, unless
-there are none; the record's ID is not shown. It offers its owner and
+the log's modifier; a timed log has none. A labelled row then shows the tags,
+unless there are none, and a labelled Description row in its own section shows
+the description, unless it is empty; the record's ID is not shown. It offers its owner and
 administrators Edit log as the primary [page action](paper-composition.md#page-actions)
 and Delete log as a secondary one, in a Log actions menu when the header is
 narrow; other visitors see neither.
 
-A log tagged `nsfw`, in any case, never shows its description as a title or a
-link label: the detail page is titled by its language and activity, and the
-edit and contest pages link back by them. Wherever the description itself is
-shown, on the detail page, the contest page's summary and the activity feeds,
+A log tagged `nsfw`, in any case, never shows its description as a link label:
+the edit and contest pages link back by its language and activity. Wherever the
+description itself is shown, on the detail page, the contest page's summary and the activity feeds,
 `frontend/apps/webv3/src/components/LogDescription.tsx` masks it with Paper's
 `Spoiler`, as Webv2 does: the text is blurred under an NSFW label and hidden
 from assistive technology until the reader selects Reveal NSFW description, and

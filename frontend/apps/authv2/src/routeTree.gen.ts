@@ -17,6 +17,7 @@ import { Route as RecoveryRouteImport } from './routes/recovery'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ActionsOperationRouteImport } from './routes/actions.$operation'
+import { Route as ActionsThemeRouteImport } from './routes/actions.theme'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -58,6 +59,11 @@ const ActionsOperationRoute = ActionsOperationRouteImport.update({
   path: '/actions/$operation',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ActionsThemeRoute = ActionsThemeRouteImport.update({
+  id: '/actions/theme',
+  path: '/actions/theme',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/actions/$operation': typeof ActionsOperationRoute
+  '/actions/theme': typeof ActionsThemeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/actions/$operation': typeof ActionsOperationRoute
+  '/actions/theme': typeof ActionsThemeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/actions/$operation': typeof ActionsOperationRoute
+  '/actions/theme': typeof ActionsThemeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/settings'
     | '/actions/$operation'
+    | '/actions/theme'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/settings'
     | '/actions/$operation'
+    | '/actions/theme'
   id:
     | '__root__'
     | '/'
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/settings'
     | '/actions/$operation'
+    | '/actions/theme'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,6 +144,7 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   SettingsRoute: typeof SettingsRoute
   ActionsOperationRoute: typeof ActionsOperationRoute
+  ActionsThemeRoute: typeof ActionsThemeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ActionsOperationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/actions/theme': {
+      id: '/actions/theme'
+      path: '/actions/theme'
+      fullPath: '/actions/theme'
+      preLoaderRoute: typeof ActionsThemeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -204,6 +224,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRoute,
   ActionsOperationRoute: ActionsOperationRoute,
+  ActionsThemeRoute: ActionsThemeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

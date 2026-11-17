@@ -3,7 +3,7 @@ import { existsSync, writeFileSync } from 'node:fs'
 import { test, expect, type Browser, type BrowserContext, type Page, type TestInfo } from '@playwright/test'
 import {
   adminEmail, adminPassword, expectContained, expectSettings, firstWrite, holdScripts, logIn, newPage, origins,
-  readerEmail, readerPassword, waitForHydration,
+  openSettingsTab, readerEmail, readerPassword, waitForHydration,
 } from './support'
 
 // Failure modes: a delete control on Settings other than the quiet link, or a link that drops return_to; guests or
@@ -87,6 +87,7 @@ test('Settings links quietly to the delete page, and guests log in before it', a
   await expectSettings(page)
   expect(new URL(page.url()).searchParams.get('return_to')).toBe(destination)
   await waitForHydration(page)
+  expect(new URL(page.url()).searchParams.get('tab')).toBe('security')
   const settings = page.getByRole('main')
   const link = settings.getByRole('link', { name: 'Delete account', exact: true })
   const href = new URL(await link.getAttribute('href') ?? '', authv2)
@@ -122,6 +123,7 @@ test('a hydrated deletion waits for the address, ends the session and lands on /
   const page = await newPage(browser, testInfo, { viewport: { width: 1280, height: 900 } })
   await register(page, account)
   await waitForHydration(page)
+  await openSettingsTab(page, 'Sign-in and security')
   await page.getByRole('link', { name: 'Delete account', exact: true }).click()
   await expectDeletePage(page)
 
@@ -172,6 +174,7 @@ test('a deletion without JavaScript refuses a mistyped address, then deletes and
   const account = disposable()
   const page = await newPage(browser, testInfo, { javaScriptEnabled: false, viewport: { width: 390, height: 844 } })
   await register(page, account)
+  await openSettingsTab(page, 'Sign-in and security')
   await page.getByRole('link', { name: 'Delete account', exact: true }).click()
   await expectDeletePage(page)
   await expectContained(page)
@@ -241,6 +244,7 @@ test('old logins log in again under the fresh-login banner and come back to the 
   await expect.poll(() => existsSync(`${directory}/deletion-aged`), { timeout: 600_000, intervals: [2_000] }).toBe(true)
 
   // Opening the page with an old login redirects during server rendering.
+  await openSettingsTab(arriving, 'Sign-in and security')
   await arriving.getByRole('link', { name: 'Delete account', exact: true }).click()
   await expect(arriving).toHaveURL(reauth)
   await expectFreshLoginBanner(arriving, account.email)
@@ -266,6 +270,7 @@ test('old logins log in again under the fresh-login banner and come back to the 
   // A hydrated visit through the Settings link redirects in the browser too, and logging in comes back.
   await hydrated.goto('/')
   await waitForHydration(hydrated)
+  await openSettingsTab(hydrated, 'Sign-in and security')
   await hydrated.getByRole('link', { name: 'Delete account', exact: true }).click()
   await expect(hydrated).toHaveURL(reauth)
   await expectFreshLoginBanner(hydrated, account.email)

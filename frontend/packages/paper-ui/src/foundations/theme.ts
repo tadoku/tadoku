@@ -1,9 +1,18 @@
 const key = 'tadoku-theme'
+const darkQuery = '(prefers-color-scheme: dark)'
 
-/** Render in <head> before the body so `[data-theme]` is set before first paint. The shared cookie wins, so every application agrees. */
-export const themeBootScript = `try{var c=document.cookie.match(/(?:^|; )${key}=(dark|light)/),t=c?c[1]:localStorage.getItem('${key}');document.documentElement.dataset.theme=t==='dark'||t==='light'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){}`
+/**
+ * Render in <head> before the body so `[data-theme]` is set before first paint, and kept in step with the system
+ * while the choice is `system`. The shared cookie wins, so every application agrees.
+ */
+export const themeBootScript = `try{var m=matchMedia('${darkQuery}'),a=function(){var c=document.cookie.match(/(?:^|; )${key}=(dark|light|system)/),t=c?c[1]:localStorage.getItem('${key}');document.documentElement.dataset.theme=t==='dark'||t==='light'?t:m.matches?'dark':'light'};a();m.addEventListener('change',a)}catch(e){}`
 
 export type ThemeName = 'light' | 'dark'
+
+/** A theme preference: a fixed theme, or whichever the system prefers. */
+export type ThemeChoice = ThemeName | 'system'
+
+export const isThemeChoice = (value: unknown): value is ThemeChoice => value === 'light' || value === 'dark' || value === 'system'
 
 /** The trailing host labels two hosts share, when that is a real domain rather than a single label such as `localhost`. */
 function sharedDomain(host: string, otherHost: string) {
@@ -17,26 +26,37 @@ function sharedDomain(host: string, otherHost: string) {
   return shared.length > 1 ? shared.join('.') : undefined
 }
 
-/** Remembers the theme in a cookie that `otherOrigin`, a sibling application, can read. */
-export function shareTheme(theme: ThemeName, otherOrigin: string) {
-  const domain = sharedDomain(location.hostname, new URL(otherOrigin).hostname)
-  const scope = domain ? `; domain=${domain}` : ''
-  const secure = location.protocol === 'https:' ? '; secure' : ''
-  document.cookie = `${key}=${theme}; path=/; max-age=31536000; samesite=lax${scope}${secure}`
+/**
+ * The cookie, for `Set-Cookie` or `document.cookie`, that stores `choice` for `host` and for `otherOrigin`, a sibling
+ * application. `secure` when `host` is served over HTTPS.
+ */
+export function themeCookie(choice: ThemeChoice, host: string, otherOrigin: string, secure: boolean) {
+  const domain = sharedDomain(host, new URL(otherOrigin).hostname)
+  return `${key}=${choice}; path=/; max-age=31536000; samesite=lax${domain ? `; domain=${domain}` : ''}${secure ? '; secure' : ''}`
 }
 
-/** Applies a theme chosen in this application and remembers it here and for `otherOrigin`. */
-export function chooseTheme(theme: ThemeName, otherOrigin: string) {
-  document.documentElement.dataset.theme = theme
-  try { localStorage.setItem(key, theme) } catch { /* Private mode keeps the choice for this page only. */ }
-  shareTheme(theme, otherOrigin)
+/** The choice a `Cookie` header or `document.cookie` holds, read as the boot script reads it. */
+export function cookieTheme(cookies: string | undefined): ThemeChoice | undefined {
+  const value = cookies?.match(new RegExp(`(?:^|;\\s*)${key}=([^;]*)`))?.[1]
+  return isThemeChoice(value) ? value : undefined
+}
+
+function shareTheme(choice: ThemeChoice, otherOrigin: string) {
+  document.cookie = themeCookie(choice, location.hostname, otherOrigin, location.protocol === 'https:')
+}
+
+/** Applies a choice made in this application and remembers it here and for `otherOrigin`. */
+export function chooseTheme(choice: ThemeChoice, otherOrigin: string) {
+  document.documentElement.dataset.theme = choice === 'system' ? (matchMedia(darkQuery).matches ? 'dark' : 'light') : choice
+  try { localStorage.setItem(key, choice) } catch { /* Private mode keeps the choice for this page only. */ }
+  shareTheme(choice, otherOrigin)
 }
 
 /** Shares a theme stored before the cookie existed. An existing cookie is newer, so it is left alone. */
 export function adoptStoredTheme(otherOrigin: string) {
-  if (document.cookie.split('; ').some(cookie => cookie.startsWith(`${key}=`))) return
+  if (cookieTheme(document.cookie)) return
   try {
     const value = localStorage.getItem(key)
-    if (value === 'dark' || value === 'light') shareTheme(value, otherOrigin)
+    if (isThemeChoice(value)) shareTheme(value, otherOrigin)
   } catch { /* Private mode has nothing stored to share. */ }
 }

@@ -1,17 +1,15 @@
 import { rootRouteId, useHydrated, useLoaderData, useNavigate, useRouterState } from '@tanstack/react-router'
-import { ActionMenu, Button, EmptyState, Navbar, SiteFooter, SkipLink, adoptStoredTheme, appFrame, buttonClassName, chooseTheme, cn, navbarStyles, surface, type NavbarItem, type ThemeName } from 'paper-ui'
+import { ActionMenu, Button, EmptyState, Navbar, SiteFooter, SkipLink, adoptStoredTheme, appFrame, buttonClassName, cn, navbarStyles, surface, type NavbarItem } from 'paper-ui'
 import mark from 'paper-ui/assets/brand/cut-meter.svg?url'
 import reversedMark from 'paper-ui/assets/brand/cut-meter-reversed.svg?url'
 import wordmark from 'paper-ui/assets/brand/wordmark-accent.svg?url'
 import reversedWordmark from 'paper-ui/assets/brand/wordmark-reversed.svg?url'
-import { Fragment, useEffect, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowRightStartOnRectangleIcon,
   Cog6ToothIcon,
-  MoonIcon,
   ShieldCheckIcon,
-  SunIcon,
   UserIcon,
   iconClassName,
 } from 'paper-ui/icons'
@@ -21,22 +19,6 @@ import { useLinks } from '../lib/links'
 import { Announcements } from './Announcements'
 import { Avatar } from './Avatar'
 import { AppLink, renderLink } from './router-link'
-
-type Theme = ThemeName
-
-const currentTheme = (): Theme => document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
-
-/** The account menu's appearance item. The menu renders only after hydration, so it reads the theme directly. */
-function useThemeSwitch() {
-  const { accountUrl } = useLoaderData({ from: rootRouteId })
-  const [theme, setThemeState] = useState<Theme>(currentTheme)
-  const next: Theme = theme === 'dark' ? 'light' : 'dark'
-  return {
-    label: next === 'dark' ? 'Use dark theme' : 'Use light theme',
-    icon: next === 'dark' ? <MoonIcon className={iconClassName('compact')} /> : <SunIcon className={iconClassName('compact')} />,
-    toggle: () => { chooseTheme(next, accountUrl); setThemeState(next) },
-  }
-}
 
 const discordUrl = 'https://discord.gg/AsC9vZs2Ex'
 const frame = appFrame()
@@ -226,10 +208,9 @@ function AccountMenuFallback({ viewer }: { viewer: SignedIn }) {
   )
 }
 
-/** The account menu once it can open: the account's pages, the appearance switch, then Log out. */
+/** The account menu once it can open: the account's pages, then Log out. */
 function AccountMenuOpen({ viewer }: { viewer: SignedIn }) {
   const navigate = useNavigate()
-  const theme = useThemeSwitch()
   const items = useAccountLinks(viewer).map(link => ({
     id: link.id,
     label: link.label,
@@ -245,7 +226,6 @@ function AccountMenuOpen({ viewer }: { viewer: SignedIn }) {
       triggerVariant="link"
       items={[
         ...items,
-        { id: 'theme', label: theme.label, icon: theme.icon, onSelect: theme.toggle },
         { id: 'logout', label: 'Log out', icon: <ArrowRightStartOnRectangleIcon className={iconClassName('compact')} />, onSelect: logOut },
       ]}
     />
@@ -254,7 +234,6 @@ function AccountMenuOpen({ viewer }: { viewer: SignedIn }) {
 
 function MobileAccount({ viewer, closeMenu }: { viewer: SignedIn; closeMenu: () => void }) {
   const links = useAccountLinks(viewer)
-  const { accountUrl } = useLoaderData({ from: rootRouteId })
   return (
     <section className="mt-3 border-t border-rule-subtle pt-3" aria-label={`${viewer.displayName} account`}>
       <p className="mb-1 mt-0 flex items-center gap-2 px-field-x text-sm font-semibold text-muted wrap-anywhere">
@@ -266,15 +245,6 @@ function MobileAccount({ viewer, closeMenu }: { viewer: SignedIn; closeMenu: () 
           {renderLink({ href: link.href, className: mobileLink, onClick: closeMenu, children: link.label })}
         </Fragment>
       ))}
-      {/* Server-rendered, so CSS shows the label for the current theme instead of reading it during render. */}
-      <Button
-        variant="ghost"
-        className={mobileButton}
-        onClick={() => chooseTheme(currentTheme() === 'dark' ? 'light' : 'dark', accountUrl)}
-      >
-        <span className="dark:hidden">Use dark theme</span>
-        <span className="hidden dark:inline">Use light theme</span>
-      </Button>
       <Button type="submit" form={logoutFormId} variant="ghost" className={mobileButton}>Log out</Button>
     </section>
   )

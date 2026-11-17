@@ -1,4 +1,5 @@
 import { getRequestHeader } from '@tanstack/react-start/server'
+import { isThemeChoice, themeCookie } from 'paper-ui'
 import {
   continuation, deleteAccountLogin, isOperation, operations, problemFor, sendIdentity, withReturnTo, type Operation,
 } from './identity'
@@ -88,4 +89,28 @@ export async function handleNativeAction(request: Request, name: string) {
   }
   for (const cookie of result.response.headers.getSetCookie()) headers.append('Set-Cookie', cookie)
   return redirect(success(name, next))
+}
+
+/**
+ * Stores a theme picked before hydration or without JavaScript, in the same shared cookie `chooseTheme()` writes once
+ * hydrated, and returns to Appearance. Requests must come from this host's own pages. The cookie is all it changes, so
+ * unlike identity operations it accepts any account host, including a plain-HTTP loopback one.
+ */
+export async function handleThemeAction(request: Request) {
+  const headers = new Headers({ 'Cache-Control': 'private, no-store', 'Referrer-Policy': 'no-referrer' })
+  const origin = request.headers.get('origin')
+  const page = origin && URL.canParse(origin) ? new URL(origin) : undefined
+  if (!page || page.host !== getRequestHeader('host')?.toLowerCase()) {
+    return new Response('This request did not come from a Tadoku account page.', { status: 403, headers })
+  }
+
+  const urls = requestUrls()
+  const form = await readForm(request)
+  const theme = form?.get('theme')
+  if (isThemeChoice(theme)) {
+    headers.append('Set-Cookie', themeCookie(theme, page.hostname, urls.webUrl, page.protocol === 'https:'))
+  }
+  // Relative, so the browser stays on the scheme it used.
+  headers.set('Location', withReturnTo('/settings?tab=appearance', continuation(form?.get('return_to'), urls.origin)))
+  return new Response(null, { status: 303, headers })
 }

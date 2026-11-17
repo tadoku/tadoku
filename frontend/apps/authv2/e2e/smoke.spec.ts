@@ -158,7 +158,7 @@ test('Settings shows stored account values unchanged', async ({ page, request },
           await page.screenshot({ path: testInfo.outputPath(`settings-${name.replaceAll(' ', '-')}-${view}-${width}.png`), fullPage: true })
         }
       }
-      await page.goto('/settings')
+      await page.goto('/settings?tab=security')
       await waitForHydration(page)
       await expect(settingValue(page, 'Email')).toHaveCount(1)
       expect.soft(await settingValue(page, 'Email').evaluate(value => value.textContent), 'the row shows the stored address').toBe(email)

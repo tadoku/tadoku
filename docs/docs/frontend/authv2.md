@@ -55,19 +55,33 @@ The header is the account header: the Tadoku brand, linking to the Tadoku
 home page, beside an **Account** label, and for a signed-in visitor their
 display name and **Log out**. It has no site navigation.
 
-Settings shows two groups of read-only rows: Profile holds the avatar and the
-display name, and Sign-in and security holds the email address and password. Below the
-groups, one plain, muted **Delete account** link opens `/delete-account` with
-the trusted `return_to`; Settings has no other delete control. Each row shows
-its stored value and a **Change** link. The `edit` query parameter
-(`display-name`, `email` or `password`) opens one editor in place of its row's
-value. `settingsView()` in `frontend/apps/authv2/src/lib/search.ts` reads it
-with the other Settings parameters: a failed native submission's `form` and
-`error` reopen the editor that sent it ahead of any `edit`, and `saved` shows a
-row's confirmation only while no editor is open. **Change** and the editor's
-**Cancel** are links that keep the path and the trusted `return_to`, so they
-work without JavaScript and only one editor is open at a time. The open editor
-focuses its input and has the page's only filled button.
+Settings has three tabs: Profile holds the avatar and the display name,
+Appearance the theme, and Sign-in and security the email address and password.
+The tabs are links that set the `tab` query parameter (`profile`, `appearance`
+or `security`, Profile by default) and keep the path and the trusted
+`return_to`. Below Sign-in and security, one plain, muted **Delete account** link opens
+`/delete-account` with the trusted `return_to`; Settings has no other delete
+control. Each row shows its stored value and a **Change** link. The `edit`
+query parameter (`display-name`, `email` or `password`) opens one editor in
+place of its row's value. `settingsView()` in
+`frontend/apps/authv2/src/lib/search.ts` reads it with the other Settings
+parameters: a failed native submission's `form` and `error` reopen the editor
+that sent it ahead of any `edit`, `saved` shows a row's confirmation only while
+no editor is open, and an open, failed or saved row shows its own tab ahead of
+`tab`. **Change** and the editor's **Cancel** are links that keep the path, the
+row's tab and the trusted `return_to`, so they work without JavaScript and only
+one editor is open at a time. The open editor focuses its input and has the
+page's only filled button.
+
+Appearance offers System, Light and Dark. The choice is stored in this browser
+only, in the `tadoku-theme` cookie on the domain authv2 and Webv3 share, so
+every Tadoku page follows it; it is not saved to the account. System, the
+default, follows the device's setting. `frontend/packages/paper-ui/src/foundations/theme.ts`
+owns the cookie's format. The session read returns the stored choice, so the
+server renders it checked. Before hydration or without JavaScript, **Save theme** posts to
+`/actions/theme`, which accepts posts from the request's own host, sets the
+cookie and returns to the tab. Once hydrated, the button is gone and a choice,
+even one tapped before hydration, applies at once.
 
 The Avatar row shows the account's Gravatar from
 `GET /immersion/users/{userId}/avatar` over the display name's initials, says

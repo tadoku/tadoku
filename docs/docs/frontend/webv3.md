@@ -96,7 +96,7 @@ Admin for administrators, Account settings and Log out; at narrow widths the
 menu's entries join the mobile navigation. Admin opens the sibling admin host
 and Account settings opens authv2's `/settings` with the current page as
 `return_to`. Before hydration the menu is a native disclosure, so it opens
-without JavaScript; the appearance switch joins it after hydration.
+without JavaScript.
 
 Links to Webv3 pages go through the router: Paper components take
 `renderLink`, and screens use `AppLink`, both from
@@ -115,10 +115,9 @@ A suspended account sees the suspended screen, with a Discord contact link and
 Log out, in place of every page. An unavailable account service names itself
 in the header and leaves public pages readable.
 
-A signed-in account's menu, and its section of the phone menu, holds the
-theme switch, named for the theme it switches to; the choice is stored in a
-cookie on the domain Webv3 and authv2 share, so both follow it, and visitors
-without one follow their system choice. The header stays in view while scrolling. The footer sits on the paper surface with a hairline above it: the brand, the
+The theme is chosen on the Appearance tab of account settings in authv2; the
+choice is stored in a cookie on the domain Webv3 and authv2 share, so both
+follow it, and visitors without one follow their system choice. The header stays in view while scrolling. The footer sits on the paper surface with a hairline above it: the brand, the
 credit line and Tadoku's Discord, GitHub and Twitter beside grouped links to
 About, Guide, Rules and Questions & help, and Privacy and Contact. `frontend/apps/webv3/src/components/Announcements.tsx`
 shows the CMS's active announcements above each page after hydration, rendering

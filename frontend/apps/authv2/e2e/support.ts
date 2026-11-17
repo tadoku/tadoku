@@ -63,9 +63,18 @@ export function settingValue(page: Page, name: string) {
   return settingRow(page, name).locator('.settings-row__value')
 }
 
-/** Opens a collapsed Settings row's editor through its Change link, with or without JavaScript. */
+const settingTabs: Record<string, string> = { 'Display name': 'Profile', Email: 'Sign-in and security', Password: 'Sign-in and security' }
+
+/** Opens a Settings tab through its link, with or without JavaScript. */
+export async function openSettingsTab(page: Page, name: string) {
+  await page.getByRole('navigation', { name: 'Settings sections' }).getByRole('link', { name, exact: true }).click()
+  await expect(page.getByRole('link', { name, exact: true })).toHaveAttribute('aria-current', 'page')
+}
+
+/** Opens a collapsed Settings row's editor through its tab and Change link, with or without JavaScript. */
 export async function openSetting(page: Page, name: string) {
   const row = settingRow(page, name)
+  if (!await row.isVisible()) await openSettingsTab(page, settingTabs[name])
   await row.getByRole('link', { name: `Change ${name.toLowerCase()}`, exact: true }).click()
   await expect(row.getByRole('link', { name: 'Cancel', exact: true })).toBeVisible()
 }

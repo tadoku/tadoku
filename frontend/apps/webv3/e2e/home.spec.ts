@@ -58,7 +58,7 @@ test('returns a useful not-found page for an unknown route', async ({ page }) =>
 
 test('preserves the dark theme and opens the blog through mobile navigation', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 900 })
-  // The appearance switch belongs to the account menu; a visitor's stored or system choice still applies.
+  // The theme is chosen in account settings; a visitor's stored or system choice still applies here.
   await page.goto('/')
   await page.evaluate(() => localStorage.setItem('tadoku-theme', 'dark'))
   await page.reload()

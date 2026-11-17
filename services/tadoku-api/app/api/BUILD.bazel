@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "api",
@@ -69,4 +69,11 @@ go_library(
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//pgxpool",
     ],
+)
+
+go_test(
+    name = "api_test",
+    srcs = ["email_token_test.go"],
+    embed = [":api"],
+    deps = ["//services/tadoku-api/internal/errx"],
 )

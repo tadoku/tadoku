@@ -25,6 +25,8 @@ func (p Post) IsPublished(now time.Time) bool {
 	return p.PublishedAt != nil && !p.PublishedAt.After(now)
 }
 
+const slugMaxLength = 200
+
 var (
 	ErrPostNotFound      = errx.NewNotFoundError("post not found")
 	ErrPostAlreadyExists = errx.NewConflictError("post already exists")
@@ -67,6 +69,9 @@ func validatePostFields(namespace, slug, title, content string) error {
 	}
 	if utf8.RuneCountInString(slug) <= 1 {
 		return errx.NewInvalidInputError("slug must be at least 2 characters")
+	}
+	if utf8.RuneCountInString(slug) > slugMaxLength {
+		return errx.NewInvalidInputError("slug must be at most 200 characters")
 	}
 	if slug != strings.ToLower(slug) {
 		return errx.NewInvalidInputError("slug must be lowercase")

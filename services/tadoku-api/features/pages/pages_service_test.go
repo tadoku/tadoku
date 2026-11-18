@@ -1,6 +1,7 @@
 package pages_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -25,6 +26,7 @@ func TestCreatePageParametersValidation(t *testing.T) {
 		{name: "ID", change: func(p *pages.CreatePageParameters) { p.ID = uuid.Nil }, message: "id is required"},
 		{name: "namespace", change: func(p *pages.CreatePageParameters) { p.Namespace = "" }, message: "namespace is required"},
 		{name: "short slug", change: func(p *pages.CreatePageParameters) { p.Slug = "x" }, message: "slug must be at least 2 characters"},
+		{name: "long slug", change: func(p *pages.CreatePageParameters) { p.Slug = strings.Repeat("a", 201) }, message: "slug must be at most 200 characters"},
 		{name: "uppercase slug", change: func(p *pages.CreatePageParameters) { p.Slug = "New-page" }, message: "slug must be lowercase"},
 		{name: "title", change: func(p *pages.CreatePageParameters) { p.Title = "" }, message: "title is required"},
 		{name: "HTML", change: func(p *pages.CreatePageParameters) { p.HTML = "" }, message: "html is required"},
@@ -45,6 +47,11 @@ func TestCreatePageParametersValidation(t *testing.T) {
 	if err := valid.Validate(); err != nil {
 		t.Errorf("valid whitespace and Unicode fields rejected: %v", err)
 	}
+
+	valid.Slug = strings.Repeat("a", 200)
+	if err := valid.Validate(); err != nil {
+		t.Errorf("200-rune slug rejected: %v", err)
+	}
 }
 
 func TestUpdatePageParametersValidation(t *testing.T) {
@@ -64,6 +71,7 @@ func TestUpdatePageParametersValidation(t *testing.T) {
 		{name: "ID", change: func(p *pages.UpdatePageParameters) { p.ID = uuid.Nil }, message: "id is required"},
 		{name: "namespace", change: func(p *pages.UpdatePageParameters) { p.Namespace = "" }, message: "namespace is required"},
 		{name: "short slug", change: func(p *pages.UpdatePageParameters) { p.Slug = "x" }, message: "slug must be at least 2 characters"},
+		{name: "long slug", change: func(p *pages.UpdatePageParameters) { p.Slug = strings.Repeat("a", 201) }, message: "slug must be at most 200 characters"},
 		{name: "uppercase slug", change: func(p *pages.UpdatePageParameters) { p.Slug = "New-page" }, message: "slug must be lowercase"},
 		{name: "title", change: func(p *pages.UpdatePageParameters) { p.Title = "" }, message: "title is required"},
 		{name: "HTML", change: func(p *pages.UpdatePageParameters) { p.HTML = "" }, message: "html is required"},
@@ -80,5 +88,10 @@ func TestUpdatePageParametersValidation(t *testing.T) {
 
 	if err := valid.Validate(); err != nil {
 		t.Errorf("valid parameters rejected: %v", err)
+	}
+
+	valid.Slug = strings.Repeat("a", 200)
+	if err := valid.Validate(); err != nil {
+		t.Errorf("200-rune slug rejected: %v", err)
 	}
 }

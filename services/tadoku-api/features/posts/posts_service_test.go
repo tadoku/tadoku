@@ -1,6 +1,7 @@
 package posts_test
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -28,6 +29,7 @@ func TestCreatePostParametersValidation(t *testing.T) {
 		{name: "slug", change: func(p *posts.CreatePostParameters) { p.Slug = "" }, message: "slug must be at least 2 characters"},
 		{name: "one character slug", change: func(p *posts.CreatePostParameters) { p.Slug = "a" }, message: "slug must be at least 2 characters"},
 		{name: "one Unicode character slug", change: func(p *posts.CreatePostParameters) { p.Slug = "日" }, message: "slug must be at least 2 characters"},
+		{name: "long slug", change: func(p *posts.CreatePostParameters) { p.Slug = strings.Repeat("a", 201) }, message: "slug must be at most 200 characters"},
 		{name: "uppercase slug", change: func(p *posts.CreatePostParameters) { p.Slug = "First-post" }, message: "slug must be lowercase"},
 		{name: "uppercase Unicode slug", change: func(p *posts.CreatePostParameters) { p.Slug = "Éé" }, message: "slug must be lowercase"},
 		{name: "title", change: func(p *posts.CreatePostParameters) { p.Title = "" }, message: "title is required"},
@@ -53,6 +55,10 @@ func TestCreatePostParametersValidation(t *testing.T) {
 				t.Errorf("valid parameters rejected: %v", err)
 			}
 		})
+	}
+	valid.Slug = strings.Repeat("a", 200)
+	if err := valid.Validate(); err != nil {
+		t.Errorf("200-rune slug rejected: %v", err)
 	}
 	for _, publishedAt := range []*time.Time{nil, new(time.Time)} {
 		parameters := valid
@@ -80,6 +86,7 @@ func TestUpdatePostParametersValidation(t *testing.T) {
 		{name: "ID", change: func(p *posts.UpdatePostParameters) { p.ID = uuid.Nil }, message: "id is required"},
 		{name: "namespace", change: func(p *posts.UpdatePostParameters) { p.Namespace = "" }, message: "namespace is required"},
 		{name: "slug", change: func(p *posts.UpdatePostParameters) { p.Slug = "" }, message: "slug must be at least 2 characters"},
+		{name: "long slug", change: func(p *posts.UpdatePostParameters) { p.Slug = strings.Repeat("a", 201) }, message: "slug must be at most 200 characters"},
 		{name: "uppercase slug", change: func(p *posts.UpdatePostParameters) { p.Slug = "First-post" }, message: "slug must be lowercase"},
 		{name: "title", change: func(p *posts.UpdatePostParameters) { p.Title = "" }, message: "title is required"},
 		{name: "content", change: func(p *posts.UpdatePostParameters) { p.Content = "" }, message: "content is required"},
@@ -96,5 +103,10 @@ func TestUpdatePostParametersValidation(t *testing.T) {
 
 	if err := valid.Validate(); err != nil {
 		t.Errorf("valid parameters rejected: %v", err)
+	}
+
+	valid.Slug = strings.Repeat("a", 200)
+	if err := valid.Validate(); err != nil {
+		t.Errorf("200-rune slug rejected: %v", err)
 	}
 }

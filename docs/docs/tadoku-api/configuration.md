@@ -86,7 +86,8 @@ base deployments leave `API_BRANCH` unset.
   authorization. Test-tenant tokens remain available in both environments.
 - `API_JWKS`, the gateway's public signing-key URL; same HTTP(S) URL rules as the other provider base URLs.
 - `API_MAX_TOKEN_AGE` (default 24h), the maximum accepted age since `iat`.
-- `API_JWT_ISSUER`, an optional exact issuer match. Empty leaves the issuer
+- `API_JWT_ISSUER`, an optional exact issuer match. Surrounding whitespace is
+  trimmed; blank after trimming fails startup. Empty leaves the issuer
   unchecked.
 - `API_OATHKEEPER_AUTHZ_TOKEN`, the bearer credential required on trusted
   Oathkeeper authorization callbacks.

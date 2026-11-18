@@ -37,6 +37,8 @@ type PageVersion struct {
 	Version int
 }
 
+const slugMaxLength = 200
+
 var (
 	ErrPageNotFound      = errx.NewNotFoundError("page not found")
 	ErrPageAlreadyExists = errx.NewConflictError("page already exists")
@@ -67,6 +69,9 @@ func validatePageFields(namespace, slug, title, html string) error {
 	}
 	if utf8.RuneCountInString(slug) <= 1 {
 		return errx.NewInvalidInputError("slug must be at least 2 characters")
+	}
+	if utf8.RuneCountInString(slug) > slugMaxLength {
+		return errx.NewInvalidInputError("slug must be at most 200 characters")
 	}
 	if slug != strings.ToLower(slug) {
 		return errx.NewInvalidInputError("slug must be lowercase")

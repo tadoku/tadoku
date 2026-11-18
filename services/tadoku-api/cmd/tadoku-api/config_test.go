@@ -218,6 +218,57 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	}
 }
 
+func TestLoadConfigJWTIssuer(t *testing.T) {
+	for key, value := range map[string]string{
+		"API_SCORING_ENGINE_ENABLED": "false",
+		"API_JWKS":                   "http://jwks.test",
+		"API_OATHKEEPER_AUTHZ_TOKEN": "callback-token",
+		"API_VALKEY_URL":             "redis://valkey:6379",
+		"API_POSTGRES_HOST":          "localhost",
+		"API_POSTGRES_DATABASE":      "tadoku",
+		"API_POSTGRES_USER":          "tadoku",
+		"API_POSTGRES_PASSWORD":      "synthetic",
+		"API_POSTGRES_SSLMODE":       "disable",
+	} {
+		t.Setenv(key, value)
+	}
+
+	for _, test := range []struct {
+		name    string
+		set     bool
+		value   string
+		want    string
+		wantErr string
+	}{
+		{name: "unset", want: ""},
+		{name: "whitespace_only", set: true, value: " ", wantErr: "JWTIssuer"},
+		{name: "space_padded", set: true, value: " https://issuer.example.test ", want: "https://issuer.example.test"},
+		{name: "trailing_slash", set: true, value: "https://issuer.example.test/", want: "https://issuer.example.test/"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if test.set {
+				t.Setenv("API_JWT_ISSUER", test.value)
+			} else if err := os.Unsetenv("API_JWT_ISSUER"); err != nil {
+				t.Fatal(err)
+			}
+
+			cfg, err := loadConfig()
+			if test.wantErr != "" {
+				if err == nil || !strings.Contains(err.Error(), test.wantErr) {
+					t.Errorf("error=%v, want containing %q", err, test.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if cfg.JWTIssuer != test.want {
+				t.Errorf("JWT issuer=%q, want %q", cfg.JWTIssuer, test.want)
+			}
+		})
+	}
+}
+
 func TestLoadConfigRejectsInvalidBranch(t *testing.T) {
 	for key, value := range map[string]string{
 		"API_SCORING_ENGINE_ENABLED": "false",

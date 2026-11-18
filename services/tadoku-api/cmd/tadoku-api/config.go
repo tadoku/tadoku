@@ -70,6 +70,12 @@ func loadConfig() (config, error) {
 	if err := validator.New().Struct(cfg); err != nil {
 		return config{}, fmt.Errorf("validate config: %w", err)
 	}
+	if cfg.JWTIssuer != "" {
+		cfg.JWTIssuer = strings.TrimSpace(cfg.JWTIssuer)
+		if cfg.JWTIssuer == "" {
+			return config{}, fmt.Errorf("validate config: JWTIssuer must not be blank")
+		}
+	}
 	if cfg.FliptEnabled {
 		if strings.TrimSpace(cfg.FliptEnvironment) == "" {
 			return config{}, fmt.Errorf("validate config: FliptEnvironment is required")

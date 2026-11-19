@@ -23,6 +23,9 @@ func NewReader(pool *pgxpool.Pool) *ReadService {
 }
 
 func (s *ReadService) FindAccount(ctx context.Context, userID uuid.UUID) (Account, error) {
+	if _, ok := tenant.FromContext(ctx); !ok {
+		return Account{}, errx.NewUnavailableError("identity accounts require a tenant", postgres.ErrNoTenant)
+	}
 	return s.repository.find(ctx, userID)
 }
 

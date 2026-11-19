@@ -253,13 +253,13 @@ select
   contests.description,
   contests.owner_user_id,
   case
-    when owner_users.deleted_at is not null then sqlc.arg(deleted_organizer_name)::varchar
+    when owner_users.id is null or owner_users.deleted_at is not null then sqlc.arg(deleted_organizer_name)::varchar
     else owner_users.display_name
   end::varchar as owner_user_display_name
 from contest_registrations
 inner join contests on contests.id = contest_registrations.contest_id
 inner join users on users.id = contest_registrations.user_id
-inner join users as owner_users on owner_users.id = contests.owner_user_id
+left join users as owner_users on owner_users.id = contests.owner_user_id
 where contest_registrations.user_id = sqlc.arg(user_id)
   and contests.contest_start <= sqlc.arg(latest_started_contest_start)
   and contests.contest_end >= sqlc.arg(earliest_unfinished_contest_end)

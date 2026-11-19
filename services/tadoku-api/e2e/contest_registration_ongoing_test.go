@@ -17,6 +17,7 @@ func TestFindOngoingContestRegistrations(t *testing.T) {
 		{description: []string{"start", "day", "included"}, want: http.StatusOK},
 		{description: []string{"ended", "and", "future", "excluded"}, want: http.StatusOK},
 		{description: []string{"deleted", "private", "contest", "remains", "visible"}, want: http.StatusOK},
+		{description: []string{"hard", "deleted", "organizer"}, want: http.StatusOK},
 		{description: []string{"invalid", "stored", "activity"}, want: http.StatusBadRequest},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 	}

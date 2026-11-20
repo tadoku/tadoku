@@ -286,11 +286,17 @@ test('active announcements show above pages until this browser dismisses them', 
   })
   expect(created.status(), 'announcement creation').toBe(201)
   const { id } = await created.json() as { id: string }
+  const ended = randomUUID()
 
   try {
+    await page.addInitScript(stale => {
+      if (!localStorage.getItem('dismissed_announcements')) localStorage.setItem('dismissed_announcements', JSON.stringify([stale]))
+    }, ended)
     await page.goto('/blog/1')
     const banner = page.getByRole('main').getByRole('status').filter({ hasText: content })
     await expect(banner).toBeVisible()
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('dismissed_announcements')), 'ended dismissal forgotten')
+      .toBe('[]')
     await expect(banner.getByRole('link', { name: 'Learn more' })).toHaveAttribute('href', '/pages/manual')
     await page.screenshot({ path: testInfo.outputPath('announcement.png') })
 

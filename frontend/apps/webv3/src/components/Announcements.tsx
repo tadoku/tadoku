@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useHydrated, useRouterState } from '@tanstack/react-router'
 import { Button, Flash } from 'paper-ui'
 import { XMarkIcon, iconClassName } from 'paper-ui/icons'
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { announcementsQuery } from '../lib/content'
 
 // Webv2's key, so dismissals carry over when the host switches.
@@ -46,15 +46,20 @@ function pathOf(href: string) {
 /** The CMS's running announcements, each until this browser dismisses it. */
 export function Announcements() {
   const hydrated = useHydrated()
-  const { data: announcements = [] } = useQuery({ ...announcementsQuery(), enabled: hydrated })
+  const query = announcementsQuery()
+  const { data: announcements = [] } = useQuery({
+    ...query,
+    queryFn: async context => {
+      const items = await query.queryFn!(context)
+      // Forget dismissals of announcements that have ended; an empty or failed read keeps them.
+      if (items.length) storeDismissed(readDismissed().filter(id => items.some(item => item.id === id)))
+      return items
+    },
+    enabled: hydrated,
+  })
   const currentPath = useRouterState({ select: state => state.location.pathname })
   // The query waits for hydration, so this browser-only read never changes server-rendered output.
   const [dismissed, setDismissed] = useState(readDismissed)
-
-  useEffect(() => {
-    // Forget dismissals of announcements that have ended.
-    if (announcements.length) storeDismissed(readDismissed().filter(id => announcements.some(item => item.id === id)))
-  }, [announcements])
 
   const dismiss = (id: string) => {
     const next = [...dismissed, id]

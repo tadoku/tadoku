@@ -150,6 +150,16 @@ function useRestoredChoices(form: { reset: (values: LogDraft, options: { keepDef
   }, [form, options, target])
 }
 
+/** The value once it has stopped changing for `ms`; compares with `Object.is`, so pass primitives. */
+function useDebouncedValue<T>(value: T, ms: number) {
+  const [settled, setSettled] = useState(value)
+  useEffect(() => {
+    const timer = setTimeout(() => setSettled(value), ms)
+    return () => clearTimeout(timer)
+  }, [value, ms])
+  return settled
+}
+
 /** Tag chips with the viewer's tags containing the typed text, fetched once typing settles for 300 ms. */
 const TagsField = withPaperForm({
   defaultValues: {} as LogDraft,
@@ -157,11 +167,7 @@ const TagsField = withPaperForm({
   render: function TagsField({ form, viewerId }) {
     const hydrated = useHydrated()
     const [query, setQuery] = useState('')
-    const [settled, setSettled] = useState(query)
-    useEffect(() => {
-      const timer = setTimeout(() => setSettled(query.trim()), 300)
-      return () => clearTimeout(timer)
-    }, [query])
+    const settled = useDebouncedValue(query.trim(), 300)
     const { data: suggestions = [] } = useQuery({ ...tagSuggestionsQuery(viewerId, settled), enabled: hydrated })
     const counts = new Map(suggestions.map(suggestion => [suggestion.tag, suggestion.count]))
 
@@ -287,11 +293,7 @@ const ScoreEstimate = withPaperForm({
     const schema = useMemo(() => logDraftSchema(options), [options])
     const draft = useStore(form.store, state => state.values)
     const input = schema.safeParse(draft).success ? JSON.stringify(toScorePreview(draft, options)) : undefined
-    const [settled, setSettled] = useState(input)
-    useEffect(() => {
-      const timer = setTimeout(() => setSettled(input), 300)
-      return () => clearTimeout(timer)
-    }, [input])
+    const settled = useDebouncedValue(input, 300)
     const { data } = useQuery(scorePreviewQuery(settled === undefined ? undefined : JSON.parse(settled)))
 
     const score = input !== undefined && data?.ok ? data.data.platform.score : undefined

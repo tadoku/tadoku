@@ -5,7 +5,9 @@
   "schedule": ["before 6am on monday"],
   "prHourlyLimit": 10,
   "prConcurrentLimit": 5,
-  "dependencyDashboard": true,
+  "dependencyDashboard": {
+    "enabled": true
+  },
   "automerge": false,
   "rebaseWhen": "conflicted",
   "labels": ["dependencies"],

@@ -235,11 +235,7 @@ with eligible_logs as (
     logs.score_source,
     logs.created_at,
     logs.updated_at,
-    logs.deleted_at,
-    coalesce(
-      (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
-      array[]::text[]
-    )::text[] as tags
+    logs.deleted_at
   from logs
   inner join languages on (languages.code = logs.language_code)
   where
@@ -265,8 +261,7 @@ with eligible_logs as (
     eligible_logs.score_source,
     eligible_logs.created_at,
     eligible_logs.updated_at,
-    eligible_logs.deleted_at,
-    eligible_logs.tags
+    eligible_logs.deleted_at
   from eligible_logs
   order by eligible_logs.created_at desc, eligible_logs.id desc
   limit sqlc.arg('page_size')
@@ -294,7 +289,13 @@ select
   page.created_at,
   page.updated_at,
   page.deleted_at,
-  page.tags,
+  case
+    when page.id is null then null::text[]
+    else coalesce(
+      (select array_agg(tag order by tag) from log_tags where log_id = page.id),
+      array[]::text[]
+    )::text[]
+  end as tags,
   total.total_size
 from total
 left join page on true

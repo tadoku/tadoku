@@ -15,7 +15,7 @@ func TestAuthzRoleUpdate(t *testing.T) {
 	}{
 		{description: []string{"ban", "user"}, want: http.StatusOK},
 		{description: []string{"unban", "user"}, want: http.StatusOK},
-		{description: []string{"whitespace", "reason"}, want: http.StatusOK},
+		{description: []string{"whitespace", "reason"}, want: http.StatusBadRequest},
 		{description: []string{"malformed", "json"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "role"}, want: http.StatusBadRequest},
 		{description: []string{"missing", "reason"}, want: http.StatusBadRequest},

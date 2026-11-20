@@ -1,6 +1,8 @@
 package authz
 
 import (
+	"strings"
+
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
@@ -39,10 +41,11 @@ func (p RoleUpdateParameters) Validate() error {
 	if p.Role != RoleUser && p.Role != RoleBanned {
 		return errx.NewInvalidInputError("role must be 'user' or 'banned'")
 	}
-	if p.Reason == "" {
+	reason := strings.TrimSpace(p.Reason)
+	if reason == "" {
 		return errx.NewInvalidInputError("reason is required")
 	}
-	if len(p.Reason) > 1000 {
+	if len(reason) > 1000 {
 		return errx.NewInvalidInputError("reason must be at most 1000 bytes")
 	}
 	return nil

@@ -84,6 +84,13 @@ func TestRoleUpdateParametersValidation(t *testing.T) {
 			want: "reason is required",
 		},
 		{
+			name: "whitespace-only reason",
+			change: func(parameters *RoleUpdateParameters) {
+				parameters.Reason = " "
+			},
+			want: "reason is required",
+		},
+		{
 			name: "reason over byte limit",
 			change: func(parameters *RoleUpdateParameters) {
 				parameters.Reason = strings.Repeat("é", 501)
@@ -106,8 +113,9 @@ func TestRoleUpdateParametersValidation(t *testing.T) {
 	}
 
 	for _, reason := range []string{
-		" ",
+		"  padded reason  ",
 		strings.Repeat("a", 1000),
+		" " + strings.Repeat("a", 1000) + " ",
 		strings.Repeat("é", 500),
 	} {
 		parameters := valid

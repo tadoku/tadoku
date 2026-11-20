@@ -316,7 +316,13 @@ type YearlyRegistrationsParameters struct {
 }
 
 func (p YearlyRegistrationsParameters) Validate() error {
-	return validatePage(p.PageSize, p.Page)
+	if err := validatePage(p.PageSize, p.Page); err != nil {
+		return err
+	}
+	if p.Year < 1 || p.Year > 9999 {
+		return errx.NewInvalidInputError("year must be between 1 and 9999")
+	}
+	return nil
 }
 
 func (p YearlyRegistrationsParameters) offset() int32 {

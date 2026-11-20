@@ -21,9 +21,6 @@ func TestListYearlyContestRegistrations(t *testing.T) {
 		{description: []string{"empty", "year"}, want: http.StatusOK},
 		{description: []string{"unknown", "user"}, want: http.StatusOK},
 		{description: []string{"nil", "user"}, want: http.StatusOK},
-		{description: []string{"negative", "year"}, want: http.StatusOK},
-		{description: []string{"zero", "year"}, want: http.StatusOK},
-		{description: []string{"int32", "wrapped", "year"}, want: http.StatusOK},
 		{description: []string{"start", "year", "boundaries"}, want: http.StatusOK},
 		{description: []string{"deleted", "contests", "and", "registrations"}, want: http.StatusOK},
 		{description: []string{"stored", "ordering", "and", "hydration"}, want: http.StatusOK},
@@ -41,6 +38,9 @@ func TestListYearlyContestRegistrations(t *testing.T) {
 		{description: []string{"invalid", "user", "id"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "year"}, want: http.StatusBadRequest},
 		{description: []string{"overflowing", "year"}, want: http.StatusBadRequest},
+		{description: []string{"negative", "year"}, want: http.StatusBadRequest},
+		{description: []string{"zero", "year"}, want: http.StatusBadRequest},
+		{description: []string{"int32", "wrapped", "year"}, want: http.StatusBadRequest},
 	}
 
 	for _, test := range tests {

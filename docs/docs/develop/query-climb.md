@@ -27,7 +27,11 @@ migrations, sqlc queries or generated sqlc differ from it or have uncommitted
 changes. `init` records every up migration it applies in the template's
 `queryclimb.template_migrations`; `attempt` rejects a template without that
 manifest or whose manifest differs from the baseline, so rebuild templates with
-`init` after `main` gains a migration. A candidate may add only migrations
+`init` after `main` gains a migration. `seed` loads synthetic data with the
+leaderboard version triggers disabled, because their per-row upserts on a few
+hot rows make the commit quadratic in data size. It writes one version-1 row
+per board those triggers would raise for the seeded data and re-enables them
+before commit, so measured writes still raise versions. A candidate may add only migrations
 numbered after the baseline's last one, each a single
 `create index concurrently` statement, and may not change or remove an existing
 file. `attempt` writes the plan to `migrations.json` before any build or clone

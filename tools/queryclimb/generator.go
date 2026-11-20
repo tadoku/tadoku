@@ -281,11 +281,20 @@ func seed(ctx context.Context, args []string) error {
 	if _, err := tx.Exec(ctx, "select set_config('tadoku.tenant', $1, true)", "tadoku/prod"); err != nil {
 		return err
 	}
+	if err := setLeaderboardVersionTriggers(ctx, tx, false); err != nil {
+		return err
+	}
 	for i, statement := range statements {
 		sql := strings.ReplaceAll(statement, "SCALE", fmt.Sprint(*scale))
 		if _, err := tx.Exec(ctx, sql); err != nil {
 			return fmt.Errorf("seed statement %d: %w", i+1, err)
 		}
+	}
+	if _, err := tx.Exec(ctx, seedLeaderboardVersionsSQL); err != nil {
+		return fmt.Errorf("seed leaderboard versions: %w", err)
+	}
+	if err := setLeaderboardVersionTriggers(ctx, tx, true); err != nil {
+		return err
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return err
@@ -329,4 +338,37 @@ func seed(ctx context.Context, args []string) error {
 		return err
 	}
 	return output(map[string]any{"database": *database, "scale": *scale, "seed": 1, "bytes": bytes})
+}
+
+var leaderboardVersionTriggerTables = []string{"logs", "contest_logs", "contest_registrations", "users", "contests"}
+
+const seedLeaderboardVersionsSQL = `insert into leaderboard_versions (tenant, board, version)
+  select tenant, board, 1
+  from (
+    select tenant, 'global' from logs where eligible_official_leaderboard and deleted_at is null
+    union
+    select tenant, 'yearly:' || year from logs where eligible_official_leaderboard and deleted_at is null
+    union
+    select tenant, 'contest:' || id from contests
+    union
+    select tenant, 'contest:' || contest_id from contest_logs
+    union
+    select tenant, 'contest:' || contest_id from contest_registrations where deleted_at is null
+  ) boards (tenant, board)`
+
+func setLeaderboardVersionTriggers(ctx context.Context, tx pgx.Tx, enabled bool) error {
+	action := "disable"
+	if enabled {
+		action = "enable"
+	}
+
+	for _, table := range leaderboardVersionTriggerTables {
+		sql := "alter table " + pgx.Identifier{table}.Sanitize() + " " + action + " trigger " +
+			pgx.Identifier{"leaderboard_versions_" + table}.Sanitize()
+		if _, err := tx.Exec(ctx, sql); err != nil {
+			return fmt.Errorf("%s leaderboard version trigger on %s: %w", action, table, err)
+		}
+	}
+
+	return nil
 }

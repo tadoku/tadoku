@@ -56,7 +56,7 @@ type ContestEntryRequest struct {
 
 type YearlyRequest struct {
 	Request
-	Year int32
+	Year int
 }
 
 func (r YearlyRequest) Validate() error {

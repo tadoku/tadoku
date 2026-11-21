@@ -68,6 +68,9 @@ func TestImmersionFetchLeaderboardForYear(t *testing.T) {
 		{description: []string{"cache", "hit", "offset", "overflow"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"overflowing", "activity"}, want: http.StatusBadRequest},
 		{description: []string{"negative", "overflowing", "activity"}, want: http.StatusBadRequest},
+		{description: []string{"int32", "wrapped", "year"}, want: http.StatusBadRequest},
+		{description: []string{"zero", "year"}, want: http.StatusBadRequest},
+		{description: []string{"negative", "year"}, want: http.StatusBadRequest},
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionFetchLeaderboardForYear", test.want, test.description...)

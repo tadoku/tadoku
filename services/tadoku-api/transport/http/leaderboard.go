@@ -41,7 +41,7 @@ func (s *server) ImmersionContestFetchLeaderboardEntry(
 
 func (s *server) ImmersionFetchLeaderboardForYear(ctx context.Context, request openapi.ImmersionFetchLeaderboardForYearRequestObject) (openapi.ImmersionFetchLeaderboardForYearResponseObject, error) {
 	result, err := s.application.FetchYearlyLeaderboard(ctx, api.YearlyLeaderboardRequest{
-		Year:    int32(request.Year),
+		Year:    request.Year,
 		Request: requestFromParams(request.Params.PageSize, request.Params.Page, request.Params.LanguageCode, request.Params.ActivityId),
 	})
 	if err != nil {

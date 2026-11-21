@@ -3,6 +3,7 @@ package scoring
 import (
 	"context"
 	"errors"
+	"unicode/utf8"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
@@ -129,6 +130,10 @@ func (s *Service) NormalizeLogInput(input logscore.Input) (logscore.Input, error
 	}
 	if input.LanguageCode == "" {
 		return logscore.Input{}, errx.NewInvalidInputError("language_code is required")
+	}
+	length := utf8.RuneCountInString(input.LanguageCode)
+	if length < 1 || length > 10 {
+		return logscore.Input{}, errx.NewInvalidInputError("language_code must be 1 to 10 characters")
 	}
 	tags, err := normalizeTags(input.Tags)
 	if err != nil {

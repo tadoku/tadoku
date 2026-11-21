@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
@@ -392,6 +393,40 @@ func TestNormalizeTagsCountsCharactersNotBytes(t *testing.T) {
 			err,
 			errx.KindOf(err),
 			"tag exceeds maximum length of 50 characters",
+		)
+	}
+}
+
+func TestNormalizeLogInputRejectsLanguageCodeOutsideRuneLimit(t *testing.T) {
+	t.Parallel()
+
+	service := NewService(nil, false, nil)
+	const want = "language_code must be 1 to 10 characters"
+	exactLimit := strings.Repeat("あ", 10)
+	overLimit := strings.Repeat("あ", 11)
+
+	got, err := service.NormalizeLogInput(logscore.Input{
+		ActivityID:   1,
+		LanguageCode: exactLimit,
+	})
+	if err != nil {
+		t.Fatalf("NormalizeLogInput(%q): %v", exactLimit, err)
+	}
+	if got.LanguageCode != exactLimit {
+		t.Errorf("LanguageCode = %q, want %q", got.LanguageCode, exactLimit)
+	}
+
+	_, err = service.NormalizeLogInput(logscore.Input{
+		ActivityID:   1,
+		LanguageCode: overLimit,
+	})
+	if errx.KindOf(err) != errx.InvalidInput || err.Error() != want {
+		t.Errorf(
+			"NormalizeLogInput(%q) error = %v (%v), want invalid input %q",
+			overLimit,
+			err,
+			errx.KindOf(err),
+			want,
 		)
 	}
 }

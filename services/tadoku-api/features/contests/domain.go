@@ -211,6 +211,9 @@ func (p CreateContestParameters) validate(ownerUserID uuid.UUID, ownerUserDispla
 	if utf8.RuneCountInString(p.Title) <= 3 {
 		return errx.NewInvalidInputError("invalid contest Title: must contain more than three characters")
 	}
+	if utf8.RuneCountInString(p.Title) > 255 {
+		return errx.NewInvalidInputError("invalid contest Title: must be at most 255 characters")
+	}
 	if len(p.ActivityTypeIDAllowList) == 0 {
 		return errx.NewInvalidInputError("invalid contest ActivityTypeIDAllowList: must not be empty")
 	}

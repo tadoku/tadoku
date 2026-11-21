@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -302,6 +303,44 @@ func TestCreateContestParametersRejectsWhitespaceOnlyTitle(t *testing.T) {
 	err := parameters.validate(ownerID, "Reader One", false, now)
 	if errx.KindOf(err) != errx.InvalidInput || err.Error() != want {
 		t.Errorf("validate error=%v, want invalid input %q", err, want)
+	}
+}
+
+func TestCreateContestParametersTitleMaxLength(t *testing.T) {
+	now := time.Date(2026, time.September, 12, 12, 0, 0, 0, time.UTC)
+	ownerID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
+	base := CreateContestParameters{
+		ContestStart:            now,
+		ContestEnd:              now,
+		RegistrationEnd:         now,
+		ActivityTypeIDAllowList: []int32{1},
+	}
+	wantTooLong := "invalid contest Title: must be at most 255 characters"
+
+	for _, test := range []struct {
+		name  string
+		title string
+		want  string
+	}{
+		{name: "255 ascii runes", title: strings.Repeat("a", 255)},
+		{name: "255 multi-byte runes", title: strings.Repeat("猫", 255)},
+		{name: "256 ascii runes", title: strings.Repeat("a", 256), want: wantTooLong},
+		{name: "256 multi-byte runes", title: strings.Repeat("猫", 256), want: wantTooLong},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			parameters := base
+			parameters.Title = test.title
+			err := parameters.validate(ownerID, "Reader One", false, now)
+			if test.want == "" {
+				if err != nil {
+					t.Errorf("validate error=%v, want nil", err)
+				}
+				return
+			}
+			if errx.KindOf(err) != errx.InvalidInput || err.Error() != test.want {
+				t.Errorf("validate error=%v, want invalid input %q", err, test.want)
+			}
+		})
 	}
 }
 

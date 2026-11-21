@@ -37,7 +37,10 @@ type PageVersion struct {
 	Version int
 }
 
-const slugMaxLength = 200
+const (
+	slugMaxLength      = 200
+	namespaceMaxLength = 50
+)
 
 var (
 	ErrPageNotFound      = errx.NewNotFoundError("page not found")
@@ -66,6 +69,9 @@ func (p pageParameters) Validate() error {
 func validatePageFields(namespace, slug, title, html string) error {
 	if namespace == "" {
 		return errx.NewInvalidInputError("namespace is required")
+	}
+	if utf8.RuneCountInString(namespace) > namespaceMaxLength {
+		return errx.NewInvalidInputError("namespace must be at most 50 characters")
 	}
 	if utf8.RuneCountInString(slug) <= 1 {
 		return errx.NewInvalidInputError("slug must be at least 2 characters")

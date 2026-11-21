@@ -34,6 +34,7 @@ func TestCreateAnnouncement(t *testing.T) {
 		{description: []string{"javascript", "href"}, want: http.StatusBadRequest},
 		{description: []string{"data", "href"}, want: http.StatusBadRequest},
 		{description: []string{"href", "too", "long"}, want: http.StatusBadRequest},
+		{description: []string{"namespace", "too", "long"}, want: http.StatusBadRequest},
 		{description: []string{"malformed", "json"}, want: http.StatusBadRequest},
 		{description: []string{"malformed", "guest"}, want: http.StatusBadRequest},
 		{description: []string{"empty", "body"}, want: http.StatusBadRequest},

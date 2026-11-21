@@ -54,6 +54,7 @@ func TestCreateAnnouncementParametersValidation(t *testing.T) {
 	}{
 		{name: "ID", change: func(p *announcements.CreateAnnouncementParameters) { p.ID = uuid.Nil }, message: "id is required"},
 		{name: "namespace", change: func(p *announcements.CreateAnnouncementParameters) { p.Namespace = "" }, message: "namespace is required"},
+		{name: "long namespace", change: func(p *announcements.CreateAnnouncementParameters) { p.Namespace = strings.Repeat("a", 51) }, message: "namespace must be at most 50 characters"},
 		{name: "title", change: func(p *announcements.CreateAnnouncementParameters) { p.Title = "" }, message: "title is required"},
 		{name: "content", change: func(p *announcements.CreateAnnouncementParameters) { p.Content = "" }, message: "content is required"},
 		{name: "style", change: func(p *announcements.CreateAnnouncementParameters) { p.Style = "other" }, message: "style must be one of success, warning, error or info"},
@@ -72,6 +73,11 @@ func TestCreateAnnouncementParametersValidation(t *testing.T) {
 				t.Errorf("error=%v, want invalid input %q", err, test.message)
 			}
 		})
+	}
+
+	valid.Namespace = strings.Repeat("a", 50)
+	if err := valid.Validate(); err != nil {
+		t.Errorf("50-rune namespace rejected: %v", err)
 	}
 }
 

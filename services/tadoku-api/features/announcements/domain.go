@@ -10,7 +10,10 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
-const announcementHrefMaxLength = 2048
+const (
+	announcementHrefMaxLength = 2048
+	namespaceMaxLength        = 50
+)
 
 type Announcement struct {
 	ID        uuid.UUID
@@ -81,6 +84,9 @@ func (p announcementParameters) Validate() error {
 	}
 	if p.Namespace == "" {
 		return errx.NewInvalidInputError("namespace is required")
+	}
+	if utf8.RuneCountInString(p.Namespace) > namespaceMaxLength {
+		return errx.NewInvalidInputError("namespace must be at most 50 characters")
 	}
 	if p.Title == "" {
 		return errx.NewInvalidInputError("title is required")

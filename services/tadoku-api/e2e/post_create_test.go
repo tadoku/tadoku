@@ -25,6 +25,7 @@ func TestCreatePost(t *testing.T) {
 		{description: []string{"empty", "slug"}, want: http.StatusBadRequest},
 		{description: []string{"short", "slug"}, want: http.StatusBadRequest},
 		{description: []string{"slug", "too", "long"}, want: http.StatusBadRequest},
+		{description: []string{"namespace", "too", "long"}, want: http.StatusBadRequest},
 		{description: []string{"uppercase", "slug"}, want: http.StatusBadRequest},
 		{description: []string{"one", "rune", "slug"}, want: http.StatusBadRequest},
 		{description: []string{"empty", "title"}, want: http.StatusBadRequest},

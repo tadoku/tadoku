@@ -26,6 +26,7 @@ func TestCreatePostParametersValidation(t *testing.T) {
 	}{
 		{name: "ID", change: func(p *posts.CreatePostParameters) { p.ID = uuid.Nil }, message: "id is required"},
 		{name: "namespace", change: func(p *posts.CreatePostParameters) { p.Namespace = "" }, message: "namespace is required"},
+		{name: "long namespace", change: func(p *posts.CreatePostParameters) { p.Namespace = strings.Repeat("a", 51) }, message: "namespace must be at most 50 characters"},
 		{name: "slug", change: func(p *posts.CreatePostParameters) { p.Slug = "" }, message: "slug must be at least 2 characters"},
 		{name: "one character slug", change: func(p *posts.CreatePostParameters) { p.Slug = "a" }, message: "slug must be at least 2 characters"},
 		{name: "one Unicode character slug", change: func(p *posts.CreatePostParameters) { p.Slug = "日" }, message: "slug must be at least 2 characters"},
@@ -60,6 +61,10 @@ func TestCreatePostParametersValidation(t *testing.T) {
 	if err := valid.Validate(); err != nil {
 		t.Errorf("200-rune slug rejected: %v", err)
 	}
+	valid.Namespace = strings.Repeat("a", 50)
+	if err := valid.Validate(); err != nil {
+		t.Errorf("50-rune namespace rejected: %v", err)
+	}
 	for _, publishedAt := range []*time.Time{nil, new(time.Time)} {
 		parameters := valid
 		parameters.PublishedAt = publishedAt
@@ -85,6 +90,7 @@ func TestUpdatePostParametersValidation(t *testing.T) {
 	}{
 		{name: "ID", change: func(p *posts.UpdatePostParameters) { p.ID = uuid.Nil }, message: "id is required"},
 		{name: "namespace", change: func(p *posts.UpdatePostParameters) { p.Namespace = "" }, message: "namespace is required"},
+		{name: "long namespace", change: func(p *posts.UpdatePostParameters) { p.Namespace = strings.Repeat("a", 51) }, message: "namespace must be at most 50 characters"},
 		{name: "slug", change: func(p *posts.UpdatePostParameters) { p.Slug = "" }, message: "slug must be at least 2 characters"},
 		{name: "long slug", change: func(p *posts.UpdatePostParameters) { p.Slug = strings.Repeat("a", 201) }, message: "slug must be at most 200 characters"},
 		{name: "uppercase slug", change: func(p *posts.UpdatePostParameters) { p.Slug = "First-post" }, message: "slug must be lowercase"},
@@ -108,5 +114,10 @@ func TestUpdatePostParametersValidation(t *testing.T) {
 	valid.Slug = strings.Repeat("a", 200)
 	if err := valid.Validate(); err != nil {
 		t.Errorf("200-rune slug rejected: %v", err)
+	}
+
+	valid.Namespace = strings.Repeat("a", 50)
+	if err := valid.Validate(); err != nil {
+		t.Errorf("50-rune namespace rejected: %v", err)
 	}
 }

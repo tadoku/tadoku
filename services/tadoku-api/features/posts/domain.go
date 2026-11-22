@@ -25,7 +25,10 @@ func (p Post) IsPublished(now time.Time) bool {
 	return p.PublishedAt != nil && !p.PublishedAt.After(now)
 }
 
-const slugMaxLength = 200
+const (
+	slugMaxLength      = 200
+	namespaceMaxLength = 50
+)
 
 var (
 	ErrPostNotFound      = errx.NewNotFoundError("post not found")
@@ -66,6 +69,9 @@ func (p postParameters) Validate() error {
 func validatePostFields(namespace, slug, title, content string) error {
 	if namespace == "" {
 		return errx.NewInvalidInputError("namespace is required")
+	}
+	if utf8.RuneCountInString(namespace) > namespaceMaxLength {
+		return errx.NewInvalidInputError("namespace must be at most 50 characters")
 	}
 	if utf8.RuneCountInString(slug) <= 1 {
 		return errx.NewInvalidInputError("slug must be at least 2 characters")

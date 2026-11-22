@@ -25,6 +25,7 @@ func TestCreatePageParametersValidation(t *testing.T) {
 	}{
 		{name: "ID", change: func(p *pages.CreatePageParameters) { p.ID = uuid.Nil }, message: "id is required"},
 		{name: "namespace", change: func(p *pages.CreatePageParameters) { p.Namespace = "" }, message: "namespace is required"},
+		{name: "long namespace", change: func(p *pages.CreatePageParameters) { p.Namespace = strings.Repeat("a", 51) }, message: "namespace must be at most 50 characters"},
 		{name: "short slug", change: func(p *pages.CreatePageParameters) { p.Slug = "x" }, message: "slug must be at least 2 characters"},
 		{name: "long slug", change: func(p *pages.CreatePageParameters) { p.Slug = strings.Repeat("a", 201) }, message: "slug must be at most 200 characters"},
 		{name: "uppercase slug", change: func(p *pages.CreatePageParameters) { p.Slug = "New-page" }, message: "slug must be lowercase"},
@@ -52,6 +53,11 @@ func TestCreatePageParametersValidation(t *testing.T) {
 	if err := valid.Validate(); err != nil {
 		t.Errorf("200-rune slug rejected: %v", err)
 	}
+
+	valid.Namespace = strings.Repeat("a", 50)
+	if err := valid.Validate(); err != nil {
+		t.Errorf("50-rune namespace rejected: %v", err)
+	}
 }
 
 func TestUpdatePageParametersValidation(t *testing.T) {
@@ -70,6 +76,7 @@ func TestUpdatePageParametersValidation(t *testing.T) {
 	}{
 		{name: "ID", change: func(p *pages.UpdatePageParameters) { p.ID = uuid.Nil }, message: "id is required"},
 		{name: "namespace", change: func(p *pages.UpdatePageParameters) { p.Namespace = "" }, message: "namespace is required"},
+		{name: "long namespace", change: func(p *pages.UpdatePageParameters) { p.Namespace = strings.Repeat("a", 51) }, message: "namespace must be at most 50 characters"},
 		{name: "short slug", change: func(p *pages.UpdatePageParameters) { p.Slug = "x" }, message: "slug must be at least 2 characters"},
 		{name: "long slug", change: func(p *pages.UpdatePageParameters) { p.Slug = strings.Repeat("a", 201) }, message: "slug must be at most 200 characters"},
 		{name: "uppercase slug", change: func(p *pages.UpdatePageParameters) { p.Slug = "New-page" }, message: "slug must be lowercase"},
@@ -93,5 +100,10 @@ func TestUpdatePageParametersValidation(t *testing.T) {
 	valid.Slug = strings.Repeat("a", 200)
 	if err := valid.Validate(); err != nil {
 		t.Errorf("200-rune slug rejected: %v", err)
+	}
+
+	valid.Namespace = strings.Repeat("a", 50)
+	if err := valid.Validate(); err != nil {
+		t.Errorf("50-rune namespace rejected: %v", err)
 	}
 }

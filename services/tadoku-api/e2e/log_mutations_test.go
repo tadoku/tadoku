@@ -37,6 +37,7 @@ func TestImmersionLogCreate(t *testing.T) {
 		{description: []string{"registration", "activity"}, want: http.StatusBadRequest},
 		{description: []string{"registration", "outside", "grace"}, want: http.StatusBadRequest},
 		{description: []string{"description", "too", "long"}, want: http.StatusBadRequest},
+		{description: []string{"language", "code", "too", "long"}, want: http.StatusBadRequest},
 		{description: []string{"old", "unit", "key"}, want: http.StatusBadRequest},
 		{description: []string{"retired", "unit", "key"}, want: http.StatusBadRequest},
 		{description: []string{"minute", "amount", "on", "timed", "activity"}, want: http.StatusBadRequest},

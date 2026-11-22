@@ -15,14 +15,12 @@ func (s *server) ImmersionContestFindRegistration(
 	request openapi.ImmersionContestFindRegistrationRequestObject,
 ) (openapi.ImmersionContestFindRegistrationResponseObject, error) {
 	registration, err := s.application.FindContestRegistration(ctx, request.Id)
+	if errors.Is(err, api.ErrContestRegistrationNotFound) {
+		return openapi.ImmersionContestFindRegistration204Response{}, nil
+	}
 	if err != nil {
 		s.logOperationError(ctx, "find contest registration", err)
-		switch {
-		case errors.Is(err, api.ErrContestRegistrationNotFound):
-			return openapi.ImmersionContestFindRegistration204Response{}, nil
-		default:
-			return nil, err
-		}
+		return nil, err
 	}
 
 	return openapi.ImmersionContestFindRegistration200JSONResponse(registrationResponse(registration)), nil

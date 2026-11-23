@@ -55,6 +55,7 @@ go_test(
         "requires-network",
     ],
     deps = [
+        "//services/common/postgresconfig",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/testpostgres",
     ],

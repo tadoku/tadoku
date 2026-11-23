@@ -35,8 +35,9 @@ environment variables. Development values are in
   `API_POSTGRES_SSLMODE`. A single `API_POSTGRES_URL` is rejected.
 - `services/common/postgresconfig` holds the password and the connection URL
   built from these fields as `Secret` values. Formatting and `log/slog` print
-  `[REDACTED]`, and JSON encoding omits them. Call `Reveal` only where the
-  value is passed to the PostgreSQL pool or the migration tool.
+  `[REDACTED]`, and JSON encoding omits them. The worker SMTP password uses the
+  same type. Call `Reveal` only where the plaintext is passed to a provider that
+  requires it: the PostgreSQL pool, the migration tool, or the SMTP client.
 - `API_POSTGRES_MAX_CONNECTIONS` (default 4, validated range 1–32).
 - [Permissions](../architecture/permission-model.md) use this pool, with no
   endpoint or timeout of their own.

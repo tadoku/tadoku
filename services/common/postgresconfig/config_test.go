@@ -81,6 +81,20 @@ func TestLoadRejectsPartialMixedAndInvalid(t *testing.T) {
 	})
 }
 
+func TestSecretDecode(t *testing.T) {
+	const sentinel = "envconfig-sentinel"
+	var secret Secret
+	if err := secret.Decode(sentinel); err != nil {
+		t.Fatal(err)
+	}
+	if got := secret.Reveal(); got != sentinel {
+		t.Errorf("Reveal() = %q, want %q", got, sentinel)
+	}
+	if out := fmt.Sprintf("%v", secret); strings.Contains(out, sentinel) || !strings.Contains(out, "[REDACTED]") {
+		t.Errorf("formatted secret = %q", out)
+	}
+}
+
 func TestSecretsAreRedactedWhenFormattedOrLogged(t *testing.T) {
 	const sentinel = "sentinel-password"
 	setIndividual(t)

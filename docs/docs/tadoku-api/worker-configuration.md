@@ -96,7 +96,9 @@ Even when enabled, only `tadoku/prod` rows can send. Configure:
 
 - `WORKER_EMAIL_ADDRESS`: SMTP host and port supporting STARTTLS.
 - `WORKER_EMAIL_USERNAME` and `WORKER_EMAIL_PASSWORD`: Secret references to the
-  existing SES SMTP credential used by Kratos. Never log or commit these values.
+  existing SES SMTP credential used by Kratos. The password is held as
+  `postgresconfig.Secret`, so formatting and logs print `[REDACTED]`. Never log
+  or commit these values.
 - `WORKER_EMAIL_SENDER`: default `no-reply@tadoku.app`.
 - `WORKER_EMAIL_SOURCE_ARN`, `WORKER_EMAIL_FROM_ARN` and
   `WORKER_EMAIL_RETURN_PATH_ARN`: the three matching `X-SES-*-ARN` headers from

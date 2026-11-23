@@ -35,11 +35,13 @@ tenant-key restrictions that make this mapping collision-free.
 
 The provider polls evaluation snapshots and evaluates in process. Accept only
 snapshots that identify the requested namespace and satisfy the SDK's required
-fields. Install an SDK only after its own initial fetch and engine initialization
-succeed. Failed initialization must not install an empty fallback snapshot; retry
-through a fresh SDK. After successful initialization, a failed refresh retains the
-last valid snapshot and marks decisions stale. Keep test-client caching bounded
-and close clients on eviction or shutdown.
+fields. Cap evaluation snapshot response bodies at 1 MiB, matching management
+response decoding; an oversize body is a failed fetch. Install an SDK only after
+its own initial fetch and engine initialization succeed. Failed initialization
+must not install an empty fallback snapshot; retry through a fresh SDK. After
+successful initialization, a failed refresh retains the last valid snapshot and
+marks decisions stale. Keep test-client caching bounded and close clients on
+eviction or shutdown.
 
 Configuration and lifecycle metrics belong to the provider. See
 [Configuration](../tadoku-api/configuration.md) for its environment variables and

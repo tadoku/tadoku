@@ -157,6 +157,60 @@ func TestObservedTransportTracksRefreshesAndBoundedFetchErrors(t *testing.T) {
 	assert.Equal(t, []string{"fetch"}, providerErrors)
 }
 
+func TestObservedTransportRejectsOversizeSnapshotAndKeepsLastGood(t *testing.T) {
+	observer := &recordingObserver{}
+	state := newProviderFetchState("default", observer)
+	bodies := []string{
+		booleanSnapshot(nil),
+		strings.Repeat("x", maxSnapshotBytes+1),
+		booleanSnapshot(nil),
+	}
+	etags := []string{`"good"`, `"oversize"`, `"recovered"`}
+	transport := &observedTransport{
+		state: state,
+		base: roundTripperFunc(func(_ *http.Request) (*http.Response, error) {
+			body := bodies[0]
+			bodies = bodies[1:]
+			etag := etags[0]
+			etags = etags[1:]
+			header := make(http.Header)
+			header.Set("ETag", etag)
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(body)),
+				Header:     header,
+			}, nil
+		}),
+	}
+	request := httptest.NewRequest(http.MethodGet, "http://flipt/snapshot", nil)
+
+	response, err := transport.RoundTrip(request)
+	require.NoError(t, err)
+	require.NotNil(t, response)
+	state.confirmPendingSnapshot()
+	_, refreshes, providerErrors := observer.snapshot()
+	assert.Equal(t, 1, refreshes)
+	assert.Empty(t, providerErrors)
+	assert.False(t, state.isStale(false))
+
+	_, err = transport.RoundTrip(request)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "exceeds")
+	_, refreshes, providerErrors = observer.snapshot()
+	assert.Equal(t, 1, refreshes)
+	assert.Equal(t, []string{"fetch"}, providerErrors)
+	assert.True(t, state.isStale(false))
+
+	response, err = transport.RoundTrip(request)
+	require.NoError(t, err)
+	require.NotNil(t, response)
+	state.confirmPendingSnapshot()
+	_, refreshes, providerErrors = observer.snapshot()
+	assert.Equal(t, 2, refreshes)
+	assert.Equal(t, []string{"fetch"}, providerErrors)
+	assert.False(t, state.isStale(false))
+}
+
 func TestObservedTransportConfirmsRecoveredSnapshotOnMatchingNotModified(t *testing.T) {
 	observer := &recordingObserver{}
 	statuses := []int{http.StatusOK, http.StatusNotModified, http.StatusNotModified}

@@ -6,11 +6,13 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
 
@@ -201,6 +203,56 @@ func TestLoadConfigRejectsInvalidWorkerSettings(t *testing.T) {
 				t.Fatalf("loadConfig() error = %v, want rejection of %s", err, tc.key)
 			}
 		})
+	}
+}
+
+func TestEmailPasswordIsSecret(t *testing.T) {
+	const sentinel = "smtp-sentinel-password"
+
+	t.Setenv("WORKER_BRANCH", "")
+	t.Setenv("WORKER_COMPONENT", "tadoku-worker")
+	t.Setenv("WORKER_POSTGRES_HOST", "127.0.0.1")
+	t.Setenv("WORKER_POSTGRES_DATABASE", "postgres")
+	t.Setenv("WORKER_POSTGRES_USER", "postgres")
+	t.Setenv("WORKER_POSTGRES_PASSWORD", "postgres")
+	t.Setenv("WORKER_POSTGRES_SSLMODE", "disable")
+	t.Setenv("WORKER_EMAIL_PASSWORD", sentinel)
+
+	cfg, err := loadConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, verb := range []string{"%v", "%+v"} {
+		out := fmt.Sprintf(verb, cfg)
+		if strings.Contains(out, sentinel) {
+			t.Errorf("config formatted with %s exposed the email password: %s", verb, out)
+		}
+		if !strings.Contains(out, "[REDACTED]") {
+			t.Errorf("config formatted with %s missing [REDACTED]: %s", verb, out)
+		}
+	}
+	if got := cfg.Email.Password.Reveal(); got != sentinel {
+		t.Errorf("Reveal() = %q, want %q", got, sentinel)
+	}
+
+	sender, err := emailConfig{
+		Enabled:       true,
+		Address:       "127.0.0.1:587",
+		Username:      "smtp-user",
+		Password:      postgresconfig.NewSecret(sentinel),
+		Sender:        "no-reply@tadoku.app",
+		SourceARN:     "arn:source",
+		FromARN:       "arn:from",
+		ReturnPathARN: "arn:return",
+		Timeout:       time.Second,
+	}.sender()
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := reflect.ValueOf(sender).Elem().FieldByName("config").FieldByName("Password").String()
+	if got != sentinel {
+		t.Errorf("smtp config password = %q, want %q", got, sentinel)
 	}
 }
 

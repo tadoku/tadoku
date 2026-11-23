@@ -29,7 +29,7 @@ type Secret struct{ value string }
 
 func NewSecret(value string) Secret { return Secret{value: value} }
 
-// Reveal is only for handing the value to a database driver or migration tool.
+// Reveal is only for handing the plaintext to a provider that requires it.
 func (s Secret) Reveal() string { return s.value }
 
 func (Secret) String() string { return "[REDACTED]" }
@@ -37,6 +37,11 @@ func (Secret) String() string { return "[REDACTED]" }
 func (s Secret) Format(f fmt.State, verb rune) { fmt.Fprintf(f, fmt.FormatString(f, verb), s.String()) }
 
 func (s Secret) LogValue() slog.Value { return slog.StringValue(s.String()) }
+
+func (s *Secret) Decode(value string) error {
+	*s = NewSecret(value)
+	return nil
+}
 
 func Load(prefix, legacyName string) (Config, error) {
 	keys := []string{"HOST", "PORT", "DATABASE", "USER", "PASSWORD", "SSLMODE"}

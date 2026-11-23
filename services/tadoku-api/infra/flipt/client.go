@@ -190,6 +190,7 @@ func (c *Client) install(client sdkClient, observer Observer) {
 const (
 	fliptSdkFetchMode     = fliptsdk.FetchModePolling
 	fliptSdkErrorStrategy = fliptsdk.ErrorStrategyFallback
+	maxSnapshotBytes      = 1 << 20
 )
 
 func (c *Client) EvaluateBoolean(ctx context.Context, request featureflags.EvaluationRequest) (featureflags.ProviderResult, error) {
@@ -335,15 +336,21 @@ func (t *observedTransport) RoundTrip(request *http.Request) (*http.Response, er
 
 	switch response.StatusCode {
 	case http.StatusOK:
-		body, readErr := io.ReadAll(response.Body)
+		body, readErr := io.ReadAll(io.LimitReader(response.Body, maxSnapshotBytes+1))
 		_ = response.Body.Close()
-		response.Body = io.NopCloser(bytes.NewReader(body))
 		if readErr != nil {
 			if t.state != nil {
 				t.state.failed()
 			}
 			return nil, fmt.Errorf("read Flipt snapshot response: %w", readErr)
 		}
+		if len(body) > maxSnapshotBytes {
+			if t.state != nil {
+				t.state.failed()
+			}
+			return nil, fmt.Errorf("Flipt snapshot response exceeds %d bytes", maxSnapshotBytes)
+		}
+		response.Body = io.NopCloser(bytes.NewReader(body))
 		if t.state != nil {
 			fetch, initial := request.Context().Value(initialFetchKey{}).(*initialFetch)
 			if err := t.state.acceptSnapshot(body); err != nil {

@@ -22,6 +22,7 @@ func TestImmersionLogExport(t *testing.T) {
 		{description: []string{"invalid", "format"}, want: http.StatusBadRequest},
 		{description: []string{"missing", "format"}, want: http.StatusBadRequest},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
+		{description: []string{"guest", "invalid", "format"}, want: http.StatusUnauthorized},
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionLogExport", test.want, test.description...)

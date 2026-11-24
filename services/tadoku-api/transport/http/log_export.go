@@ -18,14 +18,14 @@ func (s *server) ImmersionLogExport(
 	ctx context.Context,
 	request openapi.ImmersionLogExportRequestObject,
 ) (openapi.ImmersionLogExportResponseObject, error) {
-	if !request.Params.Format.Valid() {
-		return nil, errx.NewInvalidInputError("format must be csv or json")
-	}
-
 	logs, err := s.application.ExportOwnLogs(ctx)
 	if err != nil {
 		s.logOperationError(ctx, "export own logs", err)
 		return nil, err
+	}
+
+	if !request.Params.Format.Valid() {
+		return nil, errx.NewInvalidInputError("format must be csv or json")
 	}
 
 	disposition := `attachment; filename="tadoku-logs.` + string(request.Params.Format) + `"`

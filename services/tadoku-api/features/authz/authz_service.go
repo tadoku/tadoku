@@ -29,7 +29,7 @@ func (s *Service) ProxyAdminCheck(ctx context.Context, subject uuid.UUID) (bool,
 
 func (s *Service) CurrentUserRole(ctx context.Context) (Role, error) {
 	user := requestidentity.FromContext(ctx)
-	if user.Subject == "" || user.Subject == "guest" {
+	if user == nil || user.Subject == "" || user.Subject == "guest" {
 		return RoleGuest, nil
 	}
 	if permissions.IsBanned(ctx) {

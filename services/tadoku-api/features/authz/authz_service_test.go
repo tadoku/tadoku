@@ -1,6 +1,7 @@
 package authz
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -9,6 +10,18 @@ import (
 	requestidentity "github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
+
+func TestCurrentUserRoleTreatsNilIdentityAsGuest(t *testing.T) {
+	service := NewService(nil, nil)
+
+	role, err := service.CurrentUserRole(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if role != RoleGuest {
+		t.Errorf("role = %q, want %q", role, RoleGuest)
+	}
+}
 
 func TestCurrentUserRoleTreatsEmptySubjectAsGuest(t *testing.T) {
 	service := NewService(nil, nil)

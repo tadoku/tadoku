@@ -157,6 +157,9 @@ func (r *ScoringRepository) CreateDraft(ctx context.Context, draft RuleSet) (*Ru
 		FallbackRuleSetID: postgres.NullableUUID(draft.FallbackRuleSetID),
 		CreatedAt:         postgres.Timestamp(draft.CreatedAt),
 	})
+	if postgres.IsUniqueViolation(err) {
+		return nil, ErrRuleSetAlreadyExists
+	}
 	if err != nil {
 		return nil, fmt.Errorf("create scoring rule set: %w", err)
 	}

@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
@@ -90,10 +91,9 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 		Status:    "draft",
 		CreatedAt: createdAt,
 	})
-	assertConstraintViolation(
-		t, err, pgerrcode.UniqueViolation,
-		"scoring_rule_sets_tenant_platform_version",
-	)
+	if !errors.Is(err, ErrRuleSetAlreadyExists) || errx.KindOf(err) != errx.Conflict {
+		t.Errorf("error=%v (%v), want conflict %v", err, errx.KindOf(err), ErrRuleSetAlreadyExists)
+	}
 
 	specific := Rule{
 		ID:           uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1"),

@@ -76,6 +76,12 @@ func loadConfig() (config, error) {
 			return config{}, fmt.Errorf("validate config: JWTIssuer must not be blank")
 		}
 	}
+	if cfg.OathkeeperAuthzToken != "" {
+		cfg.OathkeeperAuthzToken = strings.TrimSpace(cfg.OathkeeperAuthzToken)
+		if cfg.OathkeeperAuthzToken == "" {
+			return config{}, fmt.Errorf("validate config: OathkeeperAuthzToken must not be blank")
+		}
+	}
 	if cfg.FliptEnabled {
 		if strings.TrimSpace(cfg.FliptEnvironment) == "" {
 			return config{}, fmt.Errorf("validate config: FliptEnvironment is required")

@@ -91,7 +91,8 @@ base deployments leave `API_BRANCH` unset.
   trimmed; blank after trimming fails startup. Empty leaves the issuer
   unchecked.
 - `API_OATHKEEPER_AUTHZ_TOKEN`, the bearer credential required on trusted
-  Oathkeeper authorization callbacks.
+  Oathkeeper authorization callbacks. Surrounding whitespace is trimmed; blank
+  after trimming fails startup.
 
 `API_IDENTITY_TRUSTED_PROXY_CIDRS` is an optional comma-separated list of
 IP prefixes. Only a connection from those prefixes may supply `X-Real-IP` for

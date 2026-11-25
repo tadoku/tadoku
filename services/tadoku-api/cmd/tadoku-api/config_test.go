@@ -269,6 +269,49 @@ func TestLoadConfigJWTIssuer(t *testing.T) {
 	}
 }
 
+func TestLoadConfigOathkeeperAuthzToken(t *testing.T) {
+	for key, value := range map[string]string{
+		"API_SCORING_ENGINE_ENABLED": "false",
+		"API_JWKS":                   "http://jwks.test",
+		"API_VALKEY_URL":             "redis://valkey:6379",
+		"API_POSTGRES_HOST":          "localhost",
+		"API_POSTGRES_DATABASE":      "tadoku",
+		"API_POSTGRES_USER":          "tadoku",
+		"API_POSTGRES_PASSWORD":      "synthetic",
+		"API_POSTGRES_SSLMODE":       "disable",
+	} {
+		t.Setenv(key, value)
+	}
+
+	for _, test := range []struct {
+		name    string
+		value   string
+		want    string
+		wantErr string
+	}{
+		{name: "whitespace_only", value: " ", wantErr: "OathkeeperAuthzToken"},
+		{name: "space_padded", value: " callback-token ", want: "callback-token"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Setenv("API_OATHKEEPER_AUTHZ_TOKEN", test.value)
+
+			cfg, err := loadConfig()
+			if test.wantErr != "" {
+				if err == nil || !strings.Contains(err.Error(), test.wantErr) {
+					t.Errorf("error=%v, want containing %q", err, test.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if cfg.OathkeeperAuthzToken != test.want {
+				t.Errorf("Oathkeeper authorization token=%q, want %q", cfg.OathkeeperAuthzToken, test.want)
+			}
+		})
+	}
+}
+
 func TestLoadConfigRejectsInvalidBranch(t *testing.T) {
 	for key, value := range map[string]string{
 		"API_SCORING_ENGINE_ENABLED": "false",

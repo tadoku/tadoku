@@ -58,8 +58,7 @@ func createDurationLog(t *testing.T, repository *LogsRepository, id, userID uuid
 			DurationSeconds: &duration,
 			Score:           4,
 		},
-		Year: int16(createdAt.Year()),
-		Now:  createdAt,
+		Now: createdAt,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -102,7 +101,6 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 		ActivityID:   1,
 		Description:  &description,
 		Tracking:     tracking,
-		Year:         2026,
 		Now:          createdAt,
 	})
 	if err != nil {
@@ -515,7 +513,6 @@ func TestLogsRepositoryModerateDetachClearsOfficialEligibility(t *testing.T) {
 			Score:           4,
 		},
 		EligibleOfficialLeaderboard: true,
-		Year:                        2026,
 		Now:                         createdAt,
 	})
 	if err != nil {

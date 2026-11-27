@@ -122,7 +122,6 @@ type logMutation struct {
 	Tracking                    logscore.Tracking
 	ContestTrackings            []logscore.ContestTracking
 	EligibleOfficialLeaderboard bool
-	Year                        int16
 	Now                         time.Time
 }
 

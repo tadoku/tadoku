@@ -184,7 +184,6 @@ func (s *Service) Create(
 		Tracking:                    scored.Tracking,
 		ContestTrackings:            scored.ContestTrackings,
 		EligibleOfficialLeaderboard: scored.EligibleOfficial,
-		Year:                        int16(now.Year()),
 		Now:                         now,
 	}
 	created, err := s.create(ctx, mutation)

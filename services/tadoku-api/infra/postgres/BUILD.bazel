@@ -53,6 +53,7 @@ go_test(
     srcs = [
         "errors_test.go",
         "fixtures_test.go",
+        "nullable_test.go",
         "pool_test.go",
         "sqlc_compat_test.go",
         "tenancy_schema_test.go",
@@ -79,6 +80,7 @@ go_test(
         "@com_github_jackc_pgerrcode//:pgerrcode",
         "@com_github_jackc_pgx_v5//:pgx",
         "@com_github_jackc_pgx_v5//pgconn",
+        "@com_github_jackc_pgx_v5//pgtype",
         "@com_github_jackc_pgx_v5//pgxpool",
     ],
 )

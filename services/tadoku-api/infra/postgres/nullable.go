@@ -90,9 +90,12 @@ func UUIDPointer(value pgtype.UUID) *uuid.UUID {
 }
 
 func UUIDs(values []pgtype.UUID) []uuid.UUID {
-	result := make([]uuid.UUID, len(values))
-	for i, value := range values {
-		result[i] = value.Bytes
+	result := make([]uuid.UUID, 0, len(values))
+	for _, value := range values {
+		if !value.Valid {
+			continue
+		}
+		result = append(result, value.Bytes)
 	}
 	return result
 }
